@@ -27,7 +27,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
@@ -59,10 +60,11 @@ class AddTransactionModal : ModalBottomSheet() {
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         val viewModel = koinViewModel<AddTransactionViewModel>()
+
         val uiState by viewModel.uiState.collectAsState()
 
-        var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
-        var target by remember { mutableStateOf(Transaction.Target.ACCOUNT) }
+        var type by remember { mutableStateOf(TransactionType.EXPENSE) }
+        var target by remember { mutableStateOf(TransactionTarget.ACCOUNT) }
 
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
@@ -199,8 +201,8 @@ class AddTransactionModal : ModalBottomSheet() {
             CategorySelector(
                 selectedCategory = selectedCategory,
                 categories = when (type) {
-                    Transaction.Type.INCOME -> uiState.incomeCategories
-                    Transaction.Type.EXPENSE -> uiState.expenseCategories
+                    TransactionType.INCOME -> uiState.incomeCategories
+                    TransactionType.EXPENSE -> uiState.expenseCategories
                     else -> listOf()
                 },
                 onCategorySelected = { selectedCategory = it },
@@ -220,7 +222,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null) {
+                trailingIcon = if (type.isExpense && target == TransactionTarget.CREDIT_CARD && uiState.invoiceSelection != null) {
                     {
                         InstallmentCounter(
                             state = InstallmentState(
@@ -294,29 +296,30 @@ class AddTransactionModal : ModalBottomSheet() {
                 )
             }
         }
+
     }
 
     @Composable
     fun TypeToggle(
-        selectedType: Transaction.Type,
-        onTypeSelected: (Transaction.Type) -> Unit
+        selectedType: TransactionType,
+        onTypeSelected: (TransactionType) -> Unit
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
+            onClick = { onTypeSelected(TransactionType.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.EXPENSE -> {
+                TransactionType.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Expense,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.INCOME,
-                Transaction.Type.ADJUSTMENT -> {
+                TransactionType.INCOME,
+                TransactionType.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -333,18 +336,18 @@ class AddTransactionModal : ModalBottomSheet() {
         }
 
         Button(
-            onClick = { onTypeSelected(Transaction.Type.INCOME) },
+            onClick = { onTypeSelected(TransactionType.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.INCOME -> {
+                TransactionType.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Income,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.EXPENSE,
-                Transaction.Type.ADJUSTMENT -> {
+                TransactionType.EXPENSE,
+                TransactionType.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant

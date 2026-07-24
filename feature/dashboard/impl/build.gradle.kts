@@ -6,6 +6,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.common)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
@@ -29,6 +30,9 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)
             implementation("sh.calvin.reorderable:reorderable:3.0.0")
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
         }
     }
 }

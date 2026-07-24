@@ -20,12 +20,12 @@ val dashboardModule = module {
     factory {
         DashboardComponentsBuilder(
             calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
             calculateCategoryIncomeUseCase = get(),
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),
+            entryRepository = get(),
             navCatalog = get(),
         )
     }
@@ -36,13 +36,15 @@ val dashboardModule = module {
 
     viewModel {
         DashboardViewModel(
-            operationRepository = get(),
+            transactionRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
             budgetRepository = get(),
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
+            categoryRepository = get(),
+            installmentRepository = get(),
             ensureDefaultAccountUseCase = get(),
             getDashboardPreferences = get(),
             buildDashboardViewingUseCase = get(),

@@ -1,52 +1,93 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.LocalDate
 
-class CalculateReportCategorySpendingUseCase {
-    operator fun invoke(
-        operations: List<Operation>,
+class CalculateReportCategorySpendingUseCase(
+    private val entryRepository: IEntryRepository,
+    private val categoryRepository: ICategoryRepository,
+    private val accountRepository: IAccountRepository,
+    private val creditCardRepository: ICreditCardRepository,
+) {
+    /** Account-perspective report: category totals in a date range, scoped by the perspective's legs. */
+    suspend operator fun invoke(
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
-        transactionType: Transaction.Type = Transaction.Type.EXPENSE,
+        transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
-        val matchingTransactions = operations
-            .filter { it.date in startDate..endDate }
-            .flatMap { it.transactions }
-            .filter { it.type == transactionType && it.category != null && it.matchesPerspective(perspective) }
+        val nominalType = accountType(transactionType)
+        // The perspective is expressed as the sibling legs a transaction must have:
+        // its asset accounts (all, when none selected) or the card's ledger account.
+        val siblingAccountIds = when (perspective) {
+            is ReportPerspective.AccountPerspective ->
+                // Include closed, mirroring the stats use case: the "all accounts"
+                // fallback must not silently drop an archived account's spending.
+                perspective.accountIds.ifEmpty { accountRepository.getAllAccountsIncludingClosed().map { it.id } }
+            is ReportPerspective.CreditCardPerspective ->
+                listOfNotNull(creditCardRepository.getCreditCardById(perspective.creditCardId)?.accountId)
+        }
+        if (siblingAccountIds.isEmpty()) return emptyList()
 
-        val totalAmount = matchingTransactions.sumOf { it.amount }
+        return build(
+            totals = entryRepository.totalsByDimension(nominalType, startDate, endDate, siblingAccountIds),
+            transactionType = transactionType,
+        )
+    }
 
-        return matchingTransactions
-            .groupBy { it.category!! }
-            .map { (category, transactions) ->
-                val amount = transactions.sumOf { it.amount }
+    /** Sub-ledger-scoped report: category totals across a set of dimensions. */
+    suspend fun forDimensions(
+        dimensionIds: List<Long>,
+        transactionType: TransactionType = TransactionType.EXPENSE,
+    ): List<CategorySpending> {
+        if (dimensionIds.isEmpty()) return emptyList()
+        return build(
+            totals = entryRepository.totalsByDimensionInScope(accountType(transactionType), dimensionIds),
+            transactionType = transactionType,
+        )
+    }
+
+    private fun accountType(transactionType: TransactionType) =
+        if (transactionType.isIncome) AccountType.INCOME else AccountType.EXPENSE
+
+    private suspend fun build(
+        totals: Map<Long?, Double>,
+        transactionType: TransactionType,
+    ): List<CategorySpending> {
+        val displaySign = accountType(transactionType).displaySign
+        // Include closed: the ledger totals above count an archived category's
+        // spending, so resolving with the open-only list would drop it from the
+        // breakdown AND inflate the survivors' percentages (the total below is a sum
+        // over what resolves). Mirrors the sibling-set a few lines up.
+        //
+        // The unclassified group (`null` key) resolves to no category and drops out
+        // here, exactly as the uncategorized bucket account used to.
+        val categoriesByDimension: Map<Long, Category> = categoryRepository.getAllCategoriesIncludingClosed()
+            .associateBy { it.dimensionId }
+
+        val amounts = totals.mapNotNull { (dimensionId, natural) ->
+            val category = categoriesByDimension[dimensionId] ?: return@mapNotNull null
+            val amount = natural * displaySign
+            if (amount == 0.0) null else category to amount
+        }
+        val total = amounts.sumOf { it.second }
+        return amounts
+            .map { (category, amount) ->
                 CategorySpending(
                     category = category,
                     amount = amount,
-                    percentage = when {
-                        totalAmount > 0 -> (amount / totalAmount) * 100
-                        else -> 0.0
-                    },
+                    percentage = if (total > 0) (amount / total) * 100 else 0.0,
                 )
             }
             .sortedByDescending { it.amount }
-    }
-}
-
-private fun Transaction.matchesPerspective(perspective: ReportPerspective): Boolean {
-    return when (perspective) {
-        is ReportPerspective.AccountPerspective -> {
-            target == Transaction.Target.ACCOUNT &&
-                (perspective.accountIds.isEmpty() || account?.id in perspective.accountIds)
-        }
-        is ReportPerspective.CreditCardPerspective -> {
-            target == Transaction.Target.CREDIT_CARD &&
-                creditCard?.id == perspective.creditCardId
-        }
     }
 }

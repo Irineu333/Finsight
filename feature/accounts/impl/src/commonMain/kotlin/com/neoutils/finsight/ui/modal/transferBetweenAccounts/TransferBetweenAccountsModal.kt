@@ -52,20 +52,10 @@ class TransferBetweenAccountsModal(
 
         val uiState by viewModel.uiState.collectAsState()
         val modalManager = LocalModalManager.current
-        val snackbarHostState = remember { SnackbarHostState() }
 
         val amount = rememberTextFieldState()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
-        LaunchedEffect(Unit) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is TransferBetweenAccountsEvent.ShowError -> {
-                        snackbarHostState.showSnackbar(event.message.asString())
-                    }
-                }
-            }
-        }
 
         Box {
             Column(
@@ -190,12 +180,6 @@ class TransferBetweenAccountsModal(
                 }
             }
 
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-            )
         }
     }
 

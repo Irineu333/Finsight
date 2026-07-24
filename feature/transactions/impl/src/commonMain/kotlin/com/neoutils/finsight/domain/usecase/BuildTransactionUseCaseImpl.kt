@@ -9,10 +9,14 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.exception.BuildTransactionException
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -28,9 +32,7 @@ class BuildTransactionUseCaseImpl(
 
     override suspend operator fun invoke(
         form: TransactionForm,
-        id: Long,
-        operationId: Long?,
-    ): Either<Throwable, Transaction> = either {
+    ): Either<Throwable, TransactionIntent> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)
         }
@@ -55,26 +57,25 @@ class BuildTransactionUseCaseImpl(
 
         if (form.target.isAccount) {
 
-            ensureNotNull(form.account) {
+            val account = ensureNotNull(form.account) {
                 BuildTransactionException(BuildTransactionError.AccountRequired)
             }
 
-            return@either Transaction(
-                id = id,
-                operationId = operationId,
-                type = form.type,
-                amount = form.amount.moneyToDouble(),
+            return@either TransactionIntent(
                 title = form.title,
                 date = date,
-                category = form.category,
-                target = form.target,
-                account = form.account,
-                creditCard = null,
-                invoice = null,
+                legs = listOf(
+                    TransactionLeg(
+                        type = form.type,
+                        amount = form.amount.moneyToDouble(),
+                        accountId = account.id,
+                    )
+                ),
+                contra = contraLegFor(form.type, form.category),
             )
         }
 
-        ensure(form.type == Transaction.Type.EXPENSE) {
+        ensure(form.type == TransactionType.EXPENSE) {
             BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
         }
 
@@ -88,25 +89,21 @@ class BuildTransactionUseCaseImpl(
 
         val invoice = getOrCreateInvoiceForMonthUseCase(creditCard, invoiceDueMonth).bind()
 
-        ensure(!invoice.status.isClosed) {
-            BuildTransactionException(BuildTransactionError.ClosedInvoice)
-        }
-
-        ensure(!invoice.status.isPaid) {
-            BuildTransactionException(BuildTransactionError.ClosedInvoice)
-        }
-
-        Transaction(
-            id = id,
-            operationId = operationId,
-            type = form.type,
-            amount = form.amount.moneyToDouble(),
+        TransactionIntent(
             title = form.title,
             date = date,
-            category = form.category,
-            target = form.target,
-            creditCard = form.creditCard,
-            invoice = invoice,
+            legs = listOf(
+                TransactionLeg(
+                    type = form.type,
+                    amount = form.amount.moneyToDouble(),
+                    // The card *is* its LIABILITY account, and the invoice *is* the
+                    // dimension that leg carries. Resolving both is this caller's job
+                    // now (design D6); the writer only sees identities.
+                    accountId = creditCard.accountId,
+                    dimensionId = invoice.dimensionId,
+                )
+            ),
+            contra = contraLegFor(form.type, form.category),
         )
     }
 }

@@ -9,9 +9,10 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.dao.DimensionDao
+import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
-import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
@@ -20,9 +21,10 @@ import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
+import com.neoutils.finsight.database.entity.DimensionEntity
+import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.entity.InstallmentEntity
-import com.neoutils.finsight.database.entity.OperationEntity
 import com.neoutils.finsight.database.entity.RecurringEntity
 import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
@@ -35,16 +37,17 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         InvoiceEntity::class,
         AccountEntity::class,
         InstallmentEntity::class,
-        OperationEntity::class,
         BudgetEntity::class,
         BudgetCategoryEntity::class,
         RecurringEntity::class,
         RecurringOccurrenceEntity::class,
+        EntryEntity::class,
+        DimensionEntity::class,
     ],
-    version = 7,
+    version = 10,
     exportSchema = true
 )
-@TypeConverters(Converters::class)
+@TypeConverters(Converters::class, LedgerConverters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
@@ -53,10 +56,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceDao(): InvoiceDao
     abstract fun accountDao(): AccountDao
     abstract fun installmentDao(): InstallmentDao
-    abstract fun operationDao(): OperationDao
     abstract fun budgetDao(): BudgetDao
     abstract fun recurringDao(): RecurringDao
     abstract fun recurringOccurrenceDao(): RecurringOccurrenceDao
+    abstract fun entryDao(): EntryDao
+    abstract fun dimensionDao(): DimensionDao
 }
 
 // Room compiler generates the actual implementations

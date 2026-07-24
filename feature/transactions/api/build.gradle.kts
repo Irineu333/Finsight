@@ -6,6 +6,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.common)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             api(projects.core.navigation)
             api(libs.androidx.navigation.compose)
@@ -13,6 +14,9 @@ kotlin {
             implementation(projects.core.ui)
             implementation(libs.kotlinx.datetime)
             implementation(libs.arrow.core)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
         }
     }
 }

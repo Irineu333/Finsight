@@ -1,41 +1,36 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.datetime.YearMonth
 
-class CalculateInvoiceOverviewsUseCase {
+/**
+ * Invoice overviews derived from the ledger (task 4.11): each invoice's
+ * expense/advance-payment/adjustment come from the entries carrying its dimension
+ * ([IEntryRepository.dimensionFlows]) and the owed total from
+ * [IEntryRepository.dimensionOwed].
+ */
+class CalculateInvoiceOverviewsUseCase(
+    private val entryRepository: IEntryRepository,
+) {
 
-    operator fun invoke(
+    suspend operator fun invoke(
         invoices: List<Invoice>,
-        transactions: List<Transaction>,
         forYearMonth: YearMonth,
     ): InvoiceOverviewStats {
         val invoiceOverviews = invoices
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
-                val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
-                }
-                val expense = invoiceTransactions
-                    .filter { it.type.isExpense }
-                    .sumOf { it.amount }
-                val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.isInvoicePayment }
-                    .sumOf { it.amount }
-                val adjustment = invoiceTransactions
-                    .filter { it.type.isAdjustment }
-                    .sumOf { it.amount }
-
+                val dimensionId = invoice.dimensionId
+                val flows = dimensionId?.let { entryRepository.dimensionFlows(it) }
                 InvoiceOverviewResult(
                     invoiceId = invoice.id,
                     creditCardName = invoice.creditCard.name,
                     invoiceStatus = invoice.status,
-                    expense = expense,
-                    advancePayment = advancePayment,
-                    adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { -it.signedImpact() }
+                    expense = flows?.expense ?: 0.0,
+                    advancePayment = flows?.advancePayment ?: 0.0,
+                    adjustment = flows?.adjustment ?: 0.0,
+                    total = dimensionId?.let { entryRepository.dimensionOwed(it) } ?: 0.0,
                 )
             }
 

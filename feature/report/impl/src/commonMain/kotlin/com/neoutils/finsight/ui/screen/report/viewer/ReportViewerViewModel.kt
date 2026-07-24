@@ -5,16 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
@@ -33,12 +36,15 @@ import kotlinx.coroutines.launch
 
 class ReportViewerViewModel(
     private val params: ReportViewerParams,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
+    private val entryRepository: IEntryRepository,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -66,40 +72,46 @@ class ReportViewerViewModel(
     private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    // The rows still show a category icon and an installment badge; the ledger hands
+    // out only the identities behind them (design D6).
+    private val facadeLookupFlow = combine(
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
+    ) { categories, installments -> TransactionFacadeLookup.of(categories, installments) }
+
+    // A report may be scoped to an account or card that has since been archived (the
+    // config picker offers closed ones too), so the viewer resolves the perspective
+    // label, icon and — for cards — the LIABILITY account id from the *including
+    // closed* facade. The active facade would drop an archived scope, blanking the
+    // label/icon and emptying the transaction list. Mirrors the category flow above.
     val uiState = combine(
-        operationRepository.observeAllOperations(),
-        accountRepository.observeAllAccounts(),
-        creditCardRepository.observeAllCreditCards(),
+        transactionRepository.observeAllTransactions(),
+        accountRepository.observeAllAccountsIncludingClosed(),
+        creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
-    ) { operations, accounts, creditCards, invoices ->
+        facadeLookupFlow,
+    ) { transactions, accounts, creditCards, invoices, facadeLookup ->
         val invoiceIds = invoices.map { it.id }.toSet()
-        val invoiceTransactions = operations
-            .flatMap { it.transactions }
-            .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
+        val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
         val stats = if (invoices.isNotEmpty()) {
-            val expense = invoiceTransactions
-                .filter { it.type == Transaction.Type.EXPENSE }
-                .sumOf { it.amount }
-            val advancePayment = invoiceTransactions
-                .filter { it.type == Transaction.Type.INCOME && it.isInvoicePayment }
-                .sumOf { it.amount }
-            val adjustment = invoiceTransactions
-                .filter { it.type == Transaction.Type.ADJUSTMENT }
-                .sumOf { it.amount }
-            val total = invoiceTransactions.sumOf { -it.signedImpact() }
-
+            // Expense / advance-payment / adjustment straight from the ledger — the same
+            // `flowsByDimension`/`owedByDimension` the card feature's own invoice screens
+            // use, each a single grouped read over every invoice dimension rather than one
+            // query per invoice (spec `ledger-reporting`: no alternative that sums entries
+            // already loaded).
+            val flows = entryRepository.flowsByDimension(invoiceDimensionIds).values
+            val owed = entryRepository.owedByDimension(invoiceDimensionIds).values
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
-                expense = expense,
-                advancePayment = advancePayment,
-                adjustment = adjustment,
-                total = total,
+                expense = flows.sumOf { it.expense },
+                advancePayment = flows.sumOf { it.advancePayment },
+                adjustment = flows.sumOf { it.adjustment },
+                total = owed.sum(),
             )
         } else {
-            val reportStats = calculateReportStatsUseCase(
-                operations = operations,
+            val scopeStats = calculateReportStatsUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
@@ -107,10 +119,10 @@ class ReportViewerViewModel(
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                initialBalance = reportStats.initialBalance,
-                income = reportStats.income,
-                expense = reportStats.expense,
-                balance = reportStats.balance,
+                openingBalance = scopeStats.openingBalance,
+                income = scopeStats.income,
+                expense = scopeStats.expense,
+                balance = scopeStats.balance,
             )
         }
 
@@ -129,50 +141,58 @@ class ReportViewerViewModel(
 
         val categorySpending = when {
             !params.includeSpendingByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
+                dimensionIds = invoiceDimensionIds.toList(),
+                transactionType = TransactionType.EXPENSE,
+            )
             else -> calculateReportCategorySpendingUseCase(
-                operations = operations,
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
-                transactionType = Transaction.Type.EXPENSE,
+                transactionType = TransactionType.EXPENSE,
             )
         }
 
         val categoryIncome = when {
             !params.includeIncomeByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
+                dimensionIds = invoiceDimensionIds.toList(),
+                transactionType = TransactionType.INCOME,
+            )
             else -> calculateReportCategorySpendingUseCase(
-                operations = operations,
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
-                transactionType = Transaction.Type.INCOME,
+                transactionType = TransactionType.INCOME,
             )
         }
 
         val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
-                operations.filter { op ->
-                    op.targetInvoice?.id in invoiceIds ||
-                            op.transactions.any { tx -> tx.invoice?.id in invoiceIds }
+                // One test, not two: an invoice *is* the dimension its card leg
+                // carries, so the id comparison the first clause used to make is the
+                // same question asked of the facade (design D6).
+                transactions.filter { op ->
+                    op.entries.any { it.dimensionId in invoiceDimensionIds }
                 }
             } else {
-                operations
+                transactions
                     .filter { it.date in startDate..endDate }
                     .filter { op ->
                         when (perspective) {
                             is ReportPerspective.AccountPerspective -> {
-                                op.transactions.any {
-                                    it.target == Transaction.Target.ACCOUNT &&
-                                            (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+                                op.entries.any {
+                                    it.account.type == AccountType.ASSET &&
+                                            (perspective.accountIds.isEmpty() || it.account.id in perspective.accountIds)
                                 }
                             }
 
                             is ReportPerspective.CreditCardPerspective -> {
-                                op.transactions.any {
-                                    it.target == Transaction.Target.CREDIT_CARD &&
-                                            it.creditCard?.id == perspective.creditCardId
+                                val liabilityAccountId = creditCards
+                                    .find { it.id == perspective.creditCardId }?.accountId
+                                op.entries.any {
+                                    it.account.type == AccountType.LIABILITY &&
+                                            it.account.id == liabilityAccountId
                                 }
                             }
                         }
@@ -206,6 +226,7 @@ class ReportViewerViewModel(
             categorySpending = categorySpending,
             categoryIncome = categoryIncome,
             transactions = transactionsMap,
+            facadeLookup = facadeLookup,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -226,24 +247,4 @@ class ReportViewerViewModel(
             }
         }
     }
-}
-
-private fun List<Transaction>.toCategoryBreakdown(
-    transactionType: Transaction.Type,
-): List<CategorySpending> {
-    val typedTransactions = filter { it.type == transactionType && it.category != null }
-    val totalAmount = typedTransactions.sumOf { it.amount }
-    if (totalAmount <= 0) return emptyList()
-
-    return typedTransactions
-        .groupBy { it.category!! }
-        .map { (category, transactions) ->
-            val amount = transactions.sumOf { it.amount }
-            CategorySpending(
-                category = category,
-                amount = amount,
-                percentage = (amount / totalAmount) * 100,
-            )
-        }
-        .sortedByDescending { it.amount }
 }

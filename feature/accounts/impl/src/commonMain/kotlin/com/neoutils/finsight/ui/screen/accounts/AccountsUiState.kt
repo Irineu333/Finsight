@@ -1,9 +1,10 @@
 package com.neoutils.finsight.ui.screen.accounts
 
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.ui.model.TransactionUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
@@ -16,11 +17,16 @@ sealed class AccountsUiState {
 
     data class Content(
         val accounts: List<AccountUi>,
+        // The domain accounts paired positionally with [accounts]; the screen
+        // resolves the Account for a card or a modal action from here, keeping
+        // the display model (AccountUi) free of domain (presentation-mapping).
+        val domainAccounts: List<Account> = emptyList(),
         val selectedAccountIndex: Int,
-        val operations: Map<LocalDate, List<OperationUi>>,
+        val selectedAccountId: Long? = null,
+        val transactions: Map<LocalDate, List<TransactionUi>>,
         val categories: List<Category>,
         val selectedCategory: Category? = null,
-        val selectedType: Transaction.Type? = null,
+        val selectedType: TransactionType? = null,
         val showRecurringOnly: Boolean = false,
         override val selectedMonth: YearMonth,
     ) : AccountsUiState()

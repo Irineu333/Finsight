@@ -24,6 +24,7 @@ kotlin {
             export(projects.core.crashlytics)
             export(projects.core.database)
             export(projects.core.designsystem)
+            export(projects.core.ledger)
             export(projects.core.model)
             export(projects.core.navigation)
             export(projects.core.resources)

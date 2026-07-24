@@ -4,6 +4,9 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.domain.model.CreditCard
 
 class CreditCardMapper {
+    fun toDomain(row: com.neoutils.finsight.database.dao.CreditCardWithArchival): CreditCard =
+        toDomain(row.creditCard).copy(isArchived = row.isArchived)
+
     fun toDomain(entity: CreditCardEntity): CreditCard {
         return CreditCard(
             id = entity.id,
@@ -12,7 +15,8 @@ class CreditCardMapper {
             closingDay = entity.closingDay,
             dueDay = entity.dueDay,
             iconKey = entity.iconKey,
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            accountId = entity.accountId,
         )
     }
 
@@ -24,7 +28,8 @@ class CreditCardMapper {
             closingDay = domain.closingDay,
             dueDay = domain.dueDay,
             iconKey = domain.iconKey,
-            createdAt = domain.createdAt
+            createdAt = domain.createdAt,
+            accountId = domain.accountId,
         )
     }
 }

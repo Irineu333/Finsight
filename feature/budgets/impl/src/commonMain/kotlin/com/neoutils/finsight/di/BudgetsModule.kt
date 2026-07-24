@@ -24,7 +24,7 @@ val budgetsModule = module {
     }
     factory { BudgetMapper() }
 
-    factory { CalculateBudgetProgressUseCase() }
+    factory { CalculateBudgetProgressUseCase(entryRepository = get()) }
     factory { ValidateBudgetTitleUseCase(repository = get()) }
 
     single<BudgetsEntry> { BudgetsEntryImpl() }
@@ -32,7 +32,7 @@ val budgetsModule = module {
     viewModel {
         BudgetsViewModel(
             budgetRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             recurringRepository = get(),
             calculateBudgetProgressUseCase = get(),
         )
@@ -41,7 +41,7 @@ val budgetsModule = module {
         ViewBudgetViewModel(
             budgetId = it.get(),
             budgetRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             recurringRepository = get(),
             calculateBudgetProgressUseCase = get(),
             crashlytics = get(),

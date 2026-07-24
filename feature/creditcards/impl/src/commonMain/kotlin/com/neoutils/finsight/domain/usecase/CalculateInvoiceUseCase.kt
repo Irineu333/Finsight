@@ -1,20 +1,18 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.repository.IEntryRepository
 
+/**
+ * Amount owed on an invoice = Σ the entries carrying its dimension, read positive.
+ *
+ * It takes the invoice, not its id: the ledger knows only the dimension, and
+ * resolving facade → identity is the caller's business, which is the same
+ * direction the write intent takes.
+ */
 class CalculateInvoiceUseCase(
-    private val repository: ITransactionRepository
+    private val entryRepository: IEntryRepository,
 ) {
-    suspend operator fun invoke(
-        invoiceId: Long
-    ): Double {
-        return repository.getTransactionsBy(
-            invoiceId = invoiceId,
-            type = null,
-            target = Transaction.Target.CREDIT_CARD,
-            date = null,
-        ).sumOf { -it.signedImpact() }
-    }
+    suspend operator fun invoke(invoice: Invoice): Double =
+        invoice.dimensionId?.let { entryRepository.dimensionOwed(it) } ?: 0.0
 }

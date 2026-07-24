@@ -1,0 +1,57 @@
+package com.neoutils.finsight.ui.modal.archiveCreditCard
+
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.AccountException
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.retire_action_error_generic
+import com.neoutils.finsight.util.UiText
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.neoutils.finsight.ui.component.ModalManager
+import kotlinx.coroutines.launch
+
+class ArchiveCreditCardViewModel(
+    private val creditCard: CreditCard,
+    private val archiveCreditCardUseCase: ArchiveCreditCardUseCase,
+    private val entryRepository: IEntryRepository,
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
+) : ViewModel() {
+
+    /** The card's outstanding balance — see `ArchiveAccountViewModel`. */
+    val balance = MutableStateFlow<Double?>(null)
+
+    init {
+        viewModelScope.launch { balance.value = entryRepository.balance(creditCard.accountId) }
+    }
+
+
+
+    fun archiveCreditCard() = viewModelScope.launch {
+        archiveCreditCardUseCase(creditCard).onRight {
+            analytics.logEvent(DeleteCreditCard)
+            modalManager.dismissAll()
+        }.onLeft {
+            crashlytics.recordException(it)
+            modalManager.showError(it.toUiMessage())
+        }
+    }
+
+    /**
+     * A refused action has a reason the user can act on — "this account still has a
+     * balance", "this category has transactions". Without this the sheet just did
+     * not close and said nothing.
+     */
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is AccountException -> error.toUiText()
+        else -> UiText.Res(Res.string.retire_action_error_generic)
+    }
+}

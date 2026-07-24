@@ -24,9 +24,13 @@ class ValidateAccountNameUseCase(
         return name.right()
     }
 
+    /**
+     * Uniqueness spans closed accounts too: closing keeps the name, and history
+     * still renders it. Two "Nubank" side by side, one of them grey, is not a name.
+     */
     private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {
         // TODO: improve this
-        return repository.getAllAccounts().any { account ->
+        return repository.getAllAccountsIncludingClosed().any { account ->
             account.name.equals(name.trim(), ignoreCase = true) &&
                     account.id != ignoreId
         }

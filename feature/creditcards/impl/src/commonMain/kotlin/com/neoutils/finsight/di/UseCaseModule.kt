@@ -1,6 +1,9 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
@@ -21,21 +24,21 @@ import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
     factory {
         AdjustInvoiceUseCase(
-            repository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
 
-    factory { CalculateInvoiceUseCase(repository = get()) }
+    factory { CalculateInvoiceUseCase(entryRepository = get()) }
 
-    factory { CalculateInvoiceOverviewsUseCase() }
+    factory { CalculateInvoiceOverviewsUseCase(entryRepository = get()) }
 
     factory {
         CalculateAvailableLimitUseCase(
@@ -61,7 +64,7 @@ val useCaseModules = module {
 
     factory {
         PayInvoicePaymentUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
@@ -70,7 +73,7 @@ val useCaseModules = module {
 
     factory {
         AdvanceInvoicePaymentUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
         )
@@ -123,23 +126,40 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        DeleteCreditCardUseCase(
-            creditCardRepository = get(),
-            operationRepository = get(),
+    factory<DeleteInstallmentUseCase> {
+        DeleteInstallmentUseCaseImpl(
+            transactionRepository = get(),
+            installmentRepository = get(),
         )
     }
 
     factory {
+        DeleteCreditCardUseCase(
+            creditCardRepository = get(),
+            entryRepository = get(),
+            recurringRepository = get(),
+        )
+    }
+
+    factory {
+        ArchiveCreditCardUseCase(
+            accountRepository = get(),
+            archiveAccountUseCase = get(),
+        )
+    }
+
+    factory { UnarchiveCreditCardUseCase(repository = get()) }
+
+    factory {
         DeleteFutureInvoiceUseCase(
             invoiceRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
         )
     }
 
     factory<AddInstallmentUseCase> {
         AddInstallmentUseCaseImpl(
-            operationRepository = get(),
+            transactionRepository = get(),
             installmentRepository = get(),
             invoiceRepository = get(),
             buildTransactionUseCase = get(),

@@ -5,20 +5,24 @@ package com.neoutils.finsight.ui.screen.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.model.OperationPerspective
-import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.TransactionUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
+import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
@@ -26,8 +30,10 @@ import kotlin.time.ExperimentalTime
 
 class AccountsViewModel(
     private val accountRepository: IAccountRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
+    private val entryRepository: IEntryRepository,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
@@ -51,47 +57,51 @@ class AccountsViewModel(
         accounts.getOrNull(index)
     }
 
-    private val operations = operationRepository.observeAllOperations()
+    private val transactions = transactionRepository.observeAllTransactions()
 
-    private val operationsUi = combine(
+    private val transactionsUi = combine(
         selectedAccount,
-        operations,
-    ) { account, operations ->
-        // No account selected (e.g. all accounts deleted with the screen open) → no operations.
+        transactions,
+        // The row still shows a category icon and an installment badge; the ledger
+        // hands out only the identities behind them (design D6).
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
+    ) { account, transactions, categories, installments ->
+        // No account selected (e.g. all accounts deleted with the screen open) → no transactions.
         account ?: return@combine emptyList()
-        val perspective = OperationPerspective.Account(accountId = account.id)
-        operations.mapNotNull { operation ->
-            perspective.resolve(
-                operation = operation,
-            )?.let {
-                OperationUi(
-                    operation = operation,
-                    perspective = perspective,
-                )
-            }
+        val lookup = TransactionFacadeLookup.of(categories, installments)
+        // Flat DTO derived from the ledger under this account's perspective; ops
+        // whose entries don't touch the account map to null and are omitted.
+        transactions.mapNotNull { transaction ->
+            transaction.toTransactionUi(accountId = account.id, lookup = lookup)
         }
     }
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val accountsUi = combine(
+    private val accountsWithDomain = combine(
         accounts,
-        operations,
         selectedMonth,
-    ) { accounts, operations, month ->
-        val allTransactions = operations.flatMap { operation ->
-            operation.transactions
-        }
-
+        // The figures below are SQL aggregates, not flows: without a ledger signal
+        // this only recomputed when the account list or the month changed, so a
+        // balance adjustment left the cards showing the old number.
+        entryRepository.observeLedgerChanges(),
+    ) { accounts, month, _ ->
+        // Derived entirely from the ledger (task 4.4): opening = Σ entries up to the
+        // previous month; balance = Σ entries up to the month; the month's flows come
+        // from the per-account aggregate (task 2.4). No summing of legs in memory.
         accounts.map { account ->
-            val transactions = allTransactions.filter { transaction ->
-                transaction.account?.id == account.id
-            }
-
-            AccountUi(
-                account = account,
-                transactions = transactions,
-                month = month,
+            val flows = entryRepository.accountFlows(month = month, accountId = account.id)
+            account to AccountUi(
+                id = account.id,
+                openingBalance = entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                balance = entryRepository.balanceUpTo(target = month, accountId = account.id),
+                income = flows.income,
+                expense = flows.expense,
+                adjustment = flows.adjustment,
+                settlement = flows.settlement,
+                hasMovement = entryRepository.hasEntries(account.id),
+                isDefault = account.isDefault,
             )
         }
     }
@@ -105,29 +115,31 @@ class AccountsViewModel(
     )
 
     val uiState = combine(
-        accountsUi,
-        operationsUi,
+        accountsWithDomain,
+        transactionsUi,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accountsUi, selectedAccountOperations, categories, index, month, currentFilters ->
-        val monthOperations = selectedAccountOperations.filter { operation ->
-            operation.displayDate.yearMonth == month
+    ) { accountsPairs, selectedAccountTransactions, categories, index, month, currentFilters ->
+        val monthTransactions = selectedAccountTransactions.filter { transaction ->
+            transaction.date.yearMonth == month
         }
 
-        val filteredOperations = monthOperations
+        val filteredTransactions = monthTransactions
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
-            .sortedByDescending { it.displayDate }
-            .groupBy { it.displayDate }
+            .sortedByDescending { it.date }
+            .groupBy { it.date }
 
         AccountsUiState.Content(
-            accounts = accountsUi,
+            accounts = accountsPairs.map { it.second },
+            domainAccounts = accountsPairs.map { it.first },
             selectedAccountIndex = index,
+            selectedAccountId = accountsPairs.getOrNull(index)?.first?.id,
             selectedMonth = month,
-            operations = filteredOperations,
+            transactions = filteredTransactions,
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
@@ -177,23 +189,23 @@ class AccountsViewModel(
 
 private data class AccountsFilters(
     val category: Category?,
-    val type: Transaction.Type?,
+    val type: TransactionType?,
     val recurringOnly: Boolean,
 )
 
-private fun List<OperationUi>.filter(category: Category?): List<OperationUi> {
+private fun List<TransactionUi>.filter(category: Category?): List<TransactionUi> {
     if (category == null) return this
-    return filter { operation ->
-        operation.displayCategory?.id == category.id
+    return filter { transaction ->
+        transaction.categoryId == category.id
     }
 }
 
-private fun List<OperationUi>.filter(type: Transaction.Type?): List<OperationUi> {
+private fun List<TransactionUi>.filter(type: TransactionType?): List<TransactionUi> {
     if (type == null) return this
-    return filter { operation -> operation.displayType == type }
+    return filter { transaction -> transaction.direction == type }
 }
 
-private fun List<OperationUi>.filter(recurringOnly: Boolean): List<OperationUi> {
+private fun List<TransactionUi>.filter(recurringOnly: Boolean): List<TransactionUi> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { transaction -> transaction.isRecurring }
 }

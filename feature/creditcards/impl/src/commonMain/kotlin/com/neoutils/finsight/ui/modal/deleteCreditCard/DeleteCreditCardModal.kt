@@ -31,6 +31,7 @@ class DeleteCreditCardModal(
 
         val viewModel = koinViewModel<DeleteCreditCardViewModel> { parametersOf(creditCard) }
 
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()

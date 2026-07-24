@@ -7,6 +7,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.common)
             implementation(projects.core.database)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
@@ -14,8 +15,10 @@ kotlin {
             implementation(projects.core.resources)
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
+            implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
-            implementation(projects.feature.transactions.api)
+            implementation(projects.feature.recurring.api)
+            implementation(projects.feature.budgets.api)
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)

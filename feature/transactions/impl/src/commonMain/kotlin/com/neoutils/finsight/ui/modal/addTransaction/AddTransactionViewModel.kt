@@ -2,6 +2,13 @@
 
 package com.neoutils.finsight.ui.modal.addTransaction
 
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.InvoiceException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.transaction_error_generic
+import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
@@ -9,7 +16,6 @@ import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
@@ -29,7 +35,7 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
@@ -37,6 +43,8 @@ class AddTransactionViewModel(
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
+
+
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
@@ -124,22 +132,25 @@ class AddTransactionViewModel(
         buildTransactionUseCase(form)
             .flatMap {
                 catch {
-                    operationRepository.createOperation(
-                        kind = Operation.Kind.TRANSACTION,
-                        title = it.title,
-                        date = it.date,
-                        categoryId = it.category?.id,
-                        sourceAccountId = it.account?.id,
-                        targetCreditCardId = it.creditCard?.id,
-                        targetInvoiceId = it.invoice?.id,
-                        transactions = listOf(it),
-                    )
+                    transactionRepository.createTransaction(it)
                 }
             }.onLeft {
                 crashlytics.recordException(it)
+                modalManager.showError(it.toUiMessage())
             }.onRight {
                 analytics.logEvent(CreateTransaction(form))
                 modalManager.dismiss()
             }
+    }
+
+    /**
+     * The write boundary rejects with a typed error; without this the rejection
+     * reached crashlytics and the user saw a modal that simply refused to close.
+     */
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is InvoiceException -> error.toUiText()
+        is ClosedAccountException -> error.toUiText()
+        is UnbalancedTransactionException -> error.toUiText()
+        else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

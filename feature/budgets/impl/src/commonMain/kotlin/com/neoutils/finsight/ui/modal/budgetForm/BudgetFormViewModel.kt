@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
@@ -100,13 +100,17 @@ class BudgetFormViewModel(
             .map { it.id }
             .toSet()
 
-        val incomeRecurrings = allRecurrings.filter { it.type == Transaction.Type.INCOME && it.isActive }
+        val incomeRecurrings = allRecurrings.filter { it.type == TransactionType.INCOME && it.isActive }
 
         val resolvedSelectedRecurring = fields.selectedRecurring
             ?: budget?.recurringId?.let { id -> incomeRecurrings.find { it.id == id } }
 
         BudgetFormUiState(
-            availableCategories = categories.filter { it.id !in budgetedCategoryIds },
+            availableCategories = offeredCategories(
+                open = categories,
+                selected = fields.selectedCategories,
+                otherBudgetCategoryIds = budgetedCategoryIds,
+            ),
             selectedCategories = fields.selectedCategories,
             selectedIcon = fields.selectedIcon,
             title = fields.title,
@@ -231,4 +235,24 @@ class BudgetFormViewModel(
             modalManager.dismissAll()
         }
     }
+}
+
+/**
+ * The categories the form offers in its dropdown.
+ *
+ * The open ones, minus any already claimed by another budget (a category belongs to
+ * at most one), **plus** the ones this budget already holds that are no longer open.
+ * A category archived after it was added is absent from [open], so without this it
+ * would show in the field but could never be unchecked. It is not offered fresh — it
+ * appears only because it is already selected — and once removed it is gone, since an
+ * archived category is never in [open] to be picked again.
+ */
+internal fun offeredCategories(
+    open: List<Category>,
+    selected: List<Category>,
+    otherBudgetCategoryIds: Set<Long>,
+): List<Category> {
+    val offered = open.filterNot { it.id in otherBudgetCategoryIds }
+    val selectedArchived = selected.filterNot { s -> offered.any { it.id == s.id } }
+    return offered + selectedArchived
 }

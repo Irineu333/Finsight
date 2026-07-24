@@ -1,0 +1,45 @@
+package com.neoutils.finsight.ui.model
+
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
+import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.Income
+
+/**
+ * The colour a category reads as, in every place it is drawn.
+ *
+ * Green and red say "this is money coming in / going out" — a claim about an
+ * account that still takes part. An archived category takes part in nothing new,
+ * so it reads muted: present in the history it belongs to, and visibly out of
+ * circulation. The theme's `onSurfaceVariant` carries that in both light and dark.
+ *
+ * This exists as one owner because the rule was already spelled out in five
+ * places by direction alone; adding the archived case to each would have been the
+ * fifth copy of a rule with no owner — the same drift that gave accounts and
+ * cards different icons for the same action.
+ */
+val Category.displayColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = categoryDisplayColor(type, isArchived)
+
+/**
+ * The same rule, for a flat UI model that carries no [Category] — only the two
+ * facts the colour depends on. A DTO holds no domain graph
+ * (`presentation-mapping`), so it cannot ask the extension above; it asks this,
+ * and the rule still has one owner instead of a copy per screen.
+ */
+@Composable
+@ReadOnlyComposable
+fun categoryDisplayColor(
+    type: Category.Type?,
+    isArchived: Boolean,
+): Color = when {
+    isArchived -> colorScheme.onSurfaceVariant
+    type == Category.Type.INCOME -> Income
+    type == Category.Type.EXPENSE -> Expense
+    else -> colorScheme.onSurface
+}

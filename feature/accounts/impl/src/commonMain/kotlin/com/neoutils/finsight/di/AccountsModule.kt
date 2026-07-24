@@ -7,22 +7,29 @@ import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.impl.AccountsEntryImpl
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
+import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
+import com.neoutils.finsight.ui.modal.viewAccount.ViewAccountViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
+import com.neoutils.finsight.ui.screen.archived.ArchivedAccountsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -54,19 +61,31 @@ val accountsModule = module {
             setDefaultAccount = get(),
         )
     }
-    factory { DeleteAccountUseCase(repository = get()) }
+    factory<ArchiveAccountUseCase> {
+        ArchiveAccountUseCaseImpl(
+            accountDao = get(),
+            entryRepository = get(),
+        )
+    }
+    factory<DeleteAccountUseCase> {
+        DeleteAccountUseCaseImpl(
+            accountRepository = get(),
+            entryRepository = get(),
+            recurringRepository = get(),
+        )
+    }
+    factory { UnarchiveAccountUseCase(repository = get()) }
     factory {
         AdjustBalanceUseCase(
-            repository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             calculateBalanceUseCase = get(),
         )
     }
     factory { AdjustFinalBalanceUseCase(adjustBalanceUseCase = get()) }
-    factory { AdjustInitialBalanceUseCase(adjustBalanceUseCase = get()) }
+    factory { AdjustOpeningBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             accountRepository = get(),
         )
     }
@@ -75,9 +94,11 @@ val accountsModule = module {
 
     viewModel {
         AccountsViewModel(
+            installmentRepository = get(),
             accountRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             categoryRepository = get(),
+            entryRepository = get(),
             initialAccountId = it.getOrNull(),
         )
     }
@@ -102,6 +123,17 @@ val accountsModule = module {
             crashlytics = get(),
         )
     }
+
+    viewModel {
+        ArchiveAccountViewModel(
+            account = it.get(),
+            archiveAccountUseCase = get(),
+            entryRepository = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
     viewModel {
         EditAccountBalanceViewModel(
             type = it.get(),
@@ -109,12 +141,25 @@ val accountsModule = module {
             targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
-            adjustInitialBalanceUseCase = get(),
+            adjustOpeningBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+    viewModel {
+        ViewAccountViewModel(
+            accountId = it.get(),
+            accountRepository = get(),
+            unarchiveAccount = get(),
+            crashlytics = get(),
+        )
+    }
+    viewModel {
+        ArchivedAccountsViewModel(
+            accountRepository = get(),
         )
     }
     viewModel {

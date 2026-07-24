@@ -6,6 +6,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.common)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
@@ -24,6 +25,10 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.core.ktx)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.turbine)
         }
     }
 }

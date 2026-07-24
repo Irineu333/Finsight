@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -32,7 +31,7 @@ import com.neoutils.finsight.resources.accounts_balance
 import com.neoutils.finsight.resources.accounts_default
 import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_income
-import com.neoutils.finsight.resources.accounts_initial_balance
+import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
@@ -53,13 +52,15 @@ sealed class AccountCardVariant {
     data class Detail(
         val accountUi: AccountUi,
         val onEditBalance: () -> Unit,
-        val onEditInitialBalance: () -> Unit,
+        val onEditOpeningBalance: () -> Unit,
     ) : AccountCardVariant()
 }
 
 @Composable
 fun AccountCard(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant,
     modifier: Modifier = Modifier,
 ) {
@@ -93,12 +94,16 @@ fun AccountCard(
     ) {
         if (isDetail) {
             DetailContent(
-                account = account,
+                iconKey = iconKey,
+                name = name,
+                isDefault = isDefault,
                 variant = variant as AccountCardVariant.Detail,
             )
         } else {
             CompactContent(
-                account = account,
+                iconKey = iconKey,
+                name = name,
+                isDefault = isDefault,
                 variant = variant,
             )
         }
@@ -107,7 +112,9 @@ fun AccountCard(
 
 @Composable
 private fun DetailContent(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant.Detail,
 ) {
     val accountUi = variant.accountUi
@@ -136,7 +143,7 @@ private fun DetailContent(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = AppIcon.fromKey(account.iconKey).icon,
+                            imageVector = AppIcon.fromKey(iconKey).icon,
                             contentDescription = null,
                             tint = colorScheme.primary,
                             modifier = Modifier.size(20.dp),
@@ -144,7 +151,7 @@ private fun DetailContent(
                     }
                 }
                 Text(
-                    text = account.name,
+                    text = name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
@@ -153,7 +160,7 @@ private fun DetailContent(
                 )
             }
 
-            if (account.isDefault) {
+            if (isDefault) {
                 Surface(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
@@ -170,11 +177,11 @@ private fun DetailContent(
         }
 
         AccountSummaryRow(
-            label = stringResource(Res.string.accounts_initial_balance),
-            amount = accountUi.initialBalance,
+            label = stringResource(Res.string.accounts_opening_balance),
+            amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
             signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
-            onEditClick = variant.onEditInitialBalance,
+            onEditClick = variant.onEditOpeningBalance,
         )
 
         AccountSummaryRow(
@@ -200,19 +207,10 @@ private fun DetailContent(
             )
         }
 
-        if (accountUi.invoicePayment != 0.0) {
+        if (accountUi.settlement != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_invoices),
-                amount = accountUi.invoicePayment,
-                color = InvoicePayment,
-                signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
-            )
-        }
-
-        if (accountUi.advancePayment != 0.0) {
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_advance_payments),
-                amount = accountUi.advancePayment,
+                amount = accountUi.settlement,
                 color = InvoicePayment,
                 signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
             )
@@ -233,7 +231,9 @@ private fun DetailContent(
 
 @Composable
 private fun CompactContent(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -249,13 +249,13 @@ private fun CompactContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = AppIcon.fromKey(account.iconKey).icon,
+                imageVector = AppIcon.fromKey(iconKey).icon,
                 contentDescription = null,
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
 
-            if (account.isDefault) {
+            if (isDefault) {
                 Surface(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
@@ -275,7 +275,7 @@ private fun CompactContent(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = account.name,
+                text = name,
                 style = MaterialTheme.typography.labelMedium,
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,

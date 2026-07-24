@@ -41,8 +41,11 @@ class ReportConfigViewModel(
     }
 
     val uiState: StateFlow<ReportConfigUiState> = combine(
-        accountRepository.observeAllAccounts(),
-        creditCardRepository.observeAllCreditCards(),
+        // A report is about history, and an archived account/card carries history a
+        // report must be able to cover — otherwise a paid-off, archived card can
+        // never be reported. Include closed; the stats already sum archived by type.
+        accountRepository.observeAllAccountsIncludingClosed(),
+        creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
         config,
     ) { accounts, creditCards, invoices, config ->

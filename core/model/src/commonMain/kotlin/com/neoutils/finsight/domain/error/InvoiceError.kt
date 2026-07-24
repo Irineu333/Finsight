@@ -1,6 +1,12 @@
 package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_error_cannot_reopen
+import com.neoutils.finsight.resources.ledger_error_closed_invoice
+import com.neoutils.finsight.resources.ledger_error_paid_invoice
+import com.neoutils.finsight.resources.ledger_action_error_generic
+import com.neoutils.finsight.util.UiText
 
 sealed class InvoiceError(val message: String) {
 
@@ -37,9 +43,32 @@ sealed class InvoiceError(val message: String) {
     // Reopen
     data object AlreadyOpen : InvoiceError("Invoice is already open")
     data object CannotReopenPaidInvoice : InvoiceError("Cannot reopen a paid invoice")
+    data object CannotReopenInvoice : InvoiceError("Only the latest closed invoice can be reopened")
 
     // Delete
     data object CannotDeleteInvoice : InvoiceError("Only future or retroactive invoices can be deleted")
+
+    /**
+     * Refused at the ledger's write boundary, through `DimensionWriteGuard`.
+     *
+     * These two are the invoice's own rule, so they live here and not with the
+     * ledger's errors: the ledger knows a set of dimensions was touched and that
+     * someone refused — never that an invoice exists (design D11).
+     */
+    data object Paid : InvoiceError("A paid invoice cannot be changed.")
+    data object ClosedToNewSpending : InvoiceError("A closed invoice takes no new spending.")
 }
 
 class InvoiceException(val error: InvoiceError) : Exception(error.message)
+
+/**
+ * Only errors a user action can actually surface get their own message; the rest are
+ * internal invariants that never reach a screen and fall back to the neutral generic.
+ * Reopen is the first invoice flow to show its refusal instead of failing silently.
+ */
+fun InvoiceError.toUiText(): UiText = when (this) {
+    InvoiceError.CannotReopenInvoice -> UiText.Res(Res.string.invoice_error_cannot_reopen)
+    InvoiceError.Paid -> UiText.Res(Res.string.ledger_error_paid_invoice)
+    InvoiceError.ClosedToNewSpending -> UiText.Res(Res.string.ledger_error_closed_invoice)
+    else -> UiText.Res(Res.string.ledger_action_error_generic)
+}

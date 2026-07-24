@@ -1,308 +1,133 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.ScopeStats
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * The use case's only remaining logic is resolving a [ReportPerspective] into the ledger
+ * accounts the report is "seen from" — the figures themselves come from the SQL aggregate
+ * (pinned by ReportStatsQueryTest). This locks the resolution: selected accounts pass
+ * through; an empty selection means every account, **including archived** (so their
+ * history is not dropped); a card resolves to its LIABILITY account.
+ */
 class CalculateReportStatsUseCaseTest {
 
-    private val useCase = CalculateReportStatsUseCase()
+    private val start = LocalDate(2026, 3, 1)
+    private val end = LocalDate(2026, 3, 31)
+
+    private fun useCase(
+        entry: CapturingEntryRepository,
+        accounts: List<Account> = emptyList(),
+        cards: List<CreditCard> = emptyList(),
+    ) = CalculateReportStatsUseCase(
+        entryRepository = entry,
+        accountRepository = FakeAccountRepository(accounts),
+        creditCardRepository = FakeCreditCardRepository(cards),
+    )
 
     @Test
-    fun accountPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
-        val account = Account(id = 1, name = "Carteira")
-        val otherAccount = Account(id = 2, name = "Conta Secundaria")
-
-        val operations = listOf(
-            operation(
-                date = LocalDate(2026, 3, 1),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 100.0,
-                        date = LocalDate(2026, 3, 1),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 5),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = -30.0,
-                        date = LocalDate(2026, 3, 5),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 10),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 40.0,
-                        date = LocalDate(2026, 3, 10),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = 25.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 500.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = otherAccount,
-                    )
-                ),
-            ),
-        )
-
-        val result = useCase(
-            operations = operations,
-            perspective = ReportPerspective.AccountPerspective(accountIds = listOf(account.id)),
-            startDate = LocalDate(2026, 3, 10),
-            endDate = LocalDate(2026, 3, 31),
-        )
-
-        assertEquals(0.0, result.income)
-        assertEquals(40.0, result.expense)
-        assertEquals(-15.0, result.balance)
-        assertEquals(70.0, result.initialBalance)
+    fun `selected accounts pass through as the scope`() = runTest {
+        val entry = CapturingEntryRepository()
+        useCase(entry)(ReportPerspective.AccountPerspective(listOf(1, 2)), start, end)
+        assertEquals(listOf(1L, 2L), entry.capturedScope)
     }
 
     @Test
-    fun creditCardPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
-        val creditCard = CreditCard(
-            id = 10,
-            name = "Visa",
-            limit = 1000.0,
-            closingDay = 10,
-            dueDay = 20,
+    fun `an empty selection resolves to every account including archived`() = runTest {
+        val entry = CapturingEntryRepository()
+        val accounts = listOf(
+            Account(id = 1, name = "open", type = AccountType.ASSET),
+            Account(id = 2, name = "archived", type = AccountType.ASSET, isArchived = true),
         )
-        val otherCreditCard = creditCard.copy(id = 11, name = "Master")
-
-        val operations = listOf(
-            operation(
-                date = LocalDate(2026, 2, 25),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 100.0,
-                        date = LocalDate(2026, 2, 25),
-                        creditCard = creditCard,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 2, 28),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 30.0,
-                        date = LocalDate(2026, 2, 28),
-                        creditCard = creditCard,
-                    ),
-                    creditCardTransaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = -5.0,
-                        date = LocalDate(2026, 2, 28),
-                        creditCard = creditCard,
-                    ),
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 15),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 200.0,
-                        date = LocalDate(2026, 3, 15),
-                        creditCard = creditCard,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 16),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 80.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = creditCard,
-                    ),
-                    creditCardTransaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = 10.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = creditCard,
-                    ),
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 16),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 999.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = otherCreditCard,
-                    )
-                ),
-            ),
-        )
-
-        val result = useCase(
-            operations = operations,
-            perspective = ReportPerspective.CreditCardPerspective(creditCardId = creditCard.id),
-            startDate = LocalDate(2026, 3, 1),
-            endDate = LocalDate(2026, 3, 31),
-        )
-
-        assertEquals(80.0, result.income)
-        assertEquals(200.0, result.expense)
-        assertEquals(-110.0, result.balance)
-        assertEquals(-75.0, result.initialBalance)
+        useCase(entry, accounts = accounts)(ReportPerspective.AccountPerspective(emptyList()), start, end)
+        assertEquals(listOf(1L, 2L), entry.capturedScope)
     }
 
     @Test
-    fun accountPerspectiveIgnoresInternalTransfersBetweenSelectedAccounts() {
-        val accountA = Account(id = 1, name = "Conta A")
-        val accountB = Account(id = 2, name = "Conta B")
-        val accountC = Account(id = 3, name = "Conta C")
-
-        val operations = listOf(
-            transferOperation(
-                date = LocalDate(2026, 3, 10),
-                amount = 100.0,
-                source = accountA,
-                destination = accountB,
-            ),
-            transferOperation(
-                date = LocalDate(2026, 3, 11),
-                amount = 30.0,
-                source = accountA,
-                destination = accountC,
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 50.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = accountA,
-                    ),
-                    transaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 20.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = accountB,
-                    ),
-                ),
-            ),
-        )
-
-        val result = useCase(
-            operations = operations,
-            perspective = ReportPerspective.AccountPerspective(
-                accountIds = listOf(accountA.id, accountB.id)
-            ),
-            startDate = LocalDate(2026, 3, 1),
-            endDate = LocalDate(2026, 3, 31),
-        )
-
-        assertEquals(50.0, result.income)
-        assertEquals(50.0, result.expense)
-        assertEquals(0.0, result.balance)
+    fun `a card resolves to its liability account`() = runTest {
+        val entry = CapturingEntryRepository()
+        val card = CreditCard(id = 7, name = "Visa", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 200)
+        useCase(entry, cards = listOf(card))(ReportPerspective.CreditCardPerspective(creditCardId = 7), start, end)
+        assertEquals(listOf(200L), entry.capturedScope)
     }
 
-    private fun operation(
-        date: LocalDate,
-        transactions: List<Transaction>,
-        kind: Operation.Kind = Operation.Kind.TRANSACTION,
-    ): Operation {
-        return Operation(
-            kind = kind,
-            title = null,
-            date = date,
-            transactions = transactions,
-        )
+    @Test
+    fun `a card without a resolvable account yields an empty scope`() = runTest {
+        val entry = CapturingEntryRepository()
+        useCase(entry)(ReportPerspective.CreditCardPerspective(creditCardId = 99), start, end)
+        assertEquals(emptyList(), entry.capturedScope)
+    }
+}
+
+private class CapturingEntryRepository : IEntryRepository {
+    var capturedScope: List<Long> = emptyList()
+    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats {
+        capturedScope = scopeAccountIds
+        return ScopeStats(0.0, 0.0, 0.0, 0.0)
     }
 
-    private fun transferOperation(
-        date: LocalDate,
-        amount: Double,
-        source: Account,
-        destination: Account,
-    ): Operation {
-        return operation(
-            date = date,
-            kind = Operation.Kind.TRANSFER,
-            transactions = listOf(
-                transaction(
-                    type = Transaction.Type.EXPENSE,
-                    amount = amount,
-                    date = date,
-                    account = source,
-                ),
-                transaction(
-                    type = Transaction.Type.INCOME,
-                    amount = amount,
-                    date = date,
-                    account = destination,
-                ),
-            ),
-        )
-    }
+    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override fun observeLedgerChanges(): Flow<Unit> = throw NotImplementedError()
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun netWorth(): Double = throw NotImplementedError()
+    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
+}
 
-    private fun transaction(
-        type: Transaction.Type,
-        amount: Double,
-        date: LocalDate,
-        account: Account,
-    ): Transaction {
-        return Transaction(
-            type = type,
-            amount = amount,
-            title = null,
-            date = date,
-            target = Transaction.Target.ACCOUNT,
-            account = account,
-        )
-    }
+private class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
+    override fun observeAllAccounts(): Flow<List<Account>> = throw NotImplementedError()
+    override suspend fun getAllAccounts(): List<Account> = throw NotImplementedError()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = throw NotImplementedError()
+    override suspend fun getAllLedgerAccounts(): List<Account> = throw NotImplementedError()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = throw NotImplementedError()
+    override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
+    override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
+    override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
+    override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun getAccountCount(): Int = throw NotImplementedError()
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+}
 
-    private fun creditCardTransaction(
-        type: Transaction.Type,
-        amount: Double,
-        date: LocalDate,
-        creditCard: CreditCard,
-    ): Transaction {
-        return Transaction(
-            type = type,
-            amount = amount,
-            title = null,
-            date = date,
-            target = Transaction.Target.CREDIT_CARD,
-            creditCard = creditCard,
-        )
-    }
+private class FakeCreditCardRepository(private val cards: List<CreditCard>) : ICreditCardRepository {
+    override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = cards.firstOrNull { it.id == creditCardId }
+    override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
+    override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
+    override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+    override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
 }

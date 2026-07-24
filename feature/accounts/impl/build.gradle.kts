@@ -7,6 +7,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.common)
             implementation(projects.core.database)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
@@ -17,10 +18,16 @@ kotlin {
 
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
+            implementation(projects.feature.creditcards.api)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.recurring.api)
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.turbine)
         }
     }
 }

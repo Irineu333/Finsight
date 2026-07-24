@@ -2,11 +2,18 @@
 
 package com.neoutils.finsight.ui.modal.editTransaction
 
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.InvoiceException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.transaction_error_generic
+import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
@@ -27,7 +34,6 @@ import kotlinx.datetime.YearMonth
 class EditTransactionViewModel(
     private val transaction: Transaction,
     private val transactionRepository: ITransactionRepository,
-    private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -38,9 +44,31 @@ class EditTransactionViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
-    private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
-    private val selectedAccount = MutableStateFlow(transaction.account)
+
+
+    // The ledger gives an account id and a dimension; the facades behind them are
+    // resolved once, here, because that is a lookup only these features can do.
+    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
+    private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
+    private val selectedAccount = MutableStateFlow(transaction.sourceAccount)
+    private val transactionCategory = MutableStateFlow<Category?>(null)
+
+    init {
+        viewModelScope.launch {
+            transaction.liabilityAccountId?.let { accountId ->
+                selectedCreditCard.value = creditCardRepository.getAllCreditCardsIncludingClosed()
+                    .firstOrNull { it.accountId == accountId }
+            }
+            transaction.liabilityDimensionId?.let { dimensionId ->
+                selectedDueMonth.value = invoiceRepository.getAllInvoices()
+                    .firstOrNull { it.dimensionId == dimensionId }
+                    ?.dueMonth
+            }
+            transaction.nominalDimensionId?.let { dimensionId ->
+                transactionCategory.value = categoryRepository.getCategoryByDimensionId(dimensionId)
+            }
+        }
+    }
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -64,8 +92,10 @@ class EditTransactionViewModel(
         selectedCreditCard,
         selectedDueMonth,
         selectedAccount,
-    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account ->
+        transactionCategory,
+    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category ->
         EditTransactionUiState(
+            transactionCategory = category,
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
@@ -82,16 +112,7 @@ class EditTransactionViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditTransactionUiState(
-            selectedCreditCard = transaction.creditCard,
-            selectedAccount = transaction.account,
-            invoiceSelection = transaction.invoice?.let {
-                InvoiceMonthSelection(
-                    dueMonth = it.dueMonth,
-                    existingInvoice = it
-                )
-            }
-        )
+        initialValue = EditTransactionUiState(selectedAccount = transaction.sourceAccount)
     )
 
     fun onAction(action: EditTransactionAction) {
@@ -116,22 +137,33 @@ class EditTransactionViewModel(
     private fun submit(
         form: TransactionForm
     ) = viewModelScope.launch {
-        buildTransactionUseCase(
-            form = form,
-            id = transaction.id,
-            operationId = transaction.operationId,
-        ).flatMap {
+        buildTransactionUseCase(form).flatMap { intent ->
             catch {
-                transactionRepository.update(it)
-                it.operationId?.let { operationId ->
-                    operationRepository.updateOperation(operationId, it)
-                }
+                transactionRepository.updateTransaction(
+                    id = transaction.id,
+                    title = intent.title,
+                    date = intent.date,
+                    leg = intent.legs.first(),
+                    contra = intent.contra,
+                )
             }
         }.onLeft {
             crashlytics.recordException(it)
+            modalManager.showError(it.toUiMessage())
         }.onRight {
             analytics.logEvent(EditTransaction(form))
             modalManager.dismissAll()
         }
+    }
+
+    /**
+     * The write boundary rejects with a typed error; without this the rejection
+     * reached crashlytics and the user saw a modal that simply refused to close.
+     */
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is InvoiceException -> error.toUiText()
+        is ClosedAccountException -> error.toUiText()
+        is UnbalancedTransactionException -> error.toUiText()
+        else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

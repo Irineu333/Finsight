@@ -20,7 +20,14 @@ class BudgetRepository(
         return combine(
             dao.observeAll(),
             dao.observeAllBudgetCategories(),
-            categoryRepository.observeAllCategories(),
+            // Resolving a stored reference, not offering a choice — the closed ones
+            // too. With the open-only list, archiving a budgeted category dropped it
+            // here (FK intact), which fed three failures downstream: it vanished from
+            // the budget, its spending fell out of the progress figure, and the next
+            // edit — reseeded from this list — deleted the FK for good. Same shape as
+            // the recurring hydration (§10b.1). The *form's* selector stays open-only,
+            // so it is not offered for a new budget.
+            categoryRepository.observeAllCategoriesIncludingClosed(),
         ) { entities, budgetCategories, categories ->
             val categoryMap = categories.associateBy { it.id }
             val budgetCategoryMap = budgetCategories.groupBy { it.budgetId }
@@ -55,4 +62,9 @@ class BudgetRepository(
     override suspend fun delete(budget: Budget) {
         dao.delete(mapper.toEntity(budget))
     }
+
+    // `budget_categories.categoryId` is CASCADE: deleting the category would strip
+    // it from every budget silently. The delete use case refuses instead.
+    override suspend fun hasBudgetForCategory(categoryId: Long): Boolean =
+        dao.countByCategory(categoryId) > 0
 }

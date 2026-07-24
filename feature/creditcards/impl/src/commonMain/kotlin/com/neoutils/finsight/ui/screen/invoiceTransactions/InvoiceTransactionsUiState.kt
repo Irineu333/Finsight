@@ -2,10 +2,13 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.ui.model.RetireAction
+
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
@@ -13,12 +16,21 @@ import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
+    // An archived card is read-only history: this screen still shows its invoices and
+    // transactions, but offers no write action (close/pay/advance/adjust). Deciding
+    // whether to offer the action is the screen's job; the ledger already refuses the
+    // ones that would write, and closing an invoice — which does not — is refused here.
+    val isArchived: Boolean = false,
+    // Which retire action this screen may offer for the card — the same rule the
+    // cards screen uses, so the two cannot drift.
+    val retireAction: RetireAction = RetireAction.DELETE,
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
-    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
+    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val categories: List<Category> = emptyList(),
+    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     val selectedCategory: Category? = null,
-    val selectedType: Transaction.Type? = null,
+    val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
 ) {
@@ -32,10 +44,11 @@ data class InvoiceTransactionsUiState(
         val nextDateLabel: UiText?,
         val closingDate: LocalDate,
         val isClosable: Boolean,
+        val canReopen: Boolean = false,
     ) {
         val invoiceId = invoice.id
         val status = invoice.status
         val mustShowAdjustment = adjustment != 0.0
-        val canEdit = status.isRetroactive || status.isOpen || status.isFuture
+        val canEdit = status.isEditable
     }
 }

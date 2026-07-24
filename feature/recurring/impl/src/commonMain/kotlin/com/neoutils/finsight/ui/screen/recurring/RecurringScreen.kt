@@ -474,6 +474,13 @@ private fun RecurringCard(
 
                 val creditCard = recurring.creditCard
                 val account = recurring.account
+                // An archived source keeps its name — that is the history — but reads
+                // muted, the same way an archived category does (see `displayColor`).
+                val sourceColor = if (recurring.hasUsableSource) {
+                    colorScheme.onSurfaceVariant
+                } else {
+                    colorScheme.outline
+                }
                 when {
                     creditCard != null -> Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -482,13 +489,13 @@ private fun RecurringCard(
                         Icon(
                             imageVector = Icons.Default.CreditCard,
                             contentDescription = null,
-                            tint = colorScheme.onSurfaceVariant,
+                            tint = sourceColor,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = creditCard.name,
                             fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
+                            color = sourceColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -501,13 +508,13 @@ private fun RecurringCard(
                         Icon(
                             imageVector = Icons.Default.AccountBalance,
                             contentDescription = null,
-                            tint = colorScheme.onSurfaceVariant,
+                            tint = sourceColor,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = account.name,
                             fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
+                            color = sourceColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

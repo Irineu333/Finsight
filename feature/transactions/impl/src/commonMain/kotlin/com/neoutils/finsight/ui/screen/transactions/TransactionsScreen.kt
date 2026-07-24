@@ -20,14 +20,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.MonthSelector
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -40,8 +42,8 @@ import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
 @Composable
 fun TransactionsScreen(
-    categoryType: Transaction.Type? = null,
-    target: Transaction.Target? = null,
+    categoryType: TransactionType? = null,
+    target: TransactionTarget? = null,
     viewModel: TransactionsViewModel = koinViewModel {
         parametersOf(categoryType, null, target)
     },
@@ -111,7 +113,7 @@ private fun TransactionsContent(
                 )
             }
 
-            uiState.operations.forEach { (date, operations) ->
+            uiState.transactions.forEach { (date, transactions) ->
                 item(
                     key = "date_title_$date"
                 ) {
@@ -127,27 +129,29 @@ private fun TransactionsContent(
                 }
 
                 items(
-                    items = operations,
+                    items = transactions,
                     key = { it.id }
-                ) { operation ->
-                    OperationCard(
-                        operation = operation,
+                ) { transaction ->
+                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                    TransactionCard(
+                        transaction = transactionUi,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (operation.type) {
-                                Transaction.Type.ADJUSTMENT -> {
-                                    detailController.show(ViewAdjustmentModal(operation.id))
+                            when (transactionUi.direction) {
+                                TransactionType.ADJUSTMENT -> {
+                                    detailController.show(ViewAdjustmentModal(transaction.id))
                                 }
 
                                 else -> {
-                                    detailController.show(ViewOperationModal(operation.id))
+                                    detailController.show(ViewTransactionModal(transaction.id))
                                 }
                             }
                         }
                     )
+                    }
                 }
             }
         }
@@ -283,16 +287,16 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor =
         when (selectedType) {
-            Transaction.Type.INCOME -> IncomeColor
-            Transaction.Type.EXPENSE -> ExpenseColor
-            Transaction.Type.ADJUSTMENT -> AdjustmentColor
+            TransactionType.INCOME -> IncomeColor
+            TransactionType.EXPENSE -> ExpenseColor
+            TransactionType.ADJUSTMENT -> AdjustmentColor
 
             null -> null
         }
@@ -303,9 +307,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.INCOME -> stringResource(Res.string.transactions_filter_type_income)
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.transactions_filter_type_income)
+                    TransactionType.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
                     null -> stringResource(Res.string.transactions_filter_type)
                 }
             )
@@ -336,14 +340,14 @@ private fun TypeFilterChip(
             }
         )
 
-        Transaction.Type.entries.forEach { type ->
+        TransactionType.entries.forEach { type ->
             DropdownMenuItem(
                 text = {
                     Text(
                         text = when (type) {
-                            Transaction.Type.INCOME -> stringResource(Res.string.transactions_filter_type_income)
-                            Transaction.Type.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
-                            Transaction.Type.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
+                            TransactionType.INCOME -> stringResource(Res.string.transactions_filter_type_income)
+                            TransactionType.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
+                            TransactionType.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
                         }
                     )
                 },
@@ -386,7 +390,7 @@ private fun InstallmentFilterChip(
 
 @Composable
 private fun TargetFilterChip(
-    selectedTarget: Transaction.Target?,
+    selectedTarget: TransactionTarget?,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -397,8 +401,8 @@ private fun TargetFilterChip(
         label = {
             Text(
                 when (selectedTarget) {
-                    Transaction.Target.ACCOUNT -> stringResource(Res.string.transactions_filter_account)
-                    Transaction.Target.CREDIT_CARD -> stringResource(Res.string.transactions_filter_credit_card)
+                    TransactionTarget.ACCOUNT -> stringResource(Res.string.transactions_filter_account)
+                    TransactionTarget.CREDIT_CARD -> stringResource(Res.string.transactions_filter_credit_card)
                     null -> stringResource(Res.string.transactions_filter_account)
                 }
             )
@@ -426,7 +430,7 @@ private fun TargetFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.transactions_filter_account)) },
             onClick = {
-                onAction(TransactionsAction.SelectTarget(Transaction.Target.ACCOUNT))
+                onAction(TransactionsAction.SelectTarget(TransactionTarget.ACCOUNT))
                 expanded = false
             }
         )
@@ -434,7 +438,7 @@ private fun TargetFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.transactions_filter_credit_card_label)) },
             onClick = {
-                onAction(TransactionsAction.SelectTarget(Transaction.Target.CREDIT_CARD))
+                onAction(TransactionsAction.SelectTarget(TransactionTarget.CREDIT_CARD))
                 expanded = false
             }
         )

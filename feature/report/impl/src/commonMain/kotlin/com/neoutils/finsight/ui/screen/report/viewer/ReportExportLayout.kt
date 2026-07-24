@@ -1,8 +1,10 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionLabel
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.ui.model.TransactionUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
 import com.neoutils.finsight.domain.model.ReportLayout
@@ -22,7 +24,7 @@ data class ReportExportStrings(
     val title: String,
     val generatedAtPrefix: String,
     val summaryBalance: String,
-    val summaryInitialBalance: String,
+    val summaryOpeningBalance: String,
     val summaryIncome: String,
     val summaryExpense: String,
     val summaryInvoiceExpense: String,
@@ -31,10 +33,10 @@ data class ReportExportStrings(
     val sectionSpendingByCategory: String,
     val sectionIncomeByCategory: String,
     val sectionTransactions: String,
-    val operationTransfer: String,
-    val operationPayment: String,
-    val operationBalanceAdjustment: String,
-    val operationInvoiceAdjustment: String,
+    val transactionTransfer: String,
+    val transactionPayment: String,
+    val transactionBalanceAdjustment: String,
+    val transactionInvoiceAdjustment: String,
     val columnCategory: String,
     val columnTransaction: String,
     val columnAmount: String,
@@ -62,9 +64,9 @@ fun ReportViewerUiState.Content.toReportLayout(
                 tone = s.balance.toTone(),
             ),
             ReportSummaryItem(
-                label = strings.summaryInitialBalance,
-                value = formatter.format(s.initialBalance),
-                tone = s.initialBalance.toTone(),
+                label = strings.summaryOpeningBalance,
+                value = formatter.format(s.openingBalance),
+                tone = s.openingBalance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,
@@ -132,15 +134,17 @@ fun ReportViewerUiState.Content.toReportLayout(
             add(
                 ReportLayoutSection.Transactions(
                     title = strings.sectionTransactions,
-                    groups = transactions.map { (date, operations) ->
+                    groups = transactions.map { (date, transactions) ->
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
-                            items = operations.map { operation ->
-                                TransactionItem(
-                                    title = operation.exportTitle(strings),
-                                    amount = operation.exportAmount(formatter),
-                                    tone = operation.exportTone(),
-                                )
+                            items = transactions.mapNotNull { transaction ->
+                                transaction.toTransactionUi(lookup = facadeLookup)?.let { ui ->
+                                    TransactionItem(
+                                        title = ui.exportTitle(strings),
+                                        amount = ui.exportAmount(formatter),
+                                        tone = ui.exportTone(),
+                                    )
+                                }
                             },
                         )
                     },
@@ -168,35 +172,35 @@ fun ReportViewerUiState.Content.toReportLayout(
     )
 }
 
-private fun Operation.exportTitle(strings: ReportExportStrings): String {
+private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
     return when {
-        kind == Operation.Kind.PAYMENT -> strings.operationPayment
-        kind == Operation.Kind.TRANSFER -> strings.operationTransfer
-        type == Transaction.Type.ADJUSTMENT && target.isAccount -> strings.operationBalanceAdjustment
-        type == Transaction.Type.ADJUSTMENT && target.isCreditCard -> strings.operationInvoiceAdjustment
-        else -> label
+        label == TransactionLabel.PAYMENT -> strings.transactionPayment
+        label == TransactionLabel.TRANSFER -> strings.transactionTransfer
+        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> strings.transactionBalanceAdjustment
+        label == TransactionLabel.ADJUSTMENT && isCardTarget -> strings.transactionInvoiceAdjustment
+        else -> title
     }
 }
 
-private fun Operation.exportAmount(formatter: CurrencyFormatter): String {
-    return when (type) {
-        Transaction.Type.ADJUSTMENT -> formatter.formatWithSign(amount)
-        Transaction.Type.EXPENSE -> {
-            if (kind == Operation.Kind.TRANSFER) {
+private fun TransactionUi.exportAmount(formatter: CurrencyFormatter): String {
+    return when (direction) {
+        TransactionType.ADJUSTMENT -> formatter.formatWithSign(amount)
+        TransactionType.EXPENSE -> {
+            if (label == TransactionLabel.TRANSFER) {
                 "-${formatter.format(amount)}"
             } else {
                 formatter.format(amount)
             }
         }
-        Transaction.Type.INCOME -> formatter.format(amount)
+        TransactionType.INCOME -> formatter.format(amount)
     }
 }
 
-private fun Operation.exportTone(): ReportTone {
+private fun TransactionUi.exportTone(): ReportTone {
     return when {
-        kind == Operation.Kind.TRANSFER -> ReportTone.NEUTRAL
-        type == Transaction.Type.INCOME -> ReportTone.POSITIVE
-        type == Transaction.Type.EXPENSE -> ReportTone.NEGATIVE
+        label == TransactionLabel.TRANSFER -> ReportTone.NEUTRAL
+        direction == TransactionType.INCOME -> ReportTone.POSITIVE
+        direction == TransactionType.EXPENSE -> ReportTone.NEGATIVE
         amount >= 0 -> ReportTone.POSITIVE
         else -> ReportTone.NEGATIVE
     }

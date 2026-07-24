@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -7,10 +7,18 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.combine
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.retireActionOf
+import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -18,6 +26,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -31,11 +40,16 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
-    creditCardId: Long,
+    private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
+    private val entryRepository: IEntryRepository,
+    private val recurringRepository: IRecurringRepository,
+    private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -60,24 +74,41 @@ class InvoiceTransactionsViewModel(
     private val invoicesFlow = invoiceRepository
         .observeInvoicesByCreditCard(creditCardId = creditCardId)
 
-    private val operationsFlow = operationRepository
-        .observeOperationsBy(creditCardId = creditCardId)
+    // A transaction of this card is one with a leg on the card's LIABILITY account.
+    private val transactionsFlow = creditCardFlow
+        .flatMapLatest { creditCard ->
+            transactionRepository.observeTransactionsBy(accountId = creditCard.accountId)
+        }
 
     val uiState = combine(
         creditCardFlow,
         invoicesFlow,
-        operationsFlow,
-        categoryRepository.observeAllCategories(),
+        transactionsFlow,
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
         selectedInvoiceIndex,
         filters,
-    ) { creditCard, invoices, operations, categories, index, currentFilters ->
-        val transactions = operations.flatMap { it.transactions }
+    ) { creditCard, invoices, transactions, categories, installments, index, currentFilters ->
+        // Invoice owed and its expense/advancePayment/adjustment breakdown, both derived
+        // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
+        // Read for every invoice's dimension in one grouped query each, not one per invoice.
+        val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }
+        val owedByDimension = entryRepository.owedByDimension(invoiceDimensionIds)
+        val flowsByDimension = entryRepository.flowsByDimension(invoiceDimensionIds)
+        val owedByInvoiceId = mutableMapOf<Long, Double>()
+        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
+        for (inv in invoices) {
+            val dimensionId = inv.dimensionId ?: continue
+            owedByInvoiceId[inv.id] = owedByDimension[dimensionId] ?: 0.0
+            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
+                ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
+        }
 
         val invoice = invoices.getOrNull(index)
 
-        val invoiceOperations = operations
-            .filter { it.targetInvoice?.id == invoice?.id || it.transactions.any { tx -> tx.invoice?.id == invoice?.id } }
-        val filteredOperations = invoiceOperations
+        val invoiceTransactions = transactions
+            .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
+        val filteredTransactions = invoiceTransactions
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
@@ -87,22 +118,16 @@ class InvoiceTransactionsViewModel(
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
+            isArchived = creditCard.isArchived,
+            retireAction = retireActionOf(
+                entryRepository.hasEntries(creditCard.accountId) ||
+                    recurringRepository.hasRecurringForCreditCard(creditCard.id)
+            ),
             invoices = invoices.map { invoice ->
-                val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
-                }
-
-                val expense = invoiceTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE }
-                    .sumOf { it.amount }
-
-                val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.isInvoicePayment }
-                    .sumOf { it.amount }
-
-                val adjustment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.ADJUSTMENT }
-                    .sumOf { it.amount }
+                val flows = flowsByInvoiceId.getValue(invoice.id)
+                val expense = flows.expense
+                val advancePayment = flows.advancePayment
+                val adjustment = flows.adjustment
 
                 val nextDateLabel = when (invoice.status) {
                     Invoice.Status.OPEN -> UiText.ResWithArgs(
@@ -135,16 +160,20 @@ class InvoiceTransactionsViewModel(
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { -it.signedImpact() },
+                    total = owedByInvoiceId.getValue(invoice.id),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
-                    isClosable = invoice.isClosable && currentDate >= invoice.closingDate,
+                    isClosable = invoice.isClosableOn(currentDate),
+                    canReopen = invoice.isReopenable(invoices),
                 )
             },
             selectedInvoiceIndex = index,
-            operations = filteredOperations,
-            categories = categories,
+            transactions = filteredTransactions,
+            // The filter offers only open categories; the rows still render the
+            // archived ones, so the lookup keeps them.
+            categories = categories.filterNot { it.isArchived },
+            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
@@ -195,35 +224,50 @@ class InvoiceTransactionsViewModel(
             is InvoiceTransactionsAction.ToggleInstallment -> {
                 filters.value = filters.value.copy(installmentOnly = action.enabled)
             }
+
+            // Reversible and innocuous (design D8): no confirmation. The screen offers this
+            // only for an archived card; the reopened account re-emits and the UI flips back
+            // to the active affordances on its own. The card is resolved at action time so no
+            // domain model sits in observable state.
+            InvoiceTransactionsAction.Unarchive -> {
+                val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return@launch
+                unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
+            }
         }
     }
 }
 
 private data class InvoiceTransactionsFilters(
     val category: Category?,
-    val type: Transaction.Type?,
+    val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
 )
 
-private fun List<Operation>.filter(category: Category?): List<Operation> {
+private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
-    return filter { operation ->
-        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+    return filter { transaction ->
+        transaction.nominalDimensionId == category.dimensionId
     }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
     if (type == null) return this
-    return filter { operation -> operation.creditCardType == type }
+    // The card's own leg is what this screen shows, so the filter reads its
+    // direction — a payment credits the card, a purchase debits it.
+    return filter { transaction ->
+        transaction.entries
+            .firstOrNull { it.account.type == AccountType.LIABILITY }
+            ?.let { deriveTransactionType(it.amount, transaction.entries) } == type
+    }
 }
 
-private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { transaction -> transaction.recurringId != null }
 }
 
-private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { operation -> operation.installment != null }
+    return filter { transaction -> transaction.installmentId != null }
 }

@@ -1,30 +1,30 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.ui.model
 
-import com.neoutils.finsight.domain.model.Invoice
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
+import androidx.compose.ui.graphics.Color
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
 
-private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
+/**
+ * A flat, display-ready view of a card invoice. Carries no domain graph: the status is
+ * decomposed into the flat facts the card renders and gates on, computed by the mapper
+ * from the domain rules (the UI consumes them, never re-derives them). A screen that
+ * needs the domain `Invoice` to open a modal resolves it separately, by [id].
+ */
 data class InvoiceUi(
+    val id: Long,
     val amount: Double,
     val totalUnpaidAmount: Double,
     val availableLimit: Double,
     val usagePercentage: Double,
     val showProgress: Boolean,
-    val invoice: Invoice,
     val closingDate: LocalDate,
-) {
-    val id = invoice.id
-    val creditCard = invoice.creditCard
-    val isClosable = (invoice.status.isOpen && currentDate >= closingDate) || invoice.status.isRetroactive
-    val status = invoice.status
-    val closingMonth = invoice.closingMonth
-    val dueMonth = invoice.dueMonth
-    val dueDate = invoice.dueDate
-}
+    val dueDate: LocalDate,
+    val isClosable: Boolean,
+    val canReopen: Boolean,
+    val isOpen: Boolean,
+    val isClosed: Boolean,
+    val isRetroactive: Boolean,
+    val isEditable: Boolean,
+    val statusColor: Color,
+    val statusLabel: StringResource,
+)

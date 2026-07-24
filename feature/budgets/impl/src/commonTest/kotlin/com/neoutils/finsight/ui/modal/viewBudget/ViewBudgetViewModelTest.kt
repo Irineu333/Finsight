@@ -6,13 +6,21 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.ContraLeg
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -54,41 +62,39 @@ class ViewBudgetViewModelTest {
         override suspend fun insert(budget: Budget) = throw NotImplementedError()
         override suspend fun update(budget: Budget) = throw NotImplementedError()
         override suspend fun delete(budget: Budget) = throw NotImplementedError()
+        override suspend fun hasBudgetForCategory(categoryId: Long) = false
     }
 
-    private class FakeOperationRepository : IOperationRepository {
-        override fun observeAllOperations(): Flow<List<Operation>> = flowOf(emptyList())
-        override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
-        override fun observeOperationsBy(
+    private class FakeTransactionRepository : ITransactionRepository {
+        override fun observeAllTransactions(): Flow<List<Transaction>> = flowOf(emptyList())
+        override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
+        override fun observeTransactionsBy(
             date: LocalDate?,
-            invoiceId: Long?,
-            creditCardId: Long?,
+            dimensionId: Long?,
             accountId: Long?,
-        ): Flow<List<Operation>> = throw NotImplementedError()
-        override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
-        override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-        override suspend fun createOperation(
-            kind: Operation.Kind,
+        ): Flow<List<Transaction>> = throw NotImplementedError()
+        override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+        override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+        override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
+        override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
+        override suspend fun updateTransaction(
+            id: Long,
             title: String?,
             date: LocalDate,
-            categoryId: Long?,
-            sourceAccountId: Long?,
-            targetCreditCardId: Long?,
-            targetInvoiceId: Long?,
-            recurringId: Long?,
-            recurringCycle: Int?,
-            installmentId: Long?,
-            installmentNumber: Int?,
-            transactions: List<com.neoutils.finsight.domain.model.Transaction>,
-        ): Operation = throw NotImplementedError()
-        override suspend fun updateOperation(id: Long, transaction: com.neoutils.finsight.domain.model.Transaction) = throw NotImplementedError()
-        override suspend fun deleteOperationById(id: Long) = throw NotImplementedError()
-        override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
+            leg: TransactionLeg,
+            contra: ContraLeg?,
+        ) = throw NotImplementedError()
+        override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
+        override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
     }
 
     private class FakeRecurringRepository : IRecurringRepository {
         override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
         override fun observeRecurringById(id: Long): Flow<Recurring?> = throw NotImplementedError()
+        override suspend fun getRecurringById(id: Long): Recurring? = null
+        override suspend fun hasRecurringForAccount(accountId: Long) = false
+        override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
+        override suspend fun hasRecurringForCategory(categoryId: Long) = false
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
@@ -103,15 +109,44 @@ class ViewBudgetViewModelTest {
         createdAt = 0L,
     )
 
+    private class FakeEntryRepository : IEntryRepository {
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
+        override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = false
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
+        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
+        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
+        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
+        override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+        override suspend fun netWorth(): Double = throw NotImplementedError()
+        override suspend fun totalsByDimension(
+            nominalType: AccountType,
+            startDate: kotlinx.datetime.LocalDate,
+            endDate: kotlinx.datetime.LocalDate,
+            siblingAccountIds: List<Long>,
+        ): Map<Long?, Double> = throw NotImplementedError()
+        override suspend fun totalsByDimensionInScope(
+            nominalType: AccountType,
+            scopeDimensionIds: List<Long>,
+        ): Map<Long?, Double> = throw NotImplementedError()
+        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+    }
+
     private fun viewModel(
         budgetRepository: FakeBudgetRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = ViewBudgetViewModel(
         budgetId = 1L,
         budgetRepository = budgetRepository,
-        operationRepository = FakeOperationRepository(),
+        transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository()),
         crashlytics = crashlytics,
     )
 

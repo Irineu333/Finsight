@@ -7,7 +7,7 @@ import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,6 +44,10 @@ class ViewRecurringViewModelTest {
         private val byId = MutableSharedFlow<Recurring?>(replay = 1)
         fun emit(recurring: Recurring?) { byId.tryEmit(recurring) }
         override fun observeRecurringById(id: Long): Flow<Recurring?> = byId
+        override suspend fun getRecurringById(id: Long): Recurring? = null
+        override suspend fun hasRecurringForAccount(accountId: Long) = false
+        override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
+        override suspend fun hasRecurringForCategory(categoryId: Long) = false
         override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
@@ -52,7 +56,7 @@ class ViewRecurringViewModelTest {
 
     private fun recurring(id: Long = 1L, amount: Double = 100.0) = Recurring(
         id = id,
-        type = Transaction.Type.EXPENSE,
+        type = TransactionType.EXPENSE,
         amount = amount,
         title = "Rec $id",
         dayOfMonth = 5,

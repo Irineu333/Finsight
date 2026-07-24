@@ -2,8 +2,13 @@
 
 package com.neoutils.finsight.database.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.mapper.InvoiceMapper
+import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -11,13 +16,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 
 class InvoiceRepository(
+    private val database: AppDatabase,
     private val dao: InvoiceDao,
+    private val dimensionDao: DimensionDao,
     private val creditCardRepository: ICreditCardRepository,
     private val mapper: InvoiceMapper
 ) : IInvoiceRepository {
 
+    // Resolving the card of a stored invoice, not offering a choice: closed cards
+    // too. An archived card keeps its (paid) invoices, so the open-only list dropped
+    // them here — silently in the observers, and with a NPE in getAllInvoices below.
     private val creditCardsFlow = creditCardRepository
-        .observeAllCreditCards()
+        .observeAllCreditCardsIncludingClosed()
         .map { creditCards ->
             creditCards.associateBy { creditCard -> creditCard.id }
         }
@@ -149,7 +159,7 @@ class InvoiceRepository(
 
     override suspend fun getAllInvoices(): List<Invoice> {
 
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
+        val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
 
         return dao.getAllInvoices().map { entity ->
             mapper.toDomain(
@@ -185,15 +195,36 @@ class InvoiceRepository(
         return observeInvoiceById(id).first()
     }
 
+    /**
+     * The invoice and the ledger identity its legs will carry are born together. A
+     * row in `invoices` without a dimension could never be summed.
+     */
     override suspend fun insert(invoice: Invoice): Long {
-        return dao.insert(mapper.toEntity(invoice))
+        return database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                val dimensionId = dimensionDao.emit(DimensionKind.INVOICE)
+                dao.insert(mapper.toEntity(invoice.copy(dimensionId = dimensionId)))
+            }
+        }
     }
 
     override suspend fun update(invoice: Invoice) {
         dao.update(mapper.toEntity(invoice))
     }
 
+    /**
+     * Removing the dimension is what detaches the legs that were tagged with it —
+     * the `ON DELETE SET NULL` on `entries.dimensionId` does the rest. It is the
+     * replacement for the cascade that used to come from `entries.invoiceId`, so it
+     * has to happen in the same unit of work as the invoice's own removal.
+     */
     override suspend fun deleteById(id: Long) {
-        dao.deleteById(id)
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                val dimensionId = dao.observeInvoiceById(id).first()?.dimensionId
+                dao.deleteById(id)
+                dimensionId?.let { dimensionDao.deleteById(it) }
+            }
+        }
     }
 }

@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.target_selector_account
 import com.neoutils.finsight.resources.target_selector_credit_card
@@ -28,9 +28,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TargetSelector(
-    selectedTarget: Transaction.Target,
-    onTargetSelected: (Transaction.Target) -> Unit,
-    availableTargets: List<Transaction.Target>,
+    selectedTarget: TransactionTarget,
+    onTargetSelected: (TransactionTarget) -> Unit,
+    availableTargets: List<TransactionTarget>,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -42,8 +42,8 @@ fun TargetSelector(
     ) {
         OutlinedTextField(
             value = when (selectedTarget) {
-                Transaction.Target.ACCOUNT -> stringResource(Res.string.target_selector_account)
-                Transaction.Target.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
+                TransactionTarget.ACCOUNT -> stringResource(Res.string.target_selector_account)
+                TransactionTarget.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
             },
             onValueChange = {},
             readOnly = true,
@@ -69,8 +69,8 @@ fun TargetSelector(
                     text = {
                         Text(
                             text = when (target) {
-                                Transaction.Target.ACCOUNT -> stringResource(Res.string.target_selector_account)
-                                Transaction.Target.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
+                                TransactionTarget.ACCOUNT -> stringResource(Res.string.target_selector_account)
+                                TransactionTarget.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
                             },
                             fontSize = 14.sp
                         )

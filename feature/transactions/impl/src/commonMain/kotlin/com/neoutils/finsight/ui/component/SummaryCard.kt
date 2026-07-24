@@ -33,7 +33,7 @@ import com.neoutils.finsight.resources.summary_card_adjustments
 import com.neoutils.finsight.resources.summary_card_current_balance
 import com.neoutils.finsight.resources.summary_card_final_balance
 import com.neoutils.finsight.resources.summary_card_income
-import com.neoutils.finsight.resources.summary_card_initial_balance
+import com.neoutils.finsight.resources.summary_card_opening_balance
 import com.neoutils.finsight.resources.summary_card_invoices
 import com.neoutils.finsight.resources.summary_card_outgoing
 import com.neoutils.finsight.resources.summary_card_see_invoices
@@ -45,7 +45,7 @@ fun SummaryCard(
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
     onEditBalance: (() -> Unit)? = null,
-    onEditInitialBalance: (() -> Unit)? = null,
+    onEditOpeningBalance: (() -> Unit)? = null,
     onInvoiceClick: (() -> Unit)? = null
 ) {
     Card(
@@ -72,10 +72,10 @@ fun SummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     SummaryRow(
-                        label = stringResource(Res.string.summary_card_initial_balance),
-                        amount = balanceOverview.initialBalance,
+                        label = stringResource(Res.string.summary_card_opening_balance),
+                        amount = balanceOverview.openingBalance,
                         color = colorScheme.onSurface,
-                        onEditClick = onEditInitialBalance,
+                        onEditClick = onEditOpeningBalance,
                         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
                     )
 

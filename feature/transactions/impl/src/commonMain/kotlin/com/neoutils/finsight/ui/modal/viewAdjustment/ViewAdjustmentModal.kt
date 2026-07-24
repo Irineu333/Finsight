@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toLabel
@@ -49,7 +50,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
-    private val operationId: Long,
+    private val transactionId: Long,
 ) : AdaptiveModal() {
 
     @Composable
@@ -58,7 +59,7 @@ class ViewAdjustmentModal(
         val formatter = LocalCurrencyFormatter.current
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(transactionId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         LaunchedEffect(viewModel) {
@@ -98,7 +99,7 @@ class ViewAdjustmentModal(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AdjustmentIconBox(
-                    showCreditCardBadge = uiState.transaction.target.isCreditCard
+                    showCreditCardBadge = uiState.isCardTarget
                 )
 
                 Spacer(Modifier.width(16.dp))
@@ -116,10 +117,7 @@ class ViewAdjustmentModal(
                     val balanceAdjust = stringResource(Res.string.view_adjustment_balance_adjust)
                     val invoiceAdjust = stringResource(Res.string.view_adjustment_invoice_adjust)
                     Text(
-                        text = uiState.transaction.title ?: when (uiState.transaction.target) {
-                            Transaction.Target.ACCOUNT -> balanceAdjust
-                            Transaction.Target.CREDIT_CARD -> invoiceAdjust
-                        },
+                        text = uiState.title ?: if (uiState.isCardTarget) invoiceAdjust else balanceAdjust,
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
                     )
@@ -130,7 +128,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                value = formatter.formatWithSign(uiState.transaction.amount),
+                value = formatter.formatWithSign(uiState.signedAmount),
                 valueColor = Adjustment
             )
 
@@ -138,7 +136,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_date_label),
-                value = dayMonthYear.format(uiState.transaction.date)
+                value = dayMonthYear.format(uiState.date)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -147,58 +145,47 @@ class ViewAdjustmentModal(
             val accountTypeLabel = stringResource(Res.string.view_adjustment_account_label)
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_type_row_label),
-                value = when (uiState.transaction.target) {
-                    Transaction.Target.ACCOUNT -> accountTypeLabel
-                    Transaction.Target.CREDIT_CARD -> creditCardLabel
-                }
+                value = if (uiState.isCardTarget) creditCardLabel else accountTypeLabel
             )
 
-            uiState.transaction.account?.let { account ->
+            uiState.account?.let { account ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_account_label),
                     value = account.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(AccountsRoute(account.id))
+                    // Closed: the name stays in history, the shortcut goes — the
+                    // accounts screen no longer lists it.
+                    onClick = if (account.isArchived) null else {
+                        {
+                            detailController.dismiss()
+                            navController.navigate(AccountsRoute(account.id))
+                        }
                     }
                 )
             }
 
-            val deletedLabel = stringResource(Res.string.view_adjustment_deleted)
-            uiState.transaction.creditCard?.let { creditCard ->
+            uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_card_label),
                     value = creditCard.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(
-                            CreditCardsRoute(creditCard.id)
-                        )
+                    onClick = if (creditCard.isArchived) null else {
+                        {
+                            detailController.dismiss()
+                            navController.navigate(CreditCardsRoute(creditCard.id))
+                        }
                     }
                 )
-            } ?: run {
-                if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_adjustment_card_label),
-                        value = deletedLabel,
-                        valueColor = colorScheme.error,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth()
-                    )
-                }
             }
 
-            uiState.transaction.invoice?.let { invoice ->
-                val creditCardId = uiState.transaction.creditCard?.id
+            uiState.invoice?.let { invoice ->
+                val creditCardId = uiState.creditCard?.id
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_invoice_label),
+                    label = stringResource(Res.string.view_transaction_invoice_label),
                     value = invoice.toLabel(),
                     valueColor = invoice.status.color,
                     modifier = Modifier
@@ -220,10 +207,26 @@ class ViewAdjustmentModal(
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(transactionId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val content = uiState as? ViewAdjustmentUiState.Content ?: return
+
+        // Frozen by an archived account or card: say why, the same footer the
+        // transaction modal shows, instead of leaving the area blank.
+        if (!content.isChangeable) {
+            Text(
+                text = stringResource(Res.string.view_transaction_archived_message),
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 24.dp)
+            )
+            return
+        }
+        if (!content.isDeletable) return
 
         OutlinedButton(
             onClick = {

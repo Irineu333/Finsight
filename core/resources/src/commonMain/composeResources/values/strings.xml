@@ -10,6 +10,12 @@
     <string name="account_error_empty_name">O nome da conta não pode ser vazio.</string>
     <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
     <string name="account_error_not_found">Conta não encontrada.</string>
+    <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Arquive-a para preservar o histórico.</string>
+    <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de arquivá-la.</string>
+    <!-- Neutral wording: the same guard refuses deleting an account and a card. -->
+    <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou encerre-as antes de excluir.</string>
+    <string name="account_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
+    <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -36,6 +42,16 @@
     <string name="transfer_error_destination_account_not_found">Conta de destino não encontrada.</string>
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
+    <string name="ledger_error_unbalanced">A operação não está balanceada (as pernas não somam zero).</string>
+    <string name="ledger_error_paid_invoice">Esta fatura já foi paga e não pode mais ser alterada.</string>
+    <string name="ledger_error_closed_invoice">Esta fatura está fechada. Só o pagamento dela pode ser registrado.</string>
+    <string name="ledger_error_closed_account">Esta conta está arquivada e não aceita novos lançamentos. Escolha outra conta.</string>
+    <string name="ledger_error_closed_credit_card">Este cartão está arquivado e não aceita novos lançamentos. Escolha outro cartão.</string>
+    <string name="ledger_error_closed_removal_account">Esta conta está arquivada. Apagar esta transação devolveria saldo a ela, e uma conta arquivada não pode ser acertada.</string>
+    <string name="ledger_error_closed_removal_credit_card">Este cartão está arquivado. Apagar esta transação devolveria saldo a ele, e um cartão arquivado não pode ser acertado.</string>
+    <string name="transaction_error_generic">Algo deu errado ao salvar a transação. Tente de novo em instantes.</string>
+    <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
+    <string name="ledger_action_error_generic">Algo deu errado. Tente de novo em instantes.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>
@@ -88,7 +104,7 @@
     <string name="report_viewer_summary_income">Receitas</string>
     <string name="report_viewer_summary_expense">Despesas</string>
     <string name="report_viewer_summary_balance">Saldo do Período</string>
-    <string name="report_viewer_summary_initial_balance">Saldo Inicial</string>
+    <string name="report_viewer_summary_opening_balance">Saldo Inicial</string>
     <string name="report_viewer_summary_invoice_total">Aberta</string>
     <string name="report_viewer_summary_invoice_expense">Saída</string>
     <string name="report_viewer_summary_advance_payment">Pago</string>
@@ -175,7 +191,6 @@
     <string name="credit_cards_title">Cartões de Crédito</string>
     <string name="credit_cards_empty">Sem cartões de crédito</string>
     <string name="credit_cards_create">Criar cartão</string>
-    <string name="credit_cards_delete">Excluir</string>
     <string name="credit_cards_edit">Editar</string>
     <string name="credit_cards_advance_payment">Antecipar Pagamento</string>
     <string name="credit_cards_close_invoice">Fechar Fatura</string>
@@ -188,20 +203,40 @@
     <string name="credit_cards_filter_type_expense">Despesa</string>
     <string name="credit_cards_filter_type_adjustment">Ajuste</string>
     <string name="credit_cards_filter_type_payment">Pagamento</string>
+    <string name="credit_cards_view_archived">Arquivados</string>
+    <string name="credit_cards_archived_title">Cartões arquivados</string>
+    <string name="credit_cards_archived_empty">Nenhum cartão arquivado</string>
+    <string name="credit_cards_unarchive">Desarquivar</string>
+    <string name="credit_card_archived">Arquivado</string>
+    <string name="credit_card_invoices_label">Faturas</string>
 
     <!-- Accounts Screen -->
     <string name="accounts_title">Contas</string>
     <string name="accounts_default">Padrão</string>
-    <string name="accounts_initial_balance">Saldo Inicial</string>
+    <string name="accounts_opening_balance">Saldo Inicial</string>
     <string name="accounts_income">Receitas</string>
     <string name="accounts_expenses">Despesas</string>
     <string name="accounts_adjustments">Ajustes</string>
     <string name="accounts_invoices">Faturas</string>
     <string name="accounts_advance_payments">Adiantamentos</string>
     <string name="accounts_balance">Saldo</string>
-    <string name="accounts_delete">Excluir</string>
+    <string name="retire_action_delete">Excluir</string>
+    <string name="retire_action_archive">Arquivar</string>
+    <string name="retire_action_error_generic">Algo deu errado ao salvar. Tente de novo em instantes.</string>
+    <string name="retire_error_has_transactions">Esta categoria tem lançamentos e não pode ser excluída. Arquive-a para preservar o histórico.</string>
+    <string name="retire_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
+    <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra ou encerre-as antes de excluir.</string>
+    <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
+    <!-- Archived accounts -->
+    <string name="accounts_view_archived">Arquivadas</string>
+    <string name="accounts_archived_title">Contas arquivadas</string>
+    <string name="accounts_archived_empty">Nenhuma conta arquivada</string>
+    <string name="account_unarchive">Desarquivar</string>
+    <string name="account_archived">Arquivada</string>
+    <string name="accounts_more_options_content_description">Mais opções</string>
+    <string name="accounts_navigate_back_content_description">Voltar</string>
     <string name="accounts_filter_category">Categoria</string>
     <string name="accounts_filter_category_all">Todas</string>
     <string name="accounts_filter_type">Tipo</string>
@@ -217,6 +252,10 @@
     <string name="categories_empty">Sem categorias</string>
     <string name="categories_create_default">Usar padrão</string>
     <string name="categories_create_manual">Criar manualmente</string>
+    <string name="category_card_archived">Arquivada</string>
+    <string name="categories_filter_active">Ativas</string>
+    <string name="categories_filter_archived">Arquivadas</string>
+    <string name="categories_empty_filter">Nenhuma categoria aqui.</string>
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Orçamentos</string>
@@ -231,7 +270,6 @@
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
-    <string name="invoice_transactions_delete_card">Excluir Cartão</string>
     <string name="invoice_transactions_expenses">Gastos</string>
     <string name="invoice_transactions_advance_payments">Adiantamentos</string>
     <string name="invoice_transactions_adjustments">Ajustes</string>
@@ -323,15 +361,25 @@
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
-    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.</string>
+    <string name="archive_account_title">Arquivar Conta</string>
+    <string name="archive_account_confirm">Arquivar</string>
+    <string name="archive_account_message">Esta conta tem movimentação, então ela é arquivada em vez de excluída: o histórico é preservado e ela deixa de aparecer nas listas.</string>
+    <string name="archive_account_blocked">Esta conta ainda tem saldo de %1$s. Transfira, gaste ou ajuste o saldo antes de arquivá-la — assim fica registrado para onde o dinheiro foi.</string>
+    <string name="archive_credit_card_title">Arquivar Cartão</string>
+    <string name="archive_credit_card_message">Este cartão tem movimentação, então ele é arquivado em vez de excluído: as faturas e transações são preservadas e ele deixa de aparecer nas listas.</string>
+    <string name="archive_credit_card_blocked">Este cartão ainda tem %1$s em aberto. Pague a fatura ou ajuste o saldo antes de arquivá-lo.</string>
+    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? Se ela já tiver movimentação, o histórico é preservado e a conta apenas deixa de aparecer nas listas. Nenhuma transação é excluída.</string>
     <string name="delete_account_confirm">Excluir</string>
 
     <string name="delete_credit_card_title">Excluir Cartão</string>
-    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? As faturas e transações associadas também serão excluídas.</string>
+    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? Se ele já tiver movimentação, as faturas e transações são preservadas e o cartão apenas deixa de aparecer nas listas.</string>
     <string name="delete_credit_card_confirm">Excluir</string>
 
     <string name="delete_category_title">Excluir Categoria</string>
-    <string name="delete_category_message">Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas.</string>
+    <string name="archive_category_title">Arquivar Categoria</string>
+    <string name="archive_category_confirm">Arquivar</string>
+    <string name="archive_category_message">Esta categoria já foi usada, então ela é arquivada em vez de excluída: as transações mantêm o nome dela, e ela deixa de aparecer nos seletores e nos orçamentos.</string>
+    <string name="delete_category_message">Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas, e os orçamentos que a usam continuam válidos com as demais categorias.</string>
     <string name="delete_category_confirm">Excluir</string>
 
     <string name="delete_budget_title">Excluir Orçamento</string>
@@ -365,6 +413,7 @@
     <string name="reopen_invoice_description">A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.</string>
     <string name="reopen_invoice_cancel">Cancelar</string>
     <string name="reopen_invoice_confirm">Reabrir</string>
+    <string name="invoice_error_cannot_reopen">Só a última fatura fechada pode ser reaberta.</string>
 
     <!-- Advance Payment Modal -->
     <string name="advance_payment_title">Antecipar Pagamento</string>
@@ -404,26 +453,26 @@
     <string name="edit_transaction_expense">Despesa</string>
     <string name="edit_transaction_income">Receita</string>
 
-    <!-- View Operation Modal -->
-    <string name="view_operation_type_income">Receita</string>
-    <string name="view_operation_type_expense">Despesa</string>
-    <string name="view_operation_type_adjustment">Ajuste</string>
-    <string name="view_operation_amount_label">Valor</string>
-    <string name="view_operation_date_label">Data</string>
-    <string name="view_operation_origin_label">Origem</string>
-    <string name="view_operation_origin_account">Conta</string>
-    <string name="view_operation_origin_credit_card">Cartão de Crédito</string>
-    <string name="view_operation_source_account_label">Conta origem</string>
-    <string name="view_operation_destination_account_label">Conta destino</string>
-    <string name="view_operation_account_label">Conta</string>
-    <string name="view_operation_card_label">Cartão</string>
-    <string name="view_operation_invoice_label">Fatura</string>
-    <string name="view_operation_installment_label">Parcela</string>
-    <string name="view_operation_recurring_label">Recorrência</string>
-    <string name="view_operation_deleted">Excluído</string>
-    <string name="view_operation_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
-    <string name="view_operation_delete">Excluir</string>
-    <string name="view_operation_edit">Editar</string>
+    <!-- View Transaction Modal -->
+    <string name="view_transaction_type_income">Receita</string>
+    <string name="view_transaction_type_expense">Despesa</string>
+    <string name="view_transaction_type_adjustment">Ajuste</string>
+    <string name="view_transaction_amount_label">Valor</string>
+    <string name="view_transaction_date_label">Data</string>
+    <string name="view_transaction_origin_label">Origem</string>
+    <string name="view_transaction_origin_account">Conta</string>
+    <string name="view_transaction_origin_credit_card">Cartão de Crédito</string>
+    <string name="view_transaction_source_account_label">Conta origem</string>
+    <string name="view_transaction_destination_account_label">Conta destino</string>
+    <string name="view_transaction_account_label">Conta</string>
+    <string name="view_transaction_card_label">Cartão</string>
+    <string name="view_transaction_invoice_label">Fatura</string>
+    <string name="view_transaction_installment_label">Parcela</string>
+    <string name="view_transaction_recurring_label">Recorrência</string>
+    <string name="view_transaction_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
+    <string name="view_transaction_archived_message">Esta transação pertence a uma conta ou cartão arquivado e não pode ser editada ou excluída.</string>
+    <string name="view_transaction_delete">Excluir</string>
+    <string name="view_transaction_edit">Editar</string>
 
     <!-- View Adjustment Modal -->
     <string name="view_adjustment_type_label">Ajuste</string>
@@ -435,7 +484,6 @@
     <string name="view_adjustment_account_label">Conta</string>
     <string name="view_adjustment_card_label">Cartão</string>
     <string name="view_adjustment_credit_card_label">Cartão de Crédito</string>
-    <string name="view_adjustment_deleted">Excluído</string>
     <string name="view_adjustment_delete_label">Excluir Ajuste</string>
 
     <!-- View Category Modal -->
@@ -444,8 +492,8 @@
     <string name="view_category_total_received">Total Recebido</string>
     <string name="view_category_total_spent">Total Gasto</string>
     <string name="view_category_transactions_month">Transações no Mês</string>
-    <string name="view_category_delete">Excluir</string>
     <string name="view_category_edit">Editar</string>
+    <string name="view_category_unarchive">Desarquivar</string>
 
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentual</string>
@@ -468,7 +516,7 @@
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
 
-    <string name="summary_card_initial_balance">Saldo Inicial</string>
+    <string name="summary_card_opening_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>
     <string name="summary_card_outgoing">Saídas</string>
     <string name="summary_card_invoices">Faturas</string>
@@ -477,10 +525,10 @@
     <string name="summary_card_final_balance">Saldo Final</string>
     <string name="summary_card_see_invoices">Ver faturas</string>
 
-    <string name="operation_card_transfer">Transferência</string>
-    <string name="operation_card_payment">Pagamento de Fatura</string>
-    <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
-    <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
+    <string name="transaction_card_transfer">Transferência</string>
+    <string name="transaction_card_payment">Pagamento de Fatura</string>
+    <string name="transaction_card_balance_adjustment">Ajuste de Saldo</string>
+    <string name="transaction_card_invoice_adjustment">Ajuste de Fatura</string>
 
     <string name="target_selector_account">Conta</string>
     <string name="target_selector_credit_card">Cartão de Crédito</string>
@@ -720,7 +768,7 @@
     <string name="detail_pane_close">Fechar</string>
     <string name="detail_pane_error_title">Não foi possível carregar</string>
     <string name="detail_pane_error">O item não foi encontrado ou não pôde ser carregado.</string>
-    <string name="view_operation_title">Operação</string>
+    <string name="view_transaction_title">Operação</string>
     <string name="view_adjustment_title">Ajuste</string>
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>

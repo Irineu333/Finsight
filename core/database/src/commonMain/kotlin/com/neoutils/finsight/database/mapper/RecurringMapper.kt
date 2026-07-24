@@ -5,7 +5,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 
 class RecurringMapper {
 
@@ -17,8 +17,8 @@ class RecurringMapper {
     ): Recurring = Recurring(
         id = entity.id,
         type = when (entity.type) {
-            RecurringEntity.Type.EXPENSE -> Transaction.Type.EXPENSE
-            RecurringEntity.Type.INCOME -> Transaction.Type.INCOME
+            RecurringEntity.Type.EXPENSE -> TransactionType.EXPENSE
+            RecurringEntity.Type.INCOME -> TransactionType.INCOME
         },
         amount = entity.amount,
         title = entity.title,
@@ -33,9 +33,9 @@ class RecurringMapper {
     fun toEntity(recurring: Recurring): RecurringEntity = RecurringEntity(
         id = recurring.id,
         type = when (recurring.type) {
-            Transaction.Type.EXPENSE -> RecurringEntity.Type.EXPENSE
-            Transaction.Type.INCOME -> RecurringEntity.Type.INCOME
-            Transaction.Type.ADJUSTMENT -> RecurringEntity.Type.EXPENSE
+            TransactionType.EXPENSE -> RecurringEntity.Type.EXPENSE
+            TransactionType.INCOME -> RecurringEntity.Type.INCOME
+            TransactionType.ADJUSTMENT -> RecurringEntity.Type.EXPENSE
         },
         amount = recurring.amount,
         title = recurring.title,

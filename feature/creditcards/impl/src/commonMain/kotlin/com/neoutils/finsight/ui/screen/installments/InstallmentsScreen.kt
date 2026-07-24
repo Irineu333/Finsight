@@ -73,16 +73,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import org.koin.compose.koinInject
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.categoryDisplayColor
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
@@ -282,15 +280,15 @@ private fun InstallmentsContent(
                         )
                     }
 
-                    uiState.selectedInstallment?.let { selected ->
-                        if (selected.isDeletable) {
+                    uiState.selectedDomainInstallment?.let { selectedInstallment ->
+                        if (uiState.selectedInstallment?.isDeletable == true) {
                             item(key = "delete_action") {
                                 OutlinedButton(
                                     onClick = {
                                         modalManager.show(
                                             DeleteInstallmentModal(
-                                                installment = selected.installment,
-                                                operations = selected.operations,
+                                                installment = selectedInstallment,
+                                                transactions = uiState.selectedDomainTransactions,
                                             )
                                         )
                                     },
@@ -337,30 +335,30 @@ private fun InstallmentsContent(
                     }
 
                     items(
-                        items = uiState.filteredOperations,
-                        key = Operation::id,
-                    ) { operation ->
-                        OperationCard(
-                            operation = operation,
+                        items = uiState.transactions,
+                        key = { it.transaction.id },
+                    ) { row ->
+                        val transactionUi = row.transaction
+
+                        TransactionCard(
+                            transaction = transactionUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
-                            amountDecoration = when (operation.targetInvoice?.status) {
-
-                                Invoice.Status.PAID,
-                                Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
-
-                                else -> TextDecoration.None
+                            amountDecoration = if (row.isSettled) {
+                                TextDecoration.LineThrough
+                            } else {
+                                TextDecoration.None
                             },
                             onClick = {
-                                when (operation.type) {
-                                    Transaction.Type.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                                when (transactionUi.direction) {
+                                    TransactionType.ADJUSTMENT -> {
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
                                     }
 
                                     else -> {
-                                        detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                                        detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                     }
                                 }
                             },
@@ -409,7 +407,7 @@ private fun EmptyInstallmentsState(
 
 @Composable
 private fun InstallmentPager(
-    installments: List<InstallmentWithOperationsUi>,
+    installments: List<InstallmentUi>,
     selectedIndex: Int,
     onSelectInstallment: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -448,7 +446,7 @@ private fun InstallmentPager(
 
 @Composable
 private fun InstallmentSummaryCard(
-    ui: InstallmentWithOperationsUi,
+    ui: InstallmentUi,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -475,9 +473,13 @@ private fun InstallmentSummaryCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (ui.category != null) {
+                    if (ui.categoryIcon != null) {
                         CategoryIconBox(
-                            category = ui.category,
+                            icon = ui.categoryIcon,
+                            tint = categoryDisplayColor(
+                                type = ui.categoryType,
+                                isArchived = ui.isCategoryArchived,
+                            ),
                             contentPadding = PaddingValues(8.dp),
                         )
                     } else {
@@ -518,7 +520,7 @@ private fun InstallmentSummaryCard(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(ui.installment.totalAmount),
+                    text = formatter.format(ui.totalAmount),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -544,7 +546,7 @@ private fun InstallmentSummaryCard(
                             modifier = Modifier.alignByBaseline(),
                         )
                         Text(
-                            text = " / ${ui.installment.count}",
+                            text = " / ${ui.totalCount}",
                             fontSize = 16.sp,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.alignByBaseline(),
@@ -702,15 +704,15 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (InstallmentsAction) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor = when (selectedType) {
-        Transaction.Type.EXPENSE -> ExpenseColor
-        Transaction.Type.ADJUSTMENT -> AdjustmentColor
-        Transaction.Type.INCOME -> IncomeColor
+        TransactionType.EXPENSE -> ExpenseColor
+        TransactionType.ADJUSTMENT -> AdjustmentColor
+        TransactionType.INCOME -> IncomeColor
         else -> null
     }
 
@@ -720,9 +722,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.installments_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.installments_filter_type_adjustment)
-                    Transaction.Type.INCOME -> stringResource(Res.string.installments_filter_type_income)
+                    TransactionType.EXPENSE -> stringResource(Res.string.installments_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.installments_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.installments_filter_type_income)
                     else -> stringResource(Res.string.installments_filter_type)
                 }
             )
@@ -755,9 +757,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to stringResource(Res.string.installments_filter_type_expense),
-            Transaction.Type.INCOME to stringResource(Res.string.installments_filter_type_income),
-            Transaction.Type.ADJUSTMENT to stringResource(Res.string.installments_filter_type_adjustment),
+            TransactionType.EXPENSE to stringResource(Res.string.installments_filter_type_expense),
+            TransactionType.INCOME to stringResource(Res.string.installments_filter_type_income),
+            TransactionType.ADJUSTMENT to stringResource(Res.string.installments_filter_type_adjustment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

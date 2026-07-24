@@ -28,7 +28,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.extension.isAccept
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
@@ -58,21 +62,40 @@ class EditTransactionModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
 
+
         val manager = LocalModalManager.current
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         val uiState by viewModel.uiState.collectAsState()
 
-        var type by remember { mutableStateOf(transaction.type) }
-        var target by remember { mutableStateOf(transaction.target) }
+        // The form reopens on the same choices the user made, read back from the
+        // ledger: the money leg's direction, and whether that leg is the card's.
+        var type by remember {
+            mutableStateOf(
+                transaction.primaryEntry
+                    ?.let { deriveTransactionType(it.amount, transaction.entries) }
+                    ?: TransactionType.EXPENSE
+            )
+        }
+        var target by remember {
+            mutableStateOf(
+                if (transaction.hasLiabilityLeg) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
+            )
+        }
 
         val currencyFormatter = LocalCurrencyFormatter.current
         val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount))
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember { mutableStateOf(transaction.category) }
+        // Seeded from the ui state rather than from the transaction: the category is
+        // resolved from the leg's dimension, so it arrives a beat later (design D6).
+        var selectedCategory by remember { mutableStateOf<Category?>(null) }
+
+        LaunchedEffect(uiState.transactionCategory) {
+            selectedCategory = selectedCategory ?: uiState.transactionCategory
+        }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf {
@@ -81,7 +104,7 @@ class EditTransactionModal(
         }
 
         LaunchedEffect(target, uiState.creditCards) {
-            if (target == Transaction.Target.CREDIT_CARD && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
+            if (target == TransactionTarget.CREDIT_CARD && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
                 viewModel.onAction(
                     EditTransactionAction.SelectCreditCard(
                         uiState.creditCards.first()
@@ -159,7 +182,7 @@ class EditTransactionModal(
                 }
 
                 AnimatedVisibility(
-                    type.isExpense && target == Transaction.Target.CREDIT_CARD
+                    type.isExpense && target == TransactionTarget.CREDIT_CARD
                 ) {
                     CreditCardSelector(
                         creditCards = uiState.creditCards,
@@ -175,7 +198,7 @@ class EditTransactionModal(
                 }
 
                 AnimatedVisibility(
-                    visible = target == Transaction.Target.ACCOUNT || type.isIncome
+                    visible = target == TransactionTarget.ACCOUNT || type.isIncome
                 ) {
                     AccountSelector(
                         selectedAccount = uiState.selectedAccount,
@@ -190,7 +213,7 @@ class EditTransactionModal(
                 }
 
                 AnimatedVisibility(
-                    type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
+                    type.isExpense && target == TransactionTarget.CREDIT_CARD && uiState.invoiceSelection != null
                 ) {
                     uiState.invoiceSelection?.let { selection ->
                         InvoiceMonthNavigator(
@@ -210,8 +233,8 @@ class EditTransactionModal(
                 CategorySelector(
                     selectedCategory = selectedCategory,
                     categories = when (type) {
-                        Transaction.Type.INCOME -> uiState.incomeCategories
-                        Transaction.Type.EXPENSE -> uiState.expenseCategories
+                        TransactionType.INCOME -> uiState.incomeCategories
+                        TransactionType.EXPENSE -> uiState.expenseCategories
                         else -> emptyList()
                     },
                     onCategorySelected = { selectedCategory = it },
@@ -299,29 +322,30 @@ class EditTransactionModal(
                 }
             }
         }
+
     }
 
     @Composable
     fun TypeToggle(
-        selectedType: Transaction.Type,
-        onTypeSelected: (Transaction.Type) -> Unit
+        selectedType: TransactionType,
+        onTypeSelected: (TransactionType) -> Unit
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
+            onClick = { onTypeSelected(TransactionType.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.EXPENSE -> {
+                TransactionType.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Expense,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.INCOME,
-                Transaction.Type.ADJUSTMENT -> {
+                TransactionType.INCOME,
+                TransactionType.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -338,18 +362,18 @@ class EditTransactionModal(
         }
 
         Button(
-            onClick = { onTypeSelected(Transaction.Type.INCOME) },
+            onClick = { onTypeSelected(TransactionType.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.INCOME -> {
+                TransactionType.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Income,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.EXPENSE,
-                Transaction.Type.ADJUSTMENT -> {
+                TransactionType.EXPENSE,
+                TransactionType.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -366,11 +390,5 @@ class EditTransactionModal(
         }
     }
 
-    private fun Category.Type.isAccept(type: Transaction.Type): Boolean {
-        return when (this) {
-            Category.Type.EXPENSE -> type.isExpense
-            Category.Type.INCOME -> type.isIncome
-        }
-    }
 
 }

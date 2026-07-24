@@ -22,6 +22,18 @@ class AccountRepository(
         return dao.getAllAccounts().map { mapper.toDomain(it) }
     }
 
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> =
+        dao.getAllAccountsIncludingClosed().map { mapper.toDomain(it) }
+
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> =
+        dao.observeAllAccountsIncludingClosed().map { entities -> entities.map { mapper.toDomain(it) } }
+
+    override suspend fun getAllLedgerAccounts(): List<Account> =
+        dao.getAllLedgerAccounts().map { mapper.toDomain(it) }
+
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> =
+        dao.observeAllLedgerAccounts().map { entities -> entities.map { mapper.toDomain(it) } }
+
     override suspend fun getAccountById(accountId: Long): Account? {
         return dao.getAccountById(accountId)?.let { mapper.toDomain(it) }
     }
@@ -57,4 +69,6 @@ class AccountRepository(
     override suspend fun delete(account: Account) {
         dao.delete(mapper.toEntity(account))
     }
+
+    override suspend fun reopen(accountId: Long) = dao.reopen(accountId)
 }

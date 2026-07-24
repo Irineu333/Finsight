@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.icons.LazyIcon
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -22,10 +23,7 @@ fun CategoryIconBox(
     contentPadding: PaddingValues = PaddingValues(12.dp),
     color: androidx.compose.ui.graphics.Color? = null,
 ) {
-    val resolvedColor = color ?: when (category.type) {
-        Category.Type.INCOME -> Income
-        Category.Type.EXPENSE -> Expense
-    }
+    val resolvedColor = color ?: category.displayColor
 
     CategoryIconBox(
         icon = category.icon,

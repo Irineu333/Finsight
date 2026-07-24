@@ -8,7 +8,5 @@ data class InvoiceMonthSelection(
 ) {
     val isNew = existingInvoice == null
 
-    val isBlocked = existingInvoice?.status?.isBlocked == true
-
-    val statusColor get() = existingInvoice?.status?.color
+    val isClosedToNewExpenses = existingInvoice?.status?.isClosedToNewExpenses == true
 }

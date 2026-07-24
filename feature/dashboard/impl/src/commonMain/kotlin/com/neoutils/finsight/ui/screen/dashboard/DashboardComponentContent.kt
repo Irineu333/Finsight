@@ -55,7 +55,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
@@ -70,10 +71,10 @@ import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -88,7 +89,7 @@ internal fun DashboardComponentContent(
 ) {
     val navController = LocalNavController.current
 
-    val openTransactions = { filterType: Transaction.Type?, filterTarget: Transaction.Target? ->
+    val openTransactions = { filterType: TransactionType?, filterTarget: TransactionTarget? ->
         navController.navigate(TransactionsRoute(filterType, filterTarget))
     }
 
@@ -239,7 +240,7 @@ private fun DashboardPendingRecurringSection(
 @Composable
 private fun DashboardRecentsSection(
     variant: DashboardComponentVariant.Recents,
-    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
+    openTransactions: (TransactionType?, TransactionTarget?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val detailController = LocalDetailPaneController.current
@@ -264,10 +265,11 @@ private fun DashboardRecentsSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.operations.forEachIndexed { index, operation ->
-            val isLastWithFade = component.hasMore && index == component.operations.lastIndex
-            OperationCard(
-                operation = operation,
+        component.transactions.forEachIndexed { index, transaction ->
+            val isLastWithFade = component.hasMore && index == component.transactions.lastIndex
+            val transactionUi = transaction.toTransactionUi(lookup = component.facadeLookup) ?: return@forEachIndexed
+            TransactionCard(
+                transaction = transactionUi,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -292,8 +294,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operation.type.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
-                            else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
+                            else -> detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                         }
                     }
                 },
@@ -343,7 +345,7 @@ private fun DashboardQuickActionsSection(
 @Composable
 private fun DashboardConcreteBalanceSection(
     variant: DashboardComponentVariant.ConcreteBalanceStats,
-    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
+    openTransactions: (TransactionType?, TransactionTarget?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
@@ -364,7 +366,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Income,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(Transaction.Type.INCOME, null)
+                        openTransactions(TransactionType.INCOME, null)
                     }
                 },
             )
@@ -375,7 +377,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Expense,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(Transaction.Type.EXPENSE, null)
+                        openTransactions(TransactionType.EXPENSE, null)
                     }
                 },
             )
@@ -499,16 +501,23 @@ private fun DashboardCreditCardsSection(
                     modifier = Modifier.fillMaxWidth(),
                 ) { page ->
                     val creditCardUi = component.creditCards[page]
+                    val bill = creditCardUi.invoiceUi
+                    val domainInvoice = component.domainInvoices[page]
 
                     CreditCardCard(
-                        creditCard = creditCardUi.creditCard,
+                        cardId = creditCardUi.cardId,
+                        iconKey = creditCardUi.iconKey,
+                        name = creditCardUi.name,
+                        closingDay = creditCardUi.closingDay,
+                        dueDay = creditCardUi.dueDay,
+                        limit = creditCardUi.limit,
                         invoiceUi = creditCardUi.invoiceUi,
                         modifier = Modifier.fillMaxWidth(),
                         variant = CreditCardCardVariant.Dashboard(
                             onClick = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     navController.navigate(
-                                        CreditCardsRoute(creditCardId = creditCardUi.creditCard.id)
+                                        CreditCardsRoute(creditCardId = creditCardUi.cardId)
                                     )
                                 }
                             },
@@ -521,26 +530,26 @@ private fun DashboardCreditCardsSection(
                             },
                             onPayInvoice = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
+                                    if (domainInvoice != null && bill != null) {
                                         modalManager.show(
-                                            creditCardsEntry.payInvoiceModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            creditCardsEntry.payInvoiceModal(invoice = domainInvoice, currentBillAmount = bill.amount)
                                         )
                                     }
                                 }
                             },
                             onAdvancePayment = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
+                                    if (domainInvoice != null && bill != null) {
                                         modalManager.show(
-                                            creditCardsEntry.advancePaymentModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            creditCardsEntry.advancePaymentModal(invoice = domainInvoice, currentBillAmount = bill.amount)
                                         )
                                     }
                                 }
                             },
                             onEditAmount = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(creditCardsEntry.editInvoiceBalanceModal(it.invoice))
+                                    domainInvoice?.let {
+                                        modalManager.show(creditCardsEntry.editInvoiceBalanceModal(it))
                                     }
                                 }
                             },
@@ -839,16 +848,18 @@ private fun DashboardAccountsRow(
             modifier = Modifier.fillMaxWidth(),
         ) {
             items(
-                items = component.accounts.sortedByDescending { it.account.isDefault },
-                key = { accountUi -> accountUi.account.id },
+                items = component.accounts.sortedByDescending { it.isDefault },
+                key = { accountUi -> accountUi.id },
             ) { accountUi ->
                 AccountCard(
-                    account = accountUi.account,
+                    iconKey = accountUi.iconKey,
+                    name = accountUi.name,
+                    isDefault = accountUi.isDefault,
                     variant = AccountCardVariant.Dashboard(
                         balance = accountUi.balance,
                         onClick = {
                             if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
-                                navController.navigate(AccountsRoute(accountId = accountUi.account.id))
+                                navController.navigate(AccountsRoute(accountId = accountUi.id))
                             }
                         },
                     ),

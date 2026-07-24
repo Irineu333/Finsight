@@ -5,13 +5,17 @@ package com.neoutils.finsight.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -24,13 +28,14 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val filterType: Transaction.Type?,
+    private val filterType: TransactionType?,
     private val category: Category?,
-    private val filterTarget: Transaction.Target?,
-    private val operationRepository: IOperationRepository,
+    private val filterTarget: TransactionTarget?,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
+    private val entryRepository: IEntryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -44,49 +49,46 @@ class TransactionsViewModel(
     )
 
     val uiState = combine(
-        operationRepository.observeAllOperations(),
-        categoryRepository.observeAllCategories(),
+        transactionRepository.observeAllTransactions(),
+        // The list shows the history of archived categories, so the filter must be
+        // able to narrow to one — including closed. This is a filter over existing
+        // data, not a selector for a new transaction (which stays open-only).
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
         selectedYearMonth,
         filters
-    ) { operations, categories, yearMonth, filters ->
-        val transactions = operations.flatMap { it.transactions }
-
-        val transactionsForStats = operations
-            .filterNot { it.kind == Operation.Kind.TRANSFER }
-            .filterNot { it.kind == Operation.Kind.PAYMENT }
-            .flatMap { it.transactions }
-
-        val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
-            forYearMonth = yearMonth,
-        )
+    ) { transactions, categories, installments, yearMonth, filters ->
+        // Month-wide income/expense/adjustment across the user's ASSET accounts, from
+        // the ledger — transfers and card payments are excluded there, not re-derived
+        // over the loaded list (spec `ledger-reporting`). Reactive because
+        // observeAllTransactions() re-runs this block on every ledger write.
+        val stats = entryRepository.assetMonthFlows(yearMonth)
 
         TransactionsUiState(
             balanceOverview = TransactionsUiState.BalanceOverview(
                 income = stats.income,
                 expense = stats.expense,
                 adjustment = stats.adjustment,
-                payment = operations
-                    .filter { it.kind == Operation.Kind.PAYMENT }
-                    .filter { it.date.yearMonth == yearMonth }
-                    .sumOf { it.amount },
-                initialBalance = calculateBalanceUseCase(
-                    target = yearMonth.minusMonth(),
-                    transactions = transactions,
-                ),
-                finalBalance = calculateBalanceUseCase(
-                    target = yearMonth,
-                    transactions = transactions,
-                )
+                // Month-wide card payments from the ledger (D12), not summed from the
+                // loaded list. Reactive because observeAllTransactions() above re-runs
+                // this block on every ledger write, and on month change.
+                payment = entryRepository.liabilityMonthFlows(yearMonth).payment,
+                // Opening/final balances from the ledger (task 4.11): Σ entries of all
+                // ASSET accounts up to the previous / selected month.
+                openingBalance = calculateBalanceUseCase(target = yearMonth.minusMonth()),
+                finalBalance = calculateBalanceUseCase(target = yearMonth),
             ),
             selectedYearMonth = yearMonth,
             categories = categories,
+            // The list still shows a category icon and an installment badge; the
+            // ledger only hands out the identities behind them (design D6).
+            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = filters.category,
             selectedType = filters.type,
             selectedTarget = filters.target,
             showRecurringOnly = filters.recurringOnly,
             showInstallmentOnly = filters.installmentOnly,
-            operations = operations
+            transactions = transactions
                 .filter(filters.recurringOnly)
                 .filterInstallment(filters.installmentOnly)
                 .filter(filters.category)
@@ -139,29 +141,29 @@ class TransactionsViewModel(
     }
 }
 
-private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { transaction -> transaction.recurringId != null }
 }
 
-private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { operation -> operation.installment != null }
+    return filter { transaction -> transaction.installmentId != null }
 }
 
-private fun List<Operation>.filter(category: Category?): List<Operation> {
+private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
-    return filter { it.category?.id == category.id || it.primaryTransaction.category?.id == category.id }
+    return filter { it.nominalDimensionId == category.dimensionId }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
     if (type == null) return this
-    return filter { operation ->
-        operation.type == type
+    return filter { transaction ->
+        transaction.primaryEntry?.let { deriveTransactionType(it.amount, transaction.entries) } == type
     }
 }
 
-private fun List<Operation>.filter(target: Transaction.Target?): List<Operation> {
+private fun List<Transaction>.filter(target: TransactionTarget?): List<Transaction> {
     if (target == null) return this
-    return filter { operation -> operation.transactions.any { it.target == target } }
+    return filter { transaction -> transaction.hasLiabilityLeg == target.isCreditCard }
 }

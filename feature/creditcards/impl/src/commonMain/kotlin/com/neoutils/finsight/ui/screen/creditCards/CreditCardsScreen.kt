@@ -9,6 +9,7 @@ import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.ui.navigation.ArchivedCreditCardsRoute
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -35,14 +36,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.archiveCreditCard.ArchiveCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
@@ -105,6 +110,29 @@ private fun CreditCardsContent(
                                 contentDescription = null,
                             )
                         }
+                    }
+                },
+                actions = {
+                    var expanded by remember { mutableStateOf(false) }
+
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = null,
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.credit_cards_view_archived)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(ArchivedCreditCardsRoute)
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -171,16 +199,14 @@ private fun CreditCardsContent(
                             onCardClick = { creditCardUi ->
                                 navController.navigate(
                                     InvoiceTransactionsRoute(
-                                        creditCardUi.creditCard.id
+                                        creditCardUi.cardId
                                     )
                                 )
                             },
-                            onEditInvoice = { invoice ->
-                                modalManager.show(
-                                    EditInvoiceBalanceModal(
-                                        initialInvoice = invoice
-                                    )
-                                )
+                            onEditInvoice = { invoiceId ->
+                                uiState.domainInvoices.filterNotNull()
+                                    .find { it.id == invoiceId }
+                                    ?.let { modalManager.show(EditInvoiceBalanceModal(initialInvoice = it)) }
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -191,6 +217,8 @@ private fun CreditCardsContent(
                     ) {
                         CardActions(
                             creditCardUi = uiState.creditCards[uiState.selectedCardIndex],
+                            creditCard = uiState.domainCards[uiState.selectedCardIndex],
+                            invoice = uiState.domainInvoices[uiState.selectedCardIndex],
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
@@ -210,7 +238,7 @@ private fun CreditCardsContent(
                         )
                     }
 
-                    uiState.operations.forEach { (date, operations) ->
+                    uiState.transactions.forEach { (date, transactions) ->
                         item(
                             key = "date_title_$date"
                         ) {
@@ -226,27 +254,29 @@ private fun CreditCardsContent(
                         }
 
                         items(
-                            items = operations,
+                            items = transactions,
                             key = { it.id }
-                        ) { operation ->
-                            OperationCard(
-                                operation = operation,
+                        ) { transaction ->
+                            transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                            TransactionCard(
+                                transaction = transactionUi,
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
-                                    when (operation.type) {
-                                        Transaction.Type.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                                    when (transactionUi.direction) {
+                                        TransactionType.ADJUSTMENT -> {
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
                                         }
 
                                         else -> {
-                                            detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                                            detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                                         }
                                     }
                                 }
                             )
+                            }
                         }
                     }
                 }
@@ -296,7 +326,7 @@ private fun CreditCardPager(
     selectedIndex: Int,
     onSelectCard: (Int) -> Unit,
     onCardClick: (CreditCardUi) -> Unit,
-    onEditInvoice: (invoice: Invoice) -> Unit,
+    onEditInvoice: (invoiceId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -327,7 +357,12 @@ private fun CreditCardPager(
         pageSpacing = 8.dp,
     ) { page ->
         CreditCardCard(
-            creditCard = creditCards[page].creditCard,
+            cardId = creditCards[page].cardId,
+            iconKey = creditCards[page].iconKey,
+            name = creditCards[page].name,
+            closingDay = creditCards[page].closingDay,
+            dueDay = creditCards[page].dueDay,
+            limit = creditCards[page].limit,
             invoiceUi = creditCards[page].invoiceUi,
             modifier = Modifier.fillMaxWidth(),
             variant = CreditCardCardVariant.Listing(
@@ -341,10 +376,11 @@ private fun CreditCardPager(
 @Composable
 private fun CardActions(
     creditCardUi: CreditCardUi,
+    creditCard: CreditCard,
+    invoice: Invoice?,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val creditCard = creditCardUi.creditCard
     val invoiceUi = creditCardUi.invoiceUi
 
     Column(
@@ -356,8 +392,14 @@ private fun CardActions(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
+                // Presentation picks the wording; the ledger picks the outcome.
                 onClick = {
-                    modalManager.show(DeleteCreditCardModal(creditCard))
+                    modalManager.show(
+                        when (creditCardUi.retireAction) {
+                            RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
+                            RetireAction.ARCHIVE -> ArchiveCreditCardModal(creditCard)
+                        }
+                    )
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -370,13 +412,13 @@ private fun CardActions(
                 contentPadding = PaddingValues(12.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    imageVector = creditCardUi.retireAction.icon,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.credit_cards_delete),
+                    text = stringResource(creditCardUi.retireAction.label),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -410,14 +452,14 @@ private fun CardActions(
             }
         }
 
-        invoiceUi?.let { invoice ->
-            if (invoice.status.isOpen) {
+        if (invoiceUi != null && invoice != null) {
+            if (invoiceUi.isOpen) {
                 OutlinedButton(
                     onClick = {
                         modalManager.show(
                             AdvancePaymentModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount,
+                                invoice = invoice,
+                                currentBillAmount = invoiceUi.amount,
                             )
                         )
                     },
@@ -445,10 +487,10 @@ private fun CardActions(
                 }
             }
 
-            if (invoice.isClosable) {
+            if (invoiceUi.isClosable) {
                 OutlinedButton(
                     onClick = {
-                        modalManager.show(CloseInvoiceModal(invoice.id, invoice.closingDate))
+                        modalManager.show(CloseInvoiceModal(invoiceUi.id, invoiceUi.closingDate))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -474,40 +516,42 @@ private fun CardActions(
                 }
             }
 
-            if (invoice.status.isClosed) {
-                OutlinedButton(
-                    onClick = {
-                        modalManager.show(ReopenInvoiceModal(invoice.id))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFFFA726)
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
-                    ),
-                    contentPadding = PaddingValues(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.credit_cards_reopen_invoice),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+            if (invoiceUi.isClosed) {
+                if (invoiceUi.canReopen) {
+                    OutlinedButton(
+                        onClick = {
+                            modalManager.show(ReopenInvoiceModal(invoiceUi.id))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFFFA726)
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                        ),
+                        contentPadding = PaddingValues(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(Res.string.credit_cards_reopen_invoice),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
                 Button(
                     onClick = {
                         modalManager.show(
                             PayInvoiceModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount
+                                invoice = invoice,
+                                currentBillAmount = invoiceUi.amount
                             )
                         )
                     },
@@ -650,16 +694,16 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (CreditCardsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor =
         when (selectedType) {
-            Transaction.Type.EXPENSE -> ExpenseColor
-            Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.INCOME -> BillPaymentColor
+            TransactionType.EXPENSE -> ExpenseColor
+            TransactionType.ADJUSTMENT -> AdjustmentColor
+            TransactionType.INCOME -> BillPaymentColor
             else -> null
         }
 
@@ -669,9 +713,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.credit_cards_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.credit_cards_filter_type_adjustment)
-                    Transaction.Type.INCOME -> stringResource(Res.string.credit_cards_filter_type_payment)
+                    TransactionType.EXPENSE -> stringResource(Res.string.credit_cards_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.credit_cards_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.credit_cards_filter_type_payment)
                     else -> stringResource(Res.string.credit_cards_filter_type)
                 }
             )
@@ -703,9 +747,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to stringResource(Res.string.credit_cards_filter_type_expense),
-            Transaction.Type.ADJUSTMENT to stringResource(Res.string.credit_cards_filter_type_adjustment),
-            Transaction.Type.INCOME to stringResource(Res.string.credit_cards_filter_type_payment),
+            TransactionType.EXPENSE to stringResource(Res.string.credit_cards_filter_type_expense),
+            TransactionType.ADJUSTMENT to stringResource(Res.string.credit_cards_filter_type_adjustment),
+            TransactionType.INCOME to stringResource(Res.string.credit_cards_filter_type_payment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

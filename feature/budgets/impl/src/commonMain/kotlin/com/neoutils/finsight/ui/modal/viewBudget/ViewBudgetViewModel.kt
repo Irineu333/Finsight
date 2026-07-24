@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.interceptAbsence
@@ -15,11 +15,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
+import kotlin.time.Clock
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
     budgetRepository: IBudgetRepository,
-    operationRepository: IOperationRepository,
+    transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val crashlytics: Crashlytics,
@@ -30,15 +34,15 @@ class ViewBudgetViewModel(
 
     val uiState = combine(
         budgetRepository.observeAllBudgets(),
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
-    ) { budgets, operations, recurringList ->
-        val transactions = operations.flatMap { it.transactions }
+    ) { budgets, transactions, recurringList ->
+        val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
         calculateBudgetProgressUseCase(
             budgets = budgets,
-            transactions = transactions,
             recurringList = recurringList,
-            operations = operations,
+            transactions = transactions,
+            month = month,
         ).firstOrNull { it.budget.id == budgetId }
     }
         .interceptAbsence(

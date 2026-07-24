@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
@@ -44,17 +45,25 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
+import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.ui.model.AccountRetireOffer
 import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.ui.model.TransactionPerspective
+import com.neoutils.finsight.ui.navigation.ArchivedAccountsRoute
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.OutlinedActionButton
+import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.model.displayColor
+import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
@@ -63,7 +72,6 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.accounts_delete
 import com.neoutils.finsight.resources.accounts_edit
 import com.neoutils.finsight.resources.accounts_filter_category
 import com.neoutils.finsight.resources.accounts_filter_category_all
@@ -72,13 +80,16 @@ import com.neoutils.finsight.resources.accounts_filter_type_adjustment
 import com.neoutils.finsight.resources.accounts_filter_type_all
 import com.neoutils.finsight.resources.accounts_filter_type_expense
 import com.neoutils.finsight.resources.accounts_filter_type_income
+import com.neoutils.finsight.resources.accounts_more_options_content_description
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
+import com.neoutils.finsight.resources.accounts_view_archived
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
@@ -143,6 +154,32 @@ private fun AccountsContent(
                             onAction(AccountsAction.SelectMonth(selected))
                         }
                     )
+
+                    // The MonthSelector already owns the actions slot, so archived
+                    // accounts are reached from an overflow menu beside it — mirroring
+                    // the credit cards screen's gesture (design D6).
+                    val navController = LocalNavController.current
+                    var expanded by remember { mutableStateOf(false) }
+
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(Res.string.accounts_more_options_content_description),
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.accounts_view_archived)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(ArchivedAccountsRoute)
+                            }
+                        )
+                    }
                 }
             )
         },
@@ -192,6 +229,7 @@ private fun AccountsContent(
                     ) {
                         AccountPager(
                             accounts = uiState.accounts,
+                            domainAccounts = uiState.domainAccounts,
                             selectedIndex = uiState.selectedAccountIndex,
                             onSelectAccount = { index ->
                                 onAction(AccountsAction.SelectAccount(index))
@@ -205,7 +243,7 @@ private fun AccountsContent(
                                     )
                                 )
                             },
-                            onEditInitialBalance = { account ->
+                            onEditOpeningBalance = { account ->
                                 modalManager.show(
                                     EditAccountBalanceModal(
                                         type = EditAccountBalanceModal.Type.INITIAL,
@@ -222,7 +260,8 @@ private fun AccountsContent(
                         key = "account_actions"
                     ) {
                         AccountActions(
-                            accountUi = uiState.accounts[uiState.selectedAccountIndex],
+                            account = uiState.domainAccounts[uiState.selectedAccountIndex],
+                            retireOffer = uiState.accounts[uiState.selectedAccountIndex].retireOffer,
                             canTransfer = uiState.accounts.size > 1,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -242,7 +281,7 @@ private fun AccountsContent(
                             .animateItem()
                     )
                 }
-                uiState.operations.forEach { (date, operations) ->
+                uiState.transactions.forEach { (date, transactions) ->
                     item(
                         key = "date_title_$date"
                     ) {
@@ -258,28 +297,27 @@ private fun AccountsContent(
                     }
 
                     items(
-                        items = operations,
+                        items = transactions,
                         key = { it.id }
-                    ) { operationUi ->
-                        OperationCard(
-                            operation = operationUi.operation,
-                            displayType = operationUi.displayType,
-                            displayAmount = operationUi.displayAmount,
-                            displayTarget = operationUi.displayTarget,
-                            displayCategory = operationUi.displayCategory,
+                    ) { transactionUi ->
+                        TransactionCard(
+                            transaction = transactionUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                when (operationUi.displayType) {
-                                    Transaction.Type.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
+                                when (transactionUi.direction) {
+                                    TransactionType.ADJUSTMENT -> {
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
                                     }
 
                                     else -> {
                                         detailController.show(
-                                            transactionsEntry.viewOperationModal(operationUi.id, operationUi.perspective)
+                                            transactionsEntry.viewTransactionModal(
+                                                transactionUi.id,
+                                                uiState.selectedAccountId?.let { TransactionPerspective(it) },
+                                            )
                                         )
                                     }
                                 }
@@ -296,10 +334,11 @@ private fun AccountsContent(
 @Composable
 private fun AccountPager(
     accounts: List<AccountUi>,
+    domainAccounts: List<Account>,
     selectedIndex: Int,
     onSelectAccount: (Int) -> Unit,
     onEditBalance: (Account) -> Unit,
-    onEditInitialBalance: (Account) -> Unit,
+    onEditOpeningBalance: (Account) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -325,11 +364,13 @@ private fun AccountPager(
         pageSpacing = 8.dp,
     ) { page ->
         AccountCard(
-            account = accounts[page].account,
+            iconKey = domainAccounts[page].iconKey,
+            name = domainAccounts[page].name,
+            isDefault = domainAccounts[page].isDefault,
             variant = AccountCardVariant.Detail(
                 accountUi = accounts[page],
-                onEditBalance = { onEditBalance(accounts[page].account) },
-                onEditInitialBalance = { onEditInitialBalance(accounts[page].account) },
+                onEditBalance = { onEditBalance(domainAccounts[page]) },
+                onEditOpeningBalance = { onEditOpeningBalance(domainAccounts[page]) },
             ),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -338,12 +379,12 @@ private fun AccountPager(
 
 @Composable
 private fun AccountActions(
-    accountUi: AccountUi,
+    account: Account,
+    retireOffer: AccountRetireOffer,
     canTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val account = accountUi.account
 
     Column(
         modifier = modifier,
@@ -353,97 +394,47 @@ private fun AccountActions(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(
+            // Which of the two is offered is a presentation rule (`retireActionOf`);
+            // which one actually happens is the ledger's, in ArchiveAccountUseCase.
+            // The default account shows the action disabled — it cannot be retired,
+            // and the domain refuses it too (CANNOT_ARCHIVE_DEFAULT).
+            OutlinedActionButton(
+                label = stringResource(retireOffer.action.label),
+                icon = retireOffer.action.icon,
+                contentColor = Expense,
+                enabled = retireOffer is AccountRetireOffer.Retire,
                 onClick = {
-                    modalManager.show(DeleteAccountModal(account))
-                },
-                enabled = !account.isDefault,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Expense,
-                    disabledContentColor = colorScheme.onSurface.copy(alpha = 0.38f)
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = !account.isDefault).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(
-                        if (account.isDefault) {
-                            colorScheme.onSurface.copy(alpha = 0.12f)
-                        } else {
-                            Expense.copy(alpha = 0.5f)
+                    modalManager.show(
+                        when (retireOffer.action) {
+                            RetireAction.DELETE -> DeleteAccountModal(account)
+                            RetireAction.ARCHIVE -> ArchiveAccountModal(account)
                         }
                     )
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.accounts_delete),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                },
+                modifier = Modifier.weight(1f),
+            )
 
-            OutlinedButton(
+            OutlinedActionButton(
+                label = stringResource(Res.string.accounts_edit),
+                icon = Icons.Default.Edit,
+                contentColor = Info,
                 onClick = {
                     modalManager.show(AccountFormModal(account))
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Info
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(Info.copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.accounts_edit),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
+            )
         }
 
         if (canTransfer) {
-            OutlinedButton(
+            OutlinedActionButton(
+                label = stringResource(Res.string.accounts_transfer),
+                icon = Icons.Default.SwapHoriz,
+                contentColor = colorScheme.primary,
                 onClick = {
                     modalManager.show(TransferBetweenAccountsModal(account))
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.primary
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.accounts_transfer),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            )
         }
     }
 }
@@ -560,13 +551,7 @@ private fun CategoryFilterChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor =
-        selectedCategory?.let { category ->
-            when (category.type) {
-                Category.Type.INCOME -> IncomeColor
-                Category.Type.EXPENSE -> ExpenseColor
-            }
-        }
+    val chipColor = selectedCategory?.displayColor
 
     FilterChip(
         selected = selectedCategory != null,
@@ -613,16 +598,16 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (AccountsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor = selectedType?.let { type ->
         when (type) {
-            Transaction.Type.INCOME -> IncomeColor
-            Transaction.Type.EXPENSE -> ExpenseColor
-            else -> null
+            TransactionType.INCOME -> IncomeColor
+            TransactionType.EXPENSE -> ExpenseColor
+            TransactionType.ADJUSTMENT -> AdjustmentColor
         }
     }
 
@@ -632,9 +617,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.INCOME -> stringResource(Res.string.accounts_filter_type_income)
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.accounts_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.accounts_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.accounts_filter_type_income)
+                    TransactionType.EXPENSE -> stringResource(Res.string.accounts_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.accounts_filter_type_adjustment)
                     null -> stringResource(Res.string.accounts_filter_type)
                 }
             )
@@ -669,7 +654,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_income)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.INCOME))
+                onAction(AccountsAction.SelectType(TransactionType.INCOME))
                 expanded = false
             }
         )
@@ -677,7 +662,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_expense)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.EXPENSE))
+                onAction(AccountsAction.SelectType(TransactionType.EXPENSE))
                 expanded = false
             }
         )
@@ -685,7 +670,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_adjustment)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.ADJUSTMENT))
+                onAction(AccountsAction.SelectType(TransactionType.ADJUSTMENT))
                 expanded = false
             }
         )

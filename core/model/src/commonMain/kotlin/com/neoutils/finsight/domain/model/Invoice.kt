@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.domain.model
 
-import androidx.compose.ui.graphics.Color
 import com.neoutils.finsight.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -13,6 +12,9 @@ import kotlin.time.Instant
 data class Invoice(
     val id: Long = 0,
     val creditCard: CreditCard,
+    // The ledger identity this invoice's legs are tagged with. Nullable only
+    // because v10 added the column to existing rows; every invoice has one.
+    val dimensionId: Long? = null,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val dueMonth: YearMonth,
@@ -38,14 +40,19 @@ data class Invoice(
         else -> false
     }
 
-    enum class Status(
-        val color: Color,
-    ) {
-        FUTURE(color = Color(0xFF42A5F5)),
-        OPEN(color = Color(0xFFFFA726)),
-        CLOSED(color = Color(0xFFEF5350)),
-        PAID(color = Color(0xFF66BB6A)),
-        RETROACTIVE(color = Color(0xFF5C6BC0));
+    /**
+     * Fatura fechável na data [date]: além do status permitir ([isClosable]), a data de
+     * fechamento já precisa ter chegado — para `OPEN` e `RETROACTIVE` igualmente. É a única
+     * definição do predicado com corte de data; as telas a consomem em vez de reescrevê-la.
+     */
+    fun isClosableOn(date: LocalDate) = isClosable && date >= closingDate
+
+    enum class Status {
+        FUTURE,
+        OPEN,
+        CLOSED,
+        PAID,
+        RETROACTIVE;
 
         val isFuture: Boolean
             get() = this == FUTURE
@@ -62,7 +69,12 @@ data class Invoice(
         val isRetroactive: Boolean
             get() = this == RETROACTIVE
 
-        val isBlocked: Boolean
+        /**
+         * Closed to new spending. `CLOSED` and `PAID` coincide here and only here:
+         * a closed invoice still accepts the payment that settles it, and a paid one
+         * accepts nothing — the distinction lives at the write boundary (design D23).
+         */
+        val isClosedToNewExpenses: Boolean
             get() = this == CLOSED || this == PAID
 
         val isEditable: Boolean
@@ -84,4 +96,23 @@ data class Invoice(
         }
     }
 }
+
+/**
+ * The invoice that closing this one opened, at `openingMonth == this.closingMonth`.
+ * Reopening demotes it back to `FUTURE`, so it is the pivot of the reopen rule.
+ */
+fun Invoice.reopenSuccessor(cardInvoices: List<Invoice>): Invoice? =
+    cardInvoices.find { it.openingMonth == closingMonth }
+
+/**
+ * Reopening is valid only for the latest closed invoice — the one whose successor is
+ * the current `OPEN` one. Any earlier closed (or formerly-retroactive) invoice has a
+ * later cycle already active or settled after it, so reopening would leave two `OPEN`
+ * invoices on the card. `ReopenInvoiceUseCase` enforces this; the screens read it to
+ * not offer what the domain refuses, instead of re-deciding the rule themselves.
+ */
+fun Invoice.isReopenable(cardInvoices: List<Invoice>): Boolean =
+    status != Invoice.Status.OPEN &&
+    status != Invoice.Status.PAID &&
+    reopenSuccessor(cardInvoices)?.status == Invoice.Status.OPEN
 

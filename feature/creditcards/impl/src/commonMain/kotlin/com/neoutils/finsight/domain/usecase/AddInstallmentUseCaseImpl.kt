@@ -11,18 +11,17 @@ import com.neoutils.finsight.domain.error.InstallmentError
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
 
 class AddInstallmentUseCaseImpl(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val installmentRepository: IInstallmentRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
@@ -78,7 +77,7 @@ class AddInstallmentUseCaseImpl(
         repeat(installments) { index ->
             val invoice = invoices.find { it.dueMonth == dueMonth }
 
-            if (invoice != null && invoice.status.isBlocked) {
+            if (invoice != null && invoice.status.isClosedToNewExpenses) {
                 return InstallmentException(
                     InstallmentError.BlockedInvoice(
                         installment = index + 1,
@@ -124,32 +123,31 @@ class AddInstallmentUseCaseImpl(
 
             val installmentId = installmentRepository.createInstallment(
                 count = invoices.size,
-                totalAmount = base.amount,
+                totalAmount = base.legs.first().amount,
             )
 
-            val transactions = invoices.mapIndexed { index, invoice ->
+            val baseLeg = base.legs.first()
+            val intents = invoices.mapIndexed { index, invoice ->
                 base.copy(
-                    amount = base.amount / invoices.size,
                     date = base.date.plus(index, DateTimeUnit.MONTH),
-                    invoice = invoice,
+                    installmentId = installmentId,
+                    installmentNumber = index + 1,
+                    legs = listOf(
+                        baseLeg.copy(
+                            amount = baseLeg.amount / invoices.size,
+                            // Each share lands on its own invoice's sub-ledger.
+                            dimensionId = invoice.dimensionId,
+                        )
+                    ),
                 )
             }
 
+            // One decision by the user, one unit of work: a partial fan-out would
+            // leave the installment describing money that was never recorded.
             catch {
-                transactions.mapIndexed { index, transaction ->
-                    operationRepository.createOperation(
-                        kind = Operation.Kind.TRANSACTION,
-                        title = transaction.title,
-                        date = transaction.date,
-                        categoryId = transaction.category?.id,
-                        sourceAccountId = transaction.account?.id,
-                        targetCreditCardId = transaction.creditCard?.id,
-                        targetInvoiceId = transaction.invoice?.id,
-                        installmentId = installmentId,
-                        installmentNumber = index + 1,
-                        transactions = listOf(transaction),
-                    ).primaryTransaction
-                }
+                transactionRepository.createTransactions(intents)
+            }.onLeft {
+                installmentRepository.deleteInstallmentById(installmentId)
             }.bind()
         }
     }

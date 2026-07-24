@@ -1,9 +1,8 @@
 package com.neoutils.finsight
 
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationRecurring
+import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
@@ -13,21 +12,9 @@ import kotlin.test.assertEquals
 class ComposeAppCommonTest {
 
     @Test
-    fun operationLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
-        val operation = Operation(
-            kind = Operation.Kind.TRANSACTION,
-            title = null,
-            date = LocalDate(2026, 3, 3),
-            transactions = emptyList(),
-        )
-
-        assertEquals("Untitled", operation.label)
-    }
-
-    @Test
     fun recurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,
@@ -41,9 +28,9 @@ class ComposeAppCommonTest {
     }
 
     @Test
-    fun operationRecurringLabelFallsBackToCategoryWhenTitleIsMissing() {
+    fun transactionRecurringLabelFallsBackToCategoryWhenTitleIsMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,
@@ -58,13 +45,13 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Food • 1", OperationRecurring(instance = recurring, cycleNumber = 1).label)
+        assertEquals("Food • 1", TransactionRecurring(instance = recurring, cycleNumber = 1).label)
     }
 
     @Test
-    fun operationRecurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
+    fun transactionRecurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,
@@ -74,6 +61,6 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Untitled • 1", OperationRecurring(instance = recurring, cycleNumber = 1).label)
+        assertEquals("Untitled • 1", TransactionRecurring(instance = recurring, cycleNumber = 1).label)
     }
 }

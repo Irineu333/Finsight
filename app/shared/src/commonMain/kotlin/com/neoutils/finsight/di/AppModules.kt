@@ -4,6 +4,7 @@ import org.koin.core.module.Module
 
 val appModules: List<Module> = listOf(
     databaseModule,
+    ledgerModule,
     commonModule,
     designsystemModule,
     analyticsModule,

@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.component
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,7 @@ fun InvoiceMonthNavigator(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Receipt,
-                tint = selection.statusColor ?: colorScheme.primary,
+                tint = selection.existingInvoice?.status?.color ?: colorScheme.primary,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
@@ -79,7 +80,7 @@ fun InvoiceMonthNavigator(
                 }
             }
         },
-        colors = if (selection.isBlocked) {
+        colors = if (selection.isClosedToNewExpenses) {
             OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = colorScheme.error.copy(alpha = 0.5f),
                 focusedBorderColor = colorScheme.error

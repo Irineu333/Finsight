@@ -10,10 +10,12 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -24,7 +26,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvanceInvoicePaymentUseCase(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
@@ -33,7 +35,7 @@ class AdvanceInvoicePaymentUseCase(
         amount: Double,
         date: LocalDate,
         account: Account,
-    ): Either<Throwable, Operation> = either {
+    ): Either<Throwable, Transaction> = either {
         ensure(amount > 0) {
             InvoiceException(InvoiceError.NegativeAmount)
         }
@@ -52,7 +54,7 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.DateInFuture)
         }
 
-        val currentBillAmount = calculateInvoiceUseCase(invoiceId)
+        val currentBillAmount = calculateInvoiceUseCase(invoice)
 
         ensure(currentBillAmount > 0.0) {
             InvoiceException(InvoiceError.InvoiceNotInDebt)
@@ -63,38 +65,27 @@ class AdvanceInvoicePaymentUseCase(
         }
         
         catch {
-            operationRepository.createOperation(
-                kind = Operation.Kind.PAYMENT,
-                title = null,
-                date = date,
-                categoryId = null,
-                sourceAccountId = account.id,
-                targetCreditCardId = invoice.creditCard.id,
-                targetInvoiceId = invoice.id,
-                transactions = listOf(
-                    Transaction(
-                        category = null,
-                        title = null,
-                        type = Transaction.Type.EXPENSE,
-                        amount = amount,
-                        date = date,
-                        target = Transaction.Target.ACCOUNT,
-                        creditCard = invoice.creditCard,
-                        invoice = invoice,
-                        account = account,
+            transactionRepository.createTransaction(
+                TransactionIntent(
+                    title = null,
+                    date = date,
+                    legs = listOf(
+                        // The money leaves the account undimensioned; only the card's
+                        // leg carries the invoice's sub-ledger, or the two would
+                        // cancel it out.
+                        TransactionLeg(
+                            type = TransactionType.EXPENSE,
+                            amount = amount,
+                            accountId = account.id,
+                        ),
+                        TransactionLeg(
+                            type = TransactionType.INCOME,
+                            amount = amount,
+                            accountId = invoice.creditCard.accountId,
+                            dimensionId = invoice.dimensionId,
+                        ),
                     ),
-                    Transaction(
-                        category = null,
-                        title = null,
-                        type = Transaction.Type.INCOME,
-                        amount = amount,
-                        date = date,
-                        target = Transaction.Target.CREDIT_CARD,
-                        creditCard = invoice.creditCard,
-                        invoice = invoice,
-                        account = null,
-                    ),
-                ),
+                )
             )
         }.bind()
     }

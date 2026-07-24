@@ -39,17 +39,29 @@ class CloseInvoiceUseCase(
             InvoiceException(InvoiceError.AlreadyClosed)
         }
 
+        // Reading the predicate instead of re-enumerating around it: the pair of
+        // `!=` above admits FUTURE, which `isClosable` does not and no screen offers.
+        ensure(invoice.isClosable) {
+            InvoiceException(InvoiceError.AlreadyClosed)
+        }
+
         ensure(closedAt.yearMonth == invoice.closingMonth) {
             InvoiceException(InvoiceError.CannotCloseOutsideClosingMonth)
         }
 
-        val invoiceAmount = calculateInvoiceUseCase(invoiceId)
+        val invoiceAmount = calculateInvoiceUseCase(invoice)
 
         ensure(invoiceAmount >= 0) {
             InvoiceException(InvoiceError.NegativeBalance)
         }
 
-        if (invoice.status.isRetroactive) {
+        // A retroactive invoice used to be marked PAID here whatever it owed. The
+        // ledger knows nothing about status, so nothing settled the LIABILITY legs
+        // of its purchases: the debt sat in the card's balance — and in net worth —
+        // for good, while the app displayed "paga". Only an invoice that owes
+        // nothing can be settled by closing it; one with a balance closes like any
+        // other, and is paid explicitly.
+        if (invoice.status.isRetroactive && invoiceAmount == 0.0) {
             return@either payInvoiceUseCase(
                 invoice = invoice,
                 paidAt = closedAt,
@@ -63,10 +75,15 @@ class CloseInvoiceUseCase(
             invoiceRepository.update(it)
         }
 
-        openInvoiceUseCase(
-            creditCardId = invoice.creditCard.id,
-            openingMonth = invoice.closingMonth
-        )
+        // A retroactive invoice belongs to a past cycle; the current one is already
+        // open, and opening another would leave two OPEN invoices on the same card —
+        // an invariant the whole invoice lookup assumes.
+        if (!invoice.status.isRetroactive) {
+            openInvoiceUseCase(
+                creditCardId = invoice.creditCard.id,
+                openingMonth = invoice.closingMonth
+            )
+        }
 
         if (invoiceAmount == 0.0) {
             return@either payInvoiceUseCase(

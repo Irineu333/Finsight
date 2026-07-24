@@ -95,18 +95,20 @@ class ReportViewerViewModel(
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
         val stats = if (invoices.isNotEmpty()) {
-            // Expense / advance-payment / adjustment straight from the ledger, one read
-            // per invoice dimension — the same `dimensionFlows` the card feature's own
-            // invoice screens use, instead of re-summing the loaded legs in memory
-            // (spec `ledger-reporting`: no alternative that sums entries already loaded).
-            val flows = invoiceDimensionIds.map { entryRepository.dimensionFlows(it) }
+            // Expense / advance-payment / adjustment straight from the ledger — the same
+            // `flowsByDimension`/`owedByDimension` the card feature's own invoice screens
+            // use, each a single grouped read over every invoice dimension rather than one
+            // query per invoice (spec `ledger-reporting`: no alternative that sums entries
+            // already loaded).
+            val flows = entryRepository.flowsByDimension(invoiceDimensionIds).values
+            val owed = entryRepository.owedByDimension(invoiceDimensionIds).values
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
                 expense = flows.sumOf { it.expense },
                 advancePayment = flows.sumOf { it.advancePayment },
                 adjustment = flows.sumOf { it.adjustment },
-                total = invoiceDimensionIds.sumOf { entryRepository.dimensionOwed(it) },
+                total = owed.sum(),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(

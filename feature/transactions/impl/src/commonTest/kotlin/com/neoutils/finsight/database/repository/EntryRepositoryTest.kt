@@ -43,6 +43,9 @@ private class FakeReadEntryDao(
     override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = assets
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long = inMonth
     override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = invoice
+    override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionTotal> =
+        dimensionIds.map { com.neoutils.finsight.database.dao.DimensionTotal(it, invoice) }
+    override suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionPeriodTotalsRow> = throw NotImplementedError()
     override suspend fun netWorthCents(): Long = netWorth
     override suspend fun insert(entry: EntryEntity): Long = throw NotImplementedError()
     override suspend fun insertAll(entries: List<EntryEntity>): List<Long> = throw NotImplementedError()

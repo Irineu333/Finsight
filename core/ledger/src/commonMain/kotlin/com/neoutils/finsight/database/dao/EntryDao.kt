@@ -49,6 +49,14 @@ data class DimensionPeriodTotals(
     val adjustment: Long,
 )
 
+/** [DimensionPeriodTotals] keyed by its dimension, for the batched grouped read. */
+data class DimensionPeriodTotalsRow(
+    val dimensionId: Long,
+    val expense: Long,
+    val advancePayment: Long,
+    val adjustment: Long,
+)
+
 /** Month-wide card [expense]/[payment] (cents), both positive magnitudes. */
 data class LiabilityMonthTotals(
     val expense: Long,
@@ -180,6 +188,18 @@ interface EntryDao {
     suspend fun dimensionNaturalBalance(dimensionId: Long): Long
 
     /**
+     * The natural balance of each dimension in [dimensionIds], in one grouped query,
+     * so a screen listing many sub-ledgers reads them all at once instead of one
+     * query per dimension. A dimension with no entries is simply absent from the
+     * result (its balance is 0).
+     */
+    @Query(
+        "SELECT dimensionId AS dimensionId, COALESCE(SUM(amount), 0) AS total " +
+            "FROM entries WHERE dimensionId IN (:dimensionIds) GROUP BY dimensionId"
+    )
+    suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<DimensionTotal>
+
+    /**
      * The account's income/expense/adjustment/invoice-payment flows within a month
      * (yyyy-MM), classified by each transaction's counter-legs. See [AccountPeriodTotals].
      */
@@ -223,6 +243,29 @@ interface EntryDao {
         """
     )
     suspend fun dimensionPeriodTotals(dimensionId: Long): DimensionPeriodTotals
+
+    /**
+     * The same expense/advance-payment/adjustment breakdown as [dimensionPeriodTotals],
+     * but for every dimension in [dimensionIds] at once — a single grouped read for a
+     * screen showing many sub-ledgers. A dimension with no entries is absent from the
+     * result (all its flows are 0).
+     */
+    @Query(
+        """
+        SELECT dimensionId AS dimensionId,
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS advancePayment,
+          COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
+        FROM (
+          SELECT e.dimensionId AS dimensionId, e.amount AS amount,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
+          FROM entries e
+          WHERE e.dimensionId IN (:dimensionIds)
+        )
+        GROUP BY dimensionId
+        """
+    )
+    suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<DimensionPeriodTotalsRow>
 
     /**
      * Month-wide card expense/advance-payment across every LIABILITY (card) account

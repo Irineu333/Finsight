@@ -91,12 +91,17 @@ class InvoiceTransactionsViewModel(
     ) { creditCard, invoices, transactions, categories, installments, index, currentFilters ->
         // Invoice owed and its expense/advancePayment/adjustment breakdown, both derived
         // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
+        // Read for every invoice's dimension in one grouped query each, not one per invoice.
+        val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }
+        val owedByDimension = entryRepository.owedByDimension(invoiceDimensionIds)
+        val flowsByDimension = entryRepository.flowsByDimension(invoiceDimensionIds)
         val owedByInvoiceId = mutableMapOf<Long, Double>()
         val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
-            owedByInvoiceId[inv.id] = entryRepository.dimensionOwed(dimensionId)
-            flowsByInvoiceId[inv.id] = entryRepository.dimensionFlows(dimensionId)
+            owedByInvoiceId[inv.id] = owedByDimension[dimensionId] ?: 0.0
+            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
+                ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
         }
 
         val invoice = invoices.getOrNull(index)

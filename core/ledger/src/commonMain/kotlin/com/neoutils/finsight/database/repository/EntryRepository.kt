@@ -102,6 +102,25 @@ class EntryRepository(
         )
     }
 
+    override suspend fun owedByDimension(dimensionIds: Collection<Long>): Map<Long, Double> {
+        if (dimensionIds.isEmpty()) return emptyMap()
+        // Liability entries are stored negative (credit); owed reads positive.
+        return entryDao.naturalBalanceByDimension(dimensionIds.distinct())
+            .associate { it.dimensionId!! to -it.total / CENTS_PER_UNIT }
+    }
+
+    override suspend fun flowsByDimension(dimensionIds: Collection<Long>): Map<Long, DimensionFlows> {
+        if (dimensionIds.isEmpty()) return emptyMap()
+        return entryDao.periodTotalsByDimension(dimensionIds.distinct())
+            .associate {
+                it.dimensionId to DimensionFlows(
+                    expense = it.expense / CENTS_PER_UNIT,
+                    advancePayment = it.advancePayment / CENTS_PER_UNIT,
+                    adjustment = it.adjustment / CENTS_PER_UNIT,
+                )
+            }
+    }
+
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
         val totals = entryDao.liabilityMonthTotals(month.toString())
         return LiabilityMonthFlows(

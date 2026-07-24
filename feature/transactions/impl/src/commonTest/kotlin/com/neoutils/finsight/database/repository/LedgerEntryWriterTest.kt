@@ -162,7 +162,7 @@ class LedgerEntryWriterTest {
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val bankEntry = entryDao.inserted.first { it.accountId == 1L }
-        assertEquals(-5000L, bankEntry.amount) // bank account is debited
+        assertEquals(-5000L, bankEntry.amount) // credit on the ASSET: money leaves the bank account
         assertNull(bankEntry.dimensionId) // or the two legs would cancel the sub-ledger out
         val cardEntry = entryDao.inserted.first { it.accountId == 200L }
         assertEquals(5000L, cardEntry.amount) // liability leg reduces the owed
@@ -288,6 +288,11 @@ private class FakeEntryDao : EntryDao {
     override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = inserted.sumOf { it.amount }
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
     override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
+    override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionTotal> =
+        inserted.filter { it.dimensionId in dimensionIds }
+            .groupBy { it.dimensionId!! }
+            .map { (id, entries) -> com.neoutils.finsight.database.dao.DimensionTotal(id, entries.sumOf { it.amount }) }
+    override suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionPeriodTotalsRow> = throw NotImplementedError()
     override suspend fun netWorthCents(): Long = inserted.sumOf { it.amount }
 }
 

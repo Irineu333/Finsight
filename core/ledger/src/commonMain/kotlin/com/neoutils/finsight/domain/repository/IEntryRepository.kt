@@ -114,6 +114,23 @@ interface IEntryRepository {
     /** The expense/advance-payment/adjustment breakdown of a sub-ledger, from the ledger. */
     suspend fun dimensionFlows(dimensionId: Long): DimensionFlows
 
+    /**
+     * The owed total of each sub-ledger in [dimensionIds], keyed by dimension — the
+     * batched [dimensionOwed] a screen listing many invoices needs. A dimension with
+     * no entries is absent from the map (its owed is 0). The default fans out over
+     * [dimensionOwed]; the ledger's own implementation overrides it with a single
+     * grouped query so N invoices cost one read, not N.
+     */
+    suspend fun owedByDimension(dimensionIds: Collection<Long>): Map<Long, Double> =
+        dimensionIds.distinct().associateWith { dimensionOwed(it) }
+
+    /**
+     * The flows breakdown of each sub-ledger in [dimensionIds], keyed by dimension —
+     * the batched [dimensionFlows]. Same one-query-not-N contract as [owedByDimension].
+     */
+    suspend fun flowsByDimension(dimensionIds: Collection<Long>): Map<Long, DimensionFlows> =
+        dimensionIds.distinct().associateWith { dimensionFlows(it) }
+
     /** Month-wide card expense/payment across every card account. */
     suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows
 

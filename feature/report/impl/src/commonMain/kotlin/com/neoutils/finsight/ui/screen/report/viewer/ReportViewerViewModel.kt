@@ -79,10 +79,15 @@ class ReportViewerViewModel(
         installmentRepository.observeAllInstallments(),
     ) { categories, installments -> TransactionFacadeLookup.of(categories, installments) }
 
+    // A report may be scoped to an account or card that has since been archived (the
+    // config picker offers closed ones too), so the viewer resolves the perspective
+    // label, icon and — for cards — the LIABILITY account id from the *including
+    // closed* facade. The active facade would drop an archived scope, blanking the
+    // label/icon and emptying the transaction list. Mirrors the category flow above.
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
-        accountRepository.observeAllAccounts(),
-        creditCardRepository.observeAllCreditCards(),
+        accountRepository.observeAllAccountsIncludingClosed(),
+        creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
         facadeLookupFlow,
     ) { transactions, accounts, creditCards, invoices, facadeLookup ->

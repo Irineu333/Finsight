@@ -2,11 +2,13 @@
 
 ### Requirement: Escopo governa resumo e lista
 
-A tela de transações SHALL oferecer um **escopo de leitura** com exatamente três valores — todas as contas e cartões, apenas contas (`ASSET`), apenas cartões (`LIABILITY`) — e esse escopo SHALL governar **simultaneamente** o resumo e a lista.
+A tela de transações SHALL oferecer um **escopo de leitura** com exatamente três valores — geral (contas e cartões), apenas contas (`ASSET`), apenas cartões (`LIABILITY`) — e esse escopo SHALL governar **simultaneamente** o resumo e a lista.
 
 MUST NOT ocorrer de o resumo somar um perímetro e a lista exibir outro. Em particular, um resumo derivado apenas de contas `ASSET` MUST NOT ser exibido sobre uma lista que inclua movimentação de cartão.
 
 O escopo SHALL ser um eixo único: a mesma decisão MUST NOT ser oferecida em dois controles distintos que possam assumir estados contraditórios.
+
+O escopo **recorta** a lista pela presença de perna no perímetro; ele MUST NOT alterar como um item é apresentado — valor, cor, ícone ou título —, que continuam derivando da natureza do lançamento.
 
 #### Scenario: Compra no cartão sob escopo de contas
 - **WHEN** o escopo é "contas" e existe uma compra no cartão no mês
@@ -20,21 +22,27 @@ O escopo SHALL ser um eixo único: a mesma decisão MUST NOT ser oferecida em do
 - **WHEN** o escopo é o geral
 - **THEN** a lista exibe a movimentação de contas e de cartões, e o resumo deriva do mesmo perímetro
 
+#### Scenario: Item não muda de aparência entre escopos
+- **WHEN** o mesmo lançamento é exibido em dois escopos que o contenham
+- **THEN** ele é apresentado com o mesmo valor, a mesma cor e o mesmo título nos dois
+
 ### Requirement: Gramática única de resumo por escopo
 
-O resumo SHALL ter a mesma gramática nos três escopos — **abertura, fluxos, fechamento** —, variando apenas o perímetro. Toda linha SHALL derivar do razão; MUST NOT ser somada a partir da lista já carregada.
+O resumo SHALL ter a mesma gramática nos três escopos — **abertura, fluxos, fechamento** —, variando apenas o perímetro de contas. Toda linha SHALL derivar do razão; MUST NOT ser somada a partir da lista já carregada.
 
-Para todo escopo SHALL valer a identidade:
+Sendo `P` o perímetro do escopo, SHALL valer:
 
 ```
-fechamento = abertura + entradas − saídas + ajustes
+saldo(P, mês) = saldo(P, mês anterior) + Σ entries de P no mês
 ```
 
-Uma linha exibida fora dessa soma SHALL ser identificável como informativa — sem sinal aritmético — e MUST NOT participar do fechamento.
+As linhas de fluxo exibidas SHALL **particionar** `Σ entries de P no mês`: toda entry do perímetro no período pertence a exatamente uma linha exibida, ou a um lançamento interno ao perímetro. A abertura e o fechamento SHALL ser exibidos no sinal de exibição da natureza do perímetro — para `LIABILITY`, dívida positiva.
+
+Uma linha exibida fora dessa soma SHALL ser identificável como informativa — sem sinal — e MUST NOT participar do fechamento.
 
 #### Scenario: Escopo de contas fecha
-- **WHEN** o resumo do escopo "contas" é exibido
-- **THEN** o saldo final é igual ao saldo inicial somado às entradas, subtraídas as saídas e somados os ajustes do mês
+- **WHEN** o resumo do escopo "contas" é exibido em um mês com entradas, saídas, pagamento de fatura e ajuste
+- **THEN** o saldo final é igual ao saldo inicial somadas as entradas, subtraídas as saídas, subtraídos os pagamentos de fatura e aplicados os ajustes
 
 #### Scenario: Escopo de cartões fecha, inclusive com ajuste de fatura
 - **WHEN** o resumo do escopo "cartões" é exibido em um mês que contém ajuste de fatura
@@ -42,7 +50,7 @@ Uma linha exibida fora dessa soma SHALL ser identificável como informativa — 
 
 #### Scenario: Escopo geral fecha
 - **WHEN** o resumo do escopo geral é exibido
-- **THEN** o líquido final é igual ao líquido inicial somadas as entradas, subtraídas as saídas — de conta e de cartão — e somados os ajustes
+- **THEN** o líquido final é igual ao líquido inicial somadas as entradas, subtraídas as saídas — de conta e de cartão — e aplicados os ajustes de conta e de fatura
 
 #### Scenario: Nenhuma soma em memória
 - **WHEN** qualquer linha do resumo é produzida
@@ -50,21 +58,19 @@ Uma linha exibida fora dessa soma SHALL ser identificável como informativa — 
 
 ### Requirement: Movimento interno ao perímetro não é fluxo
 
-Um lançamento cujas pernas estejam **todas dentro** do perímetro do escopo SHALL ser tratado como movimento interno: ele MUST NOT contribuir para entradas, saídas ou ajustes daquele escopo, porque não altera o seu fechamento.
+Um lançamento cujas pernas estejam **todas dentro** do perímetro do escopo SHALL contribuir zero para o fechamento daquele escopo, por consequência de `Σ = 0` por lançamento. Ele MUST NOT ser reportado como entrada, saída ou ajuste.
 
-Essa classificação SHALL depender exclusivamente do perímetro, e MUST NOT ser expressa como exceção por tipo de lançamento:
+Essa classificação SHALL depender exclusivamente do perímetro, e MUST NOT ser expressa como exceção por tipo de lançamento. Um lançamento com perna fora do perímetro SHALL, ao contrário, ser reportado como fluxo — é o caso do pagamento de fatura visto do escopo de contas, cuja perna de passivo está fora.
 
-| escopo | movimento interno |
-|---|---|
-| contas | transferência entre contas |
-| cartões | transferência entre cartões |
-| geral | transferência entre contas **e** pagamento de fatura |
-
-Um movimento interno ao escopo geral SHALL, ainda assim, poder ser **exibido** como linha informativa, sem sinal e fora da soma.
+Um movimento interno SHALL poder ser **exibido** como linha informativa, sem sinal e fora da soma.
 
 #### Scenario: Transferência não altera o saldo do escopo de contas
 - **WHEN** existe uma transferência entre duas contas no mês e o escopo é "contas"
 - **THEN** ela aparece na lista e não altera entradas, saídas nem o saldo final
+
+#### Scenario: Pagamento de fatura é fluxo no escopo de contas
+- **WHEN** existe um pagamento de fatura no mês e o escopo é "contas"
+- **THEN** ele é reportado em linha própria e reduz o saldo final, porque a sua perna de passivo está fora do perímetro
 
 #### Scenario: Pagamento de fatura abate a dívida no escopo de cartões
 - **WHEN** existe um pagamento de fatura no mês e o escopo é "cartões"
@@ -74,19 +80,13 @@ Um movimento interno ao escopo geral SHALL, ainda assim, poder ser **exibido** c
 - **WHEN** existe um pagamento de fatura no mês e o escopo é o geral
 - **THEN** o valor é exibido como linha informativa, sem sinal, e o líquido final é idêntico ao que seria sem esse pagamento
 
-### Requirement: A perna exibida segue o escopo
+### Requirement: O mês do escopo de cartões é o da transação
 
-Quando o escopo determinar um perímetro de uma única natureza de conta, o item de lista SHALL ser apresentado pela perna daquela natureza, de modo que o sinal exibido concorde com o efeito sobre o total do próprio escopo.
+No escopo de cartões, o período selecionado SHALL recortar por **data do lançamento**, e MUST NOT recortar por ciclo ou vencimento de fatura. O resumo SHALL responder "quanto foi lançado no cartão neste mês", coerente com a lista que ele governa.
 
-MUST NOT ocorrer de um item exibir o sinal de uma perna que não pertence ao perímetro que o resumo está somando.
-
-#### Scenario: Pagamento de fatura visto de dois livros
-- **WHEN** o mesmo pagamento de fatura é exibido no escopo "contas" e no escopo "cartões"
-- **THEN** no primeiro ele lê como saída de dinheiro e no segundo como redução da dívida, e cada um concorda com o total do seu escopo
-
-#### Scenario: Transação sem perna do perímetro
-- **WHEN** uma transação não possui perna da natureza do escopo selecionado
-- **THEN** ela é omitida da lista, sem falha de leitura
+#### Scenario: Compra que cai em fatura de outro mês
+- **WHEN** uma compra é lançada em dezembro e cai na fatura que vence em janeiro, e o escopo é "cartões" com dezembro selecionado
+- **THEN** a compra aparece na lista de dezembro e está contida nos gastos de dezembro
 
 ### Requirement: Alcance dos controles é posicional
 
@@ -95,7 +95,7 @@ A tela SHALL distinguir dois alcances de controle pela posição:
 - O **escopo** e o **período** SHALL governar resumo e lista, e SHALL ser apresentados no topo do card de resumo.
 - Os demais **filtros** SHALL governar apenas a lista, e SHALL ser apresentados abaixo do card.
 
-Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo. Quando um filtro se tornar redundante com o escopo selecionado — por decidir a mesma coisa que ele —, esse filtro MUST NOT ser oferecido naquele escopo.
+Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo. O filtro que seleciona entre conta e cartão MUST NOT ser oferecido nos escopos que já o decidem.
 
 #### Scenario: Filtro de categoria não move o resumo
 - **WHEN** o usuário filtra a lista por uma categoria
@@ -113,12 +113,6 @@ Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo. Q
 
 O escopo inicial da tela SHALL ser o geral, de modo que a lista exibida por padrão permaneça a mesma que a tela já exibia antes de existir o eixo de escopo.
 
-Uma navegação externa SHALL poder abrir a tela em um escopo determinado, e esse escopo SHALL concordar com o recorte da origem da navegação.
-
 #### Scenario: Abertura padrão
-- **WHEN** a tela de transações é aberta sem escopo determinado
+- **WHEN** a tela de transações é aberta
 - **THEN** o escopo é o geral e a lista exibe movimentação de contas e de cartões
-
-#### Scenario: Navegação a partir de um total de contas
-- **WHEN** o usuário aciona um total de saldo em conta em outra tela
-- **THEN** a tela de transações abre no escopo "contas", e o seu resumo concorda com o total de origem

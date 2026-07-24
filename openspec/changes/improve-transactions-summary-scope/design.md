@@ -20,7 +20,7 @@ razão   balanceUpTo(target, accountId = null) → "todas as contas ASSET"
 
 A change endireita as três, na ordem inversa: o razão ganha a leitura simétrica, o domínio ganha o ajuste que falta, e a UI ganha o escopo que governa as duas metades da tela.
 
-O que **não** muda: nenhuma escrita, nenhuma migração, nenhum valor hoje exibido. O escopo `Contas` é o card de hoje, número por número.
+O que **não** muda: nenhuma escrita, nenhuma migração, nenhum valor hoje exibido, nenhum módulo além de `core/ledger`, `core/designsystem`, `core/resources` e a própria feature. O escopo `Contas` é o card de hoje, número por número.
 
 ## Goals / Non-Goals
 
@@ -36,7 +36,9 @@ O que **não** muda: nenhuma escrita, nenhuma migração, nenhum valor hoje exib
 - Unificar o escopo desta tela com `ReportPerspective`/`scopeStats`. Menor escopo, por decisão explícita.
 - Escopo por conta ou cartão individual. O enum tem três valores, não N.
 - Fazer os chips de filtro afetarem o resumo.
-- Aposentar o default `balanceUpTo(accountId = null) → ASSET`.
+- Mudar a rota, a `api` da feature ou qualquer navegação de origem.
+- Mudar o mapeamento ou a aparência do item de lista (`core/ui`).
+- Aposentar o default `balanceUpTo(accountId = null) → ASSET`, ou rever a classificação de `assetMonthTotals`.
 - Intervalo livre de período. O eixo continua sendo mês.
 - Alinhar o escopo `Cartões` ao ciclo de fatura. Competência de lançamento, coerente com a lista.
 
@@ -44,84 +46,93 @@ O que **não** muda: nenhuma escrita, nenhuma migração, nenhum valor hoje exib
 
 ### D1 — O escopo é um perímetro de contas, e o que é interno a ele não é fluxo
 
-A regra que dá coerência aos três modos já existe no razão, aplicada a um caso só: `assetMonthTotals` exige contraperna nominal ou `EQUITY` (`EntryDao.kt:315-322`), o que é exatamente *"não é transferência e não é pagamento de fatura"* — as duas formas que movem dinheiro **dentro** do perímetro das contas. A change generaliza a regra em vez de criar exceções por escopo:
+Um lançamento cujas pernas estejam **todas dentro** do perímetro soma zero ali dentro (`Σ = 0` por lançamento é invariante do razão), logo não move o fechamento daquele escopo. Isso não é regra nova nem exceção por tipo: é a mesma razão pela qual a transferência entre contas já não aparece em `assetMonthTotals` (`EntryDao.kt:315-322`).
 
-| escopo | perímetro | interno (não é fluxo) |
+| escopo | perímetro | interno |
 |---|---|---|
-| Contas | contas `ASSET` | transferência conta→conta |
-| Cartões | contas `LIABILITY` | transferência entre cartões, se existir |
-| Tudo | `ASSET` + `LIABILITY` | transferência **e** pagamento de fatura |
+| Contas | `ASSET` | transferência conta→conta |
+| Cartões | `LIABILITY` | nenhum lançamento do produto hoje |
+| Geral | `ASSET` + `LIABILITY` | transferência **e** pagamento de fatura |
 
-Daí sai, sem decisão adicional, que "Pagamentos" no escopo Tudo é informativo: ele é interno ao perímetro. É exibido — o usuário quer vê-lo — mas fora da soma, em tom secundário e sem sinal.
+Note que o pagamento de fatura **não** é interno ao escopo Contas — ele tem perna `LIABILITY`, fora do perímetro, e por isso move o saldo. É por isso que o card de hoje tem a linha "Faturas" (`SummaryCard.kt:96-104`), e ela permanece.
 
-Alternativa descartada: **omitir a linha** no escopo Tudo, como as transferências são omitidas hoje. É mais consistente com a regra levada ao pé da letra, mas apaga da tela justamente o evento que o usuário não consegue conciliar. Exibir-sem-somar é o que responde à dor.
+Daí sai, sem decisão adicional, que "Pagamentos" no escopo Geral é informativo: ele é interno ao perímetro. É exibido — o usuário quer vê-lo — mas fora da soma e sem sinal.
+
+Alternativa descartada: **omitir a linha** no escopo Geral, como as transferências são omitidas hoje. É mais consistente com a regra ao pé da letra, mas apaga da tela justamente o evento que o usuário não consegue conciliar. Exibir-sem-somar é o que responde à dor.
 
 Alternativa descartada: **exibir com sinal**, `−800`. A coluna deixaria de fechar com o total logo abaixo — o defeito que a change existe para eliminar, reintroduzido em outro eixo.
 
-### D2 — A identidade aritmética é a invariante, e ela cai de graça da partida dobrada
+### D2 — A identidade é do razão, não da UI
 
-Para todo escopo: `fechamento = abertura + entradas − saídas + ajustes`.
-
-No escopo Tudo isso é verificável em uma linha, e é o argumento de que o design está certo:
+Para todo escopo, sendo `P` o perímetro de contas:
 
 ```
-Δ ASSET     = income − expenseA + adjA − pagamento
-Δ LIABILITY =        − expenseL + adjL + pagamento
-──────────────────────────────────────────────────
-Δ líquido   = income − (expenseA + expenseL) + (adjA + adjL)
-                                    ↑ o pagamento cancela
+saldoNatural(P, m) = saldoNatural(P, m−1) + Σ entries de P no mês m
 ```
 
-Não é convenção de exibição: é a soma das duas pernas do mesmo lançamento. É por isso que a linha "Saídas" pode agregar conta e cartão sem dupla contagem — uma compra no cartão não tem perna `ASSET`, os dois conjuntos são disjuntos.
+As linhas de fluxo exibidas **particionam** `Σ entries de P no mês`. Lançamentos internos contribuem zero por construção, não por exclusão. Abertura e fechamento são exibidos com o sinal de exibição da natureza — para `LIABILITY`, dívida positiva (`AccountType.displaySign`).
 
-Essa identidade vira teste, um por escopo, incluindo o caso com ajuste de fatura — que **hoje falharia**, o que é a justificativa de D3.
+Instanciando:
+
+```
+Contas    Σ ASSET      = income − expense + adj − pagamento
+                         ↑ as quatro linhas: Entradas, Saídas, Ajustes, Faturas
+
+Cartões   Σ LIABILITY  = −gastos + pagamentos + adj
+          exibido       devido(m) = devido(m−1) + gastos − pagamentos − adj
+
+Geral     Σ ambos      = income − (expenseA + expenseL) + (adjA + adjL)
+                         ↑ o pagamento cancela entre as duas pernas
+```
+
+**Uma versão anterior deste documento escrevia a identidade em vocabulário de UI** (`fechamento = abertura + entradas − saídas + ajustes`) e estava errada: faltava o termo do pagamento no escopo Contas e o sinal invertia em Cartões. A formulação acima é a correta, e é dela que o teste de cada escopo deriva.
 
 ### D3 — `LiabilityMonthFlows` ganha `adjustment`, por simetria e por necessidade
 
-A query de `liabilityMonthTotals` classifica só `eq = 0` (`EntryDao.kt:275-289`): um ajuste de fatura não cai em `expense` nem em `payment`, e desaparece. A irmã `assetMonthTotals` tem o ramo `eq = 1`. Hoje a assimetria é invisível porque nenhuma tela tenta fechar a conta do cartão; no escopo Cartões ela aparece na primeira linha como `dívida inicial + gastos − pagamentos ≠ dívida final`.
+A query de `liabilityMonthTotals` classifica só `eq = 0` (`EntryDao.kt:275-289`): um ajuste de fatura não cai em `expense` nem em `payment`, e desaparece. A irmã `assetMonthTotals` tem o ramo `eq = 1`. Hoje a assimetria é invisível porque nenhuma tela tenta fechar a conta do cartão; com a change ela quebraria **dois** escopos — Cartões e Geral, cuja linha "Ajustes" é `adjA + adjL`.
 
-O dono é o razão, não a tela: a correção é um `CASE WHEN eq = 1` e um campo, espelhando exatamente o que já existe do lado `ASSET`. Nenhum consumidor atual de `LiabilityMonthFlows` (só a linha "Faturas" do próprio `SummaryCard`) muda de valor.
+O dono é o razão, não a tela: a correção é um `CASE WHEN eq = 1` e um campo, espelhando o que já existe do lado `ASSET`. O único consumidor atual de `LiabilityMonthFlows` (a linha "Faturas" do `SummaryCard`) não muda de valor.
+
+**Nota de precisão:** `liabilityMonthTotals.payment` não significa literalmente "pagamento de fatura" — é *qualquer* perna `LIABILITY` positiva sem contraperna `EQUITY`. Hoje isso coincide porque `BuildTransactionUseCaseImpl` recusa lançamento em cartão que não seja despesa (`CreditCardExpenseOnly`), então não existe estorno de compra no cartão. Se um dia existir, ele entraria em `payment` — e a neutralidade do escopo Geral deixaria de valer para aquele valor, sem que o teste acusasse. A invariante mora no formulário, não no razão; registrado em Risks.
 
 ### D4 — Saldo até o mês passa a ser parametrizado por `AccountType`
 
 `assetsBalanceUpToMonth` (`EntryDao.kt:169-176`) é a query certa com o tipo cravado em literal. Generalizá-la para receber `type` dá, de uma vez:
 
-- a dívida de abertura e fechamento do escopo Cartões (`LIABILITY`, exibida como devido positivo — passivos são armazenados negativos, a inversão é de exibição e já tem dono em `AccountType.displaySign`);
-- o líquido de abertura e fechamento do escopo Tudo, como **soma** dos dois — sem query nova e sem inventar sinal.
+- a dívida de abertura e fechamento do escopo Cartões (`LIABILITY`, exibida como devido positivo);
+- o líquido de abertura e fechamento do escopo Geral, como **soma** dos dois — sem query nova e sem inventar sinal.
 
-`IEntryRepository` ganha a leitura por natureza ao lado de `balanceUpTo`, que permanece com seu default. Não é duplicação: `balanceUpTo(target, null)` passa a delegar à forma parametrizada com `ASSET`, um caminho só.
+`IEntryRepository` ganha a leitura por natureza ao lado de `balanceUpTo`, que permanece com seu default e passa a delegar à forma parametrizada com `ASSET` — um caminho só, sem duplicar o agregado.
 
-Alternativa descartada: **query dedicada de líquido até o mês** (irmã de `netWorthCents`). Uma terceira query para o que já é a soma de duas — e cada agregado novo é mais um lugar onde a regra pode divergir.
+Alternativa descartada: **query dedicada de líquido até o mês** (irmã de `netWorthCents`, que é all-time e não serve). Uma terceira consulta para o que já é a soma de duas — e cada agregado novo é mais um lugar onde a regra pode divergir.
 
-Alternativa descartada: **reusar `scopeStats(scopeAccountIds, …)`**, que já entrega `openingBalance` e `balance` para um conjunto de contas. É a generalização certa e é para onde isso deve convergir um dia, mas exigiria resolver "todas as contas de natureza X" em ids a cada leitura — trabalho de resolução que o `CalculateReportStatsUseCase` faz porque o report precisa de subconjuntos. Aqui o perímetro **é** a natureza. Fora do menor escopo acordado.
+Alternativa descartada: **reusar `scopeStats(scopeAccountIds, …)`**, que já entrega `openingBalance` e `balance` para um conjunto de contas. É a generalização certa e é para onde isso deve convergir um dia, mas exigiria resolver "todas as contas de natureza X" em ids a cada leitura. Aqui o perímetro **é** a natureza. Fora do menor escopo acordado.
 
-### D5 — `BalanceOverview` deixa de ser um shape e passa a ser três
+### D5 — O resumo passa a ter três formas, tipadas
 
 Hoje `BalanceOverview` (`TransactionsUiState.kt:39-48`) tem seis campos fixos e dois flags `mustShow*`, e o `SummaryCard` os desenha em ordem fixa. Com três escopos de linhas diferentes, esticar esse shape produziria um objeto com campos que só valem em um modo e flags cruzados — o modelo de UI decidindo o que é visível, que é o que `presentation-mapping` proíbe.
 
-O resumo passa a ser uma **lista de linhas já resolvidas** (rótulo, valor, sinal de exibição, papel: abertura/fluxo/informativa/fechamento) produzida por escopo, e o `SummaryCard` só renderiza. A escolha de quais linhas existem é do mapper; o card não conhece escopo.
+O resumo passa a ser uma **`sealed` de três variantes**, uma por escopo, cada uma com os seus campos — o conjunto de linhas de cada escopo é fixo e conhecido, então não há razão para perder tipagem. O `SummaryCard` renderiza a variante; a decisão de quais linhas existem é do mapper, não do card.
 
-Consequência boa: a linha condicional (`mustShowPayment`, `mustShowAccountAdjustment`) deixa de ser flag e vira ausência de linha, pelo mesmo mecanismo.
+Alternativa descartada: **lista genérica de linhas** (rótulo, valor, papel). Mais flexível do que o problema exige, apaga a tipagem do estado e obriga a reescrever `SummaryRow`/`SignDisplay` junto.
 
-### D6 — A perspectiva da linha vem do escopo, pela natureza da conta
+Consequência boa em qualquer das formas: a linha condicional (`mustShowPayment`, `mustShowAccountAdjustment`) deixa de ser flag e vira ausência de linha.
 
-`toTransactionUi` já aceita perspectiva, mas só por `accountId` (`TransactionUiMapper.kt:25-33`). Aqui o ponto de vista não é uma conta, é uma **natureza**:
+### D6 — O escopo recorta a lista; não reinterpreta o item
 
-| escopo | perna exibida | muda hoje? |
-|---|---|---|
-| Contas | perna `ASSET` | não — coincide com `primaryEntry` |
-| Cartões | perna `LIABILITY` | **sim** |
-| Tudo | `primaryEntry` (perna que sai) | não |
+O item de lista **não muda**. Ele já é identificado por natureza, não por sinal: `TransactionCard` escolhe cor e ícone por `label` para pagamento e transferência (`TransactionCard.kt:177-196`), o título de um pagamento é "Pagamento de fatura" (`:161`), e o valor exibido é `abs` da perna (`TransactionUiMapper.kt:41`) — idêntico nos dois livros, porque as pernas de um lançamento têm a mesma magnitude. Despesa comum sai sem sinal; só transferência e ajuste levam sinal (`TransactionCard.kt:142-151`).
 
-Sem isso, no escopo Cartões um pagamento de fatura apareceria como `−500` sob um total dizendo que a dívida caiu R$ 500. A regra de `presentation-mapping` ("perspectiva é argumento do mapeamento, resolvida no momento do mapeamento, onde a ausência é tratável") continua valendo literalmente: sem perna daquela natureza, o mapper devolve `null` e o item é omitido — que é, aliás, o mesmo mecanismo que filtra a lista por escopo.
+Uma versão anterior propunha mapear o item pela perna do escopo, o que faria um pagamento ler `+500` em Cartões. Descartado pelo usuário, e a inspeção do card confirma que era solução para um problema inexistente: nenhum valor exibido mudaria, e a identidade do item já vem da natureza.
 
-Isso levanta a possibilidade de **o escopo filtrar a lista pelo próprio mapper**, em vez de por um predicado separado sobre `hasLiabilityLeg`. Fica como questão aberta (Q1).
+Consequência: `core/ui` não é tocado, e o recorte da lista por escopo é um predicado sobre a presença de perna da natureza do perímetro.
 
-### D7 — Default `ALL`, e o chip de alvo só existe nele
+### D7 — Default Geral, e o chip de alvo só existe nele
 
-Nascer em `ACCOUNTS` preservaria o resumo atual, mas **esconderia as compras de cartão da lista** — que hoje aparecem. Trocar um resumo incompleto por uma lista incompleta é regressão percebida. Com `ALL`, a lista fica byte a byte a de hoje e o resumo passa a explicá-la: o defeito é corrigido do lado que estava errado.
+Nascer em `ACCOUNTS` preservaria o resumo atual, mas **esconderia as compras de cartão da lista** — que hoje aparecem. Trocar um resumo incompleto por uma lista incompleta é regressão percebida. Com `ALL`, a lista fica igual à de hoje e o resumo passa a explicá-la: o defeito é corrigido do lado que estava errado.
 
-`TransactionTarget` como chip sobrevive só em `ALL`, onde ainda tem trabalho a fazer (recortar a lista sem reconciliar o total). Em `ACCOUNTS`/`CARDS` ele seria a mesma decisão em dois controles, com estados contraditórios possíveis. A regra que o justifica é a mesma que governa o layout: **o escopo reconcilia, o filtro apenas recorta.**
+`TransactionTarget` como chip sobrevive só em Geral, onde ainda tem trabalho a fazer (recortar a lista sem reconciliar o total). Em Contas/Cartões ele seria a mesma decisão em dois controles, com estados contraditórios possíveis. A regra que o justifica é a mesma que governa o layout: **o escopo reconcilia, o filtro apenas recorta.**
+
+Como o chip permanece, `TransactionsRoute.filterTarget` continua tendo sentido e **não é tocado**. O escopo é estado de tela, não parâmetro de rota — nenhuma navegação de origem muda.
 
 ### D8 — Alcance é posicional, e por isso os controles moram no card
 
@@ -129,7 +140,7 @@ A tela passa a ter duas classes de controle, distinguidas por onde estão:
 
 ```
 ┌─ card ────────────────────────────────┐
-│  [ julho 2026 ▾ ]   [ Tudo ▾ ]        │  governa card + lista
+│  [ julho 2026 ▾ ]   [ Geral ▾ ]       │  governa card + lista
 │  ─────────────────────────────────    │
 │  abertura · fluxos · fechamento       │
 └───────────────────────────────────────┘
@@ -138,7 +149,11 @@ A tela passa a ter duas classes de controle, distinguidas por onde estão:
    lista
 ```
 
-A moldura do card passa a significar "isto vale para tudo daqui para baixo". O `MonthSelector` sai do `topBar` (`TransactionsScreen.kt:70-84`) e vira chip sem as setas `‹ ›` — o picker continua no toque do rótulo, via `showPickerChevron`.
+A moldura do card passa a significar "isto vale para tudo daqui para baixo".
+
+**Atenção de implementação:** o `MonthSelector` atual **não tem** modo sem setas — `‹` e `›` são `IconButton` incondicionais (`MonthSelector.kt:52-57,98-103`), e `showPickerChevron` controla o `▾`, não elas. A tela já passa `showPickerChevron = false` hoje (`TransactionsScreen.kt:78`). O chip de período precisa do **inverso disso**: sem setas, **com** `▾` — que é o que dá simetria com o chip de escopo. Ou o componente ganha o modo, ou o chip é componente próprio.
+
+Os dois chips SHALL ter a mesma interação (ambos abrem menu ao toque); dois chips gêmeos com afordâncias diferentes quebram a simetria tanto quanto formas diferentes.
 
 Alternativa descartada: **segmented button de três posições** para o escopo. Torna os três modos descobríveis de imediato e custa um toque, mas quebra a simetria visual com o chip de período ao lado. Decisão de produto do usuário: simetria.
 
@@ -146,20 +161,21 @@ Alternativa descartada: **manter as setas de mês**. Navegar mês passa de um to
 
 ## Risks / Trade-offs
 
-- **Os controles saem de vista ao rolar** → hoje o mês vive no `topBar` e está sempre visível; dentro do card, que é `item` da `LazyColumn`, ele rola para fora — e o card fica maior que o atual. Registrado como **débito de produto** no `proposal.md`: se incomodar, card fixo acima da lista ou `topBar` colapsante com mês + escopo. Decisão consciente de tentar dentro primeiro.
+- **Os controles saem de vista ao rolar** → hoje o mês vive no `topBar` e está sempre visível; dentro do card, que é `item` da `LazyColumn`, ele rola para fora — e o card fica maior que o atual. Registrado como **débito de produto** no `proposal.md`: se incomodar, card fixo acima da lista ou `topBar` colapsante. Decisão consciente de tentar dentro primeiro.
 
-- **Duas classes de controle na mesma tela, distinguidas só por posição** → um usuário pode esperar que filtrar por categoria mude o resumo. Mitigação: a fronteira visual do card, e o fato de que o resumo declara o seu escopo por escrito. Fazer os filtros afetarem o resumo exigiria agregados parametrizados por categoria/recorrência que não existem, e somar a lista carregada é proibido por `ledger-reporting`.
+- **A neutralidade do pagamento no escopo Geral depende de uma invariante do formulário, não do razão** (D3) → se um dia existir perna `LIABILITY` positiva com contraperna nominal (estorno de compra no cartão), ela entra em `payment`, sai da soma e move o líquido sem que o teste acuse. Mitigação: o teste de neutralidade deve construir o caso a partir de um pagamento real, e a nota de D3 fica no design para quem revisitar `CreditCardExpenseOnly`.
 
-- **Um pagamento de fatura passa a aparecer duas vezes com sinais opostos** (Contas e Cartões) → é o mesmo evento em dois livros, e é o efeito desejado; mas é a leitura mais contraintuitiva da change. Mitigação: os dois nunca aparecem na mesma tela ao mesmo tempo, e em `Tudo` — o único modo que vê os dois — ele aparece uma vez, neutro.
+- **Duas classes de controle na mesma tela, distinguidas só por posição** → um usuário pode esperar que filtrar por categoria mude o resumo. Mitigação: a fronteira visual do card, e o fato de que o resumo declara o seu escopo por escrito. Fazer os filtros afetarem o resumo exigiria agregados parametrizados que não existem, e somar a lista carregada é proibido por `ledger-reporting`.
 
-- **`SummaryCard` é reescrito, e há teste de caracterização apoiado no shape atual** → `TransactionsViewModelCharacterizationTest` caracteriza o resumo de hoje. Mitigação: ele passa a ser o caso do escopo `Contas` e deve continuar verde valor a valor — é a rede de segurança da change, não uma vítima dela.
+- **`SummaryCard` é reescrito, e há teste de caracterização apoiado no shape atual** → `TransactionsViewModelCharacterizationTest` caracteriza o resumo de hoje. Mitigação: ele passa a ser o caso do escopo Contas e deve continuar verde valor a valor — é a rede de segurança da change, não uma vítima dela.
+
+- **Método novo em `IEntryRepository` quebra os fakes de teste** que implementam a interface em `creditcards`, `dashboard` e `transactions` → mitigação: task própria, e a leitura por natureza pode nascer com implementação default sobre `balanceUpTo` para não quebrar ninguém de imediato.
 
 - **A generalização de `assetsBalanceUpToMonth` toca uma query usada pelo dashboard** → mudança de assinatura, não de resultado; `balanceUpTo(target, null)` continua devolvendo `ASSET`. Mitigação: os testes existentes de saldo cobrem isso e não devem mudar de expectativa.
 
-- **`TransactionScope` na `api` da feature é um quarto vocabulário de escopo** (com `ReportPerspective`, `TransactionTarget` e `scopeStats`) → dívida conceitual assumida em troca de menor escopo. Mitigação: `proposal.md` a registra como fora de escopo explícito, não como omissão.
+- **`TransactionScope` é um quarto vocabulário de escopo** (com `ReportPerspective`, `TransactionTarget` e `scopeStats`) → dívida conceitual assumida em troca de menor escopo. Mitigação: `proposal.md` a registra como fora de escopo explícito, não como omissão.
 
 ## Open Questions
 
-- **Q1 — O escopo filtra a lista por predicado ou pelo mapper?** Se `toTransactionUi` já devolve `null` quando não há perna da natureza do escopo, o filtro da lista pode ser o próprio mapeamento — um mecanismo em vez de dois, e impossível de divergir. Resolver na implementação, olhando o que fica mais legível no `combine` do ViewModel.
-- **Q2 — O escopo persiste entre visitas à tela?** Hoje mês e filtros são estado de sessão do ViewModel. Manter o mesmo comportamento é o default; se o escopo for lembrado, a rota e o estado precisam concordar sobre quem vence.
-- **Q3 — Rótulo do escopo `Tudo` no chip.** "Tudo" é ambíguo ao lado de um chip de mês (tudo = todos os meses?). Alternativas: "Geral", "Contas e cartões". Decisão de copy, na implementação.
+- **Q1 — O escopo persiste entre visitas à tela?** Hoje mês e filtros são estado de sessão do ViewModel; manter o mesmo comportamento é o default.
+- **Q2 — Rótulo do escopo Geral.** "Geral" é o nome adotado. Se na tela ficar ambíguo ao lado do chip de mês, a alternativa é "Contas e cartões".

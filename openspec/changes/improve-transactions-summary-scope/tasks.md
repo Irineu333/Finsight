@@ -54,3 +54,5 @@
 - [x] 6.5 O escopo cartões passa a ser exibido **inteiro** no sinal do razão — gastos negativos, pagamentos positivos, abertura e fechamento negativos quando se deve —, revertendo a decisão de dívida positiva de D2 (ver 6.6)
 - [x] 6.6 Ajustar `BalanceOverview.Cards`, o `SummaryCard`, o `design.md` (D2) e a spec `transaction-scope` ao sinal do razão
 - [x] 6.7 O filtro de parcelas não é oferecido no escopo contas, e deixa de recortar a lista quando não é oferecido — a mesma regra do filtro de alvo, generalizada na spec
+- [x] 6.8 Simetria vertical da tela: o `contentPadding` da lista era `top = 8, bottom = 16` — os 8 vinham do `padding(vertical = 8)` do `topBar` removido e ficaram órfãos
+- [x] 6.9 Simetria vertical do card: o respiro próprio do chip empilhava sobre o padding do card, dando 26 acima contra 20 abaixo. O padding superior passa a descontá-lo (`20.dp - CHIP_INSET`), com o valor extraído para uma constante para que os dois lugares não divirjam

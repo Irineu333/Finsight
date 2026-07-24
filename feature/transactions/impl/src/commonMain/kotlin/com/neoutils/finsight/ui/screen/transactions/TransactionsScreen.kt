@@ -75,7 +75,7 @@ private fun TransactionsContent(
                 // from; the bar is gone, the inset still has to be honoured.
                 .statusBarsPadding()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item(

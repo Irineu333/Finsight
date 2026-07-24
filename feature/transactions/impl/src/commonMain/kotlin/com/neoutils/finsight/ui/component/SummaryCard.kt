@@ -86,7 +86,10 @@ fun SummaryCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                // The chips carry their own inset, so a flat 20 all round reads as more
+                // room above than below: the top is discounted by that inset so the
+                // label lands where every other line of the card starts.
+                .padding(start = 20.dp, top = 20.dp - CHIP_INSET, end = 20.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -322,7 +325,7 @@ private fun SummaryChip(
         contentColor = colorScheme.onSurface,
     ) {
         Row(
-            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = CHIP_INSET, bottom = CHIP_INSET),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = label, style = chipTextStyle)
@@ -400,6 +403,13 @@ private fun scopeName(scope: TransactionScope) = stringResource(
 )
 
 private val chipTextStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+
+/**
+ * The chip's own vertical breathing room. Below the row it is what separates the chips
+ * from the figures, and there it is welcome; above it, it lands on top of the card's
+ * padding, which is why that one is discounted by exactly this much.
+ */
+private val CHIP_INSET = 6.dp
 
 @Composable
 private fun SummaryRow(

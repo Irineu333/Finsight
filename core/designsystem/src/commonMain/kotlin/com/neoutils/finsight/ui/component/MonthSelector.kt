@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,12 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 
+/**
+ * The month axis, as a title with its picker. The two step arrows are optional: a
+ * caller that presents the month as a chip alongside other chips wants the picker
+ * affordance ([showPickerChevron]) without them, so that stepping and picking are not
+ * two competing ways to do the same thing in a control the size of a chip.
+ */
 @Composable
 fun MonthSelector(
     selectedYearMonth: YearMonth,
@@ -36,6 +43,8 @@ fun MonthSelector(
     onNextMonth: () -> Unit,
     onMonthSelected: ((YearMonth) -> Unit)? = null,
     showPickerChevron: Boolean = true,
+    showStepArrows: Boolean = true,
+    textStyle: TextStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
     modifier: Modifier = Modifier
 ) = Row(
     modifier = modifier,
@@ -49,11 +58,13 @@ fun MonthSelector(
         (anchorWidthPx.toDp() - menuWidth) / 2
     }
 
-    IconButton(onClick = onPreviousMonth) {
-        Icon(
-            imageVector = Icons.Default.ChevronLeft,
-            contentDescription = null,
-        )
+    if (showStepArrows) {
+        IconButton(onClick = onPreviousMonth) {
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = null,
+            )
+        }
     }
 
     Box {
@@ -63,8 +74,7 @@ fun MonthSelector(
         ) {
             Text(
                 text = LocalDateFormats.current.yearMonth.format(selectedYearMonth),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = textStyle,
                 modifier = if (onMonthSelected != null) {
                     Modifier.clickable { isMonthPickerExpanded = true }
                 } else {
@@ -95,10 +105,12 @@ fun MonthSelector(
         }
     }
 
-    IconButton(onClick = onNextMonth) {
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-        )
+    if (showStepArrows) {
+        IconButton(onClick = onNextMonth) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+            )
+        }
     }
 }

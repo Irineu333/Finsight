@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,19 +61,12 @@ class TransactionsNatureFilterTest {
 
     private val transactions = listOf(expense, income, transfer, payment, adjustment)
 
-    /** Reports exactly the figures the five transactions above compose. */
-    private val ledger = LedgerBalance(
-        month = month, balance = -20.0, payment = 80.0,
-        income = 100.0, expense = 30.0, adjustment = 40.0,
-    )
-
     private fun viewModel(filterLabel: TransactionLabel? = null) = TransactionsViewModel(
         filterLabel = filterLabel, category = null, filterTarget = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
-        entryRepository = ledger,
-        calculateBalanceUseCase = CalculateBalanceUseCase(ledger),
+        entryRepository = FakeLedger(transactions),
     )
 
     private val TransactionsUiState.listed get() = transactions.values.flatten()
@@ -86,7 +78,7 @@ class TransactionsNatureFilterTest {
         vm.uiState.test {
             // Skip the empty initialValue of stateIn; assert on the computed state.
             var state = awaitItem()
-            while (state.balanceOverview.income == 0.0) state = awaitItem()
+            while (state.transactions.isEmpty()) state = awaitItem()
             if (label == null) {
                 result = state.listed
             } else {
@@ -150,7 +142,7 @@ class TransactionsNatureFilterTest {
         // over null and open the list unfiltered instead of failing.
         viewModel(filterLabel = TransactionLabel.PAYMENT).uiState.test {
             var state = awaitItem()
-            while (state.balanceOverview.income == 0.0) state = awaitItem()
+            while (state.transactions.isEmpty()) state = awaitItem()
             assertEquals(TransactionLabel.PAYMENT, state.selectedLabel)
             assertEquals(listOf(payment), state.listed)
             cancelAndIgnoreRemainingEvents()

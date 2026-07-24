@@ -66,4 +66,7 @@ data class Transaction(
 
     /** Whether any leg posts to a liability — a card purchase or its payment. */
     val hasLiabilityLeg: Boolean get() = entries.any { it.account.type == AccountType.LIABILITY }
+
+    /** The same fact for the other monetary nature — whether money moved in an account. */
+    val hasAssetLeg: Boolean get() = entries.any { it.account.type == AccountType.ASSET }
 }

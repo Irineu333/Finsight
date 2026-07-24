@@ -3,8 +3,6 @@
 package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.ui.model.InvoiceOverview
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
@@ -20,7 +18,8 @@ private val currentMonth
 
 data class TransactionsUiState(
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
-    val balanceOverview: BalanceOverview = BalanceOverview(),
+    val balanceOverview: BalanceOverview = BalanceOverview.Overall(),
+    val selectedScope: TransactionScope = TransactionScope.ALL,
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
@@ -34,22 +33,66 @@ data class TransactionsUiState(
     val isCurrentMonth = selectedYearMonth == currentMonth
     val isFutureMonth = selectedYearMonth > currentMonth
 
-    data class BalanceOverview(
-        val openingBalance: Double = 0.0,
-        val income: Double = 0.0,
-        val expense: Double = 0.0,
-        val adjustment: Double = 0.0,
-        val finalBalance: Double = 0.0,
-        val payment: Double = 0.0,
-    ) {
-        val mustShowPayment = payment != 0.0
-        val mustShowAccountAdjustment = adjustment != 0.0
+    /**
+     * Whether the target chip still has work to do. In the scoped modes it would be
+     * the same decision in a second control, able to contradict the first.
+     */
+    val mustShowTargetFilter = selectedScope == TransactionScope.ALL
+
+    /**
+     * The summary of one scope — opening, flows, closing — in three shapes rather than
+     * one shape with fields that only apply in one mode. Which lines exist is decided
+     * here, by the mapper; a `null` flow is a line the month does not have, so the card
+     * never has to ask whether a number is worth showing.
+     */
+    sealed interface BalanceOverview {
+
+        /**
+         * The `ASSET` perimeter. An invoice payment *is* a flow here — its liability
+         * leg lies outside the perimeter — which is why [invoicePayment] exists and a
+         * transfer between accounts does not appear at all.
+         *
+         * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
+         */
+        data class Accounts(
+            val openingBalance: Double = 0.0,
+            val income: Double = 0.0,
+            val expense: Double = 0.0,
+            val invoicePayment: Double? = null,
+            val adjustment: Double? = null,
+            val finalBalance: Double = 0.0,
+        ) : BalanceOverview
+
+        /**
+         * The `LIABILITY` perimeter, shown in the nature's display sign: debt reads
+         * positive. [adjustment] is likewise expressed as debt, so every line adds up
+         * in the same direction as the total above it.
+         *
+         * `finalDebt = openingDebt + expense − payment + adjustment`
+         */
+        data class Cards(
+            val openingDebt: Double = 0.0,
+            val expense: Double = 0.0,
+            val payment: Double? = null,
+            val adjustment: Double? = null,
+            val finalDebt: Double = 0.0,
+        ) : BalanceOverview
+
+        /**
+         * Both perimeters at once. [expense] aggregates account and card spending — the
+         * two sets are disjoint, since a card purchase has no `ASSET` leg — and
+         * [invoicePayment] is *informative*: both of its legs are inside the perimeter,
+         * so it sums to zero here and must be shown without a sign, outside the total.
+         *
+         * `finalNet = openingNet + income − expense + adjustment`
+         */
+        data class Overall(
+            val openingNet: Double = 0.0,
+            val income: Double = 0.0,
+            val expense: Double = 0.0,
+            val invoicePayment: Double? = null,
+            val adjustment: Double? = null,
+            val finalNet: Double = 0.0,
+        ) : BalanceOverview
     }
-
-    data class CreditCardOverview(
-        val expense: Double = 0.0,
-        val total: Double = 0.0,
-        val invoices: List<InvoiceOverview> = emptyList(),
-    )
-
 }

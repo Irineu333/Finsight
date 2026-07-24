@@ -518,6 +518,16 @@
     <string name="summary_card_final_balance">Final Balance</string>
     <string name="summary_card_see_invoices">See invoices</string>
 
+    <string name="summary_card_scope_all">Overall</string>
+    <string name="summary_card_scope_accounts">Accounts</string>
+    <string name="summary_card_scope_cards">Cards</string>
+    <string name="summary_card_opening_debt">Initial Debt</string>
+    <string name="summary_card_final_debt">Final Debt</string>
+    <string name="summary_card_card_expenses">Spending</string>
+    <string name="summary_card_payments">Payments</string>
+    <string name="summary_card_opening_net">Initial Net</string>
+    <string name="summary_card_net">Net</string>
+
     <string name="transaction_card_transfer">Transfer</string>
     <string name="transaction_card_payment">Invoice Payment</string>
     <string name="transaction_card_balance_adjustment">Balance Adjustment</string>

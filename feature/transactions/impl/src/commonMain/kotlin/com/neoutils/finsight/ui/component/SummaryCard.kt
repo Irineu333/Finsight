@@ -9,10 +9,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,7 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState
+import com.neoutils.finsight.ui.screen.transactions.TransactionScope
+import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -30,18 +36,40 @@ import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.summary_card_adjustments
+import com.neoutils.finsight.resources.summary_card_card_expenses
 import com.neoutils.finsight.resources.summary_card_current_balance
 import com.neoutils.finsight.resources.summary_card_final_balance
+import com.neoutils.finsight.resources.summary_card_final_debt
 import com.neoutils.finsight.resources.summary_card_income
+import com.neoutils.finsight.resources.summary_card_net
 import com.neoutils.finsight.resources.summary_card_opening_balance
+import com.neoutils.finsight.resources.summary_card_opening_debt
+import com.neoutils.finsight.resources.summary_card_opening_net
 import com.neoutils.finsight.resources.summary_card_invoices
 import com.neoutils.finsight.resources.summary_card_outgoing
+import com.neoutils.finsight.resources.summary_card_payments
+import com.neoutils.finsight.resources.summary_card_scope_accounts
+import com.neoutils.finsight.resources.summary_card_scope_all
+import com.neoutils.finsight.resources.summary_card_scope_cards
 import com.neoutils.finsight.resources.summary_card_see_invoices
+import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * The summary of the selected perimeter. Period and scope live *inside* the card, at
+ * the top: the card's frame is what says "this governs everything below" — the chips
+ * govern the card and the list, while the filters under it govern only the list.
+ *
+ * The chips stay anchored while the body animates, so switching scope reads as the same
+ * card answering a different question rather than as a new card arriving.
+ */
 @Composable
 fun SummaryCard(
-    balanceOverview: TransactionsUiState.BalanceOverview,
+    balanceOverview: BalanceOverview,
+    selectedScope: TransactionScope,
+    selectedYearMonth: YearMonth,
+    onScopeSelected: (TransactionScope) -> Unit,
+    onMonthSelected: (YearMonth) -> Unit,
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
     onEditBalance: (() -> Unit)? = null,
@@ -61,72 +89,301 @@ fun SummaryCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PeriodChip(
+                    selectedYearMonth = selectedYearMonth,
+                    onMonthSelected = onMonthSelected
+                )
+
+                ScopeChip(
+                    selectedScope = selectedScope,
+                    onScopeSelected = onScopeSelected
+                )
+            }
+
             AnimatedContent(
                 targetState = balanceOverview,
                 transitionSpec = {
                     fadeIn() togetherWith fadeOut()
                 }
-            ) { balanceOverview ->
+            ) { overview ->
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SummaryRow(
-                        label = stringResource(Res.string.summary_card_opening_balance),
-                        amount = balanceOverview.openingBalance,
-                        color = colorScheme.onSurface,
-                        onEditClick = onEditOpeningBalance,
-                        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
-                    )
-
-                    SummaryRow(
-                        label = stringResource(Res.string.summary_card_income),
-                        amount = balanceOverview.income,
-                        color = Income,
-                        signDisplay = SignDisplay.ALWAYS_POSITIVE
-                    )
-
-                    SummaryRow(
-                        label = stringResource(Res.string.summary_card_outgoing),
-                        amount = balanceOverview.expense,
-                        color = Expense,
-                        signDisplay = SignDisplay.ALWAYS_NEGATIVE
-                    )
-
-                    if (balanceOverview.mustShowPayment) {
-                        SummaryRow(
-                            label = stringResource(Res.string.summary_card_invoices),
-                            amount = balanceOverview.payment,
-                            color = InvoicePayment,
-                            onNavigateClick = onInvoiceClick,
-                            signDisplay = SignDisplay.ALWAYS_NEGATIVE
+                    when (overview) {
+                        is BalanceOverview.Accounts -> AccountsBody(
+                            overview = overview,
+                            isCurrentMonth = isCurrentMonth,
+                            onEditBalance = onEditBalance,
+                            onEditOpeningBalance = onEditOpeningBalance,
+                            onInvoiceClick = onInvoiceClick,
                         )
-                    }
 
-                    if (balanceOverview.mustShowAccountAdjustment) {
-                        SummaryRow(
-                            label = stringResource(Res.string.summary_card_adjustments),
-                            amount = balanceOverview.adjustment,
-                            color = Adjustment,
-                            signDisplay = SignDisplay.SHOW_ALWAYS
-                        )
+                        is BalanceOverview.Cards -> CardsBody(overview)
+
+                        is BalanceOverview.Overall -> OverallBody(overview)
                     }
                 }
             }
-
-            HorizontalDivider()
-
-            SummaryRow(
-                label = if (isCurrentMonth) stringResource(Res.string.summary_card_current_balance) else stringResource(Res.string.summary_card_final_balance),
-                amount = balanceOverview.finalBalance,
-                color = colorScheme.onSurface,
-                config = SummaryRowConfig.Total,
-                onEditClick = onEditBalance,
-                signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
-            )
         }
     }
 }
+
+@Composable
+private fun ColumnScope.AccountsBody(
+    overview: BalanceOverview.Accounts,
+    isCurrentMonth: Boolean,
+    onEditBalance: (() -> Unit)?,
+    onEditOpeningBalance: (() -> Unit)?,
+    onInvoiceClick: (() -> Unit)?,
+) {
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_opening_balance),
+        amount = overview.openingBalance,
+        color = colorScheme.onSurface,
+        onEditClick = onEditOpeningBalance,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_income),
+        amount = overview.income,
+        color = Income,
+        signDisplay = SignDisplay.ALWAYS_POSITIVE
+    )
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_outgoing),
+        amount = overview.expense,
+        color = Expense,
+        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+    )
+
+    // An invoice payment leaves this perimeter, so it moves the balance — which is why
+    // it is a signed flow here and merely informative in the overall scope.
+    overview.invoicePayment?.let { payment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_invoices),
+            amount = payment,
+            color = InvoicePayment,
+            onNavigateClick = onInvoiceClick,
+            signDisplay = SignDisplay.ALWAYS_NEGATIVE
+        )
+    }
+
+    overview.adjustment?.let { adjustment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_adjustments),
+            amount = adjustment,
+            color = Adjustment,
+            signDisplay = SignDisplay.SHOW_ALWAYS
+        )
+    }
+
+    HorizontalDivider()
+
+    SummaryRow(
+        label = stringResource(
+            if (isCurrentMonth) Res.string.summary_card_current_balance
+            else Res.string.summary_card_final_balance
+        ),
+        amount = overview.finalBalance,
+        color = colorScheme.onSurface,
+        config = SummaryRowConfig.Total,
+        onEditClick = onEditBalance,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+}
+
+@Composable
+private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
+    // Debt reads positive here, so spending adds and payments subtract — the column
+    // runs in the liability's display sign from the opening line to the total.
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_opening_debt),
+        amount = overview.openingDebt,
+        color = colorScheme.onSurface,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_card_expenses),
+        amount = overview.expense,
+        color = Expense,
+        signDisplay = SignDisplay.ALWAYS_POSITIVE
+    )
+
+    overview.payment?.let { payment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_payments),
+            amount = payment,
+            color = InvoicePayment,
+            signDisplay = SignDisplay.ALWAYS_NEGATIVE
+        )
+    }
+
+    overview.adjustment?.let { adjustment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_adjustments),
+            amount = adjustment,
+            color = Adjustment,
+            signDisplay = SignDisplay.SHOW_ALWAYS
+        )
+    }
+
+    HorizontalDivider()
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_final_debt),
+        amount = overview.finalDebt,
+        color = colorScheme.onSurface,
+        config = SummaryRowConfig.Total,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+}
+
+@Composable
+private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_opening_net),
+        amount = overview.openingNet,
+        color = colorScheme.onSurface,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_income),
+        amount = overview.income,
+        color = Income,
+        signDisplay = SignDisplay.ALWAYS_POSITIVE
+    )
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_outgoing),
+        amount = overview.expense,
+        color = Expense,
+        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+    )
+
+    // Both legs are inside this perimeter, so the payment moves nothing: shown without
+    // a sign and in a quieter tone, precisely so the column above still adds up.
+    overview.invoicePayment?.let { payment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_payments),
+            amount = payment,
+            color = colorScheme.onSurfaceVariant,
+            signDisplay = SignDisplay.NONE
+        )
+    }
+
+    overview.adjustment?.let { adjustment ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_adjustments),
+            amount = adjustment,
+            color = Adjustment,
+            signDisplay = SignDisplay.SHOW_ALWAYS
+        )
+    }
+
+    HorizontalDivider()
+
+    SummaryRow(
+        label = stringResource(Res.string.summary_card_net),
+        amount = overview.finalNet,
+        color = colorScheme.onSurface,
+        config = SummaryRowConfig.Total,
+        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+    )
+}
+
+/** The two chips are twins: same shape, same tone, and both open a menu on tap. */
+@Composable
+private fun SummaryChip(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) = Surface(
+    modifier = modifier,
+    shape = RoundedCornerShape(8.dp),
+    color = colorScheme.surfaceContainerHighest,
+    contentColor = colorScheme.onSurface,
+) {
+    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+        content()
+    }
+}
+
+@Composable
+private fun PeriodChip(
+    selectedYearMonth: YearMonth,
+    onMonthSelected: (YearMonth) -> Unit,
+) = SummaryChip {
+    // No step arrows: at chip size, stepping and picking would be two ways to do the
+    // same thing. The chevron is what both chips share as an affordance.
+    MonthSelector(
+        selectedYearMonth = selectedYearMonth,
+        onPreviousMonth = {},
+        onNextMonth = {},
+        onMonthSelected = onMonthSelected,
+        showPickerChevron = true,
+        showStepArrows = false,
+        textStyle = chipTextStyle,
+    )
+}
+
+@Composable
+private fun ScopeChip(
+    selectedScope: TransactionScope,
+    onScopeSelected: (TransactionScope) -> Unit,
+) = SummaryChip {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            modifier = Modifier.clickable { expanded = true },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = scopeName(selectedScope), style = chipTextStyle)
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier.padding(top = 1.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            TransactionScope.entries.forEach { scope ->
+                DropdownMenuItem(
+                    text = { Text(scopeName(scope)) },
+                    onClick = {
+                        onScopeSelected(scope)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/** The scope's name, shared by the chip and its menu so they cannot drift. */
+@Composable
+private fun scopeName(scope: TransactionScope) = stringResource(
+    when (scope) {
+        TransactionScope.ALL -> Res.string.summary_card_scope_all
+        TransactionScope.ACCOUNTS -> Res.string.summary_card_scope_accounts
+        TransactionScope.CARDS -> Res.string.summary_card_scope_cards
+    }
+)
+
+private val chipTextStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
 
 @Composable
 private fun SummaryRow(
@@ -197,6 +454,7 @@ private fun SummaryRow(
             val formattedAmount = when (signDisplay) {
                 SignDisplay.ALWAYS_POSITIVE -> "+${formatter.format(amount)}"
                 SignDisplay.ALWAYS_NEGATIVE -> "-${formatter.format(amount)}"
+                SignDisplay.NONE -> formatter.format(amount)
                 SignDisplay.SHOW_ALWAYS -> {
                     when {
                         amount > 0 -> "+${formatter.format(amount)}"
@@ -222,7 +480,10 @@ enum class SignDisplay {
     ALWAYS_POSITIVE,
     ALWAYS_NEGATIVE,
     SHOW_ALWAYS,
-    SHOW_ONLY_NEGATIVE
+    SHOW_ONLY_NEGATIVE,
+
+    /** No sign at all — an informative line that is not part of any sum. */
+    NONE
 }
 
 data class SummaryRowConfig(

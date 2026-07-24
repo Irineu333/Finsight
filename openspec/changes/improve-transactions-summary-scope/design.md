@@ -175,7 +175,14 @@ Alternativa descartada: **manter as setas de mês**. Navegar mês passa de um to
 
 - **`TransactionScope` é um quarto vocabulário de escopo** (com `ReportPerspective`, `TransactionTarget` e `scopeStats`) → dívida conceitual assumida em troca de menor escopo. Mitigação: `proposal.md` a registra como fora de escopo explícito, não como omissão.
 
-## Open Questions
+## Resolved Questions
 
-- **Q1 — O escopo persiste entre visitas à tela?** Hoje mês e filtros são estado de sessão do ViewModel; manter o mesmo comportamento é o default.
-- **Q2 — Rótulo do escopo Geral.** "Geral" é o nome adotado. Se na tela ficar ambíguo ao lado do chip de mês, a alternativa é "Contas e cartões".
+- **Q1 — O escopo persiste entre visitas à tela? Não.** Ele é `MutableStateFlow` no
+  `TransactionsViewModel`, exatamente como o mês e os filtros: vive enquanto o ViewModel
+  viver e volta a `ALL` quando a tela é recriada. Manter o eixo novo com o mesmo tempo de
+  vida dos que já existem evita que a tela tenha duas noções de memória; persistir só o
+  escopo seria a inconsistência, não o default. Reavaliável se o uso pedir — a decisão de
+  persistir vale para os três eixos juntos, não para um.
+- **Q2 — Rótulo do escopo Geral: "Geral"** (`Overall` em inglês). Ao lado do chip de mês
+  não gera ambiguidade, porque o chip vizinho já nomeia um período e não um perímetro. A
+  alternativa "Contas e cartões" fica registrada caso o uso mostre o contrário.

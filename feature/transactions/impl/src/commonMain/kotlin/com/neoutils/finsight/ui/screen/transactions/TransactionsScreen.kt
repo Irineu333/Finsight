@@ -24,7 +24,6 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
-import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.component.SummaryCard
@@ -67,28 +66,16 @@ private fun TransactionsContent(
     val dateFormats = LocalDateFormats.current
 
     Scaffold(
-        topBar = {
-            MonthSelector(
-                selectedYearMonth = uiState.selectedYearMonth,
-                onPreviousMonth = { onAction(TransactionsAction.PreviousMonth) },
-                onNextMonth = { onAction(TransactionsAction.NextMonth) },
-                onMonthSelected = { selected ->
-                    onAction(TransactionsAction.SelectMonth(selected))
-                },
-                showPickerChevron = false,
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .padding(vertical = 8.dp)
-                    .fillMaxWidth()
-            )
-        },
         contentWindowInsets = WindowInsets(),
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                // The month used to live in a top bar, which is where this inset came
+                // from; the bar is gone, the inset still has to be honoured.
+                .statusBarsPadding()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item(
@@ -96,6 +83,14 @@ private fun TransactionsContent(
             ) {
                 SummaryCard(
                     balanceOverview = uiState.balanceOverview,
+                    selectedScope = uiState.selectedScope,
+                    selectedYearMonth = uiState.selectedYearMonth,
+                    onScopeSelected = { scope ->
+                        onAction(TransactionsAction.SelectScope(scope))
+                    },
+                    onMonthSelected = { selected ->
+                        onAction(TransactionsAction.SelectMonth(selected))
+                    },
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth(),
@@ -190,14 +185,19 @@ private fun FiltersRow(
             }
         }
 
-        item(
-            key = "target_filter"
-        ) {
-            Box {
-                TargetFilterChip(
-                    selectedTarget = uiState.selectedTarget,
-                    onAction = onAction
-                )
+        // The scope already decides between account and card, so the chip only has work
+        // to do in the overall mode — offering it elsewhere would allow two controls to
+        // contradict each other (scope = accounts, chip = card → an empty list).
+        if (uiState.mustShowTargetFilter) {
+            item(
+                key = "target_filter"
+            ) {
+                Box {
+                    TargetFilterChip(
+                        selectedTarget = uiState.selectedTarget,
+                        onAction = onAction
+                    )
+                }
             }
         }
 

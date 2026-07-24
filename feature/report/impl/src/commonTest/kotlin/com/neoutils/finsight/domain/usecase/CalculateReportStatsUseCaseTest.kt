@@ -86,6 +86,7 @@ private class CapturingEntryRepository : IEntryRepository {
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()

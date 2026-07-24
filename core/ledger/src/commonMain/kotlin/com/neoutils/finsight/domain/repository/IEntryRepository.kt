@@ -33,10 +33,15 @@ data class DimensionFlows(
     val adjustment: Double,
 )
 
-/** Month-wide card expense/payment (reais) across every card, both positive. */
+/**
+ * Month-wide card expense/payment (reais) across every card, both positive, plus the
+ * signed [adjustment] — in symmetry with [AssetMonthFlows], so an invoice adjustment
+ * has a class of its own instead of disappearing from the report.
+ */
 data class LiabilityMonthFlows(
     val expense: Double,
     val payment: Double,
+    val adjustment: Double,
 )
 
 /**
@@ -82,6 +87,15 @@ interface IEntryRepository {
      * and including [target].
      */
     suspend fun balanceUpTo(target: YearMonth, accountId: Long? = null): Double
+
+    /**
+     * Natural balance of every account of [type] up to and including [target] — the
+     * accumulated-balance read expressed by nature of account rather than with one
+     * nature fixed in its own text. The consolidated figure of two natures is their
+     * **sum**, since liabilities are stored in credit; there is no second aggregate
+     * for it and no sign rule of its own.
+     */
+    suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double
 
     /**
      * Whether [accountId] has any movement. The fact behind "can this be removed

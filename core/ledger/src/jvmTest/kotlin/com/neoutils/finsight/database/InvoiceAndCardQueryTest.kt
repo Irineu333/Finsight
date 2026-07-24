@@ -55,11 +55,13 @@ class InvoiceAndCardQueryTest {
     }
 
     @Test
-    fun `card month totals span every card and exclude other months and adjustments`() = runTest {
+    fun `card month totals span every card, exclude other months, and report adjustment`() = runTest {
         seed()
 
+        // The adjustment has a class of its own — signed, in the ledger's natural sign —
+        // instead of falling silently outside both expense and payment.
         assertEquals(
-            LiabilityMonthTotals(expense = 10_000, payment = 3_000),
+            LiabilityMonthTotals(expense = 10_000, payment = 3_000, adjustment = 1_000),
             entryDao.liabilityMonthTotals("2026-03"),
         )
     }

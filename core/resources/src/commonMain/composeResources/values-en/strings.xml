@@ -159,6 +159,8 @@
     <string name="transactions_filter_type_income">Income</string>
     <string name="transactions_filter_type_expense">Expense</string>
     <string name="transactions_filter_type_adjustment">Adjustment</string>
+    <string name="transactions_filter_type_transfer">Transfer</string>
+    <string name="transactions_filter_type_payment">Payment</string>
     <string name="transactions_filter_account">Account</string>
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>

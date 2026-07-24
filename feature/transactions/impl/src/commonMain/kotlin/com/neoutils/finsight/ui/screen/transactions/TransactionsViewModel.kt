@@ -6,9 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -28,7 +27,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val filterType: TransactionType?,
+    private val filterLabel: TransactionLabel?,
     private val category: Category?,
     private val filterTarget: TransactionTarget?,
     private val transactionRepository: ITransactionRepository,
@@ -43,7 +42,7 @@ class TransactionsViewModel(
     private val filters = MutableStateFlow(
         TransactionsFilters(
             category = category,
-            type = filterType,
+            label = filterLabel,
             target = filterTarget,
         )
     )
@@ -84,7 +83,7 @@ class TransactionsViewModel(
             // ledger only hands out the identities behind them (design D6).
             facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = filters.category,
-            selectedType = filters.type,
+            selectedLabel = filters.label,
             selectedTarget = filters.target,
             showRecurringOnly = filters.recurringOnly,
             showInstallmentOnly = filters.installmentOnly,
@@ -92,7 +91,7 @@ class TransactionsViewModel(
                 .filter(filters.recurringOnly)
                 .filterInstallment(filters.installmentOnly)
                 .filter(filters.category)
-                .filter(filters.type)
+                .filter(filters.label)
                 .filter(filters.target)
                 .filter { it.date.yearMonth == yearMonth }
                 .sortedByDescending { it.date }
@@ -122,8 +121,8 @@ class TransactionsViewModel(
                 filters.value = filters.value.copy(category = action.category)
             }
 
-            is TransactionsAction.SelectType -> {
-                filters.value = filters.value.copy(type = action.type)
+            is TransactionsAction.SelectLabel -> {
+                filters.value = filters.value.copy(label = action.label)
             }
 
             is TransactionsAction.SelectTarget -> {
@@ -156,11 +155,9 @@ private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     return filter { it.nominalDimensionId == category.dimensionId }
 }
 
-private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
-    if (type == null) return this
-    return filter { transaction ->
-        transaction.primaryEntry?.let { deriveTransactionType(it.amount, transaction.entries) } == type
-    }
+private fun List<Transaction>.filter(label: TransactionLabel?): List<Transaction> {
+    if (label == null) return this
+    return filter { transaction -> transaction.label == label }
 }
 
 private fun List<Transaction>.filter(target: TransactionTarget?): List<Transaction> {

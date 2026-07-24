@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.MonthSelector
@@ -39,13 +39,15 @@ import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.ui.theme.InvoicePayment as PaymentColor
+import com.neoutils.finsight.ui.theme.Transfer as TransferColor
 
 @Composable
 fun TransactionsScreen(
-    categoryType: TransactionType? = null,
+    categoryLabel: TransactionLabel? = null,
     target: TransactionTarget? = null,
     viewModel: TransactionsViewModel = koinViewModel {
-        parametersOf(categoryType, null, target)
+        parametersOf(categoryLabel, null, target)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -140,14 +142,10 @@ private fun TransactionsContent(
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (transactionUi.direction) {
-                                TransactionType.ADJUSTMENT -> {
-                                    detailController.show(ViewAdjustmentModal(transaction.id))
-                                }
-
-                                else -> {
-                                    detailController.show(ViewTransactionModal(transaction.id))
-                                }
+                            if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
+                                detailController.show(ViewAdjustmentModal(transaction.id))
+                            } else {
+                                detailController.show(ViewTransactionModal(transaction.id))
                             }
                         }
                     )
@@ -186,7 +184,7 @@ private fun FiltersRow(
         ) {
             Box {
                 TypeFilterChip(
-                    selectedType = uiState.selectedType,
+                    selectedLabel = uiState.selectedLabel,
                     onAction = onAction
                 )
             }
@@ -285,33 +283,44 @@ private fun CategoryFilterChip(
     }
 }
 
+/** The nature's name, shared by the chip and its dropdown so they cannot drift. */
+@Composable
+private fun labelName(label: TransactionLabel) = stringResource(
+    when (label) {
+        TransactionLabel.INCOME -> Res.string.transactions_filter_type_income
+        TransactionLabel.EXPENSE -> Res.string.transactions_filter_type_expense
+        TransactionLabel.TRANSFER -> Res.string.transactions_filter_type_transfer
+        TransactionLabel.PAYMENT -> Res.string.transactions_filter_type_payment
+        TransactionLabel.ADJUSTMENT -> Res.string.transactions_filter_type_adjustment
+    }
+)
+
 @Composable
 private fun TypeFilterChip(
-    selectedType: TransactionType?,
+    selectedLabel: TransactionLabel?,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor =
-        when (selectedType) {
-            TransactionType.INCOME -> IncomeColor
-            TransactionType.EXPENSE -> ExpenseColor
-            TransactionType.ADJUSTMENT -> AdjustmentColor
+        when (selectedLabel) {
+            TransactionLabel.INCOME -> IncomeColor
+            TransactionLabel.EXPENSE -> ExpenseColor
+            TransactionLabel.TRANSFER -> TransferColor
+            TransactionLabel.PAYMENT -> PaymentColor
+            TransactionLabel.ADJUSTMENT -> AdjustmentColor
 
             null -> null
         }
 
     FilterChip(
-        selected = selectedType != null,
+        selected = selectedLabel != null,
         onClick = { expanded = true },
         label = {
             Text(
-                when (selectedType) {
-                    TransactionType.INCOME -> stringResource(Res.string.transactions_filter_type_income)
-                    TransactionType.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
-                    TransactionType.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
-                    null -> stringResource(Res.string.transactions_filter_type)
-                }
+                selectedLabel
+                    ?.let { labelName(it) }
+                    ?: stringResource(Res.string.transactions_filter_type)
             )
         },
         trailingIcon = {
@@ -335,24 +344,16 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.transactions_filter_type_all)) },
             onClick = {
-                onAction(TransactionsAction.SelectType(null))
+                onAction(TransactionsAction.SelectLabel(null))
                 expanded = false
             }
         )
 
-        TransactionType.entries.forEach { type ->
+        TransactionLabel.entries.forEach { label ->
             DropdownMenuItem(
-                text = {
-                    Text(
-                        text = when (type) {
-                            TransactionType.INCOME -> stringResource(Res.string.transactions_filter_type_income)
-                            TransactionType.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
-                            TransactionType.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
-                        }
-                    )
-                },
+                text = { Text(labelName(label)) },
                 onClick = {
-                    onAction(TransactionsAction.SelectType(type))
+                    onAction(TransactionsAction.SelectLabel(label))
                     expanded = false
                 }
             )

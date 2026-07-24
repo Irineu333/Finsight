@@ -83,7 +83,7 @@ class TransactionsViewModelCharacterizationTest {
             income = 100.0, expense = 30.0, adjustment = 40.0,
         )
         val vm = TransactionsViewModel(
-            filterType = null, category = null, filterTarget = null,
+            filterLabel = null, category = null, filterTarget = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
@@ -106,7 +106,7 @@ class TransactionsViewModelCharacterizationTest {
     }
 }
 
-private class FakeTransactionRepository(transactions: List<Transaction>) : ITransactionRepository {
+internal class FakeTransactionRepository(transactions: List<Transaction>) : ITransactionRepository {
     private val flow = MutableStateFlow(transactions)
     override fun observeAllTransactions(): Flow<List<Transaction>> = flow
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
@@ -121,7 +121,7 @@ private class FakeTransactionRepository(transactions: List<Transaction>) : ITran
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
 }
 
-private class FakeCategoryRepository : ICategoryRepository {
+internal class FakeCategoryRepository : ICategoryRepository {
     override fun observeAllCategories(): Flow<List<Category>> = MutableStateFlow(emptyList())
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
@@ -140,7 +140,7 @@ private class FakeCategoryRepository : ICategoryRepository {
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private class LedgerBalance(
+internal class LedgerBalance(
     private val month: YearMonth,
     private val balance: Double,
     private val payment: Double = 0.0,
@@ -193,7 +193,7 @@ private object ThrowingEntryRepository : IEntryRepository {
 }
 
 /** No installment badge is under test here; the list only needs the read to answer. */
-private object NoInstallments : IInstallmentRepository {
+internal object NoInstallments : IInstallmentRepository {
     override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
     override suspend fun getAllInstallments(): List<Installment> = emptyList()
     override suspend fun getInstallmentById(id: Long): Installment? = null

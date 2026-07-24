@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
@@ -89,8 +89,8 @@ internal fun DashboardComponentContent(
 ) {
     val navController = LocalNavController.current
 
-    val openTransactions = { filterType: TransactionType?, filterTarget: TransactionTarget? ->
-        navController.navigate(TransactionsRoute(filterType, filterTarget))
+    val openTransactions = { filterLabel: TransactionLabel?, filterTarget: TransactionTarget? ->
+        navController.navigate(TransactionsRoute(filterLabel, filterTarget))
     }
 
     when (variant) {
@@ -240,7 +240,7 @@ private fun DashboardPendingRecurringSection(
 @Composable
 private fun DashboardRecentsSection(
     variant: DashboardComponentVariant.Recents,
-    openTransactions: (TransactionType?, TransactionTarget?) -> Unit,
+    openTransactions: (TransactionLabel?, TransactionTarget?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val detailController = LocalDetailPaneController.current
@@ -345,7 +345,7 @@ private fun DashboardQuickActionsSection(
 @Composable
 private fun DashboardConcreteBalanceSection(
     variant: DashboardComponentVariant.ConcreteBalanceStats,
-    openTransactions: (TransactionType?, TransactionTarget?) -> Unit,
+    openTransactions: (TransactionLabel?, TransactionTarget?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
@@ -366,7 +366,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Income,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(TransactionType.INCOME, null)
+                        openTransactions(TransactionLabel.INCOME, null)
                     }
                 },
             )
@@ -377,7 +377,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Expense,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(TransactionType.EXPENSE, null)
+                        openTransactions(TransactionLabel.EXPENSE, null)
                     }
                 },
             )

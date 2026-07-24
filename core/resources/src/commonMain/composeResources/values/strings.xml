@@ -160,6 +160,8 @@
     <string name="transactions_filter_type_income">Entrada</string>
     <string name="transactions_filter_type_expense">Despesa</string>
     <string name="transactions_filter_type_adjustment">Ajuste</string>
+    <string name="transactions_filter_type_transfer">Transferência</string>
+    <string name="transactions_filter_type_payment">Pagamento</string>
     <string name="transactions_filter_account">Conta</string>
     <string name="transactions_filter_credit_card">Cartão</string>
     <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>

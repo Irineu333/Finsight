@@ -4,10 +4,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.feature.transactions.api.TransactionLabelNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionTargetNavType
-import com.neoutils.finsight.feature.transactions.api.TransactionTypeNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.navigation.NavGraphRoute
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
@@ -24,7 +24,7 @@ fun NavGraphBuilder.transactionsGraph() {
     ) {
         composable<TransactionsRoute>(
             typeMap = mapOf(
-                typeOf<TransactionType?>() to TransactionTypeNavType(),
+                typeOf<TransactionLabel?>() to TransactionLabelNavType(),
                 typeOf<TransactionTarget?>() to TransactionTargetNavType(),
             )
         ) { backStackEntry ->
@@ -32,7 +32,7 @@ fun NavGraphBuilder.transactionsGraph() {
                 val route = backStackEntry.toRoute<TransactionsRoute>()
 
                 TransactionsScreen(
-                    categoryType = route.filterType,
+                    categoryLabel = route.filterLabel,
                     target = route.filterTarget,
                 )
             }

@@ -56,7 +56,7 @@ val transactionsModule = module {
     }
     viewModel {
         TransactionsViewModel(
-            filterType = getOrNull(),
+            filterLabel = getOrNull(),
             category = getOrNull(),
             filterTarget = getOrNull(),
             transactionRepository = get(),

@@ -24,3 +24,10 @@ kotlin {
         }
     }
 }
+
+// `LedgerDatabase` — the schema the module's `@Query` strings are validated against —
+// lives in `jvmTest`, so that Room's generated `<Dao>_Impl` never ships beside the
+// identical ones `AppDatabase` generates (they collide when Android merges the dex).
+dependencies {
+    add("kspJvmTest", libs.androidx.room.compiler)
+}

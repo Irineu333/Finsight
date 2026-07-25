@@ -76,20 +76,28 @@ class InvoiceRepository(
         }
     }
 
+    /**
+     * A missing invoice emits `null`, it does not stop emitting. An empty inner flow
+     * would leave the observer waiting forever — Room's query flow never completes,
+     * so `first()` on it would suspend rather than return, and the callers' absence
+     * branch would never run.
+     */
     override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> {
-        return dao.observeInvoiceById(invoiceId).flatMapMerge { entity ->
+        return dao.observeInvoiceById(invoiceId).flatMapLatest { entity ->
 
             if (entity == null) {
-                return@flatMapMerge emptyFlow()
+                return@flatMapLatest flowOf(null)
             }
 
             creditCardRepository.observeCreditCardById(
                 creditCardId = entity.creditCardId,
             ).map { creditCard ->
-                mapper.toDomain(
-                    entity = entity,
-                    creditCard = creditCard!!
-                )
+                creditCard?.let {
+                    mapper.toDomain(
+                        entity = entity,
+                        creditCard = it
+                    )
+                }
             }
         }
     }
@@ -191,8 +199,22 @@ class InvoiceRepository(
         }
     }
 
+    /**
+     * A one-shot read reads once: going through the observer would subscribe to two
+     * Room flows to answer a question neither of them needs to keep answering.
+     */
     override suspend fun getInvoiceById(id: Long): Invoice? {
-        return observeInvoiceById(id).first()
+
+        val entity = dao.getInvoiceById(id) ?: return null
+
+        val creditCard = creditCardRepository.getCreditCardById(
+            creditCardId = entity.creditCardId,
+        ) ?: return null
+
+        return mapper.toDomain(
+            entity = entity,
+            creditCard = creditCard
+        )
     }
 
     /**

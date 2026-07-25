@@ -2,7 +2,7 @@
 
 ### Requirement: A política de sinal de um valor exibido tem dono único
 
-Como um valor monetário é apresentado ao usuário — em módulo, no seu sinal natural, com sinal sempre explícito, ou forçado a uma direção — SHALL ser expresso por um tipo de exibição que carrega, indissociáveis, o valor e a sua política de sinal. Nenhum componente de UI MUST decidir sinal por conta própria a partir de rótulo, natureza, direção ou tipo de conta.
+Como um valor monetário é apresentado ao usuário — em módulo, no seu sinal natural, com sinal sempre explícito, ou forçado a uma direção — SHALL ser expresso por um tipo de exibição que carrega, indissociáveis, o valor e a sua política de sinal. Um componente de UI MUST NOT decidir sinal por conta própria a partir de rótulo, natureza, direção ou tipo de conta.
 
 O conjunto de políticas SHALL ser fechado e SHALL cobrir apenas casos com chamador existente: módulo sem sinal, sinal natural (negativo aparece, positivo não), sinal sempre explícito, e as duas formas forçadas — sempre positivo e sempre negativo.
 
@@ -30,9 +30,9 @@ O tipo SHALL expor o valor numérico com o seu sinal, para que decisões que dep
 - **WHEN** uma apresentação escolhe cor ou tom pelo sinal de um valor
 - **THEN** ela lê o sinal do mesmo valor que será exibido, e não de uma segunda fonte
 
-#### Scenario: Cálculo permanece no razão
-- **WHEN** uma tela precisa de um total, um saldo ou uma diferença
-- **THEN** a figura vem do razão já calculada, e o tipo de exibição apenas a apresenta
+#### Scenario: O tipo de exibição não oferece cálculo
+- **WHEN** o tipo de exibição é inspecionado
+- **THEN** ele não expõe soma, subtração, multiplicação nem moeda, e uma tela que precise de total, saldo ou diferença os recebe do razão já calculados
 
 ### Requirement: O valor exibido de uma perna de transação segue a forma do razão
 

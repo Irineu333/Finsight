@@ -3,15 +3,15 @@
 ### Requirement: Mappers como única fronteira domínio-apresentação
 A tradução de domínio para apresentação SHALL ocorrer exclusivamente em mappers. Derivação de rótulo, resolução de perspectiva, inversão de sinal por `AccountType` e escolha do valor a exibir MUST NOT ocorrer em modelo de UI nem em componente de UI. Um modelo de UI MUST NOT declarar campo de tipo de domínio. Esta regra SHALL ser verificável por inspeção dos próprios modelos de UI, e MUST NOT ser expressa como ausência de dependência de módulo: `core/ui` depende de `core/model` **por desenho** — os seus componentes existem para renderizar modelos de domínio — e `core/ui/model` é um pacote, não um módulo Gradle.
 
-A inversão de sinal por `AccountType` é regra de **saldo**: ela existe para que o saldo natural de uma conta de natureza credora leia positivo. Ela MUST NOT ser aplicada ao valor de uma **perna de transação**, que SHALL ser exibido no sinal natural do razão — em convenção débito-positivo, o mesmo sinal em que a perna foi gravada. As duas leituras são distintas e a spec as nomeia separadamente porque a segunda é derivável da primeira por analogia errada: invertida, uma correção que aumenta uma dívida leria positiva, ao lado de uma compra que aumenta a mesma dívida e lê negativa.
+A inversão de sinal por `AccountType` é regra de **saldo**: ela existe para que o saldo natural de uma conta de natureza credora leia positivo. Ela MUST NOT ser aplicada ao valor de uma **perna de transação**. Quando o valor de uma perna for exibido com sinal, esse sinal SHALL ser o natural do razão — em convenção débito-positivo, o mesmo em que a perna foi gravada. *Se* uma perna exibe sinal é decisão da política de exibição (`money-display`); *qual* sinal ela exibe, quando exibe, é esta regra. As duas leituras são distintas e a spec as nomeia separadamente porque a segunda é derivável da primeira por analogia errada: invertida, uma correção que aumenta uma dívida leria positiva, ao lado de uma compra que aumenta a mesma dívida e lê negativa.
 
 #### Scenario: Inversão de sinal para exibição
 - **WHEN** um valor do razão em convenção débito-positivo é exibido
 - **THEN** o mapper aplica a inversão por `AccountType`, e a UI recebe o valor já no sinal que o usuário espera
 
 #### Scenario: Sinal de uma perna de transação
-- **WHEN** o valor de uma perna de transação é exibido — inclusive a perna de passivo de um cartão
-- **THEN** o mapper o entrega no sinal natural do razão, sem aplicar a inversão por `AccountType`, que é regra de saldo
+- **WHEN** o valor de uma perna de transação é exibido com sinal — inclusive a perna de passivo de um cartão
+- **THEN** o sinal é o natural do razão, sem a inversão por `AccountType`, que é regra de saldo
 
 #### Scenario: Derivação de rótulo
 - **WHEN** o rótulo de uma transação é exibido

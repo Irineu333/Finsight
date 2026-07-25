@@ -505,6 +505,8 @@
     <string name="balance_card_current_balance">Current Balance</string>
     <string name="balance_card_income">Income</string>
     <string name="balance_card_expense">Expenses</string>
+    <string name="balance_card_account_income">Account Inflow</string>
+    <string name="balance_card_account_expense">Account Outflow</string>
     <string name="balance_card_invoices">Invoices</string>
     <string name="balance_card_invoice_payments">Payments</string>
     <string name="balance_card_credit_card_expense">Card Expense</string>

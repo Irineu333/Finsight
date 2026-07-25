@@ -43,6 +43,10 @@
       proposal de o widget novo "nascer ausente"; ela vale para dashboards **já montados**, que
       seguem intocados — o default só rege quem instala agora.
 - [x] 5.2 Teste: um dashboard novo traz o perímetro neutro, não o de contas
+- [x] 5.4 Rótulos do widget de contas: `Entradas na conta` / `Saídas na conta`
+      (`BalanceCardConfig.AccountIncome` / `AccountExpense`, derivados de `Income` / `Expense` só
+      no título). D5 havia descartado diferenciar pelos rótulos porque "não resolve a receita, que
+      segue idêntica nos dois" — verdade quanto ao número, mas agora o card diz de quem ele é
 - [x] 5.3 `SHOW_HEADER=false` também no `defaultConfig` do widget neutro, revertendo o `true` de D5:
       aquele `true` existia para separar dois widgets de fluxo empilhados, e o default de 5.1 deixou de
       empilhá-los. Os três nascem iguais e sem cabeçalho; quem juntar mais de um liga o título no modal

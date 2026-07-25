@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.balance_card_account_expense
+import com.neoutils.finsight.resources.balance_card_account_income
 import com.neoutils.finsight.resources.balance_card_credit_card_expense
 import com.neoutils.finsight.resources.balance_card_current_balance
 import com.neoutils.finsight.resources.balance_card_current_invoice
@@ -226,6 +228,23 @@ data class BalanceCardConfig(
                 padding = PaddingValues(16.dp),
                 container = ExpenseColor.copy(alpha = 0.15f),
                 shape = shapes.large
+            )
+
+        /**
+         * [Income] and [Expense] named over the accounts perimeter, for a widget that
+         * sits beside one summing accounts *and* cards: same pair, and only the wording
+         * says whose money moved.
+         */
+        val AccountIncome
+            @Composable
+            get() = Income.copy(
+                title = stringResource(Res.string.balance_card_account_income),
+            )
+
+        val AccountExpense
+            @Composable
+            get() = Expense.copy(
+                title = stringResource(Res.string.balance_card_account_expense),
             )
 
         val Payment

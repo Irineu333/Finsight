@@ -514,6 +514,8 @@
     <string name="balance_card_current_balance">Saldo Atual</string>
     <string name="balance_card_income">Receitas</string>
     <string name="balance_card_expense">Despesas</string>
+    <string name="balance_card_account_income">Entradas na conta</string>
+    <string name="balance_card_account_expense">Saídas na conta</string>
     <string name="balance_card_invoices">Faturas</string>
     <string name="balance_card_invoice_payments">Pagamentos</string>
     <string name="balance_card_credit_card_expense">Gasto no Cartão</string>

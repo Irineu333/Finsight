@@ -438,7 +438,7 @@ private fun DashboardConcreteBalanceSection(
         BalanceCard(
             balance = component.income,
             modifier = Modifier.weight(1f),
-            config = BalanceCardConfig.Income,
+            config = BalanceCardConfig.AccountIncome,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -449,7 +449,7 @@ private fun DashboardConcreteBalanceSection(
         BalanceCard(
             balance = component.expense,
             modifier = Modifier.weight(1f),
-            config = BalanceCardConfig.Expense,
+            config = BalanceCardConfig.AccountExpense,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)

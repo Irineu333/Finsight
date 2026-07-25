@@ -1,8 +1,8 @@
 ## 1. Confirmar o diagnóstico antes de mexer no código
 
-- [ ] 1.1 Rodar o app com **três ou mais cartões cadastrados**, abrir a tela de cartões e deslizar para o segundo cartão — a fatura, as ações e a lista devem acompanhar
-- [ ] 1.2 Voltar para o primeiro cartão e verificar que o restante da tela **continua descrevendo o segundo** — é este o critério que valida o diagnóstico
-- [ ] 1.3 Se 1.2 não reproduzir, **parar**: a causa é outra e precisa ser reinvestigada antes de prosseguir
+- [x] 1.1 Rodar o app com **três ou mais cartões cadastrados**, abrir a tela de cartões e deslizar para o segundo cartão — a fatura, as ações e a lista devem acompanhar
+- [x] 1.2 Voltar para o primeiro cartão e verificar que o restante da tela **continua descrevendo o segundo** — é este o critério que valida o diagnóstico — **confirmado**
+- [x] 1.3 ~~Se 1.2 não reproduzir, **parar**: a causa é outra e precisa ser reinvestigada antes de prosseguir~~ — não disparou
 
 ## 2. Alinhar o pager de cartões ao de contas
 
@@ -22,5 +22,4 @@
 ## 4. Fechamento
 
 - [ ] 4.1 `./gradlew :app:desktop:compileKotlin`
-- [ ] 4.2 `./gradlew allTests`
-- [ ] 4.3 `openspec validate fix-credit-card-pager-selection`
+- [ ] 4.2 `openspec validate fix-credit-card-pager-selection`

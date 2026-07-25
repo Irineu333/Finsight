@@ -32,7 +32,11 @@ O widget lê `balanceUpTo(mês)` sem `accountId`, que o razão define como *toda
 
 **Consequência aceita e explícita:** num mês com ajuste de saldo, o dashboard e a tela de transações mostram números diferentes para a mesma pergunta. É divergência conhecida, não defeito silencioso — e é **consistente entre os três widgets**, o que preserva a aritmética que importa aqui: `Despesas(geral) = Despesas(contas) + Gasto no Cartão`.
 
-## D5 — Cabeçalho ligado por padrão só no widget novo
+## D5 — Como desambiguar dois widgets de fluxo empilhados
+
+> **Decidido como "cabeçalho ligado por padrão só no widget novo"; revisto na implementação
+> para "cabeçalho desligado nos três, rótulos de card no widget de contas".** O registro
+> original fica abaixo, seguido do que mudou e por quê.
 
 No perímetro neutro a receita é **o mesmo número** do perímetro de contas: o razão não registra receita em perna de `LIABILITY`, então `income(geral) = income(contas)`. Só a despesa difere. Com o mesmo par de cards e os mesmos rótulos (`Receitas` / `Despesas`), os dois widgets ficam indistinguíveis empilhados — e a diferença fica por conta de o usuário reparar que um número mudou.
 
@@ -41,3 +45,9 @@ No perímetro neutro a receita é **o mesmo número** do perímetro de contas: o
 **Por que não diferenciar pelos rótulos dos cards** (ex.: "Saídas Totais"): não resolve a receita, que segue idêntica nos dois, e espalha vocabulário novo por um componente compartilhado (`BalanceCardConfig`) para um problema que é de composição da tela.
 
 **Por que `false` nos dois existentes:** nenhum dashboard já montado muda de aparência. Quem quiser simetria liga no modal de opções.
+
+**Revisto depois da implementação (`tasks.md` 5.1, 5.3 e 5.4).** O `true` no widget novo caiu: ele existia para separar dois widgets de fluxo *empilhados*, e 5.1 fez o dashboard inicial abrir com o perímetro neutro **no lugar do** de contas — sozinho na tela, ele não precisa de cabeçalho para ser identificado. Os três nascem com `SHOW_HEADER=false`, e quem juntar mais de um liga o título no modal.
+
+A recusa em diferenciar pelos rótulos também caiu, por 5.4: os cards do widget de contas passam a dizer `Entradas na conta` / `Saídas na conta` (`BalanceCardConfig.AccountIncome` / `AccountExpense`). O argumento acima — "não resolve a receita, que segue idêntica nos dois" — continua verdadeiro **quanto ao número**, e é exatamente por isso que os rótulos passaram a valer: eles não distinguem os valores, distinguem *de quem* é o dinheiro que se move. O que segue descartado é vocabulário de agregação no card neutro (o "Saídas Totais"), que voltaria a prometer um total.
+
+O que sobrevive de D5 sem mudança: `SHOW_HEADER` é config genérica, existe para os três, e nenhum dashboard já montado muda de aparência.

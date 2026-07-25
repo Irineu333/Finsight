@@ -22,7 +22,9 @@
 
 - [x] 3.1 Acrescentar `SHOW_HEADER=false` ao `defaultConfig` de `CONCRETE_BALANCE_STATS` e de `CREDIT_CARD_BALANCE_STATS` — aparência de hoje preservada (D5)
 - [x] 3.2 Passar as duas seções existentes a renderizar cabeçalho condicional (`dashboard_balance` / `dashboard_credit_card_balance`), hoje ausente
-- [x] 3.3 Confirmar que o `DashboardComponentOptionsModal` já expõe o toggle de cabeçalho para os três, por ser config genérica
+- [x] 3.3 Expor o toggle de cabeçalho para os três no `DashboardComponentOptionsModal`. A config é
+      genérica, mas o modal decide por `when (item.key)` quais widgets ganham o toggle, e os três de
+      fluxo não estavam na lista — acrescentá-los é o que torna o `SHOW_HEADER` deles alcançável
 
 ## 4. Testes (`feature/dashboard/impl`)
 

@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.FilterAltOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -122,14 +124,26 @@ private fun TransactionsContent(
                 is ListState.EmptyScope -> item(
                     key = "empty_state"
                 ) {
-                    TransactionsEmptyState(
-                        listState = listState,
-                        onAction = onAction,
+                    // Centred inside a column narrower than the screen: on a desktop or a
+                    // tablet, text running the full width would read as a paragraph rather
+                    // than as a short notice.
+                    Box(
                         modifier = Modifier
                             .fillParentMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 48.dp)
-                            .animateItem()
-                    )
+                            .animateItem(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TransactionsEmptyState(
+                            listState = listState,
+                            onAction = onAction,
+                            modifier = Modifier
+                                .widthIn(max = 400.dp)
+                                .padding(
+                                    horizontal = 24.dp,
+                                    vertical = 48.dp
+                                )
+                        )
+                    }
                 }
 
                 is ListState.Content -> listState.transactions.forEach { (date, transactions) ->
@@ -194,6 +208,19 @@ private fun TransactionsEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        Icon(
+            imageVector = if (isLedgerEmpty) {
+                Icons.AutoMirrored.Outlined.ReceiptLong
+            } else {
+                Icons.Outlined.FilterAltOff
+            },
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .size(48.dp),
+        )
+
         Text(
             text = stringResource(
                 if (isLedgerEmpty) {

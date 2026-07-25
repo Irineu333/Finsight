@@ -40,6 +40,12 @@
   emitem o `item("empty_state")` com `animateItem()`; `Loading` não emite nada (D5).
 - [x] 4.3 Verificar que `SummaryCard` e `FiltersRow` continuam emitidos em todos os estados
   (spec: controles do recorte permanecem visíveis).
+- [x] 4.4 Ajuste visual após a conferência na tela: o empty state passa a ser centralizado
+  num `Box(fillParentMaxWidth)` com `widthIn(max = 400.dp)` e padding de 24.dp — em desktop e
+  tablet o texto corrido na largura toda lia como parágrafo, não como aviso curto. Ícone de
+  48.dp em `onSurfaceVariant` acima do título, distinto por estado
+  (`AutoMirrored.Outlined.ReceiptLong` para o vazio de origem, `Outlined.FilterAltOff` para o
+  de recorte), acompanhando a distinção que o texto já faz.
 
 ## 5. Testes
 
@@ -58,5 +64,6 @@
 
 - [x] 6.1 `./gradlew :app:shared:testDebugUnitTest` verde.
 - [x] 6.2 `./gradlew :app:android:assembleDebug` compilando.
-- [ ] 6.3 Conferir na tela: abertura sem piscar vazio, mês futuro vazio com mensagem de
-  recorte, filtro que corta tudo com botão de limpar funcionando.
+- [x] 6.3 Conferir na tela: abertura sem piscar vazio, mês futuro vazio com mensagem de
+  recorte, filtro que corta tudo com botão de limpar funcionando. Conferido manualmente; o
+  que a conferência pediu está em 4.4.

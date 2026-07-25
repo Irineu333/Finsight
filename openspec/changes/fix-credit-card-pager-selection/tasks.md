@@ -13,11 +13,11 @@
 
 ## 3. Verificação manual
 
-- [ ] 3.1 Repetir 1.1–1.2: voltar ao primeiro cartão agora atualiza fatura, ações e lista
-- [ ] 3.2 Vaivém entre dois cartões várias vezes: a tela acompanha em todas as paradas
-- [ ] 3.3 Abrir a tela via cartão da dashboard (`initialCreditCardId` de um cartão que não é o primeiro), navegar para outro e voltar — o cartão de entrada volta a ser descrito corretamente
-- [ ] 3.4 Um único cartão cadastrado: nada quebra e nenhuma notificação em laço acontece
-- [ ] 3.5 A transição compartilhada dashboard → cartões continua promovendo só o cartão selecionado, sem regressão do `fix-credit-card-shared-transition-overlay`
+- [x] 3.1 Repetir 1.1–1.2: voltar ao primeiro cartão agora atualiza fatura, ações e lista
+- [x] 3.2 Vaivém entre dois cartões várias vezes: a tela acompanha em todas as paradas
+- [x] 3.3 Abrir a tela via cartão da dashboard (`initialCreditCardId` de um cartão que não é o primeiro), navegar para outro e voltar — o cartão de entrada volta a ser descrito corretamente
+- [x] 3.4 Um único cartão cadastrado: nada quebra e nenhuma notificação em laço acontece
+- [x] 3.5 A transição compartilhada dashboard → cartões continua promovendo só o cartão selecionado, sem regressão do `fix-credit-card-shared-transition-overlay`
 
 ## 4. Fechamento
 

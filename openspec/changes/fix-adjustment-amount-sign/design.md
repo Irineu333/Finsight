@@ -13,12 +13,12 @@ Sob o defeito há uma regra que o app **descobriu mas nunca escreveu**. O `Summa
 - Escrever a regra de sinal como regra, com um princípio único, e aplicá-la nas duas superfícies.
 - Um ajuste exibe o sinal correto em toda superfície, coerente com a modal e com o resumo da fatura.
 - A política de sinal tem **um dono**, alcançável por `:core:ui` e por qualquer `feature/*/impl`.
-- Nos resumos, nenhuma mudança de comportamento: eles já obedecem à regra; muda o mecanismo.
-- A escolha do valor de exibição sai dos componentes e volta para o mapper.
+- Nos resumos, nenhuma mudança de comportamento — exceto o ramo de fatura do relatório, que hoje não obedece à regra e é a mudança visual 4, declarada.
+- A escolha do valor de exibição sai dos componentes e volta para quem produz a figura, nas duas superfícies.
 
 **Non-Goals:**
 
-- Não alterar `Transaction.amount` (domínio) nem `ViewTransactionUiState.amount`: são consumidos por formulários (`EditTransactionModal`), onde módulo é o correto.
+- Não alterar `Transaction.amount` (domínio): ele alimenta o formulário de edição (`EditTransactionModal.kt:88`), onde módulo é o correto. A modal de visualização **entra** no escopo — o usuário declarou a regra "para cards e modais", e `ViewTransactionUiState.amount` (`:61`) é a mesma superfície de item, hoje em `abs()`.
 - Não introduzir tipo monetário de domínio. Cents, moeda e aritmética entre valores são do razão.
 - Não corrigir a perspectiva ausente em `InvoiceTransactionsScreen`, `CreditCardsScreen` e `ReportViewerScreen` (chamam `toTransactionUi()` sem `accountId`). Defeito separado — e que **não contamina este**, porque um ajuste tem uma única perna monetária (a de reconciliação não é `isMonetary`), logo é lido igual com ou sem perspectiva.
 - Não unificar as convenções do bloco de resumo da fatura, que mistura "Despesas −100" com "Total 100" (`dimensionOwed`, positivo-como-dívida).
@@ -34,7 +34,7 @@ Sob o defeito há uma regra que o app **descobriu mas nunca escreveu**. O `Summa
 
 E a inclusão: **o sinal aparece onde há aritmética a explicar**, para que uma coluna de valores justifique o total abaixo dela.
 
-Este princípio é o dono da regra. As tabelas de D5 são a sua aplicação, não regras independentes.
+As tabelas de D5 são do usuário — ele as declarou célula a célula. O princípio acima é a generalização que este change extrai delas, para que casos futuros tenham de onde derivar em vez de virarem uma sexta linha arbitrária. Onde os dois divergirem, a tabela vence.
 
 ### D2 — `TransactionUi.amount` passa a ser `DisplayAmount`, não `Double` assinado
 
@@ -79,11 +79,11 @@ Como `TransactionUi.amount` passa a expor um tipo de `:core:common` na API públ
 | Gasto (conta e cartão) | `MAGNITUDE` | não |
 | Receita | `MAGNITUDE` | não |
 | Pagamento de fatura | `MAGNITUDE` | não |
-| Transferência **com** perspectiva | `NATURAL` | não (hoje: `−` na saída, nada na entrada) |
+| Transferência **com** perspectiva | `EXPLICIT_SIGN` | **sim** — a entrada ganha `+` |
 | Transferência **sem** perspectiva | `MAGNITUDE` | **sim** — perde o `−` de hoje |
 | Ajuste | `EXPLICIT_SIGN` | **sim** — é o defeito |
 
-A transferência é a única exceção ao "o rótulo explica": "Transferência • R$ 100,00" não diz se o dinheiro entrou ou saiu, e as duas pontas compartilham rótulo, ícone e cor. Com perspectiva, o sinal é a única coisa que as distingue e permanece. Sem perspectiva não há para onde o dinheiro ter ido — a lista geral vê as duas pontas da mesma transação —, então não há direção a exibir. O pagamento não é exceção: "Pagamento" entrega a direção em qualquer perspectiva.
+A transferência é a única exceção ao "o rótulo explica": "Transferência • R$ 100,00" não diz se o dinheiro entrou ou saiu, e as duas pontas compartilham rótulo, ícone e cor. Com perspectiva, o sinal é a única coisa que as distingue — e é **explícito nas duas pontas**, pelo mesmo motivo que o ajuste: quando o rótulo não entrega a direção, meia informação é pior que a regra inteira. Mostrar `−` na saída e nada na entrada obrigaria o usuário a inferir "sem sinal, então entrou", que é justamente o raciocínio que o sinal existe para poupar. Sem perspectiva não há para onde o dinheiro ter ido — a lista vê as duas pontas da mesma transação —, então não há direção a exibir. O pagamento não é exceção: "Pagamento" entrega a direção em qualquer perspectiva.
 
 **Resumo** (linha que participa de uma soma) — o sinal expressa o efeito sobre o patrimônio da perspectiva:
 
@@ -96,23 +96,51 @@ A transferência é a única exceção ao "o rótulo explica": "Transferência �
 | Ajuste | `EXPLICIT_SIGN` | `EXPLICIT_SIGN` | `EXPLICIT_SIGN` |
 | Saldo (abertura/fim) | `NATURAL` | `OWED` | `NATURAL` |
 
-Esta tabela **descreve o comportamento atual** de `AccountsBody`, `CardsBody`, `OverallBody`, do resumo da fatura e das linhas do relatório. Nenhum resumo muda; muda o mecanismo. A linha de transferência não tem chamador hoje — está na tabela porque a regra a cobre, não porque haja código a escrever.
+Esta tabela **descreve o comportamento atual** de `AccountsBody`, `CardsBody`, `OverallBody`, do resumo da fatura e das linhas de **conta** do relatório. Esses resumos não mudam; muda o mecanismo.
+
+**Duas exceções, ambas no ramo de fatura do relatório**, onde o comportamento atual **não** obedece à regra e a absorção é mudança visível:
+
+| Sítio | Hoje | Pela regra |
+|---|---|---|
+| `ReportExportLayout.kt:86` e `ReportContextCard.kt:199` — gasto de fatura | sem sinal | `FORCED_NEGATIVE` — ganha `−` |
+| `ReportExportLayout.kt:96` e `ReportContextCard.kt:235` — pagamento antecipado | sem sinal | `FORCED_POSITIVE` — ganha `+` |
+
+Elas são declaradas como mudança visual 3, e não descobertas durante a implementação. As linhas de conta do mesmo relatório (`ReportExportLayout.kt:73,78`) já obedecem.
+
+**Uma armadilha, na linha "Total" da fatura** (`InvoiceTransactionsScreen.kt:555`): a figura vem de `owedByDimension`, que já devolve **positivo-como-dívida** (`EntryRepository.kt:106-111`). A linha de saldo da tabela acima diz `OWED` para perspectiva de cartão, mas `OWED` calcula `max(0, -valor)` e zeraria um total já positivo. Para essa linha a política é `NATURAL`: a inversão já foi feita a montante. `OWED` serve às linhas que recebem saldo no sinal do razão (`SummaryCard.kt:200,235`), não às que recebem dívida já invertida.
+
+A linha de transferência da tabela não tem chamador hoje — está nela porque a regra a cobre, não porque haja código a escrever.
 
 O ajuste é a única forma idêntica nas duas superfícies, e é o que o torna especial: é a única transação cuja direção o rótulo não entrega.
 
-### D6 — O tipo não faz aritmética entre valores
+### D6 — A política é resolvida por quem produz a figura, não pela composable
+
+Nos resumos, a política é hoje escolhida **dentro do `@Composable`**: `SummaryCard.kt:134-290`, `AccountCard.kt:179-228` e o `SummaryRow` da fatura nomeiam a sua a cada linha. Trocar `SignDisplay.ALWAYS_NEGATIVE` por `DisplayAmount.forcedNegative(...)` no mesmo lugar não corrigiria nada: a decisão continuaria na UI, contra `presentation-mapping` e contra o requisito que este próprio change escreve.
+
+Então a figura chega pronta. Cada produtor entrega `DisplayAmount`, e a composable só renderiza:
+
+| Superfície | Produtor |
+|---|---|
+| `SummaryCard` (três corpos) | `BalanceOverviewFactory.balanceOverview()` |
+| `AccountCard` | `AccountsViewModel.kt:95`, onde `AccountUi` é montado |
+| Resumo da fatura | `InvoiceTransactionsViewModel.kt:170-180`, em `InvoiceSummary` |
+| Relatório (contexto e exportação) | `ReportViewerUiState.Stats.Account` / `.Invoice` |
+
+O ganho não é estético: hoje `AccountUi.income` e `AccountUi.expense` são dois `Double` cuja diferença de tratamento existe apenas na composable que os lê. Depois, a intenção viaja com o dado, e uma segunda tela que renderize o mesmo `AccountUi` não pode discordar da primeira.
+
+### D7 — O tipo não faz aritmética entre valores
 
 `DisplayAmount` MUST NOT somar, subtrair ou multiplicar dois valores, e MUST NOT conhecer moeda: quanto uma figura vale é do razão.
 
 Uma política **pode** transformar o seu próprio valor para leitura — módulo, negação, clamp em zero. É o que `OWED` faz, e é da mesma família que `AccountType.displaySign`: apresentação de um único número, não cálculo. Sem essa distinção, `OWED` teria de ser resolvido por quem produz a figura, mexendo nos modelos de overview sem ganho — e a absorção do `SignDisplay` deixaria de ser mecânica.
 
-### D7 — A absorção é condição, não extra
+### D8 — A absorção é condição, não extra
 
 Sete sítios implementam a política hoje: `SignDisplay` (18 usos), `AccountSignDisplay` (6), o `SummaryRow` da fatura (4), os dois `when` de item (`TransactionCard`, `ReportExportLayout.exportAmount`) e quatro literais `"+${...}"`/`"-${...}"` em `ReportContextCard` e `ReportExportLayout`. Criar o tipo e converter só a superfície de item deixaria **oito**. O que justifica o tipo é ele ser o único, então a absorção entra no escopo.
 
 Como os resumos já obedecem à regra (D5), a absorção é conversão de mecanismo, não mudança de comportamento — menos arriscada do que o número de sítios sugere. Duas armadilhas concretas: `ALWAYS_POSITIVE` aplica `absoluteValue` em `AccountCard.kt:325` e **não** aplica em `SummaryCard.kt:447`; e existem dois componentes chamados `SummaryRow` (`InvoiceTransactionsScreen.kt:728` e `SummaryCard.kt:399`), em sistemas diferentes.
 
-### D8 — Delta de spec: sinal de perna ≠ sinal de saldo
+### D9 — Delta de spec: sinal de perna ≠ sinal de saldo
 
 `presentation-mapping` diz *onde* a tradução acontece, não *qual* sinal — e seu único cenário sobre sinal é o da inversão por `AccountType`. Lido isoladamente, sugere aplicar `displaySign` também à perna `LIABILITY`, o que produziria de volta o `+R$ 100,00` que este change remove. Na prática `displaySign` só é usado em saldos e totais, nunca numa perna.
 

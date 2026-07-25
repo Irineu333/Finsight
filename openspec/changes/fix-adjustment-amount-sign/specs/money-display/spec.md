@@ -38,6 +38,10 @@ Valor e política MUST NOT ser campos independentes de um modelo de UI: um valor
 - **WHEN** um componente de UI renderiza um valor monetário
 - **THEN** ele aplica a política que acompanha o valor, sem consultar rótulo, natureza, direção ou tipo de conta
 
+#### Scenario: Linha de resumo recebe a política pronta
+- **WHEN** um resumo exibe uma coluna de linhas com políticas diferentes entre si
+- **THEN** cada linha recebe valor e política já resolvidos por quem produziu a figura, e o componente que a desenha não nomeia política alguma
+
 #### Scenario: Política acompanha o valor
 - **WHEN** um modelo de UI expõe um valor monetário
 - **THEN** valor e política vêm no mesmo tipo, e não é possível expor um sem o outro
@@ -72,7 +76,7 @@ Na superfície de **item** — o card de uma transação, a sua modal, a sua lin
 
 O **ajuste** SHALL exibir sinal sempre, positivo quando aumenta o patrimônio líquido da perspectiva e negativo quando o reduz — inclusive quando a perspectiva é um cartão, onde aumentar a dívida reduz o patrimônio. É a única transação cuja direção o rótulo não entrega.
 
-A **transferência** SHALL exibir o sinal do seu efeito quando lida sob uma perspectiva, porque as suas duas pontas compartilham rótulo, ícone e cor, e sem sinal seriam indistinguíveis. Lida sem perspectiva, ela MUST NOT exibir sinal: a mesma transação contém as duas pontas, e a direção de uma perna escolhida arbitrariamente não é propriedade da transação.
+A **transferência** SHALL exibir sinal explícito nas duas pontas quando lida sob uma perspectiva, porque elas compartilham rótulo, ícone e cor e sem sinal seriam indistinguíveis; exibir o sinal em apenas uma delas obrigaria o leitor a inferir a outra por ausência. Lida sem perspectiva, ela MUST NOT exibir sinal: a mesma transação contém as duas pontas, e a direção de uma perna escolhida arbitrariamente não é propriedade da transação.
 
 #### Scenario: Ajuste que aumenta a dívida de um cartão
 - **WHEN** a dívida de uma fatura é ajustada de R$ 0,00 para R$ 100,00 e a transação resultante é exibida como item
@@ -100,7 +104,7 @@ A **transferência** SHALL exibir o sinal do seu efeito quando lida sob uma pers
 
 #### Scenario: Transferência sob a perspectiva de uma conta
 - **WHEN** uma transferência é exibida na lista da conta de onde o dinheiro saiu
-- **THEN** o valor é exibido como negativo, e na lista da conta de destino, sem sinal
+- **THEN** o valor é exibido com sinal negativo, e na lista da conta de destino, com sinal positivo explícito
 
 #### Scenario: Transferência sem perspectiva
 - **WHEN** uma transferência é exibida em uma lista que não declara perspectiva

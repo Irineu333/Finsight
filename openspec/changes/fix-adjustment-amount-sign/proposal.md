@@ -11,7 +11,10 @@ A causa é que o app **descobriu a regra de sinal mas nunca a escreveu**. Os res
 - `TransactionUiMapper` deixa de aplicar `abs()` e resolve a política de cada item pela regra.
 - **BREAKING (interno)**: `TransactionUi.amount` deixa de ser `Double` sempre positivo e passa a ser `DisplayAmount`. Consumidores fora de `:core:ui` são dois, ambos em `feature/report/impl`.
 - **Mudança visual 1** — o **ajuste** passa a exibir o sinal correto em toda superfície de item: negativo quando reduz o patrimônio (dívida que sobe, saldo que desce), positivo quando o aumenta. É o defeito.
-- **Mudança visual 2** — a **transferência sem perspectiva** deixa de exibir o `−` que hoje é composto à mão. Na lista geral a transação contém as duas pontas, então não há direção a exibir; sob a perspectiva de uma conta ela mantém o sinal, que é a única coisa que distingue as duas pontas.
+- **Mudança visual 2** — a **transferência sob a perspectiva de uma conta** passa a exibir sinal explícito nas duas pontas: `−` na origem, como hoje, e `+` no destino, que hoje aparece sem sinal. As duas pontas compartilham rótulo, ícone e cor; sinalizar só uma obrigaria a inferir a outra por ausência.
+- **Mudança visual 3** — a **transferência sem perspectiva** deixa de exibir o `−` que hoje é composto à mão. Vale para todas as listas que não declaram perspectiva — transações, dashboard, cartões, parcelamentos e relatório; só a tela de contas passa `accountId`.
+- **Mudança visual 4** — no ramo de **fatura** do relatório, o gasto passa a exibir `−` e o pagamento antecipado `+`, alinhando-o ao ramo de conta do mesmo relatório, que já exibe. É a única parte dos resumos que não obedecia à regra.
+- A escolha da política sai dos `@Composable` e passa para quem produz a figura — `BalanceOverviewFactory`, `AccountsViewModel`, `InvoiceTransactionsViewModel` e `ReportViewerUiState.Stats` —, nas duas superfícies. Sem isso a change escreveria um requisito que ela mesma violaria em cinco dos sete sítios.
 - `TransactionCard` e `ReportExportLayout.exportAmount` perdem seus `when` duplicados e a concatenação manual de `"-"`.
 - `ReportExportLayout.exportTone` passa a acertar o tom do ajuste — hoje todo ajuste cai em `ReportTone.POSITIVE`, porque o ramo que decide é `amount >= 0` e `amount` é sempre positivo (o ramo `NEGATIVE` é inalcançável).
 - Absorção dos demais sítios da mesma política, **sem mudança de comportamento**, porque já obedecem à regra: o `enum SignDisplay` de `SummaryCard` (18 usos — a implementação de referência, de onde o tipo novo nasce), o `private enum AccountSignDisplay` de `AccountCard`, o trio de `Boolean` do `SummaryRow` da fatura, e quatro literais `"+${...}"`/`"-${...}"` em `ReportContextCard` e `ReportExportLayout`.
@@ -29,10 +32,11 @@ A causa é que o app **descobriu a regra de sinal mas nunca a escreveu**. Os res
 
 **Código**
 - `core/common`: novo `DisplayAmount` + extensão de formatação sobre `CurrencyFormatter`.
-- `core/ui`: `TransactionUiMapper`, `TransactionUi.amount`, `TransactionCard`, `AccountCard`, e `implementation(core.common)` → `api(...)`.
-- `feature/report/impl`: `ReportExportLayout` (`exportAmount`, `exportTone`, linhas de resumo) e `ReportContextCard`.
-- `feature/transactions/impl`: `SummaryCard` (`SignDisplay` e seus 18 usos).
-- `feature/creditcards/impl`: `InvoiceTransactionsScreen.SummaryRow`.
+- `core/ui`: `TransactionUiMapper`, `TransactionUi.amount`, `TransactionCard`, `AccountCard`, `AccountUi`, e `implementation(core.common)` → `api(...)`.
+- `feature/report/impl`: `ReportExportLayout` (`exportAmount`, `exportTone`, linhas de resumo), `ReportContextCard` e `ReportViewerUiState.Stats`.
+- `feature/transactions/impl`: `SummaryCard` (`SignDisplay` e seus 18 usos), `BalanceOverviewFactory`, `ViewTransactionUiState` e `ViewTransactionModal`.
+- `feature/creditcards/impl`: `InvoiceTransactionsScreen.SummaryRow` e `InvoiceTransactionsViewModel`.
+- `feature/accounts/impl`: `AccountsViewModel`, onde `AccountUi` é montado.
 
 **Telas a verificar**: transações (lista + os três corpos do `SummaryCard`), contas, cartões/extrato da fatura, parcelamentos, dashboard, relatório exportado (tela e HTML/PDF).
 

@@ -18,6 +18,13 @@ sealed interface DashboardComponent {
         override val key = DashboardComponentType.TOTAL_BALANCE.key
     }
 
+    data class OverallBalanceStats(
+        val income: Double,
+        val expense: Double,
+    ) : DashboardComponent {
+        override val key = DashboardComponentType.OVERALL_BALANCE_STATS.key
+    }
+
     data class ConcreteBalanceStats(
         val income: Double,
         val expense: Double,
@@ -100,6 +107,7 @@ sealed interface DashboardComponent {
 
 fun DashboardComponent.toViewingVariant(config: Map<String, String>): DashboardComponentVariant = when (this) {
     is DashboardComponent.TotalBalance -> DashboardComponentVariant.TotalBalance.Viewing(this, config)
+    is DashboardComponent.OverallBalanceStats -> DashboardComponentVariant.OverallBalanceStats.Viewing(this, config)
     is DashboardComponent.ConcreteBalanceStats -> DashboardComponentVariant.ConcreteBalanceStats.Viewing(this, config)
     is DashboardComponent.PendingBalanceStats -> DashboardComponentVariant.PendingBalanceStats.Viewing(this, config)
     is DashboardComponent.CreditCardBalanceStats -> DashboardComponentVariant.CreditCardBalanceStats.Viewing(this, config)

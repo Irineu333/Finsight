@@ -81,10 +81,13 @@ class DashboardComponentOptionsModal(
             )
 
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
-            val showHeader = config.showHeader()
+            val showHeader = config.showHeader(item.key)
 
             DashboardConfigCard {
                 when (item.key) {
+                    DashboardComponentType.OVERALL_BALANCE_STATS.key,
+                    DashboardComponentType.CONCRETE_BALANCE_STATS.key,
+                    DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key,
                     DashboardComponentType.ACCOUNTS_OVERVIEW.key,
                     DashboardComponentType.CREDIT_CARDS_PAGER.key,
                     DashboardComponentType.PENDING_RECURRING.key,
@@ -112,6 +115,7 @@ class DashboardComponentOptionsModal(
             }
 
             when (item.key) {
+                DashboardComponentType.OVERALL_BALANCE_STATS.key,
                 DashboardComponentType.CONCRETE_BALANCE_STATS.key -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),

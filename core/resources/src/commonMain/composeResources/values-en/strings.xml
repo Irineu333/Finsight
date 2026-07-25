@@ -73,7 +73,10 @@
     <string name="dashboard_accounts">Accounts</string>
     <string name="dashboard_installments">Installments</string>
     <string name="dashboard_support">Support</string>
-    <string name="dashboard_total_balance">Total Balance</string>
+    <string name="dashboard_total_balance">Balance in Accounts</string>
+    <string name="dashboard_overall_balance">Overall Balance</string>
+    <string name="dashboard_balance">Balance in Accounts</string>
+    <string name="dashboard_credit_card_balance">Card Balance</string>
     <string name="dashboard_add_account">Add account</string>
     <string name="dashboard_reports">Reports</string>
 
@@ -702,8 +705,9 @@
     <string name="recurring_error_account_required">Account is required.</string>
 
     <!-- Dashboard Component Names -->
-    <string name="component_total_balance">Total Balance</string>
+    <string name="component_total_balance">Balance in Accounts</string>
     <string name="component_balance_stats">Balance</string>
+    <string name="component_overall_balance_stats">Overall Balance</string>
     <string name="component_pending_balance">Pending Balance</string>
     <string name="component_credit_card_balance_stats">Card Balance</string>
     <string name="component_accounts_overview">Accounts</string>

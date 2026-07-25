@@ -24,6 +24,21 @@ sealed interface DashboardComponentVariant {
         ) : TotalBalance
     }
 
+    sealed interface OverallBalanceStats : DashboardComponentVariant {
+        override val component: DashboardComponent.OverallBalanceStats
+        override val title: UiText get() = UiText.Res(Res.string.component_overall_balance_stats)
+
+        data class Viewing(
+            override val component: DashboardComponent.OverallBalanceStats,
+            override val config: Map<String, String>,
+        ) : OverallBalanceStats
+
+        data class Preview(
+            override val component: DashboardComponent.OverallBalanceStats,
+            override val config: Map<String, String> = emptyMap(),
+        ) : OverallBalanceStats
+    }
+
     sealed interface ConcreteBalanceStats : DashboardComponentVariant {
         override val component: DashboardComponent.ConcreteBalanceStats
         override val title: UiText get() = UiText.Res(Res.string.component_balance_stats)

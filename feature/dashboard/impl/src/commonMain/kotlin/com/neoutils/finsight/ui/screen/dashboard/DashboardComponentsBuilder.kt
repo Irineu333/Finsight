@@ -59,6 +59,7 @@ class DashboardComponentsBuilder(
     ): DashboardComponent? {
         return when (key) {
             DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input)
+            DashboardComponentType.OVERALL_BALANCE_STATS.key -> overallBalanceStats(input, config)
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
                 pendingRecurring = context.pendingRecurring,
@@ -115,6 +116,32 @@ class DashboardComponentsBuilder(
         // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
         return DashboardComponent.TotalBalance(
             amount = calculateBalanceUseCase(target = input.targetMonth),
+        )
+    }
+
+    private suspend fun overallBalanceStats(
+        input: DashboardComponentsInput,
+        config: Map<String, String>,
+    ): DashboardComponent.OverallBalanceStats? {
+        // The neutral perimeter (ASSET + LIABILITY) is the *sum* of the two per-nature
+        // reads the ledger already exposes — `ledger-reporting` forbids a third aggregate
+        // for it (design D2). The two expense sets are disjoint: a card purchase has no
+        // ASSET leg, so nothing is double-counted; and neither read reports an invoice
+        // payment, which is internal to this perimeter. Income only ever lands on ASSET.
+        val asset = entryRepository.assetMonthFlows(input.targetMonth)
+        val liability = entryRepository.liabilityMonthFlows(input.targetMonth)
+
+        val income = asset.income
+        val expense = asset.expense + liability.expense
+
+        val isEmpty = income <= 0.0 && expense <= 0.0
+        if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
+            return null
+        }
+
+        return DashboardComponent.OverallBalanceStats(
+            income = income,
+            expense = expense,
         )
     }
 

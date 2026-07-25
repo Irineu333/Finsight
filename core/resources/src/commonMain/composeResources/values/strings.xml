@@ -74,7 +74,10 @@
     <string name="dashboard_accounts">Contas</string>
     <string name="dashboard_installments">Parcelamentos</string>
     <string name="dashboard_support">Suporte</string>
-    <string name="dashboard_total_balance">Saldo Total</string>
+    <string name="dashboard_total_balance">Saldo em Contas</string>
+    <string name="dashboard_overall_balance">Balanço Geral</string>
+    <string name="dashboard_balance">Balanço em Contas</string>
+    <string name="dashboard_credit_card_balance">Balanço do Cartão</string>
     <string name="dashboard_add_account">Adicionar conta</string>
     <string name="dashboard_reports">Relatórios</string>
 
@@ -711,8 +714,9 @@
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
 
     <!-- Dashboard Component Names -->
-    <string name="component_total_balance">Saldo Total</string>
+    <string name="component_total_balance">Saldo em Contas</string>
     <string name="component_balance_stats">Balanço</string>
+    <string name="component_overall_balance_stats">Balanço Geral</string>
     <string name="component_pending_balance">Balanço Pendente</string>
     <string name="component_credit_card_balance_stats">Balanço do Cartão</string>
     <string name="component_accounts_overview">Contas</string>

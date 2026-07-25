@@ -10,11 +10,20 @@ enum class DashboardComponentType(
             DashboardComponentConfig.TOP_SPACING to "false",
         ),
     ),
+    OVERALL_BALANCE_STATS(
+        key = "balance_stats_overall",
+        defaultConfig = mapOf(
+            DashboardComponentConfig.TOP_SPACING to "false",
+            DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+            DashboardComponentConfig.SHOW_HEADER to "true",
+        ),
+    ),
     CONCRETE_BALANCE_STATS(
         key = "balance_stats_concrete",
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
             DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+            DashboardComponentConfig.SHOW_HEADER to "false",
         ),
     ),
     PENDING_BALANCE_STATS(
@@ -29,6 +38,7 @@ enum class DashboardComponentType(
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
             DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+            DashboardComponentConfig.SHOW_HEADER to "false",
         ),
     ),
     ACCOUNTS_OVERVIEW(

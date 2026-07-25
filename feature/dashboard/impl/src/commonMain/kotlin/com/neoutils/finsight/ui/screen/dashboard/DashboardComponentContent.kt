@@ -101,6 +101,14 @@ internal fun DashboardComponentContent(
             )
         }
 
+        is DashboardComponentVariant.OverallBalanceStats -> {
+            DashboardOverallBalanceSection(
+                variant = variant,
+                openTransactions = openTransactions,
+                modifier = modifier,
+            )
+        }
+
         is DashboardComponentVariant.ConcreteBalanceStats -> {
             DashboardConcreteBalanceSection(
                 variant = variant,
@@ -195,7 +203,7 @@ private fun DashboardPendingRecurringSection(
     val modalManager = LocalModalManager.current
     val recurringEntry = koinInject<RecurringEntry>()
     val component = variant.component
-    val showHeader = variant.config.showHeader()
+    val showHeader = variant.config.showHeader(variant.key)
 
     Column(
         modifier = modifier,
@@ -246,7 +254,7 @@ private fun DashboardRecentsSection(
     val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val component = variant.component
-    val showHeader = variant.config.showHeader()
+    val showHeader = variant.config.showHeader(variant.key)
 
     Column(
         modifier = modifier,
@@ -311,7 +319,7 @@ private fun DashboardQuickActionsSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
-    val showHeader = variant.config.showHeader()
+    val showHeader = variant.config.showHeader(variant.key)
 
     Column(
         modifier = modifier,
@@ -342,6 +350,78 @@ private fun DashboardQuickActionsSection(
     }
 }
 
+/**
+ * The shape every flow widget shares: an optional header naming its perimeter — without
+ * it the neutral and the accounts perimeters are indistinguishable, since income is
+ * literally the same number in both (design D5) — over a pair of balance cards.
+ */
+@Composable
+private fun DashboardFlowStatsSection(
+    title: String,
+    showHeader: Boolean,
+    modifier: Modifier = Modifier,
+    cards: @Composable RowScope.() -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+    ) {
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            content = cards,
+        )
+    }
+}
+
+@Composable
+private fun DashboardOverallBalanceSection(
+    variant: DashboardComponentVariant.OverallBalanceStats,
+    openTransactions: (TransactionLabel?, TransactionTarget?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val component = variant.component
+
+    DashboardFlowStatsSection(
+        title = stringResource(Res.string.dashboard_overall_balance),
+        showHeader = variant.config.showHeader(variant.key),
+        modifier = modifier,
+    ) {
+        BalanceCard(
+            balance = component.income,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.Income,
+            onClick = {
+                if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
+                    openTransactions(TransactionLabel.INCOME, null)
+                }
+            },
+        )
+
+        BalanceCard(
+            balance = component.expense,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.Expense,
+            onClick = {
+                if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
+                    openTransactions(TransactionLabel.EXPENSE, null)
+                }
+            },
+        )
+    }
+}
+
 @Composable
 private fun DashboardConcreteBalanceSection(
     variant: DashboardComponentVariant.ConcreteBalanceStats,
@@ -350,38 +430,32 @@ private fun DashboardConcreteBalanceSection(
 ) {
     val component = variant.component
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    DashboardFlowStatsSection(
+        title = stringResource(Res.string.dashboard_balance),
+        showHeader = variant.config.showHeader(variant.key),
         modifier = modifier,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        ) {
-            BalanceCard(
-                balance = component.income,
-                modifier = Modifier.weight(1f),
-                config = BalanceCardConfig.Income,
-                onClick = {
-                    if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(TransactionLabel.INCOME, null)
-                    }
-                },
-            )
+        BalanceCard(
+            balance = component.income,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.Income,
+            onClick = {
+                if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
+                    openTransactions(TransactionLabel.INCOME, null)
+                }
+            },
+        )
 
-            BalanceCard(
-                balance = component.expense,
-                modifier = Modifier.weight(1f),
-                config = BalanceCardConfig.Expense,
-                onClick = {
-                    if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        openTransactions(TransactionLabel.EXPENSE, null)
-                    }
-                },
-            )
-        }
+        BalanceCard(
+            balance = component.expense,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.Expense,
+            onClick = {
+                if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
+                    openTransactions(TransactionLabel.EXPENSE, null)
+                }
+            },
+        )
     }
 }
 
@@ -424,11 +498,10 @@ private fun DashboardCreditCardBalanceSection(
 ) {
     val component = variant.component
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+    DashboardFlowStatsSection(
+        title = stringResource(Res.string.dashboard_credit_card_balance),
+        showHeader = variant.config.showHeader(variant.key),
+        modifier = modifier,
     ) {
         BalanceCard(
             balance = component.payment,
@@ -454,7 +527,7 @@ private fun DashboardCreditCardsSection(
     val modalManager = LocalModalManager.current
     val creditCardsEntry = koinInject<CreditCardsEntry>()
     val component = variant.component
-    val showHeader = variant.config.showHeader()
+    val showHeader = variant.config.showHeader(variant.key)
 
     Column(
         modifier = modifier,
@@ -821,7 +894,7 @@ private fun DashboardAccountsRow(
     val modalManager = LocalModalManager.current
     val accountsEntry = koinInject<AccountsEntry>()
     val component = variant.component
-    val showHeader = variant.config.showHeader()
+    val showHeader = variant.config.showHeader(variant.key)
 
     Column(
         modifier = modifier,

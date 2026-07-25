@@ -45,3 +45,11 @@ fun Map<String, String>.hideWhenEmpty(defaultValue: Boolean): Boolean =
 
 fun Map<String, String>.showHeader(defaultValue: Boolean = true): Boolean =
     get(DashboardComponentConfig.SHOW_HEADER)?.toBoolean() ?: defaultValue
+
+/**
+ * The header's fallback for a preference saved before the widget declared one: the
+ * widget's own `defaultConfig`, so the default is stated in a single place — a dashboard
+ * assembled earlier keeps the appearance it had.
+ */
+fun Map<String, String>.showHeader(key: String): Boolean =
+    showHeader(defaultValue = DashboardComponentType.fromKey(key)?.defaultConfig?.showHeader() ?: true)

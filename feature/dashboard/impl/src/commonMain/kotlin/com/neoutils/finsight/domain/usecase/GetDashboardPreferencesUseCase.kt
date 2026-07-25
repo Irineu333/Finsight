@@ -27,8 +27,12 @@ class GetDashboardPreferencesUseCase(
             position = 0,
             config = emptyMap(),
         ),
+        // The flow widget a fresh dashboard opens with is the neutral one: it answers
+        // "how much left my money this month" over accounts *and* cards. The
+        // accounts-only perimeter is one edit away, and stacking both by default would
+        // put two cards showing the very same income side by side.
         DashboardComponentPreference(
-            key = DashboardComponentType.CONCRETE_BALANCE_STATS.key,
+            key = DashboardComponentType.OVERALL_BALANCE_STATS.key,
             position = 1,
             config = emptyMap(),
         ),

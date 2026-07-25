@@ -34,7 +34,17 @@
 - [x] 4.6 O widget novo aparece entre os disponíveis, e sobrevive a salvar/recarregar preferências
 - [x] 4.7 Um dashboard salvo antes desta change carrega idêntico, sem o widget neutro e sem cabeçalho nos dois existentes
 
-## 5. Fora do escopo original, encontrado ao verificar no emulador
+## 5. Ajuste pedido depois da implementação
+
+- [x] 5.1 O dashboard inicial (`GetDashboardPreferencesUseCase.defaultPreferences`) abre com
+      `OVERALL_BALANCE_STATS` **no lugar de** `CONCRETE_BALANCE_STATS` — o perímetro de contas
+      continua a um toque no modo de edição. Empilhar os dois por padrão poria lado a lado dois
+      cards com a mesma receita, que é o que D5 descreve. Contraria a decisão registrada no
+      proposal de o widget novo "nascer ausente"; ela vale para dashboards **já montados**, que
+      seguem intocados — o default só rege quem instala agora.
+- [x] 5.2 Teste: um dashboard novo traz o perímetro neutro, não o de contas, e com cabeçalho
+
+## 6. Fora do escopo original, encontrado ao verificar no emulador
 
 O APK não buildava desde `7b56d8d1d` (*Refactor(ledger): move the ledger into `:core:ledger`*),
 por colisão de dex: o `LedgerDatabase` de `:core:ledger` e o `AppDatabase` de `:core:database`
@@ -42,11 +52,11 @@ declaram as mesmas quatro entidades, então o Room gerava `AccountDao_Impl`, `En
 `TransactionDao_Impl` e `DimensionDao_Impl` nos dois módulos, com a mesma FQN. Nada disso vem
 desta change — ela só foi o que fez o APK ser buildado de novo.
 
-- [x] 5.1 Mover `LedgerDatabase` de `commonMain` para `jvmTest` em `:core:ledger`, sem `@ConstructedBy`
+- [x] 6.1 Mover `LedgerDatabase` de `commonMain` para `jvmTest` em `:core:ledger`, sem `@ConstructedBy`
       nem o `expect object` (target único) e `internal` — as classes geradas deixam de ir para o artefato
-- [x] 5.2 Registrar `kspJvmTest` no `build.gradle.kts` do ledger; o convention plugin `finsight.room.library`
+- [x] 6.2 Registrar `kspJvmTest` no `build.gradle.kts` do ledger; o convention plugin `finsight.room.library`
       só cobre os source sets `Main`
-- [x] 5.3 Verificar que a garantia do D9 sobrevive: um `@Query` do ledger nomeando `invoices` ainda
+- [x] 6.3 Verificar que a garantia do D9 sobrevive: um `@Query` do ledger nomeando `invoices` ainda
       falha o build, agora em `kspTestKotlinJvm` (`[ksp] … no such table: invoices`)
 
 > Alternativa registrada, não adotada: um módulo de verificação próprio (`core:ledger-schemacheck`),

@@ -2,15 +2,21 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
+import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
+import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.russhwolf.settings.MapSettings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * The neutral widget joins the catalog like any other — offered by the edit mode, absent
@@ -47,6 +53,22 @@ class DashboardBalanceWidgetsCatalogTest {
         val present = setOf(DashboardComponentType.OVERALL_BALANCE_STATS.key)
 
         assertFalse(DashboardComponentType.OVERALL_BALANCE_STATS.key in availableKeys(present))
+    }
+
+    @Test
+    fun `a fresh dashboard opens with the neutral perimeter, not the accounts one`() = runTest {
+        val defaults = GetDashboardPreferencesUseCase(
+            repository = EmptyPreferencesRepository,
+            navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
+        )().first()
+
+        val keys = defaults.map { it.key }
+        assertContains(keys, DashboardComponentType.OVERALL_BALANCE_STATS.key)
+        assertFalse(DashboardComponentType.CONCRETE_BALANCE_STATS.key in keys)
+
+        // And it opens with its header, so the perimeter is named on screen.
+        val neutral = defaults.single { it.key == DashboardComponentType.OVERALL_BALANCE_STATS.key }
+        assertTrue(neutral.config.showHeader(neutral.key))
     }
 
     @Test
@@ -95,4 +117,12 @@ class DashboardBalanceWidgetsCatalogTest {
             )
         }
     }
+}
+
+/** Nothing saved — what a freshly installed app sees. */
+private object EmptyPreferencesRepository : IDashboardPreferencesRepository {
+    override fun observe(): StateFlow<List<DashboardComponentPreference>?> = MutableStateFlow(null)
+    override fun observeEditTipDismissed(): StateFlow<Boolean> = MutableStateFlow(false)
+    override suspend fun dismissEditTip() = Unit
+    override suspend fun save(preferences: List<DashboardComponentPreference>) = Unit
 }

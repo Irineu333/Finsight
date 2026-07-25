@@ -7,6 +7,7 @@
 - [x] 1.3 Adicionar `component_overall_balance_stats` (`Balanço Geral` / `Overall Balance`) em todos os idiomas
 - [x] 1.4 Adicionar as três strings de cabeçalho, que **não existem hoje** — nenhum dos widgets de fluxo tem título: `dashboard_overall_balance` (`Balanço Geral`), `dashboard_balance` (`Balanço em Contas`), `dashboard_credit_card_balance` (`Balanço do Cartão`)
 - [x] 1.5 Verificar que nenhum outro consumidor lê `dashboard_total_balance` / `component_total_balance` esperando o texto antigo
+- [x] 1.6 Trocar o valor de `component_balance_stats` para `Balanço em Contas` / `Accounts Balance` — o título na lista de edição também não qualificava o perímetro
 
 ## 2. O widget neutro (`feature/dashboard/impl`)
 
@@ -32,3 +33,22 @@
 - [x] 4.5 `hideWhenEmpty` do widget neutro: mês sem movimento nenhum não some por padrão
 - [x] 4.6 O widget novo aparece entre os disponíveis, e sobrevive a salvar/recarregar preferências
 - [x] 4.7 Um dashboard salvo antes desta change carrega idêntico, sem o widget neutro e sem cabeçalho nos dois existentes
+
+## 5. Fora do escopo original, encontrado ao verificar no emulador
+
+O APK não buildava desde `7b56d8d1d` (*Refactor(ledger): move the ledger into `:core:ledger`*),
+por colisão de dex: o `LedgerDatabase` de `:core:ledger` e o `AppDatabase` de `:core:database`
+declaram as mesmas quatro entidades, então o Room gerava `AccountDao_Impl`, `EntryDao_Impl`,
+`TransactionDao_Impl` e `DimensionDao_Impl` nos dois módulos, com a mesma FQN. Nada disso vem
+desta change — ela só foi o que fez o APK ser buildado de novo.
+
+- [x] 5.1 Mover `LedgerDatabase` de `commonMain` para `jvmTest` em `:core:ledger`, sem `@ConstructedBy`
+      nem o `expect object` (target único) e `internal` — as classes geradas deixam de ir para o artefato
+- [x] 5.2 Registrar `kspJvmTest` no `build.gradle.kts` do ledger; o convention plugin `finsight.room.library`
+      só cobre os source sets `Main`
+- [x] 5.3 Verificar que a garantia do D9 sobrevive: um `@Query` do ledger nomeando `invoices` ainda
+      falha o build, agora em `kspTestKotlinJvm` (`[ksp] … no such table: invoices`)
+
+> Alternativa registrada, não adotada: um módulo de verificação próprio (`core:ledger-schemacheck`),
+> que devolveria a checagem ao `assemble` em vez de ao `test`, ao custo de um módulo inteiro para
+> uma classe.

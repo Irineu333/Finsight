@@ -715,7 +715,7 @@
 
     <!-- Dashboard Component Names -->
     <string name="component_total_balance">Saldo em Contas</string>
-    <string name="component_balance_stats">Balanço</string>
+    <string name="component_balance_stats">Balanço em Contas</string>
     <string name="component_overall_balance_stats">Balanço Geral</string>
     <string name="component_pending_balance">Balanço Pendente</string>
     <string name="component_credit_card_balance_stats">Balanço do Cartão</string>

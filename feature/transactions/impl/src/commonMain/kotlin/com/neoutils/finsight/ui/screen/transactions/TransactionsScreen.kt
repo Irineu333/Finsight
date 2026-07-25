@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,6 +26,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -203,59 +203,38 @@ private fun TransactionsEmptyState(
 ) {
     val isLedgerEmpty = listState is ListState.EmptyLedger
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            imageVector = if (isLedgerEmpty) {
-                Icons.AutoMirrored.Outlined.ReceiptLong
+    EmptyStateMessage(
+        icon = if (isLedgerEmpty) {
+            Icons.AutoMirrored.Outlined.ReceiptLong
+        } else {
+            Icons.Outlined.FilterAltOff
+        },
+        title = stringResource(
+            if (isLedgerEmpty) {
+                Res.string.transactions_empty_title
             } else {
-                Icons.Outlined.FilterAltOff
-            },
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .padding(bottom = 8.dp)
-                .size(48.dp),
-        )
-
-        Text(
-            text = stringResource(
-                if (isLedgerEmpty) {
-                    Res.string.transactions_empty_title
-                } else {
-                    Res.string.transactions_empty_filter_title
-                }
-            ),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-
-        Text(
-            text = stringResource(
-                if (isLedgerEmpty) {
-                    Res.string.transactions_empty_body
-                } else {
-                    Res.string.transactions_empty_filter_body
-                }
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        if (listState is ListState.EmptyScope && listState.canClearFilters) {
-            Button(
-                onClick = { onAction(TransactionsAction.ClearFilters) },
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                Text(stringResource(Res.string.transactions_empty_filter_action))
+                Res.string.transactions_empty_filter_title
             }
-        }
-    }
+        ),
+        description = stringResource(
+            if (isLedgerEmpty) {
+                Res.string.transactions_empty_body
+            } else {
+                Res.string.transactions_empty_filter_body
+            }
+        ),
+        modifier = modifier,
+        action = if (listState is ListState.EmptyScope && listState.canClearFilters) {
+            {
+                Button(
+                    onClick = { onAction(TransactionsAction.ClearFilters) },
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    Text(stringResource(Res.string.transactions_empty_filter_action))
+                }
+            }
+        } else null,
+    )
 }
 
 @Composable

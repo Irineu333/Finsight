@@ -6,10 +6,10 @@
 
 ## 2. Alinhar o pager de cartões ao de contas
 
-- [ ] 2.1 Em `CreditCardsScreen.kt` (`CreditCardPager`), remover a guarda `if (pagerState.currentPage != selectedIndex)` do `collect`
-- [ ] 2.2 Encadear `.distinctUntilChanged()` no `snapshotFlow`, notificando `onSelectCard(page)` a cada parada — mesma forma de `AccountsScreen.kt`
-- [ ] 2.3 Remover o bloco comentado do efeito inverso (`LaunchedEffect(selectedIndex) { scrollToPage }`), que não está em uso e é a origem da guarda
-- [ ] 2.4 Confirmar que `selectedIndex` continua sendo usado para o `initialPage` e para a promoção a elemento compartilhado (`page == selectedIndex`), que não mudam
+- [x] 2.1 Em `CreditCardsScreen.kt` (`CreditCardPager`), remover a guarda `if (pagerState.currentPage != selectedIndex)` do `collect`
+- [x] 2.2 Encadear `.distinctUntilChanged()` no `snapshotFlow`, notificando `onSelectCard(page)` a cada parada — mesma forma de `AccountsScreen.kt`
+- [x] 2.3 Remover o bloco comentado do efeito inverso (`LaunchedEffect(selectedIndex) { scrollToPage }`), que não está em uso e é a origem da guarda
+- [x] 2.4 Confirmar que `selectedIndex` continua sendo usado para o `initialPage` e para a promoção a elemento compartilhado (`page == selectedIndex`), que não mudam
 
 ## 3. Verificação manual
 
@@ -21,5 +21,5 @@
 
 ## 4. Fechamento
 
-- [ ] 4.1 `./gradlew :app:desktop:compileKotlin`
-- [ ] 4.2 `openspec validate fix-credit-card-pager-selection`
+- [x] 4.1 `./gradlew :app:desktop:compileKotlin`
+- [x] 4.2 `openspec validate fix-credit-card-pager-selection`

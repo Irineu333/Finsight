@@ -57,6 +57,7 @@ import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -417,18 +418,12 @@ private fun CreditCardPager(
     LaunchedEffect(Unit) {
         snapshotFlow {
             pagerState.currentPage
-        }.collect {
-            if (pagerState.currentPage != selectedIndex) {
-                onSelectCard(pagerState.currentPage)
-            }
         }
+            .distinctUntilChanged()
+            .collect { page ->
+                onSelectCard(page)
+            }
     }
-
-//    LaunchedEffect(selectedIndex) {
-//        if (pagerState.currentPage != selectedIndex) {
-//            pagerState.scrollToPage(selectedIndex)
-//        }
-//    }
 
     HorizontalPager(
         state = pagerState,

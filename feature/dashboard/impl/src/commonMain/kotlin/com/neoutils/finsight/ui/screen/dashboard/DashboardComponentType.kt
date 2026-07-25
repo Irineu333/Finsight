@@ -15,7 +15,7 @@ enum class DashboardComponentType(
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
             DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
-            DashboardComponentConfig.SHOW_HEADER to "true",
+            DashboardComponentConfig.SHOW_HEADER to "false",
         ),
     ),
     CONCRETE_BALANCE_STATS(

@@ -11,7 +11,7 @@
 
 ## 2. O widget neutro (`feature/dashboard/impl`)
 
-- [x] 2.1 Acrescentar `OVERALL_BALANCE_STATS` a `DashboardComponentType`, com `TOP_SPACING=false`, `HIDE_WHEN_EMPTY=false` e `SHOW_HEADER=true` (D5)
+- [x] 2.1 Acrescentar `OVERALL_BALANCE_STATS` a `DashboardComponentType`, com `TOP_SPACING=false`, `HIDE_WHEN_EMPTY=false` e `SHOW_HEADER=false` (ver 5.3)
 - [x] 2.2 Acrescentar `DashboardComponent.OverallBalanceStats(income, expense)` e o ramo em `toViewingVariant`
 - [x] 2.3 Acrescentar `DashboardComponentVariant.OverallBalanceStats` (`Viewing` + `Preview`), com `title` apontando para `component_overall_balance_stats`
 - [x] 2.4 Construir o componente em `DashboardComponentsBuilder`: `income = assetMonthFlows.income`, `expense = assetMonthFlows.expense + liabilityMonthFlows.expense` (D2), honrando `hideWhenEmpty`
@@ -42,7 +42,10 @@
       cards com a mesma receita, que é o que D5 descreve. Contraria a decisão registrada no
       proposal de o widget novo "nascer ausente"; ela vale para dashboards **já montados**, que
       seguem intocados — o default só rege quem instala agora.
-- [x] 5.2 Teste: um dashboard novo traz o perímetro neutro, não o de contas, e com cabeçalho
+- [x] 5.2 Teste: um dashboard novo traz o perímetro neutro, não o de contas
+- [x] 5.3 `SHOW_HEADER=false` também no `defaultConfig` do widget neutro, revertendo o `true` de D5:
+      aquele `true` existia para separar dois widgets de fluxo empilhados, e o default de 5.1 deixou de
+      empilhá-los. Os três nascem iguais e sem cabeçalho; quem juntar mais de um liga o título no modal
 
 ## 6. Fora do escopo original, encontrado ao verificar no emulador
 

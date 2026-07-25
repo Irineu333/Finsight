@@ -16,7 +16,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * The neutral widget joins the catalog like any other — offered by the edit mode, absent
@@ -66,9 +65,10 @@ class DashboardBalanceWidgetsCatalogTest {
         assertContains(keys, DashboardComponentType.OVERALL_BALANCE_STATS.key)
         assertFalse(DashboardComponentType.CONCRETE_BALANCE_STATS.key in keys)
 
-        // And it opens with its header, so the perimeter is named on screen.
+        // Alone among the flow widgets on a fresh screen, it needs no header to be told
+        // apart — like the other two, it opens without one.
         val neutral = defaults.single { it.key == DashboardComponentType.OVERALL_BALANCE_STATS.key }
-        assertTrue(neutral.config.showHeader(neutral.key))
+        assertFalse(neutral.config.showHeader(neutral.key))
     }
 
     @Test

@@ -26,9 +26,6 @@ class DashboardPreviewFactory(
                     income = 3200.0,
                     expense = 3950.0,
                 ),
-                // The edit list already names the widget above the card, as it does for
-                // every other previewed header.
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
             )
         }
 

@@ -63,8 +63,8 @@ valor cujos campos coincidam com os de um recorte legitimamente sem itens.
 
 ### Requirement: Os controles do recorte SHALL permanecer visíveis no vazio
 
-O resumo do escopo e os controles que governam o recorte — escopo, período e os chips de
-filtro — SHALL continuar visíveis quando a lista está vazia. MUST NOT ocorrer de o vazio
+SHALL continuar visíveis quando a lista está vazia o resumo do escopo e os controles que
+governam o recorte — escopo, período e os chips de filtro. MUST NOT ocorrer de o vazio
 substituir a tela inteira, o que removeria justamente os controles capazes de sair dele.
 
 A mensagem de vazio SHALL ocupar o lugar da lista, abaixo desses controles.
@@ -77,9 +77,9 @@ A mensagem de vazio SHALL ocupar o lugar da lista, abaixo desses controles.
 
 ### Requirement: O vazio de recorte SHALL oferecer limpar os filtros quando houver algum ativo
 
-Quando a tela está em vazio de recorte e ao menos um filtro de lista está ativo — categoria,
-natureza, alvo, apenas recorrentes ou apenas parcelados —, a mensagem SHALL oferecer uma ação
-de **limpar os filtros**. Com todos os filtros no neutro, a ação MUST NOT ser oferecida: não
+A mensagem SHALL oferecer uma ação de **limpar os filtros** quando a tela está em vazio de
+recorte e ao menos um filtro de lista está ativo — categoria, natureza, alvo, apenas
+recorrentes ou apenas parcelados. Com todos os filtros no neutro, a ação MUST NOT ser oferecida: não
 haveria nada para limpar e o botão prometeria um resultado que não pode entregar.
 
 Limpar os filtros SHALL devolver ao neutro apenas os filtros de lista. MUST NOT alterar o mês

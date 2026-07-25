@@ -466,7 +466,6 @@ private fun DashboardPendingBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
-    val showBothCards = component.pendingIncome <= 0.0 && component.pendingExpense <= 0.0
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -474,21 +473,17 @@ private fun DashboardPendingBalanceSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
     ) {
-        if (component.pendingIncome > 0.0 || showBothCards) {
-            BalanceCard(
-                balance = component.pendingIncome,
-                modifier = Modifier.weight(1f),
-                config = BalanceCardConfig.PendingIncome,
-            )
-        }
+        BalanceCard(
+            balance = component.pendingIncome,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.PendingIncome,
+        )
 
-        if (component.pendingExpense > 0.0 || showBothCards) {
-            BalanceCard(
-                balance = component.pendingExpense,
-                modifier = Modifier.weight(1f),
-                config = BalanceCardConfig.PendingExpense,
-            )
-        }
+        BalanceCard(
+            balance = component.pendingExpense,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.PendingExpense,
+        )
     }
 }
 

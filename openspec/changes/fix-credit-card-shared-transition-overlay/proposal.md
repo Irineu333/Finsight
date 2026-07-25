@@ -12,7 +12,6 @@ O defeito de fundo é de desenho: um componente de `:core:ui` decide sozinho par
 - **Só o cartão selecionado participa.** Dashboard promove a página corrente do pager; a tela de cartões promove a página de `selectedCardIndex`. As páginas vizinhas deixam de ser elevadas ao overlay — e, com isso, deixam de escapar do clip.
 - **O chrome da casca passa a ser desenhado acima do overlay.** `SharedTransitionProvider` sobe em `App.kt` para envolver o `ChromeHost`, e `NavigationRail`, bottom bar e FAB recebem `Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)`. Defesa estrutural: qualquer shared element futuro, com qualquer trajetória, fica abaixo do chrome.
 - **Fallbacks documentados** em `design.md`, caso o sintoma persista após as duas medidas acima.
-- Fora de escopo, registrados como achados: `CreditCardsScreen` não publica `ChromeEffect` (herda o config da tela anterior) e `EXCLUDED_CARD_IDS` faz as duas listas de cartões divergirem.
 
 ## Capabilities
 

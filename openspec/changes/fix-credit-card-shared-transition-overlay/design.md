@@ -43,8 +43,6 @@ Logo, a página N−1 é pintada a partir de x = −1160 e cobre a faixa do rail
 - Deixar registradas as alternativas, para o caso de o sintoma sobreviver às duas medidas.
 
 **Non-Goals:**
-- Corrigir o `ChromeEffect` ausente da `CreditCardsScreen` (bug real, separado).
-- Reconciliar `EXCLUDED_CARD_IDS` entre a lista da dashboard e a da tela de cartões.
 - Introduzir transição compartilhada em telas que hoje não têm.
 - Trocar `sharedElement` por `sharedBounds` ou ajustar curvas de animação.
 
@@ -105,6 +103,10 @@ Aplicar **na ordem**, e só se a verificação falhar. Cada um é mais barato e 
 | F4 | `OverlayClip` customizado, clipando ao retângulo do viewport do pager | `core/ui` | Acopla o cartão à geometria do container. Último recurso |
 
 F1 é o único que vale aplicar mesmo sem o bug persistir; os outros três são remédios.
+
+**Resultado:** nenhum remédio foi necessário. D1+D2+D3 eliminaram o sintoma — verificação manual
+nas duas larguras de janela e nos dois sentidos da navegação. F1 está aplicado, por valer por si;
+F2, F3 e F4 ficam registrados aqui e não foram tocados. O diagnóstico da seção Context se sustentou.
 
 ## Risks / Trade-offs
 

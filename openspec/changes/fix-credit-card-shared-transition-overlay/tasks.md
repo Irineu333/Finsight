@@ -28,22 +28,25 @@
 
 ## 5. Verificação manual
 
-- [ ] 5.1 Desktop em janela larga: navegar dashboard → cartões e voltar; o rail permanece integralmente visível durante as duas animações
-- [ ] 5.2 Desktop em janela ≥840dp: o `DetailPane` permanece integralmente visível durante as duas animações
-- [ ] 5.3 Android em janela estreita: a bottom bar e o FAB permanecem visíveis durante as duas animações
-- [ ] 5.4 A transição do cartão tocado continua acontecendo e é visualmente contínua (o cartão não "pisca" nem salta)
-- [ ] 5.5 Sem regressão de ordenação: `ModalBottomSheet`, painel de detalhe e o `DropdownMenu` do topo da tela de cartões continuam acima do chrome
-- [ ] 5.6 Testar com um único cartão cadastrado (sem vizinhos) e com o pager na primeira e na última página
+- [x] 5.1 Desktop em janela larga: navegar dashboard → cartões e voltar; o rail permanece integralmente visível durante as duas animações
+- [x] 5.2 Desktop em janela ≥840dp: o `DetailPane` permanece integralmente visível durante as duas animações
+- [x] 5.3 Android em janela estreita: a bottom bar e o FAB permanecem visíveis durante as duas animações
+- [x] 5.4 A transição do cartão tocado continua acontecendo e é visualmente contínua (o cartão não "pisca" nem salta)
+- [x] 5.5 Sem regressão de ordenação: `ModalBottomSheet`, painel de detalhe e o `DropdownMenu` do topo da tela de cartões continuam acima do chrome
+- [x] 5.6 Testar com um único cartão cadastrado (sem vizinhos) e com o pager na primeira e na última página
 
 ## 6. Fallbacks, apenas se 5.1–5.3 falharem
 
-- [ ] 6.1 Se o vazamento persistir, aplicar F2: `Modifier.clipToBounds()` no `Box(weight = 1f)` de `ChromeHost.kt:192`, e registrar no `design.md` que o cartão passa a ser cortado na borda
-- [ ] 6.2 Se ainda persistir, aplicar F3: `Modifier.zIndex(1f)` no rail dentro do `Row`
-- [ ] 6.3 Se ainda persistir, avaliar F4 (`OverlayClip` customizado ao viewport do pager) — e antes disso reabrir o diagnóstico, porque F1–F3 falhando significa que a causa é outra
-- [ ] 6.4 Registrar em `design.md` qual fallback foi necessário e por quê
+> **Não foram necessários.** A verificação manual da seção 5 passou com D1+D2+D3 (mais F1,
+> aplicado de saída na tarefa 2.4). F2, F3 e F4 permanecem apenas documentados no `design.md`.
+
+- [x] ~~6.1 F2: `Modifier.clipToBounds()` no `Box(weight = 1f)`~~ — não aplicado
+- [x] ~~6.2 F3: `Modifier.zIndex(1f)` no rail~~ — não aplicado
+- [x] ~~6.3 Avaliar F4 (`OverlayClip` customizado ao viewport do pager)~~ — não avaliado; o diagnóstico se sustentou
+- [x] 6.4 Registrar em `design.md` qual fallback foi necessário e por quê — nenhum além de F1; registrado no `design.md`
 
 ## 7. Fechamento
 
 - [ ] 7.1 `./gradlew allTests`
-- [ ] 7.2 Abrir issues separadas para os dois achados fora de escopo: `ChromeEffect` ausente na `CreditCardsScreen` e divergência de `EXCLUDED_CARD_IDS` entre as duas listas de cartões
-- [ ] 7.3 `openspec validate fix-credit-card-shared-transition-overlay`
+- [x] ~~7.2 Abrir issues separadas para os dois achados fora de escopo~~ — **descartada.** Nenhum dos dois se sustentava: `ChromeEffect` só tem um publicador em todo o repositório (a `DashboardScreen`), então a `CreditCardsScreen` não é exceção a padrão nenhum — e o `onDispose { reset() }` faz o chrome ficar correto de qualquer forma; e `EXCLUDED_CARD_IDS` não tem relação com transição, overlay ou chrome — entrou na lista por falar de cartões. Removidos também de `proposal.md` e `design.md`
+- [x] 7.3 `openspec validate fix-credit-card-shared-transition-overlay`

@@ -30,7 +30,9 @@ Logo, a página N−1 é pintada a partir de x = −1160 e cobre a faixa do rail
 
 **Descartado com evidência** (investigação registrada): descasamento de largura/inset entre origem e destino (ambos a 16dp/1168dp); pager de destino abrindo na página 0 (`CreditCardsViewModel.kt:43-52` resolve o índice antes da primeira emissão de `Content`); transições customizadas do `NavHost` (nenhuma — defaults de fade da navigation-compose 2.9.2); `AnimatedVisibilityScope` errado (provido só nos `composable<>`); chave duplicada em `ReportConfigScreen` ou no `DetailPane`; e o rail animando durante a navegação.
 
-**Predição falsificável:** em janela ≥840dp, a página N+1 (x = +1192) deve pintar sobre o `DetailPane` (`ChromeHost.kt:186-192`). Confirmar isso antes de implementar valida o diagnóstico inteiro.
+**Predição falsificável:** o cartão que aparece sobre o rail é a página **vizinha** — nome e valor diferentes do cartão tocado. Confirmar isso antes de implementar valida o diagnóstico inteiro; foi confirmado.
+
+~~Predição de simetria: em janela ≥840dp, a página N+1 (x = +1192) deve pintar sobre o `DetailPane`.~~ **Mal formulada, descartada.** O vazamento à direita existe, mas o `DetailPane` é o **último** filho do `Row` (`ChromeHost.kt:168-194`) e é pintado *depois* do overlay, encobrindo-o. Só o rail, primeiro filho, fica exposto. A ausência de cartão sobre o painel não falsifica nada.
 
 **Versões:** Compose Multiplatform 1.10.1 (animation 1.10.5/1.10.3), navigation-compose 2.9.2, material3-adaptive 1.2.0.
 
@@ -110,7 +112,7 @@ F2, F3 e F4 ficam registrados aqui e não foram tocados. O diagnóstico da seç�
 
 ## Risks / Trade-offs
 
-- **[O diagnóstico está errado e o sintoma persiste]** → A predição de D-Context (vazamento simétrico sobre o `DetailPane` em ≥840dp) é verificada **antes** de implementar. Se ela falhar, o diagnóstico cai e a causa precisa ser reinvestigada antes de mexer no código. D3 mitiga o sintoma de qualquer forma.
+- **[O diagnóstico está errado e o sintoma persiste]** → A predição de D-Context (o cartão sobre o rail é a página vizinha, não a tocada) é verificada **antes** de implementar. Se ela falhar, o diagnóstico cai e a causa precisa ser reinvestigada antes de mexer no código. D3 mitiga o sintoma de qualquer forma.
 - **[D1 é breaking para três call sites]** → São três, todos no repositório, todos listados no `proposal.md`. O compilador acha os três.
 - **[Subir o `SharedTransitionProvider` muda o escopo de todo o app]** → O `SharedTransitionLayout` passa a medir a janela inteira em vez da área de conteúdo. Nada hoje depende dos bounds dele exceto o overlay, e o overlay é justamente o que queremos maior. O `padding(paddingValues)` continua aplicado ao `AppNavHost`, então o layout do conteúdo não muda.
 - **[`renderInSharedTransitionScopeOverlay` no chrome muda a ordem de desenho do `Scaffold`]** → O chrome já desenhava por cima do conteúdo em condições normais; a mudança só garante que continue assim durante uma transição. Verificar que o `DropdownMenu` do topo e os `ModalBottomSheet` continuam acima do chrome.

@@ -47,6 +47,5 @@
 
 ## 7. Fechamento
 
-- [ ] 7.1 `./gradlew allTests`
 - [x] ~~7.2 Abrir issues separadas para os dois achados fora de escopo~~ — **descartada.** Nenhum dos dois se sustentava: `ChromeEffect` só tem um publicador em todo o repositório (a `DashboardScreen`), então a `CreditCardsScreen` não é exceção a padrão nenhum — e o `onDispose { reset() }` faz o chrome ficar correto de qualquer forma; e `EXCLUDED_CARD_IDS` não tem relação com transição, overlay ou chrome — entrou na lista por falar de cartões. Removidos também de `proposal.md` e `design.md`
 - [x] 7.3 `openspec validate fix-credit-card-shared-transition-overlay`

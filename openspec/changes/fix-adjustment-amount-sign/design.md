@@ -140,7 +140,13 @@ Sete sítios implementam a política hoje: `SignDisplay` (18 usos), `AccountSign
 
 Como os resumos já obedecem à regra (D5), a absorção é conversão de mecanismo, não mudança de comportamento — menos arriscada do que o número de sítios sugere. Duas armadilhas concretas: `ALWAYS_POSITIVE` aplica `absoluteValue` em `AccountCard.kt:325` e **não** aplica em `SummaryCard.kt:447`; e existem dois componentes chamados `SummaryRow` (`InvoiceTransactionsScreen.kt:728` e `SummaryCard.kt:399`), em sistemas diferentes.
 
-### D9 — Delta de spec: sinal de perna ≠ sinal de saldo
+### D9 — A tabela de item tem uma função, não duas cópias
+
+A superfície de item tem **dois** produtores: `TransactionUiMapper` (`:core:ui`) para as listas e o relatório, e `ViewTransactionUiState` (`feature/transactions/impl`) para a modal de detalhe. Cada um resolvendo a tabela por conta própria seria o oitavo sítio — o que D8 existe para impedir.
+
+A tabela mora numa função de `:core:ui` (`itemDisplayAmount(label, legAmountCents, hasPerspective)`), consumida pelos dois. `TransactionLabel` mais a presença de perspectiva bastam para todas as seis linhas, e `feature/transactions/impl` já depende de `:core:ui`.
+
+### D10 — Delta de spec: sinal de perna ≠ sinal de saldo
 
 `presentation-mapping` diz *onde* a tradução acontece, não *qual* sinal — e seu único cenário sobre sinal é o da inversão por `AccountType`. Lido isoladamente, sugere aplicar `displaySign` também à perna `LIABILITY`, o que produziria de volta o `+R$ 100,00` que este change remove. Na prática `displaySign` só é usado em saldos e totais, nunca numa perna.
 
@@ -151,6 +157,6 @@ O delta separa as duas leituras: *se* uma perna exibe sinal é decisão da polí
 - **A transferência sem perspectiva perde o `−`, e é mudança de comportamento visível** → deliberada (D5). Na lista geral as duas pontas da mesma transferência aparecem como uma linha só, então o `−` de hoje descreve uma perna escolhida arbitrariamente — exatamente o que `presentation-mapping` já proíbe apresentar como propriedade da transação.
 - **Regressão silenciosa se alguma forma ficar sem política explícita** → `CurrencyFormatter.format` não aplica `abs`, então o erro aparece na primeira renderização. Coberto por teste de não-regressão, um caso por forma.
 - **`ALWAYS_POSITIVE` com semânticas divergentes entre os dois sítios** → unificar com `absoluteValue`; verificar antes se algum chamador de `SummaryCard` passa valor negativo, caso em que é mudança de comportamento e precisa ser decidida, não assumida.
-- **Diferença de locale ao trocar concatenação por formatação de negativo** → posição do sinal passa a ser do `NumberFormat`. Mais correto, com precedente em produção, mas não é no-op garantido. Verificar em pt-BR.
+- **Diferença de locale ao trocar concatenação por formatação de negativo** → **eliminado por construção**, e não deixado para a verificação manual: `FORCED_POSITIVE`/`FORCED_NEGATIVE`/`EXPLICIT_SIGN` concatenam o sinal sobre o módulo, exatamente como os sete sítios fazem hoje; só as políticas que já delegavam continuam delegando. A absorção vira no-op de texto demonstrável. Deixar o `NumberFormat` decidir a posição do negativo seria mais correto, mas é decisão própria e merece change própria.
 - **Escopo: sete sítios, três features e dois módulos core** → mitigado pela ordem dos grupos em `tasks.md`: 1-2 consertam o defeito e se sustentam sozinhos; 3 é a absorção, interrompível a qualquer momento sem desfazer o conserto.
 - **`TransactionUi.amount` muda de tipo** → quebra de compilação, não de runtime: dois consumidores de produção (ambos em `ReportExportLayout`) e um de teste.

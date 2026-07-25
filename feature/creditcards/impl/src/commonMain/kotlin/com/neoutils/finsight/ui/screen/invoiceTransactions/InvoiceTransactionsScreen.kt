@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.FilterAltOff
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -43,6 +45,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -75,6 +78,10 @@ import com.neoutils.finsight.resources.invoice_transactions_adjustments
 import com.neoutils.finsight.resources.invoice_transactions_close_invoice
 import com.neoutils.finsight.resources.invoice_transactions_delete_invoice
 import com.neoutils.finsight.resources.invoice_transactions_edit_card
+import com.neoutils.finsight.resources.invoice_transactions_empty_body
+import com.neoutils.finsight.resources.invoice_transactions_empty_filter_body
+import com.neoutils.finsight.resources.invoice_transactions_empty_filter_title
+import com.neoutils.finsight.resources.invoice_transactions_empty_title
 import com.neoutils.finsight.resources.invoice_transactions_expenses
 import com.neoutils.finsight.resources.invoice_transactions_filter_category
 import com.neoutils.finsight.resources.invoice_transactions_filter_category_all
@@ -86,6 +93,7 @@ import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
 import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
+import com.neoutils.finsight.resources.transactions_empty_filter_action
 import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.util.stringUiText
@@ -291,49 +299,131 @@ private fun InvoiceTransactionsContent(
                 )
             }
 
-            uiState.transactions.forEach { (date, transactions) ->
-                item(
-                    key = "date_title_$date"
+            when (val listState = uiState.listState) {
+                // Nothing has been read yet: the screen says nothing rather than
+                // claiming an emptiness it cannot yet know about.
+                InvoiceTransactionsUiState.ListState.Loading -> Unit
+
+                InvoiceTransactionsUiState.ListState.EmptyInvoice,
+                is InvoiceTransactionsUiState.ListState.EmptyScope -> item(
+                    key = "empty_state"
                 ) {
-                    Text(
-                        text = dateFormats.formatRelativeDate(date),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
+                    // Centred inside a column narrower than the screen: on a desktop or a
+                    // tablet, text running the full width would read as a paragraph
+                    // rather than as a short notice.
+                    Box(
                         modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .padding(horizontal = 16.dp)
-                            .animateItem()
-                    )
+                            .fillParentMaxWidth()
+                            .animateItem(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        InvoiceTransactionsEmptyState(
+                            listState = listState,
+                            onAction = onAction,
+                            modifier = Modifier
+                                .widthIn(max = 400.dp)
+                                .padding(
+                                    horizontal = 24.dp,
+                                    vertical = 48.dp
+                                )
+                        )
+                    }
                 }
 
-                items(
-                    items = transactions,
-                    key = { it.id }
-                ) { transaction ->
-                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
-                    TransactionCard(
-                        transaction = transactionUi,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        onClick = {
-                            when (transactionUi.direction) {
-                                TransactionType.ADJUSTMENT -> {
-                                    detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
-                                }
+                is InvoiceTransactionsUiState.ListState.Content -> {
+                    listState.transactions.forEach { (date, transactions) ->
+                        item(
+                            key = "date_title_$date"
+                        ) {
+                            Text(
+                                text = dateFormats.formatRelativeDate(date),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem()
+                            )
+                        }
 
-                                else -> {
-                                    detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
-                                }
+                        items(
+                            items = transactions,
+                            key = { it.id }
+                        ) { transaction ->
+                            transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                                TransactionCard(
+                                    transaction = transactionUi,
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .fillMaxWidth()
+                                        .animateItem(),
+                                    onClick = {
+                                        when (transactionUi.direction) {
+                                            TransactionType.ADJUSTMENT -> {
+                                                detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
+                                            }
+
+                                            else -> {
+                                                detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
-                    )
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * What stands where the list would be. An invoice with nothing on it cannot be revealed by
+ * any filter, and this screen offers no command to record a transaction, so that text only
+ * states the fact. A cut with nothing in it can be loosened, and only then is clearing
+ * worth offering.
+ */
+@Composable
+private fun InvoiceTransactionsEmptyState(
+    listState: InvoiceTransactionsUiState.ListState,
+    onAction: (InvoiceTransactionsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isInvoiceEmpty = listState is InvoiceTransactionsUiState.ListState.EmptyInvoice
+
+    EmptyStateMessage(
+        icon = if (isInvoiceEmpty) {
+            Icons.Outlined.CreditCard
+        } else {
+            Icons.Outlined.FilterAltOff
+        },
+        title = stringResource(
+            if (isInvoiceEmpty) {
+                Res.string.invoice_transactions_empty_title
+            } else {
+                Res.string.invoice_transactions_empty_filter_title
+            }
+        ),
+        description = stringResource(
+            if (isInvoiceEmpty) {
+                Res.string.invoice_transactions_empty_body
+            } else {
+                Res.string.invoice_transactions_empty_filter_body
+            }
+        ),
+        modifier = modifier,
+        action = if (listState is InvoiceTransactionsUiState.ListState.EmptyScope && listState.canClearFilters) {
+            {
+                Button(
+                    onClick = { onAction(InvoiceTransactionsAction.ClearFilters) },
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    Text(stringResource(Res.string.transactions_empty_filter_action))
+                }
+            }
+        } else null,
+    )
 }
 
 @Composable

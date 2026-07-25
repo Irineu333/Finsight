@@ -23,11 +23,40 @@ sealed class AccountsUiState {
         val domainAccounts: List<Account> = emptyList(),
         val selectedAccountIndex: Int,
         val selectedAccountId: Long? = null,
-        val transactions: Map<LocalDate, List<TransactionUi>>,
+        val listState: ListState,
         val categories: List<Category>,
         val selectedCategory: Category? = null,
         val selectedType: TransactionType? = null,
         val showRecurringOnly: Boolean = false,
         override val selectedMonth: YearMonth,
     ) : AccountsUiState()
+
+    /**
+     * What stands where the list goes. The transactions live *inside* [ListState.Content]
+     * rather than beside it, so there is no empty map awaiting interpretation: a state
+     * with no list is one of the two emptinesses, by construction and not by convention.
+     *
+     * There is no loading case here — [AccountsUiState] already has one, and [Content]
+     * only exists after the first read.
+     *
+     * The chrome above the list — the account pager, its actions and the chips — is not
+     * part of this: it survives every state, since it is the only way out of an empty one.
+     */
+    sealed interface ListState {
+
+        /** The selected account has no transaction at all, in any month. */
+        data object EmptyAccount : ListState
+
+        /**
+         * The account has transactions; none survives the current cut — the month or the
+         * filters. [canClearFilters] is false when every list filter is already neutral,
+         * as in a month with no entries: offering to clear then would promise a change
+         * the button cannot deliver.
+         */
+        data class EmptyScope(val canClearFilters: Boolean) : ListState
+
+        data class Content(
+            val transactions: Map<LocalDate, List<TransactionUi>>,
+        ) : ListState
+    }
 }

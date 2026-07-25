@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.screen.accounts.AccountsUiState.ListState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,12 +61,19 @@ class AccountsEmptyStateTest {
     private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true)
     private val expenseAccount = Account(id = 99, name = "Expense", type = AccountType.EXPENSE)
 
-    private val food = Category(id = 1, name = "Food", dimensionId = 7, type = Category.Type.EXPENSE)
+    private val food = Category(
+        id = 1,
+        name = "Food",
+        icon = CategoryLazyIcon("food"),
+        type = Category.Type.EXPENSE,
+        createdAt = 1,
+        dimensionId = 7,
+    )
 
     private fun expense(id: Long, month: YearMonth, dimensionId: Long? = null) = Transaction(
         id = id,
         title = "Lunch",
-        date = LocalDate(month.year, month.month.number, 10),
+        date = LocalDate(month.year, month.month, 10),
         entries = listOf(
             Entry(transactionId = id, account = account, amount = -1_000),
             Entry(transactionId = id, account = expenseAccount, amount = 1_000, dimensionId = dimensionId),

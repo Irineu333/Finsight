@@ -133,13 +133,28 @@ class AccountsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
+        // Which emptiness this is comes from the account's whole history, not from the
+        // month already cut: an account that moved in another month is a cut with nothing
+        // in it, never an account that never moved.
+        val listState = when {
+            filteredTransactions.isNotEmpty() -> {
+                AccountsUiState.ListState.Content(filteredTransactions)
+            }
+
+            selectedAccountTransactions.isEmpty() -> AccountsUiState.ListState.EmptyAccount
+
+            else -> AccountsUiState.ListState.EmptyScope(
+                canClearFilters = currentFilters.isNotNeutral
+            )
+        }
+
         AccountsUiState.Content(
             accounts = accountsPairs.map { it.second },
             domainAccounts = accountsPairs.map { it.first },
             selectedAccountIndex = index,
             selectedAccountId = accountsPairs.getOrNull(index)?.first?.id,
             selectedMonth = month,
-            transactions = filteredTransactions,
+            listState = listState,
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
@@ -172,6 +187,17 @@ class AccountsViewModel(
                 filters.value = filters.value.copy(recurringOnly = action.enabled)
             }
 
+            // The month and the selected account are left alone: they govern the card at
+            // the top too, and an action announced as "clear filters" that rewrites those
+            // figures would do more than it says.
+            is AccountsAction.ClearFilters -> {
+                filters.value = AccountsFilters(
+                    category = null,
+                    type = null,
+                    recurringOnly = false,
+                )
+            }
+
             is AccountsAction.SelectMonth -> {
                 selectedMonth.value = action.yearMonth
             }
@@ -191,7 +217,10 @@ private data class AccountsFilters(
     val category: Category?,
     val type: TransactionType?,
     val recurringOnly: Boolean,
-)
+) {
+    /** Whether there is anything for [AccountsAction.ClearFilters] to clear. */
+    val isNotNeutral = category != null || type != null || recurringOnly
+}
 
 private fun List<TransactionUi>.filter(category: Category?): List<TransactionUi> {
     if (category == null) return this

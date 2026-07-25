@@ -212,6 +212,10 @@
     <string name="credit_cards_filter_type_expense">Expense</string>
     <string name="credit_cards_filter_type_adjustment">Adjustment</string>
     <string name="credit_cards_filter_type_payment">Payment</string>
+    <string name="credit_cards_transactions_empty_title">Empty invoice</string>
+    <string name="credit_cards_transactions_empty_body">This card's current invoice has no transactions yet. Purchases made on it show up here.</string>
+    <string name="credit_cards_transactions_empty_filter_title">Nothing here</string>
+    <string name="credit_cards_transactions_empty_filter_body">No transaction on this invoice fits the active filters.</string>
     <string name="credit_cards_view_archived">Archived</string>
     <string name="credit_cards_archived_title">Archived cards</string>
     <string name="credit_cards_archived_empty">No archived cards</string>
@@ -250,6 +254,10 @@
     <string name="accounts_filter_type_income">Income</string>
     <string name="accounts_filter_type_expense">Expense</string>
     <string name="accounts_filter_type_adjustment">Adjustment</string>
+    <string name="accounts_empty_title">No activity yet</string>
+    <string name="accounts_empty_body">This account has no transactions yet. Whatever you record on it shows up here.</string>
+    <string name="accounts_empty_filter_title">Nothing here</string>
+    <string name="accounts_empty_filter_body">No transaction fits this view. Try another month or loosen the filters.</string>
 
     <!-- Categories Screen -->
     <string name="categories_title">Categories</string>
@@ -288,6 +296,10 @@
     <string name="invoice_transactions_filter_type_expense">Expense</string>
     <string name="invoice_transactions_filter_type_adjustment">Adjustment</string>
     <string name="invoice_transactions_filter_type_payment">Payment</string>
+    <string name="invoice_transactions_empty_title">Empty invoice</string>
+    <string name="invoice_transactions_empty_body">No transaction was recorded on this invoice.</string>
+    <string name="invoice_transactions_empty_filter_title">Nothing here</string>
+    <string name="invoice_transactions_empty_filter_body">No transaction on this invoice fits the active filters.</string>
 
     <!-- Account Form Modal -->
     <string name="account_form_edit_title">Edit Account</string>

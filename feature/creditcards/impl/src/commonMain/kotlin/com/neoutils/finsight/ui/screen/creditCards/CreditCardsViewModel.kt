@@ -107,6 +107,20 @@ class CreditCardsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
+        // Which emptiness this is comes from the invoice's own transactions, before any
+        // filter: an invoice with entries the chips hide is a cut, not an empty invoice.
+        val listState = when {
+            filteredTransactions.isNotEmpty() -> {
+                CreditCardsUiState.ListState.Content(filteredTransactions)
+            }
+
+            transactions.isEmpty() -> CreditCardsUiState.ListState.EmptyInvoice
+
+            else -> CreditCardsUiState.ListState.EmptyScope(
+                canClearFilters = currentFilters.isNotNeutral
+            )
+        }
+
         val cards = creditCards.map { creditCard ->
             val cardInvoices = invoices[creditCard.id].orEmpty()
             val invoice = cardInvoices.currentUnpaid()
@@ -131,7 +145,7 @@ class CreditCardsViewModel(
             domainCards = cards.map { it.first },
             domainInvoices = cards.map { it.second },
             selectedCardIndex = index,
-            transactions = filteredTransactions,
+            listState = listState,
             // The filter offers only open categories; the rows still render the
             // archived ones, so the lookup keeps them.
             categories = categories.filterNot { it.isArchived },
@@ -175,6 +189,18 @@ class CreditCardsViewModel(
             is CreditCardsAction.ToggleInstallment -> {
                 filters.value = filters.value.copy(installmentOnly = action.enabled)
             }
+
+            // The selected card is left alone: it governs the pager and its figures, and
+            // an action announced as "clear filters" that changed cards would do more
+            // than it says.
+            is CreditCardsAction.ClearFilters -> {
+                filters.value = CreditCardsFilters(
+                    category = null,
+                    type = null,
+                    recurringOnly = false,
+                    installmentOnly = false,
+                )
+            }
         }
     }
 }
@@ -184,7 +210,10 @@ private data class CreditCardsFilters(
     val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
-)
+) {
+    /** Whether there is anything for [CreditCardsAction.ClearFilters] to clear. */
+    val isNotNeutral = category != null || type != null || recurringOnly || installmentOnly
+}
 
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this

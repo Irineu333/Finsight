@@ -26,7 +26,7 @@ data class InvoiceTransactionsUiState(
     val retireAction: RetireAction = RetireAction.DELETE,
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
-    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
+    val listState: ListState = ListState.Loading,
     val categories: List<Category> = emptyList(),
     val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     val selectedCategory: Category? = null,
@@ -34,6 +34,39 @@ data class InvoiceTransactionsUiState(
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
 ) {
+
+    /**
+     * What stands where the list goes. The transactions live *inside* [ListState.Content]
+     * rather than beside it, which is what makes the ambiguity impossible: this screen's
+     * default state used to be an empty map, indistinguishable from an invoice legitimately
+     * without transactions, so the blank flashed on every load — including the ones that
+     * had something to show.
+     *
+     * [Loading] is a starting state, not a recurring one: switching invoice or filter cuts
+     * over data already observed and never returns here.
+     *
+     * The chrome above the list — the invoice pager, its actions and the chips — is not
+     * part of this: it survives every state.
+     */
+    sealed interface ListState {
+
+        /** No read has landed yet. The screen asserts nothing — not even emptiness. */
+        data object Loading : ListState
+
+        /** The selected invoice has no transaction at all. */
+        data object EmptyInvoice : ListState
+
+        /**
+         * The invoice has transactions; none survives the active filters.
+         * [canClearFilters] is false when every filter is already neutral.
+         */
+        data class EmptyScope(val canClearFilters: Boolean) : ListState
+
+        data class Content(
+            val transactions: Map<LocalDate, List<Transaction>>,
+        ) : ListState
+    }
+
     data class InvoiceSummary(
         val invoice: Invoice,
         val expense: Double,

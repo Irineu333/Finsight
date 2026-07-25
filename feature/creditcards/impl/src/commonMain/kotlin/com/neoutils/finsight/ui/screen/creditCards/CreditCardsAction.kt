@@ -9,4 +9,7 @@ sealed class CreditCardsAction {
     data class SelectType(val type: TransactionType?) : CreditCardsAction()
     data class ToggleRecurring(val enabled: Boolean) : CreditCardsAction()
     data class ToggleInstallment(val enabled: Boolean) : CreditCardsAction()
+
+    /** Returns the list filters to neutral. The selected card is not a filter. */
+    data object ClearFilters : CreditCardsAction()
 }

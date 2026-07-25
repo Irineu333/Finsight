@@ -9,5 +9,9 @@ sealed class InvoiceTransactionsAction {
     data class SelectType(val type: TransactionType?) : InvoiceTransactionsAction()
     data class ToggleRecurring(val enabled: Boolean) : InvoiceTransactionsAction()
     data class ToggleInstallment(val enabled: Boolean) : InvoiceTransactionsAction()
+
+    /** Returns the list filters to neutral. The selected invoice is not a filter. */
+    data object ClearFilters : InvoiceTransactionsAction()
+
     data object Unarchive : InvoiceTransactionsAction()
 }

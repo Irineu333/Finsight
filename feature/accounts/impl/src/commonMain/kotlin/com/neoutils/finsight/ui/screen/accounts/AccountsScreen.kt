@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.FilterAltOff
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -54,6 +56,7 @@ import com.neoutils.finsight.ui.model.AccountRetireOffer
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.navigation.ArchivedAccountsRoute
+import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -73,6 +76,10 @@ import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.accounts_edit
+import com.neoutils.finsight.resources.accounts_empty_body
+import com.neoutils.finsight.resources.accounts_empty_filter_body
+import com.neoutils.finsight.resources.accounts_empty_filter_title
+import com.neoutils.finsight.resources.accounts_empty_title
 import com.neoutils.finsight.resources.accounts_filter_category
 import com.neoutils.finsight.resources.accounts_filter_category_all
 import com.neoutils.finsight.resources.accounts_filter_type
@@ -84,6 +91,7 @@ import com.neoutils.finsight.resources.accounts_more_options_content_description
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
 import com.neoutils.finsight.resources.accounts_view_archived
+import com.neoutils.finsight.resources.transactions_empty_filter_action
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
@@ -281,54 +289,133 @@ private fun AccountsContent(
                             .animateItem()
                     )
                 }
-                uiState.transactions.forEach { (date, transactions) ->
-                    item(
-                        key = "date_title_$date"
+                when (val listState = uiState.listState) {
+                    AccountsUiState.ListState.EmptyAccount,
+                    is AccountsUiState.ListState.EmptyScope -> item(
+                        key = "empty_state"
                     ) {
-                        Text(
-                            text = LocalDateFormats.current.formatRelativeDate(date),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                        // Centred inside a column narrower than the screen: on a desktop
+                        // or a tablet, text running the full width would read as a
+                        // paragraph rather than as a short notice.
+                        Box(
                             modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .padding(horizontal = 16.dp)
-                                .animateItem()
-                        )
+                                .fillParentMaxWidth()
+                                .animateItem(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AccountsEmptyState(
+                                listState = listState,
+                                onAction = onAction,
+                                modifier = Modifier
+                                    .widthIn(max = 400.dp)
+                                    .padding(
+                                        horizontal = 24.dp,
+                                        vertical = 48.dp
+                                    )
+                            )
+                        }
                     }
 
-                    items(
-                        items = transactions,
-                        key = { it.id }
-                    ) { transactionUi ->
-                        TransactionCard(
-                            transaction = transactionUi,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .animateItem(),
-                            onClick = {
-                                when (transactionUi.direction) {
-                                    TransactionType.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                    }
-
-                                    else -> {
-                                        detailController.show(
-                                            transactionsEntry.viewTransactionModal(
-                                                transactionUi.id,
-                                                uiState.selectedAccountId?.let { TransactionPerspective(it) },
-                                            )
-                                        )
-                                    }
-                                }
+                    is AccountsUiState.ListState.Content -> {
+                        listState.transactions.forEach { (date, transactions) ->
+                            item(
+                                key = "date_title_$date"
+                            ) {
+                                Text(
+                                    text = LocalDateFormats.current.formatRelativeDate(date),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp)
+                                        .padding(horizontal = 16.dp)
+                                        .animateItem()
+                                )
                             }
-                        )
+
+                            items(
+                                items = transactions,
+                                key = { it.id }
+                            ) { transactionUi ->
+                                TransactionCard(
+                                    transaction = transactionUi,
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .fillMaxWidth()
+                                        .animateItem(),
+                                    onClick = {
+                                        when (transactionUi.direction) {
+                                            TransactionType.ADJUSTMENT -> {
+                                                detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
+                                            }
+
+                                            else -> {
+                                                detailController.show(
+                                                    transactionsEntry.viewTransactionModal(
+                                                        transactionUi.id,
+                                                        uiState.selectedAccountId?.let { TransactionPerspective(it) },
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
+}
+
+/**
+ * What stands where the list would be. The two emptinesses read differently because the
+ * ways out differ: an account that never moved cannot be revealed by any filter, so the
+ * text only states it — this screen offers no command to record a transaction. A cut with
+ * nothing in it can be loosened, and only then, and only if a filter is actually
+ * narrowing, is clearing worth offering.
+ */
+@Composable
+private fun AccountsEmptyState(
+    listState: AccountsUiState.ListState,
+    onAction: (AccountsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isAccountEmpty = listState is AccountsUiState.ListState.EmptyAccount
+
+    EmptyStateMessage(
+        icon = if (isAccountEmpty) {
+            Icons.AutoMirrored.Outlined.ReceiptLong
+        } else {
+            Icons.Outlined.FilterAltOff
+        },
+        title = stringResource(
+            if (isAccountEmpty) {
+                Res.string.accounts_empty_title
+            } else {
+                Res.string.accounts_empty_filter_title
+            }
+        ),
+        description = stringResource(
+            if (isAccountEmpty) {
+                Res.string.accounts_empty_body
+            } else {
+                Res.string.accounts_empty_filter_body
+            }
+        ),
+        modifier = modifier,
+        action = if (listState is AccountsUiState.ListState.EmptyScope && listState.canClearFilters) {
+            {
+                Button(
+                    onClick = { onAction(AccountsAction.ClearFilters) },
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    Text(stringResource(Res.string.transactions_empty_filter_action))
+                }
+            }
+        } else null,
+    )
 }
 
 @Composable

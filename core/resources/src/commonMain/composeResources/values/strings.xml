@@ -213,6 +213,10 @@
     <string name="credit_cards_filter_type_expense">Despesa</string>
     <string name="credit_cards_filter_type_adjustment">Ajuste</string>
     <string name="credit_cards_filter_type_payment">Pagamento</string>
+    <string name="credit_cards_transactions_empty_title">Fatura sem lançamentos</string>
+    <string name="credit_cards_transactions_empty_body">A fatura atual deste cartão ainda não tem lançamentos. As compras feitas nele aparecem aqui.</string>
+    <string name="credit_cards_transactions_empty_filter_title">Nada por aqui</string>
+    <string name="credit_cards_transactions_empty_filter_body">Nenhum lançamento desta fatura passa pelos filtros ativos.</string>
     <string name="credit_cards_view_archived">Arquivados</string>
     <string name="credit_cards_archived_title">Cartões arquivados</string>
     <string name="credit_cards_archived_empty">Nenhum cartão arquivado</string>
@@ -254,6 +258,10 @@
     <string name="accounts_filter_type_income">Receita</string>
     <string name="accounts_filter_type_expense">Despesa</string>
     <string name="accounts_filter_type_adjustment">Ajuste</string>
+    <string name="accounts_empty_title">Conta sem movimento</string>
+    <string name="accounts_empty_body">Esta conta ainda não tem lançamentos. Os que você registrar nela aparecem aqui.</string>
+    <string name="accounts_empty_filter_title">Nada por aqui</string>
+    <string name="accounts_empty_filter_body">Nenhum lançamento neste recorte. Experimente outro mês ou afrouxe os filtros.</string>
 
     <!-- Categories Screen -->
     <string name="categories_title">Categorias</string>
@@ -296,6 +304,10 @@
     <string name="invoice_transactions_filter_type_expense">Despesa</string>
     <string name="invoice_transactions_filter_type_adjustment">Ajuste</string>
     <string name="invoice_transactions_filter_type_payment">Pagamento</string>
+    <string name="invoice_transactions_empty_title">Fatura sem lançamentos</string>
+    <string name="invoice_transactions_empty_body">Nenhum lançamento foi registrado nesta fatura.</string>
+    <string name="invoice_transactions_empty_filter_title">Nada por aqui</string>
+    <string name="invoice_transactions_empty_filter_body">Nenhum lançamento desta fatura passa pelos filtros ativos.</string>
 
     <!-- Account Form Modal -->
     <string name="account_form_edit_title">Editar Conta</string>

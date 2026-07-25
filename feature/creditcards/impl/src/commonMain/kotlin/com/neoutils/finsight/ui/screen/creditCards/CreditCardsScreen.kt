@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.FilterAltOff
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
@@ -238,44 +240,74 @@ private fun CreditCardsContent(
                         )
                     }
 
-                    uiState.transactions.forEach { (date, transactions) ->
-                        item(
-                            key = "date_title_$date"
+                    when (val listState = uiState.listState) {
+                        CreditCardsUiState.ListState.EmptyInvoice,
+                        is CreditCardsUiState.ListState.EmptyScope -> item(
+                            key = "empty_state"
                         ) {
-                            Text(
-                                text = LocalDateFormats.current.formatRelativeDate(date),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
+                            // Centred inside a column narrower than the screen: on a
+                            // desktop or a tablet, text running the full width would read
+                            // as a paragraph rather than as a short notice.
+                            Box(
                                 modifier = Modifier
-                                    .padding(vertical = 8.dp)
-                                    .padding(horizontal = 16.dp)
-                                    .animateItem()
-                            )
+                                    .fillParentMaxWidth()
+                                    .animateItem(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CreditCardTransactionsEmptyState(
+                                    listState = listState,
+                                    onAction = onAction,
+                                    modifier = Modifier
+                                        .widthIn(max = 400.dp)
+                                        .padding(
+                                            horizontal = 24.dp,
+                                            vertical = 48.dp
+                                        )
+                                )
+                            }
                         }
 
-                        items(
-                            items = transactions,
-                            key = { it.id }
-                        ) { transaction ->
-                            transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
-                            TransactionCard(
-                                transaction = transactionUi,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                onClick = {
-                                    when (transactionUi.direction) {
-                                        TransactionType.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
-                                        }
+                        is CreditCardsUiState.ListState.Content -> {
+                            listState.transactions.forEach { (date, transactions) ->
+                                item(
+                                    key = "date_title_$date"
+                                ) {
+                                    Text(
+                                        text = LocalDateFormats.current.formatRelativeDate(date),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .padding(vertical = 8.dp)
+                                            .padding(horizontal = 16.dp)
+                                            .animateItem()
+                                    )
+                                }
 
-                                        else -> {
-                                            detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
-                                        }
+                                items(
+                                    items = transactions,
+                                    key = { it.id }
+                                ) { transaction ->
+                                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                                        TransactionCard(
+                                            transaction = transactionUi,
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp)
+                                                .fillMaxWidth()
+                                                .animateItem(),
+                                            onClick = {
+                                                when (transactionUi.direction) {
+                                                    TransactionType.ADJUSTMENT -> {
+                                                        detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
+                                                    }
+
+                                                    else -> {
+                                                        detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
+                                                    }
+                                                }
+                                            }
+                                        )
                                     }
                                 }
-                            )
                             }
                         }
                     }
@@ -318,6 +350,54 @@ private fun EmptyCreditCardsState(
             }
         }
     }
+}
+
+/**
+ * What stands where the list would be. An invoice with nothing on it cannot be revealed
+ * by any filter, and this screen offers no command to record a transaction — its FAB
+ * creates a card — so that text only states the fact. A cut with nothing in it can be
+ * loosened, and only then is clearing worth offering.
+ */
+@Composable
+private fun CreditCardTransactionsEmptyState(
+    listState: CreditCardsUiState.ListState,
+    onAction: (CreditCardsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isInvoiceEmpty = listState is CreditCardsUiState.ListState.EmptyInvoice
+
+    EmptyStateMessage(
+        icon = if (isInvoiceEmpty) {
+            Icons.Outlined.CreditCard
+        } else {
+            Icons.Outlined.FilterAltOff
+        },
+        title = stringResource(
+            if (isInvoiceEmpty) {
+                Res.string.credit_cards_transactions_empty_title
+            } else {
+                Res.string.credit_cards_transactions_empty_filter_title
+            }
+        ),
+        description = stringResource(
+            if (isInvoiceEmpty) {
+                Res.string.credit_cards_transactions_empty_body
+            } else {
+                Res.string.credit_cards_transactions_empty_filter_body
+            }
+        ),
+        modifier = modifier,
+        action = if (listState is CreditCardsUiState.ListState.EmptyScope && listState.canClearFilters) {
+            {
+                Button(
+                    onClick = { onAction(CreditCardsAction.ClearFilters) },
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    Text(stringResource(Res.string.transactions_empty_filter_action))
+                }
+            }
+        } else null,
+    )
 }
 
 @Composable

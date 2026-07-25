@@ -116,6 +116,20 @@ class InvoiceTransactionsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
+        // Which emptiness this is comes from the invoice's own transactions, before any
+        // filter: an invoice with entries the chips hide is a cut, not an empty invoice.
+        val listState = when {
+            filteredTransactions.isNotEmpty() -> {
+                InvoiceTransactionsUiState.ListState.Content(filteredTransactions)
+            }
+
+            invoiceTransactions.isEmpty() -> InvoiceTransactionsUiState.ListState.EmptyInvoice
+
+            else -> InvoiceTransactionsUiState.ListState.EmptyScope(
+                canClearFilters = currentFilters.isNotNeutral
+            )
+        }
+
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
             isArchived = creditCard.isArchived,
@@ -169,7 +183,7 @@ class InvoiceTransactionsViewModel(
                 )
             },
             selectedInvoiceIndex = index,
-            transactions = filteredTransactions,
+            listState = listState,
             // The filter offers only open categories; the rows still render the
             // archived ones, so the lookup keeps them.
             categories = categories.filterNot { it.isArchived },
@@ -225,6 +239,18 @@ class InvoiceTransactionsViewModel(
                 filters.value = filters.value.copy(installmentOnly = action.enabled)
             }
 
+            // The selected invoice is left alone: it governs the pager and its figures,
+            // and an action announced as "clear filters" that changed invoice would do
+            // more than it says.
+            is InvoiceTransactionsAction.ClearFilters -> {
+                filters.value = InvoiceTransactionsFilters(
+                    category = null,
+                    type = null,
+                    recurringOnly = false,
+                    installmentOnly = false,
+                )
+            }
+
             // Reversible and innocuous (design D8): no confirmation. The screen offers this
             // only for an archived card; the reopened account re-emits and the UI flips back
             // to the active affordances on its own. The card is resolved at action time so no
@@ -242,7 +268,10 @@ private data class InvoiceTransactionsFilters(
     val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
-)
+) {
+    /** Whether there is anything for [InvoiceTransactionsAction.ClearFilters] to clear. */
+    val isNotNeutral = category != null || type != null || recurringOnly || installmentOnly
+}
 
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this

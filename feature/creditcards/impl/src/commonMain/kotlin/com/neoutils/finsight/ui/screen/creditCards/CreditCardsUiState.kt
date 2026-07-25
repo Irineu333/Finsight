@@ -24,7 +24,7 @@ sealed class CreditCardsUiState {
         val domainCards: List<CreditCard>,
         val domainInvoices: List<Invoice?>,
         val selectedCardIndex: Int,
-        val transactions: Map<LocalDate, List<Transaction>>,
+        val listState: ListState,
         val categories: List<Category>,
         val selectedCategory: Category?,
         val selectedType: TransactionType?,
@@ -32,4 +32,29 @@ sealed class CreditCardsUiState {
         val showInstallmentOnly: Boolean,
         val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     ) : CreditCardsUiState()
+
+    /**
+     * What stands where the list goes. The transactions live *inside* [ListState.Content]
+     * rather than beside it, so there is no empty map awaiting interpretation.
+     *
+     * There is no loading case here — [CreditCardsUiState] already has one, and [Content]
+     * only exists after the first read. Nor is [Empty] one of these: that one is about
+     * having no card at all, and takes the whole screen, since without a card there is no
+     * pager and no chips to preserve.
+     */
+    sealed interface ListState {
+
+        /** The selected card's current invoice has no transaction at all. */
+        data object EmptyInvoice : ListState
+
+        /**
+         * The invoice has transactions; none survives the active filters.
+         * [canClearFilters] is false when every filter is already neutral.
+         */
+        data class EmptyScope(val canClearFilters: Boolean) : ListState
+
+        data class Content(
+            val transactions: Map<LocalDate, List<Transaction>>,
+        ) : ListState
+    }
 }

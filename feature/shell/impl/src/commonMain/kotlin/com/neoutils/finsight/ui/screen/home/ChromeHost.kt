@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package com.neoutils.finsight.ui.screen.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -54,6 +57,7 @@ import com.neoutils.finsight.resources.add_transaction_fab_description
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.DetailPane
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.ui.component.NavigationRailBar
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
@@ -139,7 +143,9 @@ fun ChromeHost(
                         visible = { it.isBottomBarVisible },
                         enter = slideInVertically { it } + expandVertically(),
                         exit = shrinkVertically() + slideOutVertically { it },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aboveSharedElements(),
                     ) {
                         BottomNavigationBar(
                             items = bottomItems,
@@ -158,6 +164,7 @@ fun ChromeHost(
                         modifier = Modifier
                             .offset(y = 40.dp)
                             .size(56.dp)
+                            .aboveSharedElements()
                     ) {
                         AddTransactionFab(onClick = onAddTransaction)
                     }
@@ -171,6 +178,7 @@ fun ChromeHost(
                         visible = { it.isBottomBarVisible },
                         enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
                         exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
+                        modifier = Modifier.aboveSharedElements(),
                     ) {
                         NavigationRailBar(
                             items = railItems,
@@ -202,6 +210,21 @@ fun ChromeHost(
                 }
             }
         }
+    }
+}
+
+/**
+ * Draws the chrome in the transition overlay, above every shared element. A shared element is
+ * lifted out of its containers while it animates, so nothing but this ordering keeps it from
+ * being painted over the rail, the bottom bar or the FAB.
+ *
+ * Inert when the shell is composed outside a `SharedTransitionProvider`.
+ */
+@Composable
+private fun Modifier.aboveSharedElements(): Modifier {
+    val sharedTransitionScope = LocalSharedTransitionScope.current ?: return this
+    return with(sharedTransitionScope) {
+        this@aboveSharedElements.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)
     }
 }
 

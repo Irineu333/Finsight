@@ -40,8 +40,10 @@ fun App() {
                     ProvideNavController {
                         ModalManagerHost {
                             DetailPaneHost {
-                                ChromeHost { paddingValues ->
-                                    SharedTransitionProvider {
+                                // The layout wraps the shell, so the chrome can declare itself
+                                // in the transition overlay — above any shared element.
+                                SharedTransitionProvider {
+                                    ChromeHost { paddingValues ->
                                         AppNavHost(
                                             modifier = Modifier.padding(paddingValues),
                                         )

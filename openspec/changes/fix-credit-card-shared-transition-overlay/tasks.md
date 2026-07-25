@@ -1,30 +1,30 @@
 ## 1. Confirmar o diagnóstico antes de mexer no código
 
-- [ ] 1.1 Rodar `./gradlew :app:desktop:run` com a janela em ≥840dp e navegar do cartão da dashboard para a tela de cartões, com **três ou mais cartões cadastrados** e o pager numa página do meio
-- [ ] 1.2 Verificar a predição de simetria: durante a animação, um cartão deve aparecer **também à direita**, sobre o `DetailPane` (`ChromeHost.kt:186-192`), além do que já aparece sobre o rail
-- [ ] 1.3 Verificar que o cartão que sobrepõe o rail é a página **vizinha** (nome/valor diferentes do cartão tocado), não o cartão tocado
-- [ ] 1.4 Se 1.2 ou 1.3 falharem, **parar**: o diagnóstico do `design.md` está errado e a causa precisa ser reinvestigada antes de prosseguir
+- [x] 1.1 Rodar `./gradlew :app:desktop:run` com a janela em ≥840dp e navegar do cartão da dashboard para a tela de cartões, com **três ou mais cartões cadastrados** e o pager numa página do meio
+- [x] 1.2 ~~Verificar a predição de simetria: durante a animação, um cartão deve aparecer **também à direita**, sobre o `DetailPane`~~ — **predição mal formulada, descartada.** Nada aparece sobre o `DetailPane`, e não deveria mesmo: o vazamento à direita existe, mas o painel é o último filho do `Row` (`ChromeHost.kt:168-194`) e é pintado **depois** do overlay, encobrindo-o. Só o rail, que é o primeiro filho, fica exposto. Ver `design.md`
+- [x] 1.3 Verificar que o cartão que sobrepõe o rail é a página **vizinha** (nome/valor diferentes do cartão tocado), não o cartão tocado — **confirmado**; é este o critério que valida o diagnóstico
+- [x] 1.4 Se 1.3 falhar, **parar**: o diagnóstico do `design.md` está errado e a causa precisa ser reinvestigada antes de prosseguir — não disparou
 
 ## 2. Promoção opt-in em `:core:ui`
 
-- [ ] 2.1 Em `core/ui/.../component/CreditCardCard.kt`, extrair a construção do `sharedElement` para `@Composable fun Modifier.creditCardSharedElement(cardId: Long): Modifier`, mantendo a chave `credit_card_$cardId` como única fonte da chave
-- [ ] 2.2 Fazer o `Modifier` devolver `Modifier` inerte quando `LocalSharedTransitionScope` ou `LocalAnimatedVisibilityScope` forem nulos
-- [ ] 2.3 Remover de `CreditCardCard` a leitura dos dois `CompositionLocal`s e a aplicação implícita de `sharedModifier`; o componente passa a aplicar apenas o `modifier` recebido
-- [ ] 2.4 Aplicar `clipInOverlayDuringTransition = OverlayClip(shapes.large)` na promoção (fallback F1 do design — vale independentemente do bug)
+- [x] 2.1 Em `core/ui/.../component/CreditCardCard.kt`, extrair a construção do `sharedElement` para `@Composable fun Modifier.creditCardSharedElement(cardId: Long): Modifier`, mantendo a chave `credit_card_$cardId` como única fonte da chave
+- [x] 2.2 Fazer o `Modifier` devolver `Modifier` inerte quando `LocalSharedTransitionScope` ou `LocalAnimatedVisibilityScope` forem nulos
+- [x] 2.3 Remover de `CreditCardCard` a leitura dos dois `CompositionLocal`s e a aplicação implícita de `sharedModifier`; o componente passa a aplicar apenas o `modifier` recebido
+- [x] 2.4 Aplicar `clipInOverlayDuringTransition = OverlayClip(shapes.large)` na promoção (fallback F1 do design — vale independentemente do bug)
 
 ## 3. Promover apenas o cartão selecionado
 
-- [ ] 3.1 Em `feature/dashboard/impl/.../DashboardComponentContent.kt`, aplicar `creditCardSharedElement` no `CreditCardCard` somente quando `page == pagerState.currentPage`
-- [ ] 3.2 Em `feature/creditcards/impl/.../CreditCardsScreen.kt` (`CreditCardPager`), aplicar somente quando `page == selectedIndex`
-- [ ] 3.3 Ajustar o call site de `feature/report/impl/.../ReportConfigScreen.kt` para compilar sem promover nada (ele já não participava, por não ter `AnimatedVisibilityScope`)
-- [ ] 3.4 `./gradlew :app:shared:compileKotlinDesktop` (ou equivalente) para confirmar que os três call sites são os únicos afetados
+- [x] 3.1 Em `feature/dashboard/impl/.../DashboardComponentContent.kt`, aplicar `creditCardSharedElement` no `CreditCardCard` somente quando `page == pagerState.currentPage`
+- [x] 3.2 Em `feature/creditcards/impl/.../CreditCardsScreen.kt` (`CreditCardPager`), aplicar somente quando `page == selectedIndex`
+- [x] 3.3 Ajustar o call site de `feature/report/impl/.../ReportConfigScreen.kt` para compilar sem promover nada (ele já não participava, por não ter `AnimatedVisibilityScope`) — só a remoção do argumento `cardId`, agora sem uso no componente
+- [x] 3.4 ~~`./gradlew :app:shared:compileKotlinDesktop`~~ → `./gradlew :app:desktop:compileKotlin` (a task nomeada não existe neste projeto); os três call sites foram os únicos afetados
 
 ## 4. Chrome acima do overlay
 
-- [ ] 4.1 Em `app/shared/.../ui/App.kt`, mover `SharedTransitionProvider` para envolver `ChromeHost`, mantendo `Modifier.padding(paddingValues)` aplicado ao `AppNavHost`
-- [ ] 4.2 Em `feature/shell/impl/.../ChromeHost.kt`, aplicar `Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)` no `NavigationRailBar`
-- [ ] 4.3 Aplicar o mesmo no `BottomNavigationBar` e no `AddTransactionFab`
-- [ ] 4.4 Confirmar que `feature:shell:impl` já depende de `:core:designsystem` e que nenhuma nova dependência de módulo foi introduzida
+- [x] 4.1 Em `app/shared/.../ui/App.kt`, mover `SharedTransitionProvider` para envolver `ChromeHost`, mantendo `Modifier.padding(paddingValues)` aplicado ao `AppNavHost`
+- [x] 4.2 Em `feature/shell/impl/.../ChromeHost.kt`, aplicar `Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)` no `NavigationRailBar` — via `Modifier.aboveSharedElements()` privado, aplicado no `AnimatedVisibility` que envolve a barra (o componente de `:core:designsystem` não expõe `modifier`, e o wrapper cobre também a animação de entrada/saída)
+- [x] 4.3 Aplicar o mesmo no `BottomNavigationBar` e no `AddTransactionFab`
+- [x] 4.4 Confirmar que `feature:shell:impl` já depende de `:core:designsystem` e que nenhuma nova dependência de módulo foi introduzida
 
 ## 5. Verificação manual
 

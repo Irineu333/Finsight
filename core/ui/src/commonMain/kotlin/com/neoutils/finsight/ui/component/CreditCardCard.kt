@@ -28,6 +28,27 @@ import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * Promotes this card to a shared element between screens. Opt-in: only the caller knows which
+ * card the user named, and only the promoted instances are lifted to the transition overlay —
+ * where the clip of their containers no longer applies.
+ *
+ * Inert outside a [SharedTransitionProvider] or an [AnimatedVisibilityScopeProvider].
+ */
+@Composable
+fun Modifier.creditCardSharedElement(cardId: Long): Modifier {
+    val sharedTransitionScope = LocalSharedTransitionScope.current ?: return this
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current ?: return this
+
+    return with(sharedTransitionScope) {
+        this@creditCardSharedElement.sharedElement(
+            sharedContentState = rememberSharedContentState(key = "credit_card_$cardId"),
+            animatedVisibilityScope = animatedVisibilityScope,
+            clipInOverlayDuringTransition = OverlayClip(shapes.large),
+        )
+    }
+}
+
 sealed class CreditCardCardVariant {
 
     data class Dashboard(
@@ -48,7 +69,6 @@ sealed class CreditCardCardVariant {
 
 @Composable
 fun CreditCardCard(
-    cardId: Long,
     iconKey: String,
     name: String,
     closingDay: Int,
@@ -59,17 +79,6 @@ fun CreditCardCard(
     invoiceUi: InvoiceUi? = null,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-
-    val sharedModifier = sharedTransitionScope?.run {
-        animatedVisibilityScope?.let {
-            Modifier.sharedElement(
-                sharedContentState = rememberSharedContentState(key = "credit_card_$cardId"),
-                animatedVisibilityScope = it,
-            )
-        }
-    } ?: Modifier
 
     val onClick = when (variant) {
         is CreditCardCardVariant.Dashboard -> variant.onClick
@@ -79,7 +88,6 @@ fun CreditCardCard(
 
     Card(
         modifier = modifier
-            .then(sharedModifier)
             .then(
                 if (onClick != null) Modifier.clip(shapes.large).clickable { onClick() }
                 else Modifier

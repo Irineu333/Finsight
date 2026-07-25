@@ -69,6 +69,7 @@ import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
+import com.neoutils.finsight.ui.component.creditCardSharedElement
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.TransactionCard
@@ -578,14 +579,21 @@ private fun DashboardCreditCardsSection(
                     val domainInvoice = component.domainInvoices[page]
 
                     CreditCardCard(
-                        cardId = creditCardUi.cardId,
                         iconKey = creditCardUi.iconKey,
                         name = creditCardUi.name,
                         closingDay = creditCardUi.closingDay,
                         dueDay = creditCardUi.dueDay,
                         limit = creditCardUi.limit,
                         invoiceUi = creditCardUi.invoiceUi,
-                        modifier = Modifier.fillMaxWidth(),
+                        // Only the current page is promoted: a neighbour composed by the pager's
+                        // contentPadding would be lifted to the overlay and lose its clip.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (page == pagerState.currentPage) {
+                                    Modifier.creditCardSharedElement(creditCardUi.cardId)
+                                } else Modifier
+                            ),
                         variant = CreditCardCardVariant.Dashboard(
                             onClick = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {

@@ -274,7 +274,6 @@ private fun ReportConfigContent(
                             .animateItem(),
                     ) { page ->
                         CreditCardCard(
-                            cardId = uiState.creditCards[page].id,
                             iconKey = uiState.creditCards[page].iconKey,
                             name = uiState.creditCards[page].name,
                             closingDay = uiState.creditCards[page].closingDay,

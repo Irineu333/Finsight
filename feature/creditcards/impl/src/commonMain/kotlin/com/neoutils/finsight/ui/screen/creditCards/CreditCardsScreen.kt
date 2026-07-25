@@ -437,14 +437,21 @@ private fun CreditCardPager(
         pageSpacing = 8.dp,
     ) { page ->
         CreditCardCard(
-            cardId = creditCards[page].cardId,
             iconKey = creditCards[page].iconKey,
             name = creditCards[page].name,
             closingDay = creditCards[page].closingDay,
             dueDay = creditCards[page].dueDay,
             limit = creditCards[page].limit,
             invoiceUi = creditCards[page].invoiceUi,
-            modifier = Modifier.fillMaxWidth(),
+            // Only the selected page is promoted: a neighbour composed by the pager's
+            // contentPadding would be lifted to the overlay and lose its clip.
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (page == selectedIndex) {
+                        Modifier.creditCardSharedElement(creditCards[page].cardId)
+                    } else Modifier
+                ),
             variant = CreditCardCardVariant.Listing(
                 onClick = { onCardClick(creditCards[page]) },
                 onEditInvoice = onEditInvoice,

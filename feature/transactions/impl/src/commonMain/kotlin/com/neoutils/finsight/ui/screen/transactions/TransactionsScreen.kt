@@ -14,8 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,6 +31,7 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
+import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -110,42 +113,119 @@ private fun TransactionsContent(
                 )
             }
 
-            uiState.transactions.forEach { (date, transactions) ->
-                item(
-                    key = "date_title_$date"
+            when (val listState = uiState.listState) {
+                // Nothing has been read yet: the screen says nothing rather than
+                // claiming an emptiness it cannot yet know about.
+                ListState.Loading -> Unit
+
+                ListState.EmptyLedger,
+                is ListState.EmptyScope -> item(
+                    key = "empty_state"
                 ) {
-                    Text(
-                        text = dateFormats.formatRelativeDate(date),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
+                    TransactionsEmptyState(
+                        listState = listState,
+                        onAction = onAction,
                         modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .padding(horizontal = 16.dp)
+                            .fillParentMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 48.dp)
                             .animateItem()
                     )
                 }
 
-                items(
-                    items = transactions,
-                    key = { it.id }
-                ) { transaction ->
-                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
-                    TransactionCard(
-                        transaction = transactionUi,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        onClick = {
-                            if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
-                                detailController.show(ViewAdjustmentModal(transaction.id))
-                            } else {
-                                detailController.show(ViewTransactionModal(transaction.id))
-                            }
+                is ListState.Content -> listState.transactions.forEach { (date, transactions) ->
+                    item(
+                        key = "date_title_$date"
+                    ) {
+                        Text(
+                            text = dateFormats.formatRelativeDate(date),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .padding(horizontal = 16.dp)
+                                .animateItem()
+                        )
+                    }
+
+                    items(
+                        items = transactions,
+                        key = { it.id }
+                    ) { transaction ->
+                        transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                            TransactionCard(
+                                transaction = transactionUi,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                                onClick = {
+                                    if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
+                                        detailController.show(ViewAdjustmentModal(transaction.id))
+                                    } else {
+                                        detailController.show(ViewTransactionModal(transaction.id))
+                                    }
+                                }
+                            )
                         }
-                    )
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * What stands where the list would be. The two emptinesses read differently because the
+ * ways out differ: with nothing recorded at all no filter can reveal anything, so the
+ * text points at the add button the chrome already offers; with a cut that shows nothing,
+ * loosening it is the way out — and only then, and only if a filter is actually narrowing,
+ * is clearing worth offering.
+ */
+@Composable
+private fun TransactionsEmptyState(
+    listState: ListState,
+    onAction: (TransactionsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isLedgerEmpty = listState is ListState.EmptyLedger
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(
+                if (isLedgerEmpty) {
+                    Res.string.transactions_empty_title
+                } else {
+                    Res.string.transactions_empty_filter_title
+                }
+            ),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+
+        Text(
+            text = stringResource(
+                if (isLedgerEmpty) {
+                    Res.string.transactions_empty_body
+                } else {
+                    Res.string.transactions_empty_filter_body
+                }
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+
+        if (listState is ListState.EmptyScope && listState.canClearFilters) {
+            Button(
+                onClick = { onAction(TransactionsAction.ClearFilters) },
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text(stringResource(Res.string.transactions_empty_filter_action))
             }
         }
     }

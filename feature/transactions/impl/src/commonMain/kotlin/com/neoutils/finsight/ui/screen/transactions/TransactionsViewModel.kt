@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -72,6 +73,19 @@ class TransactionsViewModel(
         // longer offers must stop narrowing too, or it would go on cutting invisibly.
         val installmentOnly = filters.installmentOnly && scope != TransactionScope.ACCOUNTS
 
+        val visible = transactions
+            .filter(filters.recurringOnly)
+            .filterInstallment(installmentOnly)
+            .filter(filters.category)
+            .filter(filters.label)
+            .filter(target)
+            // The scope narrows the list to the transactions touching its perimeter,
+            // so summary and list always answer for the same set of accounts.
+            .filter { scope.contains(it) }
+            .filter { it.date.yearMonth == yearMonth }
+            .sortedByDescending { it.date }
+            .groupBy { it.date }
+
         TransactionsUiState(
             balanceOverview = balanceOverview,
             selectedScope = scope,
@@ -85,18 +99,23 @@ class TransactionsViewModel(
             selectedTarget = target,
             showRecurringOnly = filters.recurringOnly,
             showInstallmentOnly = installmentOnly,
-            transactions = transactions
-                .filter(filters.recurringOnly)
-                .filterInstallment(installmentOnly)
-                .filter(filters.category)
-                .filter(filters.label)
-                .filter(target)
-                // The scope narrows the list to the transactions touching its perimeter,
-                // so summary and list always answer for the same set of accounts.
-                .filter { scope.contains(it) }
-                .filter { it.date.yearMonth == yearMonth }
-                .sortedByDescending { it.date }
-                .groupBy { it.date },
+            // Which emptiness this is comes from the list *before* any filter, never
+            // from which controls are active: with every filter neutral, a month with
+            // nothing in it is still a cut — as long as some other month has something.
+            listState = when {
+                visible.isNotEmpty() -> ListState.Content(visible)
+                transactions.isEmpty() -> ListState.EmptyLedger
+                else -> ListState.EmptyScope(
+                    // The effective filters, not the stored ones: a filter the scope has
+                    // already neutralised is absent from the row and narrows nothing, so
+                    // clearing it would change neither the chips nor the list.
+                    canClearFilters = filters.category != null ||
+                        filters.label != null ||
+                        target != null ||
+                        filters.recurringOnly ||
+                        installmentOnly,
+                )
+            },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -132,6 +151,14 @@ class TransactionsViewModel(
 
             is TransactionsAction.ToggleInstallment -> {
                 filters.value = filters.value.copy(installmentOnly = action.enabled)
+            }
+
+            // Month and scope survive: they govern the summary as well, and clearing a
+            // filter must not rewrite figures nobody asked to change. The filters that
+            // arrived by route go with the rest — on this screen they are chips like any
+            // other, and keeping them would make the action inexplicable.
+            is TransactionsAction.ClearFilters -> {
+                filters.value = TransactionsFilters()
             }
         }
     }

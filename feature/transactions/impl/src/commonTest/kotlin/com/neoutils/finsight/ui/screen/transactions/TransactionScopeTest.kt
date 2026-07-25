@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
+import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -109,9 +110,9 @@ class TransactionScopeTest {
         val vm = viewModel(transactions)
         var result = TransactionsUiState()
         vm.uiState.test {
-            // Skip the empty initialValue of stateIn; assert on the computed state.
+            // Skip the Loading initialValue of stateIn; assert on the computed state.
             var state = awaitItem()
-            while (state.transactions.isEmpty()) state = awaitItem()
+            while (state.listState is ListState.Loading) state = awaitItem()
 
             actions.forEach { vm.onAction(it) }
             vm.onAction(TransactionsAction.SelectScope(scope))
@@ -123,7 +124,12 @@ class TransactionScopeTest {
         return result
     }
 
-    private val TransactionsUiState.listed get() = transactions.values.flatten()
+    private val TransactionsUiState.listed
+        get() = (listState as? ListState.Content)
+            ?.transactions
+            ?.values
+            ?.flatten()
+            .orEmpty()
 
     @Test
     fun `the accounts scope closes with the payment and the adjustment in it`() = runTest(dispatcher) {

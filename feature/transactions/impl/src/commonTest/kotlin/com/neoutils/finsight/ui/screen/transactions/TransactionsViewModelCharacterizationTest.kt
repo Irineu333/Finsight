@@ -83,9 +83,9 @@ class TransactionsViewModelCharacterizationTest {
         )
 
         vm.uiState.test {
-            // Skip the empty initialValue of stateIn; assert on the computed state.
+            // Skip the Loading initialValue of stateIn; assert on the computed state.
             var state = awaitItem()
-            while (state.transactions.isEmpty()) state = awaitItem()
+            while (state.listState is TransactionsUiState.ListState.Loading) state = awaitItem()
 
             vm.onAction(TransactionsAction.SelectScope(TransactionScope.ACCOUNTS))
             while (state.selectedScope != TransactionScope.ACCOUNTS) state = awaitItem()

@@ -170,6 +170,11 @@
     <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>
     <string name="transactions_filter_recurring">Recorrência</string>
     <string name="transactions_filter_installment">Parcelas</string>
+    <string name="transactions_empty_title">Nenhuma transação ainda</string>
+    <string name="transactions_empty_body">Toque no botão de adicionar para registrar a primeira e começar a acompanhar seu dinheiro.</string>
+    <string name="transactions_empty_filter_title">Nada por aqui</string>
+    <string name="transactions_empty_filter_body">Nenhuma transação neste recorte. Experimente outro mês, outro escopo ou afrouxe os filtros.</string>
+    <string name="transactions_empty_filter_action">Limpar filtros</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Parcelamentos</string>

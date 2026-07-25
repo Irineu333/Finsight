@@ -16,4 +16,11 @@ sealed class TransactionsAction {
     data class SelectTarget(val target: TransactionTarget?) : TransactionsAction()
     data class ToggleRecurring(val enabled: Boolean) : TransactionsAction()
     data class ToggleInstallment(val enabled: Boolean) : TransactionsAction()
+
+    /**
+     * Returns the list filters to neutral. Month and scope are deliberately untouched:
+     * they govern the summary too, and an action announced as "clear filters" that
+     * rewrote the figures above would do more than it says.
+     */
+    data object ClearFilters : TransactionsAction()
 }

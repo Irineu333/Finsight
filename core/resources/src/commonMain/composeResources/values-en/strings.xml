@@ -169,6 +169,11 @@
     <string name="transactions_filter_credit_card_label">Credit Card</string>
     <string name="transactions_filter_recurring">Recurring</string>
     <string name="transactions_filter_installment">Installments</string>
+    <string name="transactions_empty_title">No transactions yet</string>
+    <string name="transactions_empty_body">Tap the add button to record your first one and start tracking your money.</string>
+    <string name="transactions_empty_filter_title">Nothing here</string>
+    <string name="transactions_empty_filter_body">No transaction fits this view. Try another month, another scope, or loosen the filters.</string>
+    <string name="transactions_empty_filter_action">Clear filters</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Installments</string>

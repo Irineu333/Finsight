@@ -17,7 +17,7 @@ private val currentMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
-    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
+    val listState: ListState = ListState.Loading,
     val balanceOverview: BalanceOverview = BalanceOverview.Overall(),
     val selectedScope: TransactionScope = TransactionScope.ALL,
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
@@ -41,6 +41,35 @@ data class TransactionsUiState(
 
     /** An instalment is a card arrangement, so the filter has nothing to narrow without one. */
     val mustShowInstallmentFilter = selectedScope != TransactionScope.ACCOUNTS
+
+    /**
+     * What stands where the list goes. The transactions live *inside* [Content] rather
+     * than beside this field, which is what makes the ambiguity impossible: there is no
+     * longer an empty map awaiting interpretation, so the screen's default state already
+     * means "I have not read yet" without anyone having to remember a flag.
+     *
+     * The chrome above the list — summary, scope, month, chips — is not part of this: it
+     * survives every state, since it is the only way out of an empty one.
+     */
+    sealed interface ListState {
+
+        /** No read has landed yet. The screen asserts nothing — not even emptiness. */
+        data object Loading : ListState
+
+        /** Not one transaction exists, in any month, under any scope. */
+        data object EmptyLedger : ListState
+
+        /**
+         * Transactions exist; none survives the current cut. [canClearFilters] is false
+         * when every list filter is already neutral — offering to clear then would
+         * promise a change the button cannot deliver.
+         */
+        data class EmptyScope(val canClearFilters: Boolean) : ListState
+
+        data class Content(
+            val transactions: Map<LocalDate, List<Transaction>>,
+        ) : ListState
+    }
 
     /**
      * The summary of one scope — opening, flows, closing — in three shapes rather than

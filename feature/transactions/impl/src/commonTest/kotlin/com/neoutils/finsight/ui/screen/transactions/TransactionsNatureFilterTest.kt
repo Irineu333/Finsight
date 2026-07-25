@@ -69,16 +69,21 @@ class TransactionsNatureFilterTest {
         entryRepository = FakeLedger(transactions),
     )
 
-    private val TransactionsUiState.listed get() = transactions.values.flatten()
+    private val TransactionsUiState.listed
+        get() = (listState as? TransactionsUiState.ListState.Content)
+            ?.transactions
+            ?.values
+            ?.flatten()
+            .orEmpty()
 
     /** The list under [label], read off the settled state after the filter is applied. */
     private suspend fun listedUnder(label: TransactionLabel?): List<Transaction> {
         val vm = viewModel()
         var result = emptyList<Transaction>()
         vm.uiState.test {
-            // Skip the empty initialValue of stateIn; assert on the computed state.
+            // Skip the Loading initialValue of stateIn; assert on the computed state.
             var state = awaitItem()
-            while (state.transactions.isEmpty()) state = awaitItem()
+            while (state.listState is TransactionsUiState.ListState.Loading) state = awaitItem()
             if (label == null) {
                 result = state.listed
             } else {
@@ -142,7 +147,7 @@ class TransactionsNatureFilterTest {
         // over null and open the list unfiltered instead of failing.
         viewModel(filterLabel = TransactionLabel.PAYMENT).uiState.test {
             var state = awaitItem()
-            while (state.transactions.isEmpty()) state = awaitItem()
+            while (state.listState is TransactionsUiState.ListState.Loading) state = awaitItem()
             assertEquals(TransactionLabel.PAYMENT, state.selectedLabel)
             assertEquals(listOf(payment), state.listed)
             cancelAndIgnoreRemainingEvents()

@@ -31,7 +31,7 @@ Estado atual relevante:
 ### D1 — A coluna continua `isActive`; o mapper inverte
 O domínio e a UI passam a falar `Recurring.isArchived`; `RecurringMapper` faz `isArchived = !entity.isActive` na ida e o inverso na volta. Renomear a coluna exigiria migração (rename + inversão de default), e a alteração é pequena demais para justificá-la agora.
 
-A inversão fica **confinada ao mapper** — que já é a camada de tradução, pois já colapsa `TransactionType.ADJUSTMENT → EXPENSE`. Consequência deliberada: quando a migração vier, ela toca `RecurringEntity` e duas linhas do mapper, e **nada** de domínio, use case, ViewModel ou tela.
+A inversão fica **confinada ao mapper** — que já é a camada de tradução, pois já colapsa `TransactionType.ADJUSTMENT → EXPENSE`. Consequência deliberada: quando a migração vier, ela toca `RecurringEntity`, duas linhas do mapper e o SQL/testes de migração que nomeiam a coluna (`Database.kt`, `V7Schema.kt`, `Migration3To4Test`, `Migration2To3Test`), e **nada** de domínio, use case, ViewModel ou tela.
 
 Um KDoc no campo da entidade registra por que o nome diverge do significado — sem ele, o próximo leitor lê como bug.
 - *Alternativa considerada:* manter `isActive` também no domínio e trocar só o texto da UI. Rejeitada: a mentira atravessaria o domínio inteiro, e a spec exige que o use case diga o que o botão diz.
@@ -46,6 +46,10 @@ Duas razões, ambas verificadas no código:
 2. **Bloquear por SKIPPED é recusar o meramente inapropriado.** Um skip não escreve `transactionId`, não gera entry e não move dinheiro — é um bilhete dizendo "neste mês não teve", sem sentido depois que o template some. `account-lifecycle` é explícita: *"O domínio SHALL recusar apenas o que violaria uma invariante, e MUST NOT recusar o que é meramente inapropriado."* Um usuário que criou um template, pulou um mês e o abandonou ficaria com uma recorrência permanentemente inapagável.
 
 Consequência aceita e documentada: apagar uma recorrência sem transações descarta, via CASCADE, as suas linhas SKIPPED.
+
+A justificativa da trava é **própria da fachada**, e não a do razão. Nenhuma entry referencia uma recorrência: `transactions.recurringId` não tem FK, nenhuma leitura do razão o consulta, e `RecurringDao.detachTransactions` já o anula na remoção. Apagar uma recorrência não deixa lançamento órfão algum — destrói o *vínculo* entre os lançamentos e o template, o registro dos ciclos e a ligação do orçamento. Recorrência é a primeira fachada deste ciclo de vida cuja preservação não decorre da integridade referencial do plano de contas, e a spec diz isso em vez de tomar emprestada uma justificativa que não transfere.
+
+Efeito colateral do guard: como a remoção passa a ser recusada exatamente quando alguma transação nomeia o template, o `UPDATE` de `detachTransactions` nunca mais casa uma linha. Ele **permanece** como defesa em profundidade, com KDoc registrando que por construção já não é alcançável.
 
 O guard de orçamento entra por razão **oposta** à de categoria. Em categoria, `HAS_BUDGET` existe porque o FK CASCADE faria algo ruim silenciosamente; em recorrência, ele precisa existir porque **não há FK alguma** em `budgets` — nada mais pega. Sem ele, um orçamento PERCENTAGE fica apontando para um id morto e `CalculateBudgetProgressUseCase` cai no `?: 0.0`, zerando o limite sem erro.
 - *Alternativa considerada:* guard por ocorrências (confirmadas ou puladas). Rejeitada pelos dois motivos acima.
@@ -64,7 +68,9 @@ Três razões:
 2. Os motivos **não se sobrepõem**. Os de `RetireError` são justificados por FKs de categoria (`budget_categories.categoryId` CASCADE, `recurring.categoryId` SET_NULL) e nenhum deles pode ocorrer para uma recorrência; os de recorrência não podem ocorrer para uma categoria. Um enum compartilhado daria a cada `when` membros impossíveis — exatamente o que o KDoc de `AccountRetireOffer` diz ter evitado.
 3. Os motivos **são** o conteúdo do container: sem eles, `Deletable | MustArchive` é um booleano. Compartilhar a casca enquanto cada motivo é privado é DRY aplicado a uma coincidência de forma, contra o critério do `CLAUDE.md`.
 
-Bônus: as strings `retire_error_*` são redigidas para categoria ("Esta categoria tem lançamentos…"). Motivos próprios as deixam **intactas**, sem risco de regressão de texto nem de neutralização para "Este item…".
+Efeito prático: as strings `retire_error_*` são redigidas para categoria ("Esta categoria tem lançamentos…"). Motivos próprios evitam neutralizá-las para "Este item…", que seria regressão de texto.
+
+Isso **não** é passe livre para deixá-las como estão. `retire_error_has_recurring` e `account_error_has_recurring` mandam hoje "encerre-as antes de excluir", e encerrar nunca desbloqueou nada: `countByCategory`/`countByAccount`/`countByCreditCard` contam qualquer template, com ou sem flag. As duas são corrigidas aqui para nomear os caminhos que funcionam — reapontar ou excluir. Os counts **não** passam a filtrar arquivadas: arquivamento é reversível, e liberar a exclusão da categoria enquanto a recorrência está arquivada apenas adia a corrupção para o momento do desarquivamento, quando o template voltaria sem classificação.
 - *Alternativa considerada:* renomear `CategoryRetirability` → `Retirability` compartilhado. Rejeitada pelos três pontos acima.
 - *Alternativa considerada:* `Retirability<out E>` genérico ou um supertipo `RetireReason`. Rejeitada: abstração nova, sem comportamento, para unificar justamente a parte que difere.
 - *Reavaliar quando:* uma **terceira** fachada precisar do mesmo conjunto de motivos. Aí a generalização tem base empírica.
@@ -72,7 +78,9 @@ Bônus: as strings `retire_error_*` são redigidas para categoria ("Esta categor
 ### D5 — Arquivar interrompe a geração; é o padrão, não exceção
 Para conta, cartão e categoria, arquivar é puramente visibilidade. Para recorrência, o mesmo flag também governa a geração — `GetPendingRecurringUseCase` filtra por ele, e é isso que alimenta o card de pendências do dashboard.
 
-A formulação que reconcilia, e que vai para a spec: **arquivar é sair de circulação; para uma recorrência, estar em circulação _é_ gerar ocorrências.** Não é uma exceção ao padrão, é o padrão aplicado a uma fachada cujo "estar em uso" é ativo em vez de passivo. Fica escrito para que a diferença de comportamento não seja lida como incoerência.
+A formulação que reconcilia, e que vai para a spec: **arquivar é sair de circulação; para uma recorrência, estar em circulação _é_ gerar ocorrências.** Não é exceção ao padrão, é o padrão aplicado a uma fachada cuja **presença em circulação é ativa** em vez de passiva. ("Em uso" fica reservado para o critério de retirabilidade do D2 — são coisas diferentes: uma recorrência pode estar em uso, no sentido de ter gerado lançamentos, e ao mesmo tempo arquivada.)
+
+Há uma assimetria real que a spec registra em vez de esconder: para conta e cartão, o desarquivamento é inócuo porque o estado reaberto é garantidamente de saldo zero — nada ficou para trás. Para recorrência, os ciclos decorridos durante o arquivamento **não foram gerados e não são repostos**: a geração retoma do ciclo corrente. O desarquivar é inócuo por nada desfazer, não por repor o intervalo.
 
 ### D6 — Um seletor: `RecurringFilter { ACTIVE, EXPENSE, INCOME, ARCHIVED }`
 Funde os dois enums, exatamente como `CategoryFilter`. Nove estados viram quatro; perdem-se "arquivadas de um tipo" e "todas incluindo arquivadas", perda que Categorias já aceitou conscientemente. "Ativas" em vez de "Todas" mantém o rótulo honesto.
@@ -88,6 +96,8 @@ Junto vêm dois ajustes que Categorias já fez (D10 de lá): `Empty` passa a sig
 O par passa a ser escrito dentro de um único `useWriterConnection { immediateTransaction { … } }`. Duas restrições determinam onde isso mora:
 - `useWriterConnection` é usado **apenas em repositórios** neste projeto, nunca em use case. Logo a transação externa é de um repositório, e repositório injetando repositório já é idiomático aqui (`InvoiceRepository`, `BudgetRepository`, o próprio `RecurringRepository`).
 - `TransactionRepository.createTransaction` **já abre a própria** `useWriterConnection { immediateTransaction { … } }`. O pool do Room é reentrante — uma chamada aninhada no mesmo contexto de corrotina reusa a conexão confinada e a transação interna vira `SAVEPOINT`, sem deadlock —, então o aninhamento é seguro e a escrita interna continua intacta.
+
+A **checagem de reentrada entra junto**. Hoje o `require(existingOccurrence?.status != CONFIRMED)` é lido antes, fora de qualquer transação, e por isso é um TOCTOU: entre a leitura e a escrita cabe outra confirmação. O índice único `(recurringId, yearMonth)` não socorre, porque `RecurringOccurrenceRepository.save()` é um **upsert** — quando encontra linha existente ele faz `update`, sobrescrevendo em silêncio em vez de recusar. A leitura passa para dentro da mesma transação, e a operação devolve a `Transaction` criada, que é o que `ConfirmRecurringUseCase` retorna.
 
 `GetOrCreateInvoiceForMonthUseCase` fica **fora** da transação: se entrasse, uma falha na confirmação desfaria uma fatura recém-criada. Sobrar uma fatura vazia é dano menor que desfazer estrutura de fatura, e menor ainda que duplicar lançamento.
 - *Alternativa considerada:* um `TransactionCreationHook` no razão, simétrico ao `TransactionRemovalHook`. Rejeitada: a ocorrência precisa do `transaction.id` recém-criado, e a porta existente é de remoção; criar uma porta nova para um caso é desproporcional.

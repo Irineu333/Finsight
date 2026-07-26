@@ -4,11 +4,12 @@
 
 ## 1. Atomicidade da confirmação (D7)
 
-- [ ] 1.1 `IRecurringOccurrenceRepository`: expor uma operação que grave **transação + ocorrência** como uma unidade de trabalho, recebendo o `TransactionIntent` e os dados da ocorrência (o `transactionId` só existe depois da escrita da transação).
+- [ ] 1.1 `IRecurringOccurrenceRepository`: expor uma operação que grave **transação + ocorrência** como uma unidade de trabalho, recebendo o `TransactionIntent` e os dados da ocorrência (o `transactionId` só existe depois da escrita da transação) e **devolvendo a `Transaction` criada** — é o que `ConfirmRecurringUseCase` retorna.
 - [ ] 1.2 `RecurringOccurrenceRepository`: receber o handle do banco e `ITransactionRepository`; implementar a operação dentro de um único `useWriterConnection { immediateTransaction { … } }`, chamando `createTransaction` por dentro (o pool do Room é reentrante e a escrita interna vira `SAVEPOINT`). KDoc explicando a unidade de trabalho, no espírito do já existente em `RecurringRepository.delete`.
-- [ ] 1.3 `ConfirmRecurringUseCase`: substituir o par `catch { createTransaction }.flatMap { catch { save(occurrence) } }` pela chamada única. Manter `GetOrCreateInvoiceForMonthUseCase` **fora** da transação (D7) e comentar por quê.
-- [ ] 1.4 Garantir que nenhuma troca de dispatcher ocorra entre as duas escritas — a reentrância do pool depende do elemento de contexto de corrotina.
-- [ ] 1.5 Atualizar o registro no `RecurringModule` (Koin) para as novas dependências do `RecurringOccurrenceRepository`.
+- [ ] 1.3 Mover a checagem de reentrada (`existingOccurrence?.status != CONFIRMED`) para **dentro** dessa transação. Hoje ela é lida fora, o que a torna um TOCTOU, e o índice único `(recurringId, yearMonth)` não socorre porque `save()` é upsert: com linha existente ele faz `update` e sobrescreve em silêncio em vez de recusar.
+- [ ] 1.4 `ConfirmRecurringUseCase`: substituir o par `catch { createTransaction }.flatMap { catch { save(occurrence) } }` pela chamada única. Manter `GetOrCreateInvoiceForMonthUseCase` **fora** da transação (D7) e comentar por quê.
+- [ ] 1.5 Garantir que nenhuma troca de dispatcher ocorra entre as duas escritas — a reentrância do pool depende do elemento de contexto de corrotina.
+- [ ] 1.6 Atualizar o registro no `RecurringModule` (Koin) para as novas dependências do `RecurringOccurrenceRepository`.
 
 ## 2. Vocabulário: `isActive` → `isArchived` (D1, D9)
 
@@ -18,9 +19,12 @@
 - [ ] 2.4 Renomear `StopRecurringUseCase` → `ArchiveRecurringUseCase` e `ReactivateRecurringUseCase` → `UnarchiveRecurringUseCase`, escrevendo `isArchived = true/false`. KDoc do desarquivar como "reversível e inócuo".
 - [ ] 2.5 Renomear os modais e ViewModels correspondentes (`stopRecurring` → `archiveRecurring`, `reactivateRecurring` → `unarchiveRecurring`) e os eventos de analytics.
 - [ ] 2.6 `SaveRecurringUseCase`: trocar o parâmetro `isActive: Boolean = true` por `isArchived: Boolean = false`.
-- [ ] 2.7 `GetPendingRecurringUseCase`: trocar o filtro `recurring.isActive` por `!recurring.isArchived`.
-- [ ] 2.8 `DashboardComponentsBuilder`: mesma troca no filtro de recorrências próximas.
-- [ ] 2.9 Atualizar os registros no `RecurringModule` (Koin) para os use cases e ViewModels renomeados.
+- [ ] 2.7 `RecurringFormViewModel:93` — **único call site** de 2.6: passar `isArchived = recurring?.isArchived ?: false`. Editar uma recorrência arquivada MUST preservar o flag; apagar o argumento por ser default a desarquivaria em silêncio.
+- [ ] 2.8 `GetPendingRecurringUseCase`: trocar o filtro `recurring.isActive` por `!recurring.isArchived`.
+- [ ] 2.9 `DashboardComponentsBuilder`: mesma troca no filtro de recorrências próximas.
+- [ ] 2.10 `BudgetFormViewModel:103` — **terceira leitura do flag, em outro módulo**: `incomeRecurrings` deixa de oferecer arquivadas. Atenção ao `:106`, que resolve a seleção salva dentro dessa lista: garantir que arquivar uma recorrência não apague em silêncio a seleção de um orçamento PERCENTAGE que aponta para ela.
+- [ ] 2.11 Confirmar por varredura que 2.7–2.10 esgotam as leituras do flag fora de `feature/recurring`.
+- [ ] 2.12 Atualizar os registros no `RecurringModule` (Koin) para os use cases e ViewModels renomeados.
 
 ## 3. Domínio: retirabilidade de recorrência (D2, D3, D4)
 
@@ -32,16 +36,19 @@
 - [ ] 3.6 `IRecurringRepository` + `RecurringRepository`: expor "existe transação para esta recorrência".
 - [ ] 3.7 Criar `ResolveRecurringRetirabilityUseCase` — dono único, resolvendo os dois guards na ordem e devolvendo `RecurringRetirability`.
 - [ ] 3.8 `DeleteRecurringUseCase`: consumir o resolver; `MustArchive` vira recusa com a exceção tipada, `Deletable` segue para `repository.delete`.
-- [ ] 3.9 Registrar o resolver no `RecurringModule` (Koin).
+- [ ] 3.9 `RecurringDao.detachTransactions`: manter como defesa em profundidade e acrescentar KDoc registrando que, com o guard de 3.7, o `UPDATE` já não é alcançável por construção — a remoção é recusada exatamente quando alguma transação nomeia o template.
+- [ ] 3.10 Registrar o resolver no `RecurringModule` (Koin).
 
 ## 4. UI: visualização da recorrência (D3, D9)
 
 - [ ] 4.1 `ViewRecurringUiState`: carregar a `RetireAction` resolvida (via `retireActionOf`) em vez de a tela decidir.
 - [ ] 4.2 `ViewRecurringViewModel`: consumir `ResolveRecurringRetirabilityUseCase`; injetar `UnarchiveRecurringUseCase`; tratar a ação de desarquivar com `onLeft { crashlytics.recordException(it) }`.
 - [ ] 4.3 `ViewRecurringAction`: adicionar a ação de desarquivar.
-- [ ] 4.4 `ViewRecurringModal.Actions`: tornar as ofertas mutuamente exclusivas por `isArchived` — arquivada renderiza **apenas** Desarquivar (ícone `Icons.Default.Unarchive`, sem modal de confirmação); não arquivada renderiza a `RetireAction` resolvida, abrindo o modal de arquivar ou o de excluir. Consumir `OutlinedActionButton` em vez do botão local.
+- [ ] 4.4 `ViewRecurringModal.Actions`: tornar as ofertas mutuamente exclusivas por `isArchived` — arquivada renderiza, **entre as ofertas de retirada**, apenas Desarquivar (ícone `Icons.Default.Unarchive`, sem modal de confirmação); não arquivada renderiza a `RetireAction` resolvida, abrindo o modal de arquivar ou o de excluir. Editar continua oferecido nos dois estados. Consumir `OutlinedActionButton` em vez do botão local.
 - [ ] 4.5 Remover o `Icons.Default.Delete` do botão de arquivar — o ícone passa a vir da `RetireAction`.
-- [ ] 4.6 Usar `Throwable.toRetireUiMessage()`-equivalente para a recusa de exclusão, exibindo o motivo pelo `modalManager.showError`.
+- [ ] 4.6 `ViewRecurringModal:191-199`: a `DetailRow` de status deixa de dizer "Ativa/Inativa" e passa a "Ativa/Arquivada", com indicação que não dependa só da cor. Sem isto o modal mostraria "Status: Inativa" logo acima do botão "Desarquivar".
+- [ ] 4.7 `DeleteRecurringViewModel`: no `onLeft`, além do `crashlytics.recordException`, exibir o motivo via `modalManager.showError`. É este ViewModel — não o `ViewRecurringViewModel` — que invoca `DeleteRecurringUseCase`, e hoje ele falha em silêncio.
+- [ ] 4.8 Mesma exibição de motivo no ViewModel de arquivar, para que arquivar e excluir não divirjam.
 
 ## 5. Tela de recorrências: estado (D6)
 
@@ -60,10 +67,13 @@
 ## 7. Strings (`core/resources`)
 
 - [ ] 7.1 Arquivar/desarquivar recorrência: rótulos de ação, títulos e mensagens dos modais. A mensagem de arquivar preserva a promessa atual ("os lançamentos já gerados continuarão vinculados").
-- [ ] 7.2 Reescrever a mensagem do modal de exclusão: ela agora só aparece para recorrência sem uso e SHALL dizer que não há histórico a perder, no lugar do genérico "não pode ser desfeita".
+- [ ] 7.2 Reescrever a mensagem do modal de exclusão: ela agora só aparece para recorrência sem uso e diz que não há histórico a perder, no lugar do genérico "não pode ser desfeita".
 - [ ] 7.3 Motivos de recusa de exclusão de recorrência (um por razão do enum de 3.1).
-- [ ] 7.4 Rótulos do seletor (`Ativas`, `Arquivadas`; reusar os de despesa/receita) e o texto do filtro vazio.
-- [ ] 7.5 Adicionar as mesmas chaves em `values-en`.
+- [ ] 7.4 `recurring_status_active`/`recurring_status_inactive` passam a "Ativa"/"Arquivada", consumidas pela `DetailRow` (4.6) e pelo badge do card (6.4).
+- [ ] 7.5 Rótulos do seletor (`Ativas`, `Arquivadas`; reusar os de despesa/receita) e o texto do filtro vazio.
+- [ ] 7.6 Corrigir `retire_error_has_recurring` e `account_error_has_recurring` (pt e en): hoje mandam "encerre-as antes de excluir" / "stop them before deleting", caminho que nunca desbloqueou nada porque `countByCategory`/`countByAccount`/`countByCreditCard` contam qualquer template independentemente do flag. Passam a nomear os caminhos reais — reapontar para outra categoria/destino ou excluir. Os counts **não** mudam: arquivamento não anula guard.
+- [ ] 7.7 Remover as strings órfãs: `recurring_filter_all`, `recurring_filter_status_active/inactive/all`, `view_recurring_stop`, `view_recurring_reactivate` — em `values` e `values-en`.
+- [ ] 7.8 Adicionar em `values-en` todas as chaves novas desta seção.
 
 ## 8. Testes
 
@@ -75,13 +85,17 @@
 - [ ] 8.6 `RecurringViewModel`: `ACTIVE` não inclui arquivadas; `ARCHIVED` lista só arquivadas; `Empty` só quando não há recorrência alguma.
 - [ ] 8.7 `GetPendingRecurringUseCase`: recorrência arquivada não é apresentada como pendente.
 - [ ] 8.8 Confirmação atômica: falha ao registrar a ocorrência não deixa a transação gravada; confirmar o mesmo ciclo duas vezes não grava segundo lançamento.
-- [ ] 8.9 Ajustar os fakes existentes (`RecurringRepositoryTest`, fakes de orçamento) às novas assinaturas.
+- [ ] 8.9 `RecurringFormViewModel`: salvar uma recorrência arquivada a mantém arquivada.
+- [ ] 8.10 `BudgetFormViewModel`: recorrência arquivada não é oferecida como receita base; um orçamento que já aponta para uma arquivada não perde a seleção em silêncio.
+- [ ] 8.11 Atualizar os **fakes de `IRecurringRepository`** afetados por 3.6 — são sete, em cinco módulos: `CreditCardsEmptyStateTest`, `InvoiceTransactionsFakes`, `DeleteCreditCardUseCaseTest` (creditcards), `RetireAccountGuardsTest` (accounts), `ViewBudgetViewModelTest` (budgets), `ViewCategoryViewModelTest` e `DeleteCategoryGuardsTest` (categories).
+- [ ] 8.12 Atualizar os **fakes de `IBudgetRepository`** afetados por 3.5: `ViewBudgetViewModelTest`, `ViewCategoryViewModelTest`, `DeleteCategoryGuardsTest`.
+- [ ] 8.13 `RecurringRepositoryTest` (jvmTest contra o repositório real): estender para o novo método de 3.6.
 
 ## 9. Validação
 
 - [ ] 9.1 `openspec validate archive-and-redesign-recurring --strict`.
 - [ ] 9.2 `./gradlew :app:shared:testDebugUnitTest` verde.
 - [ ] 9.3 `./gradlew allTests` verde (inclui os testes de migração de `core/database`, que nomeiam a coluna `isActive`).
-- [ ] 9.4 Ao sincronizar/arquivar: reescrever o *Purpose* de `account-lifecycle`, que hoje nomeia apenas conta, cartão e categoria, para incluir recorrência como quarta fachada.
+- [ ] 9.4 Conferir que o sync aplicou o bloco `## MODIFIED Requirements` do delta, e reescrever o *Purpose* de `account-lifecycle`: além de nomear a quarta fachada, a premissa atual ("Partidas dobradas não admitem apagar aquilo que entries referenciam") não cobre recorrência, que entry alguma referencia — precisa abranger também a história própria da fachada.
 - [ ] 9.5 Conferir na tela: arquivar → some das pendências e das listagens ativas → aparece em Arquivadas com badge → abrir → Desarquivar → volta a pendências e a Ativas.
 - [ ] 9.6 Conferir a trava: recorrência com lançamento gerado oferece **Arquivar**; recorrência recém-criada oferece **Excluir** e apaga direto, sem exigir arquivar antes.

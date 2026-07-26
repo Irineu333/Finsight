@@ -26,7 +26,11 @@ ainda não receberam bump de versão — são o candidato natural para a próxim
 | **Telemetria**                  | Analytics e Crashlytics (Firebase)                                               | Arquitetura    | 1.8.0         |
 | **Modularização**               | `core:*`, feature `api`/`impl`, split `app/{shared,android,desktop,ios}`         | Arquitetura    | Sem versão    |
 | **Navegação adaptativa**        | Navigation rail + detail pane conforme a largura da janela                       | Funcionalidade | Sem versão    |
-| **Desktop**                     | Estado de janela, empacotamento e Suporte via Firebase                           | Funcionalidade | Sem versão    |
+| **Desktop Support**             | Estado de janela, empacotamento e Suporte via Firebase                           | Funcionalidade | Sem versão    |
 | **Ledger de partidas dobradas** | Razão de dupla entrada como fonte única de verdade; migração v9 (`:core:ledger`) | Arquitetura    | Sem versão    |
-| **Arquivar/desarquivar**        | Retire/unarchive de contas, cartões e categorias, com listas de arquivados       | Funcionalidade | Sem versão    |
+| **Arquivar/desarquivar**        | Retire/unarchive de contas, cartões, categorias e recorrentes, com arquivados    | Funcionalidade | Sem versão    |
 | **Redesign de Categorias**      | Filtro por chip, seções e visão de arquivados                                    | Funcionalidade | Sem versão    |
+| **Redesign de Recorrentes**     | Arquivar no lugar de parar, filtro único e confirmação atômica do ciclo          | Funcionalidade | Sem versão    |
+| **Perímetro de saldo**          | Escopo contas/cartões/tudo no resumo de transações e nos widgets do dashboard    | Funcionalidade | Sem versão    |
+| **Estados vazios**              | Transações, contas, cartões e faturas dizem o que está vazio                     | Funcionalidade | Sem versão    |
+| **Política de sinal**           | `DisplayAmount` como dono único do sinal exibido, em item e em resumo            | Arquitetura    | Sem versão    |

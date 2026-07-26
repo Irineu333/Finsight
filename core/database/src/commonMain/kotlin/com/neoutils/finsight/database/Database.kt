@@ -229,18 +229,7 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
-// 1.6.0 — the balanced double-entry ledger becomes the single source of truth.
-//
-// A single v7 -> v9 step: v8 never shipped, so there is no device to carry through
-// it and no reason to inherit its two mistakes (a 'Saldo Inicial' account nothing
-// referenced, and routing the legs of deleted accounts into a 'Conta removida'
-// bucket) only to correct them afterwards.
-//
-// It builds the chart of accounts, derives the ledger from the legacy legs,
-// reconstructs accounts deleted in v7 as *closed* accounts carrying their real
-// type plus a dated write-off, drops the legacy `transactions` table, and renames
-// `operations` -> `transactions` so the aggregate finally owns the user's word.
-// System-account names mirror `SystemAccount` in :core:model.
+// no version
 val MIGRATION_7_9 = object : Migration(7, 9) {
     override fun migrate(connection: SQLiteConnection) {
         val now = "CAST(strftime('%s','now') AS INTEGER) * 1000"
@@ -584,14 +573,7 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
     }
 }
 
-/**
- * The invoice half of v10: the card sub-ledger stops being a foreign key into
- * `invoices` and becomes a dimension the ledger owns.
- *
- * Written in two stages over one version number — this one, and the category half.
- * That is only legitimate because no build between them may be released: a device
- * carrying half a v10 would need a v11 to be rescued.
- */
+// no version
 val MIGRATION_9_10 = object : Migration(9, 10) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("PRAGMA foreign_keys=OFF")

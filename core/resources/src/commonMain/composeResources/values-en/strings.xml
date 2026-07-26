@@ -236,6 +236,9 @@
     <string name="retire_action_delete">Delete</string>
     <string name="retire_action_archive">Archive</string>
     <string name="retire_action_error_generic">Something went wrong while saving. Try again in a moment.</string>
+    <string name="retire_error_has_transactions">This category has transactions and cannot be deleted. Archive it to keep the history.</string>
+    <string name="retire_error_has_budget">This category is in a budget. Remove it from the budget before deleting.</string>
+    <string name="retire_error_has_recurring">Recurring entries depend on this category. Point them at another category or delete them before deleting this one.</string>
     <string name="error_modal_dismiss">Got it</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
@@ -266,6 +269,10 @@
     <string name="categories_empty">No categories</string>
     <string name="categories_create_default">Use default</string>
     <string name="categories_create_manual">Create manually</string>
+    <string name="category_card_archived">Archived</string>
+    <string name="categories_filter_active">Active</string>
+    <string name="categories_filter_archived">Archived</string>
+    <string name="categories_empty_filter">No categories here.</string>
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Budgets</string>
@@ -507,6 +514,7 @@
     <string name="view_category_total_spent">Total Spent</string>
     <string name="view_category_transactions_month">Transactions this Month</string>
     <string name="view_category_edit">Edit</string>
+    <string name="view_category_unarchive">Unarchive</string>
 
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentage</string>

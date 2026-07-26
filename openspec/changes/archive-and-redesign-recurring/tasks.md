@@ -75,6 +75,7 @@
 - [x] 7.6 Corrigir `retire_error_has_recurring` e `account_error_has_recurring` (pt e en): hoje mandam "encerre-as antes de excluir" / "stop them before deleting", caminho que nunca desbloqueou nada porque `countByCategory`/`countByAccount`/`countByCreditCard` contam qualquer template independentemente do flag. Passam a nomear os caminhos reais — reapontar para outra categoria/destino ou excluir. Os counts **não** mudam: arquivamento não anula guard.
 - [x] 7.7 Remover as strings órfãs: `recurring_filter_all`, `recurring_filter_status_active/inactive/all`, `view_recurring_stop`, `view_recurring_reactivate` — em `values` e `values-en`.
 - [x] 7.8 Adicionar em `values-en` todas as chaves novas desta seção.
+- [x] 7.9 Fechar a paridade `values`/`values-en`: acrescentar as oito chaves que só existiam em pt — as três `retire_error_*` (com o texto já corrigido em 7.6) e as cinco de categoria herdadas de `unarchive-and-redesign-categories`. Conferir por diferença de chaves entre os dois arquivos, não por leitura.
 
 ## 8. Testes
 

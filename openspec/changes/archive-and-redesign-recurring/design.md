@@ -24,7 +24,7 @@ Estado atual relevante:
 - **Renomear a coluna** `recurring.isActive`. Ver D1.
 - Generalizar `CategoryRetirability`/`RetireError` para servir recorrência. Ver D4.
 - Reparar bancos que já divergiram antes da correção de atomicidade. Ver D8.
-- Dívida transversal registrada no `proposal.md` (guard não-derivado do `AccountsViewModel`, `retire_error_*` ausentes em `values-en`, `?: 0.0` do `CalculateBudgetProgressUseCase`, `ArchivedBadge` compartilhado, varredura completa em `getRecurringById`).
+- Dívida transversal registrada no `proposal.md` (guard não-derivado do `AccountsViewModel`, `?: 0.0` do `CalculateBudgetProgressUseCase`, `ArchivedBadge` compartilhado, varredura completa em `getRecurringById`).
 
 ## Decisions
 
@@ -71,6 +71,8 @@ Três razões:
 Efeito prático: as strings `retire_error_*` são redigidas para categoria ("Esta categoria tem lançamentos…"). Motivos próprios evitam neutralizá-las para "Este item…", que seria regressão de texto.
 
 Isso **não** é passe livre para deixá-las como estão. `retire_error_has_recurring` e `account_error_has_recurring` mandam hoje "encerre-as antes de excluir", e encerrar nunca desbloqueou nada: `countByCategory`/`countByAccount`/`countByCreditCard` contam qualquer template, com ou sem flag. As duas são corrigidas aqui para nomear os caminhos que funcionam — reapontar ou excluir. Os counts **não** passam a filtrar arquivadas: arquivamento é reversível, e liberar a exclusão da categoria enquanto a recorrência está arquivada apenas adia a corrupção para o momento do desarquivamento, quando o template voltaria sem classificação.
+
+Corrigir o texto de uma chave que existe em um idioma só é meia correção: as três `retire_error_*` nunca chegaram a `values-en`, e com elas outras cinco de categoria. Como esta mudança já está reescrevendo uma delas, as oito entram agora e a paridade entre os dois arquivos passa a ser total — verificável por diferença de chaves, não por leitura.
 - *Alternativa considerada:* renomear `CategoryRetirability` → `Retirability` compartilhado. Rejeitada pelos três pontos acima.
 - *Alternativa considerada:* `Retirability<out E>` genérico ou um supertipo `RetireReason`. Rejeitada: abstração nova, sem comportamento, para unificar justamente a parte que difere.
 - *Reavaliar quando:* uma **terceira** fachada precisar do mesmo conjunto de motivos. Aí a generalização tem base empírica.

@@ -29,6 +29,14 @@ interface BudgetDao {
     @Query("SELECT COUNT(*) FROM budget_categories WHERE categoryId = :categoryId")
     suspend fun countByCategory(categoryId: Long): Int
 
+    /**
+     * Whether any budget still names this recurring as its base income. `budgets`
+     * declares no foreign key, so this is the only thing that stands between a
+     * deleted recurring and a percentage limit silently reading as zero.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM budgets WHERE recurringId = :recurringId)")
+    suspend fun existsByRecurring(recurringId: Long): Boolean
+
     @Update
     suspend fun update(budget: BudgetEntity)
 

@@ -120,6 +120,7 @@ class RecordingCategoryRepository(
 
 class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepository {
     override suspend fun hasRecurringForCategory(categoryId: Long) = hasRecurring
+    override suspend fun hasTransactionForRecurring(recurringId: Long) = false
     override suspend fun hasRecurringForAccount(accountId: Long) = false
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
     override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
@@ -132,6 +133,7 @@ class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepository {
 
 class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
     override suspend fun hasBudgetForCategory(categoryId: Long) = hasBudget
+    override suspend fun hasBudgetForRecurring(recurringId: Long) = false
     override fun observeAllBudgets(): Flow<List<Budget>> = flowOf(emptyList())
     override suspend fun getAllBudgets(): List<Budget> = emptyList()
     override suspend fun insert(budget: Budget) = throw NotImplementedError()

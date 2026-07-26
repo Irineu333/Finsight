@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.stopRecurring
+package com.neoutils.finsight.ui.modal.unarchiveRecurring
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -19,22 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.stop_recurring_confirm
-import com.neoutils.finsight.resources.stop_recurring_message
-import com.neoutils.finsight.resources.stop_recurring_title
+import com.neoutils.finsight.resources.unarchive_recurring_confirm
+import com.neoutils.finsight.resources.unarchive_recurring_message
+import com.neoutils.finsight.resources.unarchive_recurring_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.ui.theme.Income
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class StopRecurringModal(
+class UnarchiveRecurringModal(
     private val recurring: Recurring,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<StopRecurringViewModel> { parametersOf(recurring) }
+        val viewModel = koinViewModel<UnarchiveRecurringViewModel> { parametersOf(recurring) }
         val label = recurring.label
 
         Column(
@@ -44,7 +44,7 @@ class StopRecurringModal(
                 .padding(bottom = 32.dp),
         ) {
             Text(
-                text = stringResource(Res.string.stop_recurring_title),
+                text = stringResource(Res.string.unarchive_recurring_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
             )
@@ -52,7 +52,7 @@ class StopRecurringModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.stop_recurring_message, label),
+                text = stringResource(Res.string.unarchive_recurring_message, label),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
@@ -60,15 +60,15 @@ class StopRecurringModal(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.stop() },
+                onClick = { viewModel.unarchive() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Warning,
+                    containerColor = Income,
                 ),
             ) {
                 Text(
-                    text = stringResource(Res.string.stop_recurring_confirm),
+                    text = stringResource(Res.string.unarchive_recurring_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )

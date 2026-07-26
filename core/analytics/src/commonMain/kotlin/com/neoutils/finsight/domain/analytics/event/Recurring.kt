@@ -55,7 +55,7 @@ class SkipRecurring(params: Map<String, String>) : Event("skip_recurring", param
     )
 }
 
-class StopRecurring(params: Map<String, String>) : Event("stop_recurring", params) {
+class ArchiveRecurring(params: Map<String, String>) : Event("archive_recurring", params) {
     constructor(recurring: Recurring) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())
@@ -65,7 +65,7 @@ class StopRecurring(params: Map<String, String>) : Event("stop_recurring", param
     )
 }
 
-class ReactivateRecurring(params: Map<String, String>) : Event("reactivate_recurring", params) {
+class UnarchiveRecurring(params: Map<String, String>) : Event("unarchive_recurring", params) {
     constructor(recurring: Recurring) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())

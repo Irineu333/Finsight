@@ -63,6 +63,7 @@ class ViewBudgetViewModelTest {
         override suspend fun update(budget: Budget) = throw NotImplementedError()
         override suspend fun delete(budget: Budget) = throw NotImplementedError()
         override suspend fun hasBudgetForCategory(categoryId: Long) = false
+        override suspend fun hasBudgetForRecurring(recurringId: Long) = false
     }
 
     private class FakeTransactionRepository : ITransactionRepository {
@@ -95,6 +96,7 @@ class ViewBudgetViewModelTest {
         override suspend fun hasRecurringForAccount(accountId: Long) = false
         override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
         override suspend fun hasRecurringForCategory(categoryId: Long) = false
+        override suspend fun hasTransactionForRecurring(recurringId: Long) = false
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()

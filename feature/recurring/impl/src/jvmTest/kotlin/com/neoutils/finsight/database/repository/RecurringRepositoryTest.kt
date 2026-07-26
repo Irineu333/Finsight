@@ -19,11 +19,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class RecurringRepositoryTest {
 
     private val recurringFlow = MutableSharedFlow<List<RecurringEntity>>(replay = 1)
+    private val transactionsFor = mutableSetOf<Long>()
 
     private val dao = object : RecurringDao {
         override fun observeAll(): Flow<List<RecurringEntity>> = recurringFlow
@@ -35,6 +38,7 @@ class RecurringRepositoryTest {
         override suspend fun countByCategory(categoryId: Long): Int = throw NotImplementedError()
         override suspend fun delete(entity: RecurringEntity) = throw NotImplementedError()
         override suspend fun detachTransactions(recurringId: Long) = Unit
+        override suspend fun existsTransactionFor(recurringId: Long): Boolean = transactionsFor.contains(recurringId)
     }
 
     private val categoryRepository = object : ICategoryRepository {
@@ -128,6 +132,14 @@ class RecurringRepositoryTest {
             recurringFlow.emit(emptyList())
             assertNull(awaitItem())
         }
+    }
+
+    @Test
+    fun reportsWhetherATransactionNamesTheRecurring() = runTest {
+        assertFalse(repository.hasTransactionForRecurring(1L))
+        transactionsFor += 1L
+        assertTrue(repository.hasTransactionForRecurring(1L))
+        assertFalse(repository.hasTransactionForRecurring(2L))
     }
 
     @Test

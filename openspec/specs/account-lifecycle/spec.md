@@ -2,7 +2,11 @@
 
 ## Purpose
 
-Como uma conta, um cartão ou uma categoria sai de circulação sem levar consigo a história que o razão registrou. Partidas dobradas não admitem apagar aquilo que entries referenciam: o que possui lançamentos é **arquivado** — permanece no plano de contas, com o seu tipo real, e some apenas das listagens e seletores. O estado de arquivamento mora numa única coluna do plano de contas (`chart-of-accounts`), e as fachadas o consomem da sua conta. Apagar e arquivar são ações distintas, cada uma recusando o que seria inválido, e a interface oferece a que o domínio vai executar.
+Como uma conta, um cartão, uma categoria ou uma recorrência sai de circulação sem levar consigo a história que deixou. O que está **em uso** é arquivado, não apagado — some das listagens e dos seletores, e permanece acessível por uma listagem dedicada de arquivadas.
+
+A história preservada tem duas origens, e a spec não confunde uma com a outra. Para conta, cartão e categoria ela é a do razão: partidas dobradas não admitem apagar aquilo que entries referenciam, e a fachada permanece no plano de contas com o seu tipo real. Para **recorrência** nenhuma entry a referencia — o que se preserva é história própria da fachada: o vínculo entre os lançamentos gerados e o template que os originou, o registro dos ciclos tratados e a ligação de um orçamento à sua receita base.
+
+Onde o estado de arquivamento mora acompanha essa divisão: conta e cartão o leem de uma única coluna do plano de contas (`chart-of-accounts`); categoria e recorrência, que não são linhas do plano, o guardam na própria fachada. Arquivar é sair de circulação — para uma recorrência, cuja presença em circulação é ativa, isso também interrompe a geração. Apagar e arquivar são ações distintas, cada uma recusando o que seria inválido, e a interface oferece a que o domínio vai executar.
 ## Requirements
 ### Requirement: Conta com lançamentos é arquivada, nunca apagada
 Uma conta ou cartão que possua qualquer lançamento MUST NOT ser removida do plano de contas. O sistema SHALL arquivá-la: a conta permanece no plano de contas, com o seu tipo real preservado, marcada como arquivada, e os seus lançamentos históricos permanecem intactos e atribuídos a ela. Uma conta sem nenhum lançamento MAY ser removida, por não haver história a preservar.

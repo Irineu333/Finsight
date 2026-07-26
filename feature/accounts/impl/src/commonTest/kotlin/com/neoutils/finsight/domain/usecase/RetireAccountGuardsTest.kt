@@ -169,6 +169,7 @@ private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurr
     override suspend fun hasRecurringForAccount(accountId: Long) = hasRecurring
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) = hasRecurring
     override suspend fun hasRecurringForCategory(categoryId: Long) = hasRecurring
+    override suspend fun hasTransactionForRecurring(recurringId: Long) = false
     override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
     override fun observeRecurringById(id: Long): Flow<Recurring?> = flowOf(null)
     override suspend fun getRecurringById(id: Long): Recurring? = null

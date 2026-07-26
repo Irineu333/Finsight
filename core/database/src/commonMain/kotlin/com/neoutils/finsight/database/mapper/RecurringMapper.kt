@@ -27,7 +27,9 @@ class RecurringMapper {
         account = account,
         creditCard = creditCard,
         createdAt = entity.createdAt,
-        isActive = entity.isActive,
+        // The single translation of the flag: the column says "active", the domain
+        // says "archived" (design D1).
+        isArchived = !entity.isActive,
     )
 
     fun toEntity(recurring: Recurring): RecurringEntity = RecurringEntity(
@@ -44,6 +46,6 @@ class RecurringMapper {
         accountId = recurring.account?.id,
         creditCardId = recurring.creditCard?.id,
         createdAt = recurring.createdAt,
-        isActive = recurring.isActive,
+        isActive = !recurring.isArchived,
     )
 }

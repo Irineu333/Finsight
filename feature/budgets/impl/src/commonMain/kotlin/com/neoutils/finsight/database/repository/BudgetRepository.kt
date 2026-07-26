@@ -67,4 +67,9 @@ class BudgetRepository(
     // it from every budget silently. The delete use case refuses instead.
     override suspend fun hasBudgetForCategory(categoryId: Long): Boolean =
         dao.countByCategory(categoryId) > 0
+
+    // `budgets` declares no foreign key: nothing else would stop a deleted recurring
+    // from leaving a percentage budget pointing at a dead id.
+    override suspend fun hasBudgetForRecurring(recurringId: Long): Boolean =
+        dao.existsByRecurring(recurringId)
 }

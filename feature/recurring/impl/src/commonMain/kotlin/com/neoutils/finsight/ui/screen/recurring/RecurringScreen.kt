@@ -13,10 +13,12 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,13 +43,12 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_card_monthly_amount
+import com.neoutils.finsight.resources.recurring_empty_filter
 import com.neoutils.finsight.resources.recurring_expense
-import com.neoutils.finsight.resources.recurring_filter_all
+import com.neoutils.finsight.resources.recurring_filter_active
+import com.neoutils.finsight.resources.recurring_filter_archived
 import com.neoutils.finsight.resources.recurring_income
-import com.neoutils.finsight.resources.recurring_filter_status_active
-import com.neoutils.finsight.resources.recurring_filter_status_all
-import com.neoutils.finsight.resources.recurring_filter_status_inactive
-import com.neoutils.finsight.resources.recurring_status_inactive
+import com.neoutils.finsight.resources.recurring_status_archived
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
@@ -59,6 +61,7 @@ import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Warning
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -98,21 +101,21 @@ fun RecurringScreen(
                     }
                 },
                 actions = {
-                    Row {
-                        RecurringStatusFilterMenu(
-                            selectedFilter = uiState.selectedStatusFilter,
-                            onFilterSelected = { viewModel.onAction(RecurringAction.SelectStatusFilter(it)) },
-                        )
-                        RecurringFilterMenu(
-                            selectedFilter = uiState.selectedFilter,
-                            onFilterSelected = { viewModel.onAction(RecurringAction.SelectFilter(it)) },
+                    // One selector, in the top bar — same place and shape as the
+                    // categories screen.
+                    if (uiState is RecurringUiState.Content) {
+                        FilterSelector(
+                            selected = uiState.filter,
+                            onSelect = { viewModel.onAction(RecurringAction.SelectFilter(it)) },
                         )
                     }
                 }
             )
         },
         floatingActionButton = {
-            if (uiState is RecurringUiState.Content) {
+            // Not tied to Content: filtering by Archived in an app with none used to
+            // hide the create button.
+            if (uiState !is RecurringUiState.Loading) {
                 FloatingActionButton(
                     onClick = { modalManager.show(RecurringFormModal()) },
                 ) {
@@ -134,8 +137,16 @@ fun RecurringScreen(
             }
 
             is RecurringUiState.Empty -> {
-                RecurringEmptyState(
+                EmptyDatabaseState(
                     onCreateClick = { modalManager.show(RecurringFormModal()) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
+            }
+
+            is RecurringUiState.Content if uiState.filteredRecurring.isEmpty() -> {
+                EmptyFilterState(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
@@ -170,9 +181,9 @@ fun RecurringScreen(
 }
 
 @Composable
-private fun RecurringStatusFilterMenu(
-    selectedFilter: RecurringStatusFilter,
-    onFilterSelected: (RecurringStatusFilter) -> Unit,
+private fun FilterSelector(
+    selected: RecurringFilter,
+    onSelect: (RecurringFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -188,13 +199,7 @@ private fun RecurringStatusFilterMenu(
                     contentColor = Color.Unspecified,
                 ),
             ) {
-                Text(
-                    text = when (selectedFilter) {
-                        RecurringStatusFilter.ACTIVE -> stringResource(Res.string.recurring_filter_status_active)
-                        RecurringStatusFilter.INACTIVE -> stringResource(Res.string.recurring_filter_status_inactive)
-                        RecurringStatusFilter.ALL -> stringResource(Res.string.recurring_filter_status_all)
-                    },
-                )
+                Text(text = stringResource(selected.label))
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
@@ -208,14 +213,10 @@ private fun RecurringStatusFilterMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
         ) {
-            listOf(
-                RecurringStatusFilter.ACTIVE to stringResource(Res.string.recurring_filter_status_active),
-                RecurringStatusFilter.INACTIVE to stringResource(Res.string.recurring_filter_status_inactive),
-                RecurringStatusFilter.ALL to stringResource(Res.string.recurring_filter_status_all),
-            ).forEach { (filter, label) ->
+            RecurringFilter.entries.forEach { filter ->
                 DropdownMenuItem(
-                    text = { Text(label) },
-                    trailingIcon = if (selectedFilter == filter) {
+                    text = { Text(stringResource(filter.label)) },
+                    trailingIcon = if (selected == filter) {
                         {
                             Icon(
                                 imageVector = Icons.Default.Check,
@@ -225,7 +226,7 @@ private fun RecurringStatusFilterMenu(
                         }
                     } else null,
                     onClick = {
-                        onFilterSelected(filter)
+                        onSelect(filter)
                         menuExpanded = false
                     },
                 )
@@ -234,73 +235,43 @@ private fun RecurringStatusFilterMenu(
     }
 }
 
+private val RecurringFilter.label: StringResource
+    get() = when (this) {
+        RecurringFilter.ACTIVE -> Res.string.recurring_filter_active
+        RecurringFilter.EXPENSE -> Res.string.recurring_expense
+        RecurringFilter.INCOME -> Res.string.recurring_income
+        RecurringFilter.ARCHIVED -> Res.string.recurring_filter_archived
+    }
+
+/** A filter with nothing to show, database not empty: a quiet note, no CTA. */
 @Composable
-private fun RecurringFilterMenu(
-    selectedFilter: RecurringFilter,
-    onFilterSelected: (RecurringFilter) -> Unit,
+private fun EmptyFilterState(
     modifier: Modifier = Modifier,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    Box(modifier = modifier) {
-        CompositionLocalProvider(
-            LocalContentColor provides colorScheme.onBackground,
-            LocalTextStyle provides MaterialTheme.typography.labelLarge,
-        ) {
-            TextButton(
-                onClick = { menuExpanded = true },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.Unspecified,
-                ),
-            ) {
-                Text(
-                    text = when (selectedFilter) {
-                        RecurringFilter.ALL -> stringResource(Res.string.recurring_filter_all)
-                        RecurringFilter.INCOME -> stringResource(Res.string.recurring_income)
-                        RecurringFilter.EXPENSE -> stringResource(Res.string.recurring_expense)
-                    },
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-        ) {
-            listOf(
-                RecurringFilter.ALL to stringResource(Res.string.recurring_filter_all),
-                RecurringFilter.INCOME to stringResource(Res.string.recurring_income),
-                RecurringFilter.EXPENSE to stringResource(Res.string.recurring_expense),
-            ).forEach { (filter, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    trailingIcon = if (selectedFilter == filter) {
-                        {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    } else null,
-                    onClick = {
-                        onFilterSelected(filter)
-                        menuExpanded = false
-                    },
-                )
-            }
-        }
+    Column(
+        modifier = modifier.padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Autorenew,
+            contentDescription = null,
+            tint = colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(bottom = 12.dp)
+                .size(40.dp),
+        )
+        Text(
+            text = stringResource(Res.string.recurring_empty_filter),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+        )
     }
 }
 
+/** The big CTA, earned only by a database with no recurring at all. */
 @Composable
-private fun RecurringEmptyState(
+private fun EmptyDatabaseState(
     onCreateClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -423,10 +394,14 @@ private fun RecurringCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (!recurring.isActive) {
+                    // The colour alone cannot carry "archived" — it fails for anyone
+                    // who does not read colour. Icon + label states it in the clear,
+                    // as the category card already does.
+                    if (recurring.isArchived) {
                         RecurringBadge(
-                            label = stringResource(Res.string.recurring_status_inactive),
+                            label = stringResource(Res.string.recurring_status_archived),
                             color = Warning,
+                            icon = Icons.Default.Archive,
                         )
                     }
 
@@ -530,6 +505,7 @@ private fun RecurringBadge(
     label: String,
     color: Color,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
 ) {
     Card(
         modifier = modifier,
@@ -539,11 +515,23 @@ private fun RecurringBadge(
         ),
         shape = RoundedCornerShape(4.dp),
     ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+        Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-        )
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
     }
 }

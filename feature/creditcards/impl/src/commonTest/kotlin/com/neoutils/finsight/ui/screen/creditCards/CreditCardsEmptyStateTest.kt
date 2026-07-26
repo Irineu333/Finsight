@@ -235,6 +235,7 @@ private object NoRecurring : IRecurringRepository {
     override suspend fun hasRecurringForAccount(accountId: Long): Boolean = false
     override suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean = false
     override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
+    override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = false
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
     override suspend fun update(recurring: Recurring) = throw NotImplementedError()
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()

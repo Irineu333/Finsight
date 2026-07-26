@@ -17,6 +17,10 @@ interface RecurringDao {
      * an explicit owner (design D12). It writes `transactions` from the facade's
      * DAO because a ledger DAO may not consult those columns at all, and it also
      * does more than the key did: the key never cleared `recurringCycle`.
+     *
+     * Kept as defence in depth. With the retirability guard in place the `UPDATE` is
+     * no longer reachable by construction: removal is refused in exactly the case
+     * where some transaction names the template, so it can never match a row.
      */
     @Query(
         """
@@ -26,6 +30,14 @@ interface RecurringDao {
         """
     )
     suspend fun detachTransactions(recurringId: Long)
+
+    /**
+     * Whether any transaction still names this template. Reads `transactions` from
+     * the facade's DAO for the same reason [detachTransactions] writes it: a ledger
+     * DAO may not consult a facade's grouping metadata at all.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM transactions WHERE recurringId = :recurringId)")
+    suspend fun existsTransactionFor(recurringId: Long): Boolean
 
     @Query("SELECT * FROM recurring ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<RecurringEntity>>

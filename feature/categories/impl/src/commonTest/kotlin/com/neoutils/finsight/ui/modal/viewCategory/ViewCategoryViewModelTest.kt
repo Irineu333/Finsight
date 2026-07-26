@@ -156,6 +156,7 @@ class ViewCategoryViewModelTest {
 
     private class FakeRecurringRepository(private val has: Boolean = false) : IRecurringRepository {
         override suspend fun hasRecurringForCategory(categoryId: Long) = has
+        override suspend fun hasTransactionForRecurring(recurringId: Long) = false
         override suspend fun hasRecurringForAccount(accountId: Long) = false
         override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
         override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
@@ -168,6 +169,7 @@ class ViewCategoryViewModelTest {
 
     private class FakeBudgetRepository(private val has: Boolean = false) : IBudgetRepository {
         override suspend fun hasBudgetForCategory(categoryId: Long) = has
+        override suspend fun hasBudgetForRecurring(recurringId: Long) = false
         override fun observeAllBudgets(): Flow<List<Budget>> = flowOf(emptyList())
         override suspend fun getAllBudgets(): List<Budget> = emptyList()
         override suspend fun insert(budget: Budget) = throw NotImplementedError()

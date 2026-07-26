@@ -2,32 +2,25 @@ package com.neoutils.finsight.ui.screen.recurring
 
 import com.neoutils.finsight.domain.model.Recurring
 
-enum class RecurringFilter {
-    ALL, INCOME, EXPENSE
-}
-
-enum class RecurringStatusFilter {
-    ACTIVE, INACTIVE, ALL
-}
-
 sealed class RecurringUiState {
 
-    abstract val selectedFilter: RecurringFilter
-    abstract val selectedStatusFilter: RecurringStatusFilter
+    abstract val filter: RecurringFilter
 
     data class Loading(
-        override val selectedFilter: RecurringFilter = RecurringFilter.ALL,
-        override val selectedStatusFilter: RecurringStatusFilter = RecurringStatusFilter.ACTIVE,
+        override val filter: RecurringFilter = RecurringFilter.ACTIVE,
     ) : RecurringUiState()
 
+    /**
+     * The database holds no recurring at all — the only case that earns the big CTA
+     * empty-state. A filter that merely happens to be empty is [Content] with an
+     * empty list. [filter] survives so the FAB is still shown and knows its context.
+     */
     data class Empty(
-        override val selectedFilter: RecurringFilter,
-        override val selectedStatusFilter: RecurringStatusFilter,
+        override val filter: RecurringFilter,
     ) : RecurringUiState()
 
     data class Content(
         val filteredRecurring: List<Recurring>,
-        override val selectedFilter: RecurringFilter,
-        override val selectedStatusFilter: RecurringStatusFilter,
+        override val filter: RecurringFilter,
     ) : RecurringUiState()
 }

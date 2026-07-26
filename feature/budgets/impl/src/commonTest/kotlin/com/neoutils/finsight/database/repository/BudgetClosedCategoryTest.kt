@@ -68,6 +68,7 @@ class BudgetClosedCategoryTest {
             linksFlow.value = linksFlow.value.filterNot { it.budgetId == budgetId }
         }
         override suspend fun countByCategory(categoryId: Long): Int = linksFlow.value.count { it.categoryId == categoryId }
+        override suspend fun existsByRecurring(recurringId: Long): Boolean = false
         override suspend fun update(budget: BudgetEntity) {
             budgetsFlow.value = budgetsFlow.value.map { if (it.id == budget.id) budget else it }
         }

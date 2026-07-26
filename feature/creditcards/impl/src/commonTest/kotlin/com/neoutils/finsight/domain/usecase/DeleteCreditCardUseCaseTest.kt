@@ -96,6 +96,7 @@ private class FakeRecurringRepository(private val hasRecurring: Boolean) : IRecu
     override suspend fun getRecurringById(id: Long): Recurring? = null
     override suspend fun hasRecurringForAccount(accountId: Long): Boolean = false
     override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
+    override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = false
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
     override suspend fun update(recurring: Recurring) = throw NotImplementedError()
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()

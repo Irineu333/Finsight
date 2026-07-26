@@ -10,4 +10,10 @@ interface IBudgetRepository {
     suspend fun update(budget: Budget)
     suspend fun delete(budget: Budget)
     suspend fun hasBudgetForCategory(categoryId: Long): Boolean
+
+    /**
+     * Whether any budget still names this recurring as its base income — one of the
+     * two guards that decide whether the recurring may be deleted or must be archived.
+     */
+    suspend fun hasBudgetForRecurring(recurringId: Long): Boolean
 }

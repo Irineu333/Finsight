@@ -90,7 +90,9 @@ class RecurringFormViewModel(
                 account = form.account,
                 creditCard = form.creditCard,
                 createdAt = recurring?.createdAt,
-                isActive = recurring?.isActive ?: true,
+                // Editing an archived recurring preserves the flag; dropping this
+                // argument for the default would silently unarchive it.
+                isArchived = recurring?.isArchived ?: false,
             ).onLeft {
                 crashlytics.recordException(it)
             }.onRight {

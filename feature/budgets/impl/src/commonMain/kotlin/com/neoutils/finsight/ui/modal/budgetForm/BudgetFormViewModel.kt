@@ -100,8 +100,12 @@ class BudgetFormViewModel(
             .map { it.id }
             .toSet()
 
-        val incomeRecurrings = allRecurrings.filter { it.type == TransactionType.INCOME && it.isActive }
+        val incomeRecurrings = allRecurrings.filter { it.type == TransactionType.INCOME }
 
+        // Resolved against every income recurring, archived included: the budget's own
+        // base income is a link already established, and archiving governs the *new*
+        // choice, not the one already made. Resolving inside the offered list instead
+        // would erase it the moment the recurring was archived.
         val resolvedSelectedRecurring = fields.selectedRecurring
             ?: budget?.recurringId?.let { id -> incomeRecurrings.find { it.id == id } }
 
@@ -119,7 +123,10 @@ class BudgetFormViewModel(
             isEditMode = isEditMode,
             limitType = fields.limitType,
             percentage = fields.percentage,
-            incomeRecurrings = incomeRecurrings,
+            incomeRecurrings = offeredRecurrings(
+                open = incomeRecurrings.filterNot { it.isArchived },
+                selected = resolvedSelectedRecurring,
+            ),
             selectedRecurring = resolvedSelectedRecurring,
         )
     }.stateIn(
@@ -238,21 +245,46 @@ class BudgetFormViewModel(
 }
 
 /**
- * The categories the form offers in its dropdown.
+ * Continuity of an already-made choice, the single form both selections of this form
+ * use: what is offered is [offered] **plus** whatever is already [chosen] and no
+ * longer in it.
  *
- * The open ones, minus any already claimed by another budget (a category belongs to
- * at most one), **plus** the ones this budget already holds that are no longer open.
- * A category archived after it was added is absent from [open], so without this it
- * would show in the field but could never be unchecked. It is not offered fresh — it
- * appears only because it is already selected — and once removed it is gone, since an
- * archived category is never in [open] to be picked again.
+ * A facade archived after it was chosen drops out of [offered], so without this it
+ * would show in the field but could never be unpicked. It is not offered fresh — it
+ * appears only because it is already chosen — and once dropped it is gone, since an
+ * archived facade is never back in [offered] to be picked again.
+ */
+private fun <T> withAlreadyChosen(
+    offered: List<T>,
+    chosen: List<T>,
+    id: (T) -> Long,
+): List<T> = offered + chosen.filterNot { c -> offered.any { id(it) == id(c) } }
+
+/**
+ * The categories the form offers in its dropdown: the open ones, minus any already
+ * claimed by another budget (a category belongs to at most one), kept continuous by
+ * [withAlreadyChosen].
  */
 internal fun offeredCategories(
     open: List<Category>,
     selected: List<Category>,
     otherBudgetCategoryIds: Set<Long>,
-): List<Category> {
-    val offered = open.filterNot { it.id in otherBudgetCategoryIds }
-    val selectedArchived = selected.filterNot { s -> offered.any { it.id == s.id } }
-    return offered + selectedArchived
-}
+): List<Category> = withAlreadyChosen(
+    offered = open.filterNot { it.id in otherBudgetCategoryIds },
+    chosen = selected,
+    id = Category::id,
+)
+
+/**
+ * The recurrings the form offers as base income: the unarchived ones, kept continuous
+ * by [withAlreadyChosen] so a budget that already elected one keeps seeing it — and
+ * can swap it — after it is archived.
+ */
+internal fun offeredRecurrings(
+    open: List<Recurring>,
+    selected: Recurring?,
+): List<Recurring> = withAlreadyChosen(
+    offered = open,
+    chosen = listOfNotNull(selected),
+    id = Recurring::id,
+)

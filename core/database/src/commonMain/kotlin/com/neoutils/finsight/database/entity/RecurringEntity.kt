@@ -48,6 +48,19 @@ data class RecurringEntity(
     val accountId: Long?,
     val creditCardId: Long?,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    /**
+     * The **inverse** of `Recurring.isArchived`: stored `true` means not archived.
+     *
+     * The name diverges from the meaning on purpose. The domain and the UI speak
+     * `isArchived`, like every other archivable facade; renaming the column would
+     * take a migration (rename plus default inversion) that this change is too
+     * small to justify, so `RecurringMapper` inverts on both sides and is the only
+     * place that does (design D1).
+     *
+     * Debt with an owner: when the rename comes, it touches this field, two lines
+     * of the mapper, and the migration SQL/tests that name the column — and nothing
+     * in domain, use case, ViewModel or screen.
+     */
     val isActive: Boolean = true,
 ) {
     enum class Type { EXPENSE, INCOME }

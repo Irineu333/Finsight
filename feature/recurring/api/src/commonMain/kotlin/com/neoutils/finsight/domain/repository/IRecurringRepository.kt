@@ -22,6 +22,12 @@ interface IRecurringRepository {
     suspend fun hasRecurringForAccount(accountId: Long): Boolean
     suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean
     suspend fun hasRecurringForCategory(categoryId: Long): Boolean
+
+    /**
+     * Whether any transaction still carries this template's link — one of the two
+     * guards that decide whether the recurring may be deleted or must be archived.
+     */
+    suspend fun hasTransactionForRecurring(recurringId: Long): Boolean
     suspend fun insert(recurring: Recurring)
     suspend fun update(recurring: Recurring)
     suspend fun delete(recurring: Recurring)

@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.error.toRecurringRetireUiMessage
 import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
@@ -24,6 +25,7 @@ class DeleteRecurringViewModel(
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)
+            modalManager.showError(it.toRecurringRetireUiMessage())
         }
     }
 }

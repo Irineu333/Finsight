@@ -1,16 +1,15 @@
 package com.neoutils.finsight.ui.modal.viewRecurring
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -20,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,18 +35,16 @@ import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_status_active
-import com.neoutils.finsight.resources.recurring_status_inactive
+import com.neoutils.finsight.resources.recurring_status_archived
 import com.neoutils.finsight.resources.view_recurring_account_label
 import com.neoutils.finsight.resources.view_recurring_amount_label
 import com.neoutils.finsight.resources.view_recurring_category_label
 import com.neoutils.finsight.resources.view_recurring_credit_card_label
 import com.neoutils.finsight.resources.view_recurring_day_label
-import com.neoutils.finsight.resources.view_recurring_delete
 import com.neoutils.finsight.resources.view_recurring_edit
-import com.neoutils.finsight.resources.view_recurring_reactivate
 import com.neoutils.finsight.resources.view_recurring_status_label
-import com.neoutils.finsight.resources.view_recurring_stop
 import com.neoutils.finsight.resources.view_recurring_type_label
+import com.neoutils.finsight.resources.view_recurring_unarchive
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -55,10 +53,11 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.component.DetailPaneController
+import com.neoutils.finsight.ui.component.OutlinedActionButton
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.archiveRecurring.ArchiveRecurringModal
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
-import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
-import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
@@ -190,12 +189,15 @@ class ViewRecurringModal(
 
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_status_label),
-                    value = if (recurring.isActive) {
-                        stringResource(Res.string.recurring_status_active)
+                    value = if (recurring.isArchived) {
+                        stringResource(Res.string.recurring_status_archived)
                     } else {
-                        stringResource(Res.string.recurring_status_inactive)
+                        stringResource(Res.string.recurring_status_active)
                     },
-                    valueColor = if (recurring.isActive) Income else Warning,
+                    valueColor = if (recurring.isArchived) Warning else Income,
+                    // Colour is never the only differentiator: the archived state also
+                    // carries its own word and its own icon.
+                    valueIcon = if (recurring.isArchived) Icons.Default.Archive else null,
                 )
                 recurring.account?.let { account ->
                     Spacer(modifier = Modifier.height(8.dp))
@@ -249,120 +251,59 @@ class ViewRecurringModal(
         val viewModel = koinViewModel<ViewRecurringViewModel> { parametersOf(recurringId) }
         val uiState by viewModel.uiState.collectAsState()
 
-        val recurring = (uiState as? ViewRecurringUiState.Content)?.recurring ?: return
+        val content = uiState as? ViewRecurringUiState.Content ?: return
 
-        Actions(recurring = recurring, manager = manager)
+        Actions(content = content, manager = manager, viewModel = viewModel)
     }
 
     @Composable
     private fun Actions(
-        recurring: Recurring,
+        content: ViewRecurringUiState.Content,
         manager: ModalManager,
+        viewModel: ViewRecurringViewModel,
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(top = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (recurring.isActive) {
-                    OutlinedButton(
-                        onClick = { manager.show(StopRecurringModal(recurring)) },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Warning,
-                        ),
-                        border = BorderStroke(width = 1.dp, color = Warning),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = stringResource(Res.string.view_recurring_stop),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = { manager.show(ReactivateRecurringModal(recurring)) },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Income,
-                        ),
-                        border = BorderStroke(width = 1.dp, color = Income),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = stringResource(Res.string.view_recurring_reactivate),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                }
-
-                OutlinedButton(
-                    onClick = { manager.show(RecurringFormModal(recurring)) },
+            // Retire and unarchive are mutually exclusive by archived state. A screen
+            // decides whether it offers an action, never which one it is — which is
+            // why the retire offer comes resolved in the state.
+            if (content.recurring.isArchived) {
+                OutlinedActionButton(
+                    label = stringResource(Res.string.view_recurring_unarchive),
+                    icon = Icons.Default.Unarchive,
+                    contentColor = colorScheme.primary,
+                    onClick = { viewModel.onAction(ViewRecurringAction.Unarchive) },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Info,
-                    ),
-                    border = BorderStroke(width = 1.dp, color = Info),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_recurring_edit),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                )
+            } else {
+                OutlinedActionButton(
+                    label = stringResource(content.retireAction.label),
+                    icon = content.retireAction.icon,
+                    contentColor = colorScheme.error,
+                    onClick = {
+                        manager.show(
+                            when (content.retireAction) {
+                                RetireAction.DELETE -> DeleteRecurringModal(content.recurring)
+                                RetireAction.ARCHIVE -> ArchiveRecurringModal(content.recurring)
+                            }
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             }
 
-            if (!recurring.isActive) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = { manager.show(DeleteRecurringModal(recurring)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(width = 1.dp, color = colorScheme.error),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_recurring_delete),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-            }
+            OutlinedActionButton(
+                label = stringResource(Res.string.view_recurring_edit),
+                icon = Icons.Default.Edit,
+                contentColor = Info,
+                onClick = { manager.show(RecurringFormModal(content.recurring)) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 
@@ -371,6 +312,7 @@ class ViewRecurringModal(
         label: String,
         value: String,
         valueColor: Color = colorScheme.onSurface,
+        valueIcon: ImageVector? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -393,6 +335,14 @@ class ViewRecurringModal(
                         imageVector = Icons.Default.OpenInNew,
                         contentDescription = null,
                         tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                if (valueIcon != null) {
+                    Icon(
+                        imageVector = valueIcon,
+                        contentDescription = null,
+                        tint = valueColor,
                         modifier = Modifier.size(14.dp),
                     )
                 }

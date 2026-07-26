@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.reactivateRecurring
+package com.neoutils.finsight.ui.modal.archiveRecurring
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -19,22 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.reactivate_recurring_confirm
-import com.neoutils.finsight.resources.reactivate_recurring_message
-import com.neoutils.finsight.resources.reactivate_recurring_title
+import com.neoutils.finsight.resources.archive_recurring_confirm
+import com.neoutils.finsight.resources.archive_recurring_message
+import com.neoutils.finsight.resources.archive_recurring_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class ReactivateRecurringModal(
+class ArchiveRecurringModal(
     private val recurring: Recurring,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<ReactivateRecurringViewModel> { parametersOf(recurring) }
+        val viewModel = koinViewModel<ArchiveRecurringViewModel> { parametersOf(recurring) }
         val label = recurring.label
 
         Column(
@@ -44,7 +44,7 @@ class ReactivateRecurringModal(
                 .padding(bottom = 32.dp),
         ) {
             Text(
-                text = stringResource(Res.string.reactivate_recurring_title),
+                text = stringResource(Res.string.archive_recurring_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
             )
@@ -52,7 +52,7 @@ class ReactivateRecurringModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.reactivate_recurring_message, label),
+                text = stringResource(Res.string.archive_recurring_message, label),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
@@ -60,15 +60,15 @@ class ReactivateRecurringModal(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.reactivate() },
+                onClick = { viewModel.archive() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Income,
+                    containerColor = Warning,
                 ),
             ) {
                 Text(
-                    text = stringResource(Res.string.reactivate_recurring_confirm),
+                    text = stringResource(Res.string.archive_recurring_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )

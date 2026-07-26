@@ -6,9 +6,13 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -48,11 +52,25 @@ class ViewRecurringViewModelTest {
         override suspend fun hasRecurringForAccount(accountId: Long) = false
         override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
         override suspend fun hasRecurringForCategory(categoryId: Long) = false
+        override suspend fun hasTransactionForRecurring(recurringId: Long) = false
         override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
     }
+
+    private fun resolver() = ResolveRecurringRetirabilityUseCase(
+        recurringRepository = FakeRecurringRepository(),
+        budgetRepository = object : IBudgetRepository {
+            override fun observeAllBudgets(): Flow<List<Budget>> = throw NotImplementedError()
+            override suspend fun getAllBudgets(): List<Budget> = emptyList()
+            override suspend fun insert(budget: Budget) = throw NotImplementedError()
+            override suspend fun update(budget: Budget) = throw NotImplementedError()
+            override suspend fun delete(budget: Budget) = throw NotImplementedError()
+            override suspend fun hasBudgetForCategory(categoryId: Long) = false
+            override suspend fun hasBudgetForRecurring(recurringId: Long) = false
+        },
+    )
 
     private fun recurring(id: Long = 1L, amount: Double = 100.0) = Recurring(
         id = id,
@@ -69,7 +87,7 @@ class ViewRecurringViewModelTest {
     @Test
     fun loadingThenContent() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
-        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, crashlytics = FakeCrashlytics())
+        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, resolveRetirability = resolver(), unarchiveRecurring = UnarchiveRecurringUseCase(repository), crashlytics = FakeCrashlytics())
 
         vm.uiState.test {
             assertEquals(ViewRecurringUiState.Loading, awaitItem())
@@ -82,7 +100,7 @@ class ViewRecurringViewModelTest {
     fun firstEmissionNullShowsErrorAndRecordsException() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
         val crashlytics = FakeCrashlytics()
-        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, crashlytics = crashlytics)
+        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, resolveRetirability = resolver(), unarchiveRecurring = UnarchiveRecurringUseCase(repository), crashlytics = crashlytics)
 
         vm.uiState.test {
             assertEquals(ViewRecurringUiState.Loading, awaitItem())
@@ -97,7 +115,7 @@ class ViewRecurringViewModelTest {
     @Test
     fun deletionAfterContentEmitsDismiss() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
-        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, crashlytics = FakeCrashlytics())
+        val vm = ViewRecurringViewModel(recurringId = 1L, recurringRepository = repository, resolveRetirability = resolver(), unarchiveRecurring = UnarchiveRecurringUseCase(repository), crashlytics = FakeCrashlytics())
 
         turbineScope {
             val state = vm.uiState.testIn(backgroundScope)

@@ -9,17 +9,18 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
-import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
+import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
-import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveRecurringUseCase
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.impl.RecurringEntryImpl
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
-import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
+import com.neoutils.finsight.ui.modal.unarchiveRecurring.UnarchiveRecurringViewModel
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
-import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
+import com.neoutils.finsight.ui.modal.archiveRecurring.ArchiveRecurringViewModel
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import org.koin.core.module.dsl.viewModel
@@ -38,21 +39,33 @@ val recurringModule = module {
     }
     single<IRecurringOccurrenceRepository> {
         RecurringOccurrenceRepository(
+            database = get(),
             dao = get(),
             mapper = get(),
+            transactionRepository = get(),
         )
     }
     factory { RecurringMapper() }
     factory { RecurringOccurrenceMapper() }
 
     factory { GetPendingRecurringUseCase() }
-    factory { DeleteRecurringUseCase(repository = get()) }
+    factory {
+        ResolveRecurringRetirabilityUseCase(
+            recurringRepository = get(),
+            budgetRepository = get(),
+        )
+    }
+    factory {
+        DeleteRecurringUseCase(
+            repository = get(),
+            resolveRetirability = get(),
+        )
+    }
     factory { SaveRecurringUseCase(repository = get()) }
-    factory { ReactivateRecurringUseCase(repository = get()) }
-    factory { StopRecurringUseCase(repository = get()) }
+    factory { UnarchiveRecurringUseCase(repository = get()) }
+    factory { ArchiveRecurringUseCase(repository = get()) }
     factory {
         ConfirmRecurringUseCase(
-            transactionRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )
@@ -70,6 +83,8 @@ val recurringModule = module {
         ViewRecurringViewModel(
             recurringId = it.get(),
             recurringRepository = get(),
+            resolveRetirability = get(),
+            unarchiveRecurring = get(),
             crashlytics = get(),
         )
     }
@@ -109,18 +124,18 @@ val recurringModule = module {
         )
     }
     viewModel {
-        StopRecurringViewModel(
+        ArchiveRecurringViewModel(
             recurring = it.get(),
-            stopRecurringUseCase = get(),
+            archiveRecurringUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
         )
     }
     viewModel {
-        ReactivateRecurringViewModel(
+        UnarchiveRecurringViewModel(
             recurring = it.get(),
-            reactivateRecurringUseCase = get(),
+            unarchiveRecurringUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

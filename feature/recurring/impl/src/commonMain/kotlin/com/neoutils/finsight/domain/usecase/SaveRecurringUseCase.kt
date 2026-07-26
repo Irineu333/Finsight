@@ -32,7 +32,7 @@ class SaveRecurringUseCase(
         account: Account?,
         creditCard: CreditCard?,
         createdAt: Long? = null,
-        isActive: Boolean = true,
+        isArchived: Boolean = false,
     ): Either<Throwable, Unit> = either {
         ensure(amount.isNotEmpty()) {
             RecurringException(RecurringError.AMOUNT_REQUIRED)
@@ -76,7 +76,7 @@ class SaveRecurringUseCase(
             account = account,
             creditCard = if (type.isIncome) null else creditCard,
             createdAt = createdAt ?: Clock.System.now().toEpochMilliseconds(),
-            isActive = isActive,
+            isArchived = isArchived,
         )
 
         catch {

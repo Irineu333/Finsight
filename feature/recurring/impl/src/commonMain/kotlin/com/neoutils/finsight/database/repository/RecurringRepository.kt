@@ -78,6 +78,9 @@ class RecurringRepository(
     override suspend fun hasRecurringForCategory(categoryId: Long) =
         dao.countByCategory(categoryId) > 0
 
+    override suspend fun hasTransactionForRecurring(recurringId: Long) =
+        dao.existsTransactionFor(recurringId)
+
     override suspend fun insert(recurring: Recurring) {
         dao.insert(mapper.toEntity(recurring))
     }

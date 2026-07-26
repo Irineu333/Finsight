@@ -4,7 +4,6 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
@@ -18,7 +17,6 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.monthsUntil
@@ -30,7 +28,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class ConfirmRecurringUseCase(
-    private val transactionRepository: ITransactionRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
 ) {
@@ -54,72 +51,65 @@ class ConfirmRecurringUseCase(
             .monthsUntil(yearMonth) + 1
 
         return catch {
-            val existingOccurrence = recurringOccurrenceRepository.getOccurrenceBy(recurring.id, yearMonth)
-            require(existingOccurrence?.status != RecurringOccurrence.Status.CONFIRMED) {
-                "Recurring already confirmed for $yearMonth"
-            }
-
-            if (target.isCreditCard) {
+            val intent = if (target.isCreditCard) {
                 val targetCreditCard = creditCard ?: recurring.creditCard
                 requireNotNull(targetCreditCard) { "Credit card is required for recurring confirmation" }
 
+                // Deliberately outside the unit of work below: an invoice created here
+                // and left unused is a smaller harm than undoing invoice structure —
+                // and far smaller than a duplicated ledger entry (design D7).
                 val invoice = invoice
                     ?: getOrCreateInvoiceForMonthUseCase(targetCreditCard, yearMonth)
                         .getOrElse { throw it }
 
-                transactionRepository.createTransaction(
-                    TransactionIntent(
-                        title = recurring.title,
-                        date = date,
-                        recurringId = recurring.id,
-                        recurringCycle = cycleNumber,
-                        legs = listOf(
-                            TransactionLeg(
-                                type = recurring.type,
-                                amount = amount,
-                                accountId = targetCreditCard.accountId,
-                                dimensionId = invoice.dimensionId,
-                            )
-                        ),
-                        contra = contraLegFor(recurring.type, recurring.category),
-                    )
+                TransactionIntent(
+                    title = recurring.title,
+                    date = date,
+                    recurringId = recurring.id,
+                    recurringCycle = cycleNumber,
+                    legs = listOf(
+                        TransactionLeg(
+                            type = recurring.type,
+                            amount = amount,
+                            accountId = targetCreditCard.accountId,
+                            dimensionId = invoice.dimensionId,
+                        )
+                    ),
+                    contra = contraLegFor(recurring.type, recurring.category),
                 )
             } else {
                 val sourceAccount = account ?: recurring.account
-                transactionRepository.createTransaction(
-                    TransactionIntent(
-                        title = recurring.title,
-                        date = date,
-                        recurringId = recurring.id,
-                        recurringCycle = cycleNumber,
-                        legs = listOf(
-                            TransactionLeg(
-                                type = recurring.type,
-                                amount = amount,
-                                accountId = requireNotNull(sourceAccount) {
-                                    "Account is required for recurring confirmation"
-                                }.id,
-                            )
-                        ),
-                        contra = contraLegFor(recurring.type, recurring.category),
-                    )
+                TransactionIntent(
+                    title = recurring.title,
+                    date = date,
+                    recurringId = recurring.id,
+                    recurringCycle = cycleNumber,
+                    legs = listOf(
+                        TransactionLeg(
+                            type = recurring.type,
+                            amount = amount,
+                            accountId = requireNotNull(sourceAccount) {
+                                "Account is required for recurring confirmation"
+                            }.id,
+                        )
+                    ),
+                    contra = contraLegFor(recurring.type, recurring.category),
                 )
             }
-        }.flatMap { transaction ->
-            catch {
-                recurringOccurrenceRepository.save(
-                    RecurringOccurrence(
-                        recurringId = recurring.id,
-                        cycleNumber = cycleNumber,
-                        yearMonth = yearMonth,
-                        status = RecurringOccurrence.Status.CONFIRMED,
-                        transactionId = transaction.id,
-                        effectiveDate = date,
-                        handledAt = Clock.System.now().toEpochMilliseconds(),
-                    )
-                )
-                transaction
-            }
+
+            // Transaction, re-entry check and occurrence are a single unit of work;
+            // no dispatcher switch may come between them (design D7).
+            recurringOccurrenceRepository.confirmCycle(
+                intent = intent,
+                occurrence = RecurringOccurrence(
+                    recurringId = recurring.id,
+                    cycleNumber = cycleNumber,
+                    yearMonth = yearMonth,
+                    status = RecurringOccurrence.Status.CONFIRMED,
+                    effectiveDate = date,
+                    handledAt = Clock.System.now().toEpochMilliseconds(),
+                ),
+            )
         }
     }
 }

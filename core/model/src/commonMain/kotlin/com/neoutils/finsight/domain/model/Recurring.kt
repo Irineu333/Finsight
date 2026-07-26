@@ -12,7 +12,7 @@ data class Recurring(
     val account: Account?,
     val creditCard: CreditCard?,
     val createdAt: Long,
-    val isActive: Boolean = true,
+    val isArchived: Boolean = false,
 ) {
     val label get() = displayTitleOf(title, category)
 

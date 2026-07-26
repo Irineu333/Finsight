@@ -358,7 +358,7 @@ class DashboardComponentsBuilder(
         val upcomingRecurring = input.recurringList.filter { recurring ->
             val effectiveDay = currentYearMonth.effectiveDay(recurring.dayOfMonth)
 
-            recurring.isActive &&
+            !recurring.isArchived &&
                 recurring.id !in handledRecurringIds &&
                 recurring.id !in pendingIds &&
                 effectiveDay > input.today.day &&

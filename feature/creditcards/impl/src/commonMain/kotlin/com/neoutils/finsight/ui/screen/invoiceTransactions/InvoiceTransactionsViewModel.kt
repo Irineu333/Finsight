@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.retireActionOf
@@ -171,10 +172,13 @@ class InvoiceTransactionsViewModel(
 
                 InvoiceTransactionsUiState.InvoiceSummary(
                     invoice = invoice,
-                    expense = expense,
-                    advancePayment = advancePayment,
-                    adjustment = adjustment,
-                    total = owedByInvoiceId.getValue(invoice.id),
+                    // The row only renders: spending subtracts from what the card is
+                    // worth to the user, an advance payment adds, and an adjustment is
+                    // the one line whose direction its label withholds.
+                    expense = DisplayAmount.forcedNegative(expense),
+                    advancePayment = DisplayAmount.forcedPositive(advancePayment),
+                    adjustment = DisplayAmount.explicitSign(adjustment),
+                    total = DisplayAmount.natural(owedByInvoiceId.getValue(invoice.id)),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,

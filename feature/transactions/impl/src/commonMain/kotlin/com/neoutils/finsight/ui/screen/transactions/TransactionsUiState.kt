@@ -7,6 +7,7 @@ import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -87,12 +88,12 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
          */
         data class Accounts(
-            val openingBalance: Double = 0.0,
-            val income: Double = 0.0,
-            val expense: Double = 0.0,
-            val invoicePayment: Double? = null,
-            val adjustment: Double? = null,
-            val finalBalance: Double = 0.0,
+            val openingBalance: DisplayAmount = DisplayAmount.natural(0.0),
+            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val invoicePayment: DisplayAmount? = null,
+            val adjustment: DisplayAmount? = null,
+            val finalBalance: DisplayAmount = DisplayAmount.natural(0.0),
         ) : BalanceOverview
 
         /**
@@ -104,11 +105,11 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance − expense + payment + adjustment`
          */
         data class Cards(
-            val openingBalance: Double = 0.0,
-            val expense: Double = 0.0,
-            val payment: Double? = null,
-            val adjustment: Double? = null,
-            val finalBalance: Double = 0.0,
+            val openingBalance: DisplayAmount = DisplayAmount.owed(0.0),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val payment: DisplayAmount? = null,
+            val adjustment: DisplayAmount? = null,
+            val finalBalance: DisplayAmount = DisplayAmount.owed(0.0),
         ) : BalanceOverview
 
         /**
@@ -120,12 +121,12 @@ data class TransactionsUiState(
          * `finalNet = openingNet + income − expense + adjustment`
          */
         data class Overall(
-            val openingNet: Double = 0.0,
-            val income: Double = 0.0,
-            val expense: Double = 0.0,
-            val invoicePayment: Double? = null,
-            val adjustment: Double? = null,
-            val finalNet: Double = 0.0,
+            val openingNet: DisplayAmount = DisplayAmount.natural(0.0),
+            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val invoicePayment: DisplayAmount? = null,
+            val adjustment: DisplayAmount? = null,
+            val finalNet: DisplayAmount = DisplayAmount.natural(0.0),
         ) : BalanceOverview
     }
 }

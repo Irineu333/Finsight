@@ -91,12 +91,14 @@ class TransactionsViewModelCharacterizationTest {
             while (state.selectedScope != TransactionScope.ACCOUNTS) state = awaitItem()
 
             val overview = state.balanceOverview as TransactionsUiState.BalanceOverview.Accounts
-            assertEquals(100.0, overview.income)
-            assertEquals(30.0, overview.expense)
-            assertEquals(40.0, overview.adjustment)
-            assertEquals(80.0, overview.invoicePayment, "month-wide card payment from the ledger")
-            assertEquals(0.0, overview.openingBalance)
-            assertEquals(30.0, overview.finalBalance, "Σ signed account legs up to the month")
+            // Each figure carries the sign it is displayed with: spending and the payment
+            // leave the account perimeter, so they arrive negative.
+            assertEquals(100.0, overview.income.value)
+            assertEquals(-30.0, overview.expense.value)
+            assertEquals(40.0, overview.adjustment?.value)
+            assertEquals(-80.0, overview.invoicePayment?.value, "month-wide card payment from the ledger")
+            assertEquals(0.0, overview.openingBalance.value)
+            assertEquals(30.0, overview.finalBalance.value, "Σ signed account legs up to the month")
             cancelAndIgnoreRemainingEvents()
         }
     }

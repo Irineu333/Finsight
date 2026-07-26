@@ -5,16 +5,16 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
-import kotlin.math.abs
 
 /**
  * Maps an [Transaction] to its flat [TransactionUi], deriving both display axes from
  * the ledger entries — the single domain→presentation boundary for a list item.
  *
  * The perspective leg is the entry the screen looks through: the entry in
- * [accountId] when a perspective is given, otherwise the transaction's own money
- * leg (the outgoing one for a two-leg transaction, which is how a transfer or a
- * payment reads from a neutral list). Returns `null` when the perspective has no
+ * [accountId] when a perspective is given, otherwise [Transaction.primaryEntry],
+ * which is where that choice is defined — the mapper consumes it instead of
+ * restating the criterion, so a list without perspective and the detail can never
+ * disagree about which leg they read. Returns `null` when the perspective has no
  * matching leg, so the caller omits the item instead of failing on a read.
  *
  * [lookup] closes the gap the ledger leaves: a transaction carries the *dimension*
@@ -27,19 +27,20 @@ fun Transaction.toTransactionUi(
     lookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
 ): TransactionUi? {
     val category = lookup.categoryOf(this)
+    val label = entries.deriveTransactionLabel()
 
     val leg = if (accountId != null) {
         entries.firstOrNull { it.account.id == accountId }
     } else {
-        entries.filter { it.account.type.isMonetary }.minByOrNull { it.amount }
+        primaryEntry
     } ?: return null
 
     return TransactionUi(
         id = id,
-        label = entries.deriveTransactionLabel(),
+        label = label,
         direction = deriveTransactionType(leg.amount, entries),
         title = displayTitleOf(title, category),
-        amount = abs(leg.amount) / 100.0,
+        amount = itemDisplayAmount(label, leg.amount, hasPerspective = accountId != null),
         date = date,
         categoryId = category?.id,
         categoryIcon = category?.icon,

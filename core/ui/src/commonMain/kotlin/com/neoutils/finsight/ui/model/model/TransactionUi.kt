@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
 
@@ -11,13 +12,17 @@ import kotlinx.datetime.LocalDate
  * axes are derived by the mapper (see `Transaction.toTransactionUi`): [label] is the
  * transaction's nature (color/title/icon), [direction] is the leg's direction under
  * the current perspective (the type text and the list filter).
+ *
+ * [amount] arrives with its sign policy already resolved (see [itemDisplayAmount]), so
+ * a component renders it without branching on label, nature or direction to decide
+ * what to show.
  */
 data class TransactionUi(
     val id: Long,
     val label: TransactionLabel,
     val direction: TransactionType,
     val title: String,
-    val amount: Double,
+    val amount: DisplayAmount,
     val date: LocalDate,
     val categoryId: Long?,
     val categoryIcon: CategoryLazyIcon?,

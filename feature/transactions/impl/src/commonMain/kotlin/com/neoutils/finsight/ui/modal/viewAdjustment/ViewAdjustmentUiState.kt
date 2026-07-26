@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.closedLegBlockingChange
+import com.neoutils.finsight.ui.model.itemDisplayAmount
 
 sealed interface ViewAdjustmentUiState {
 
@@ -25,10 +26,15 @@ sealed interface ViewAdjustmentUiState {
 
         /**
          * An adjustment is the one transaction whose sign the user must see: it says
-         * which way the balance was corrected. Read off the money leg, where the
-         * ledger already carries it.
+         * which way the balance was corrected. Read off the money leg, where the ledger
+         * already carries it — through the same item rule the list and the transaction
+         * detail read through, so the three cannot disagree.
          */
-        val signedAmount = (transaction.primaryEntry?.amount ?: 0L) / 100.0
+        val signedAmount = itemDisplayAmount(
+            label = transaction.label,
+            legAmountCents = transaction.primaryEntry?.amount ?: 0L,
+            hasPerspective = false,
+        )
 
         /**
          * Whether the ledger lets this adjustment be touched at all: false when it

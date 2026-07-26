@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_card_balance_adjustment
 import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
@@ -140,15 +141,7 @@ fun TransactionCard(
             }
 
             Text(
-                text = when (transaction.direction) {
-                    TransactionType.ADJUSTMENT -> formatter.formatWithSign(transaction.amount)
-                    TransactionType.EXPENSE -> if (transaction.label == TransactionLabel.TRANSFER) {
-                        "-${formatter.format(transaction.amount)}"
-                    } else {
-                        formatter.format(transaction.amount)
-                    }
-                    else -> formatter.format(transaction.amount)
-                },
+                text = formatter.format(transaction.amount),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = color,

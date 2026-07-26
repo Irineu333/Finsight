@@ -5,7 +5,10 @@ package com.neoutils.finsight.ui.modal.viewTransaction
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.ui.model.TransactionFacades
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
 import com.neoutils.finsight.ui.modal.transaction
@@ -53,7 +56,25 @@ class ViewTransactionViewModelTest {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
             val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
-            assertEquals(100.0, content.amount)
+            assertEquals(100.0, content.amount.value)
+        }
+    }
+
+    @Test
+    fun anAdjustmentReadsInTheDetailExactlyAsItReadsInTheList() = runTest(dispatcher) {
+        val repository = FakeTransactionRepository()
+        val vm = viewModel(repository)
+        val adjustment = transaction(id = 1L, amount = 100.0, type = TransactionType.ADJUSTMENT)
+
+        vm.uiState.test {
+            assertEquals(ViewTransactionUiState.Loading, awaitItem())
+            repository.emit(adjustment)
+            val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
+
+            // Same figure, same rule — the detail must not contradict the card it was
+            // opened from.
+            assertEquals(adjustment.toTransactionUi()?.amount, content.amount)
+            assertEquals(SignPolicy.EXPLICIT_SIGN, content.amount.policy)
         }
     }
 
@@ -65,9 +86,9 @@ class ViewTransactionViewModelTest {
         vm.uiState.test {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
-            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount)
+            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount.value)
             repository.emit(transaction(id = 1L, amount = 250.0))
-            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount)
+            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount.value)
         }
     }
 

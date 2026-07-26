@@ -29,6 +29,7 @@ import androidx.navigation.NavController
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
@@ -128,7 +129,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                value = formatter.formatWithSign(uiState.signedAmount),
+                value = formatter.format(uiState.signedAmount),
                 valueColor = Adjustment
             )
 

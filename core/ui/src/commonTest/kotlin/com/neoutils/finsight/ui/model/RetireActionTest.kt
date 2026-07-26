@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.model
 
+import com.neoutils.finsight.extension.DisplayAmount
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,11 +19,16 @@ class RetireActionTest {
         assertEquals(RetireAction.DELETE, retireActionOf(mustPreserve = false))
     }
 
+    // The figures are irrelevant to the rule under test; only their presence is.
+    private val zero = DisplayAmount.natural(0.0)
+
     @Test
     fun `the ui models expose the same rule so the two screens cannot drift`() {
         val moved = AccountUi(
-            id = 1, openingBalance = 0.0, balance = 0.0, income = 0.0,
-            expense = 0.0, adjustment = 0.0, settlement = 0.0, hasMovement = true,
+            id = 1,
+            openingBalance = zero, balance = zero, income = zero,
+            expense = zero, adjustment = zero, settlement = zero,
+            hasMovement = true,
         )
         // A non-default account still exposes the shared archive-vs-delete rule, now
         // wrapped in AccountRetireOffer.Retire (see AccountRetireOfferTest).

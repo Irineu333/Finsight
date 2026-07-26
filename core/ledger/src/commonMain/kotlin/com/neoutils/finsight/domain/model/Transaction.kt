@@ -49,7 +49,11 @@ data class Transaction(
      */
     val primaryEntry: Entry? get() = monetaryEntries.minByOrNull { it.amount }
 
-    /** The transaction's amount, always positive — the sign is a display concern. */
+    /**
+     * The transaction's amount as a magnitude. The sign is a display concern and is
+     * resolved by the item mapper (`itemDisplayAmount`), which reads it off the leg —
+     * an adjustment shows it, a labelled form does not.
+     */
     val amount: Double get() = abs(primaryEntry?.amount ?: 0L) / 100.0
 
     /** The account the money left, when it left one — a card purchase has none. */

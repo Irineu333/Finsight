@@ -40,6 +40,7 @@ import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import kotlin.test.assertEquals
 
 /**
@@ -109,10 +110,14 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         vm.uiState.test {
             var summary = awaitItem().invoices.firstOrNull()
             while (summary == null) summary = awaitItem().invoices.firstOrNull()
-            assertEquals(100.0, summary.expense)
-            assertEquals(30.0, summary.advancePayment)
-            assertEquals(10.0, summary.adjustment)
-            assertEquals(70.0, summary.total, "owed comes from the ledger's dimensionOwed")
+            assertEquals(-100.0, summary.expense.value)
+            assertEquals(30.0, summary.advancePayment.value)
+            assertEquals(10.0, summary.adjustment.value)
+            // Positive-as-debt, and NATURAL rather than OWED: `owedByDimension` already
+            // inverted it, and OWED would zero a total that is already positive — taking
+            // the payment modal's pre-filled amount down with it.
+            assertEquals(70.0, summary.total.value, "owed comes from the ledger's dimensionOwed")
+            assertEquals(SignPolicy.NATURAL, summary.total.policy)
             cancelAndIgnoreRemainingEvents()
         }
     }

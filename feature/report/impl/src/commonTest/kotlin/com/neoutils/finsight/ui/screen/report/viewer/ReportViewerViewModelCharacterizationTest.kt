@@ -123,10 +123,11 @@ class ReportViewerViewModelCharacterizationTest {
             var state = awaitItem()
             while (state !is ReportViewerUiState.Content) state = awaitItem()
             val stats = state.stats as ReportViewerUiState.Stats.Account
-            assertEquals(100.0, stats.income)
-            assertEquals(30.0, stats.expense)
-            assertEquals(70.0, stats.balance)
-            assertEquals(-20.0, stats.openingBalance)
+            // Each figure carries the sign it is displayed with.
+            assertEquals(100.0, stats.income.value)
+            assertEquals(-30.0, stats.expense.value)
+            assertEquals(70.0, stats.balance.value)
+            assertEquals(-20.0, stats.openingBalance.value)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -201,10 +202,13 @@ class ReportViewerViewModelCharacterizationTest {
             var state = awaitItem()
             while (state !is ReportViewerUiState.Content) state = awaitItem()
             val stats = state.stats as ReportViewerUiState.Stats.Invoice
-            assertEquals(100.0, stats.expense)
-            assertEquals(30.0, stats.advancePayment)
-            assertEquals(10.0, stats.adjustment)
-            assertEquals(70.0, stats.total, "owed comes from the ledger's dimensionOwed")
+            // The invoice lines now read like the account lines of the same report:
+            // spending signed negative, an advance payment positive.
+            assertEquals(-100.0, stats.expense.value)
+            assertEquals(30.0, stats.advancePayment.value)
+            assertEquals(10.0, stats.adjustment.value)
+            // Positive-as-debt, hence NATURAL and not OWED, which would zero it.
+            assertEquals(70.0, stats.total.value, "owed comes from the ledger's dimensionOwed")
             cancelAndIgnoreRemainingEvents()
         }
     }

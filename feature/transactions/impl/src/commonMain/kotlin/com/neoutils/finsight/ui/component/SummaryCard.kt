@@ -22,7 +22,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
@@ -57,6 +59,9 @@ import org.jetbrains.compose.resources.stringResource
  *
  * The chips stay anchored while the body animates, so switching scope reads as the same
  * card answering a different question rather than as a new card arriving.
+ *
+ * The card names no sign policy: every figure arrives from `balanceOverview()` with its
+ * own, so the two screens that read the same overview cannot disagree about it.
  */
 @Composable
 fun SummaryCard(
@@ -134,32 +139,26 @@ private fun ColumnScope.AccountsBody(
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_balance),
         amount = overview.openingBalance,
-        color = colorScheme.onSurface,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        color = colorScheme.onSurface
     )
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income,
-        signDisplay = SignDisplay.ALWAYS_POSITIVE
+        color = Income
     )
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense,
-        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+        color = Expense
     )
 
-    // An invoice payment leaves this perimeter, so it moves the balance — which is why
-    // it is a signed flow here and merely informative in the overall scope.
     overview.invoicePayment?.let { payment ->
         SummaryRow(
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
-            color = InvoicePayment,
-            signDisplay = SignDisplay.ALWAYS_NEGATIVE
+            color = InvoicePayment
         )
     }
 
@@ -167,8 +166,7 @@ private fun ColumnScope.AccountsBody(
         SummaryRow(
             label = stringResource(Res.string.summary_card_adjustments),
             amount = adjustment,
-            color = Adjustment,
-            signDisplay = SignDisplay.SHOW_ALWAYS
+            color = Adjustment
         )
     }
 
@@ -181,38 +179,29 @@ private fun ColumnScope.AccountsBody(
         ),
         amount = overview.finalBalance,
         color = colorScheme.onSurface,
-        config = SummaryRowConfig.Total,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        config = SummaryRowConfig.Total
     )
 }
 
 @Composable
 private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
-    // The flows run in the ledger's own sign, like the accounts ones: spending takes the
-    // balance down, a payment brings it up. Reading the card's book the other way round —
-    // debt positive — would make spending read `+90`, which is not how anyone reads a
-    // statement. The two ends are the exception: a line called "debt" answers *how much
-    // is owed*, so it carries no sign at all (see [SignDisplay.OWED]).
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_debt),
         amount = overview.openingBalance,
-        color = colorScheme.onSurface,
-        signDisplay = SignDisplay.OWED
+        color = colorScheme.onSurface
     )
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_card_expenses),
         amount = overview.expense,
-        color = Expense,
-        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+        color = Expense
     )
 
     overview.payment?.let { payment ->
         SummaryRow(
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
-            color = InvoicePayment,
-            signDisplay = SignDisplay.ALWAYS_POSITIVE
+            color = InvoicePayment
         )
     }
 
@@ -220,8 +209,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
         SummaryRow(
             label = stringResource(Res.string.summary_card_adjustments),
             amount = adjustment,
-            color = Adjustment,
-            signDisplay = SignDisplay.SHOW_ALWAYS
+            color = Adjustment
         )
     }
 
@@ -231,8 +219,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
         label = stringResource(Res.string.summary_card_final_debt),
         amount = overview.finalBalance,
         color = colorScheme.onSurface,
-        config = SummaryRowConfig.Total,
-        signDisplay = SignDisplay.OWED
+        config = SummaryRowConfig.Total
     )
 }
 
@@ -241,32 +228,26 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_net),
         amount = overview.openingNet,
-        color = colorScheme.onSurface,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        color = colorScheme.onSurface
     )
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income,
-        signDisplay = SignDisplay.ALWAYS_POSITIVE
+        color = Income
     )
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense,
-        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+        color = Expense
     )
 
-    // Both legs are inside this perimeter, so the payment moves nothing: shown without
-    // a sign and in a quieter tone, precisely so the column above still adds up.
     overview.invoicePayment?.let { payment ->
         SummaryRow(
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
-            color = InvoicePayment,
-            signDisplay = SignDisplay.NONE
+            color = InvoicePayment
         )
     }
 
@@ -274,8 +255,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         SummaryRow(
             label = stringResource(Res.string.summary_card_adjustments),
             amount = adjustment,
-            color = Adjustment,
-            signDisplay = SignDisplay.SHOW_ALWAYS
+            color = Adjustment
         )
     }
 
@@ -285,8 +265,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         label = stringResource(Res.string.summary_card_net),
         amount = overview.finalNet,
         color = colorScheme.onSurface,
-        config = SummaryRowConfig.Total,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        config = SummaryRowConfig.Total
     )
 }
 
@@ -398,11 +377,10 @@ private val CHIP_INSET = 6.dp
 @Composable
 private fun SummaryRow(
     label: String,
-    amount: Double,
+    amount: DisplayAmount,
     color: Color,
     modifier: Modifier = Modifier,
     config: SummaryRowConfig = SummaryRowConfig.Default,
-    signDisplay: SignDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -417,38 +395,9 @@ private fun SummaryRow(
         )
 
         Text(
-            text = signDisplay.format(amount, formatter::format),
+            text = formatter.format(amount),
             style = config.amountStyle.copy(color = color)
         )
-    }
-}
-
-enum class SignDisplay {
-    ALWAYS_POSITIVE,
-    ALWAYS_NEGATIVE,
-
-    /** The figure carries its own sign, and a positive one is spelled out. */
-    SHOW_ALWAYS,
-
-    /** The figure carries its own sign, and only a negative one is visible. */
-    SHOW_ONLY_NEGATIVE,
-
-    /** No sign at all — an informative line that is not part of any sum. */
-    NONE,
-
-    /**
-     * How much is owed, from a balance in the ledger's sign: a liability you owe on is
-     * stored negative, and the line answers the magnitude of the debt. A card in credit
-     * owes nothing, so it reads zero rather than a negative debt.
-     */
-    OWED;
-
-    fun format(amount: Double, format: (Double) -> String): String = when (this) {
-        ALWAYS_POSITIVE -> "+${format(amount)}"
-        ALWAYS_NEGATIVE -> "-${format(amount)}"
-        SHOW_ALWAYS -> if (amount > 0) "+${format(amount)}" else format(amount)
-        SHOW_ONLY_NEGATIVE, NONE -> format(amount)
-        OWED -> format(maxOf(0.0, -amount))
     }
 }
 

@@ -13,7 +13,7 @@ import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
-import kotlin.math.abs
+import com.neoutils.finsight.ui.model.itemDisplayAmount
 
 sealed interface ViewTransactionUiState {
 
@@ -58,7 +58,13 @@ sealed interface ViewTransactionUiState {
         val date = transaction.date
         val account = transaction.sourceAccount
         val isCardTarget = transaction.hasLiabilityLeg
-        val amount = abs(perspectiveEntry?.amount ?: 0L) / 100.0
+        // The same item-surface rule the list reads through, not a second copy of it:
+        // a detail that disagreed with the card it was opened from would be a defect.
+        val amount = itemDisplayAmount(
+            label = label,
+            legAmountCents = perspectiveEntry?.amount ?: 0L,
+            hasPerspective = perspective != null,
+        )
 
         private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }
 

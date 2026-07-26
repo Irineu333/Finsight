@@ -5,7 +5,9 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.core.common)
+            // `api`, not `implementation`: `TransactionUi.amount` is a `DisplayAmount`,
+            // so `:core:common` is part of this module's public surface.
+            api(projects.core.common)
             implementation(projects.core.designsystem)
             implementation(projects.core.model)
             implementation(projects.core.resources)

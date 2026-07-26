@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
@@ -94,12 +95,19 @@ class AccountsViewModel(
             val flows = entryRepository.accountFlows(month = month, accountId = account.id)
             account to AccountUi(
                 id = account.id,
-                openingBalance = entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
-                balance = entryRepository.balanceUpTo(target = month, accountId = account.id),
-                income = flows.income,
-                expense = flows.expense,
-                adjustment = flows.adjustment,
-                settlement = flows.settlement,
+                // The card only renders: the sign of each line is the effect of that
+                // figure on the account's balance, and it is decided here, once.
+                openingBalance = DisplayAmount.natural(
+                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id)
+                ),
+                balance = DisplayAmount.natural(
+                    entryRepository.balanceUpTo(target = month, accountId = account.id)
+                ),
+                income = DisplayAmount.forcedPositive(flows.income),
+                expense = DisplayAmount.forcedNegative(flows.expense),
+                // The only line whose direction its label withholds.
+                adjustment = DisplayAmount.explicitSign(flows.adjustment),
+                settlement = DisplayAmount.forcedNegative(flows.settlement),
                 hasMovement = entryRepository.hasEntries(account.id),
                 isDefault = account.isDefault,
             )

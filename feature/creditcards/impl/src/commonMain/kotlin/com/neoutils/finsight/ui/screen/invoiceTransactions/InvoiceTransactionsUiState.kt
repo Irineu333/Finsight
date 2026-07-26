@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
+import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
@@ -67,12 +68,19 @@ data class InvoiceTransactionsUiState(
         ) : ListState
     }
 
+    /**
+     * [total] is `NATURAL`, **not** `OWED`, and that is not an oversight: it comes from
+     * `owedByDimension`, which already returns debt-as-positive — the inversion happened
+     * upstream, and `OWED` (`max(0, −value)`) would zero it. It also feeds
+     * `currentBillAmount` on the payment and advance-payment modals, which is form
+     * pre-filling rather than text: under `OWED` the payment modal would open at zero.
+     */
     data class InvoiceSummary(
         val invoice: Invoice,
-        val expense: Double,
-        val advancePayment: Double,
-        val adjustment: Double,
-        val total: Double,
+        val expense: DisplayAmount,
+        val advancePayment: DisplayAmount,
+        val adjustment: DisplayAmount,
+        val total: DisplayAmount,
         val dueMonth: YearMonth,
         val nextDateLabel: UiText?,
         val closingDate: LocalDate,
@@ -81,7 +89,7 @@ data class InvoiceTransactionsUiState(
     ) {
         val invoiceId = invoice.id
         val status = invoice.status
-        val mustShowAdjustment = adjustment != 0.0
+        val mustShowAdjustment = adjustment.value != 0.0
         val canEdit = status.isEditable
     }
 }

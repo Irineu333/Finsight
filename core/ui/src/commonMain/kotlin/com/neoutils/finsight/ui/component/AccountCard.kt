@@ -18,7 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
@@ -35,7 +37,6 @@ import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.absoluteValue
 
 sealed class AccountCardVariant {
 
@@ -180,7 +181,6 @@ private fun DetailContent(
             label = stringResource(Res.string.accounts_opening_balance),
             amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
-            signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
             onEditClick = variant.onEditOpeningBalance,
         )
 
@@ -188,31 +188,27 @@ private fun DetailContent(
             label = stringResource(Res.string.accounts_income),
             amount = accountUi.income,
             color = Income,
-            signDisplay = AccountSignDisplay.ALWAYS_POSITIVE,
         )
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_expenses),
             amount = accountUi.expense,
             color = Expense,
-            signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
         )
 
-        if (accountUi.adjustment != 0.0) {
+        if (accountUi.adjustment.value != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_adjustments),
                 amount = accountUi.adjustment,
                 color = Adjustment,
-                signDisplay = AccountSignDisplay.SHOW_ALWAYS,
             )
         }
 
-        if (accountUi.settlement != 0.0) {
+        if (accountUi.settlement.value != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_invoices),
                 amount = accountUi.settlement,
                 color = InvoicePayment,
-                signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
             )
         }
 
@@ -224,7 +220,6 @@ private fun DetailContent(
             color = colorScheme.onSurface,
             isTotal = true,
             onEditClick = variant.onEditBalance,
-            signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
         )
     }
 }
@@ -298,10 +293,9 @@ private fun CompactContent(
 @Composable
 private fun AccountSummaryRow(
     label: String,
-    amount: Double,
+    amount: DisplayAmount,
     color: Color,
     modifier: Modifier = Modifier,
-    signDisplay: AccountSignDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
 ) {
@@ -320,13 +314,6 @@ private fun AccountSummaryRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-
-        val formattedAmount = when (signDisplay) {
-            AccountSignDisplay.ALWAYS_POSITIVE -> "+${formatter.format(amount.absoluteValue)}"
-            AccountSignDisplay.ALWAYS_NEGATIVE -> "-${formatter.format(amount.absoluteValue)}"
-            AccountSignDisplay.SHOW_ONLY_NEGATIVE -> formatter.format(amount)
-            AccountSignDisplay.SHOW_ALWAYS -> formatter.formatWithSign(amount)
-        }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -347,7 +334,7 @@ private fun AccountSummaryRow(
             }
 
             Text(
-                text = formattedAmount,
+                text = formatter.format(amount),
                 fontSize = if (isTotal) 20.sp else 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = color,
@@ -356,9 +343,3 @@ private fun AccountSummaryRow(
     }
 }
 
-private enum class AccountSignDisplay {
-    ALWAYS_POSITIVE,
-    ALWAYS_NEGATIVE,
-    SHOW_ONLY_NEGATIVE,
-    SHOW_ALWAYS,
-}

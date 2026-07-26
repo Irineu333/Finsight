@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -105,10 +106,13 @@ class ReportViewerViewModel(
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
-                expense = flows.sumOf { it.expense },
-                advancePayment = flows.sumOf { it.advancePayment },
-                adjustment = flows.sumOf { it.adjustment },
-                total = owed.sum(),
+                // The invoice lines follow the same rule as the account lines of this
+                // very report: spending subtracts, an advance payment adds, and only the
+                // adjustment needs its direction spelled out.
+                expense = DisplayAmount.forcedNegative(flows.sumOf { it.expense }),
+                advancePayment = DisplayAmount.forcedPositive(flows.sumOf { it.advancePayment }),
+                adjustment = DisplayAmount.explicitSign(flows.sumOf { it.adjustment }),
+                total = DisplayAmount.natural(owed.sum()),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(
@@ -119,10 +123,10 @@ class ReportViewerViewModel(
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                openingBalance = scopeStats.openingBalance,
-                income = scopeStats.income,
-                expense = scopeStats.expense,
-                balance = scopeStats.balance,
+                openingBalance = DisplayAmount.natural(scopeStats.openingBalance),
+                income = DisplayAmount.forcedPositive(scopeStats.income),
+                expense = DisplayAmount.forcedNegative(scopeStats.expense),
+                balance = DisplayAmount.natural(scopeStats.balance),
             )
         }
 

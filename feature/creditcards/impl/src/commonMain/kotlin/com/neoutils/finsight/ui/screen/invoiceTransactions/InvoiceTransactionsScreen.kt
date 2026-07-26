@@ -44,7 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -97,7 +99,6 @@ import com.neoutils.finsight.resources.transactions_empty_filter_action
 import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.util.stringUiText
-import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -530,23 +531,20 @@ private fun InvoiceSummaryItem(
             SummaryRow(
                 label = stringResource(Res.string.invoice_transactions_expenses),
                 amount = summary.expense,
-                color = Expense,
-                isNegative = true
+                color = Expense
             )
 
             SummaryRow(
                 label = stringResource(Res.string.invoice_transactions_advance_payments),
                 amount = summary.advancePayment,
-                color = InvoicePayment,
-                isPositive = true
+                color = InvoicePayment
             )
 
             if (summary.mustShowAdjustment) {
                 SummaryRow(
                     label = stringResource(Res.string.invoice_transactions_adjustments),
                     amount = summary.adjustment,
-                    color = Adjustment,
-                    showSign = true
+                    color = Adjustment
                 )
             }
 
@@ -585,7 +583,7 @@ private fun InvoiceActions(
                     modalManager.show(
                         AdvancePaymentModal(
                             invoice = invoice,
-                            currentBillAmount = summary.total,
+                            currentBillAmount = summary.total.value,
                         )
                     )
                 },
@@ -700,7 +698,7 @@ private fun InvoiceActions(
                     modalManager.show(
                         PayInvoiceModal(
                             invoice = invoice,
-                            currentBillAmount = summary.total
+                            currentBillAmount = summary.total.value
                         )
                     )
                 },
@@ -727,12 +725,9 @@ private fun InvoiceActions(
 @Composable
 private fun SummaryRow(
     label: String,
-    amount: Double,
+    amount: DisplayAmount,
     color: Color,
     modifier: Modifier = Modifier,
-    isNegative: Boolean = false,
-    isPositive: Boolean = false,
-    showSign: Boolean = false,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
 ) {
@@ -749,13 +744,6 @@ private fun SummaryRow(
             fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
             color = if (isTotal) colorScheme.onSurface else colorScheme.onSurfaceVariant
         )
-
-        val formattedAmount = when {
-            isPositive -> "+${formatter.format(amount.absoluteValue)}"
-            isNegative -> "-${formatter.format(amount.absoluteValue)}"
-            showSign && amount > 0 -> "+${formatter.format(amount)}"
-            else -> formatter.format(amount)
-        }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -780,7 +768,7 @@ private fun SummaryRow(
             }
 
             Text(
-                text = formattedAmount,
+                text = formatter.format(amount),
                 fontSize = if (isTotal) 20.sp else 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = color

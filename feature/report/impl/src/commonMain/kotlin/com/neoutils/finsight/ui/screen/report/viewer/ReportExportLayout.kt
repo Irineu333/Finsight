@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
@@ -61,21 +62,21 @@ fun ReportViewerUiState.Content.toReportLayout(
             ReportSummaryItem(
                 label = strings.summaryBalance,
                 value = formatter.format(s.balance),
-                tone = s.balance.toTone(),
+                tone = s.balance.value.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryOpeningBalance,
                 value = formatter.format(s.openingBalance),
-                tone = s.openingBalance.toTone(),
+                tone = s.openingBalance.value.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,
-                value = "+${formatter.format(s.income)}",
+                value = formatter.format(s.income),
                 tone = ReportTone.POSITIVE,
             ),
             ReportSummaryItem(
                 label = strings.summaryExpense,
-                value = "-${formatter.format(s.expense)}",
+                value = formatter.format(s.expense),
                 tone = ReportTone.NEGATIVE,
             ),
         )
@@ -89,7 +90,7 @@ fun ReportViewerUiState.Content.toReportLayout(
             ReportSummaryItem(
                 label = strings.summaryInvoiceTotal,
                 value = formatter.format(s.total),
-                tone = s.total.toTone(),
+                tone = s.total.value.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryAdvancePayment,
@@ -141,7 +142,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                                 transaction.toTransactionUi(lookup = facadeLookup)?.let { ui ->
                                     TransactionItem(
                                         title = ui.exportTitle(strings),
-                                        amount = ui.exportAmount(formatter),
+                                        amount = formatter.format(ui.amount),
                                         tone = ui.exportTone(),
                                     )
                                 }
@@ -182,26 +183,17 @@ private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
     }
 }
 
-private fun TransactionUi.exportAmount(formatter: CurrencyFormatter): String {
-    return when (direction) {
-        TransactionType.ADJUSTMENT -> formatter.formatWithSign(amount)
-        TransactionType.EXPENSE -> {
-            if (label == TransactionLabel.TRANSFER) {
-                "-${formatter.format(amount)}"
-            } else {
-                formatter.format(amount)
-            }
-        }
-        TransactionType.INCOME -> formatter.format(amount)
-    }
-}
-
+/**
+ * The tone reads the sign off the very value that will be printed, so text and color
+ * cannot disagree. Before, `amount` was always a magnitude and an adjustment could only
+ * ever land on [ReportTone.POSITIVE] — the negative branch was unreachable.
+ */
 private fun TransactionUi.exportTone(): ReportTone {
     return when {
         label == TransactionLabel.TRANSFER -> ReportTone.NEUTRAL
         direction == TransactionType.INCOME -> ReportTone.POSITIVE
         direction == TransactionType.EXPENSE -> ReportTone.NEGATIVE
-        amount >= 0 -> ReportTone.POSITIVE
+        amount.value >= 0 -> ReportTone.POSITIVE
         else -> ReportTone.NEGATIVE
     }
 }

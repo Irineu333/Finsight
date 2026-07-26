@@ -43,9 +43,9 @@
 ## 4. UI: visualização da recorrência (D3, D9)
 
 - [x] 4.1 `ViewRecurringUiState`: carregar a `RetireAction` resolvida (via `retireActionOf`) em vez de a tela decidir.
-- [x] 4.2 `ViewRecurringViewModel`: consumir `ResolveRecurringRetirabilityUseCase`; injetar `UnarchiveRecurringUseCase`; tratar a ação de desarquivar com `onLeft { crashlytics.recordException(it) }`.
-- [x] 4.3 `ViewRecurringAction`: adicionar a ação de desarquivar.
-- [x] 4.4 `ViewRecurringModal.Actions`: tornar as ofertas mutuamente exclusivas por `isArchived` — arquivada renderiza, **entre as ofertas de retirada**, apenas Desarquivar (ícone `Icons.Default.Unarchive`, sem modal de confirmação); não arquivada renderiza a `RetireAction` resolvida, abrindo o modal de arquivar ou o de excluir. Editar continua oferecido nos dois estados. Consumir `OutlinedActionButton` em vez do botão local.
+- [x] 4.2 `ViewRecurringViewModel`: consumir `ResolveRecurringRetirabilityUseCase`. Ele **não** conhece o desarquivar: como arquivar e excluir, a operação mora no ViewModel do seu próprio modal (D9).
+- [x] 4.3 `UnarchiveRecurringModal`/`UnarchiveRecurringViewModel`: modal de confirmação do desarquivar, com o `dismissAll` e o evento de analytics no padrão dos irmãos. Sem `ViewRecurringAction` — as três retiradas saem da visualização por `manager.show(...)`.
+- [x] 4.4 `ViewRecurringModal.Actions`: tornar as ofertas mutuamente exclusivas por `isArchived` — arquivada renderiza, **entre as ofertas de retirada**, apenas Desarquivar (ícone `Icons.Default.Unarchive`), abrindo o `UnarchiveRecurringModal`; não arquivada renderiza a `RetireAction` resolvida, abrindo o modal de arquivar ou o de excluir. Editar continua oferecido nos dois estados. Consumir `OutlinedActionButton` em vez do botão local.
 - [x] 4.5 Remover o `Icons.Default.Delete` do botão de arquivar — o ícone passa a vir da `RetireAction`.
 - [x] 4.6 `ViewRecurringModal:191-199`: a `DetailRow` de status deixa de dizer "Ativa/Inativa" e passa a "Ativa/Arquivada", com indicação que não dependa só da cor. Sem isto o modal mostraria "Status: Inativa" logo acima do botão "Desarquivar".
 - [x] 4.7 `DeleteRecurringViewModel`: no `onLeft`, além do `crashlytics.recordException`, exibir o motivo via `modalManager.showError`. É este ViewModel — não o `ViewRecurringViewModel` — que invoca `DeleteRecurringUseCase`, e hoje ele falha em silêncio.
@@ -82,7 +82,7 @@
 - [x] 8.2 `DeleteRecurringUseCase`: recusa com o erro tipado quando em uso; delega a remoção quando apagável.
 - [x] 8.3 `UnarchiveRecurringUseCase` e `ArchiveRecurringUseCase`: escrevem o flag correto e retornam `Right(Unit)`.
 - [x] 8.4 `RecurringMapper`: inversão do flag nos **dois** sentidos.
-- [x] 8.5 `ViewRecurringViewModel`: arquivada oferece desarquivar (e não arquivar/apagar); não arquivada oferece a `RetireAction` resolvida (e não desarquivar).
+- [x] 8.5 `ViewRecurringViewModel`: a `RetireAction` resolvida chega ao estado — `DELETE` para recorrência sem uso, `ARCHIVE` para a que gerou lançamentos. Que a arquivada ofereça só desarquivar é decisão de renderização do modal; a escrita do flag está coberta em 8.3.
 - [x] 8.6 `RecurringViewModel`: `ACTIVE` não inclui arquivadas; `ARCHIVED` lista só arquivadas; `Empty` só quando não há recorrência alguma.
 - [x] 8.7 `GetPendingRecurringUseCase`: recorrência arquivada não é apresentada como pendente.
 - [x] 8.8 Confirmação atômica: falha ao registrar a ocorrência não deixa a transação gravada; confirmar o mesmo ciclo duas vezes não grava segundo lançamento.

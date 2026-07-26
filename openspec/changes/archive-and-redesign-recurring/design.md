@@ -110,7 +110,12 @@ Uma leitura que cicatrizasse — calcular "já tratados" também a partir de `tr
 ### D9 — Renomear os use cases é parte do escopo, não cosmética
 `StopRecurringUseCase` → `ArchiveRecurringUseCase`, `ReactivateRecurringUseCase` → `UnarchiveRecurringUseCase`, com os modais correspondentes. `account-lifecycle` exige: *"Um use case que faz coisa diferente do seu nome deixa quem o chama — e o usuário lendo o botão — com expectativa errada."*
 
-Desarquivar é ação direta, sem modal de confirmação, como nas outras três fachadas — reversível e inócua. Arquivar mantém o modal, e a sua mensagem atual já está correta ("os lançamentos já gerados continuarão vinculados"). O modal de exclusão, que agora só aparece para recorrência sem uso, precisa de texto novo: hoje diz genericamente "não pode ser desfeita" sem revelar que apagaria o vínculo; passa a dizer que não há histórico a perder.
+Desarquivar **pede confirmação**, divergindo das outras três fachadas, que o fazem por ação direta. A divergência é a assimetria que o D5 já registra: em conta, cartão e categoria voltar à circulação é recuperar visibilidade; numa recorrência é voltar a gerar. O modal existe para dizer o alcance dessa retomada e, sobretudo, o que ela não faz — os ciclos decorridos durante o arquivamento não são repostos, a geração retoma do corrente. Sem ele essa informação não tem onde caber, e o usuário descobre o alcance da ação pelo resultado dela.
+
+Como arquivar e excluir, o modal tem ViewModel próprio, e o `ViewRecurringViewModel` não conhece o desarquivar: as três retiradas saem dali da mesma forma, por `manager.show(...)`.
+- *Alternativa considerada:* ação direta, por simetria com as outras três. Rejeitada: a simetria seria de forma, e o conteúdo difere — só aqui a ação religa um gerador. Se um dia conta ou cartão passarem a carregar consequência ativa no desarquivar, revisita-se o par.
+
+Arquivar mantém o modal, e a sua mensagem atual já está correta ("os lançamentos já gerados continuarão vinculados"). O modal de exclusão, que agora só aparece para recorrência sem uso, precisa de texto novo: hoje diz genericamente "não pode ser desfeita" sem revelar que apagaria o vínculo; passa a dizer que não há histórico a perder.
 
 ## Risks / Trade-offs
 

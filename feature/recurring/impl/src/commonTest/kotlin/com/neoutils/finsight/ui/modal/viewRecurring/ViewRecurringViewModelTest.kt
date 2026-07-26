@@ -12,7 +12,6 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
-import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.ui.model.RetireAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -50,7 +48,6 @@ class ViewRecurringViewModelTest {
         private val hasTransaction: Boolean = false,
     ) : IRecurringRepository {
         private val byId = MutableSharedFlow<Recurring?>(replay = 1)
-        val updated = mutableListOf<Recurring>()
         fun emit(recurring: Recurring?) { byId.tryEmit(recurring) }
         override fun observeRecurringById(id: Long): Flow<Recurring?> = byId
         override suspend fun getRecurringById(id: Long): Recurring? = null
@@ -60,7 +57,7 @@ class ViewRecurringViewModelTest {
         override suspend fun hasTransactionForRecurring(recurringId: Long) = hasTransaction
         override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
-        override suspend fun update(recurring: Recurring) { updated += recurring }
+        override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
     }
 
@@ -85,7 +82,6 @@ class ViewRecurringViewModelTest {
         recurringId = 1L,
         recurringRepository = repository,
         resolveRetirability = resolver(hasTransaction = hasTransaction),
-        unarchiveRecurring = UnarchiveRecurringUseCase(repository),
         crashlytics = crashlytics,
     )
 
@@ -175,24 +171,6 @@ class ViewRecurringViewModelTest {
             // The screen never offers a delete the domain refuses: the same resolver
             // the delete use case consumes says archive, so archive is what it shows.
             assertEquals(RetireAction.ARCHIVE, assertIs<ViewRecurringUiState.Content>(awaitItem()).retireAction)
-        }
-    }
-
-    @Test
-    fun `unarchiving an archived recurring clears the flag`() = runTest(dispatcher) {
-        val repository = FakeRecurringRepository()
-        val vm = viewModel(repository)
-
-        vm.uiState.test {
-            assertEquals(ViewRecurringUiState.Loading, awaitItem())
-            repository.emit(recurring(isArchived = true))
-            assertIs<ViewRecurringUiState.Content>(awaitItem())
-
-            vm.onAction(ViewRecurringAction.Unarchive)
-            runCurrent()
-
-            assertEquals(listOf(false), repository.updated.map { it.isArchived })
-            cancelAndIgnoreRemainingEvents()
         }
     }
 }

@@ -58,6 +58,7 @@ import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveRecurring.ArchiveRecurringModal
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
+import com.neoutils.finsight.ui.modal.unarchiveRecurring.UnarchiveRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
@@ -277,7 +278,7 @@ class ViewRecurringModal(
                     label = stringResource(Res.string.view_recurring_unarchive),
                     icon = Icons.Default.Unarchive,
                     contentColor = colorScheme.primary,
-                    onClick = { viewModel.onAction(ViewRecurringAction.Unarchive) },
+                    onClick = { manager.show(UnarchiveRecurringModal(content.recurring)) },
                     modifier = Modifier.weight(1f),
                 )
             } else {

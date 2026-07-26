@@ -84,7 +84,6 @@ val recurringModule = module {
             recurringId = it.get(),
             recurringRepository = get(),
             resolveRetirability = get(),
-            unarchiveRecurring = get(),
             crashlytics = get(),
         )
     }

@@ -92,6 +92,7 @@
 - [x] 8.11 Atualizar os **fakes de `IRecurringRepository`** afetados por 3.6 — são sete, em cinco módulos: `CreditCardsEmptyStateTest`, `InvoiceTransactionsFakes`, `DeleteCreditCardUseCaseTest` (creditcards), `RetireAccountGuardsTest` (accounts), `ViewBudgetViewModelTest` (budgets), `ViewCategoryViewModelTest` e `DeleteCategoryGuardsTest` (categories).
 - [x] 8.12 Atualizar os **fakes de `IBudgetRepository`** afetados por 3.5: `ViewBudgetViewModelTest`, `ViewCategoryViewModelTest`, `DeleteCategoryGuardsTest`.
 - [x] 8.13 `RecurringRepositoryTest` (jvmTest contra o repositório real): estender para o novo método de 3.6.
+- [x] 8.14 `UnarchiveRecurringViewModel`: confirmar escreve o flag, registra o evento e fecha a folha; falha registra no crashlytics **sem** registrar evento e **sem** fechar — uma folha fechada leria como sucesso. É o único desarquivar confirmado do app (D9), então a fiação do modal é coberta em vez de presumida.
 
 ## 9. Validação
 

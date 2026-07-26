@@ -37,6 +37,7 @@ class FakeCrashlytics : Crashlytics {
 
 class FakeRecurringRepository(
     private val hasTransaction: Boolean = false,
+    private val updateFailure: Throwable? = null,
 ) : IRecurringRepository {
 
     val all = MutableStateFlow<List<Recurring>>(emptyList())
@@ -55,7 +56,10 @@ class FakeRecurringRepository(
     override suspend fun hasRecurringForCategory(categoryId: Long) = false
     override suspend fun hasTransactionForRecurring(recurringId: Long) = hasTransaction
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
-    override suspend fun update(recurring: Recurring) { updated += recurring }
+    override suspend fun update(recurring: Recurring) {
+        updateFailure?.let { throw it }
+        updated += recurring
+    }
     override suspend fun delete(recurring: Recurring) { deleted += recurring }
 }
 

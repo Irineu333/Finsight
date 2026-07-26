@@ -29,7 +29,6 @@ import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
@@ -164,23 +163,21 @@ private fun TransactionsContent(
                     items(
                         items = transactions,
                         key = { it.id }
-                    ) { transaction ->
-                        transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
-                            TransactionCard(
-                                transaction = transactionUi,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                onClick = {
-                                    if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
-                                        detailController.show(ViewAdjustmentModal(transaction.id))
-                                    } else {
-                                        detailController.show(ViewTransactionModal(transaction.id))
-                                    }
+                    ) { transactionUi ->
+                        TransactionCard(
+                            transaction = transactionUi,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateItem(),
+                            onClick = {
+                                if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
+                                    detailController.show(ViewAdjustmentModal(transactionUi.id))
+                                } else {
+                                    detailController.show(ViewTransactionModal(transactionUi.id))
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }

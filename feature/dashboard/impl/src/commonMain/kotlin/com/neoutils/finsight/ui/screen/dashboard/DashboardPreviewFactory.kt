@@ -5,6 +5,7 @@ import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
 
@@ -270,6 +271,8 @@ class DashboardPreviewFactory(
 
             DashboardComponentVariant.Recents.Preview(
                 component = DashboardComponent.Recents(
+                    // Built from the ledger and mapped here, exactly as the builder does,
+                    // so the preview cannot read differently from the real section.
                     transactions = listOf(
                         Transaction(
                             id = 1,
@@ -298,7 +301,7 @@ class DashboardPreviewFactory(
                                 Entry(id = 6, account = foodAccount, amount = 2190),
                             ),
                         ),
-                    ),
+                    ).mapNotNull { it.toTransactionUi() },
                     hasMore = true,
                 ),
                 config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),

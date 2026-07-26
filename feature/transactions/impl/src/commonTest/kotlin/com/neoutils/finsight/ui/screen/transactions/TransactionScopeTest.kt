@@ -58,6 +58,8 @@ class TransactionScopeTest {
         type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = 70,
     )
 
+    private val List<Transaction>.ids get() = map { it.id }.toSet()
+
     private fun date(day: Int) = LocalDate(month.year, month.month, day)
     private fun previousDate(day: Int) = LocalDate(previous.year, previous.month, day)
 
@@ -125,11 +127,17 @@ class TransactionScopeTest {
         return result
     }
 
+    /**
+     * The ids the screen lists. The state carries display models, not the ledger
+     * (`presentation-mapping`), so identity is the id — which is also all these tests ever
+     * asked of the list.
+     */
     private val TransactionsUiState.listed
         get() = (listState as? ListState.Content)
             ?.transactions
             ?.values
             ?.flatten()
+            ?.map { it.id }
             .orEmpty()
 
     @Test
@@ -233,15 +241,15 @@ class TransactionScopeTest {
             invoicePayment, accountAdjustment, invoiceAdjustment,
         )
 
-        assertEquals(monthly.toSet(), stateUnder(TransactionScope.ALL).listed.toSet())
+        assertEquals(monthly.ids, stateUnder(TransactionScope.ALL).listed.toSet())
 
         assertEquals(
-            setOf(salary, groceriesExpense, transfer, invoicePayment, accountAdjustment),
+            listOf(salary, groceriesExpense, transfer, invoicePayment, accountAdjustment).ids,
             stateUnder(TransactionScope.ACCOUNTS).listed.toSet(),
         )
 
         assertEquals(
-            setOf(cardPurchase, invoicePayment, invoiceAdjustment),
+            listOf(cardPurchase, invoicePayment, invoiceAdjustment).ids,
             stateUnder(TransactionScope.CARDS).listed.toSet(),
         )
     }
@@ -255,7 +263,7 @@ class TransactionScopeTest {
             settled = { it.selectedScope == TransactionScope.ACCOUNTS && it.selectedCategory == groceries },
         )
 
-        assertEquals(listOf(groceriesExpense), filtered.listed)
+        assertEquals(listOf(groceriesExpense.id), filtered.listed)
         assertEquals(unfiltered.balanceOverview, filtered.balanceOverview)
     }
 
@@ -268,7 +276,7 @@ class TransactionScopeTest {
         assertEquals(-90.0, overview.expense.value, "only this month's purchase")
         assertEquals(120.0, overview.openingBalance.value, "last month's purchase is the opening debt")
         assertEquals(
-            setOf(cardPurchase, invoicePayment, invoiceAdjustment),
+            listOf(cardPurchase, invoicePayment, invoiceAdjustment).ids,
             stateUnder(TransactionScope.CARDS).listed.toSet(),
             "and last month's purchase is not in the list",
         )
@@ -318,7 +326,7 @@ class TransactionScopeTest {
             actions = cardsOnly,
             settled = { it.selectedTarget == TransactionTarget.CREDIT_CARD },
         )
-        assertEquals(setOf(cardPurchase, invoicePayment, invoiceAdjustment), narrowed.listed.toSet())
+        assertEquals(listOf(cardPurchase, invoicePayment, invoiceAdjustment).ids, narrowed.listed.toSet())
 
         // Contradictory on its face — accounts under a card filter — which is why the
         // scope drops it instead of letting the two controls disagree.

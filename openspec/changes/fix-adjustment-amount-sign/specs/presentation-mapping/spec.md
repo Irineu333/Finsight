@@ -25,6 +25,14 @@ A inversão de sinal por `AccountType` é regra de **saldo**: ela existe para qu
 - **WHEN** um componente de UI renderiza o valor de uma transação
 - **THEN** ele recebe do mapper o valor já resolvido com a sua política de sinal, sem ramificar por rótulo, natureza ou direção para decidir o que exibir
 
+#### Scenario: Lista chega mapeada ao componente
+- **WHEN** uma tela exibe uma lista de transações
+- **THEN** o estado carrega os modelos de exibição já mapeados, e a composable não chama o mapper nem recebe o que ele precisaria para chamá-lo
+
+#### Scenario: Agregado de domínio ao lado do modelo de exibição, não dentro dele
+- **WHEN** uma tela precisa do agregado de domínio para abrir uma modal que o exige
+- **THEN** ele é declarado como campo próprio do estado, nomeado como domínio, e o modelo que a lista renderiza segue sem ele
+
 ## ADDED Requirements
 
 ### Requirement: A escolha da perna neutra tem um dono

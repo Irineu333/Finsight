@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
@@ -91,9 +91,11 @@ sealed interface DashboardComponent {
     }
 
     data class Recents(
-        val transactions: List<Transaction>,
+        // Already mapped by the builder — this list is what the section renders, and the
+        // section holds no ledger (`presentation-mapping`, design D12). No perspective:
+        // the dashboard spans every account and card.
+        val transactions: List<TransactionUi>,
         val hasMore: Boolean,
-        val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     ) : DashboardComponent {
         override val key = DashboardComponentType.RECENTS.key
     }

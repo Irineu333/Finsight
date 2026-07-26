@@ -2,8 +2,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
 
@@ -37,20 +36,16 @@ sealed class ReportViewerUiState {
 
     data class Content(
         val perspectiveLabel: String,
-        /**
-         * The account this report is read through, when it is read through **one**: the
-         * card's ledger account under a credit-card perspective. An account perspective is
-         * a *list* of accounts, and several accounts are not a point of view — a transfer
-         * between two of them has both legs inside the perimeter — so it stays null there,
-         * and that is the right answer rather than a missing one.
-         */
-        val perspectiveAccountId: Long? = null,
         val perspectiveBadge: UiText,
         val perspectiveIconKey: String,
         val stats: Stats,
         val categorySpending: List<CategorySpending>?,
         val categoryIncome: List<CategorySpending>?,
-        val transactions: Map<LocalDate, List<Transaction>>?,
-        val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
+        /**
+         * Already mapped, under this report's perspective when it has one: the card's
+         * ledger account under a credit-card perspective, and nothing under an account
+         * one, where several accounts are not a point of view (design D11).
+         */
+        val transactions: Map<LocalDate, List<TransactionUi>>?,
     ) : ReportViewerUiState()
 }

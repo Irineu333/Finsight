@@ -19,6 +19,7 @@ A causa é que o app **descobriu a regra de sinal mas nunca a escreveu**. Os res
 - `ReportExportLayout.exportTone` passa a acertar o tom do ajuste — hoje todo ajuste cai em `ReportTone.POSITIVE`, porque o ramo que decide é `amount >= 0` e `amount` é sempre positivo (o ramo `NEGATIVE` é inalcançável).
 - Absorção dos demais sítios da mesma política, **sem mudança de comportamento**, porque já obedecem à regra: o `enum SignDisplay` de `SummaryCard` (18 usos — a implementação de referência, de onde o tipo novo nasce), o `private enum AccountSignDisplay` de `AccountCard`, o trio de `Boolean` do `SummaryRow` da fatura, e quatro literais `"+${...}"`/`"-${...}"` em `ReportContextCard` e `ReportExportLayout`.
 - `TransactionUiMapper` passa a usar `Transaction.primaryEntry` em vez de reimplementar a escolha da perna neutra.
+- O mapeamento das listas de transação sobe para o ViewModel nas cinco telas que ainda o faziam dentro do `@Composable` — `TransactionUi` chega pronto no estado, e `TransactionFacadeLookup` deixa de viajar nele. `presentation-mapping` já exigia isto; `AccountsViewModel` e `InstallmentsViewModel` já cumpriam.
 - As três telas que **têm** uma perspectiva de cartão e não a declaravam passam a declará-la — extrato da fatura, tela de cartões e o ramo de cartão do relatório —, e o filtro por tipo da fatura, que reimplementava a escolha da perna à mão, passa a consumi-la. Sem isso a change fecharia deixando de pé a mesma classe de defeito que ela nomeia: uma escolha de perna com dois donos, na mesma tela.
 
 ## Capabilities
@@ -36,7 +37,8 @@ A causa é que o app **descobriu a regra de sinal mas nunca a escreveu**. Os res
 - `core/ui`: `TransactionUiMapper`, `TransactionUi.amount`, `TransactionCard`, `AccountCard`, `AccountUi`, e `implementation(core.common)` → `api(...)`.
 - `feature/report/impl`: `ReportExportLayout` (`exportAmount`, `exportTone`, linhas de resumo), `ReportContextCard` e `ReportViewerUiState.Stats`.
 - `feature/transactions/impl`: `SummaryCard` (`SignDisplay` e seus 18 usos), `BalanceOverviewFactory`, `ViewTransactionUiState` e `ViewTransactionModal`.
-- `feature/creditcards/impl`: `InvoiceTransactionsScreen.SummaryRow` e `InvoiceTransactionsViewModel` (resumo, perspectiva e filtro por tipo), `CreditCardsScreen`.
+- `feature/creditcards/impl`: `InvoiceTransactionsScreen.SummaryRow` e `InvoiceTransactionsViewModel` (resumo, perspectiva e filtro por tipo), `CreditCardsScreen`/`CreditCardsViewModel`.
+- `feature/dashboard/impl`: `DashboardComponent.Recents` e `DashboardComponentsBuilder.recents()`.
 - `feature/accounts/impl`: `AccountsViewModel`, onde `AccountUi` é montado.
 
 **Telas a verificar**: transações (lista + os três corpos do `SummaryCard`), contas, cartões/extrato da fatura, parcelamentos, dashboard, relatório exportado (tela e HTML/PDF).

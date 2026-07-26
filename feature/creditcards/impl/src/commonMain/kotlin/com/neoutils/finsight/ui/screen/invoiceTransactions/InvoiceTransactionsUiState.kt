@@ -5,9 +5,8 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import com.neoutils.finsight.ui.model.RetireAction
 
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
@@ -32,7 +31,6 @@ data class InvoiceTransactionsUiState(
     val selectedInvoiceIndex: Int = 0,
     val listState: ListState = ListState.Loading,
     val categories: List<Category> = emptyList(),
-    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     val selectedCategory: Category? = null,
     val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,
@@ -67,7 +65,7 @@ data class InvoiceTransactionsUiState(
         data class EmptyScope(val canClearFilters: Boolean) : ListState
 
         data class Content(
-            val transactions: Map<LocalDate, List<Transaction>>,
+            val transactions: Map<LocalDate, List<TransactionUi>>,
         ) : ListState
     }
 

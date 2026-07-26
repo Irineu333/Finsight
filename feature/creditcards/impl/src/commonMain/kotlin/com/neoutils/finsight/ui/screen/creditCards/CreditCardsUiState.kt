@@ -3,10 +3,9 @@ package com.neoutils.finsight.ui.screen.creditCards
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.CreditCardUi
-import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.TransactionUi
 import kotlinx.datetime.LocalDate
 
 sealed class CreditCardsUiState {
@@ -30,7 +29,6 @@ sealed class CreditCardsUiState {
         val selectedType: TransactionType?,
         val showRecurringOnly: Boolean,
         val showInstallmentOnly: Boolean,
-        val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     ) : CreditCardsUiState()
 
     /**
@@ -54,7 +52,7 @@ sealed class CreditCardsUiState {
         data class EmptyScope(val canClearFilters: Boolean) : ListState
 
         data class Content(
-            val transactions: Map<LocalDate, List<Transaction>>,
+            val transactions: Map<LocalDate, List<TransactionUi>>,
         ) : ListState
     }
 }

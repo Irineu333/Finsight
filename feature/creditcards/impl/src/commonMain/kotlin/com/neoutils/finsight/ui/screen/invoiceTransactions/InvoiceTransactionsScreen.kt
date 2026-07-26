@@ -53,7 +53,6 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.model.RetireAction
@@ -350,30 +349,25 @@ private fun InvoiceTransactionsContent(
                         items(
                             items = transactions,
                             key = { it.id }
-                        ) { transaction ->
-                            transaction.toTransactionUi(
-                                accountId = uiState.cardAccountId,
-                                lookup = uiState.facadeLookup,
-                            )?.let { transactionUi ->
-                                TransactionCard(
-                                    transaction = transactionUi,
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .fillMaxWidth()
-                                        .animateItem(),
-                                    onClick = {
-                                        when (transactionUi.direction) {
-                                            TransactionType.ADJUSTMENT -> {
-                                                detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
-                                            }
+                        ) { transactionUi ->
+                            TransactionCard(
+                                transaction = transactionUi,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                                onClick = {
+                                    when (transactionUi.direction) {
+                                        TransactionType.ADJUSTMENT -> {
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
+                                        }
 
-                                            else -> {
-                                                detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
-                                            }
+                                        else -> {
+                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                         }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                 }

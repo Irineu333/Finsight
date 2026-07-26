@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -386,9 +387,10 @@ class DashboardComponentsBuilder(
 
         return if (recentTransactions.isNotEmpty()) {
             DashboardComponent.Recents(
-                transactions = recentTransactions,
+                transactions = recentTransactions.mapNotNull {
+                    it.toTransactionUi(lookup = input.facadeLookup)
+                },
                 hasMore = presentTransactions.size > count,
-                facadeLookup = input.facadeLookup,
             )
         } else {
             null

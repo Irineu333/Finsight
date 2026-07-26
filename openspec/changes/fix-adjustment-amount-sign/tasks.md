@@ -118,18 +118,34 @@
 - [x] 12.4 Teste travando as duas metades: um pagamento lido pela perspectiva do cartão é `INCOME`, e o filtro por `INCOME` devolve exatamente a transação que o item apresenta como tal.
 - [x] 12.5 `./gradlew :feature:creditcards:impl:jvmTest :feature:report:impl:jvmTest`.
 
-## 13. Verificação manual
+## 13. A lista chega mapeada — commit `Refactor(Transactions, CreditCards, Report, Dashboard): map a transaction list before it reaches the screen`
+
+> Ver design D12. O requisito já existe em `presentation-mapping`; o que falta é cumpri-lo em
+> cinco telas. `AccountsViewModel` (`:77`) é o modelo a seguir, e
+> `AccountsUiState.ListState.Content` (`:59`) a forma: `Map<LocalDate, List<TransactionUi>>`.
+> Cada tela é independente da outra — o grupo é interrompível a qualquer item.
+
+- [x] 13.1 `TransactionsUiState.ListState.Content:71` passa a carregar `TransactionUi`; `TransactionsViewModel` mapeia; `TransactionsScreen.kt:149-179` só renderiza, e a modal passa a ser aberta por `transactionUi.id`.
+- [x] 13.2 O mesmo em `InvoiceTransactionsUiState:70` — aqui o mapeamento leva junto a perspectiva de 12.1, que sai da tela.
+- [x] 13.3 O mesmo em `CreditCardsUiState:57`, com a perspectiva de 12.1: `uiState.domainCards[selectedCardIndex].accountId` sai da composable e volta para o ViewModel, onde o cartão selecionado já é conhecido.
+- [x] 13.4 O mesmo em `ReportViewerUiState.Content:53`, com a perspectiva de 12.2. **Dois consumidores**: `ReportViewerScreen` e `toReportLayout`, que deixa de mapear e passa a receber a lista pronta.
+- [x] 13.5 `DashboardComponent.Recents:94` passa a carregar `TransactionUi`; o mapeamento vai para `DashboardComponentsBuilder.recents()` (`:381`). `DashboardComponentsInput.transactions` **continua** de domínio: é entrada do builder, e `budgets()` a consome como domínio.
+- [x] 13.6 Remover `facadeLookup` dos estados onde ele só existia para alimentar o mapper da composable.
+- [x] 13.7 Atualizar os testes que afirmam sobre as listas de domínio desses estados — `TransactionScopeTest`, `InvoiceTransactionsPerspectiveTest`, `InvoiceTransactionsEmptyStateTest` e os do dashboard.
+- [x] 13.8 `./gradlew :app:shared:compileKotlinJvm` e os `jvmTest` das quatro features.
+
+## 14. Verificação manual
 
 > Não há CI de teste (`.github/workflows/` só empacota o instalador Windows por tag) nem infraestrutura de teste de Compose. Todo o gate é local, o que dá peso extra a esta seção.
 
-- [ ] 13.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
-- [ ] 13.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
-- [ ] 13.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
-- [ ] 13.4 Dashboard (recentes), parcelamentos e lista geral: seguem sem perspectiva por não terem nenhuma, então a transferência perde o `−` nelas. As telas de cartão e o ramo de cartão do relatório passam a ter perspectiva (grupo 12), e ali a transferência não ocorre.
-- [ ] 13.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
-- [ ] 13.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
+- [ ] 14.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
+- [ ] 14.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
+- [ ] 14.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
+- [ ] 14.4 Dashboard (recentes), parcelamentos e lista geral: seguem sem perspectiva por não terem nenhuma, então a transferência perde o `−` nelas. As telas de cartão e o ramo de cartão do relatório passam a ter perspectiva (grupo 12), e ali a transferência não ocorre.
+- [ ] 14.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
+- [ ] 14.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
 
-## 14. Encerramento
+## 15. Encerramento
 
-- [x] 14.1 ~~Abrir uma proposta separada para a perspectiva ausente.~~ **Descartada**: a sua justificativa — que a transferência passaria a ser afetada — era falsa, e o que de fato sobrava entrou nesta change como grupo 12. A change não deixa débito.
-- [ ] 14.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.
+- [x] 15.1 ~~Abrir uma proposta separada para a perspectiva ausente.~~ **Descartada**: a sua justificativa — que a transferência passaria a ser afetada — era falsa, e o que de fato sobrava entrou nesta change como grupo 12. A change não deixa débito.
+- [ ] 15.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.

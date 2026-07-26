@@ -37,7 +37,6 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
@@ -285,11 +284,7 @@ private fun ReportViewerContent(
                                     )
                                 }
 
-                                items(transactions, key = { "op_${it.id}" }) { transaction ->
-                                    transaction.toTransactionUi(
-                                        accountId = state.perspectiveAccountId,
-                                        lookup = state.facadeLookup,
-                                    )?.let { transactionUi ->
+                                items(transactions, key = { "op_${it.id}" }) { transactionUi ->
                                     TransactionCard(
                                         transaction = transactionUi,
                                         modifier = Modifier
@@ -298,14 +293,13 @@ private fun ReportViewerContent(
                                         onClick = {
                                             when {
                                                 transactionUi.direction.isAdjustment -> detailController.show(
-                                                    transactionsEntry.viewAdjustmentModal(transaction.id)
+                                                    transactionsEntry.viewAdjustmentModal(transactionUi.id)
                                                 )
 
-                                                else -> detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
+                                                else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                             }
                                         },
                                     )
-                                    }
                                 }
                             }
                         }

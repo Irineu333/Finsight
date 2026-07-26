@@ -188,6 +188,38 @@ seguem sem por não terem nenhuma. O parcelamento é o caso instrutivo: ele *tem
 mas uma parcela é um gasto em cartão, de uma perna monetária só — declarar não mudaria nada,
 e não declarar não esconde nada.
 
+### D12 — A lista chega mapeada ao componente, não mapeável
+
+Quatro estados de UI declaram `Map<LocalDate, List<Transaction>>` e um declara
+`List<Transaction>`, e a composable chama `toTransactionUi()` no corpo do `items {}`. Isto
+não é uma preferência de estilo: `presentation-mapping` já o proíbe, no requisito *"Modelos
+de UI sem grafo de domínio"* — *"MUST NOT conter modelo de domínio como campo — nem
+agregado, nem entidade, nem coleção deles"* — e no cenário *"Ação da UI sobre um item"*, que
+manda a UI identificar o item **pelo id**. `AccountsViewModel` e `InstallmentsViewModel` já
+cumprem; as outras cinco divergiram do precedente do próprio repositório.
+
+**O defeito que D11 corrige é sintoma disto.** A perspectiva é conhecida pelo ViewModel — ele
+lê o cartão, filtra por ele. Com o mapeamento na composable, a tela precisa *lembrar* de
+repassar o `accountId`: quatro precisavam, três esqueceram, e o filtro acabou reimplementando
+a perna para não depender dela. Mapear onde o conhecimento está torna esse esquecimento
+impossível em vez de corrigível — é o mesmo movimento de D6, que tirou a política de sinal da
+composable, aplicado ao mapeamento inteiro.
+
+**Custo real, verificado antes de prometer o escopo.** Nas composables o objeto de domínio é
+usado para exatamente uma coisa: `transaction.id`, para abrir a modal — e `TransactionUi` já
+carrega `id`. O `TransactionFacadeLookup` sai dos estados junto, porque só viajava neles para
+ser entregue à composable que mapeava. E o dashboard, que era o caso que eu não queria
+prometer no escuro, é mecânico: `DashboardComponentsInput` é **entrada** do builder, onde
+domínio é legítimo — só `DashboardComponent.Recents` guarda o resultado, e `budgets()` usa a
+lista de domínio para um caso de uso de domínio, o que segue correto.
+
+**O que continua carregando domínio, de propósito.** `AccountsUiState.domainAccounts`,
+`InstallmentsUiState.selectedDomainInstallment`/`selectedDomainTransactions` e o
+`CreditCardsUiState.domainCards` são exceções nomeadas: existem para abrir modais que pedem o
+agregado, ficam ao lado dos modelos de exibição e não dentro deles, e cada uma já diz isso no
+seu próprio comentário. A regra é sobre o modelo que a lista renderiza, não sobre o estado
+não ter acesso ao domínio em lugar nenhum.
+
 ## Risks / Trade-offs
 
 - **A transferência sem perspectiva perde o `−`, e é mudança de comportamento visível** → deliberada (D5). Na lista geral as duas pontas da mesma transferência aparecem como uma linha só, então o `−` de hoje descreve uma perna escolhida arbitrariamente — exatamente o que `presentation-mapping` já proíbe apresentar como propriedade da transação.

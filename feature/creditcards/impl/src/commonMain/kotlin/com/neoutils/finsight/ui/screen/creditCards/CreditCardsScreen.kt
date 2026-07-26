@@ -44,7 +44,6 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
@@ -287,32 +286,25 @@ private fun CreditCardsContent(
                                 items(
                                     items = transactions,
                                     key = { it.id }
-                                ) { transaction ->
-                                    transaction.toTransactionUi(
-                                        // This screen shows one card, so it reads through
-                                        // the card's own leg.
-                                        accountId = uiState.domainCards[uiState.selectedCardIndex].accountId,
-                                        lookup = uiState.facadeLookup,
-                                    )?.let { transactionUi ->
-                                        TransactionCard(
-                                            transaction = transactionUi,
-                                            modifier = Modifier
-                                                .padding(horizontal = 16.dp)
-                                                .fillMaxWidth()
-                                                .animateItem(),
-                                            onClick = {
-                                                when (transactionUi.direction) {
-                                                    TransactionType.ADJUSTMENT -> {
-                                                        detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
-                                                    }
+                                ) { transactionUi ->
+                                    TransactionCard(
+                                        transaction = transactionUi,
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .fillMaxWidth()
+                                            .animateItem(),
+                                        onClick = {
+                                            when (transactionUi.direction) {
+                                                TransactionType.ADJUSTMENT -> {
+                                                    detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
+                                                }
 
-                                                    else -> {
-                                                        detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
-                                                    }
+                                                else -> {
+                                                    detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                                 }
                                             }
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
                         }

@@ -3,8 +3,7 @@
 package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.ui.model.TransactionFacadeLookup
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.DisplayAmount
@@ -28,7 +27,6 @@ data class TransactionsUiState(
     val selectedTarget: TransactionTarget? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
-    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
 ) {
 
     val isCurrentMonth = selectedYearMonth == currentMonth
@@ -68,7 +66,7 @@ data class TransactionsUiState(
         data class EmptyScope(val canClearFilters: Boolean) : ListState
 
         data class Content(
-            val transactions: Map<LocalDate, List<Transaction>>,
+            val transactions: Map<LocalDate, List<TransactionUi>>,
         ) : ListState
     }
 

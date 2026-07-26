@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.TransactionItem
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
@@ -69,7 +70,11 @@ class ReportExportAdjustmentToneTest {
             ),
             categorySpending = listOf(CategorySpending(category, amount = 100.0, percentage = 100.0)),
             categoryIncome = null,
-            transactions = mapOf(transaction.date to listOf(transaction)),
+            // The state carries display models, mapped under the card's perspective, as
+            // the view model hands them over.
+            transactions = mapOf(
+                transaction.date to listOfNotNull(transaction.toTransactionUi(accountId = card.id)),
+            ),
         )
 
         val layout = content.toReportLayout(

@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -171,6 +172,16 @@ class ReportViewerViewModel(
             )
         }
 
+        // Declared once, here, and consumed by the list and by the export alike: the card's
+        // ledger account under a card perspective, nothing under an account one, where
+        // several accounts are not a point of view (design D11).
+        val perspectiveAccountId = when (perspective) {
+            is ReportPerspective.CreditCardPerspective ->
+                creditCards.find { it.id == perspective.creditCardId }?.accountId
+
+            is ReportPerspective.AccountPerspective -> null
+        }
+
         val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
                 // One test, not two: an invoice *is* the dimension its card leg
@@ -192,17 +203,24 @@ class ReportViewerViewModel(
                             }
 
                             is ReportPerspective.CreditCardPerspective -> {
-                                val liabilityAccountId = creditCards
-                                    .find { it.id == perspective.creditCardId }?.accountId
                                 op.entries.any {
                                     it.account.type == AccountType.LIABILITY &&
-                                            it.account.id == liabilityAccountId
+                                            it.account.id == perspectiveAccountId
                                 }
                             }
                         }
                     }
             }
-            filteredOps.sortedByDescending { it.date }.groupBy { it.date }
+            // Mapped here rather than in the screen and again in the export (design D12):
+            // one list, one perspective, two consumers that cannot disagree.
+            filteredOps
+                .sortedByDescending { it.date }
+                .groupBy { it.date }
+                .mapValues { (_, ops) ->
+                    ops.mapNotNull {
+                        it.toTransactionUi(accountId = perspectiveAccountId, lookup = facadeLookup)
+                    }
+                }
         } else null
 
         val perspectiveIconKey = when (perspective) {
@@ -224,19 +242,12 @@ class ReportViewerViewModel(
 
         ReportViewerUiState.Content(
             perspectiveLabel = perspectiveLabel,
-            perspectiveAccountId = when (perspective) {
-                is ReportPerspective.CreditCardPerspective ->
-                    creditCards.find { it.id == perspective.creditCardId }?.accountId
-
-                is ReportPerspective.AccountPerspective -> null
-            },
             perspectiveBadge = perspectiveBadge,
             perspectiveIconKey = perspectiveIconKey,
             stats = stats,
             categorySpending = categorySpending,
             categoryIncome = categoryIncome,
             transactions = transactionsMap,
-            facadeLookup = facadeLookup,
         )
     }.stateIn(
         scope = viewModelScope,

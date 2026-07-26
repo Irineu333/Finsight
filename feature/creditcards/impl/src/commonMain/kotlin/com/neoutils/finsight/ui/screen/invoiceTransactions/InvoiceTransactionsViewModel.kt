@@ -21,6 +21,7 @@ import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.legUnder
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -107,6 +108,9 @@ class InvoiceTransactionsViewModel(
         }
 
         val invoice = invoices.getOrNull(index)
+        // The rows render archived categories too, so the lookup keeps them — only the
+        // filter below offers the open ones.
+        val lookup = TransactionFacadeLookup.of(categories, installments)
 
         val invoiceTransactions = transactions
             .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
@@ -122,7 +126,15 @@ class InvoiceTransactionsViewModel(
         // filter: an invoice with entries the chips hide is a cut, not an empty invoice.
         val listState = when {
             filteredTransactions.isNotEmpty() -> {
-                InvoiceTransactionsUiState.ListState.Content(filteredTransactions)
+                // Mapped here, through this screen's own perspective — the card — so the
+                // screen renders display models and never holds the ledger (design D12).
+                InvoiceTransactionsUiState.ListState.Content(
+                    filteredTransactions.mapValues { (_, ops) ->
+                        ops.mapNotNull {
+                            it.toTransactionUi(accountId = creditCard.accountId, lookup = lookup)
+                        }
+                    }
+                )
             }
 
             invoiceTransactions.isEmpty() -> InvoiceTransactionsUiState.ListState.EmptyInvoice
@@ -190,10 +202,8 @@ class InvoiceTransactionsViewModel(
             },
             selectedInvoiceIndex = index,
             listState = listState,
-            // The filter offers only open categories; the rows still render the
-            // archived ones, so the lookup keeps them.
+            // The filter offers only open categories.
             categories = categories.filterNot { it.isArchived },
-            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,

@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,6 +70,7 @@ class TransactionsNatureFilterTest {
         entryRepository = FakeLedger(transactions),
     )
 
+    /** What the screen lists: display models, already mapped (`presentation-mapping`). */
     private val TransactionsUiState.listed
         get() = (listState as? TransactionsUiState.ListState.Content)
             ?.transactions
@@ -77,9 +79,9 @@ class TransactionsNatureFilterTest {
             .orEmpty()
 
     /** The list under [label], read off the settled state after the filter is applied. */
-    private suspend fun listedUnder(label: TransactionLabel?): List<Transaction> {
+    private suspend fun listedUnder(label: TransactionLabel?): List<TransactionUi> {
         val vm = viewModel()
-        var result = emptyList<Transaction>()
+        var result = emptyList<TransactionUi>()
         vm.uiState.test {
             // Skip the Loading initialValue of stateIn; assert on the computed state.
             var state = awaitItem()
@@ -98,11 +100,11 @@ class TransactionsNatureFilterTest {
 
     @Test
     fun `each nature selects exactly its own transactions`() = runTest(dispatcher) {
-        assertEquals(listOf(expense), listedUnder(TransactionLabel.EXPENSE))
-        assertEquals(listOf(income), listedUnder(TransactionLabel.INCOME))
-        assertEquals(listOf(transfer), listedUnder(TransactionLabel.TRANSFER))
-        assertEquals(listOf(payment), listedUnder(TransactionLabel.PAYMENT))
-        assertEquals(listOf(adjustment), listedUnder(TransactionLabel.ADJUSTMENT))
+        assertEquals(listOf(expense.id), listedUnder(TransactionLabel.EXPENSE).map { it.id })
+        assertEquals(listOf(income.id), listedUnder(TransactionLabel.INCOME).map { it.id })
+        assertEquals(listOf(transfer.id), listedUnder(TransactionLabel.TRANSFER).map { it.id })
+        assertEquals(listOf(payment.id), listedUnder(TransactionLabel.PAYMENT).map { it.id })
+        assertEquals(listOf(adjustment.id), listedUnder(TransactionLabel.ADJUSTMENT).map { it.id })
     }
 
     @Test
@@ -135,10 +137,10 @@ class TransactionsNatureFilterTest {
     fun `each summary line agrees with its filter`() = runTest(dispatcher) {
         // The header reads the ledger; the list reads the loaded transactions. Both must
         // agree on what composes each figure — the discrepancy this change fixes.
-        assertEquals(30.0, listedUnder(TransactionLabel.EXPENSE).sumOf { it.amount })
-        assertEquals(100.0, listedUnder(TransactionLabel.INCOME).sumOf { it.amount })
-        assertEquals(40.0, listedUnder(TransactionLabel.ADJUSTMENT).sumOf { it.amount })
-        assertEquals(80.0, listedUnder(TransactionLabel.PAYMENT).sumOf { it.amount })
+        assertEquals(30.0, listedUnder(TransactionLabel.EXPENSE).sumOf { it.amount.value })
+        assertEquals(100.0, listedUnder(TransactionLabel.INCOME).sumOf { it.amount.value })
+        assertEquals(40.0, listedUnder(TransactionLabel.ADJUSTMENT).sumOf { it.amount.value })
+        assertEquals(80.0, listedUnder(TransactionLabel.PAYMENT).sumOf { it.amount.value })
     }
 
     @Test
@@ -149,7 +151,7 @@ class TransactionsNatureFilterTest {
             var state = awaitItem()
             while (state.listState is TransactionsUiState.ListState.Loading) state = awaitItem()
             assertEquals(TransactionLabel.PAYMENT, state.selectedLabel)
-            assertEquals(listOf(payment), state.listed)
+            assertEquals(listOf(payment.id), state.listed.map { it.id })
             cancelAndIgnoreRemainingEvents()
         }
     }

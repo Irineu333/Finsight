@@ -73,7 +73,6 @@ import com.neoutils.finsight.ui.component.creditCardSharedElement
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import kotlinx.datetime.TimeZone
@@ -274,9 +273,8 @@ private fun DashboardRecentsSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.transactions.forEachIndexed { index, transaction ->
+        component.transactions.forEachIndexed { index, transactionUi ->
             val isLastWithFade = component.hasMore && index == component.transactions.lastIndex
-            val transactionUi = transaction.toTransactionUi(lookup = component.facadeLookup) ?: return@forEachIndexed
             TransactionCard(
                 transaction = transactionUi,
                 modifier = Modifier
@@ -303,8 +301,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
-                            else -> detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
+                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
+                            else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                         }
                     }
                 },

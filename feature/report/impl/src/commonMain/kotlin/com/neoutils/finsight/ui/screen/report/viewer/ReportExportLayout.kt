@@ -5,7 +5,6 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.model.TransactionUi
-import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
 import com.neoutils.finsight.domain.model.ReportLayout
@@ -138,17 +137,12 @@ fun ReportViewerUiState.Content.toReportLayout(
                     groups = transactions.map { (date, transactions) ->
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
-                            items = transactions.mapNotNull { transaction ->
-                                transaction.toTransactionUi(
-                                    accountId = perspectiveAccountId,
-                                    lookup = facadeLookup,
-                                )?.let { ui ->
-                                    TransactionItem(
-                                        title = ui.exportTitle(strings),
-                                        amount = formatter.format(ui.amount),
-                                        tone = ui.exportTone(),
-                                    )
-                                }
+                            items = transactions.map { ui ->
+                                TransactionItem(
+                                    title = ui.exportTitle(strings),
+                                    amount = formatter.format(ui.amount),
+                                    tone = ui.exportTone(),
+                                )
                             },
                         )
                     },

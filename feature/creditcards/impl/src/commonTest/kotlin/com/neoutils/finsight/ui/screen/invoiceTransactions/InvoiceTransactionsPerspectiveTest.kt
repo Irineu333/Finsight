@@ -134,28 +134,27 @@ class InvoiceTransactionsPerspectiveTest {
 
     @Test
     fun `the type filter agrees with the item it returns`() = runTest(dispatcher) {
-        val state = settledState(InvoiceTransactionsAction.SelectType(TransactionType.INCOME))
-        val listed = assertIs<ListState.Content>(state.listState).transactions.values.flatten()
+        val listed = listedUnder(TransactionType.INCOME)
 
-        assertEquals(listOf(payment), listed, "filtering by income returns the payment")
-        listed.forEach { transaction ->
-            assertEquals(
-                TransactionType.INCOME,
-                transaction.toTransactionUi(state.cardAccountId)?.direction,
-                "and the item the screen renders for it agrees",
-            )
-        }
+        // The state carries the item the screen renders, so the two halves are compared
+        // where they meet rather than re-derived by the test.
+        assertEquals(listOf(payment.id), listed.map { it.id }, "filtering by income returns the payment")
+        assertEquals(TransactionType.INCOME, listed.single().direction, "and the item agrees")
     }
 
     @Test
     fun `a purchase is unaffected, having a single monetary leg`() = runTest(dispatcher) {
-        val state = settledState(InvoiceTransactionsAction.SelectType(TransactionType.EXPENSE))
-        val listed = assertIs<ListState.Content>(state.listState).transactions.values.flatten()
+        val listed = listedUnder(TransactionType.EXPENSE)
 
-        assertEquals(listOf(purchase), listed)
+        assertEquals(listOf(purchase.id), listed.map { it.id })
         assertEquals(
             purchase.toTransactionUi()?.direction,
-            purchase.toTransactionUi(state.cardAccountId)?.direction,
+            listed.single().direction,
+            "one monetary leg, so the perspective changes nothing",
         )
     }
+
+    private suspend fun listedUnder(type: TransactionType) = assertIs<ListState.Content>(
+        settledState(InvoiceTransactionsAction.SelectType(type)).listState
+    ).transactions.values.flatten()
 }

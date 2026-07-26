@@ -193,7 +193,7 @@ class TransactionsEmptyStateTest {
     @Test
     fun `a non-empty cut is content`() = runTest(dispatcher) {
         val listState = assertIs<ListState.Content>(stateAfter(listOf(salary)).listState)
-        assertEquals(listOf(salary), listState.transactions.values.flatten())
+        assertEquals(listOf(salary.id), listState.transactions.values.flatten().map { it.id })
     }
 
     @Test
@@ -232,6 +232,6 @@ class TransactionsEmptyStateTest {
         assertEquals(filtered.balanceOverview, cleared.balanceOverview, "so the summary cannot move")
 
         val listState = assertIs<ListState.Content>(cleared.listState, "and the list comes back")
-        assertEquals(listOf(salary), listState.transactions.values.flatten())
+        assertEquals(listOf(salary.id), listState.transactions.values.flatten().map { it.id })
     }
 }

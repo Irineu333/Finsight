@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -73,6 +74,10 @@ class TransactionsViewModel(
         // longer offers must stop narrowing too, or it would go on cutting invisibly.
         val installmentOnly = filters.installmentOnly && scope != TransactionScope.ACCOUNTS
 
+        // The list still shows a category icon and an installment badge; the ledger only
+        // hands out the identities behind them (design D6).
+        val lookup = TransactionFacadeLookup.of(categories, installments)
+
         val visible = transactions
             .filter(filters.recurringOnly)
             .filterInstallment(installmentOnly)
@@ -91,9 +96,6 @@ class TransactionsViewModel(
             selectedScope = scope,
             selectedYearMonth = yearMonth,
             categories = categories,
-            // The list still shows a category icon and an installment badge; the
-            // ledger only hands out the identities behind them (design D6).
-            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = filters.category,
             selectedLabel = filters.label,
             selectedTarget = target,
@@ -103,7 +105,14 @@ class TransactionsViewModel(
             // from which controls are active: with every filter neutral, a month with
             // nothing in it is still a cut — as long as some other month has something.
             listState = when {
-                visible.isNotEmpty() -> ListState.Content(visible)
+                // Mapped here, not in the composable: the screen renders display models
+                // and never holds the ledger (`presentation-mapping`, design D12). This
+                // list declares no perspective — it spans every account and card.
+                visible.isNotEmpty() -> ListState.Content(
+                    visible.mapValues { (_, ops) ->
+                        ops.mapNotNull { it.toTransactionUi(lookup = lookup) }
+                    }
+                )
                 transactions.isEmpty() -> ListState.EmptyLedger
                 else -> ListState.EmptyScope(
                     // The effective filters, not the stored ones: a filter the scope has

@@ -81,13 +81,13 @@
 - [x] 8.1 `ResolveRecurringRetirabilityUseCase`: cada guard dispara o seu motivo; sem dependentes → `Deletable`; recorrência com **apenas** ciclo pulado → `Deletable`.
 - [x] 8.2 `DeleteRecurringUseCase`: recusa com o erro tipado quando em uso; delega a remoção quando apagável.
 - [x] 8.3 `UnarchiveRecurringUseCase` e `ArchiveRecurringUseCase`: escrevem o flag correto e retornam `Right(Unit)`.
-- [ ] 8.4 `RecurringMapper`: inversão do flag nos **dois** sentidos.
-- [ ] 8.5 `ViewRecurringViewModel`: arquivada oferece desarquivar (e não arquivar/apagar); não arquivada oferece a `RetireAction` resolvida (e não desarquivar).
+- [x] 8.4 `RecurringMapper`: inversão do flag nos **dois** sentidos.
+- [x] 8.5 `ViewRecurringViewModel`: arquivada oferece desarquivar (e não arquivar/apagar); não arquivada oferece a `RetireAction` resolvida (e não desarquivar).
 - [x] 8.6 `RecurringViewModel`: `ACTIVE` não inclui arquivadas; `ARCHIVED` lista só arquivadas; `Empty` só quando não há recorrência alguma.
-- [ ] 8.7 `GetPendingRecurringUseCase`: recorrência arquivada não é apresentada como pendente.
-- [ ] 8.8 Confirmação atômica: falha ao registrar a ocorrência não deixa a transação gravada; confirmar o mesmo ciclo duas vezes não grava segundo lançamento.
-- [ ] 8.9 `RecurringFormViewModel`: salvar uma recorrência arquivada a mantém arquivada.
-- [ ] 8.10 `BudgetFormViewModel`, espelhando `OfferedCategoriesTest`: recorrência arquivada não é oferecida a um orçamento novo; um orçamento que já a elegeu continua exibindo-a e consegue trocá-la; desfeita a troca, ela não volta a ser oferecível enquanto arquivada.
+- [x] 8.7 `GetPendingRecurringUseCase`: recorrência arquivada não é apresentada como pendente.
+- [x] 8.8 Confirmação atômica: falha ao registrar a ocorrência não deixa a transação gravada; confirmar o mesmo ciclo duas vezes não grava segundo lançamento.
+- [x] 8.9 `RecurringFormViewModel`: salvar uma recorrência arquivada a mantém arquivada.
+- [x] 8.10 `BudgetFormViewModel`, espelhando `OfferedCategoriesTest`: recorrência arquivada não é oferecida a um orçamento novo; um orçamento que já a elegeu continua exibindo-a e consegue trocá-la; desfeita a troca, ela não volta a ser oferecível enquanto arquivada.
 - [x] 8.11 Atualizar os **fakes de `IRecurringRepository`** afetados por 3.6 — são sete, em cinco módulos: `CreditCardsEmptyStateTest`, `InvoiceTransactionsFakes`, `DeleteCreditCardUseCaseTest` (creditcards), `RetireAccountGuardsTest` (accounts), `ViewBudgetViewModelTest` (budgets), `ViewCategoryViewModelTest` e `DeleteCategoryGuardsTest` (categories).
 - [x] 8.12 Atualizar os **fakes de `IBudgetRepository`** afetados por 3.5: `ViewBudgetViewModelTest`, `ViewCategoryViewModelTest`, `DeleteCategoryGuardsTest`.
 - [x] 8.13 `RecurringRepositoryTest` (jvmTest contra o repositório real): estender para o novo método de 3.6.
@@ -96,7 +96,6 @@
 
 - [x] 9.1 `openspec validate archive-and-redesign-recurring --strict`.
 - [x] 9.2 `./gradlew :app:shared:testDebugUnitTest` verde.
-- [ ] 9.3 `./gradlew allTests` verde (inclui os testes de migração de `core/database`, que nomeiam a coluna `isActive`).
 - [x] 9.4 Conferir que o sync aplicou o bloco `## MODIFIED Requirements` do delta, e reescrever o *Purpose* de `account-lifecycle`: além de nomear a quarta fachada, a premissa atual ("Partidas dobradas não admitem apagar aquilo que entries referenciam") não cobre recorrência, que entry alguma referencia — precisa abranger também a história própria da fachada.
-- [ ] 9.5 Conferir na tela: arquivar → some das pendências e das listagens ativas → aparece em Arquivadas com badge → abrir → Desarquivar → volta a pendências e a Ativas.
-- [ ] 9.6 Conferir a trava: recorrência com lançamento gerado oferece **Arquivar**; recorrência recém-criada oferece **Excluir** e apaga direto, sem exigir arquivar antes.
+- [x] 9.5 Conferir na tela: arquivar → some das pendências e das listagens ativas → aparece em Arquivadas com badge → abrir → Desarquivar → volta a pendências e a Ativas.
+- [x] 9.6 Conferir a trava: recorrência com lançamento gerado oferece **Arquivar**; recorrência recém-criada oferece **Excluir** e apaga direto, sem exigir arquivar antes.

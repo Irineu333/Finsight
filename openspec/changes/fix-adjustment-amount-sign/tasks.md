@@ -17,7 +17,7 @@
 
 - [x] 2.1 Criar `DisplayAmount` em `core/common/.../extension/`: `value: Double` + política fechada `MAGNITUDE`, `NATURAL`, `NEUTRAL`, `EXPLICIT_SIGN`, `FORCED_POSITIVE`, `FORCED_NEGATIVE`, `OWED`, com um construtor nomeado por política. Marcar `@Immutable`. Sem operação entre dois valores e sem moeda (design D7); transformar o próprio valor (módulo, negação, limite em zero) é permitido.
 - [x] 2.2 Portar o KDoc por caso do `SignDisplay` (`SummaryCard.kt:426-452`), que é a implementação de referência — em especial `NEUTRAL` (não move nada nesta perspectiva) e `OWED` (magnitude devida, zero quando não se deve).
-- [x] 2.3 Adicionar a formatação como **extensão** sobre `CurrencyFormatter` (`fun CurrencyFormatter.format(amount: DisplayAmount): String`) em `commonMain` — **não** como membro do `expect class`, sob pena de três `actual` a mais e de quebra visível só no `iosSimulatorArm64Test`. Semântica fechada aqui, não descoberta na verificação manual: `FORCED_POSITIVE`/`FORCED_NEGATIVE`/`EXPLICIT_SIGN` **concatenam** o sinal sobre `format(value.absoluteValue)`, como os sete sítios fazem hoje; `MAGNITUDE`/`NATURAL`/`NEUTRAL`/`OWED` **delegam** a `format(...)`. Assim a absorção é no-op de texto demonstrável e o risco de locale desaparece.
+- [x] 2.3 Adicionar a formatação como **extensão** sobre `CurrencyFormatter` (`fun CurrencyFormatter.format(amount: DisplayAmount): String`) em `commonMain` — **não** como membro do `expect class`, sob pena de três `actual` a mais e de quebra visível só no `iosSimulatorArm64Test`. Semântica fechada aqui, não descoberta na verificação manual: `FORCED_POSITIVE`/`FORCED_NEGATIVE`/`EXPLICIT_SIGN` **concatenam** o sinal sobre `format(value.absoluteValue)`, como os oito sítios fazem hoje; `MAGNITUDE`/`NATURAL`/`NEUTRAL`/`OWED` **delegam** a `format(...)`. Assim a absorção é no-op de texto demonstrável e o risco de locale desaparece.
 - [x] 2.4 Testar a formatação por política em `core/common`. **Não asserte literal de moeda** — `NumberFormat.getCurrencyInstance()` usa o locale default da JVM e o teste quebraria em outra máquina. Asserte relações: `"+" + f.format(100.0)` para `EXPLICIT_SIGN`; `f.format(100.0)` para `NATURAL` (sem `+`); `f.format(0.0)` para `EXPLICIT_SIGN` de zero e para `OWED` de saldo credor.
 - [x] 2.5 `./gradlew :core:common:jvmTest`.
 
@@ -56,7 +56,7 @@
 - [x] 6.1 `Transaction.kt:52` ("always positive — the sign is a display concern") passa a apontar ao mapper, agora que o valor de exibição carrega sinal.
 - [x] 6.2 `TransactionUi.kt:11-14`, que descreve `amount` implicitamente como módulo.
 
-> **⟵ Ponto de recuo real.** Aqui o defeito está corrigido nas três superfícies de item, `DisplayAmount` existe com dois consumidores, e sete sítios viraram cinco. Estado defensável indefinidamente. Parar antes do grupo 4 **não** é seguro: deixaria lista e detalhe em desacordo.
+> **⟵ Ponto de recuo real.** Aqui o defeito está corrigido nas três superfícies de item, `DisplayAmount` existe com dois consumidores, e oito sítios viraram seis. Estado defensável indefinidamente. Parar antes do grupo 4 **não** é seguro: deixaria lista e detalhe em desacordo.
 
 ## 7. Absorção: resumo do mês — commit `Refactor(Transactions): let the summary receive its sign policy already resolved`
 
@@ -138,14 +138,14 @@
 
 > Não há CI de teste (`.github/workflows/` só empacota o instalador Windows por tag) nem infraestrutura de teste de Compose. Todo o gate é local, o que dá peso extra a esta seção.
 
-- [ ] 14.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
-- [ ] 14.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
-- [ ] 14.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
-- [ ] 14.4 Dashboard (recentes), parcelamentos e lista geral: seguem sem perspectiva por não terem nenhuma, então a transferência perde o `−` nelas. As telas de cartão e o ramo de cartão do relatório passam a ter perspectiva (grupo 12), e ali a transferência não ocorre.
-- [ ] 14.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
-- [ ] 14.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
+- [x] 14.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
+- [x] 14.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
+- [x] 14.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
+- [x] 14.4 Dashboard (recentes), parcelamentos e lista geral: seguem sem perspectiva por não terem nenhuma, então a transferência perde o `−` nelas. As telas de cartão e o ramo de cartão do relatório passam a ter perspectiva (grupo 12), e ali a transferência não ocorre.
+- [x] 14.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
+- [x] 14.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
 
 ## 15. Encerramento
 
 - [x] 15.1 ~~Abrir uma proposta separada para a perspectiva ausente.~~ **Descartada**: a sua justificativa — que a transferência passaria a ser afetada — era falsa, e o que de fato sobrava entrou nesta change como grupo 12. A change não deixa débito.
-- [ ] 15.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.
+- [x] 15.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.

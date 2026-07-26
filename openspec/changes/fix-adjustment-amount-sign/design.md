@@ -105,7 +105,7 @@ Esta tabela **descreve o comportamento atual** de `AccountsBody`, `CardsBody`, `
 | `ReportExportLayout.kt:86` e `ReportContextCard.kt:199` — gasto de fatura | sem sinal | `FORCED_NEGATIVE` — ganha `−` |
 | `ReportExportLayout.kt:96` e `ReportContextCard.kt:235` — pagamento antecipado | sem sinal | `FORCED_POSITIVE` — ganha `+` |
 
-Elas são declaradas como mudança visual 3, e não descobertas durante a implementação. As linhas de conta do mesmo relatório (`ReportExportLayout.kt:73,78`) já obedecem.
+Elas são declaradas como mudança visual 4, e não descobertas durante a implementação. As linhas de conta do mesmo relatório (`ReportExportLayout.kt:73,78`) já obedecem.
 
 **Uma armadilha, na linha "Total" da fatura** (`InvoiceTransactionsScreen.kt:555`): a figura vem de `owedByDimension`, que já devolve **positivo-como-dívida** (`EntryRepository.kt:106-111`). A linha de saldo da tabela acima diz `OWED` para perspectiva de cartão, mas `OWED` calcula `max(0, -valor)` e zeraria um total já positivo. Para essa linha a política é `NATURAL`: a inversão já foi feita a montante. `OWED` serve às linhas que recebem saldo no sinal do razão (`SummaryCard.kt:200,235`), não às que recebem dívida já invertida.
 
@@ -136,7 +136,9 @@ Uma política **pode** transformar o seu próprio valor para leitura — módulo
 
 ### D8 — A absorção é condição, não extra
 
-Sete sítios implementam a política hoje: `SignDisplay` (18 usos), `AccountSignDisplay` (6), o `SummaryRow` da fatura (4), os dois `when` de item (`TransactionCard`, `ReportExportLayout.exportAmount`) e quatro literais `"+${...}"`/`"-${...}"` em `ReportContextCard` e `ReportExportLayout`. Criar o tipo e converter só a superfície de item deixaria **oito**. O que justifica o tipo é ele ser o único, então a absorção entra no escopo.
+Oito sítios implementam a política hoje: `SignDisplay` (18 usos), `AccountSignDisplay` (6), o `SummaryRow` da fatura (4), os dois `when` de item (`TransactionCard`, `ReportExportLayout.exportAmount`), quatro literais `"+${...}"`/`"-${...}"` em `ReportContextCard` e `ReportExportLayout`, e o `formatWithSign` de `ViewAdjustmentUiState.signedAmount`. Criar o tipo e converter só a superfície de item deixaria **nove**. O que justifica o tipo é ele ser o único, então a absorção entra no escopo.
+
+O oitavo não estava neste levantamento: ele apareceu na varredura final (11.1), que buscou `formatWithSign` além dos literais. Já exibia o sinal certo — é a leitura de referência do ajuste, de onde a regra de item foi extraída —, mas escolhia a política dentro do `@Composable`. Absorvê-lo é no-op de texto e evita que a change feche criando o sítio que ela existe para eliminar.
 
 Como os resumos já obedecem à regra (D5), a absorção é conversão de mecanismo, não mudança de comportamento — menos arriscada do que o número de sítios sugere. Duas armadilhas concretas: `ALWAYS_POSITIVE` aplica `absoluteValue` em `AccountCard.kt:325` e **não** aplica em `SummaryCard.kt:447`; e existem dois componentes chamados `SummaryRow` (`InvoiceTransactionsScreen.kt:728` e `SummaryCard.kt:399`), em sistemas diferentes.
 
@@ -225,6 +227,6 @@ não ter acesso ao domínio em lugar nenhum.
 - **A transferência sem perspectiva perde o `−`, e é mudança de comportamento visível** → deliberada (D5). Na lista geral as duas pontas da mesma transferência aparecem como uma linha só, então o `−` de hoje descreve uma perna escolhida arbitrariamente — exatamente o que `presentation-mapping` já proíbe apresentar como propriedade da transação.
 - **Regressão silenciosa se alguma forma ficar sem política explícita** → `CurrencyFormatter.format` não aplica `abs`, então o erro aparece na primeira renderização. Coberto por teste de não-regressão, um caso por forma.
 - **`ALWAYS_POSITIVE` com semânticas divergentes entre os dois sítios** → unificar com `absoluteValue`; verificar antes se algum chamador de `SummaryCard` passa valor negativo, caso em que é mudança de comportamento e precisa ser decidida, não assumida.
-- **Diferença de locale ao trocar concatenação por formatação de negativo** → **eliminado por construção**, e não deixado para a verificação manual: `FORCED_POSITIVE`/`FORCED_NEGATIVE`/`EXPLICIT_SIGN` concatenam o sinal sobre o módulo, exatamente como os sete sítios fazem hoje; só as políticas que já delegavam continuam delegando. A absorção vira no-op de texto demonstrável. Deixar o `NumberFormat` decidir a posição do negativo seria mais correto, mas é decisão própria e merece change própria.
-- **Escopo: sete sítios, três features e dois módulos core** → mitigado pela ordem dos grupos em `tasks.md`: 1-2 consertam o defeito e se sustentam sozinhos; 3 é a absorção, interrompível a qualquer momento sem desfazer o conserto.
+- **Diferença de locale ao trocar concatenação por formatação de negativo** → **eliminado por construção**, e não deixado para a verificação manual: `FORCED_POSITIVE`/`FORCED_NEGATIVE`/`EXPLICIT_SIGN` concatenam o sinal sobre o módulo, exatamente como os oito sítios fazem hoje; só as políticas que já delegavam continuam delegando. A absorção vira no-op de texto demonstrável. Deixar o `NumberFormat` decidir a posição do negativo seria mais correto, mas é decisão própria e merece change própria.
+- **Escopo: oito sítios, quatro features e dois módulos core** → mitigado pela ordem dos grupos em `tasks.md`: 1-2 consertam o defeito e se sustentam sozinhos; 3 é a absorção, interrompível a qualquer momento sem desfazer o conserto.
 - **`TransactionUi.amount` muda de tipo** → quebra de compilação, não de runtime: dois consumidores de produção (ambos em `ReportExportLayout`) e um de teste.

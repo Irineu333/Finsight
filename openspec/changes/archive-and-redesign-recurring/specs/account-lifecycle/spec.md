@@ -34,7 +34,9 @@ Editar uma recorrência arquivada MUST NOT desarquivá-la. A edição SHALL pres
 
 ### Requirement: Arquivar recorrência interrompe a geração de ocorrências
 
-Arquivar uma recorrência SHALL interrompê-la: a partir do arquivamento ela MUST NOT ser apresentada como pendente, MUST NOT gerar novas ocorrências, MUST NOT aparecer nas listagens ativas da sua tela e MUST NOT ser oferecida em seletor algum que a apresente como template disponível — inclusive o de **receita base de orçamento**. Os lançamentos que ela já gerou SHALL permanecer intactos e continuar vinculados a ela.
+Arquivar uma recorrência SHALL interrompê-la: a partir do arquivamento ela MUST NOT ser apresentada como pendente, MUST NOT gerar novas ocorrências, MUST NOT aparecer nas listagens ativas da sua tela e MUST NOT ser oferecida como escolha nova em seletor algum — inclusive o de **receita base de orçamento**. Os lançamentos que ela já gerou SHALL permanecer intactos e continuar vinculados a ela.
+
+Isso MUST NOT romper vínculo já estabelecido: um orçamento que já elegeu essa recorrência como receita base SHALL continuar exibindo-a e usando-a, e SHALL poder trocá-la — a continuidade de quem já usa vale aqui como vale para as demais fachadas.
 
 Isto não é exceção ao arquivamento das demais fachadas. Arquivar é sair de circulação; para uma conta, um cartão ou uma categoria, estar em circulação é ser oferecível — para uma recorrência, a presença em circulação é **ativa**: ela gera. O efeito difere porque a fachada é ativa, não porque a regra é outra.
 
@@ -45,8 +47,12 @@ O estado de arquivamento de recorrência SHALL residir na própria fachada, pela
 - **THEN** ela não é apresentada como pendente nem oferecida para confirmação, e nenhuma ocorrência é gerada
 
 #### Scenario: Recorrência arquivada não é oferecida como receita base
-- **WHEN** o usuário monta um orçamento com limite percentual sobre uma receita
+- **WHEN** o usuário monta um orçamento novo com limite percentual sobre uma receita
 - **THEN** recorrências arquivadas não são oferecidas na seleção
+
+#### Scenario: Orçamento que já usa a recorrência arquivada continua funcionando
+- **WHEN** um orçamento percentual já elege uma recorrência e ela é arquivada depois
+- **THEN** o orçamento continua exibindo-a como sua receita base, o seu limite segue sendo calculado sobre ela, e o usuário consegue trocá-la — a seleção não é apagada em silêncio
 
 #### Scenario: Arquivar preserva os lançamentos gerados
 - **WHEN** uma recorrência que já gerou lançamentos é arquivada
@@ -94,6 +100,10 @@ Uma categoria que possua qualquer lançamento MUST NOT ser removida: SHALL ser a
 Uma **recorrência** em uso MUST NOT ser removida: SHALL ser arquivada. Diferentemente das três anteriores, a sua preservação não decorre da integridade referencial do plano de contas — nenhuma entry a referencia —, e o que se preserva é o vínculo dos lançamentos gerados, o registro dos ciclos tratados e a ligação de um orçamento à sua receita base. O critério de "em uso" e a sua justificativa vivem no requisito próprio da recorrência.
 
 Uma conta arquivada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas; ela SHALL, porém, permanecer **acessível** por uma listagem dedicada de arquivadas, em tela própria, de onde pode ser visualizada e desarquivada. Um cartão arquivado MUST NOT ser oferecido nos seus seletores de lançamento nem aparecer na tela de cartões ativa; ele SHALL, porém, permanecer **acessível** por uma listagem dedicada de arquivados, em tela própria, de onde pode ser visualizado e desarquivado. Uma categoria arquivada MUST NOT ser oferecida nos seus seletores de lançamento nem aparecer nas listagens ativas da sua tela; ela SHALL, porém, permanecer **acessível** por uma listagem dedicada de arquivadas na sua própria tela, de onde pode ser visualizada e desarquivada. Uma recorrência arquivada MUST NOT ser oferecida em seletor algum nem aparecer nas listagens ativas ou nas pendências; ela SHALL, porém, permanecer **acessível** por uma listagem dedicada de arquivadas na sua própria tela, de onde pode ser visualizada e desarquivada. Tornar a arquivada visível nessas listagens MUST NOT reintroduzi-la em seletor algum nem nas listagens ativas.
+
+Retirar a arquivada dos seletores MUST NOT retirá-la de onde ela **já está em uso**. Quem já a usa SHALL continuar usando: um vínculo estabelecido antes do arquivamento permanece válido, permanece **visível** para o consumidor que o detém, e permanece removível por ele. O arquivamento governa a escolha **nova**, não a já feita — do contrário o consumidor exibiria um vínculo que não consegue desfazer, ou o perderia sem ter pedido.
+
+A arquivada SHALL aparecer, nesse consumidor, **apenas por já estar escolhida**, e MUST NOT ser oferecida como opção fresca ao lado das ativas. Desfeita a escolha, ela não volta a ser oferecível enquanto permanecer arquivada. Esta continuidade SHALL valer para toda fachada arquivável e para todo consumidor que guarde um vínculo com ela — as categorias de um orçamento e a receita base de um orçamento inclusive —, e SHALL ter forma única por consumidor, não ser reimplementada por tela.
 
 O estado de arquivamento de conta e cartão SHALL residir **exclusivamente no plano de contas**, e a fachada de cartão SHALL consumi-lo da sua conta pelo vínculo que já possui — MUST NOT existir cópia desse estado nessa fachada. Todo cartão SHALL possuir conta no plano de contas desde a sua criação, de modo que a consulta não dependa de tratamento para vínculo ausente.
 
@@ -144,6 +154,14 @@ A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que
 #### Scenario: Recorrência arquivada some das listagens ativas mas fica acessível
 - **WHEN** uma recorrência em uso é arquivada
 - **THEN** ela desaparece das listagens ativas, das pendências e dos seletores, permanecendo acessível pela listagem de arquivadas da sua tela
+
+#### Scenario: Quem já usa a arquivada continua usando
+- **WHEN** uma fachada é arquivada depois de já ter sido escolhida por um consumidor — uma categoria já adicionada a um orçamento, uma recorrência já eleita como receita base
+- **THEN** o vínculo permanece válido, o consumidor continua exibindo a fachada arquivada e consegue removê-la, e ela não é oferecida como opção nova ao lado das ativas
+
+#### Scenario: Desfeita a escolha, a arquivada não volta a ser oferecida
+- **WHEN** o consumidor remove o vínculo com uma fachada arquivada
+- **THEN** ela deixa de aparecer naquele consumidor e não pode ser escolhida de novo enquanto permanecer arquivada
 
 #### Scenario: Cartão recém-criado tem conta
 - **WHEN** um cartão é criado

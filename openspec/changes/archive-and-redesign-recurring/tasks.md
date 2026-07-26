@@ -22,7 +22,8 @@
 - [ ] 2.7 `RecurringFormViewModel:93` — **único call site** de 2.6: passar `isArchived = recurring?.isArchived ?: false`. Editar uma recorrência arquivada MUST preservar o flag; apagar o argumento por ser default a desarquivaria em silêncio.
 - [ ] 2.8 `GetPendingRecurringUseCase`: trocar o filtro `recurring.isActive` por `!recurring.isArchived`.
 - [ ] 2.9 `DashboardComponentsBuilder`: mesma troca no filtro de recorrências próximas.
-- [ ] 2.10 `BudgetFormViewModel:103` — **terceira leitura do flag, em outro módulo**: `incomeRecurrings` deixa de oferecer arquivadas. Atenção ao `:106`, que resolve a seleção salva dentro dessa lista: garantir que arquivar uma recorrência não apague em silêncio a seleção de um orçamento PERCENTAGE que aponta para ela.
+- [ ] 2.10 `BudgetFormViewModel:103` — **terceira leitura do flag, em outro módulo**: `incomeRecurrings` deixa de oferecer arquivadas **como escolha nova**, mas MUST preservar a continuidade de quem já usa. Aplicar a mesma forma de `offeredCategories` (`BudgetFormViewModel:250`, KDoc + `OfferedCategoriesTest`): abertas + a já selecionada que deixou de estar aberta. Sem isso, o `:106` — que resolve `budget.recurringId` **dentro** dessa lista — apagaria a receita base de um orçamento existente no instante em que a recorrência fosse arquivada.
+- [ ] 2.10a Considerar extrair a regra de continuidade numa forma única consumida pelas duas seleções do formulário (categorias e receita base), em vez de uma segunda cópia da lógica de `offeredCategories`.
 - [ ] 2.11 Confirmar por varredura que 2.7–2.10 esgotam as leituras do flag fora de `feature/recurring`.
 - [ ] 2.12 Atualizar os registros no `RecurringModule` (Koin) para os use cases e ViewModels renomeados.
 
@@ -86,7 +87,7 @@
 - [ ] 8.7 `GetPendingRecurringUseCase`: recorrência arquivada não é apresentada como pendente.
 - [ ] 8.8 Confirmação atômica: falha ao registrar a ocorrência não deixa a transação gravada; confirmar o mesmo ciclo duas vezes não grava segundo lançamento.
 - [ ] 8.9 `RecurringFormViewModel`: salvar uma recorrência arquivada a mantém arquivada.
-- [ ] 8.10 `BudgetFormViewModel`: recorrência arquivada não é oferecida como receita base; um orçamento que já aponta para uma arquivada não perde a seleção em silêncio.
+- [ ] 8.10 `BudgetFormViewModel`, espelhando `OfferedCategoriesTest`: recorrência arquivada não é oferecida a um orçamento novo; um orçamento que já a elegeu continua exibindo-a e consegue trocá-la; desfeita a troca, ela não volta a ser oferecível enquanto arquivada.
 - [ ] 8.11 Atualizar os **fakes de `IRecurringRepository`** afetados por 3.6 — são sete, em cinco módulos: `CreditCardsEmptyStateTest`, `InvoiceTransactionsFakes`, `DeleteCreditCardUseCaseTest` (creditcards), `RetireAccountGuardsTest` (accounts), `ViewBudgetViewModelTest` (budgets), `ViewCategoryViewModelTest` e `DeleteCategoryGuardsTest` (categories).
 - [ ] 8.12 Atualizar os **fakes de `IBudgetRepository`** afetados por 3.5: `ViewBudgetViewModelTest`, `ViewCategoryViewModelTest`, `DeleteCategoryGuardsTest`.
 - [ ] 8.13 `RecurringRepositoryTest` (jvmTest contra o repositório real): estender para o novo método de 3.6.

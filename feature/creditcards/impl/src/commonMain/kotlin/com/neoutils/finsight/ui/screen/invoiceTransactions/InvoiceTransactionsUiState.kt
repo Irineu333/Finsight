@@ -17,6 +17,9 @@ import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
+    // The card's ledger account — this screen's perspective. A transaction here is read
+    // through the card's own leg, so an invoice payment reads as money coming in.
+    val cardAccountId: Long? = null,
     // An archived card is read-only history: this screen still shows its invoices and
     // transactions, but offers no write action (close/pay/advance/adjust). Deciding
     // whether to offer the action is the screen's job; the ledger already refuses the

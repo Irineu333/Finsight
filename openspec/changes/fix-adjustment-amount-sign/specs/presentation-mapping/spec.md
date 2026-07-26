@@ -34,3 +34,27 @@ Quando um mapeamento for solicitado sem perspectiva, a perna pela qual a transa�
 #### Scenario: Lista sem perspectiva e detalhe concordam sobre a perna
 - **WHEN** a mesma transação é exibida em uma lista sem perspectiva e aberta no detalhe
 - **THEN** ambas leem a mesma perna, por consumirem a mesma definição de perna primária
+
+### Requirement: Uma tela declara a perspectiva que tem
+
+Uma superfície que apresenta transações sob **uma** conta ou **um** cartão SHALL declarar essa
+perspectiva ao mapear, e MUST NOT deixar que a perna lida seja escolhida pelo critério de
+ausência de perspectiva. Uma superfície que não tem perspectiva única — uma lista de tudo, ou
+um recorte sobre várias contas — MUST NOT inventar uma: a ausência é a resposta correta, e não
+uma omissão.
+
+Dentro de uma mesma superfície, a perna lida SHALL ter uma única definição. Filtro, item e
+detalhe MUST NOT derivá-la cada um por conta própria: duas definições podem discordar, e o
+filtro passa a devolver uma transação que o item apresenta na direção oposta.
+
+#### Scenario: Extrato de fatura lê pela perna do cartão
+- **WHEN** o pagamento de uma fatura é exibido no extrato dessa fatura
+- **THEN** ele é lido pela perna do cartão, como dinheiro que entra, e não pela perna da conta de onde saiu
+
+#### Scenario: Filtro e item concordam sobre a perna
+- **WHEN** uma lista com perspectiva é filtrada por direção
+- **THEN** a direção que o filtro aplica é a mesma que o item exibe, por virem da mesma definição
+
+#### Scenario: Recorte sobre várias contas não tem perspectiva
+- **WHEN** um relatório apresenta transações de várias contas
+- **THEN** o mapeamento é feito sem perspectiva, porque não há uma única conta de cujo ponto de vista ler

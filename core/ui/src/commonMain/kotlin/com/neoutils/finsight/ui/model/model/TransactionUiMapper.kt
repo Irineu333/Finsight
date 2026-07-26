@@ -10,12 +10,10 @@ import com.neoutils.finsight.extension.deriveTransactionType
  * Maps an [Transaction] to its flat [TransactionUi], deriving both display axes from
  * the ledger entries — the single domain→presentation boundary for a list item.
  *
- * The perspective leg is the entry the screen looks through: the entry in
- * [accountId] when a perspective is given, otherwise [Transaction.primaryEntry],
- * which is where that choice is defined — the mapper consumes it instead of
- * restating the criterion, so a list without perspective and the detail can never
- * disagree about which leg they read. Returns `null` when the perspective has no
- * matching leg, so the caller omits the item instead of failing on a read.
+ * Which leg is read is [Transaction.legUnder]'s to say, not the mapper's — the same
+ * definition the detail and the list's own filter consume, so the three cannot disagree
+ * about the leg they are all supposedly showing. Returns `null` when the perspective has
+ * no matching leg, so the caller omits the item instead of failing on a read.
  *
  * [lookup] closes the gap the ledger leaves: a transaction carries the *dimension*
  * its nominal leg is classified by and the *id* of its installment, and turning
@@ -29,11 +27,7 @@ fun Transaction.toTransactionUi(
     val category = lookup.categoryOf(this)
     val label = entries.deriveTransactionLabel()
 
-    val leg = if (accountId != null) {
-        entries.firstOrNull { it.account.id == accountId }
-    } else {
-        primaryEntry
-    } ?: return null
+    val leg = legUnder(accountId) ?: return null
 
     return TransactionUi(
         id = id,

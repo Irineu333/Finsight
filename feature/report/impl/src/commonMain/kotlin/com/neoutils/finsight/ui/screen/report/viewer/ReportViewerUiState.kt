@@ -37,6 +37,14 @@ sealed class ReportViewerUiState {
 
     data class Content(
         val perspectiveLabel: String,
+        /**
+         * The account this report is read through, when it is read through **one**: the
+         * card's ledger account under a credit-card perspective. An account perspective is
+         * a *list* of accounts, and several accounts are not a point of view — a transfer
+         * between two of them has both legs inside the perimeter — so it stays null there,
+         * and that is the right answer rather than a missing one.
+         */
+        val perspectiveAccountId: Long? = null,
         val perspectiveBadge: UiText,
         val perspectiveIconKey: String,
         val stats: Stats,

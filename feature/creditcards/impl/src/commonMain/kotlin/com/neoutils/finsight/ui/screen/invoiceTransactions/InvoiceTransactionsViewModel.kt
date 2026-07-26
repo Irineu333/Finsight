@@ -20,6 +20,7 @@ import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.ui.model.legUnder
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -111,7 +112,7 @@ class InvoiceTransactionsViewModel(
             .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
         val filteredTransactions = invoiceTransactions
             .filter(currentFilters.category)
-            .filter(currentFilters.type)
+            .filter(currentFilters.type, creditCard.accountId)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
             .sortedByDescending { it.date }
@@ -133,6 +134,7 @@ class InvoiceTransactionsViewModel(
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
+            cardAccountId = creditCard.accountId,
             isArchived = creditCard.isArchived,
             retireAction = retireActionOf(
                 entryRepository.hasEntries(creditCard.accountId) ||
@@ -284,13 +286,19 @@ private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     }
 }
 
-private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
+/**
+ * The card's own leg is what this screen shows, so the filter reads its direction — a
+ * payment credits the card, a purchase debits it.
+ *
+ * [accountId] is the screen's perspective, and the leg comes from the same definition the
+ * rendered item uses. It used to pick the `LIABILITY` leg here by hand while the item was
+ * mapped without a perspective, off the account's leg: filtering by income returned a
+ * payment that the item beside it then presented as an expense.
+ */
+private fun List<Transaction>.filter(type: TransactionType?, accountId: Long): List<Transaction> {
     if (type == null) return this
-    // The card's own leg is what this screen shows, so the filter reads its
-    // direction — a payment credits the card, a purchase debits it.
     return filter { transaction ->
-        transaction.entries
-            .firstOrNull { it.account.type == AccountType.LIABILITY }
+        transaction.legUnder(accountId)
             ?.let { deriveTransactionType(it.amount, transaction.entries) } == type
     }
 }

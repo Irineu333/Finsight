@@ -139,7 +139,10 @@ fun ReportViewerUiState.Content.toReportLayout(
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
                             items = transactions.mapNotNull { transaction ->
-                                transaction.toTransactionUi(lookup = facadeLookup)?.let { ui ->
+                                transaction.toTransactionUi(
+                                    accountId = perspectiveAccountId,
+                                    lookup = facadeLookup,
+                                )?.let { ui ->
                                     TransactionItem(
                                         title = ui.exportTitle(strings),
                                         amount = formatter.format(ui.amount),

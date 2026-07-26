@@ -106,18 +106,30 @@
 - [x] 11.3 `./gradlew :app:shared:compileKotlinJvm` — primeira vez que todos os `impl` compilam juntos.
 - [x] 11.4 `./gradlew allTests` e `./gradlew :app:ios:linkDebugFrameworkIosSimulatorArm64`.
 
-## 12. Verificação manual
+## 12. A perspectiva que as telas já tinham — commit `Fix(CreditCards, Report): let a card's own screens read a transaction through the card`
+
+> Fecha o único débito que a change ia deixar. Ver design D11: a justificativa anterior para
+> adiar — "a transferência passa a ser afetada" — era falsa, e o que sobrava era uma escolha
+> de perna com dois donos dentro da mesma tela.
+
+- [x] 12.1 `InvoiceTransactionsScreen.kt:354` e `CreditCardsScreen.kt:291` passam `accountId` do cartão a `toTransactionUi()`. A tela de cartões já tem o cartão (`domainCards[selectedCardIndex]`); o estado da fatura carrega só o nome e precisa passar a expor o `accountId`.
+- [x] 12.2 `ReportViewerScreen.kt:289` e `ReportExportLayout.kt:142` passam a perspectiva **apenas** no ramo `CreditCardPerspective`; em `AccountPerspective` seguem sem, porque várias contas não são uma perspectiva. Exige expor o `accountId` do cartão no estado — hoje `Stats.Invoice` não o carrega.
+- [x] 12.3 Dar um dono à leitura "a perna que esta superfície mostra": uma função em `:core:ui`, ao lado de `TransactionPerspective`, consumida pelo mapper, por `ViewTransactionUiState` e por `InvoiceTransactionsViewModel.filter(type)` (`:287`) — hoje são três reimplementações, e a terceira discorda das outras duas.
+- [x] 12.4 Teste travando as duas metades: um pagamento lido pela perspectiva do cartão é `INCOME`, e o filtro por `INCOME` devolve exatamente a transação que o item apresenta como tal.
+- [x] 12.5 `./gradlew :feature:creditcards:impl:jvmTest :feature:report:impl:jvmTest`.
+
+## 13. Verificação manual
 
 > Não há CI de teste (`.github/workflows/` só empacota o instalador Windows por tag) nem infraestrutura de teste de Compose. Todo o gate é local, o que dá peso extra a esta seção.
 
-- [ ] 12.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
-- [ ] 12.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
-- [ ] 12.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
-- [ ] 12.4 Dashboard (recentes), parcelamentos, tela de cartões e lista do relatório: **todas** chamam `toTransactionUi()` sem perspectiva, então a transferência perde o `−` nas quatro — só a tela de contas passa `accountId`.
-- [ ] 12.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
-- [ ] 12.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
+- [ ] 13.1 Cartões / extrato da fatura: ajuste que aumenta e que reduz a dívida; conferir que a lista concorda com a linha "Ajustes" do resumo e com a modal de ajuste. Abrir o modal de pagamento e conferir que o valor vem pré-preenchido (armadilha de 9.2).
+- [ ] 13.2 Contas: ajuste de saldo para mais e para menos; transferência vista das duas pontas — `−` na origem e `+` no destino (o `+` é novo); linhas de resumo do `AccountCard` idênticas.
+- [ ] 13.3 Transações: lista geral — transferência **sem** sinal (mudança 3); gasto, receita e pagamento idênticos; os três corpos do `SummaryCard` linha a linha. Modal de visualização de uma transferência e de um gasto.
+- [ ] 13.4 Dashboard (recentes), parcelamentos e lista geral: seguem sem perspectiva por não terem nenhuma, então a transferência perde o `−` nelas. As telas de cartão e o ramo de cartão do relatório passam a ter perspectiva (grupo 12), e ali a transferência não ocorre.
+- [ ] 13.5 Relatório: tela e arquivo exportado (HTML/PDF) — valor e tom do ajuste; linhas de conta idênticas; linhas de fatura com os sinais novos (mudança 4).
+- [ ] 13.6 Rodar em Desktop (`./gradlew :app:desktop:run`) e Android (`./gradlew :app:android:assembleDebug`).
 
-## 13. Encerramento
+## 14. Encerramento
 
-- [x] 13.1 Abrir uma proposta OpenSpec separada para a ausência de perspectiva em `InvoiceTransactionsScreen`, `CreditCardsScreen` e `ReportViewerScreen` ao chamar `toTransactionUi()`. Registrar nela que o ajuste não é afetado, por ter uma única perna monetária, mas que a **transferência** passa a ser, já que a sua política depende da perspectiva.
-- [ ] 13.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.
+- [x] 14.1 ~~Abrir uma proposta separada para a perspectiva ausente.~~ **Descartada**: a sua justificativa — que a transferência passaria a ser afetada — era falsa, e o que de fato sobrava entrou nesta change como grupo 12. A change não deixa débito.
+- [ ] 14.2 `openspec validate fix-adjustment-amount-sign --strict` e `/opsx:verify`.

@@ -286,7 +286,10 @@ private fun ReportViewerContent(
                                 }
 
                                 items(transactions, key = { "op_${it.id}" }) { transaction ->
-                                    transaction.toTransactionUi(lookup = state.facadeLookup)?.let { transactionUi ->
+                                    transaction.toTransactionUi(
+                                        accountId = state.perspectiveAccountId,
+                                        lookup = state.facadeLookup,
+                                    )?.let { transactionUi ->
                                     TransactionCard(
                                         transaction = transactionUi,
                                         modifier = Modifier

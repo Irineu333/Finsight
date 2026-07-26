@@ -20,7 +20,7 @@ Sob o defeito há uma regra que o app **descobriu mas nunca escreveu**. O `Summa
 
 - Não alterar `Transaction.amount` (domínio): ele alimenta o formulário de edição (`EditTransactionModal.kt:88`), onde módulo é o correto. A modal de visualização **entra** no escopo — o usuário declarou a regra "para cards e modais", e `ViewTransactionUiState.amount` (`:61`) é a mesma superfície de item, hoje em `abs()`.
 - Não introduzir tipo monetário de domínio. Cents, moeda e aritmética entre valores são do razão.
-- Não corrigir a perspectiva ausente em `InvoiceTransactionsScreen`, `CreditCardsScreen` e `ReportViewerScreen` (chamam `toTransactionUi()` sem `accountId`). Defeito separado — e que **não contamina este**, porque um ajuste tem uma única perna monetária (a de reconciliação não é `isMonetary`), logo é lido igual com ou sem perspectiva.
+- Não dar perspectiva a quem não tem uma: a lista geral, o dashboard e os parcelamentos seguem mapeando sem `accountId`. As telas que **têm** uma entram no escopo — ver D11, que substitui o não-goal anterior.
 - Não unificar as convenções do bloco de resumo da fatura, que mistura "Despesas −100" com "Total 100" (`dimensionOwed`, positivo-como-dívida).
 
 ## Decisions
@@ -151,6 +151,42 @@ A tabela mora numa função de `:core:ui` (`itemDisplayAmount(label, legAmountCe
 `presentation-mapping` diz *onde* a tradução acontece, não *qual* sinal — e seu único cenário sobre sinal é o da inversão por `AccountType`. Lido isoladamente, sugere aplicar `displaySign` também à perna `LIABILITY`, o que produziria de volta o `+R$ 100,00` que este change remove. Na prática `displaySign` só é usado em saldos e totais, nunca numa perna.
 
 O delta separa as duas leituras: *se* uma perna exibe sinal é decisão da política (`money-display`); *qual* sinal, quando exibe, é o natural do razão.
+
+### D11 — Uma tela que tem perspectiva declara a perspectiva que tem
+
+Esta decisão substitui o não-goal que dizia o contrário. A investigação que o motivava
+estava errada em premissa, e vale registrar o erro: a justificativa para adiar era que a
+**transferência** passaria a ser afetada, já que a sua política depende da perspectiva. Não
+passa. Uma transferência é `ASSET → ASSET`; as duas telas de cartão têm perspectiva de
+*cartão* e nunca a listam, e o relatório de contas é de **várias** contas, onde as duas
+pernas caem dentro do perímetro. As três estão sem sinal por estarem certas, não por
+acidente.
+
+A perspectiva só muda a leitura de uma transação com **duas pernas monetárias**. Nas outras
+cinco formas há uma perna monetária só, e a `primaryEntry` é ela de qualquer modo. Sobram
+duas: a transferência, que não alcança nenhuma das três telas, e o **pagamento de fatura**
+(`ASSET −X`, `LIABILITY +X`), cuja `primaryEntry` é a perna da conta. Lido do cartão, é a
+perna do cartão — dinheiro que **entra**, `INCOME`.
+
+O que torna isto escopo desta change não é a diferença visível, que é quase nula: `label` já
+decide cor, ícone e título, e a política já decide o valor. É que
+`InvoiceTransactionsViewModel.filter(type)` **já reimplementou a perspectiva à mão** para
+poder filtrar, e diz isso no seu próprio comentário — *"a perna do cartão é o que esta tela
+mostra"* —, enquanto o card que a mesma tela renderiza lê pela perna da conta. Uma tela, duas
+definições de "a perna que eu mostro", capazes de discordar: filtrar por receita traz o
+pagamento, e o item trazido foi mapeado como despesa.
+
+É a mesma falha que D9 evita entre o mapper e a modal, e que a regra de derivação do projeto
+proíbe em geral. Fechar a change deixando-a de pé seria escrever um requisito e violá-lo na
+tela ao lado.
+
+**Onde declarar, e onde não.** A perspectiva é declarada onde existe **uma**: o cartão, no
+extrato da fatura, na tela de cartões e no ramo `CreditCardPerspective` do relatório. No ramo
+`AccountPerspective` o relatório tem uma lista de contas, e "várias" não é uma perspectiva —
+continua sem, e é o comportamento correto. A lista geral, o dashboard e os parcelamentos
+seguem sem por não terem nenhuma. O parcelamento é o caso instrutivo: ele *tem* um cartão,
+mas uma parcela é um gasto em cartão, de uma perna monetária só — declarar não mudaria nada,
+e não declarar não esconde nada.
 
 ## Risks / Trade-offs
 

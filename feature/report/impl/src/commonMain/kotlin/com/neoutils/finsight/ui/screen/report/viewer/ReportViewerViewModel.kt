@@ -224,6 +224,12 @@ class ReportViewerViewModel(
 
         ReportViewerUiState.Content(
             perspectiveLabel = perspectiveLabel,
+            perspectiveAccountId = when (perspective) {
+                is ReportPerspective.CreditCardPerspective ->
+                    creditCards.find { it.id == perspective.creditCardId }?.accountId
+
+                is ReportPerspective.AccountPerspective -> null
+            },
             perspectiveBadge = perspectiveBadge,
             perspectiveIconKey = perspectiveIconKey,
             stats = stats,

@@ -14,6 +14,7 @@ import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.model.itemDisplayAmount
+import com.neoutils.finsight.ui.model.legUnder
 
 sealed interface ViewTransactionUiState {
 
@@ -39,11 +40,13 @@ sealed interface ViewTransactionUiState {
         val recurring: TransactionRecurring? = null,
     ) : ViewTransactionUiState {
 
-        // The entry seen through the current perspective (the account's leg, else
-        // the transaction's own money-out leg), used to derive the leg direction.
-        private val perspectiveEntry = perspective?.let { selectedPerspective ->
-            transaction.entries.firstOrNull { it.account.id == selectedPerspective.accountId }
-        } ?: transaction.primaryEntry
+        // The entry seen through the current perspective, from the one definition of it,
+        // so the detail cannot read a different leg than the list it was opened from.
+        //
+        // A list drops an item whose perspective has no leg; a detail has nothing to drop
+        // to, so it falls back to the transaction's own leg rather than render nothing.
+        private val perspectiveEntry = transaction.legUnder(perspective?.accountId)
+            ?: transaction.primaryEntry
 
         /** Axis 2 — the transaction's nature (title/colour), derived from the entries. */
         val label: TransactionLabel = transaction.label

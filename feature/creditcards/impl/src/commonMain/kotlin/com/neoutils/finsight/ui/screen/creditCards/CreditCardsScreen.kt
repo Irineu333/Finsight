@@ -288,7 +288,12 @@ private fun CreditCardsContent(
                                     items = transactions,
                                     key = { it.id }
                                 ) { transaction ->
-                                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
+                                    transaction.toTransactionUi(
+                                        // This screen shows one card, so it reads through
+                                        // the card's own leg.
+                                        accountId = uiState.domainCards[uiState.selectedCardIndex].accountId,
+                                        lookup = uiState.facadeLookup,
+                                    )?.let { transactionUi ->
                                         TransactionCard(
                                             transaction = transactionUi,
                                             modifier = Modifier

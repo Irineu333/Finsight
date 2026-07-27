@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -70,6 +71,31 @@ class EnsureYieldCategoryUseCaseTest {
     }
 
     @Test
+    fun `losing the insert race returns the row the winner created`() = runTest {
+        val repo = YieldCategoryStore()
+        // Someone else got there between this caller's lookup and its insert, so the
+        // insert is refused — and the category the caller asked to exist does.
+        val winner = EnsureYieldCategoryUseCase(repo)()
+
+        val found = EnsureYieldCategoryUseCase(RacedStore(repo))()
+
+        assertEquals(winner.id, found.id)
+        assertEquals(winner.dimensionId, found.dimensionId)
+        assertEquals(1, repo.inserted.size)
+    }
+
+    @Test
+    fun `an insert that fails for any other reason still fails`() = runTest {
+        val failure = IllegalStateException("disk full")
+
+        val thrown = assertFailsWith<IllegalStateException> {
+            EnsureYieldCategoryUseCase(FailingStore(failure))()
+        }
+
+        assertEquals(failure, thrown)
+    }
+
+    @Test
     fun `an archived yield category is still found`() = runTest {
         val repo = YieldCategoryStore()
         val useCase = EnsureYieldCategoryUseCase(repo)
@@ -92,6 +118,11 @@ internal class YieldCategoryStore : ICategoryRepository {
     private var nextId = 0L
 
     override suspend fun insert(category: Category) {
+        // The store's unique index on `systemKey`, so the test cannot pass on a
+        // guarantee production does not have.
+        require(category.systemKey == null || rows.none { it.systemKey == category.systemKey }) {
+            "UNIQUE constraint failed: categories.systemKey"
+        }
         nextId++
         val stored = category.copy(id = nextId, dimensionId = 100 + nextId)
         rows += stored
@@ -124,4 +155,27 @@ internal class YieldCategoryStore : ICategoryRepository {
         rows.any { it.name.equals(name, ignoreCase = true) && it.id != ignoreId }
     override suspend fun insertAll(categories: List<Category>) = categories.forEach { insert(it) }
     override suspend fun delete(category: Category) { rows.removeAll { it.id == category.id } }
+}
+
+/**
+ * A store that hides the winner's row until after the insert is attempted — the shape
+ * of losing a race: nothing found, insert refused, row there all along.
+ */
+private class RacedStore(private val delegate: YieldCategoryStore) : ICategoryRepository by delegate {
+
+    private var lookedUp = false
+
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? {
+        if (!lookedUp) {
+            lookedUp = true
+            return null
+        }
+        return delegate.getCategoryBySystemKey(systemKey)
+    }
+}
+
+/** A store whose insert fails for a reason that is not a lost race. */
+private class FailingStore(private val failure: Throwable) : ICategoryRepository by YieldCategoryStore() {
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
+    override suspend fun insert(category: Category) = throw failure
 }

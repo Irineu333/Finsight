@@ -633,6 +633,11 @@ val MIGRATION_7_10 = object : Migration(7, 10) {
  * `categories.systemKey` is how the app finds a category it provides without
  * depending on its name, so the user may rename it (design D3).
  *
+ * `systemKey` is unique, and that is the whole guarantee: two rows under one key
+ * would split the dimension, and the reads that separate by it would return one half
+ * silently — the other half's money back in the line it had left, with no error to
+ * catch. NULLs are exempt in SQLite, so the user's own categories are untouched.
+ *
  * There is no backfill, by design. No existing account yields until the user says
  * so, and no existing category becomes a system one. Adjustments already recorded
  * stay adjustments: they record what the user actually asked for at the time, and
@@ -645,6 +650,9 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         )
         connection.execSQL(
             "ALTER TABLE `categories` ADD COLUMN `systemKey` TEXT DEFAULT NULL"
+        )
+        connection.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_systemKey` ON `categories` (`systemKey`)"
         )
     }
 }

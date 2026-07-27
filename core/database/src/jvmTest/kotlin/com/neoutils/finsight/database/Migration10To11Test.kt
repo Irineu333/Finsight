@@ -1,12 +1,14 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.SQLiteException
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -157,6 +159,44 @@ class Migration10To11Test {
         assertEquals(0L, entries.getLong(1))
         assertEquals(1L, entries.getLong(2))
         entries.close()
+    }
+
+    @Test
+    fun `given database at version 10 when migrated to 11 then systemKey is unique`() {
+        MIGRATION_10_11.migrate(connection)
+
+        assertTrue(connection.indexExists("index_categories_systemKey"))
+
+        connection.execSQL(
+            "INSERT INTO `categories` (`id`, `name`, `iconKey`, `type`, `createdAt`, `dimensionId`, `isArchived`, `systemKey`) " +
+                "VALUES (2, 'Rendimentos', 'savings', 'INCOME', 1000, 1, 0, 'yield')"
+        )
+
+        // A second row under the same key would split the dimension in two: the reads
+        // would separate by one of them and silently return half the yield.
+        assertFailsWith<SQLiteException> {
+            connection.execSQL(
+                "INSERT INTO `categories` (`id`, `name`, `iconKey`, `type`, `createdAt`, `dimensionId`, `isArchived`, `systemKey`) " +
+                    "VALUES (3, 'CDI', 'money', 'INCOME', 1000, 1, 0, 'yield')"
+            )
+        }
+    }
+
+    @Test
+    fun `given the unique key when many categories have none then they coexist`() {
+        MIGRATION_10_11.migrate(connection)
+
+        // NULLs are exempt from a unique index in SQLite — which is the whole reason
+        // the user's own categories are untouched by it.
+        connection.execSQL(
+            "INSERT INTO `categories` (`name`, `iconKey`, `type`, `createdAt`, `dimensionId`, `isArchived`) VALUES " +
+                "('Mercado', 'cart', 'EXPENSE', 1000, 1, 0), ('Lazer', 'movie', 'EXPENSE', 1000, 1, 0)"
+        )
+
+        val stmt = connection.prepare("SELECT COUNT(*) FROM `categories` WHERE `systemKey` IS NULL")
+        stmt.step()
+        assertEquals(3L, stmt.getLong(0))
+        stmt.close()
     }
 
     @Test

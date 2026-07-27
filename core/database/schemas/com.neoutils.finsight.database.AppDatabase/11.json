@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "4267a4a0c59fccdd5b4cffed7a8b3402",
+    "identityHash": "c29a9c498d3075494afe693eb33874e0",
     "entities": [
       {
         "tableName": "transactions",
@@ -149,6 +149,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_dimensionId` ON `${TABLE_NAME}` (`dimensionId`)"
+          },
+          {
+            "name": "index_categories_systemKey",
+            "unique": true,
+            "columnNames": [
+              "systemKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_systemKey` ON `${TABLE_NAME}` (`systemKey`)"
           }
         ],
         "foreignKeys": [
@@ -1025,7 +1034,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4267a4a0c59fccdd5b4cffed7a8b3402')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c29a9c498d3075494afe693eb33874e0')"
     ]
   }
 }

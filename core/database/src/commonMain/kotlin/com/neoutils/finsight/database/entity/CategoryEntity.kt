@@ -21,6 +21,13 @@ import kotlin.time.ExperimentalTime
     ],
     indices = [
         Index(value = ["dimensionId"]),
+        // At most one category per system key, enforced by the store rather than by
+        // the code that reads it. A second row under the same key would split the
+        // dimension in two, and every read that separates by it would quietly return
+        // the half it happened to find — money back in the line it had left, with no
+        // error and nothing to reconcile against. SQLite allows many NULLs in a
+        // unique index, so the categories the user creates are unaffected.
+        Index(value = ["systemKey"], unique = true),
     ]
 )
 data class CategoryEntity(

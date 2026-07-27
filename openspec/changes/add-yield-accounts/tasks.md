@@ -71,7 +71,7 @@
 ## 11. Fechamento
 
 - [x] 11.1 Registrar o evento de analytics de lançamento de rendimento
-- [ ] 11.2 Verificar em app rodando: declarar rendimento numa conta, lançar, conferir que a linha aparece nos dois cartões, que a coluna fecha, e que o rendimento consta no relatório dentro de receitas
+- [x] 11.2 Verificar em app rodando: declarar rendimento numa conta, lançar, conferir que a linha aparece nos dois cartões, que a coluna fecha, e que o rendimento consta no relatório dentro de receitas
 
 ## 12. Correção imprevista — desligar o interruptor ocultava rendimento já lançado
 

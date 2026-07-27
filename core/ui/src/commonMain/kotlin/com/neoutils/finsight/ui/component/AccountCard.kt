@@ -193,15 +193,20 @@ private fun DetailContent(
             color = Income,
         )
 
-        // Shown on the declaration, not on the figure: a freshly declared account has
-        // yielded nothing yet, and a line that only appeared once it had would have
-        // nowhere for the first launch to be tapped.
-        if (accountUi.yieldsInterest) {
+        // The declaration puts the line on screen at zero — a freshly declared account
+        // has yielded nothing yet, and a line that appeared only once it had would
+        // leave the first launch nowhere to be tapped. A yield already recorded keeps
+        // it there whatever the account declares now, because `income` no longer holds
+        // that money and the column has to keep adding up.
+        //
+        // Only the declaration makes it *actionable*, though: an account that no longer
+        // declares a yield is not offered the launch path.
+        if (accountUi.showsYield) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_yield),
                 amount = accountUi.yield,
                 color = Yield,
-                onEditClick = variant.onLaunchYield,
+                onEditClick = variant.onLaunchYield.takeIf { accountUi.yieldsInterest },
             )
         }
 

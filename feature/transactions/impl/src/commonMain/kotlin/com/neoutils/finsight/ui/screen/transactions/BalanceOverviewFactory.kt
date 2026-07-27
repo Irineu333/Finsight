@@ -29,16 +29,16 @@ import kotlinx.datetime.minusMonth
  *   carries no sign at all. Reading the card's book the other way round — debt positive —
  *   would make spending read `+90`, which is not how anyone reads a statement.
  *
- * [yieldDimensionId] is what separates yield from ordinary income; [hasYieldingAccount]
- * is what decides whether the line is offered at all. Two owners, two questions: the
- * declaration says *whether the line exists*, the dimension says *what the number is*.
- * With no account declaring it, the line is absent and income is what it always was.
+ * [yieldDimensionId] is what separates yield from ordinary income. The line appears
+ * when the period actually holds one, and not on any account's declaration: the summary
+ * has nothing to launch from, so a line at zero here would say nothing — while a yield
+ * already recorded must stay visible however the account is configured now, since
+ * `income` no longer contains it.
  */
 internal suspend fun IEntryRepository.balanceOverview(
     scope: TransactionScope,
     month: YearMonth,
     yieldDimensionId: Long? = null,
-    hasYieldingAccount: Boolean = false,
 ): BalanceOverview {
     val previous = month.minusMonth()
 
@@ -48,9 +48,7 @@ internal suspend fun IEntryRepository.balanceOverview(
             BalanceOverview.Accounts(
                 openingBalance = DisplayAmount.natural(naturalBalanceUpTo(previous, AccountType.ASSET)),
                 income = DisplayAmount.forcedPositive(flows.income),
-                // Shown at zero when someone declares it: the month the user expects to
-                // start seeing it is precisely the month the summary must not go quiet.
-                yield = DisplayAmount.forcedPositive(flows.yield).takeIf { hasYieldingAccount },
+                yield = DisplayAmount.forcedPositive(flows.yield).orNullIfZero(),
                 expense = DisplayAmount.forcedNegative(flows.expense),
                 // An invoice payment has a leg outside this perimeter, so it *is* a
                 // flow here — unlike a transfer, whose two legs are both inside.
@@ -82,7 +80,7 @@ internal suspend fun IEntryRepository.balanceOverview(
             BalanceOverview.Overall(
                 openingNet = DisplayAmount.natural(netBalanceUpTo(previous)),
                 income = DisplayAmount.forcedPositive(asset.income),
-                yield = DisplayAmount.forcedPositive(asset.yield).takeIf { hasYieldingAccount },
+                yield = DisplayAmount.forcedPositive(asset.yield).orNullIfZero(),
                 // Disjoint sets — a card purchase has no ASSET leg — so aggregating
                 // them cannot double-count. Which book the money left is the scope's
                 // question, not the summary's.

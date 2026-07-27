@@ -40,9 +40,11 @@ Um lançamento não tem esse problema porque não reconhece nada. Cada rendiment
 
 **Decisão:** `Account.yieldsInterest: Boolean`, em `:core:ledger`, sem participação em cálculo.
 
-A separação dos totais é feita inteiramente pela dimensão (D3). O interruptor governa apenas afordância: se a conta oferece a linha e o modal. A razão de ele existir mesmo assim é o **primeiro mês**: uma conta recém-marcada ainda não tem lançamento de rendimento, e uma linha derivada dos lançamentos exibiria nada — sem lugar para clicar e começar. O interruptor é o que faz `Rendimentos R$ 0,00` aparecer e ser clicável.
+A separação dos totais é feita inteiramente pela dimensão (D3). O interruptor governa apenas afordância: se a conta oferece o modal, e se a linha aparece **zerada**. A razão de ele existir mesmo assim é o **primeiro mês**: uma conta recém-marcada ainda não tem lançamento de rendimento, e uma linha derivada apenas dos lançamentos exibiria nada — sem lugar para clicar e começar. O interruptor é o que faz `Rendimentos R$ 0,00` aparecer e ser clicável.
 
-Duas coisas, dois donos: o `Boolean` diz *se a linha existe*; a dimensão diz *qual é o número*.
+O que ele **não** pode governar é a exibição de um rendimento já lançado. A dimensão separa independentemente dele, então a linha de entradas deixou de conter aquele valor; ocultar a linha ao desligar o interruptor tiraria o dinheiro de ambas e faria a coluna deixar de fechar. O critério de exibição é, portanto, `declarado || período contém rendimento` — e só a declaração torna a linha acionável.
+
+Duas coisas, dois donos: o `Boolean` diz *se a linha é oferecida*; a dimensão diz *qual é o número* — e um número diferente de zero exige a sua linha, tenha sido oferecida ou não.
 
 `chart-of-accounts` não é modificada por isso. Ela restringe o conjunto de `type` e proíbe categoria como linha do plano — nada sobre colunas adicionais na linha de conta. E `poupança` e `investimento` já estão nomeadas ali como `ASSET`.
 
@@ -110,6 +112,8 @@ O ganho é que a regra é **verificável olhando a tela**, e o vocabulário pass
 ### D7 — Escopos que segregam
 
 `Contas` e `Geral` ganham a linha: ambos carregam fluxos `ASSET` e ambos já usam as mesmas chaves `summary_card_income`/`_outgoing`. `Cartões` não: o perímetro é `LIABILITY`, não há rendimento, e ele já tem vocabulário próprio (gasto/pagamento).
+
+No resumo o critério é apenas *o período contém rendimento* — sem a metade "declarada" de D2. Ali não há o que clicar, então uma linha zerada não convidaria a nada; e o resumo agrega o perímetro inteiro, onde "qual conta declarou" não é uma pergunta que a linha responda. O `AccountCard` é quem tem uma conta e um lugar para tocar, e é lá que a linha zerada serve.
 
 ## Risks / Trade-offs
 

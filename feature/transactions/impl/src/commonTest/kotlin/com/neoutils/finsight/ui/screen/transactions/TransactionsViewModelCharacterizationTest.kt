@@ -79,7 +79,6 @@ class TransactionsViewModelCharacterizationTest {
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
-            accountRepository = FakeAccountsForYield,
         entryRepository = FakeLedger(transactions),
         )
 

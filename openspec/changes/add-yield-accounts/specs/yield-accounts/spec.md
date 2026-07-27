@@ -4,9 +4,11 @@
 
 Uma conta `ASSET` SHALL poder declarar que **rende** — que o seu saldo cresce por remuneração do próprio dinheiro, sem que o usuário o movimente. A declaração SHALL ser estado primário da conta, escolhido pelo usuário na configuração dela, e MUST NOT ser derivada de lançamentos: uma conta recém-declarada ainda não rendeu, e derivá-la a manteria invisível exatamente quando o usuário precisa começar.
 
-Essa declaração SHALL governar **apenas** o que o sistema oferece: se a conta exibe a linha de rendimento e o caminho para lançar. Ela MUST NOT participar de nenhuma soma, de nenhuma classificação de lançamento e de nenhuma consulta de total — a separação do rendimento nas leituras é feita pela dimensão (ver "Rendimento é separado por dimensão"), e não por ela. São dois donos distintos: a declaração decide *se a linha existe*, a dimensão decide *qual é o número*.
+Essa declaração SHALL governar **apenas** o que o sistema oferece: se a conta oferece o caminho para lançar, e se a linha de rendimento é exibida **ainda que zerada**. Ela MUST NOT participar de nenhuma soma, de nenhuma classificação de lançamento e de nenhuma consulta de total — a separação do rendimento nas leituras é feita pela dimensão (ver "Rendimento é separado por dimensão"), e não por ela. São dois donos distintos: a declaração decide *se a linha existe*, a dimensão decide *qual é o número*.
 
 Declarar que uma conta rende, ou deixar de declarar, MUST NOT alterar valor algum já registrado. Lançamentos de rendimento existentes permanecem intactos, classificados como sempre estiveram, e continuam somados no total da conta.
+
+Disso decorre que retirar a declaração MUST NOT ocultar rendimento já lançado: a separação nas leituras é feita pela dimensão e independe da declaração, de modo que a linha de entradas **deixou de conter** aquele valor. Uma superfície que segrega rendimento SHALL exibir a linha sempre que o período contiver um, declarada a conta ou não — do contrário o valor não estaria em linha alguma e a decomposição deixaria de ser total. O que a retirada cessa é a **oferta**: o caminho de lançamento, e a linha zerada nos períodos sem rendimento.
 
 Nenhuma outra natureza de conta SHALL poder declarar rendimento: a declaração pertence a onde o dinheiro do usuário está e é remunerado.
 
@@ -14,13 +16,17 @@ Nenhuma outra natureza de conta SHALL poder declarar rendimento: a declaração 
 - **WHEN** o usuário declara que uma conta rende e nenhum rendimento foi lançado nela
 - **THEN** a linha de rendimento é exibida com valor zero e permanece acionável, de onde o primeiro lançamento pode ser feito
 
-#### Scenario: Conta que não declara rendimento
-- **WHEN** uma conta não declara que rende
+#### Scenario: Conta que não declara rendimento e nunca rendeu
+- **WHEN** uma conta não declara que rende e não há rendimento lançado nela no período
 - **THEN** a linha de rendimento não é exibida para ela, e o caminho de lançamento não é oferecido
 
 #### Scenario: Retirar a declaração preserva a história
 - **WHEN** o usuário deixa de declarar que uma conta rende, havendo rendimentos já lançados nela
 - **THEN** nenhum lançamento é alterado ou removido, o saldo da conta permanece o mesmo, e apenas a oferta do afordance cessa
+
+#### Scenario: Retirar a declaração não oculta rendimento já lançado
+- **WHEN** o usuário deixa de declarar que uma conta rende e um período dela contém rendimento lançado
+- **THEN** a linha de rendimento continua exibida com o valor do período, sem oferecer o caminho de lançamento, e a decomposição do período continua total
 
 ### Requirement: Rendimento é lançamento, nunca ajuste
 

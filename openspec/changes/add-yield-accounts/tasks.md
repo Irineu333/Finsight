@@ -49,7 +49,7 @@
 ## 8. A linha em Contas
 
 - [x] 8.1 Adicionar `yield` a `AccountUi` e ao seu mapper
-- [x] 8.2 Adicionar a linha de rendimento a `AccountCard` (`:core:ui`), logo após a de entradas, usando o `AccountSummaryRow` clicável que já existe, exibida quando a conta declara render — inclusive com valor zero
+- [x] 8.2 Adicionar a linha de rendimento a `AccountCard` (`:core:ui`), logo após a de entradas, usando o `AccountSummaryRow` clicável que já existe, exibida quando a conta declara render — inclusive com valor zero (critério revisto em 12.1)
 - [x] 8.3 Definir a cor de rendimento em `:core:designsystem`, irmã de `Income` e distinguível dela (design, questão em aberto)
 - [x] 8.4 Ligar o clique da linha ao modal de lançamento
 
@@ -57,7 +57,7 @@
 
 - [x] 9.1 Adicionar `yield` a `BalanceOverview.Accounts` e `.Overall`, atualizando o KDoc da identidade aritmética de cada uma
 - [x] 9.2 Exibir a linha em `AccountsBody` e `OverallBody` de `SummaryCard`, e não em `CardsBody` (design D7)
-- [x] 9.3 Testar que a coluna fecha com a linha nova e que ela não aparece quando nenhuma conta do perímetro declara render
+- [x] 9.3 Testar que a coluna fecha com a linha nova e que ela não aparece quando nenhuma conta do perímetro declara render (critério revisto em 12.2)
 
 ## 10. Vocabulário
 
@@ -72,3 +72,16 @@
 
 - [x] 11.1 Registrar o evento de analytics de lançamento de rendimento
 - [ ] 11.2 Verificar em app rodando: declarar rendimento numa conta, lançar, conferir que a linha aparece nos dois cartões, que a coluna fecha, e que o rendimento consta no relatório dentro de receitas
+
+## 12. Correção imprevista — desligar o interruptor ocultava rendimento já lançado
+
+Encontrado em uso, depois de 1–11 implementadas. Exibir a linha **na declaração**
+deixava a coluna de fora do fechamento: a dimensão separa o rendimento de `income`
+assim que existe, qualquer que seja a declaração da conta, então ao desligar o
+interruptor o valor não estava em linha alguma — nem em entradas, nem em rendimentos.
+A declaração governa a **oferta**, nunca a história.
+
+- [x] 12.1 Em `AccountUi`, derivar `showsYield` = declara render **ou** o período contém rendimento, e tornar a linha de `AccountCard` acionável apenas na declaração — quem não declara não recebe o caminho de lançamento
+- [x] 12.2 Em `BalanceOverviewFactory`, exibir a linha quando o período contém rendimento, sem consultar declaração alguma; remover o parâmetro `hasYieldingAccount` e, com ele, a injeção de `IAccountRepository` no `TransactionsViewModel`, que existia só para isso
+- [x] 12.3 Testar os três casos da regra em `:core:ui` (declarado e zerado; declaração retirada com rendimento no período; nem um nem outro), e em `transaction-scope` que a coluna fecha com a declaração retirada e que um mês sem rendimento não exibe a linha
+- [x] 12.4 Corrigir as specs `yield-accounts` e `transaction-scope` e o design (D2, D7), que enunciavam o critério antigo — era a spec que descrevia o bug

@@ -9,7 +9,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -82,24 +81,21 @@ class TransactionScopeYieldTest {
 
     private fun viewModel(
         transactions: List<Transaction>,
-        hasYieldingAccount: Boolean,
         yieldCategoryExists: Boolean = true,
     ) = TransactionsViewModel(
         filterLabel = null, category = null, filterTarget = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = YieldAwareCategories(yieldCategory.takeIf { yieldCategoryExists }),
         installmentRepository = NoInstallments,
-        accountRepository = YieldAwareAccounts(hasYieldingAccount),
         entryRepository = FakeLedger(transactions),
     )
 
     private suspend fun overviewUnder(
         scope: TransactionScope,
         transactions: List<Transaction> = everything,
-        hasYieldingAccount: Boolean = true,
         yieldCategoryExists: Boolean = true,
     ): BalanceOverview {
-        val vm = viewModel(transactions, hasYieldingAccount, yieldCategoryExists)
+        val vm = viewModel(transactions, yieldCategoryExists)
         var result: BalanceOverview = BalanceOverview.Overall()
         vm.uiState.test {
             var state = awaitItem()
@@ -132,24 +128,48 @@ class TransactionScopeYieldTest {
     fun `the yield line takes exactly what the income line gives up`() = runTest(dispatcher) {
         val segregated = assertIs<BalanceOverview.Accounts>(overviewUnder(TransactionScope.ACCOUNTS))
         val undivided = assertIs<BalanceOverview.Accounts>(
-            overviewUnder(TransactionScope.ACCOUNTS, hasYieldingAccount = false, yieldCategoryExists = false)
+            overviewUnder(TransactionScope.ACCOUNTS, yieldCategoryExists = false)
         )
 
-        assertNull(undivided.yield, "no account declares it, so there is no line")
+        assertNull(undivided.yield, "nothing separates it, so there is no line")
         assertEquals(5_020.40, undivided.income.value)
         assertEquals(undivided.income.value, segregated.income.value + segregated.yield!!.value)
         assertEquals(undivided.finalBalance.value, segregated.finalBalance.value)
     }
 
     @Test
-    fun `a declared account shows the line at zero in a month without yield`() = runTest(dispatcher) {
+    fun `a month without yield has no yield line`() = runTest(dispatcher) {
         val overview = assertIs<BalanceOverview.Accounts>(
             overviewUnder(TransactionScope.ACCOUNTS, transactions = listOf(salary, groceries))
         )
 
-        // The month the user expects to start seeing it is the one the summary must
-        // not go quiet in — the line is what the first launch is reached from.
-        assertEquals(0.0, overview.yield?.value)
+        // Nothing to launch from here, so a line at zero would say nothing. The account
+        // card is where a declared account is offered its empty line.
+        assertNull(overview.yield)
+    }
+
+    @Test
+    fun `a yield already recorded keeps its line however the account is configured now`() = runTest(dispatcher) {
+        // The account has stopped declaring a yield, but the month still holds one and
+        // `income` no longer contains it: hiding the line would break the column.
+        val retired = account.copy(yieldsInterest = false)
+        val overview = assertIs<BalanceOverview.Accounts>(
+            overviewUnder(
+                TransactionScope.ACCOUNTS,
+                transactions = everything.map { op ->
+                    op.copy(entries = op.entries.map { entry ->
+                        if (entry.account.id == account.id) entry.copy(account = retired) else entry
+                    })
+                },
+            )
+        )
+
+        assertEquals(20.40, overview.yield?.value)
+        assertEquals(
+            overview.finalBalance.value,
+            overview.openingBalance.value + overview.income.value + overview.yield!!.value +
+                overview.expense.value,
+        )
     }
 
     @Test
@@ -194,24 +214,4 @@ private class YieldAwareCategories(private val yieldCategory: Category?) : ICate
     override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
     override suspend fun update(category: Category) = throw NotImplementedError()
     override suspend fun delete(category: Category) = throw NotImplementedError()
-}
-
-private class YieldAwareAccounts(private val declared: Boolean) : IAccountRepository {
-    override suspend fun hasYieldingAccount(): Boolean = declared
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(declared)
-    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAllAccounts(): List<Account> = emptyList()
-    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
-    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
-    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAccountById(accountId: Long): Account? = null
-    override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(null)
-    override suspend fun getDefaultAccount(): Account? = null
-    override fun observeDefaultAccount(): Flow<Account?> = flowOf(null)
-    override suspend fun getAccountCount(): Int = 0
-    override suspend fun insert(account: Account): Long = throw NotImplementedError()
-    override suspend fun update(account: Account) = throw NotImplementedError()
-    override suspend fun delete(account: Account) = throw NotImplementedError()
-    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 }

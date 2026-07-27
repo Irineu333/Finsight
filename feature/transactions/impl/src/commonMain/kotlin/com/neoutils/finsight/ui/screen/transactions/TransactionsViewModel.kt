@@ -9,7 +9,6 @@ import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -35,7 +34,6 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
-    private val accountRepository: IAccountRepository,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -74,7 +72,6 @@ class TransactionsViewModel(
             yieldDimensionId = categoryRepository
                 .getCategoryBySystemKey(SystemCategoryKey.YIELD)
                 ?.dimensionId,
-            hasYieldingAccount = accountRepository.hasYieldingAccount(),
         )
 
         // The scope decides between account and card; offering the chip as well would

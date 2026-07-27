@@ -116,24 +116,3 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
 }
-
-/** No account declares a yield, so the summary offers no yield line. */
-internal object FakeAccountsForYield : com.neoutils.finsight.domain.repository.IAccountRepository {
-    override suspend fun hasYieldingAccount(): Boolean = false
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
-    override fun observeAllAccounts(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
-    override suspend fun getAllAccounts(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
-    override suspend fun getAllAccountsIncludingClosed(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
-    override fun observeAllAccountsIncludingClosed(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
-    override suspend fun getAllLedgerAccounts(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
-    override fun observeAllLedgerAccounts(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
-    override suspend fun getAccountById(accountId: Long): com.neoutils.finsight.domain.model.Account? = null
-    override fun observeAccountById(accountId: Long): Flow<com.neoutils.finsight.domain.model.Account?> = flowOf(null)
-    override suspend fun getDefaultAccount(): com.neoutils.finsight.domain.model.Account? = null
-    override fun observeDefaultAccount(): Flow<com.neoutils.finsight.domain.model.Account?> = flowOf(null)
-    override suspend fun getAccountCount(): Int = 0
-    override suspend fun insert(account: com.neoutils.finsight.domain.model.Account): Long = throw NotImplementedError()
-    override suspend fun update(account: com.neoutils.finsight.domain.model.Account) = throw NotImplementedError()
-    override suspend fun delete(account: com.neoutils.finsight.domain.model.Account) = throw NotImplementedError()
-    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
-}

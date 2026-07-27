@@ -84,7 +84,6 @@ class RecurringFormViewModelTest {
         override suspend fun getDefaultAccount(): Account? = account
         override fun observeDefaultAccount(): Flow<Account?> = flowOf(account)
         override suspend fun hasYieldingAccount(): Boolean = false
-        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
         override suspend fun getAccountCount(): Int = 1
         override suspend fun insert(account: Account): Long = 0L
         override suspend fun update(account: Account) = Unit

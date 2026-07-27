@@ -341,7 +341,6 @@ private class FakeAccountDao : AccountDao {
     override suspend fun getDefaultAccount(): AccountEntity? = null
     override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()
     override suspend fun hasYieldingAccount(): Boolean = false
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
     override suspend fun getAccountCount(): Int = accounts.size
     override suspend fun update(account: AccountEntity) { accounts[account.id] = account }
     override suspend fun delete(account: AccountEntity) { accounts.remove(account.id) }

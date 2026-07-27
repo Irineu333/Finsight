@@ -125,7 +125,6 @@ class RecordingCategoryRepository(
 
 class FakeAccounts(private val hasYieldingAccount: Boolean) : IAccountRepository {
     override suspend fun hasYieldingAccount(): Boolean = hasYieldingAccount
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(hasYieldingAccount)
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<Account> = emptyList()
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()

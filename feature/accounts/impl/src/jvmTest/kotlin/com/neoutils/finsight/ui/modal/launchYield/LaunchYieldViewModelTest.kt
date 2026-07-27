@@ -239,7 +239,6 @@ class LaunchYieldViewModelTest {
     private class AccountStore(private val accounts: List<Account>) : IAccountRepository {
         override suspend fun getAccountById(accountId: Long): Account? = accounts.firstOrNull { it.id == accountId }
         override suspend fun hasYieldingAccount(): Boolean = accounts.any { it.yieldsInterest }
-        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(accounts.any { it.yieldsInterest })
         override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
         override suspend fun getAllAccounts(): List<Account> = accounts
         override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts

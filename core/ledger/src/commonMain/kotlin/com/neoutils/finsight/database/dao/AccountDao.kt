@@ -64,8 +64,8 @@ interface AccountDao {
     suspend fun getAccountCount(): Int
 
     /**
-     * Whether any open account declares that it yields — the fact behind both the
-     * aggregate yield line and the guard on retiring the yield category.
+     * Whether any open account declares that it yields — the fact behind the guard
+     * on retiring the yield category.
      *
      * Closed accounts are excluded deliberately. One offers no yield affordance and
      * cannot be edited to withdraw the declaration, so counting it would hold the
@@ -74,9 +74,6 @@ interface AccountDao {
      */
     @Query("SELECT EXISTS(SELECT 1 FROM accounts WHERE type = 'ASSET' AND isArchived = 0 AND yieldsInterest = 1)")
     suspend fun hasYieldingAccount(): Boolean
-
-    @Query("SELECT EXISTS(SELECT 1 FROM accounts WHERE type = 'ASSET' AND isArchived = 0 AND yieldsInterest = 1)")
-    fun observeHasYieldingAccount(): Flow<Boolean>
 
     /**
      * Closing is the only way an account with history leaves the app: the rows

@@ -73,7 +73,6 @@ private class AccountStore(vararg seed: Account) : IAccountRepository {
         if (index >= 0) rows[index] = account
     }
     override suspend fun hasYieldingAccount(): Boolean = rows.any { !it.isArchived && it.yieldsInterest }
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(rows.any { it.yieldsInterest })
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = rows
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(rows)
     override suspend fun getAllAccounts(): List<Account> = rows

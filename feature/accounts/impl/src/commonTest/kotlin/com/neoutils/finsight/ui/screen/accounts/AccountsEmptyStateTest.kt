@@ -172,7 +172,6 @@ private class FakeAccountRepository(private val account: Account) : IAccountRepo
     override suspend fun getDefaultAccount(): Account = account
     override fun observeDefaultAccount(): Flow<Account?> = MutableStateFlow(account)
     override suspend fun hasYieldingAccount(): Boolean = false
-    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
     override suspend fun getAccountCount(): Int = 1
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()

@@ -60,8 +60,6 @@ class AccountRepository(
 
     override suspend fun hasYieldingAccount(): Boolean = dao.hasYieldingAccount()
 
-    override fun observeHasYieldingAccount(): Flow<Boolean> = dao.observeHasYieldingAccount()
-
     override suspend fun insert(account: Account): Long {
         return dao.insert(mapper.toEntity(account))
     }

@@ -42,7 +42,6 @@ class ArchivedAccountsViewModelTest {
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
         override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
         override suspend fun hasYieldingAccount(): Boolean = false
-        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
         override suspend fun getAccountCount(): Int = throw NotImplementedError()
         override suspend fun insert(account: Account): Long = throw NotImplementedError()
         override suspend fun update(account: Account) = throw NotImplementedError()

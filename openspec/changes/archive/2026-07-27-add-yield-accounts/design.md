@@ -140,6 +140,6 @@ Nenhum dado é reinterpretado e nenhuma transação é reescrita. Ajustes `EQUIT
 
 A remoção do template "Investimentos" vale só para instalações futuras — quem já criou as categorias padrão mantém a sua, que segue funcionando como categoria comum.
 
-## Open Questions
+## Resolved Questions
 
-- **O texto em inglês do par segregado.** `Money In / Money Out` é a proposta, com `Yield` na linha nova; a distinção pt entre "entrada" e "receita" não tem equivalente direto, e vale uma revisão de quem lê o app em inglês antes de congelar.
+- **O texto em inglês do par segregado** — resolvido como proposto: `Money In / Money Out` no par segregado, `Income / Expenses` no não segregado, e `Yield` na linha nova. A distinção pt entre "entrada" e "receita" não tem equivalente direto; o par escolhido é o que diz "dinheiro que entrou" sem prometer a classificação que "income" promete.

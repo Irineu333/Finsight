@@ -142,5 +142,4 @@ A remoção do template "Investimentos" vale só para instalações futuras — 
 
 ## Open Questions
 
-- **A cor da linha de rendimento.** Precisa ser irmã de `Income` e distinguível dela, senão a segregação não se lê. Definição para `:core:designsystem` na implementação.
 - **O texto em inglês do par segregado.** `Money In / Money Out` é a proposta, com `Yield` na linha nova; a distinção pt entre "entrada" e "receita" não tem equivalente direto, e vale uma revisão de quem lê o app em inglês antes de congelar.

@@ -15,9 +15,6 @@ val Primary1 = Color(0xFF0D9A8E) // Teal - Success/Primary actions
 val Income = Color(0xFF22C55E) // Vibrant lime green - Receitas
 val Expense = Color(0xFFEF4444) // Vibrant red - Despesas
 val Adjustment = Color(0xFFF59E0B) // Amber - Ajustes
-// Teal-green: a sibling of Income, and distinguishable from it. Both are money in,
-// and the yield line only reads as a separation if the eye can tell the two apart.
-val Yield = Color(0xFF14B8A6) // Teal - Rendimentos
 val InvoicePayment = Color(0xFF8B5CF6) // Purple - Pagamento de Fatura
 val Transfer = Color(0xFF3B82F6) // Blue - Transferências
 

@@ -45,7 +45,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.ui.theme.Yield
+import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
@@ -164,7 +164,7 @@ class LaunchYieldModal(
                         enabled = yieldAmount > 0.0 && !state.isSubmitting,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Yield),
+                        colors = ButtonDefaults.buttonColors(containerColor = Income),
                     ) {
                         Text(
                             text = stringResource(Res.string.launch_yield_save),

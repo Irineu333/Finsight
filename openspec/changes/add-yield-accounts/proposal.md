@@ -12,7 +12,7 @@ O problema não é de modelo — um rendimento *é* uma receita, e o razão já 
 
 - **Lançar rendimento é um lançamento, não um ajuste.** Um modal pede **data e valor** e escreve uma transação comum `ASSET ← INCOME` carregando a dimensão de rendimentos. Não há valor-alvo, não há reconhecimento do lançamento anterior, não há contrapartida `EQUITY`. **"Editar saldo" permanece exatamente como está** — esta mudança não o toca.
 
-- **Uma linha própria em Contas e em Transações.** `AccountCard` e `SummaryCard` (escopos *Contas* e *Geral*) ganham a linha **Rendimentos**, logo após a de entradas, com cor própria. Ela aparece quando a conta tem o interruptor ligado — e, no agregado, quando alguma conta tem. O relatório **não** segrega: lá rendimento continua dentro de receita.
+- **Uma linha própria em Contas e em Transações.** `AccountCard` e `SummaryCard` (escopos *Contas* e *Geral*) ganham a linha **Rendimentos**, logo após a de entradas, na cor de receita — é dinheiro que entrou, e o que o segrega é o rótulo. Ela aparece quando a conta tem o interruptor ligado — e, no agregado, quando alguma conta tem. O relatório **não** segrega: lá rendimento continua dentro de receita.
 
 - **A regra de vocabulário que torna isso legível.** Numa decomposição fixa de um total, se *Rendimentos* é uma das linhas o par é **Entrada/Saída**; se não é, o par é **Receita/Despesa** — e fica subentendido que receita engloba rendimento. O rótulo passa a responder *o que está dentro do número*, e a divergência entre telas deixa de ser incoerência para virar informação. A regra já existe no código pela metade: `summary_card_income`/`_outgoing` já diz "Entradas/Saídas" e o relatório já diz "Receitas/Despesas" — **só o `AccountCard` está fora de posição**, e é justamente a tela onde a linha nova entra.
 
@@ -41,7 +41,6 @@ O problema não é de modelo — um rendimento *é* uma receita, e o razão já 
 - **`feature/accounts/*`** — interruptor no `AccountFormModal`, `LaunchYieldModal` novo (data + valor), o use case de lançamento, o use case que garante a categoria de sistema, e o guard consultado pela retirabilidade de categoria.
 - **`feature/categories/*`** — `ICategoryRepository` ganha a busca por `systemKey`; `CreateDefaultCategoriesUseCase` perde o template "Investimentos"; a resolução de retirabilidade consulta o quarto guard.
 - **`feature/transactions/impl`** — `BalanceOverview.Accounts` e `.Overall` ganham `yield`; `SummaryCard` ganha a linha nos dois corpos.
-- **`core/designsystem`** — cor própria para rendimento, irmã de `Income` e distinta dela; sem uma, a segregação não se lê.
 - **`core/resources`** — strings novas (linha, modal, interruptor, motivo de recusa) e as renomeações da regra de vocabulário, em pt **e** en. Em inglês a distinção não tem tradução direta: o par segregado é **Money In / Money Out**, o agregado permanece **Income / Expenses**, e a linha nova é **Yield**. Isso também conserta o par misto `summary_card_income`/`_outgoing` ("Income"/"Outgoing").
 - **`core/analytics`** — evento de lançamento de rendimento.
 

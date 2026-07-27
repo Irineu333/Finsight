@@ -32,7 +32,6 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.ui.theme.Yield
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.summary_card_adjustments
@@ -156,7 +155,7 @@ private fun ColumnScope.AccountsBody(
         SummaryRow(
             label = stringResource(Res.string.summary_card_yield),
             amount = yield,
-            color = Yield
+            color = Income
         )
     }
 
@@ -255,7 +254,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         SummaryRow(
             label = stringResource(Res.string.summary_card_yield),
             amount = yield,
-            color = Yield
+            color = Income
         )
     }
 

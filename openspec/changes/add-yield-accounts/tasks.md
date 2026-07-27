@@ -50,7 +50,7 @@
 
 - [x] 8.1 Adicionar `yield` a `AccountUi` e ao seu mapper
 - [x] 8.2 Adicionar a linha de rendimento a `AccountCard` (`:core:ui`), logo após a de entradas, usando o `AccountSummaryRow` clicável que já existe, exibida quando a conta declara render — inclusive com valor zero (critério revisto em 12.1)
-- [x] 8.3 Definir a cor de rendimento em `:core:designsystem`, irmã de `Income` e distinguível dela (design, questão em aberto)
+- [x] 8.3 Definir a cor de rendimento (design, questão em aberto) — resolvida em 12.5: o rendimento lê-se com a cor de receita, e é o rótulo que o segrega
 - [x] 8.4 Ligar o clique da linha ao modal de lançamento
 
 ## 9. A linha em Transações
@@ -85,3 +85,5 @@ A declaração governa a **oferta**, nunca a história.
 - [x] 12.2 Em `BalanceOverviewFactory`, exibir a linha quando o período contém rendimento, sem consultar declaração alguma; remover o parâmetro `hasYieldingAccount` e, com ele, a injeção de `IAccountRepository` no `TransactionsViewModel`, que existia só para isso
 - [x] 12.3 Testar os três casos da regra em `:core:ui` (declarado e zerado; declaração retirada com rendimento no período; nem um nem outro), e em `transaction-scope` que a coluna fecha com a declaração retirada e que um mês sem rendimento não exibe a linha
 - [x] 12.4 Corrigir as specs `yield-accounts` e `transaction-scope` e o design (D2, D7), que enunciavam o critério antigo — era a spec que descrevia o bug
+- [x] 12.5 Fechar a questão em aberto da cor: o valor do rendimento usa `Income`, porque é receita e assim se lê; o que o segrega é o **rótulo** (`money-display`), não uma cor própria. A cor `Yield` sai de `:core:designsystem` por não ter mais uso, e o botão do modal de lançamento passa a `Income`
+- [x] 12.6 Desacoplar o lápis do `AccountSummaryRow` da cor da figura ao lado: cinza por padrão, porque nas linhas de saldo ele é só um caminho de entrada. A de rendimento passa a cor da figura, esmaecida, porque ali a ação **é** a figura — é dali que se lança

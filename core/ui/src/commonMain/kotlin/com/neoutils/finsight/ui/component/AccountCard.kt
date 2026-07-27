@@ -26,7 +26,6 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.ui.theme.Yield
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.accounts_advance_payments
 import com.neoutils.finsight.resources.accounts_adjustments
@@ -205,8 +204,9 @@ private fun DetailContent(
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_yield),
                 amount = accountUi.yield,
-                color = Yield,
+                color = Income,
                 onEditClick = variant.onLaunchYield.takeIf { accountUi.yieldsInterest },
+                editTint = Income.copy(alpha = 0.5f),
             )
         }
 
@@ -318,6 +318,11 @@ private fun AccountSummaryRow(
     modifier: Modifier = Modifier,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
+    // Chrome by default, so the pencil reads the same on the rows where it is only a
+    // way in. A row whose action *is* the figure — launching a yield — passes the
+    // figure's colour, faded, so the two read as one thing without the control
+    // competing with the number it creates.
+    editTint: Color = colorScheme.onSurfaceVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -348,7 +353,7 @@ private fun AccountSummaryRow(
                 Icon(
                     imageVector = Icons.Rounded.ModeEdit,
                     contentDescription = null,
-                    tint = color.copy(alpha = 0.5f),
+                    tint = editTint,
                     modifier = Modifier.size(16.dp),
                 )
             }

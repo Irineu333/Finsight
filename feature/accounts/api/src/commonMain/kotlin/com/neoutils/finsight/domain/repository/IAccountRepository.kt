@@ -29,6 +29,17 @@ interface IAccountRepository {
     suspend fun getDefaultAccount(): Account?
     fun observeDefaultAccount(): Flow<Account?>
     suspend fun getAccountCount(): Int
+
+    /**
+     * Whether any open account declares that it yields.
+     *
+     * Two consumers, one fact: it decides whether an aggregate summary shows the
+     * yield line at all, and it is the fourth guard on retiring the yield category —
+     * which is protected while someone uses it, and removable again once nobody does.
+     */
+    suspend fun hasYieldingAccount(): Boolean
+
+    fun observeHasYieldingAccount(): Flow<Boolean>
     suspend fun insert(account: Account): Long
     suspend fun update(account: Account)
     suspend fun delete(account: Account)

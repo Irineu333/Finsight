@@ -3,12 +3,14 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.error.RetireError
 import com.neoutils.finsight.domain.exception.RetireException
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -42,6 +44,7 @@ class DeleteCategoryGuardsTest {
         hasEntries: Boolean = false,
         hasBudget: Boolean = false,
         hasRecurring: Boolean = false,
+        hasYieldingAccount: Boolean = false,
         repo: RecordingCategoryRepository = RecordingCategoryRepository(),
     ) = DeleteCategoryUseCase(
         categoryRepository = repo,
@@ -49,6 +52,7 @@ class DeleteCategoryGuardsTest {
             entryRepository = FakeEntries(hasEntries),
             budgetRepository = FakeBudget(hasBudget),
             recurringRepository = FakeRecurring(hasRecurring),
+            accountRepository = FakeAccounts(hasYieldingAccount),
         ),
     )
 
@@ -109,6 +113,7 @@ class RecordingCategoryRepository(
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(existing)
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun archive(id: Long) { archived += id }
@@ -116,6 +121,26 @@ class RecordingCategoryRepository(
     override suspend fun insert(category: Category) = throw NotImplementedError()
     override suspend fun insertAll(categories: List<Category>) { insertedBatches += categories }
     override suspend fun update(category: Category) = throw NotImplementedError()
+}
+
+class FakeAccounts(private val hasYieldingAccount: Boolean) : IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = hasYieldingAccount
+    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(hasYieldingAccount)
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
+    override suspend fun getAllAccounts(): List<Account> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
+    override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
+    override suspend fun getAccountById(accountId: Long): Account? = null
+    override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(null)
+    override suspend fun getDefaultAccount(): Account? = null
+    override fun observeDefaultAccount(): Flow<Account?> = flowOf(null)
+    override suspend fun getAccountCount(): Int = 0
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 }
 
 class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepository {
@@ -151,12 +176,12 @@ class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,

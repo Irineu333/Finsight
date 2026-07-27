@@ -5,9 +5,11 @@ package com.neoutils.finsight.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -33,6 +35,7 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
+    private val accountRepository: IAccountRepository,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -64,7 +67,15 @@ class TransactionsViewModel(
         // Every figure comes from the ledger, per scope — never summed over the loaded
         // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
         // re-runs this block on every ledger write, and on scope or month change.
-        val balanceOverview = entryRepository.balanceOverview(scope, yearMonth)
+        // Translating the facade into a dimension belongs here, not in the ledger.
+        val balanceOverview = entryRepository.balanceOverview(
+            scope = scope,
+            month = yearMonth,
+            yieldDimensionId = categoryRepository
+                .getCategoryBySystemKey(SystemCategoryKey.YIELD)
+                ?.dimensionId,
+            hasYieldingAccount = accountRepository.hasYieldingAccount(),
+        )
 
         // The scope decides between account and card; offering the chip as well would
         // be the same decision twice, able to contradict itself.

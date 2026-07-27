@@ -26,6 +26,7 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
+import com.neoutils.finsight.ui.theme.Yield
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.accounts_advance_payments
 import com.neoutils.finsight.resources.accounts_adjustments
@@ -35,6 +36,7 @@ import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_income
 import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
+import com.neoutils.finsight.resources.accounts_yield
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
@@ -54,6 +56,7 @@ sealed class AccountCardVariant {
         val accountUi: AccountUi,
         val onEditBalance: () -> Unit,
         val onEditOpeningBalance: () -> Unit,
+        val onLaunchYield: () -> Unit,
     ) : AccountCardVariant()
 }
 
@@ -189,6 +192,18 @@ private fun DetailContent(
             amount = accountUi.income,
             color = Income,
         )
+
+        // Shown on the declaration, not on the figure: a freshly declared account has
+        // yielded nothing yet, and a line that only appeared once it had would have
+        // nowhere for the first launch to be tapped.
+        if (accountUi.yieldsInterest) {
+            AccountSummaryRow(
+                label = stringResource(Res.string.accounts_yield),
+                amount = accountUi.yield,
+                color = Yield,
+                onEditClick = variant.onLaunchYield,
+            )
+        }
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_expenses),

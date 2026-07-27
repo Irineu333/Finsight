@@ -20,6 +20,10 @@ data class AccountEntity(
     // when *its* account is (design D21). Closed accounts keep their history and
     // their real type; they are only hidden from the active selectors.
     val isArchived: Boolean = false,
+    // Affordance only: whether this account offers the yield line and the launch
+    // path. No ledger read consults it — the separation of yield is done by the
+    // dimension (design D2).
+    val yieldsInterest: Boolean = false,
 ) {
     enum class Type {
         ASSET,

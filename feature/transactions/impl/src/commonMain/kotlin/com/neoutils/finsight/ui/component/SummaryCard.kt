@@ -32,6 +32,7 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
+import com.neoutils.finsight.ui.theme.Yield
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.summary_card_adjustments
@@ -45,6 +46,7 @@ import com.neoutils.finsight.resources.summary_card_opening_balance
 import com.neoutils.finsight.resources.summary_card_opening_debt
 import com.neoutils.finsight.resources.summary_card_opening_net
 import com.neoutils.finsight.resources.summary_card_outgoing
+import com.neoutils.finsight.resources.summary_card_yield
 import com.neoutils.finsight.resources.summary_card_payments
 import com.neoutils.finsight.resources.summary_card_scope_accounts
 import com.neoutils.finsight.resources.summary_card_scope_all
@@ -148,6 +150,16 @@ private fun ColumnScope.AccountsBody(
         color = Income
     )
 
+    // Between money in and money out, because that is where it came from: the yield
+    // line takes from the income line exactly what it shows, so the column still adds.
+    overview.yield?.let { yield ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_yield),
+            amount = yield,
+            color = Yield
+        )
+    }
+
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
@@ -236,6 +248,16 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         amount = overview.income,
         color = Income
     )
+
+    // Between money in and money out, because that is where it came from: the yield
+    // line takes from the income line exactly what it shows, so the column still adds.
+    overview.yield?.let { yield ->
+        SummaryRow(
+            label = stringResource(Res.string.summary_card_yield),
+            amount = yield,
+            color = Yield
+        )
+    }
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),

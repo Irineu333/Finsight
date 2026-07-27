@@ -84,7 +84,7 @@ class DashboardOverallBalanceStatsTest {
 
     // A card purchase lands only on the LIABILITY leg — the two expense sets are disjoint,
     // so summing them counts it exactly once.
-    private val assetFlows = AssetMonthFlows(income = 1000.0, expense = 300.0, adjustment = 0.0)
+    private val assetFlows = AssetMonthFlows(income = 1000.0, yield = 0.0, expense = 300.0, adjustment = 0.0)
     private val liabilityFlows = LiabilityMonthFlows(expense = 250.0, payment = 400.0, adjustment = 0.0)
 
     private suspend fun overall(
@@ -128,7 +128,7 @@ class DashboardOverallBalanceStatsTest {
     @Test
     fun `a month with no movement keeps the neutral widget by default`() = runTest {
         val component = overall(
-            asset = AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0),
+            asset = AssetMonthFlows(income = 0.0, yield = 0.0, expense = 0.0, adjustment = 0.0),
             liability = LiabilityMonthFlows(expense = 0.0, payment = 0.0, adjustment = 0.0),
         )
 
@@ -142,7 +142,7 @@ private class FlowsEntryRepository(
     private val asset: AssetMonthFlows,
     private val liability: LiabilityMonthFlows,
 ) : IEntryRepository {
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = asset
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlows = asset
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = liability
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
@@ -154,7 +154,7 @@ private class FlowsEntryRepository(
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()

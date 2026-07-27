@@ -58,8 +58,14 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
      * "not a transfer and not a card payment", the two forms whose money never leaves
      * the user's own accounts.
      */
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
+    /** Whether the income counter-leg of this transaction carries [dimensionId]. */
+    private fun Transaction.isYield(dimensionId: Long?) = dimensionId != null && entries.any {
+        it.account.type == AccountType.INCOME && it.dimensionId == dimensionId
+    }
+
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlows {
         var income = 0L
+        var yield = 0L
         var expense = 0L
         var adjustment = 0L
 
@@ -67,12 +73,15 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
             if (!transaction.hasEquityLeg() && !transaction.hasNominalLeg()) return@forEach
             when {
                 transaction.hasEquityLeg() -> adjustment += entry.amount
+                // The yield line takes exactly what the income line gives up, so the
+                // two together are what income alone was.
+                entry.amount > 0 && transaction.isYield(yieldDimensionId) -> yield += entry.amount
                 entry.amount > 0 -> income += entry.amount
                 entry.amount < 0 -> expense += -entry.amount
             }
         }
 
-        return AssetMonthFlows(income / 100.0, expense / 100.0, adjustment / 100.0)
+        return AssetMonthFlows(income / 100.0, yield / 100.0, expense / 100.0, adjustment / 100.0)
     }
 
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
@@ -98,7 +107,7 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
@@ -106,4 +115,25 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
+}
+
+/** No account declares a yield, so the summary offers no yield line. */
+internal object FakeAccountsForYield : com.neoutils.finsight.domain.repository.IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = false
+    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
+    override fun observeAllAccounts(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
+    override suspend fun getAllAccounts(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
+    override suspend fun getAllLedgerAccounts(): List<com.neoutils.finsight.domain.model.Account> = emptyList()
+    override fun observeAllLedgerAccounts(): Flow<List<com.neoutils.finsight.domain.model.Account>> = flowOf(emptyList())
+    override suspend fun getAccountById(accountId: Long): com.neoutils.finsight.domain.model.Account? = null
+    override fun observeAccountById(accountId: Long): Flow<com.neoutils.finsight.domain.model.Account?> = flowOf(null)
+    override suspend fun getDefaultAccount(): com.neoutils.finsight.domain.model.Account? = null
+    override fun observeDefaultAccount(): Flow<com.neoutils.finsight.domain.model.Account?> = flowOf(null)
+    override suspend fun getAccountCount(): Int = 0
+    override suspend fun insert(account: com.neoutils.finsight.domain.model.Account): Long = throw NotImplementedError()
+    override suspend fun update(account: com.neoutils.finsight.domain.model.Account) = throw NotImplementedError()
+    override suspend fun delete(account: com.neoutils.finsight.domain.model.Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 }

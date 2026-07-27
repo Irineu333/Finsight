@@ -16,7 +16,6 @@ import com.neoutils.finsight.resources.category_default_food
 import com.neoutils.finsight.resources.category_default_freelance
 import com.neoutils.finsight.resources.category_default_health
 import com.neoutils.finsight.resources.category_default_housing
-import com.neoutils.finsight.resources.category_default_investments
 import com.neoutils.finsight.resources.category_default_market
 import com.neoutils.finsight.resources.category_default_refund
 import com.neoutils.finsight.resources.category_default_salary
@@ -41,7 +40,6 @@ class CreateDefaultCategoriesUseCase(
     private val templates = listOf(
         Template(UiText.Res(Res.string.category_default_salary), AppIcon.MONEY, Category.Type.INCOME),
         Template(UiText.Res(Res.string.category_default_freelance), AppIcon.WORK, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_investments), AppIcon.BUSINESS, Category.Type.INCOME),
         Template(UiText.Res(Res.string.category_default_benefits), AppIcon.GIFT, Category.Type.INCOME),
         Template(UiText.Res(Res.string.category_default_refund), AppIcon.DEFAULT, Category.Type.INCOME),
         Template(UiText.Res(Res.string.category_default_housing), AppIcon.HOME, Category.Type.EXPENSE),

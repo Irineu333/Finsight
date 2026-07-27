@@ -79,7 +79,8 @@ class TransactionsViewModelCharacterizationTest {
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
-            entryRepository = FakeLedger(transactions),
+            accountRepository = FakeAccountsForYield,
+        entryRepository = FakeLedger(transactions),
         )
 
         vm.uiState.test {
@@ -127,6 +128,7 @@ internal class FakeCategoryRepository : ICategoryRepository {
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override suspend fun archive(id: Long) = Unit
     override suspend fun unarchive(id: Long) = Unit

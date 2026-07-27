@@ -39,6 +39,11 @@ data class CategoryEntity(
     // from its account; a category has none, so there is no copy to diverge from —
     // the facade is the single owner (spec `account-lifecycle`).
     val isArchived: Boolean = false,
+    // The key under which the app finds a category it provides — never its name.
+    // That is the whole point: the user may rename it to "CDI" and change its icon,
+    // and the lookup, the classification and the reads keep working (design D3).
+    // `null` for every category the user created, which is almost all of them.
+    val systemKey: String? = null,
 ) {
     enum class Type {
         INCOME,

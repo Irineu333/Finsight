@@ -27,12 +27,16 @@ data class DimensionTotal(val dimensionId: Long?, val total: Long)
  *  - [income]/[expense]: transactions with neither an EQUITY nor a LIABILITY leg,
  *    split by the sign of the account's own entry (this includes a transfer's two
  *    legs, exactly as the legacy leg types EXPENSE/INCOME did);
+ *  - [yield]: the part of [income] whose income counter-leg carries the caller's
+ *    dimension. It **repartitions** [income] rather than adding to it — what it
+ *    shows, [income] no longer does — so the lines still sum to Σ entries;
  *  - [adjustment]: transactions with an EQUITY counter-leg, kept signed;
  *  - [settlement]: transactions with a LIABILITY counter-leg — paying off a debt.
  * All are positive magnitudes except [adjustment], which is signed.
  */
 data class AccountPeriodTotals(
     val income: Long,
+    val yield: Long,
     val expense: Long,
     val adjustment: Long,
     val settlement: Long,
@@ -72,10 +76,13 @@ data class LiabilityMonthTotals(
  * classified by each transaction's counter-legs — the "money in / money out" a
  * transaction list or dashboard summarises. Transfers and card payments move money
  * between the user's own accounts and are neither, so they are excluded. [income]/
- * [expense] are positive magnitudes; [adjustment] is signed. See [EntryDao.assetMonthTotals].
+ * [expense] are positive magnitudes; [adjustment] is signed. [yield] repartitions
+ * [income] — it is the slice whose income counter-leg carries the caller's dimension,
+ * and [income] no longer contains it. See [EntryDao.assetMonthTotals].
  */
 data class AssetMonthTotals(
     val income: Long,
+    val yield: Long,
     val expense: Long,
     val adjustment: Long,
 )
@@ -209,27 +216,41 @@ interface EntryDao {
     suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<DimensionTotal>
 
     /**
-     * The account's income/expense/adjustment/invoice-payment flows within a month
-     * (yyyy-MM), classified by each transaction's counter-legs. See [AccountPeriodTotals].
+     * The account's income/yield/expense/adjustment/invoice-payment flows within a
+     * month (yyyy-MM), classified by each transaction's counter-legs.
+     *
+     * [yieldDimensionId] is a plain dimension identity — the ledger does not know
+     * what it names, and must not. It is a third counter-leg flag of the same shape
+     * as `eq` and `li`, and `income` excludes exactly what `yield` includes, so the
+     * lines keep partitioning Σ entries. Passing `null` never matches, `yl` is always
+     * 0, and the totals are the ones this query produced before the flag existed —
+     * the separation degrades to nothing with no conditional of its own.
+     * See [AccountPeriodTotals].
      */
     @Query(
         """
         SELECT
-          COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND yl = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND yl = 1 AND amount > 0 THEN amount ELSE 0 END), 0) AS yield,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 1 THEN -amount ELSE 0 END), 0) AS settlement
         FROM (
           SELECT e.amount AS amount,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'LIABILITY') AS li
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'LIABILITY') AS li,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'INCOME' AND x.dimensionId = :yieldDimensionId) AS yl
           FROM entries e
           JOIN transactions o ON o.id = e.transactionId
           WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth
         )
         """
     )
-    suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): AccountPeriodTotals
+    suspend fun accountPeriodTotals(
+        accountId: Long,
+        yearMonth: String,
+        yieldDimensionId: Long?,
+    ): AccountPeriodTotals
 
     /**
      * The expense/advance-payment/adjustment breakdown of a sub-ledger, from the
@@ -308,17 +329,25 @@ interface EntryDao {
      * transfer and not a card payment", the two forms that move money between the
      * user's own accounts. An EQUITY counter-leg is an adjustment (kept signed); the
      * rest split by the sign of the ASSET leg (money out = expense, money in = income),
-     * so a refund on an expense reads as income by the same rule. See [AssetMonthTotals].
+     * so a refund on an expense reads as income by the same rule.
+     *
+     * [yieldDimensionId] repartitions income exactly as in [accountPeriodTotals], and
+     * degrades to nothing when null. It is what lets the aggregate perimeter — every
+     * ASSET account at once — separate yield without a per-account lookup: the
+     * dimension is one and global, so both reads take the same `Long`.
+     * See [AssetMonthTotals].
      */
     @Query(
         """
         SELECT
-          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN eq = 0 AND yl = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN eq = 0 AND yl = 1 AND amount > 0 THEN amount ELSE 0 END), 0) AS yield,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
           SELECT e.amount AS amount,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a5 ON a5.id = x.accountId WHERE x.transactionId = e.transactionId AND a5.type = 'INCOME' AND x.dimensionId = :yieldDimensionId) AS yl
           FROM entries e
           JOIN accounts a ON a.id = e.accountId
           JOIN transactions o ON o.id = e.transactionId
@@ -330,7 +359,7 @@ interface EntryDao {
         )
         """
     )
-    suspend fun assetMonthTotals(yearMonth: String): AssetMonthTotals
+    suspend fun assetMonthTotals(yearMonth: String, yieldDimensionId: Long?): AssetMonthTotals
 
     /** Number of entries carrying a dimension within a month (yyyy-MM). */
     @Query(

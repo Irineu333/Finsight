@@ -69,6 +69,7 @@ import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
+import com.neoutils.finsight.ui.modal.launchYield.LaunchYieldModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
@@ -260,6 +261,9 @@ private fun AccountsContent(
                                     )
                                 )
                             },
+                            onLaunchYield = { account ->
+                                modalManager.show(LaunchYieldModal(account = account))
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -426,6 +430,7 @@ private fun AccountPager(
     onSelectAccount: (Int) -> Unit,
     onEditBalance: (Account) -> Unit,
     onEditOpeningBalance: (Account) -> Unit,
+    onLaunchYield: (Account) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -458,6 +463,7 @@ private fun AccountPager(
                 accountUi = accounts[page],
                 onEditBalance = { onEditBalance(domainAccounts[page]) },
                 onEditOpeningBalance = { onEditOpeningBalance(domainAccounts[page]) },
+                onLaunchYield = { onLaunchYield(domainAccounts[page]) },
             ),
             modifier = Modifier.fillMaxWidth(),
         )

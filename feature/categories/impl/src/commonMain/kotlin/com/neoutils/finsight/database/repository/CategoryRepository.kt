@@ -56,6 +56,9 @@ class CategoryRepository(
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? =
         dao.getCategoryByDimensionId(dimensionId)?.let { mapper.toDomain(it) }
 
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? =
+        dao.getCategoryBySystemKey(systemKey)?.let { mapper.toDomain(it) }
+
     override fun observeCategoryById(id: Long): Flow<Category?> {
         return dao.observeCategoryById(id).map { row -> row?.let { mapper.toDomain(it) } }
     }

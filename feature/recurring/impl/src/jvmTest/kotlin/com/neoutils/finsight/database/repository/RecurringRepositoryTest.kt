@@ -48,6 +48,7 @@ class RecurringRepositoryTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
         override suspend fun archive(id: Long) = Unit
@@ -71,6 +72,8 @@ class RecurringRepositoryTest {
         override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
         override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+        override suspend fun hasYieldingAccount(): Boolean = false
+        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
         override suspend fun getAccountCount(): Int = throw NotImplementedError()
         override suspend fun insert(account: Account): Long = throw NotImplementedError()
         override suspend fun update(account: Account) = throw NotImplementedError()

@@ -67,6 +67,7 @@ class TransactionsNatureFilterTest {
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
+        accountRepository = FakeAccountsForYield,
         entryRepository = FakeLedger(transactions),
     )
 

@@ -12,6 +12,10 @@ sealed class AccountFormAction {
         val isDefault: Boolean
     ) : AccountFormAction()
 
+    data class YieldsInterestChanged(
+        val yieldsInterest: Boolean
+    ) : AccountFormAction()
+
     data class IconSelected(
         val icon: AppIcon,
     ) : AccountFormAction()

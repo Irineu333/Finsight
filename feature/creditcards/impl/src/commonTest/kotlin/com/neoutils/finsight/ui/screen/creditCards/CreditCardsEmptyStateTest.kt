@@ -209,6 +209,7 @@ private class FakeCategoryRepository : ICategoryRepository {
     override suspend fun getAllCategoriesIncludingClosed(): List<Category> = emptyList()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = null
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override suspend fun archive(id: Long) = Unit
     override suspend fun unarchive(id: Long) = Unit
@@ -252,12 +253,12 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows(0.0, 0.0, 0.0, 0.0)
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = AccountFlows(0.0, 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
     override suspend fun dimensionOwed(dimensionId: Long): Double = 0.0
     override suspend fun dimensionFlows(dimensionId: Long) = DimensionFlows(0.0, 0.0, 0.0)
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = 0.0
     override suspend fun totalsByDimension(
         nominalType: AccountType,

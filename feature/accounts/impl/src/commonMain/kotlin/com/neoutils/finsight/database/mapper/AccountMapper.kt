@@ -16,6 +16,7 @@ class AccountMapper {
             isDefault = entity.isDefault,
             createdAt = entity.createdAt,
             isArchived = entity.isArchived,
+            yieldsInterest = entity.yieldsInterest,
         )
     }
 
@@ -29,6 +30,7 @@ class AccountMapper {
             isDefault = domain.isDefault,
             createdAt = domain.createdAt,
             isArchived = domain.isArchived,
+            yieldsInterest = domain.yieldsInterest,
         )
     }
 

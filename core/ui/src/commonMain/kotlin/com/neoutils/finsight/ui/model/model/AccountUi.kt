@@ -18,6 +18,9 @@ data class AccountUi(
     val openingBalance: DisplayAmount,
     val balance: DisplayAmount,
     val income: DisplayAmount,
+    // The slice of [income] classified as yield. It repartitions [income] rather than
+    // adding to it: what this shows, [income] no longer does.
+    val yield: DisplayAmount,
     val expense: DisplayAmount,
     val adjustment: DisplayAmount,
     val settlement: DisplayAmount,
@@ -26,6 +29,10 @@ data class AccountUi(
     val hasMovement: Boolean = false,
     // The default account cannot be retired at all — a third case of the offer.
     val isDefault: Boolean = false,
+    // Whether the account declares that it yields. It decides only whether the yield
+    // line is offered — including at zero, which is the whole reason it is primary
+    // state and not derived from [yield] (design D2).
+    val yieldsInterest: Boolean = false,
 ) {
     val retireOffer: AccountRetireOffer get() = accountRetireOfferOf(hasMovement, isDefault)
 }

@@ -15,9 +15,14 @@ import kotlinx.datetime.YearMonth
 /**
  * The per-account, per-period money flows (reais) an account screen shows, derived
  * from the ledger. [adjustment] is signed; the rest are positive magnitudes.
+ *
+ * [yield] repartitions [income]: it is the slice classified by the dimension the
+ * caller asked to separate, and [income] no longer contains it. Without the
+ * dimension it is zero and [income] is what it always was.
  */
 data class AccountFlows(
     val income: Double,
+    val yield: Double,
     val expense: Double,
     val adjustment: Double,
     val settlement: Double,
@@ -48,9 +53,11 @@ data class LiabilityMonthFlows(
  * The month-wide income/expense/adjustment (reais) across every ASSET account,
  * derived from the ledger. Transfers and card payments are excluded — neither is
  * income or expense. [income]/[expense] are positive magnitudes; [adjustment] is signed.
+ * [yield] repartitions [income], exactly as in [AccountFlows].
  */
 data class AssetMonthFlows(
     val income: Double,
+    val yield: Double,
     val expense: Double,
     val adjustment: Double,
 )
@@ -116,8 +123,19 @@ interface IEntryRepository {
     /** Natural balance of [dimensionId] within [month] — used for category spending. */
     suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double
 
-    /** The income/expense/adjustment/invoice-payment flows of [accountId] in [month]. */
-    suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows
+    /**
+     * The income/expense/adjustment/invoice-payment flows of [accountId] in [month].
+     *
+     * [yieldDimensionId] is the dimension whose income is to be reported on its own
+     * line instead of inside `income`. The ledger takes an identity and nothing more:
+     * translating a facade into it belongs to whoever owns the facade. Omit it and
+     * the breakdown is the undivided one.
+     */
+    suspend fun accountFlows(
+        month: YearMonth,
+        accountId: Long,
+        yieldDimensionId: Long? = null,
+    ): AccountFlows
 
     /** Number of ledger entries carrying [dimensionId] within [month]. */
     suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int
@@ -151,8 +169,14 @@ interface IEntryRepository {
     /**
      * The month-wide income/expense/adjustment across every ASSET account, excluding
      * transfers and card payments — the summary a transaction list or dashboard shows.
+     *
+     * [yieldDimensionId] separates a dimension's income onto its own line, exactly as
+     * in [accountFlows] and with the same degradation when absent.
      */
-    suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows
+    suspend fun assetMonthFlows(
+        month: YearMonth,
+        yieldDimensionId: Long? = null,
+    ): AssetMonthFlows
 
     /** Net worth = Σ ASSET − Σ LIABILITY, via the same entry mechanism. */
     suspend fun netWorth(): Double

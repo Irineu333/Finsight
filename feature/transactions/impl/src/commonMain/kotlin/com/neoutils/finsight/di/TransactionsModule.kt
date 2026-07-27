@@ -63,6 +63,7 @@ val transactionsModule = module {
             categoryRepository = get(),
             installmentRepository = get(),
             entryRepository = get(),
+            accountRepository = get(),
         )
     }
     viewModel {

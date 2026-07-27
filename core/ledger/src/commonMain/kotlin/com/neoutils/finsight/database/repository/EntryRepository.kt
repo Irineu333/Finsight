@@ -75,10 +75,15 @@ class EntryRepository(
         return entryDao.dimensionBalanceInMonth(dimensionId, month.toString()) / CENTS_PER_UNIT
     }
 
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows {
-        val totals = entryDao.accountPeriodTotals(accountId, month.toString())
+    override suspend fun accountFlows(
+        month: YearMonth,
+        accountId: Long,
+        yieldDimensionId: Long?,
+    ): AccountFlows {
+        val totals = entryDao.accountPeriodTotals(accountId, month.toString(), yieldDimensionId)
         return AccountFlows(
             income = totals.income / CENTS_PER_UNIT,
+            yield = totals.yield / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,
             settlement = totals.settlement / CENTS_PER_UNIT,
@@ -131,10 +136,11 @@ class EntryRepository(
         )
     }
 
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
-        val totals = entryDao.assetMonthTotals(month.toString())
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlows {
+        val totals = entryDao.assetMonthTotals(month.toString(), yieldDimensionId)
         return AssetMonthFlows(
             income = totals.income / CENTS_PER_UNIT,
+            yield = totals.yield / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,
         )

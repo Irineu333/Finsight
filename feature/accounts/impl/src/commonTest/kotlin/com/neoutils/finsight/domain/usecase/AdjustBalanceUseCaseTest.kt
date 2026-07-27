@@ -48,6 +48,26 @@ class AdjustBalanceUseCaseTest {
 
         assertEquals(150.0, ledger.accountBalance())
     }
+
+    @Test
+    fun `adjusting a yielding account is still an adjustment`() = runTest {
+        // Declaring that an account yields changes what it *offers*, never how an
+        // existing operation behaves. "Rendeu quanto" and "o saldo é quanto" are two
+        // questions, and this change deliberately fuses neither into the other (D1).
+        val yielding = account.copy(yieldsInterest = true)
+        val ledger = LedgerStore(yielding)
+        val transactions = FakeTransactionRepository(ledger)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = transactions,
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        useCase(targetBalance = 100.0, adjustmentDate = date, account = yielding).getOrNull()
+
+        val entries = ledger.entriesByTransaction.values.single()
+        assertEquals(1, entries.count { it.account.type == AccountType.EQUITY })
+        assertEquals(100.0, ledger.accountBalance())
+    }
 }
 
 /**
@@ -139,11 +159,11 @@ class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,

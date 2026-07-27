@@ -160,7 +160,7 @@
     <string name="transactions_filter_category_all">Todas</string>
     <string name="transactions_filter_type">Tipo</string>
     <string name="transactions_filter_type_all">Todos</string>
-    <string name="transactions_filter_type_income">Entrada</string>
+    <string name="transactions_filter_type_income">Receita</string>
     <string name="transactions_filter_type_expense">Despesa</string>
     <string name="transactions_filter_type_adjustment">Ajuste</string>
     <string name="transactions_filter_type_transfer">Transferência</string>
@@ -228,8 +228,8 @@
     <string name="accounts_title">Contas</string>
     <string name="accounts_default">Padrão</string>
     <string name="accounts_opening_balance">Saldo Inicial</string>
-    <string name="accounts_income">Receitas</string>
-    <string name="accounts_expenses">Despesas</string>
+    <string name="accounts_income">Entradas</string>
+    <string name="accounts_expenses">Saídas</string>
     <string name="accounts_adjustments">Ajustes</string>
     <string name="accounts_invoices">Faturas</string>
     <string name="accounts_advance_payments">Adiantamentos</string>
@@ -240,6 +240,7 @@
     <string name="retire_error_has_transactions">Esta categoria tem lançamentos e não pode ser excluída. Arquive-a para preservar o histórico.</string>
     <string name="retire_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
     <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra categoria ou exclua-as antes de excluir esta.</string>
+    <string name="retire_error_has_yielding_accounts">Há contas que rendem e classificam o rendimento nesta categoria. Desligue o rendimento delas antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
@@ -320,6 +321,9 @@
     <string name="account_form_default_state_on">Usada por padrão</string>
     <string name="account_form_default_state_off">Definir como padrão</string>
     <string name="account_form_default_state_disabled">Já é a conta padrão</string>
+    <string name="account_form_yield_label">Conta que rende</string>
+    <string name="account_form_yield_state_on">Exibe a linha de rendimentos</string>
+    <string name="account_form_yield_state_off">Marque se o saldo é remunerado</string>
     <string name="account_form_save">Salvar</string>
 
     <!-- Credit Card Form Modal -->
@@ -531,8 +535,8 @@
     <string name="balance_card_current_balance">Saldo Atual</string>
     <string name="balance_card_income">Receitas</string>
     <string name="balance_card_expense">Despesas</string>
-    <string name="balance_card_account_income">Entradas na conta</string>
-    <string name="balance_card_account_expense">Saídas na conta</string>
+    <string name="balance_card_account_income">Receitas na conta</string>
+    <string name="balance_card_account_expense">Despesas na conta</string>
     <string name="balance_card_invoices">Faturas</string>
     <string name="balance_card_invoice_payments">Pagamentos</string>
     <string name="balance_card_credit_card_expense">Gasto no Cartão</string>
@@ -610,10 +614,18 @@
     <string name="invoice_status_retroactive">Retroativa</string>
     <string name="invoice_status_new">Nova</string>
 
+    <!-- Yield -->
+    <string name="category_yield">Rendimentos</string>
+    <string name="launch_yield_title">Lançar rendimento</string>
+    <string name="launch_yield_amount_label">Valor do rendimento</string>
+    <string name="launch_yield_date_label">Data</string>
+    <string name="launch_yield_save">Lançar</string>
+    <string name="accounts_yield">Rendimentos</string>
+    <string name="summary_card_yield">Rendimentos</string>
+
     <!-- Default category names -->
     <string name="category_default_salary">Salário</string>
     <string name="category_default_freelance">Freelance</string>
-    <string name="category_default_investments">Investimentos</string>
     <string name="category_default_benefits">Benefícios</string>
     <string name="category_default_refund">Reembolso</string>
     <string name="category_default_housing">Moradia</string>

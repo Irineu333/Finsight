@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -91,12 +92,12 @@ private class CapturingEntryRepository : IEntryRepository {
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
@@ -113,6 +114,8 @@ private class FakeAccountRepository(private val accounts: List<Account>) : IAcco
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
+    override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(false)
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()

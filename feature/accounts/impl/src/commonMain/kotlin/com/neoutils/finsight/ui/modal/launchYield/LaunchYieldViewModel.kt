@@ -40,14 +40,25 @@ class LaunchYieldViewModel(
         get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
+    private val accounts = MutableStateFlow(emptyList<Account>())
     private val date = MutableStateFlow(currentDate)
     private val isSubmitting = MutableStateFlow(false)
 
-    val uiState = combine(selectedAccount, date, isSubmitting) { account, date, isSubmitting ->
+    val uiState = combine(
+        selectedAccount,
+        accounts,
+        date,
+        isSubmitting,
+    ) { account, accounts, date, isSubmitting ->
         if (account == null) {
             LaunchYieldUiState.Loading
         } else {
-            LaunchYieldUiState.Content(account = account, date = date, isSubmitting = isSubmitting)
+            LaunchYieldUiState.Content(
+                account = account,
+                accounts = accounts,
+                date = date,
+                isSubmitting = isSubmitting,
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -59,12 +70,20 @@ class LaunchYieldViewModel(
         viewModelScope.launch {
             // Re-read: the sheet may have been opened over a stale card, and a yield
             // must land on the account as it is now.
-            selectedAccount.value = accountRepository.getAccountById(account.id) ?: account
+            val current = accountRepository.getAccountById(account.id) ?: account
+            val declaring = accountRepository.getAllAccounts().filter { it.yieldsInterest }
+
+            selectedAccount.value = current
+            // The account the sheet opened on stays selectable even if it somehow no
+            // longer declares one — a selector whose selection is absent from its own
+            // options renders blank, and the user did reach this sheet from it.
+            accounts.value = if (declaring.any { it.id == current.id }) declaring else declaring + current
         }
     }
 
     fun onAction(action: LaunchYieldAction) {
         when (action) {
+            is LaunchYieldAction.SelectAccount -> selectedAccount.value = action.account
             is LaunchYieldAction.DateChanged -> date.value = action.date
             is LaunchYieldAction.Submit -> submit(action.amount)
         }

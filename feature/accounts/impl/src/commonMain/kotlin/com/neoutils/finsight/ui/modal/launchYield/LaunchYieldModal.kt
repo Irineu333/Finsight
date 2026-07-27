@@ -41,10 +41,10 @@ import com.neoutils.finsight.resources.launch_yield_amount_label
 import com.neoutils.finsight.resources.launch_yield_date_label
 import com.neoutils.finsight.resources.launch_yield_save
 import com.neoutils.finsight.resources.launch_yield_title
+import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
@@ -101,14 +101,18 @@ class LaunchYieldModal(
                 }
 
                 is LaunchYieldUiState.Content -> {
-                    Text(
-                        text = state.account.name,
-                        fontSize = 14.sp,
-                        color = TextLight1,
-                        modifier = Modifier.padding(top = 4.dp),
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    AccountSelector(
+                        selectedAccount = state.account,
+                        accounts = state.accounts,
+                        onAccountSelected = { selected ->
+                            selected?.let { viewModel.onAction(LaunchYieldAction.SelectAccount(it)) }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.launch_yield_amount_label)) },

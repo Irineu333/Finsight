@@ -42,6 +42,10 @@ O caminho de ajuste de saldo SHALL permanecer inalterado: ajustar o saldo de uma
 - **WHEN** o usuário informa a data e o valor de um rendimento em uma conta que declara render
 - **THEN** o sistema registra uma transação de receita nessa conta, com a contrapartida na conta nominal de receita carregando a dimensão de rendimentos
 
+#### Scenario: O lançamento escolhe entre as contas que declaram render
+- **WHEN** o usuário abre o lançamento de rendimento e escolhe outra conta
+- **THEN** apenas contas que declaram render são oferecidas, e o rendimento é registrado na conta escolhida
+
 #### Scenario: Dois rendimentos na mesma data somam
 - **WHEN** o usuário lança dois rendimentos na mesma conta e na mesma data
 - **THEN** ambos são registrados como transações distintas e ambos somam no total de rendimento do período, sem que o segundo substitua o primeiro

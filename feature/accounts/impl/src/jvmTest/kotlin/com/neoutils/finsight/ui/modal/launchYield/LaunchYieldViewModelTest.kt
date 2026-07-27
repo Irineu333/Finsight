@@ -46,16 +46,19 @@ class LaunchYieldViewModelTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, yieldsInterest = true)
+    private val picpay = Account(id = 2, name = "PicPay", type = AccountType.ASSET, yieldsInterest = true)
+    private val wallet = Account(id = 3, name = "Carteira", type = AccountType.ASSET)
 
     private fun viewModel(
         transactions: ITransactionRepository,
         manager: ModalManager,
         analytics: FakeAnalytics,
         crashlytics: FakeCrashlytics,
+        accounts: List<Account> = listOf(account, picpay, wallet),
     ) = LaunchYieldViewModel(
         account = account,
         launchYieldUseCase = LaunchYieldUseCase(transactions, EnsureYieldCategoryUseCase(YieldCategoryStore())),
-        accountRepository = SingleAccountRepository(account),
+        accountRepository = AccountStore(accounts),
         modalManager = manager,
         analytics = analytics,
         crashlytics = crashlytics,
@@ -73,6 +76,40 @@ class LaunchYieldViewModelTest {
             assertFalse(state.isSubmitting)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `only the accounts that declare a yield are offered`() = runTest(dispatcher) {
+        val viewModel = viewModel(RecordingTransactions(), ModalManager(), FakeAnalytics(), FakeCrashlytics())
+
+        viewModel.uiState.test {
+            awaitItem()
+
+            // "Carteira" declares none, so the selector must not offer it — the sheet
+            // would otherwise reach an account the card refuses to reach it from.
+            val state = assertIs<LaunchYieldUiState.Content>(awaitItem())
+            assertEquals(listOf(account.id, picpay.id), state.accounts.map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the launch lands on the account picked in the selector`() = runTest(dispatcher) {
+        val transactions = RecordingTransactions()
+        val manager = ModalManager()
+        val viewModel = viewModel(transactions, manager, FakeAnalytics(), FakeCrashlytics())
+
+        viewModel.uiState.test {
+            awaitItem()
+            advanceUntilIdle()
+
+            viewModel.onAction(LaunchYieldAction.SelectAccount(picpay))
+            viewModel.onAction(LaunchYieldAction.Submit(12.40))
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals(picpay.id, transactions.created.single().legs.single().accountId)
     }
 
     @Test
@@ -199,20 +236,20 @@ class LaunchYieldViewModelTest {
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     }
 
-    private class SingleAccountRepository(private val account: Account) : IAccountRepository {
-        override suspend fun getAccountById(accountId: Long): Account? = account.takeIf { it.id == accountId }
-        override suspend fun hasYieldingAccount(): Boolean = account.yieldsInterest
-        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(account.yieldsInterest)
-        override fun observeAllAccounts(): Flow<List<Account>> = flowOf(listOf(account))
-        override suspend fun getAllAccounts(): List<Account> = listOf(account)
-        override suspend fun getAllAccountsIncludingClosed(): List<Account> = listOf(account)
-        override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(listOf(account))
-        override suspend fun getAllLedgerAccounts(): List<Account> = listOf(account)
-        override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(listOf(account))
-        override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(account)
+    private class AccountStore(private val accounts: List<Account>) : IAccountRepository {
+        override suspend fun getAccountById(accountId: Long): Account? = accounts.firstOrNull { it.id == accountId }
+        override suspend fun hasYieldingAccount(): Boolean = accounts.any { it.yieldsInterest }
+        override fun observeHasYieldingAccount(): Flow<Boolean> = flowOf(accounts.any { it.yieldsInterest })
+        override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
+        override suspend fun getAllAccounts(): List<Account> = accounts
+        override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
+        override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts)
+        override suspend fun getAllLedgerAccounts(): List<Account> = accounts
+        override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
+        override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(accounts.firstOrNull())
         override suspend fun getDefaultAccount(): Account? = null
         override fun observeDefaultAccount(): Flow<Account?> = flowOf(null)
-        override suspend fun getAccountCount(): Int = 1
+        override suspend fun getAccountCount(): Int = accounts.size
         override suspend fun insert(account: Account): Long = throw NotImplementedError()
         override suspend fun update(account: Account) = throw NotImplementedError()
         override suspend fun delete(account: Account) = throw NotImplementedError()

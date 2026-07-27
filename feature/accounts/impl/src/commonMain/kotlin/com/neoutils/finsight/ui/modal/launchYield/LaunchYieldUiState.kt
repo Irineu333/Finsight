@@ -14,6 +14,10 @@ sealed interface LaunchYieldUiState {
      */
     data class Content(
         val account: Account,
+        // The accounts a yield may be launched on — those that declare they yield.
+        // An account that does not declare one is not offered the path, and that has
+        // to hold here too, or the selector would offer what the card refuses.
+        val accounts: List<Account>,
         val date: LocalDate,
         val isSubmitting: Boolean = false,
     ) : LaunchYieldUiState

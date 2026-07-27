@@ -16,10 +16,10 @@ import kotlin.test.assertEquals
  * Room's own schema validation — the check that actually happens on a device.
  *
  * Every other migration test asserts individual facts, which is spot-checking: a
- * nullability mismatch on `categories.accountId` once survived a fully green
- * suite and would have thrown `Migration didn't properly handle categories` on
- * every real 7 → 9 upgrade. This test fails on any such divergence, whatever the
- * column, index or foreign key.
+ * nullability mismatch on a facade's link column once survived a fully green suite
+ * and would have thrown `Migration didn't properly handle categories` on every real
+ * upgrade. This test fails on any such divergence, whatever the column, index or
+ * foreign key.
  */
 class MigrationSchemaEquivalenceTest {
 
@@ -38,7 +38,7 @@ class MigrationSchemaEquivalenceTest {
         }
 
         val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-            .addMigrations(MIGRATION_7_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_7_10)
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

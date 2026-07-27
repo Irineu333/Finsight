@@ -10,32 +10,8 @@ import androidx.sqlite.SQLiteConnection
  */
 class MigrationAbortedException(reason: String) : IllegalStateException(reason)
 
-/**
- * Asserts that every account the v10 chart no longer contains is actually gone.
- *
- * The two deletes that precede it are conditional — an account still referenced by
- * an entry is skipped — so on its own a silent skip would leave a category account
- * in the chart, invisible and unreachable, with the rewrite that should have emptied
- * it half done. Counting the survivors turns "the rewrite worked" from an assumption
- * into a check.
- */
-internal fun SQLiteConnection.verifyRetiredAccountsAreGone() {
-    val survivors = count(
-        """
-        SELECT COUNT(*) FROM `accounts`
-        WHERE `id` IN (SELECT `oldAccountId` FROM `_cat_map`)
-           OR `id` IN (SELECT `accountId` FROM `_uncat`)
-        """
-    )
-    if (survivors != 0L) {
-        throw MigrationAbortedException(
-            "v9 → v10: $survivors retired chart account(s) are still referenced by entries"
-        )
-    }
-}
-
 /** No entry may point at a dimension that does not exist. */
-internal fun SQLiteConnection.verifyNoOrphanDimensions() {
+internal fun SQLiteConnection.verifyNoOrphanDimensions(stage: String) {
     val orphans = count(
         """
         SELECT COUNT(*) FROM `entries` `e`
@@ -44,7 +20,7 @@ internal fun SQLiteConnection.verifyNoOrphanDimensions() {
         """
     )
     if (orphans != 0L) {
-        throw MigrationAbortedException("v9 → v10: $orphans entry(ies) carry a dimension that does not exist")
+        throw MigrationAbortedException("$stage: $orphans entry(ies) carry a dimension that does not exist")
     }
 }
 

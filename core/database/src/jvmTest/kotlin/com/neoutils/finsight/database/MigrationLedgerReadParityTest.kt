@@ -13,12 +13,12 @@ import kotlin.test.assertEquals
 
 /**
  * Closes the parity gap the other migration tests leave open: they assert the
- * migrated rows with their own raw SQL, and the query tests run the production
- * DAOs over a hand-built ledger — the two halves never meet. Here the fixture is
- * a real v7 database, Room runs [MIGRATION_7_9], and the figures the app actually
- * shows are read back through the **production** `EntryDao` queries and compared
- * to the v7 legacy values. A silent sign flip or off-by-one between how the
- * migration writes and how a screen reads would surface here, not on a device.
+ * migrated rows with their own raw SQL, and the query tests run the production DAOs
+ * over a hand-built ledger — the two halves never meet. Here the fixture is a real
+ * v7 database, Room runs [MIGRATION_7_10], and the figures the app actually shows
+ * are read back through the **production** DAOs and compared to the v7 legacy
+ * values. A silent sign flip or off-by-one between how the migration writes and how
+ * a screen reads would surface here, not on a device.
  */
 class MigrationLedgerReadParityTest {
 
@@ -57,12 +57,11 @@ class MigrationLedgerReadParityTest {
         assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId))
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
-        // Read through the category's dimension, which is what carries it since v10.
         assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId))
 
-        // The income side, which the fixture had no case for until now: an income
-        // category lands on the INCOME nominal, credit-natured, so its total is
-        // negative — and it must not have been routed to the expense one.
+        // The income side: an income category lands on the INCOME nominal,
+        // credit-natured, so its total is negative — and it must not have been routed
+        // to the expense one.
         val categories = database.categoryDao().getAllCategories()
         val salaryDimensionId = categories.first { it.name == "Salary" }.dimensionId
         assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId))
@@ -78,25 +77,28 @@ class MigrationLedgerReadParityTest {
     }
 
     /**
-     * The parity gate of v10, figure by figure and keyed by facade id.
+     * The parity gate, figure by figure and keyed by facade id.
      *
-     * The "before" is raw SQL over the v9 schema, taken while `entries.invoiceId`
-     * still exists; the "after" is the production reads over v10, where the same
-     * invoice total comes from a dimension. Only the mechanism changed, so only the
-     * production side of the comparison moved — and the two must still agree on
-     * every account balance, every invoice owed, every category total and net worth.
+     * The "before" is raw SQL over the legacy v7 schema, taken while the single-sided
+     * legs still exist; the "after" is the production reads over v10, where the same
+     * numbers come from a balanced ledger, a chart row per card and a dimension per
+     * category and invoice. Every mechanism moved; not one figure may.
      */
     @Test
-    fun `given a v9 ledger when v10 rewrites the mechanism then every figure is unchanged`() = runTest {
+    fun `given a v7 ledger when v10 replaces the mechanism then every figure is unchanged`() = runTest {
         val expected = BundledSQLiteDriver().open(file.absolutePath).use { connection ->
             buildV7Fixture(connection)
-            // v9 by hand, so the snapshot can be taken before v10 removes the columns
-            // it is computed from.
-            MIGRATION_7_9.migrate(connection)
-            connection.execSQL("PRAGMA user_version = 9")
-            connection.verifyLedgerBalanced(stage = "v9 snapshot")
-            connection.readV9Figures()
+            connection.execSQL("PRAGMA user_version = 7")
+            connection.readLegacyFigures()
         }
+
+        // An empty map equals an empty map: without this the comparison below could
+        // pass by having nothing to compare.
+        assertEquals(3, expected.balanceByAccountId.size)
+        assertEquals(1, expected.owedByCardId.size)
+        assertEquals(1, expected.owedByInvoiceId.size)
+        assertEquals(2, expected.totalByCategoryId.size)
+        assertEquals(2, expected.nominalNatureByCategoryId.size)
 
         val database = openMigrated()
         assertEquals(expected, database.readProductionFigures())
@@ -104,16 +106,16 @@ class MigrationLedgerReadParityTest {
     }
 
     private fun openMigrated(): AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-        .addMigrations(MIGRATION_7_9, MIGRATION_9_10)
+        .addMigrations(MIGRATION_7_10)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }
 
 /**
- * The same representative v7 data as `Migration7To9Test`, including the orphan
- * legs of a deleted account and card, so the production reads exercise the
- * closed-account reconstruction too.
+ * The same representative v7 data as `Migration7To10Test`, including the orphan legs
+ * of a deleted account and card, so the production reads exercise the closed-account
+ * reconstruction too.
  */
 private fun buildV7Fixture(connection: SQLiteConnection) {
     V7_SCHEMA.forEach(connection::execSQL)
@@ -152,14 +154,14 @@ private fun buildV7Fixture(connection: SQLiteConnection) {
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
 
-    // op8: income 900 into A, category Salary — the INCOME side of the chart, which
-    // the fixture had no case for. Without it the migration could route every nominal
-    // leg to the EXPENSE nominal and every figure would still match.
+    // op8: income 900 into A, category Salary — the INCOME side of the chart. Without
+    // it the migration could route every nominal leg to the EXPENSE nominal and every
+    // figure would still match.
     connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (8,'TRANSACTION','2024-01-05')")
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (8,'INCOME',900.0,'2024-01-05',2,'ACCOUNT',1)")
 
-    // op9: income 100 into B with no category — the `Sem categoria (receita)` bucket,
-    // whose rewrite to the INCOME nominal had no coverage either.
+    // op9: income 100 into B with no category — the uncategorized income side, whose
+    // rewrite to the INCOME nominal has no other coverage here.
     connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (9,'TRANSACTION','2024-01-06')")
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (9,'INCOME',100.0,'2024-01-06','ACCOUNT',2)")
 

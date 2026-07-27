@@ -1,29 +1,32 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
-import com.neoutils.finsight.database.mapper.toDomain
+import com.neoutils.finsight.database.entity.AccountEntity
 
 /**
- * The four figures the app renders from the ledger, each **keyed by the id of the
- * facade the user sees** — not by the ledger row that happens to carry it today.
+ * The figures the app renders from the ledger, each **keyed by the id of the facade
+ * the user sees** — not by the ledger row that happens to carry it today.
  *
- * That keying is the whole point. The v9 → v10 migration replaces the mechanism by
- * which three of these are computed: an invoice stops being an `entries.invoiceId`
- * and becomes a dimension; a category stops being an account and becomes a
- * dimension. A parity assertion written in terms of the mechanism would be rewritten
- * along with it and prove nothing. Written in terms of the facade id, the "before"
- * comes from raw SQL over the old schema and the "after" from the production reads
- * over the new one, and the comparison survives the change it exists to police.
+ * That keying is the whole point. The v7 → v10 migration replaces every mechanism
+ * these are computed by: a leg stops being a signed `REAL` on a single-sided
+ * `transactions` row and becomes a balanced pair of entries in cents; a card stops
+ * being a table of its own and becomes a `LIABILITY` account; a category and an
+ * invoice become dimensions. A parity assertion written in terms of the mechanism
+ * would be rewritten along with it and prove nothing. Written in terms of the facade
+ * id, the "before" comes from raw SQL over the legacy schema and the "after" from
+ * the production reads over v10, and the comparison survives the change it exists to
+ * police.
  */
 internal data class LedgerFigures(
     val balanceByAccountId: Map<Long, Long>,
+    val owedByCardId: Map<Long, Long>,
     val owedByInvoiceId: Map<Long, Long>,
     val totalByCategoryId: Map<Long, Long>,
     /**
      * The nature of the chart account each category's entries sit on.
      *
-     * Without it the other three figures are blind to the one mistake this migration
-     * is most able to make: sending the `EXPENSE` legs to the `INCOME` nominal. Every
+     * Without it the other figures are blind to the one mistake this migration is
+     * most able to make: sending the `EXPENSE` legs to the `INCOME` nominal. Every
      * balance would still match (the nominals are not monetary), every category total
      * would still match (they are summed by dimension, not by account) — and the
      * chart would be quietly wrong, taking the derived label and display sign with it.
@@ -32,58 +35,71 @@ internal data class LedgerFigures(
     val netWorth: Long,
 )
 
+/** The signed cents a legacy leg contributes to its own side, debit-positive. */
+private const val LEGACY_CENTS =
+    "CASE `t`.`type` WHEN 'EXPENSE' THEN -CAST(ROUND(`t`.`amount` * 100) AS INTEGER) " +
+        "ELSE CAST(ROUND(`t`.`amount` * 100) AS INTEGER) END"
+
 /**
- * Computes the figures by raw SQL over a **v9** database, before any migration runs.
- * Deliberately independent of the DAOs: this is the side of the comparison that must
- * not move when the mechanism does.
+ * Computes the figures by raw SQL over the **v7** database, before any migration
+ * runs. Deliberately independent of the DAOs and of the migration's own SQL: this is
+ * the side of the comparison that must not move when the mechanism does.
  */
-internal fun SQLiteConnection.readV9Figures(): LedgerFigures = LedgerFigures(
-    // The balance *of an account*, which is what a screen shows: the monetary rows
-    // of the chart. The nominal rows are not accounts to the user (design D10) —
-    // whatever v10 does with them is answered by `totalByCategoryId` below, and
-    // comparing them by id would be comparing the mechanism to itself.
+internal fun SQLiteConnection.readLegacyFigures(): LedgerFigures = LedgerFigures(
     balanceByAccountId = queryMap(
         """
-        SELECT `a`.`id`, COALESCE(SUM(`e`.`amount`), 0)
+        SELECT `a`.`id`, COALESCE(SUM($LEGACY_CENTS), 0)
         FROM `accounts` `a`
-        LEFT JOIN `entries` `e` ON `e`.`accountId` = `a`.`id`
-        WHERE `a`.`type` IN ('ASSET', 'LIABILITY')
+        LEFT JOIN `transactions` `t` ON `t`.`accountId` = `a`.`id` AND `t`.`target` = 'ACCOUNT'
         GROUP BY `a`.`id`
+        """
+    ),
+    // A card's own balance, which in v7 lives nowhere but the sum of its legs. Note
+    // the `target` filter: a payment's *account* leg also carries `creditCardId`, and
+    // counting it here would abate the debt twice.
+    owedByCardId = queryMap(
+        """
+        SELECT `cc`.`id`, COALESCE(SUM($LEGACY_CENTS), 0)
+        FROM `credit_cards` `cc`
+        LEFT JOIN `transactions` `t` ON `t`.`creditCardId` = `cc`.`id` AND `t`.`target` = 'CREDIT_CARD'
+        GROUP BY `cc`.`id`
         """
     ),
     owedByInvoiceId = queryMap(
         """
-        SELECT `i`.`id`, COALESCE(SUM(`e`.`amount`), 0)
+        SELECT `i`.`id`, COALESCE(SUM($LEGACY_CENTS), 0)
         FROM `invoices` `i`
-        LEFT JOIN `entries` `e` ON `e`.`invoiceId` = `i`.`id`
+        LEFT JOIN `transactions` `t` ON `t`.`invoiceId` = `i`.`id` AND `t`.`target` = 'CREDIT_CARD'
         GROUP BY `i`.`id`
         """
     ),
-    // In v9 a category *is* an account; in v10 it is a dimension. Both sides key by
-    // `categories.id`, which is what the user's screen actually shows.
+    // What a category totals is what was filed under it, with the sign of the contra
+    // side: an expense is a debit to the category. An adjustment classifies nothing.
     totalByCategoryId = queryMap(
         """
-        SELECT `c`.`id`, COALESCE(SUM(`e`.`amount`), 0)
+        SELECT `c`.`id`, COALESCE(SUM(-($LEGACY_CENTS)), 0)
         FROM `categories` `c`
-        LEFT JOIN `entries` `e` ON `e`.`accountId` = `c`.`accountId`
+        LEFT JOIN `transactions` `t` ON `t`.`categoryId` = `c`.`id` AND `t`.`type` <> 'ADJUSTMENT'
         GROUP BY `c`.`id`
         """
     ),
-    // Before, a category *is* an account, so the nature is that account's.
+    // Before, a category declares its own nature and nothing else carries it.
     nominalNatureByCategoryId = queryTextMap(
         """
-        SELECT `c`.`id`, `a`.`type`
+        SELECT `c`.`id`, `c`.`type`
         FROM `categories` `c`
-        JOIN `accounts` `a` ON `a`.`id` = `c`.`accountId`
-        WHERE EXISTS (SELECT 1 FROM `entries` `e` WHERE `e`.`accountId` = `c`.`accountId`)
+        WHERE EXISTS (SELECT 1 FROM `transactions` `t` WHERE `t`.`categoryId` = `c`.`id`)
         """
     ),
+    // Net worth counts what the user still holds. A leg whose account or card was
+    // deleted is not part of it — in v7 that money simply vanished, and v10 records
+    // the same fact explicitly, by writing the reconstructed account off.
     netWorth = querySum(
         """
-        SELECT COALESCE(SUM(`e`.`amount`), 0)
-        FROM `entries` `e`
-        JOIN `accounts` `a` ON `a`.`id` = `e`.`accountId`
-        WHERE `a`.`type` IN ('ASSET', 'LIABILITY')
+        SELECT COALESCE(SUM($LEGACY_CENTS), 0)
+        FROM `transactions` `t`
+        WHERE (`t`.`target` = 'ACCOUNT' AND `t`.`accountId` IS NOT NULL)
+           OR (`t`.`target` = 'CREDIT_CARD' AND `t`.`creditCardId` IS NOT NULL)
         """
     ),
 )
@@ -94,12 +110,17 @@ internal fun SQLiteConnection.readV9Figures(): LedgerFigures = LedgerFigures(
  */
 internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
     val entryDao = entryDao()
+    val accounts = accountDao().getAllLedgerAccounts()
     return LedgerFigures(
-        balanceByAccountId = accountDao().getAllLedgerAccounts()
-            .filter { it.type.toDomain().isMonetary }
+        // The user's own accounts: the `ASSET` rows that are still open. The two
+        // reconstructed closed accounts are not facades the user ever sees — what
+        // happened to their money is answered by `netWorth`.
+        balanceByAccountId = accounts
+            .filter { it.type == AccountEntity.Type.ASSET && !it.isArchived }
             .associate { it.id to entryDao.balanceOf(it.id) },
-        // Keyed by invoice id, read through the dimension — this is the side that
-        // moved, and the only one that should have.
+        owedByCardId = creditCardDao().getAllCreditCardsList()
+            .associate { it.id to entryDao.balanceOf(it.accountId) },
+        // Keyed by invoice id, read through the dimension.
         owedByInvoiceId = invoiceDao().getAllInvoices()
             .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d) }.orZero() },
         // Archived included: parity is about every figure the ledger can produce,
@@ -109,7 +130,7 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
         // After, it is the nature of the nominal the dimension's entries landed on.
         nominalNatureByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
             .mapNotNull { category ->
-                accountDao().getAllLedgerAccounts()
+                accounts
                     .firstOrNull { account ->
                         entryDao.getAll().any { it.dimensionId == category.dimensionId && it.accountId == account.id }
                     }

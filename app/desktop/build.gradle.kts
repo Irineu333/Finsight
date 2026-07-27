@@ -52,7 +52,7 @@ compose.desktop {
             )
 
             packageName = "Finsight"
-            packageVersion = "1.8.0"
+            packageVersion = "1.9.0"
             description = "Finsight finance app"
             vendor = "NeoUtils"
 

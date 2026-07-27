@@ -229,24 +229,7 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
-/**
- * The whole ledger rewrite, in one step: v7 is the last schema that ever shipped,
- * and v10 is the one the app runs on. The versions in between were never released,
- * so no device is on one and nothing has to be able to land there — which is what
- * lets this be a direct translation instead of a legacy state reconstructed only to
- * be dismantled two statements later.
- *
- * It takes a v7 database — single-sided `transactions` legs hanging off `operations`,
- * a chart of accounts that holds only the user's own accounts, categories and cards
- * as tables of their own — and produces the v10 double-entry ledger: `Σ = 0` per
- * transaction, cards as `LIABILITY` accounts, two nominal accounts every expense and
- * income lands on, and a category or invoice as a *dimension* rather than a row in
- * the chart (design D4/D10).
- *
- * It is all-or-nothing. The checks at the end throw from inside `migrate()`, so Room
- * rolls the whole transaction back rather than commit accounting history it cannot
- * justify.
- */
+// 1.9.0-rc01
 val MIGRATION_7_10 = object : Migration(7, 10) {
     override fun migrate(connection: SQLiteConnection) {
         val now = "CAST(strftime('%s','now') AS INTEGER) * 1000"

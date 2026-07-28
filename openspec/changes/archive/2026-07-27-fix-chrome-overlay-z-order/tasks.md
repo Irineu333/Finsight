@@ -15,8 +15,8 @@
 
 - [x] 3.1 Compilar: `./gradlew :app:shared:compileDebugKotlinAndroid` (ou `./gradlew allTests` se preferir a suíte completa)
 - [x] 3.2 Confirmar que nenhum `1f`/`0f` de prioridade de overlay restou espalhado — a busca por `zIndexInOverlay` deve encontrar apenas referências à escala
-- [ ] 3.3 Rodar o app em janela compacta **com ao menos um cartão de crédito cadastrado** e navegar da dashboard para outra tela: o FAB permanece inteiro sobre a barra durante toda a animação
-- [ ] 3.4 Repetir 3.3 no sentido inverso (voltando para a dashboard)
-- [ ] 3.5 Verificar a não-regressão do requisito original: durante a transição dashboard ↔ tela de cartões, o cartão continua sendo desenhado por baixo do chrome
-- [ ] 3.6 Verificar o modo wide: o FAB no `header` do rail e o rail seguem sem alteração visual
-- [ ] 3.7 Verificar que, sem nenhum cartão cadastrado, a dashboard e suas transições seguem sem regressão
+- [x] 3.3 Rodar o app em janela compacta **com ao menos um cartão de crédito cadastrado** e navegar da dashboard para outra tela: o FAB permanece inteiro sobre a barra durante toda a animação
+- [x] 3.4 Repetir 3.3 no sentido inverso (voltando para a dashboard)
+- [x] 3.5 Verificar a não-regressão do requisito original: durante a transição dashboard ↔ tela de cartões, o cartão continua sendo desenhado por baixo do chrome
+- [x] 3.6 Verificar o modo wide: o FAB no `header` do rail e o rail seguem sem alteração visual
+- [x] 3.7 Verificar que, sem nenhum cartão cadastrado, a dashboard e suas transições seguem sem regressão

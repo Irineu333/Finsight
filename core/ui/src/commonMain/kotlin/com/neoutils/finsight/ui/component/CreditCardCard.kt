@@ -44,6 +44,7 @@ fun Modifier.creditCardSharedElement(cardId: Long): Modifier {
         this@creditCardSharedElement.sharedElement(
             sharedContentState = rememberSharedContentState(key = "credit_card_$cardId"),
             animatedVisibilityScope = animatedVisibilityScope,
+            zIndexInOverlay = OverlayPriority.SharedElement,
             clipInOverlayDuringTransition = OverlayClip(shapes.large),
         )
     }

@@ -48,7 +48,9 @@ O sistema SHALL manter um histórico de taxas de conversão por moeda **para a m
 
 A consolidação de uma figura referente a um instante ou período SHALL usar **a última taxa em ou antes daquela data**. Uma figura de um período passado MUST NOT ser recalculada à taxa corrente: o passado não SHALL se mover sozinho quando a taxa muda.
 
-A taxa gravada localmente SHALL ser a única autoridade usada em qualquer conversão. O usuário SHALL poder cadastrar e corrigir taxas a qualquer momento, e uma taxa informada pelo usuário SHALL prevalecer sobre uma derivada de operação na mesma data.
+A taxa gravada localmente SHALL ser a única autoridade usada em qualquer conversão. O usuário SHALL poder cadastrar, corrigir **e remover** taxas a qualquer momento, e uma taxa informada pelo usuário SHALL prevalecer sobre uma derivada de operação na mesma data.
+
+A remoção SHALL existir como consequência de a taxa sobreviver à operação que a originou: sem ela, uma taxa colhida de uma operação que o usuário apagou permanece sem caminho que a alcance. Removida a única taxa de uma moeda, as figuras que dependiam dela SHALL voltar a exibir o termo próprio daquela moeda, em vez de um valor convertido por uma taxa que ninguém mais sustenta.
 
 Uma fonte externa MAY oferecer um valor **sugerido** dentro da tela que edita a taxa, e MUST NOT ser consultada em nenhum outro ponto. Nenhuma leitura, tela ou figura do app SHALL depender de rede, apresentar estado de carregamento ou falhar por indisponibilidade em razão de conversão de moeda.
 
@@ -109,6 +111,14 @@ Isso MUST NOT ser confundido com persistir a taxa **na** operação, o que `bala
 #### Scenario: A operação continua sem taxa
 - **WHEN** a operação que originou a taxa é inspecionada
 - **THEN** ela não possui campo de taxa, e a taxa registrada é uma linha do histórico
+
+#### Scenario: A taxa sobrevive à operação que a originou
+- **WHEN** o usuário apaga a operação cruzada que colheu uma taxa
+- **THEN** a taxa permanece no histórico, e as figuras do período que dependiam dela não mudam
+
+#### Scenario: Uma taxa colhida por engano pode ser removida
+- **WHEN** o usuário remove, na tela de taxas, uma taxa colhida de uma operação que ele já apagou
+- **THEN** ela deixa de existir, e as figuras que dependiam dela passam a exibir a parcela daquela moeda como termo próprio
 
 ### Requirement: Consolida-se até onde a taxa permitir, e nunca se inventa um valor
 

@@ -5,7 +5,7 @@
 >
 > E isso não é sustentado por disciplina: 1.6 escreve um **teste de inércia** afirmando que
 > nenhum sítio de produção constrói conta com moeda diferente do padrão. Ele vale de 1.6 até
-> 9.2, e 9.5 o **inverte** em vez de removê-lo, passando a valer para sempre como "exatamente
+> 9.7, e 9.8 o **inverte** em vez de removê-lo, passando a valer para sempre como "exatamente
 > dois sítios escolhem moeda".
 >
 > **Regra de higiene, e ela é o que corrige o erro mais fácil de cometer aqui:** nenhum grupo
@@ -85,7 +85,8 @@
 - [ ] 6.4 Semear a moeda base em `EnsureDefaultAccountUseCase` (`:feature:accounts:api`), hoje o único ponto que cria conta sem moeda explícita. **Definir também o fallback para app já instalado**, onde o use case retorna cedo por já existir conta e o seed nunca roda.
 - [ ] 6.5 Tela de configurações e tela de taxas: lista por moeda, data **sempre visível**, procedência no idioma de `CategoryCard:58-75` (`SwapHoriz` colhida / `ModeEdit` digitada) e sinalização de desatualizada aos 30 dias com cor `Warning` **e a palavra**.
 - [ ] 6.6 Modal de edição de taxa: campo numérico, `DatePickerModal`, e a sugestão externa como **placeholder** — único ponto do app onde rede é permitida, sem estado de carregamento que bloqueie a modal. Teste: nenhuma leitura de figura consolidada depende de rede.
-- [ ] 6.7 Strings de §6 em `values/` e `values-en/`.
+- [ ] 6.7 **Remoção** de taxa na tela de taxas (D27), com o `ExchangeRateDao` expondo o `delete`. É o corolário obrigatório de a taxa sobreviver à sua origem: sem ele, uma taxa colhida de uma operação já apagada fica sem caminho que a alcance. Teste: removida a única taxa de uma moeda, as figuras que dependiam dela voltam a exibir aquela moeda como termo próprio, em vez de convertida.
+- [ ] 6.8 Strings de §6 em `values/` e `values-en/`.
 
 ## 7. A perna primária e a exibição
 
@@ -115,7 +116,7 @@
 
 - [ ] 9.1 Os três fluxos de dois valores: `TransferBetweenAccountsUseCase` aceita o valor de destino; `PayInvoicePaymentUseCase` ganha um valor de entrada que **hoje não existe** (é derivado e exibido somente-leitura — o campo do devido mantém o papel, o editável é novo, abaixo dele), com `Action` e `UiState` novos; `AdvanceInvoicePaymentUseCase` ganha o par, com o teto `amount <= currentBillAmount` passando a valer sobre o campo na **moeda do cartão**. Nos três modais: segundo campo por `AnimatedVisibility`, campos nomeando a conta, taxa derivada como `supportingText`, e o `enabled` do botão cobrindo o **segundo** campo — sem isso a guarda de 2.8 fica alcançável por valor zerado.
 - [ ] 9.2 Pré-preencher o segundo valor **apenas** quando a taxa conhecida é do mesmo dia; fora disso, placeholder com a data no `supportingText`. Não é conveniência: o valor digitado vira taxa colhida, e pré-preencher com cotação velha a regravaria como nova, em laço.
-- [ ] 9.3 Colher a taxa de toda operação cruzada — derivada das duas pontas, na data da operação, origem de operação — a partir do caminho de escrita da feature, nunca do razão. Teste: a operação gravada não possui campo de taxa. **Decidir e registrar** o que acontece com a taxa colhida quando a operação que a produziu é removida.
+- [ ] 9.3 Colher a taxa de toda operação cruzada — derivada das duas pontas, na data da operação, origem de operação — a partir do caminho de escrita da feature, nunca do razão. A taxa **sobrevive** à remoção da operação que a originou (D27), então a remoção de transação não a toca. Testes: a operação gravada não possui campo de taxa; apagar a operação não altera a taxa nem as figuras do período.
 - [ ] 9.4 `ConfirmRecurringUseCase` recusa com erro tipado redirecionar para conta ou cartão de outra moeda (D17); `ConfirmRecurringModal` oferece apenas os da moeda da recorrência **e diz por que a lista encolheu**. Exibir valor com a moeda correta em `RecurringFormModal`, `ViewRecurringModal` e `RecurringScreen`.
 - [ ] 9.5 **Recusa de domínio** para a moeda imutável: guarda em `UpdateAccountUseCase` e no caminho de atualização do cartão, consumindo `hasEntries(accountId)`. A spec exige que a tentativa seja recusada **pelo domínio** e que a tela consulte a mesma implementação — sem isto a regra viveria só na UI, que é a inversão que o projeto proíbe.
 - [ ] 9.6 `CurrencyPickerModal` em `core/designsystem`, irmão do `IconPickerModal`, alimentado pelo catálogo de 5.2.

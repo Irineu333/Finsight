@@ -338,6 +338,18 @@ O app tem dois registros de recusa, e a regra entre eles é: se o usuário pode 
 
 E **falta de taxa não é erro nenhum**: a figura ganha um termo (D9). Nada recusa, nada bloqueia, nada pisca.
 
+### D27 — Uma taxa sobrevive à transação que a originou
+
+Apagar uma transação cruzada MUST NOT remover a taxa que ela colheu. Em compensação, a tela de taxas permite **remover** uma taxa, e não apenas corrigi-la.
+
+O argumento é sobre o que uma taxa **é**: uma observação sobre o mundo numa data, não uma propriedade da transação. A transação foi a *ocasião* de aprendê-la, não a dona dela. E a consequência decide junto: apagar um lançamento errado de março não pode mover em silêncio o patrimônio daquele mês — o patrimônio de março depende da taxa de março, que continua sendo verdade sobre março independentemente de qual lançamento a revelou.
+
+É o comportamento do GnuCash, que grava a taxa do diálogo de transferência no *price database* com a origem `PRICE_SOURCE_XFER_DLG_VAL` e não a remove quando a transação some; e do Beancount, onde a diretiva `price` é inteiramente separada de transação e não há acoplamento a desfazer. O contraexemplo é o Ledger CLI, em que o `@` faz parte do posting e o histórico de preços é **derivado** — mas ali não existe repositório de preços próprio. Quem tem tabela, não apaga.
+
+A remoção na tela é o **corolário obrigatório**, não uma conveniência: se a taxa sobrevive à sua origem, o cenário em que o usuário apagou uma transação com erro de digitação deixa presa uma taxa errada que nenhum caminho alcança. É a mesma razão pela qual o GnuCash embarca um *Price Editor*. Corrigir não basta — uma taxa colhida por engano numa data em que nenhuma outra existe precisa poder deixar de existir, e não ser substituída por um palpite.
+
+Consequência de leitura, e ela é desejável: removida a única taxa de uma moeda, as figuras daquele período voltam a exibir o termo próprio daquela moeda (D9) em vez de um valor convertido por uma taxa que ninguém mais sustenta.
+
 ## Riscos / Trade-offs
 
 - **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.

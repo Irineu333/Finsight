@@ -59,7 +59,7 @@
 - [ ] 3.8 Casos de duas moedas nas 6 suítes de query sobre `LedgerFixture` (habilitadas por 1.5): cada agregação devolve duas chaves e nenhuma soma entre elas. É a prova executável de "nenhuma agregação soma moedas".
 - [ ] 3.9 **Teste de regressão monomoeda**, e ele é o gate de todos os grupos seguintes: com todas as contas na moeda base, toda figura do app é idêntica à de antes da mudança e nenhuma recebe marca de aproximação. Escrito aqui, rodado ao fim de cada grupo.
 - [ ] 3.10 **Gate irmão de 3.9, e ele cobre o ponto cego dele:** teste com uma conta cuja moeda **difere da base**, provando que toda figura monomoeda carrega a moeda da sua conta ou fachada — saldo, extrato, devido de fatura, parcela — e **nunca** a base. Incluir o caso do usuário com **todas** as contas fora da base, **com taxa cadastrada**: nenhuma figura é convertida e nenhuma recebe marca, porque não havia mais de uma moeda a reconciliar (D9). Com moedas iguais a violação é invisível, porque os dois textos coincidem; 3.9 passaria com a base ligada por engano num saldo de conta. Como 1.1 instrui a passar a base nos sítios que agregam, este é o teste que separa os dois usos.
-- [ ] 3.11 Adaptar os consumidores de contas, categorias e orçamentos: `CalculateBalanceUseCase` (o `accountId = null` é a porta pela qual o multimoeda entra no app), `AccountsViewModel`, `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (incluindo o denominador de porcentagem), `CalculateBudgetProgressUseCase` (`:feature:budgets:api`).
+- [ ] 3.11 Adaptar os consumidores de contas, categorias e orçamentos: `CalculateBalanceUseCase` (o `accountId = null` é a porta pela qual o multimoeda entra no app), `AccountsViewModel`, `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (incluindo o denominador de porcentagem), `CalculateBudgetProgressUseCase` (`:feature:budgets:api`), que passa a reduzir o gasto à **moeda do limite** e não à base.
 - [ ] 3.12 Adaptar os consumidores de cartões: `CalculateInvoiceUseCase`, `CalculateInvoiceOverviewsUseCase`, `InvoiceTransactionsViewModel`. A redução a uma chave acontece **aqui**, com a garantia da fachada escrita onde o mapa é reduzido — não presumida no razão.
 - [ ] 3.13 Adaptar `DashboardComponentsBuilder` e `BalanceOverviewFactory` para somar `ASSET + LIABILITY` e `asset.expense + liability.expense` pela soma de 3.2, nunca por soma de mapas em linha.
 - [ ] 3.14 Adaptar `feature/report/impl`: `CalculateReportStatsUseCase` (escopo vazio = todas as contas, arquivadas inclusive — a figura mais cruzada do app), `CalculateReportCategorySpendingUseCase`, `ReportViewerViewModel`.
@@ -68,7 +68,7 @@
 ## 4. A tabela de taxas (independente de §2 e §3)
 
 - [ ] 4.1 `ExchangeRateEntity(currency, date, rate, source)` e `ExchangeRateDao` em `:core:database`, com `source` distinguindo colhida-de-operação de informada-pelo-usuário; a consulta "última taxa em ou antes de `:date`" com precedência da do usuário na mesma data; a listagem observável.
-- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` (apenas `CREATE TABLE`) registrada em `Database.kt`; bindar o DAO em `databaseModule`.
+- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` registrada em `Database.kt`: `CREATE TABLE` da tabela de taxas **e** `ALTER TABLE budgets ADD COLUMN` da moeda do limite (D13), com `DEFAULT` na constante de último recurso. O preenchimento é **exato, não aproximado**: todo banco existente está inteiramente em BRL, então a moeda que a coluna recebe é exatamente a que já denominava cada limite gravado. Nenhum valor é alterado. Bindar o DAO em `databaseModule`.
 - [ ] 4.3 Exportar `schemas/…/11.json`; escrever `Migration10To11Test` no molde dos existentes e estender `MigrationSchemaEquivalenceTest`, hoje um `@Test` só cobrindo `7 → 10`.
 - [ ] 4.4 Confirmar por teste que `LedgerBalanceCheck` **não muda** — já agrupa por `(transactionId, currency)` — com um banco contendo transação cruzada.
 
@@ -112,8 +112,10 @@
 - [ ] 8.2 Ligar à consolidação de 5.4 os consumidores que exibem figura consolidada — dashboard, resumo de transações, relatório, orçamentos, categorias —, sem nenhuma multiplicação por taxa em tela, ViewModel ou modelo de UI. Teste de inspeção.
 - [ ] 8.3 Atualizar `TransactionItemSignTest`, `TransactionPerspectiveTest`, `TransactionFormCoherenceTest` e os testes de formatação de `core/common`, `core/ui` e `report`.
 - [ ] 8.4 Strings de §7 e §8 em `values/` e `values-en/`: nomes de moeda, explicação da figura aproximada, aviso de parcela não convertida.
-- [ ] 8.5 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
-- [ ] 8.6 **Fechar a lista de 1.2**: nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. É o critério de pronto da varredura de superfície.
+- [ ] 8.5 **Moeda do limite de orçamento** (D13): a entidade de orçamento ganha o campo de moeda (a coluna e o preenchimento vêm de 4.2); o formulário oferece a escolha pré-selecionada — moeda única do app quando há uma só, base quando há várias — e a apresenta **travada** na edição; `CalculateBudgetProgressUseCase` reduz o gasto à moeda do limite. Migração dos orçamentos existentes: recebem a moeda base vigente, que é a que os denominava implicitamente, sem alterar valor algum.
+- [ ] 8.6 Teste do orçamento no perfil que motiva a regra: todas as contas em moeda diferente da base, limite criado na moeda das contas, gasto inteiramente nela → **progresso exato, sem marca**. E o perfil oposto: contas em duas moedas → progresso aproximado, com marca.
+- [ ] 8.7 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
+- [ ] 8.8 **Fechar a lista de 1.2**: nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. É o critério de pronto da varredura de superfície.
 
 ## 9. Os fluxos de dois valores e a porta
 

@@ -172,6 +172,38 @@ A consolidação SHALL produzir, junto de cada figura, se ela é exata ou aproxi
 - **WHEN** a interface da camada de consolidação é inspecionada
 - **THEN** não existe forma de obter uma figura consolidada sem a sua exatidão
 
+### Requirement: O limite de um orçamento carrega a moeda escolhida na sua criação
+
+O limite de um orçamento SHALL ser denominado numa moeda escolhida na sua criação, e MUST NOT herdar a moeda base. A escolha SHALL ser oferecida pré-selecionada com a moeda única do app quando houver apenas uma, e com a moeda base quando houver mais de uma.
+
+A denominação escolhida MUST NOT ser alterada depois: reinterpretar um limite gravado reescreve em silêncio o significado de um número que o usuário digitou. Alterar a denominação SHALL exigir outro orçamento.
+
+O progresso de um orçamento SHALL ser o gasto da sua categoria reduzido à **moeda do limite**, e SHALL ser exato quando nenhuma conversão participar dele.
+
+A regra existe para que o custo do multimoeda seja pago apenas por quem mistura moedas. Herdar a base cobraria esse custo de um usuário com **todas** as contas numa moeda diferente da base — que por toda leitura vê figuras exatas —, pedindo-lhe um limite na moeda base e comparando moedas distintas na barra de progresso.
+
+Um orçamento não nomeia conta alguma, então a sua denominação MUST NOT ser derivada: é o caso em que declará-la é a única alternativa a herdá-la de uma preferência que pode mudar.
+
+#### Scenario: Usuário de moeda única não é cobrado pela base
+- **WHEN** todas as contas estão em dólar, a base é o real, e o usuário cria um orçamento
+- **THEN** o limite é oferecido pré-selecionado em dólar, e o progresso é exato
+
+#### Scenario: Usuário com várias moedas
+- **WHEN** existem contas em real e em dólar e o usuário cria um orçamento
+- **THEN** o limite é oferecido pré-selecionado na moeda base, e o progresso é aproximado quando a categoria tem gasto em outra moeda
+
+#### Scenario: Progresso exato quando não houve conversão
+- **WHEN** o gasto de uma categoria está inteiramente na moeda do limite do seu orçamento
+- **THEN** o progresso é exato e não recebe marca de aproximação
+
+#### Scenario: Denominação não muda depois
+- **WHEN** o usuário edita um orçamento existente
+- **THEN** a moeda do limite é apresentada travada, e alterá-la exige criar outro orçamento
+
+#### Scenario: Limite não herda a base
+- **WHEN** a moeda base muda e existem orçamentos gravados
+- **THEN** o limite de cada um permanece na moeda em que foi criado, e o seu valor não é reinterpretado
+
 ### Requirement: O conjunto de moedas oferecidas é curado e de duas casas decimais
 
 O sistema SHALL oferecer ao usuário um conjunto curado de moedas, restrito às de **duas** casas decimais. O catálogo dessas moedas SHALL pertencer a esta camada, e MUST NOT ser conhecido pelo razão, que persiste apenas o código da moeda.

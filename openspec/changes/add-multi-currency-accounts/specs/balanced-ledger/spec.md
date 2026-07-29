@@ -192,11 +192,13 @@ Uma perna de conversão MUST NOT carregar dimensão, e em particular MUST NOT he
 
 ### Requirement: Um valor de fachada é denominado pela conta que ele nomeia
 
-Um valor monetário guardado por uma fachada — o valor de uma recorrência, o total de um parcelamento, o limite de um cartão, o limite de um orçamento — SHALL ser entendido como denominado na moeda da conta que aquela fachada nomeia. Ele MUST NOT ser transportado para uma conta de outra moeda como se fosse o mesmo número.
+Um valor monetário guardado por uma fachada — o valor de uma recorrência, o total de um parcelamento, o limite de um cartão — SHALL ser entendido como denominado na moeda da conta que aquela fachada nomeia. Ele MUST NOT ser transportado para uma conta de outra moeda como se fosse o mesmo número.
 
 Quando uma operação permitir redirecionar a conta ou o cartão de destino no momento da execução, e a moeda do novo destino diferir da moeda em que o valor está denominado, a operação SHALL ser **recusada** com erro tipado. Ela MUST NOT converter o valor em silêncio: converter exigiria escolher uma taxa em nome do usuário no meio de uma operação que ele não pediu e não vê, e gravar sem converter registraria o número de uma moeda como se fosse de outra.
 
-Onde a moeda da conta que a fachada nomeia é imutável, esta regra é vacuamente satisfeita e MUST NOT gerar verificação própria: um parcelamento é denominado na moeda do seu cartão, e o limite de um cartão idem, ambos imutáveis a partir do primeiro lançamento.
+Onde a moeda da conta que a fachada nomeia é imutável, esta regra é vacuamente satisfeita e MUST NOT gerar verificação própria: um parcelamento é denominado na moeda do seu cartão, e o limite de um cartão idem, ambos imutáveis desde a criação da conta.
+
+Uma fachada que **não nomeia conta alguma** — o orçamento, que não tem escopo de conta — MUST NOT herdar a sua denominação de uma preferência de exibição. Ela SHALL declará-la na sua criação e mantê-la (`currency-consolidation`): uma denominação herdada mudaria de significado quando a preferência mudasse, que é o modo de falha que este requisito existe para impedir.
 
 A interface SHALL oferecer apenas os destinos que o domínio aceitaria, em vez de oferecer o que seria recusado. Quando essa restrição reduzir as opções apresentadas, a interface SHALL dizer por que a lista encolheu: uma lista silenciosamente mais curta é indistinguível de uma lista incompleta.
 

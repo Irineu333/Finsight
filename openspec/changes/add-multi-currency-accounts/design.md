@@ -2,7 +2,7 @@
 
 O `:core:ledger` foi desenhado para multimoeda e nunca a exerceu. O estado atual, verificado no código:
 
-- `AccountEntity.currency` e `EntryEntity.currency` existem, com default `"BRL"`; **toda linha de todo banco existente já tem `'BRL'`**. Nenhuma tabela existente muda.
+- `AccountEntity.currency` e `EntryEntity.currency` existem, com default `"BRL"`; **toda linha de todo banco existente já tem `'BRL'`**.
 - `LedgerEntryWriter` valida `Σ = 0` **por moeda** (`entries.groupBy { it.currency }`), mas grava `currency = BASE_CURRENCY` literal nas duas construções de `EntryEntity` (linhas 73 e 88) e na criação de conta de sistema (linha 171). O `groupBy` tem, hoje, sempre um grupo só.
 - **Existe um segundo ponto de validação de soma zero**: `LedgerEntryWriter.validate(legs)` (linha 43), chamado de `TransactionRepository:219` e `:240`. É uma soma **plana, sem moeda**, sobre as pernas cruas, antes de qualquer acesso ao banco.
 - `TransactionLeg` não carrega moeda. `orRejectIfClosed` **já carrega a `AccountEntity`** de cada perna para verificar fechamento — a moeda está ali, sem custo adicional de leitura.
@@ -32,8 +32,7 @@ O `:core:ledger` foi desenhado para multimoeda e nunca a exerceu. O estado atual
 - Registrar o valor estrangeiro de uma despesa paga em moeda local. Ver D1 (a operação é monomoeda; o "quanto era em dólar" é informação de nota fiscal, não de razão).
 - Rastrear ganho cambial por **par** de moedas. Ver D3.
 - Tela dedicada de ganho/perda cambial. Ver D6 — o dado passa a existir; expô-lo é mudança própria.
-- Orçamento denominado em moeda não-base. Ver D13.
-- Alteração de qualquer tabela existente — há **uma** tabela nova (taxas), e nenhuma migração de dados.
+- Reescrita de dado existente — a migração cria a tabela de taxas e acrescenta uma coluna a `budgets`, preenchida com a moeda que já denominava aqueles limites. Nenhum valor gravado é alterado.
 - **Editar uma transação que atravessa moedas.** Ver D19: `updateTransaction` recebe uma única perna, e o gate de editabilidade já recusa duas pernas monetárias. Apagar e refazer.
 - **Taxa entre duas moedas não-base.** Ver D11: uma transferência USD→EUR com base BRL não produz taxa contra a base, e nenhuma é colhida.
 - **Trocar a moeda base.** Ver D18 e D28: a base é resolvida pelo locale na primeira execução e a v1 não oferece a troca; o requisito que a descreve existe para que a implementação não a impossibilite.
@@ -231,11 +230,22 @@ Isto não acrescenta máquina nova: o app **já** deriva moeda do locale, e é e
 
 A base é semeada **uma vez**. Trocar o locale do dispositivo depois MUST NOT mudá-la: seria mover em silêncio toda figura consolidada do histórico por causa de uma viagem.
 
-### D13 — Orçamento e categoria consolidam de forma aproximada
+### D13 — O limite de um orçamento carrega a moeda escolhida na sua criação
 
-Uma categoria é dimensão, não conta: não tem moeda, e as suas entries podem estar em várias. O gasto de "Alimentação" é, por natureza, leitura multimoeda — cai no lado aproximado de D9 pelo mesmo mecanismo de tudo o mais, sem regra própria.
+Uma categoria é dimensão, não conta: não tem moeda, e as suas entries podem estar em várias. O gasto de "Alimentação" é, por natureza, leitura por moeda — e cai nas duas partes de D9 sem regra própria: uma moeda passa exata, duas ou mais consolidam.
 
-O orçamento é denominado na moeda base, e o seu progresso é figura aproximada quando a categoria tem gasto em outra moeda. Consequência aceita: **o progresso pode se mover por variação de taxa, sem gasto novo algum.** É o preço de haver um único número, e ele vem marcado como aproximado. É exatamente a família de bugs que o Firefly III acumula em orçamento multimoeda (#1350, #3875, #9810, #9858, #11964) — lá sem marca e sem dono único; aqui, com ambos.
+**O limite de um orçamento é denominado, e a denominação é escolhida na criação** — não herdada da moeda base. A pré-seleção oferecida é a moeda única do app quando há uma só, e a base quando há várias. O progresso é o gasto da categoria **reduzido à moeda do limite**, e é exato quando não houve conversão.
+
+Denominar o limite na base era o desenho anterior, e produzia um custo indevido: um usuário com **tudo em dólar** e a base resolvida em real — que por D9 vê toda leitura exata e sem marca — teria o formulário de orçamento pedindo um limite em reais e a barra de progresso comparando reais com dólares, aproximada. Ele é monomoeda e pagaria o preço do multimoeda, pela porta da **entrada** em vez da leitura. Com o limite denominado, ele escolhe dólar, e o progresso volta a ser exato.
+
+É a generalização de D17 (*"um valor de fachada é denominado pela conta que ele nomeia"*) para o caso em que a fachada **não nomeia conta alguma**: um orçamento não tem escopo de conta, então a sua denominação não é derivável — e por isso é declarada, uma vez, e nunca herdada de uma preferência que pode mudar.
+
+A denominação escolhida MUST NOT mudar depois, pela mesma razão de D12: reinterpretar um limite gravado é reescrever em silêncio o significado de um número que o usuário digitou. Trocá-la é criar outro orçamento.
+
+Consequência que permanece e é aceita: quando a categoria tem gasto em moeda diferente da do limite, **o progresso pode se mover por variação de taxa, sem gasto novo algum** — e vem marcado como aproximado. É o preço de haver um único número, e agora só é pago por quem de fato mistura moedas. É a família de bugs que o Firefly III acumula em orçamento multimoeda (#1350, #3875, #9810, #9858, #11964): lá sem marca e sem dono único, aqui com ambos, e sem cobrar de quem não mistura.
+
+- *Alternativa considerada:* limite sempre na base, com o progresso aproximado quando a categoria tem gasto em outra moeda. Rejeitada pelo caso acima: cobra do usuário monomoeda um custo que é do multimoeda, e o cobra no lugar mais visível do app.
+- *Alternativa considerada:* limite implicitamente na "moeda única do app quando há uma só, base quando há várias". Rejeitada: o significado do número gravado mudaria no dia em que o usuário criasse a segunda moeda, que é o modo de falha que D12 e D17 existem para impedir.
 
 ### D14 — O expoente da moeda permanece 2, e o conjunto oferecido é restrito a isso
 
@@ -392,7 +402,7 @@ Registrar isso como decisão, e não apenas como tarefa de teste, é o que imped
 ## Riscos / Trade-offs
 
 - **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.
-- **Uma tabela nova, e uma migração de verdade.** A tabela de taxas (D11) leva `AppDatabase` de `version = 10` para `11`, com `MIGRATION_10_11` registrada, o schema `11.json` exportado (o plugin de convenção exporta schemas) e `MigrationSchemaEquivalenceTest` — hoje cobrindo apenas `7 → 10` — estendido. Nenhuma tabela existente muda e nenhum dado migra, mas "sem migração" era falso a partir do momento em que a taxa ganhou data.
+- **Uma tabela nova, uma coluna nova, e uma migração de verdade.** A tabela de taxas (D11) e a coluna de moeda do limite de orçamento (D13) levam `AppDatabase` de `version = 10` para `11`, com `MIGRATION_10_11` registrada, o schema `11.json` exportado (o plugin de convenção exporta schemas) e `MigrationSchemaEquivalenceTest` — hoje cobrindo apenas `7 → 10` — estendido. Nenhum valor gravado é alterado: todo banco existente está inteiramente em BRL, então a moeda que a coluna nova recebe é exatamente a que já denominava cada limite. Mas "sem migração" era falso a partir do momento em que a taxa ganhou data.
 - **`netWorth()` não tem consumidor de produção.** A mudança de assinatura mais anunciada da change custa, hoje, apenas os ~25 fakes que implementam `IEntryRepository` inteiro. Ou é código morto, ou falta o consumidor — e o "saldo total" que o dashboard exibe vem de `CalculateBalanceUseCase(accountId = null)`, não dele.
 - **O custo real é de superfície, não de núcleo.** ~105 sítios de formatação de dinheiro em 10 módulos, nenhum dos quais conhece a moeda hoje; 12 modais usando `MoneyInputTransformation`; ~25 arquivos de teste que implementam `IEntryRepository` como stub completo; e `LedgerFixture` sem parâmetro de moeda, sem o qual nenhum teste cruzado é escrevível.
 - **Superfície de leitura.** O critério é único e não enumerado: **toda agregação que não filtre por uma única conta passa a ser expressa por moeda**. Só as escopadas a uma conta (`balanceOf`, `balanceUpToMonth`, `accountPeriodTotals` → `AccountFlows`) permanecem escalares, porque ali a moeda é atributo da conta. **Toda leitura por dimensão entra no conjunto que muda**, `DimensionFlows` e `dimensionOwed` inclusive: nada no razão amarra uma dimensão a uma única conta, e presumir o contrário para a fatura exigiria que o razão consultasse `DimensionKind` na leitura — exatamente o conhecimento de fachada que D8 proíbe. Quem sabe que o resultado de uma fatura tem uma chave só é a feature de cartões, e é lá que a redução acontece.

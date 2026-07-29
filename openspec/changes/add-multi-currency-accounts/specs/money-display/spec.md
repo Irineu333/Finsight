@@ -57,6 +57,8 @@ Se um valor é exato ou aproximado SHALL ser **derivado** do resultado por moeda
 
 A exatidão SHALL viajar junto do valor, no mesmo tipo que já carrega a política de sinal e a moeda, pelo mesmo argumento: um valor que perde a sua marca no caminho até a tela é indistinguível de um valor exato, e a falha é silenciosa.
 
+A marca MUST NOT ser expressa apenas por cor. Ela SHALL ter um significante textual, resolvido no mesmo ponto que já resolve o sinal, de modo que a mesma regra produza o mesmo texto em toda superfície — inclusive naquelas sem cor, como o documento exportado. Esta é a mesma exigência que o sistema já aplica a estado exibido: cor sozinha falha para quem não a lê.
+
 Decorre da derivação que, para um usuário cujas contas estejam todas na moeda base, nenhuma figura do app é aproximada e a marca não aparece em superfície alguma — sem que exista caminho de código, ramo de compatibilidade ou configuração que a desligue.
 
 #### Scenario: Patrimônio com contas em duas moedas
@@ -74,6 +76,10 @@ Decorre da derivação que, para um usuário cujas contas estejam todas na moeda
 #### Scenario: Usuário de uma moeda só não vê marca alguma
 - **WHEN** todas as contas do usuário estão na moeda base e qualquer tela do app é exibida
 - **THEN** nenhuma figura recebe marca de aproximação
+
+#### Scenario: A marca sobrevive à ausência de cor
+- **WHEN** uma figura aproximada é exibida numa superfície sem cor, como o relatório exportado
+- **THEN** a marca continua legível, por ser textual
 
 #### Scenario: A tela não decide a marca
 - **WHEN** um modelo de UI é montado a partir de uma figura consolidada

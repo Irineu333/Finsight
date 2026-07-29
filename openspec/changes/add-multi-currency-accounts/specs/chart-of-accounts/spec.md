@@ -80,13 +80,17 @@ A moeda de uma `Account` SHALL ser escolhida na sua criação e MUST NOT ser alt
 
 O fato que governa a recusa SHALL ser o **mesmo** que já decide apagar-vs-arquivar uma conta — a existência de entries que a referenciam —, consultado da mesma implementação de domínio. Nenhuma tela SHALL rederivar essa condição.
 
-A interface SHALL apresentar a moeda travada, com o motivo, em vez de oferecer uma edição que o domínio recusaria.
+A interface SHALL apresentar a moeda travada, com o motivo, em vez de oferecer uma edição que o domínio recusaria. O controle que a apresenta SHALL estar sempre presente no formulário, esteja a moeda editável ou travada, e MUST NOT depender de o app já possuir mais de uma moeda: a moeda é atributo da conta como o seu nome e o seu ícone são, e um formulário que muda de forma conforme o estado global do app esconde a decisão de quem ainda não a tomou.
 
 A regra existe porque trocar a moeda de uma conta com história não reinterpreta um dado: ela reescreve em silêncio o significado de toda entry já gravada, que passa a valer outra coisa sem que nada registre o que valia antes.
 
 #### Scenario: Conta nova permite trocar a moeda
 - **WHEN** o usuário edita uma conta que ainda não tem nenhum lançamento
 - **THEN** a moeda é editável
+
+#### Scenario: O controle existe mesmo com uma moeda só
+- **WHEN** o usuário abre o formulário de conta num app cujas contas estão todas na mesma moeda
+- **THEN** o controle de moeda está presente, exibindo a moeda corrente
 
 #### Scenario: Conta com lançamento recusa a troca
 - **WHEN** o usuário edita uma conta que já possui ao menos um lançamento

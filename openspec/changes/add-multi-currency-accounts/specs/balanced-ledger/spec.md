@@ -198,9 +198,15 @@ Quando uma operação permitir redirecionar a conta ou o cartão de destino no m
 
 Onde a moeda da conta que a fachada nomeia é imutável, esta regra é vacuamente satisfeita e MUST NOT gerar verificação própria: um parcelamento é denominado na moeda do seu cartão, e o limite de um cartão idem, ambos imutáveis a partir do primeiro lançamento.
 
+A interface SHALL oferecer apenas os destinos que o domínio aceitaria, em vez de oferecer o que seria recusado. Quando essa restrição reduzir as opções apresentadas, a interface SHALL dizer por que a lista encolheu: uma lista silenciosamente mais curta é indistinguível de uma lista incompleta.
+
 #### Scenario: Confirmar recorrência em conta de outra moeda é recusado
 - **WHEN** o usuário confirma um ciclo de uma recorrência criada sobre uma conta em BRL, redirecionando-o para uma conta em USD
 - **THEN** a operação é recusada com erro tipado, nada é gravado, e o valor não é convertido nem copiado
+
+#### Scenario: O seletor oferece apenas o que o domínio aceita
+- **WHEN** o usuário abre o seletor de conta ao confirmar um ciclo de uma recorrência denominada em USD
+- **THEN** apenas contas em USD são oferecidas, e o seletor informa que a lista está restrita à moeda da recorrência
 
 #### Scenario: Confirmar recorrência na mesma moeda é permitido
 - **WHEN** o usuário confirma um ciclo redirecionando-o para outra conta de mesma moeda

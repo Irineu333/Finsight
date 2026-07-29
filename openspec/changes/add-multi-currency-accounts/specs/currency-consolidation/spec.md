@@ -52,7 +52,11 @@ A taxa gravada localmente SHALL ser a única autoridade usada em qualquer conver
 
 Uma fonte externa MAY oferecer um valor **sugerido** dentro da tela que edita a taxa, e MUST NOT ser consultada em nenhum outro ponto. Nenhuma leitura, tela ou figura do app SHALL depender de rede, apresentar estado de carregamento ou falhar por indisponibilidade em razão de conversão de moeda.
 
-O sistema SHALL apresentar, junto de onde as taxas são editadas, a data e a origem de cada uma.
+O sistema SHALL apresentar, junto de onde as taxas são editadas, a data e a origem de cada uma. A origem SHALL distinguir a taxa **colhida de uma operação** da **informada pelo usuário**.
+
+Uma taxa cuja data seja anterior a **30 dias** SHALL ser sinalizada como desatualizada. A sinalização MUST NOT ser expressa apenas por cor: ela SHALL incluir um significante textual, pela mesma razão que a marca de aproximação o inclui. A data SHALL ser exibida esteja a taxa desatualizada ou não.
+
+O limiar não é derivável do domínio — é opinião sobre volatilidade. Sinalizar, em vez de apenas exibir a data, existe porque a consequência de uma taxa velha é uma figura de um período passado exibida errada, e essa consequência não é visível da tela em que o usuário está.
 
 #### Scenario: Conversão usa a taxa local
 - **WHEN** uma figura consolidada é calculada
@@ -73,6 +77,14 @@ O sistema SHALL apresentar, junto de onde as taxas são editadas, a data e a ori
 #### Scenario: Data e origem visíveis
 - **WHEN** o usuário abre a tela de taxas
 - **THEN** cada taxa exibe a sua data e se veio de uma operação ou do próprio usuário
+
+#### Scenario: Taxa desatualizada é sinalizada
+- **WHEN** uma taxa foi definida há mais de 30 dias
+- **THEN** ela é sinalizada como desatualizada, com um significante textual e não apenas por cor
+
+#### Scenario: Taxa recente exibe a data assim mesmo
+- **WHEN** uma taxa foi definida hoje
+- **THEN** a sua data é exibida, sem sinalização de desatualizada
 
 #### Scenario: Uma taxa por moeda e data
 - **WHEN** as taxas gravadas são inspecionadas com três moedas em uso

@@ -268,6 +268,72 @@ Uma figura de dois termos (`R$ 100,00 + US$ 50,00`) não cabe em toda superfíci
 
 Isso é degradação **declarada**, e a alternativa não é "renderizar tudo": é o layout decidir sozinho, por truncamento ou quebra, o que uma superfície mostra de uma figura incompleta — que é como um número passa a mentir sem que ninguém tenha decidido isso.
 
+### D21 — A marca de aproximação é um prefixo textual, e nunca cor
+
+`≈` como prefixo, resolvido **dentro do formatador**, sempre mais externo que o sinal: `≈ +R$ 1.240,00`. É a porta que `DisplayAmount.format` já usa para concatenar `"+"` e `"-"` sobre o valor formatado, com o KDoc registrando que absorvê-lo ali é "um no-op demonstrável no texto". Ser o mais externo é também a única posição que sobrevive a um locale que ponha o símbolo à direita.
+
+Cor está **descartada**, por duas razões independentes. A paleta já está inteiramente tomada por natureza de lançamento, e o âmbar que "aproximado" pediria é literalmente o `Adjustment` (`Color.kt:17`). E o projeto já escreveu a doutrina: *"a cor sozinha não carrega 'arquivado' — falha para quem não lê cor"* (`CategoryCard.kt:56-57`). Onde o app precisa de estado, ele usa ícone **e** rótulo.
+
+Ícone e sufixo `(aprox.)` também descartados: o `SummaryCard` tem até seis linhas de dinheiro, e nem seis ícones de 16dp nem oito caracteres extras cabem numa coluna que já está em `SpaceBetween`.
+
+A densidade é o que torna isso viável, e ela é consequência de D9, não escolha: a marca alcança ~6 famílias de **totais**, e **nenhuma lista** — extrato, saldo de conta, fatura, contador de parcelas e medidor de limite são monomoeda por construção (D17).
+
+Como `≈` a 12–20sp não é alvo de toque, a explicação e a navegação vivem num **rodapé do card**, no idioma do `helperText` (13sp, `onSurfaceVariant`), renderizado só quando alguma linha do card é aproximada — como `AccountCard:199-213` já condiciona as linhas de ajuste e fatura a `!= 0.0`. Um elemento faz três trabalhos: explica a marca, revela que existe uma taxa, e é o alvo que leva à tela de taxas.
+
+### D22 — Os termos de uma figura multitermo são empilhados, não justapostos
+
+Justapor em linha não sobrevive ao `TotalBalanceCard` (`headlineMedium`) nem ao `BalanceCard.Default` (36sp). Os termos ocupam uma linha cada, alinhados à direita; o primeiro mantém o estilo tipográfico da superfície, os demais descem **um degrau** e vão para `onSurfaceVariant` — que é como `CreditCardCard:255-270` já desenha `disponível` a 20sp junto de `/ limite` a 14sp.
+
+O degrau não significa "vale menos": significa "mesma figura, segunda linha". E o `+` fica colado ao termo, porque é operador de justaposição, não de soma.
+
+Regra única, em toda superfície que comporte mais de um termo — nenhuma decide por conta própria, que é o que D20 exige.
+
+### D23 — A linha de moeda é sempre visível no formulário
+
+O controle reutiliza inteiro o `DefaultAccountSelector` (`AccountFormModal:207-290`): caixa de 52dp com o **símbolo como glifo** no lugar do ícone, título, subtítulo de estado, e a mesma mecânica de travamento que ele já tem — três subtítulos alternativos e a caixa trocando de `primary` para `onSurfaceVariant` quando `!canChange`, sem chevron. Consequência deliberada: "moeda travada" **lê igual** a "conta padrão não pode mudar", significante que o usuário deste app já aprendeu.
+
+A linha é **sempre renderizada**, e não revelada por um link quando existe uma segunda moeda. Custo aceito: ~60dp permanentes no formulário para quem nunca vai tocá-la. Em troca, a moeda é atributo da conta do mesmo modo que o ícone é, e não uma feature que se descobre — o que também elimina a assimetria de um formulário que muda de forma conforme o estado global do app.
+
+O toque abre um `CurrencyPickerModal`, irmão do `IconPickerModal`, que já vive em `core/designsystem` exatamente por ser modal compartilhada entre features.
+
+### D24 — Os três fluxos de dois valores compartilham uma gramática
+
+**Ordem:** *quem participa* → *quanto* → *quando*. O `TransferBetweenAccountsModal` já é assim; `PayInvoiceModal` e `AdvancePaymentModal` pedem valor **antes** da conta, e são reordenados. Não é concessão ao multimoeda — é o alinhamento dos três —, mas muda o caso comum de todo usuário, inclusive quem nunca verá duas moedas. Aceito conscientemente: sem ele, revelar o segundo campo empurraria o seletor de conta para baixo com o dedo do usuário em cima dele.
+
+**Revelação:** o segundo campo aparece por `AnimatedVisibility` quando `origem.currency != destino.currency`, no padrão que `ConfirmRecurringModal:123-178` já usa para revelar seletores em cascata. O caso de moeda única fica idêntico ao de hoje.
+
+**Rótulos:** quando há duas moedas, "Valor" deixa de bastar e "valor de origem/destino" repete o que os seletores acima já dizem. Os campos nomeiam a conta — *"Sai de Nubank"* / *"Entra em Chase"* —, que é a frase que o extrato conta. O símbolo dentro do campo vem de graça de D10.
+
+**A taxa derivada é exibida** como `supportingText` do segundo campo — o slot que os formulários já usam para dizer algo *sobre* um campo, aqui livre por este campo não ter validação a reportar. Lê-se como consequência, não como controle, que é o que um valor derivado é. Um campo desabilitado para a taxa foi descartado: pesa 56dp e sugere que ali houve entrada.
+
+**Pré-preenchimento do segundo valor apenas quando a taxa conhecida é do mesmo dia.** Fora disso, o valor implícito vai para o *placeholder*, com a data no `supportingText` (*"pela taxa de 05/07: US$ 100,00"*). A regra não é de conveniência: como o valor digitado ali **vira** taxa colhida (D11), pré-preencher com uma cotação de duas semanas atrás gravaria a taxa velha como taxa nova, em silêncio e em laço.
+
+**No pagamento de fatura, o campo somente-leitura que hoje mostra a dívida não muda de papel** — ele continua dizendo quanto se deve, exato, na moeda do cartão. O campo editável é **novo**, abaixo dele. Tornar editável um controle existente trocaria o seu significado.
+
+**No pagamento antecipado, o teto `amount <= currentBillAmount` passa a valer sobre o campo na moeda do cartão**, e o campo na moeda da conta é livre — sem isso a validação compara moedas distintas.
+
+### D25 — Configurações entra no `AppNavCatalog`; a porta real é o rodapé do card
+
+`AppNavCatalog` é a fonte única de seções navegáveis, projetada em três afordâncias. Configurações entra imediatamente **antes** de `Support`, que o KDoc registra ser o último de propósito — os dois são "sobre o app".
+
+Descartados: pôr as taxas no overflow de Contas (moeda base e taxa são preferências do app inteiro, não sub-assunto de contas, e ali ficam inencontráveis a partir de um orçamento aproximado), e um widget no dashboard (que o usuário pode ter desmontado — uma preferência não pode depender de um layout editável).
+
+Mas o caminho **projetado** não é o catálogo: é o rodapé de D21, que aparece exatamente onde a taxa importa. E ele resolve sozinho a descoberta da taxa colhida — o rodapé nasce junto da primeira figura aproximada, que por construção só existe depois da primeira transação cruzada, que é o que colheu a taxa.
+
+Uma taxa é sinalizada como **desatualizada aos 30 dias**, com cor `Warning` **e a palavra**, nunca cor sozinha (doutrina de D21). A data aparece sempre, atualizada ou não. Trinta dias não é derivável do domínio — é opinião sobre volatilidade —, e a razão de sinalizar em vez de só mostrar a data é que a consequência de uma taxa velha (o patrimônio de um mês passado exibido errado) não é visível de onde o usuário está.
+
+A origem de cada taxa é dita no formato que `CategoryCard:58-75` já estabeleceu para procedência de estado — ícone de 16dp + `labelSmall` em `onSurfaceVariant` —, com dois ícones que o app já carrega e cujo sentido já está fixado: `SwapHoriz` (o ícone de transferência em `TransactionCard:173`) para a taxa colhida, `ModeEdit` (o glifo de "você editou isto", em `AccountCard:329` e `BalanceCard:133`) para a digitada.
+
+### D26 — Uma recusa por moeda é prevenida no controle, não reportada como erro
+
+O app tem dois registros de recusa, e a regra entre eles é: se o usuário pode consertar dentro da modal, é *inline*; se a recusa vem do domínio na escrita, é `ErrorModal`. As três recusas desta change ficam **antes** dos dois:
+
+- **Moeda travada** não é erro, é estado: linha desabilitada com o motivo no subtítulo (D23). Nenhuma recusa alcança o escriturador.
+- **Recorrência em conta de outra moeda** (D17): o `AccountSelector` oferece apenas contas da moeda da recorrência — a doutrina de D5 ("deixa de ser recusado e passa a ser inexprimível") aplicada à UI, e o que `TransferBetweenAccountsModal` já pratica ao excluir a origem dos destinos. Mas uma lista silenciosamente mais curta é mentira por omissão, então o seletor diz por que encolheu. A recusa do domínio permanece como rede, e nunca é o caminho projetado.
+- **Resíduos de mesmo sinal** (D1) é defeito, não erro de usuário: num formulário onde um campo é "sai" e o outro "entra", os resíduos se opõem por construção, e a guarda só é alcançável por valor zerado — que o `enabled` do botão já barra, **desde que passe a cobrir o segundo campo**. É a alteração de validação mais fácil de esquecer.
+
+E **falta de taxa não é erro nenhum**: a figura ganha um termo (D9). Nada recusa, nada bloqueia, nada pisca.
+
 ## Riscos / Trade-offs
 
 - **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.

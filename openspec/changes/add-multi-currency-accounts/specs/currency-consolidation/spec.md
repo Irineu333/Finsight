@@ -28,12 +28,14 @@ O razão MUST NOT prover valor padrão para a moeda de uma conta. Não existe, p
 - **WHEN** o usuário troca o locale do dispositivo depois de a moeda base já estar resolvida
 - **THEN** a moeda base permanece a mesma, e nenhuma figura consolidada muda
 
-#### Scenario: Troca de moeda base é imediata e retroativa
-- **WHEN** o usuário troca a moeda base de BRL para USD
-- **THEN** toda figura consolidada passa a ser expressa em dólar, incluindo períodos passados, sem migração e sem alterar nenhuma entry
+#### Scenario: Trocar a base é imediato e retroativo (invariante da preferência)
+- **GIVEN** a v1 não oferece UI para trocar a base — este scenario verifica a **invariante do repositório**, exercitada emitindo uma nova moeda base pelo `SettingsRepository` em teste
+- **WHEN** a moeda base emitida muda de BRL para USD
+- **THEN** toda figura consolidada passa a ser expressa em dólar na leitura seguinte, incluindo períodos passados, sem migração e sem alterar nenhuma entry
 
-#### Scenario: Troca de moeda base preserva as taxas
-- **WHEN** o usuário troca a moeda base e existiam taxas cadastradas contra a base anterior
+#### Scenario: Trocar a base preserva as taxas (invariante da preferência)
+- **GIVEN** a v1 não oferece UI para trocar a base — este scenario verifica a **invariante do repositório de taxas** frente a uma nova base
+- **WHEN** a moeda base muda e existiam taxas cadastradas contra a base anterior
 - **THEN** as taxas continuam utilizáveis, derivadas por inversão e triangulação, sem que nenhuma linha gravada seja alterada
 
 #### Scenario: Nenhum valor convertido persistido

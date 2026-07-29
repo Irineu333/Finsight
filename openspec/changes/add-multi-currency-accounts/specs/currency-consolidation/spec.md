@@ -2,7 +2,7 @@
 
 ### Requirement: A moeda base é preferência de exibição, não fato contábil
 
-O sistema SHALL manter uma **moeda base** do usuário, usada exclusivamente para reduzir a uma única figura os valores que o razão devolve por moeda. Ela SHALL ser preferência de exibição, e MUST NOT ser propriedade de conta, de entry, de transação ou de qualquer dado do razão.
+O sistema SHALL manter uma **moeda base** do usuário, usada exclusivamente para reduzir a uma única figura os valores que o razão devolve em **mais de uma** moeda. Um usuário cujas contas estejam todas numa mesma moeda MUST NOT ter figura alguma expressa na base quando esta difere daquela — para ele, a base permanece sem uso. Ela SHALL ser preferência de exibição, e MUST NOT ser propriedade de conta, de entry, de transação ou de qualquer dado do razão.
 
 Trocar a moeda base MUST NOT alterar dado algum já gravado, e MUST NOT exigir migração ou reprocessamento: as figuras consolidadas SHALL ser recalculadas na leitura seguinte, retroativamente e por inteiro. Nenhum valor convertido SHALL ser persistido.
 
@@ -140,7 +140,9 @@ Isso MUST NOT ser confundido com persistir a taxa **na** operação, o que `bala
 
 ### Requirement: Consolida-se até onde a taxa permitir, e nunca se inventa um valor
 
-A consolidação SHALL reduzir um resultado por moeda **até onde as taxas disponíveis permitirem**, produzindo uma figura composta de um ou mais termos: um termo na moeda base com tudo o que pôde ser convertido, e um termo próprio para cada moeda cuja taxa é desconhecida.
+A consolidação SHALL ocorrer **apenas quando houver mais de uma moeda a reconciliar**. Um resultado com uma única moeda SHALL ser entregue naquela moeda, exato, e MUST NOT ser convertido à base — nem quando a base difere dela e a taxa é conhecida. Converter ali troca um valor exato por um aproximado sem reconciliar nada.
+
+Quando houver duas ou mais moedas, a consolidação SHALL reduzir o resultado **até onde as taxas disponíveis permitirem**, produzindo uma figura composta de um ou mais termos: um termo na moeda base com tudo o que pôde ser convertido, e um termo próprio para cada moeda cuja taxa é desconhecida.
 
 Uma taxa ausente MUST NOT ser tratada como `1`, MUST NOT fazer a parcela correspondente ser omitida da figura, e MUST NOT impedir a exibição das parcelas que puderam ser convertidas. O estado em que uma conta em moeda não-base existe e a sua taxa ainda não foi cadastrada é alcançável por construção, e SHALL ter comportamento definido.
 
@@ -158,9 +160,13 @@ A consolidação SHALL produzir, junto de cada figura, se ela é exata ou aproxi
 - **WHEN** um resultado contendo R$ 100,00 e US$ 50,00 é consolidado sem taxa cadastrada para o dólar
 - **THEN** a figura resultante tem dois termos — R$ 100,00 e US$ 50,00 — e nenhuma parcela é omitida nem convertida a uma taxa presumida
 
-#### Scenario: Moeda única sem taxa permanece na sua moeda
-- **WHEN** um resultado contendo apenas dólares é consolidado sem taxa cadastrada
-- **THEN** a figura resultante tem um termo em dólar e é exata, porque nada foi convertido
+#### Scenario: Moeda única permanece na sua moeda, com ou sem taxa
+- **WHEN** um resultado contendo apenas dólares é consolidado com a base em real, exista ou não taxa cadastrada para o dólar
+- **THEN** a figura resultante tem um termo em dólar e é exata, porque não havia mais de uma moeda a reconciliar
+
+#### Scenario: Usuário sem nenhuma conta na base
+- **WHEN** todas as contas e cartões estão em dólar e a base, resolvida pelo locale, é o real
+- **THEN** nenhuma figura do app é convertida, e a moeda base não é usada em lugar algum
 
 #### Scenario: Exatidão não é opcional
 - **WHEN** a interface da camada de consolidação é inspecionada

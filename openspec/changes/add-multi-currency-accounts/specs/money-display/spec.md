@@ -51,15 +51,16 @@ Um valor monetário cuja obtenção passou por conversão de moeda SHALL ser exi
 Se um valor é exato ou aproximado SHALL ser **derivado** do resultado por moeda que o originou e das taxas disponíveis, e MUST NOT ser declarado pela tela nem marcado à mão por quem monta um modelo de UI. Uma figura SHALL ser aproximada quando, e apenas quando, alguma conversão tiver participado dela:
 
 - resultado sem moeda alguma → exato;
-- resultado numa única moeda, igual à moeda base → exato;
-- resultado numa única moeda diferente da base, sem taxa conhecida → exato, exibido naquela moeda, pois nada foi convertido;
-- qualquer resultado em que ao menos uma parcela foi convertida → aproximado.
+- resultado numa **única** moeda, qualquer que ela seja → exato, exibido naquela moeda, com ou sem taxa conhecida, porque não havia nada a reconciliar e nenhuma conversão ocorreu;
+- resultado em duas ou mais moedas → aproximado, reduzido à base até onde as taxas permitirem.
 
 A exatidão SHALL viajar junto do valor, no mesmo tipo que já carrega a política de sinal e a moeda, pelo mesmo argumento: um valor que perde a sua marca no caminho até a tela é indistinguível de um valor exato, e a falha é silenciosa.
 
 A marca MUST NOT ser expressa apenas por cor. Ela SHALL ter um significante textual, resolvido no mesmo ponto que já resolve o sinal, de modo que a mesma regra produza o mesmo texto em toda superfície — inclusive naquelas sem cor, como o documento exportado. Esta é a mesma exigência que o sistema já aplica a estado exibido: cor sozinha falha para quem não a lê.
 
-Decorre da derivação que, para um usuário cujas contas estejam todas na moeda base, nenhuma figura do app é aproximada e a marca não aparece em superfície alguma — sem que exista caminho de código, ramo de compatibilidade ou configuração que a desligue.
+Uma figura MUST NOT ser convertida quando o resultado que a originou tem uma única moeda, mesmo que ela difira da base. Converter ali troca um valor exato por um aproximado sem reconciliar nada, e é perda pura.
+
+Decorre da derivação que, para um usuário de uma moeda só — **qualquer** moeda, não apenas a base —, nenhuma figura do app é aproximada e a marca não aparece em superfície alguma, sem que exista caminho de código, ramo de compatibilidade ou configuração que a desligue.
 
 #### Scenario: Patrimônio com contas em duas moedas
 - **WHEN** o patrimônio total é exibido, o usuário tem contas em BRL e em USD, e a taxa do dólar é conhecida
@@ -69,13 +70,17 @@ Decorre da derivação que, para um usuário cujas contas estejam todas na moeda
 - **WHEN** o saldo de uma conta em USD é exibido
 - **THEN** ele aparece em dólar, exato e sem marca, porque nenhuma conversão participou dele
 
-#### Scenario: Figura em moeda única sem taxa não é aproximada
-- **WHEN** uma figura consolidada contém apenas dólares e não há taxa cadastrada
-- **THEN** ela é exibida em dólar, sem marca, porque nada foi convertido
+#### Scenario: Figura em moeda única não é convertida, mesmo com taxa
+- **WHEN** a moeda base é o real, uma figura contém apenas dólares e existe taxa cadastrada para o dólar
+- **THEN** ela é exibida em dólar, exata e sem marca, porque não havia mais de uma moeda a reconciliar
+
+#### Scenario: Usuário de moeda única diferente da base
+- **WHEN** todas as contas e cartões estão em dólar, a base é o real, e qualquer tela do app é exibida — dashboard incluído
+- **THEN** toda figura aparece em dólar, exata, e a marca de aproximação não aparece em lugar algum
 
 #### Scenario: Usuário de uma moeda só não vê marca alguma
-- **WHEN** todas as contas do usuário estão na moeda base e qualquer tela do app é exibida
-- **THEN** nenhuma figura recebe marca de aproximação
+- **WHEN** todas as contas do usuário estão numa mesma moeda e qualquer tela do app é exibida
+- **THEN** nenhuma figura recebe marca de aproximação, qualquer que seja essa moeda
 
 #### Scenario: A marca sobrevive à ausência de cor
 - **WHEN** uma figura aproximada é exibida numa superfície sem cor, como o relatório exportado

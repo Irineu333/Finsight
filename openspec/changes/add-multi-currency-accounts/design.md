@@ -163,18 +163,22 @@ Uma figura consolidada é, no caso geral, uma **lista de termos**; quase sempre 
 
 | entrada (saldo por moeda) | resultado |
 |---|---|
-| vazio | `R$ 0,00` — exato |
-| `{BRL: 100}` (base) | `R$ 100,00` — exato |
-| `{USD: 50}`, taxa conhecida | `≈ R$ 275,00` — aproximado |
+| vazio | zero — exato |
+| `{BRL: 100}`, base BRL | `R$ 100,00` — exato |
+| `{USD: 50}`, base BRL, **com ou sem** taxa | `US$ 50,00` — **exato** |
 | `{BRL: 100, USD: 50}`, taxa conhecida | `≈ R$ 375,00` — aproximado |
 | `{BRL: 100, USD: 50}`, **sem** taxa de USD | `R$ 100,00 + US$ 50,00` — aproximado |
-| `{USD: 50}`, **sem** taxa | `US$ 50,00` — exato (nada foi convertido) |
 
-A regra: um termo por moeda cuja taxa é desconhecida, mais um termo na base com tudo o que foi convertido. A figura é aproximada se **alguma** conversão ocorreu.
+A regra, em duas partes:
+
+1. **Uma única moeda no resultado → a figura é ela, exata, naquela moeda — qualquer que ela seja.** A base não participa. Não havia nada a reconciliar, então converter seria perda pura: um número aproximado no lugar de um exato, em troca de nada.
+2. **Duas ou mais moedas → reduz-se à base até onde as taxas permitirem**, um termo por moeda sem taxa mais um termo na base com o que foi convertido. A figura é aproximada porque alguma conversão ocorreu.
+
+O caso que essa distinção existe para acertar: **um usuário com todas as contas e cartões em dólar e o dispositivo em locale brasileiro.** A base resolvida pelo locale é o real, mas ele não tem um centavo em reais — e vê tudo em dólar, exato, sem marca, inclusive no dashboard, porque em nenhuma leitura houve mais de uma moeda para reconciliar. A redação anterior desta tabela convertia o patrimônio dele para reais no instante em que uma taxa de dólar existisse, e a tela de taxas listava exatamente essa moeda, convidando-o a acionar o problema.
 
 Nada é inventado e nada é omitido. Uma taxa ausente não vira `1`, não some da soma e não zera a tela — ela produz um termo a mais, que é honesto sobre o que o app sabe. Como consequência, o estado "primeira conta estrangeira criada, taxa ainda não cadastrada" — obrigatório no fluxo real — tem comportamento definido e útil, em vez de indefinido.
 
-A exatidão é **derivada** desse cálculo, nunca declarada pela tela nem marcada à mão. Daí decorre o principal fator de redução de risco da mudança: **para um usuário com contas só em BRL, toda leitura devolve um mapa de uma chave igual à base, e a marca de aproximação não aparece em lugar nenhum do app** — sem flag, sem ramo de compatibilidade e sem caminho alternativo. O comportamento de hoje é o caso particular do caso geral.
+A exatidão é **derivada** desse cálculo, nunca declarada pela tela nem marcada à mão. Daí decorre o principal fator de redução de risco da mudança: **para um usuário de uma moeda só — qualquer moeda —, toda leitura devolve um mapa de uma chave, toda figura é exata, e a marca de aproximação não aparece em lugar nenhum do app** — sem flag, sem ramo de compatibilidade e sem caminho alternativo. O comportamento de hoje é o caso particular do caso geral, e a garantia deixa de depender de a moeda do usuário coincidir com a base.
 
 ### D10 — Moeda, exatidão e multiplicidade viajam **dentro** do tipo de exibição
 

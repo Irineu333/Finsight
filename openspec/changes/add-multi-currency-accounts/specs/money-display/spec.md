@@ -82,3 +82,27 @@ Decorre da derivação que, para um usuário cujas contas estejam todas na moeda
 #### Scenario: Mesma figura, mesma marca em toda superfície
 - **WHEN** a mesma figura aproximada aparece numa lista, num resumo e no relatório exportado
 - **THEN** as três exibem a marca de aproximação, por consumirem o mesmo valor
+
+### Requirement: Onde a figura multitermo não cabe, a degradação é declarada
+
+Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso, o contador de parcelas, o documento exportado —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.
+
+Cada superfície com essa limitação SHALL declará-la; a decisão MUST NOT ser deixada ao layout. Um número que perde uma parcela por o texto não caber é indistinguível de um número completo, e a falha é silenciosa — que é exatamente o modo de falha que a marca de aproximação existe para impedir.
+
+Uma superfície que **possa** exibir mais de um termo SHALL exibi-los todos.
+
+#### Scenario: Contador de parcelas não recebe dois termos
+- **WHEN** um valor multitermo alcançaria um contador de parcelas
+- **THEN** apenas o termo na moeda base é exibido, com a marca de aproximação, e a existência de parcela não convertida é indicada
+
+#### Scenario: Documento exportado declara a limitação
+- **WHEN** um relatório é exportado com figuras que contêm parcela não convertida
+- **THEN** cada figura exibe o termo na moeda base com a marca, e o documento indica que há parcela não convertida
+
+#### Scenario: Superfície sem limitação exibe tudo
+- **WHEN** um valor multitermo é exibido numa superfície sem restrição de largura ou gramática
+- **THEN** todos os termos aparecem
+
+#### Scenario: Nada é truncado em silêncio
+- **WHEN** as superfícies que exibem dinheiro são inspecionadas
+- **THEN** nenhuma delas descarta um termo por decisão de layout

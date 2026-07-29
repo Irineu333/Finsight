@@ -33,7 +33,11 @@ O `:core:ledger` foi desenhado para multimoeda e nunca a exerceu. O estado atual
 - Rastrear ganho cambial por **par** de moedas. Ver D3.
 - Tela dedicada de ganho/perda cambial. Ver D6 — o dado passa a existir; expô-lo é mudança própria.
 - Orçamento denominado em moeda não-base. Ver D13.
-- Alteração de qualquer tabela existente. Ver Riscos — há **uma** tabela nova (taxas), e nenhuma migração de dados.
+- Alteração de qualquer tabela existente — há **uma** tabela nova (taxas), e nenhuma migração de dados.
+- **Editar uma transação que atravessa moedas.** Ver D19: `updateTransaction` recebe uma única perna, e o gate de editabilidade já recusa duas pernas monetárias. Apagar e refazer.
+- **Taxa entre duas moedas não-base.** Ver D11: uma transferência USD→EUR com base BRL não produz taxa contra a base, e nenhuma é colhida.
+- **Trocar a moeda base.** Ver D18: a v1 semeia a base na primeira conta e não oferece a troca; o requisito que a descreve existe para que a implementação não a impossibilite.
+- **Limite de orçamento `PERCENTAGE` derivado de recorrência em moeda não-base.** Ver D13.
 
 ## Decisions
 
@@ -216,10 +220,60 @@ Premissa **deliberada**: suportar JPY (0 casas) ou KWD (3) não é acrescentar u
 
 A moeda continua um `String` ISO 4217 na persistência. O catálogo do que é oferecido mora na camada de consolidação, que é quem tem opinião sobre quais moedas o app suporta.
 
+### D15 — A perna de conversão não carrega dimensão
+
+Uma perna de conversão MUST NOT herdar a dimensão da perna cujo resíduo ela absorve.
+
+Sem isso, o pagamento de fatura cruzado **não persiste**: a perna `LIABILITY` carrega a dimensão da fatura, e se o escriturador a copiasse para a perna de resíduo, `rejectIfDimensionLandsWrong` (`LedgerEntryWriter:118`) recusaria a transação inteira — `DimensionKind.INVOICE.landsOn` é `{LIABILITY}`, e `CONVERSION` não está lá.
+
+E é o que faz sentido contábil: a dimensão responde "a que sub-razão esta perna pertence". O resíduo cambial não pertence à fatura; ele pertence ao câmbio. Somá-lo ao devido da fatura seria contar como dívida do cartão o custo de ter trocado moeda.
+
+### D16 — A perna primária não é escolhida comparando moedas
+
+`Transaction.primaryEntry` é hoje `monetaryEntries.minByOrNull { it.amount }`, e `Ledger.kt` `sourceLeg()` é o mesmo critério. Numa transação cruzada isso compara `Long` de moedas diferentes e escolhe a ponta pelo número maior, não pelo sentido — R$ 550 e US$ 100 elegem a perna errada se o câmbio for outro.
+
+A perna primária de uma transação cruzada SHALL ser a de **valor negativo** — a que o dinheiro deixou —, que é o que o critério atual queria dizer e que a comparação por magnitude apenas aproximava enquanto havia uma moeda só. Com duas pernas monetárias, uma é sempre negativa e a outra positiva, então o critério é total e não compara moedas.
+
+Isto não é detalhe de apresentação: `presentation-mapping` já exige que a escolha da perna neutra tenha **um dono**, e todo item de lista sem perspectiva passa por ele (`TransactionUiMapper:37`, `ItemDisplayAmount:27-44`).
+
+### D17 — Um valor de fachada é denominado pela conta que ele nomeia
+
+Recorrência, parcelamento, limite de cartão e limite de orçamento guardam um `Double` sem moeda. Enquanto a moeda for uma só, isso é inócuo; deixa de ser no instante em que a fachada aponta para uma conta de outra moeda.
+
+O caso alcançável hoje, e o único que produz **dado errado em silêncio fora do razão**: `ConfirmRecurringUseCase:34-46` permite redirecionar conta e cartão no momento da confirmação, com `amount = recurring.amount` por default. Confirmar uma recorrência criada numa conta BRL apontando-a para uma conta USD grava o número cru como se fosse dólar.
+
+A regra: um valor de fachada é denominado na moeda da conta que a fachada nomeia, e **transportá-lo para uma conta de outra moeda é recusado**, não convertido. Recusar, e não converter, porque converter exigiria escolher uma taxa em nome do usuário no meio de uma confirmação — decisão que ele não pediu e não vê.
+
+Os outros três caem por consequência, sem regra própria: o parcelamento é denominado na moeda do cartão, que D12 torna imutável; o limite do cartão idem — e é por isso que o medidor `limite − devido` (`CreditCardCard:215-265`) é garantidamente monomoeda; e o limite de orçamento é denominado na base (D13).
+
+### D18 — A moeda base e a taxa moram numa feature nova
+
+D11 exige uma tela que edita a taxa, e a moeda base é preferência do usuário. Não existe feature de configurações no repositório, e pela arquitetura do projeto isso é um `feature/settings/api` + `impl` inteiro — rota `@Serializable`, `NavGraphBuilder.settingsGraph()`, módulo Koin, entry point. Não é detalhe de implementação: sem isso a change não é implementável.
+
+A moeda base é **semeada** na criação da primeira conta (`EnsureDefaultAccountUseCase:31`, hoje o único lugar que cria conta sem moeda explícita), e a v1 não oferece trocá-la. O requisito que descreve a troca existe assim mesmo, para que a implementação não a torne impossível: nada de convertido é persistido, então a troca é derivação — mas oferecê-la é escopo próprio.
+
+A preferência precisa ser **observável**: toda figura consolidada reage à sua mudança. `Settings` é bindado como `single<Settings>` sem fluxo; o precedente de preferência observável no projeto é `DashboardPreferencesRepository`, e é a forma a seguir.
+
+### D19 — Uma transação cruzada não é editável, e isso não é regra nova
+
+`TransactionRepository.updateTransaction:258-294` recebe **uma única** `TransactionLeg` e chama `rewriteEntries(id, listOf(leg), contra)`. Não existe caminho de edição para duas pernas monetárias — nem para uma transferência comum, hoje.
+
+E não precisa existir: o gate de editabilidade de `balanced-ledger` já recusa toda transação com número de pernas monetárias diferente de exatamente uma. Uma transação cruzada tem duas, e portanto **já cai no gate existente, sem regra nova**. As pernas de conversão não entram na contagem, por não serem monetárias (D2).
+
+Registrado como Non-Goal explícito em vez de omissão: a operação é apagada e refeita, como toda transferência e todo pagamento de fatura já são.
+
+### D20 — A figura multitermo tem degradação declarada, não decidida pelo layout
+
+Uma figura de dois termos (`R$ 100,00 + US$ 50,00`) não cabe em toda superfície. As de largura fixa ou de gramática própria — medidor de limite, rótulo de barra de progresso de orçamento, `InstallmentCounter` ("3x de …"), e o documento HTML exportado, cujos modelos guardam **string já formatada** — SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que há parcela não convertida.
+
+Isso é degradação **declarada**, e a alternativa não é "renderizar tudo": é o layout decidir sozinho, por truncamento ou quebra, o que uma superfície mostra de uma figura incompleta — que é como um número passa a mentir sem que ninguém tenha decidido isso.
+
 ## Riscos / Trade-offs
 
-- **Abrir o conjunto fechado de tipos de conta.** É a maior concessão da mudança, e toca todo `when (type)` exaustivo do app. Mitigação: é a alternativa a quebrar quatro comportamentos existentes (D2), e o compilador encontra cada site.
-- **Uma tabela nova.** A tabela de taxas (D11) é a única alteração de schema — nenhuma tabela existente muda, e não há migração de dados. A afirmação "sem migração" do desenho anterior era falsa a partir do momento em que a taxa ganhou data.
+- **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.
+- **Uma tabela nova, e uma migração de verdade.** A tabela de taxas (D11) leva `AppDatabase` de `version = 10` para `11`, com `MIGRATION_10_11` registrada, o schema `11.json` exportado (o plugin de convenção exporta schemas) e `MigrationSchemaEquivalenceTest` — hoje cobrindo apenas `7 → 10` — estendido. Nenhuma tabela existente muda e nenhum dado migra, mas "sem migração" era falso a partir do momento em que a taxa ganhou data.
+- **`netWorth()` não tem consumidor de produção.** A mudança de assinatura mais anunciada da change custa, hoje, apenas os ~25 fakes que implementam `IEntryRepository` inteiro. Ou é código morto, ou falta o consumidor — e o "saldo total" que o dashboard exibe vem de `CalculateBalanceUseCase(accountId = null)`, não dele.
+- **O custo real é de superfície, não de núcleo.** ~105 sítios de formatação de dinheiro em 10 módulos, nenhum dos quais conhece a moeda hoje; 12 modais usando `MoneyInputTransformation`; ~25 arquivos de teste que implementam `IEntryRepository` como stub completo; e `LedgerFixture` sem parâmetro de moeda, sem o qual nenhum teste cruzado é escrevível.
 - **Superfície de leitura.** As agregações da `EntryDao` que atravessam contas ganham `GROUP BY e.currency`, e os retornos multimoeda do `IEntryRepository` mudam de forma — inclusive `balanceUpTo(accountId = null)`, `naturalBalanceUpTo`, `dimensionBalanceInMonth` de categoria, `totalsByDimension` e `totalsByDimensionInScope`. As leituras escopadas a **uma** conta (`AccountFlows`) e à dimensão de **uma** fatura (`DimensionFlows`) permanecem monomoeda e só ganham a moeda no resultado — mas por D8 é a fachada, não o razão, quem sabe disso.
 - **Silêncio residual até a UI existir.** Entre gravar `leg.currency` corretamente e todas as leituras agregarem por moeda existe uma janela em que uma segunda moeda produziria números errados. Mitigação de ordenação: as leituras vêm **antes** da escolha de moeda no formulário — enquanto nenhuma conta puder ser criada em outra moeda, nenhum dado errado é produzível.
 - **A soma de perímetros disjuntos perde dono.** `dashboard-balance-widgets` exige somar `assetMonthFlows` + `liabilityMonthFlows` fora do razão e "sem agregado dedicado". Com os dois devolvendo por moeda, essa soma passa a ser soma de mapas — que **não** é conversão e portanto não é da camada de consolidação, e **não** pode ser do tipo de exibição, que D10 proíbe de combinar valores. Ela precisa de dono explícito, no razão, como operação sobre saldos por moeda.

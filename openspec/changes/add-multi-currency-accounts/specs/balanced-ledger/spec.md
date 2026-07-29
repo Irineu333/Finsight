@@ -101,6 +101,47 @@ Resolver uma fachada para a identidade que a representa no razão SHALL ser resp
 - **WHEN** uma intenção de escrita é inspecionada
 - **THEN** ela não distingue conta de cartão por um campo dedicado; a distinção emerge da natureza da conta referenciada
 
+### Requirement: Editabilidade derivada, preservando os gates existentes
+A editabilidade de uma transação SHALL ser derivada, nunca persistida, e SHALL preservar cada um dos gates hoje aplicados: uma transação MUST NOT ser editável se pertencer a uma fatura cujo status seja `CLOSED` ou `PAID`; MUST NOT ser editável se o seu rótulo for `ADJUSTMENT`; MUST NOT ser editável se possuir um número de entries em conta **monetária** (`ASSET`/`LIABILITY`) diferente de exatamente uma; e MUST NOT ser editável se pertencer a um parcelamento. Uma transação que passe em todos os gates SHALL ser editável.
+
+A contagem MUST NOT usar o total de entries, já que toda transação balanceada tem ao menos duas. As pernas de **conversão** MUST NOT entrar nessa contagem, por não serem monetárias — de modo que uma operação que atravessa moedas é recusada pelo gate por ter **duas pernas monetárias**, exatamente como a transferência e o pagamento de fatura de moeda única já são, e sem gate novo.
+
+#### Scenario: Despesa é editável
+- **WHEN** uma despesa em conta (`ASSET` + `EXPENSE`) sem parcelamento é exibida
+- **THEN** ela é editável
+
+#### Scenario: Compra no cartão é editável
+- **WHEN** uma compra no cartão (`LIABILITY` + `EXPENSE`) sem parcelamento é exibida
+- **THEN** ela é editável
+
+#### Scenario: Ajuste de conta não é editável
+- **WHEN** um ajuste de saldo de conta (`ASSET` + `EQUITY`) é exibido
+- **THEN** ele não é editável, por seu rótulo ser `ADJUSTMENT`
+
+#### Scenario: Ajuste de fatura não é editável
+- **WHEN** um ajuste de saldo de fatura (`LIABILITY` + `EQUITY`) é exibido
+- **THEN** ele não é editável, por seu rótulo ser `ADJUSTMENT`
+
+#### Scenario: Lançamento de baixa não é editável
+- **WHEN** o lançamento de baixa que a migração `v7 → v9` gerou para uma conta apagada no v7 é exibido
+- **THEN** ele não é editável, pelo mesmo gate de rótulo, sem regra nova — arquivar não gera baixa em runtime (`account-lifecycle`), mas a migração gera, e o dado migrado obedece às mesmas regras que o novo
+
+#### Scenario: Transferência não é editável
+- **WHEN** uma transferência (`ASSET` + `ASSET`) é exibida
+- **THEN** ela não é editável, por ter duas pernas monetárias
+
+#### Scenario: Transferência entre moedas não é editável, pelo mesmo gate
+- **WHEN** uma transferência entre contas de moedas diferentes, com as suas pernas de conversão, é exibida
+- **THEN** ela não é editável, por ter duas pernas monetárias, e as pernas de conversão não entram na contagem
+
+#### Scenario: Pagamento de fatura não é editável
+- **WHEN** um pagamento de fatura (`ASSET` + `LIABILITY`) é exibido
+- **THEN** ele não é editável, por ter duas pernas monetárias
+
+#### Scenario: Parcelamento não é editável
+- **WHEN** uma compra pertencente a um parcelamento é exibida
+- **THEN** ela não é editável, por pertencer a um parcelamento
+
 ## ADDED Requirements
 
 ### Requirement: Operação que atravessa moedas é completada com pernas de conversão
@@ -114,6 +155,8 @@ A perna de conversão SHALL ser a **última calculada**, recebendo o resíduo po
 Quando **uma só** moeda estiver presente, o resíduo SHALL ser zero — o comportamento existente permanece intacto —, e uma perna avulsa SHALL continuar sendo completada pela contrapartida declarada na intenção. A conta de conversão MUST NOT ser usada para completar uma operação monomoeda: ali, resíduo não nulo é desbalanceamento, e SHALL ser recusado.
 
 Quando duas ou mais moedas estiverem presentes, os resíduos MUST NOT ser todos do mesmo sinal. Uma intenção em que toda moeda envolvida ganha valor cria dinheiro sem origem: não é câmbio, e SHALL ser recusada com erro tipado.
+
+Uma perna de conversão MUST NOT carregar dimensão, e em particular MUST NOT herdar a dimensão da perna cujo resíduo ela absorve. Sem isso, o pagamento de fatura que atravessa moedas não persiste: a perna de passivo carrega a dimensão da fatura, cujo `kind` só aceita `LIABILITY`, e copiá-la para a perna de conversão faria a regra de pouso de dimensão recusar a transação inteira. É também o que corresponde ao significado da dimensão — o resíduo cambial não pertence ao sub-razão da fatura, e somá-lo ao devido contaria o custo de trocar moeda como dívida do cartão.
 
 #### Scenario: Transferência entre moedas soma zero nas duas
 - **WHEN** o usuário transfere de uma conta em BRL para uma conta em USD, informando o valor que saiu e o valor que entrou
@@ -142,6 +185,34 @@ Quando duas ou mais moedas estiverem presentes, os resíduos MUST NOT ser todos 
 #### Scenario: Resíduos de mesmo sinal são recusados
 - **WHEN** uma intenção cruzada é submetida em que todas as moedas envolvidas ganham valor
 - **THEN** a persistência é recusada com erro tipado, e nada é gravado
+
+#### Scenario: Perna de conversão não herda a dimensão da fatura
+- **WHEN** uma fatura em USD é paga a partir de uma conta em BRL
+- **THEN** as pernas de conversão são gravadas sem dimensão, a regra de pouso de dimensão não é violada, e o devido da fatura não é alterado pelo resíduo cambial
+
+### Requirement: Um valor de fachada é denominado pela conta que ele nomeia
+
+Um valor monetário guardado por uma fachada — o valor de uma recorrência, o total de um parcelamento, o limite de um cartão, o limite de um orçamento — SHALL ser entendido como denominado na moeda da conta que aquela fachada nomeia. Ele MUST NOT ser transportado para uma conta de outra moeda como se fosse o mesmo número.
+
+Quando uma operação permitir redirecionar a conta ou o cartão de destino no momento da execução, e a moeda do novo destino diferir da moeda em que o valor está denominado, a operação SHALL ser **recusada** com erro tipado. Ela MUST NOT converter o valor em silêncio: converter exigiria escolher uma taxa em nome do usuário no meio de uma operação que ele não pediu e não vê, e gravar sem converter registraria o número de uma moeda como se fosse de outra.
+
+Onde a moeda da conta que a fachada nomeia é imutável, esta regra é vacuamente satisfeita e MUST NOT gerar verificação própria: um parcelamento é denominado na moeda do seu cartão, e o limite de um cartão idem, ambos imutáveis a partir do primeiro lançamento.
+
+#### Scenario: Confirmar recorrência em conta de outra moeda é recusado
+- **WHEN** o usuário confirma um ciclo de uma recorrência criada sobre uma conta em BRL, redirecionando-o para uma conta em USD
+- **THEN** a operação é recusada com erro tipado, nada é gravado, e o valor não é convertido nem copiado
+
+#### Scenario: Confirmar recorrência na mesma moeda é permitido
+- **WHEN** o usuário confirma um ciclo redirecionando-o para outra conta de mesma moeda
+- **THEN** a operação prossegue normalmente
+
+#### Scenario: Parcelamento não precisa de verificação própria
+- **WHEN** as parcelas de um parcelamento são geradas nas faturas do seu cartão
+- **THEN** todas estão na moeda do cartão, sem que nenhuma verificação de moeda seja executada, porque essa moeda é imutável
+
+#### Scenario: Medidor de limite é monomoeda
+- **WHEN** o limite disponível de um cartão é exibido como a diferença entre o limite e o devido
+- **THEN** as duas parcelas estão na moeda do cartão, e a subtração não atravessa moedas
 
 ### Requirement: A taxa de câmbio de uma operação é derivada, nunca persistida na operação
 

@@ -74,32 +74,42 @@ O sistema MUST NOT prover conta de sistema para representar a ausência de class
 
 ## ADDED Requirements
 
-### Requirement: A moeda de uma conta é imutável a partir do primeiro lançamento
+### Requirement: A moeda de uma conta é fixada na criação e nunca muda
 
-A moeda de uma `Account` SHALL ser escolhida na sua criação e MUST NOT ser alterada a partir do momento em que qualquer entry a referencie. Enquanto a conta não tiver lançamento algum, a sua moeda MAY ser alterada livremente.
+A moeda de uma `Account` SHALL ser escolhida na sua criação e MUST NOT ser alterada depois, em nenhuma circunstância. O sistema MUST NOT oferecer a troca, e o domínio SHALL recusá-la **sem consultar condição alguma** — nem a existência de lançamentos, nem qualquer outro estado.
 
-O fato que governa a recusa SHALL ser o **mesmo** que já decide apagar-vs-arquivar uma conta — a existência de entries que a referenciam —, consultado da mesma implementação de domínio. Nenhuma tela SHALL rederivar essa condição.
+A moeda SHALL ser atributo de identidade da linha do plano de contas, no mesmo grau que o seu tipo. Trocá-la não reinterpreta um dado: reescreve em silêncio o significado de toda entry já gravada, que passa a valer outra coisa sem que nada registre o que valia antes.
 
-A interface SHALL apresentar a moeda travada, com o motivo, em vez de oferecer uma edição que o domínio recusaria. O controle que a apresenta SHALL estar sempre presente no formulário, esteja a moeda editável ou travada, e MUST NOT depender de o app já possuir mais de uma moeda: a moeda é atributo da conta como o seu nome e o seu ícone são, e um formulário que muda de forma conforme o estado global do app esconde a decisão de quem ainda não a tomou.
+Corrigir uma moeda escolhida por engano SHALL usar o caminho que já existe, sem mecanismo próprio: uma conta sem lançamento algum pode ser removida, então apagar e recriar é a correção. Uma conta que já tem lançamentos MUST NOT ter correção alguma, porque o significado das entries gravadas depende da moeda que elas assumiram.
 
-A regra existe porque trocar a moeda de uma conta com história não reinterpreta um dado: ela reescreve em silêncio o significado de toda entry já gravada, que passa a valer outra coisa sem que nada registre o que valia antes.
+A `Account` MUST NOT ser construível sem que a sua moeda seja decidida: o modelo MUST NOT prover valor padrão para ela, de modo que omiti-la seja impossível em vez de recair num padrão silencioso.
 
-#### Scenario: Conta nova permite trocar a moeda
-- **WHEN** o usuário edita uma conta que ainda não tem nenhum lançamento
-- **THEN** a moeda é editável
+O controle que apresenta a moeda SHALL estar sempre presente no formulário, e MUST NOT depender de o app já possuir mais de uma moeda: a moeda é atributo da conta como o seu nome e o seu ícone são, e um formulário que muda de forma conforme o estado global do app esconde a decisão de quem ainda não a tomou. Ele SHALL ser seletor no formulário de **criação** e estado travado no de **edição**, decidido pelo modo do formulário e não pelo estado da conta.
+
+#### Scenario: Criação oferece a escolha
+- **WHEN** o usuário cria uma conta
+- **THEN** a moeda é escolhível, pré-selecionada com a moeda base
+
+#### Scenario: Edição nunca oferece a troca
+- **WHEN** o usuário edita uma conta, com ou sem lançamentos
+- **THEN** a moeda é apresentada travada, e nenhuma interação a altera
+
+#### Scenario: O domínio recusa sem condição
+- **WHEN** uma atualização de conta que altere a moeda é submetida ao domínio
+- **THEN** ela é recusada, sem que a existência de lançamentos seja consultada
+
+#### Scenario: Correção de conta não usada é apagar e recriar
+- **WHEN** o usuário percebe que escolheu a moeda errada numa conta que ainda não tem lançamentos
+- **THEN** ele a remove pela ação que o sistema já oferece e cria outra, sem que exista caminho de edição de moeda
+
+#### Scenario: Cartão segue a mesma regra
+- **WHEN** o usuário edita um cartão
+- **THEN** a moeda da sua conta `LIABILITY` é apresentada travada, pela mesma regra
+
+#### Scenario: Conta sem moeda é inexprimível
+- **WHEN** o modelo de conta é inspecionado
+- **THEN** a moeda não possui valor padrão, e nenhuma conta é construível sem que ela seja informada
 
 #### Scenario: O controle existe mesmo com uma moeda só
 - **WHEN** o usuário abre o formulário de conta num app cujas contas estão todas na mesma moeda
 - **THEN** o controle de moeda está presente, exibindo a moeda corrente
-
-#### Scenario: Conta com lançamento recusa a troca
-- **WHEN** o usuário edita uma conta que já possui ao menos um lançamento
-- **THEN** a moeda é apresentada travada, com o motivo, e uma tentativa de alterá-la é recusada pelo domínio
-
-#### Scenario: Cartão segue a mesma regra pela sua conta
-- **WHEN** o usuário edita um cartão cuja conta `LIABILITY` já possui lançamentos
-- **THEN** a moeda é apresentada travada, pela mesma regra e pelo mesmo fato
-
-#### Scenario: Oferta e execução concordam
-- **WHEN** a tela decide se oferece a edição da moeda
-- **THEN** ela consulta a mesma implementação que o domínio usaria para recusá-la, e nunca oferece o que seria recusado

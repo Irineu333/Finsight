@@ -20,7 +20,7 @@ O `:core:ledger` foi desenhado para multimoeda e nunca a exerceu. O estado atual
 ## Goals / Non-Goals
 
 **Goals:**
-- Moeda por conta e por cartão, escolhida na criação e imutável a partir do primeiro lançamento.
+- Moeda por conta e por cartão, escolhida na criação e imutável para sempre — o app não oferece a troca.
 - `Σ = 0` por moeda **sem exceção alguma**, inclusive na transação que atravessa moedas.
 - Nenhuma agregação capaz de somar moedas diferentes num mesmo número sobreviver à mudança.
 - Nenhum predicado existente mudar de significado: `EQUITY` continua significando exatamente "ajuste".
@@ -36,7 +36,7 @@ O `:core:ledger` foi desenhado para multimoeda e nunca a exerceu. O estado atual
 - Alteração de qualquer tabela existente — há **uma** tabela nova (taxas), e nenhuma migração de dados.
 - **Editar uma transação que atravessa moedas.** Ver D19: `updateTransaction` recebe uma única perna, e o gate de editabilidade já recusa duas pernas monetárias. Apagar e refazer.
 - **Taxa entre duas moedas não-base.** Ver D11: uma transferência USD→EUR com base BRL não produz taxa contra a base, e nenhuma é colhida.
-- **Trocar a moeda base.** Ver D18: a v1 semeia a base na primeira conta e não oferece a troca; o requisito que a descreve existe para que a implementação não a impossibilite.
+- **Trocar a moeda base.** Ver D18 e D28: a base é resolvida pelo locale na primeira execução e a v1 não oferece a troca; o requisito que a descreve existe para que a implementação não a impossibilite.
 - **Limite de orçamento `PERCENTAGE` derivado de recorrência em moeda não-base.** Ver D13.
 
 ## Decisions
@@ -198,13 +198,34 @@ A taxa gravada é a **única** autoridade em qualquer conversão. Uma fonte exte
 
 Uma taxa por moeda **→ base**; não uma matriz de pares. Trocar a moeda base não invalida o acervo: a taxa da antiga base contra a nova é a inversa da que já existe, e as demais se re-expressam por triangulação sobre as taxas de mesma data. Isso é derivação, não migração — nenhuma linha gravada muda.
 
-### D12 — A moeda de uma conta é imutável a partir do primeiro lançamento
+### D12 — A moeda de uma conta é fixada na criação e **nunca** muda
 
-A regra usa `IEntryRepository.hasEntries(accountId)` — o **mesmo** fato que já decide apagar-vs-arquivar em `account-lifecycle`. Entre a criação e o primeiro lançamento a moeda é editável; a partir dele, o formulário a apresenta travada, com o motivo.
+Não é "imutável a partir do primeiro lançamento": é imutável desde o instante em que a conta existe. O app **não oferece** trocar a moeda de uma conta, em nenhum estado, e o domínio recusa a tentativa sem consultar condição alguma.
 
-Pertence a `chart-of-accounts`, não a `account-lifecycle`: a moeda é atributo da linha do plano de contas, e por D4 isso vale para **toda** linha, inclusive as de sistema — que ninguém edita, o que torna a regra vacuamente verdadeira ali em vez de inaplicável.
+A regra condicional era mais fraca em três dimensões, e todas importam:
 
+1. **Precisava de um fato para decidir.** `hasEntries(accountId)` numa regra que não precisa dele — a moeda é atributo de identidade, não de histórico.
+2. **Produzia um controle de dois comportamentos** na mesma tela de edição, e um estado que o usuário encontra uma vez na vida e não reconhece.
+3. **Deixava a recusa condicional**, e uma recusa condicional é uma recusa que alguém precisa lembrar de manter correta.
+
+O **caminho de correção já existe e não é novo**: uma conta sem lançamento algum pode ser apagada (`account-lifecycle` — *"Uma conta sem nenhum lançamento MAY ser removida, por não haver história a preservar"*). Errou a moeda e ainda não usou a conta? Apaga e cria de novo, com a ação que o app já oferece. Errou e já usou? Aí não há correção possível de qualquer forma, porque o significado das entries já gravadas depende dela.
+
+Pertence a `chart-of-accounts`: a moeda é atributo da linha do plano de contas, e por D4 isso vale para **toda** linha, inclusive as de sistema.
+
+- *Alternativa considerada:* editável até o primeiro lançamento (a redação anterior desta decisão). Rejeitada pelas três razões acima; o ganho — corrigir sem recriar uma conta vazia — é coberto por apagar e recriar.
 - *Alternativa considerada:* permitir a troca e reinterpretar o histórico. Rejeitada: reescreve em silêncio o significado de toda entry já gravada.
+
+### D28 — O locale do dispositivo resolve as duas moedas iniciais, e o modelo perde o seu padrão
+
+Duas coisas precisavam de uma definição e não tinham: a moeda da conta que o app cria sozinho, e a moeda base de consolidação. A redação anterior de D18 dizia que a base era "semeada na criação da primeira conta" — o que era **circular**, porque essa conta é a que `EnsureDefaultAccountUseCase` cria sem escolher moeda, caindo no `BASE_CURRENCY = "BRL"` do razão. A base derivava BRL de BRL, e nenhum usuário fora do Brasil tinha caminho para outra coisa.
+
+**As duas passam a ser resolvidas pelo locale do dispositivo, na primeira execução.** Se a moeda do locale não estiver no catálogo curado (duas casas decimais, D14), cai numa constante declarada — que passa a ser *último recurso*, e não padrão.
+
+Isto não acrescenta máquina nova: o app **já** deriva moeda do locale, e é exatamente o que `NumberFormat.getCurrencyInstance()` e `NSLocale.currentLocale` fazem hoje dentro do `CurrencyFormatter`. É por isso que um aparelho em `en-US` renderiza `$` sobre valores em real. A derivação existe; o que faltava era usá-la para **decidir** em vez de para *formatar* — e D10, que tira a moeda do locale na hora de exibir, é a outra metade da mesma correção: o locale deixa de dizer *em que moeda o número está* e passa a dizer, uma vez, *em que moeda este usuário vive*.
+
+**E o modelo perde o seu padrão.** `Account.currency` e `AccountEntity.currency` deixam de ter valor default, de modo que **nenhuma conta é construível sem que alguém decida a sua moeda** — o compilador cobra, como em D5. Com isso `BASE_CURRENCY` sai de `:core:ledger`: o razão passa a saber que moeda existe e nada além disso, sem opinião sobre qual. Remover o default do Kotlin é neutro no schema — um default de construtor não emite `DEFAULT` em SQL, e a coluna segue `NOT NULL`.
+
+A base é semeada **uma vez**. Trocar o locale do dispositivo depois MUST NOT mudá-la: seria mover em silêncio toda figura consolidada do histórico por causa de uma viagem.
 
 ### D13 — Orçamento e categoria consolidam de forma aproximada
 
@@ -254,7 +275,7 @@ Os outros três caem por consequência, sem regra própria: o parcelamento é de
 
 D11 exige uma tela que edita a taxa, e a moeda base é preferência do usuário. Não existe feature de configurações no repositório, e pela arquitetura do projeto isso é um `feature/settings/api` + `impl` inteiro — rota `@Serializable`, `NavGraphBuilder.settingsGraph()`, módulo Koin, entry point. Não é detalhe de implementação: sem isso a change não é implementável.
 
-A moeda base é **semeada** na criação da primeira conta (`EnsureDefaultAccountUseCase:31`, hoje o único lugar que cria conta sem moeda explícita), e a v1 não oferece trocá-la. O requisito que descreve a troca existe assim mesmo, para que a implementação não a torne impossível: nada de convertido é persistido, então a troca é derivação — mas oferecê-la é escopo próprio.
+A moeda base é resolvida pelo **locale do dispositivo** na primeira execução (D28), e a v1 não oferece trocá-la. O requisito que descreve a troca existe assim mesmo, para que a implementação não a torne impossível: nada de convertido é persistido, então a troca é derivação — mas oferecê-la é escopo próprio.
 
 A preferência precisa ser **observável**: toda figura consolidada reage à sua mudança. `Settings` é bindado como `single<Settings>` sem fluxo; o precedente de preferência observável no projeto é `DashboardPreferencesRepository`, e é a forma a seguir.
 
@@ -297,6 +318,8 @@ Regra única, em toda superfície que comporte mais de um termo — nenhuma deci
 O controle reutiliza inteiro o `DefaultAccountSelector` (`AccountFormModal:207-290`): caixa de 52dp com o **símbolo como glifo** no lugar do ícone, título, subtítulo de estado, e a mesma mecânica de travamento que ele já tem — três subtítulos alternativos e a caixa trocando de `primary` para `onSurfaceVariant` quando `!canChange`, sem chevron. Consequência deliberada: "moeda travada" **lê igual** a "conta padrão não pode mudar", significante que o usuário deste app já aprendeu.
 
 A linha é **sempre renderizada**, e não revelada por um link quando existe uma segunda moeda. Custo aceito: ~60dp permanentes no formulário para quem nunca vai tocá-la. Em troca, a moeda é atributo da conta do mesmo modo que o ícone é, e não uma feature que se descobre — o que também elimina a assimetria de um formulário que muda de forma conforme o estado global do app.
+
+Por D12 a linha tem **dois comportamentos, decididos pelo modo do formulário e não pelo estado da conta**: na criação é um seletor, pré-selecionado com a moeda base; na edição é linha de estado travada, sempre. O `DefaultAccountSelector` já traz os dois — caixa de `primary` quando editável, `onSurfaceVariant` e sem chevron quando não.
 
 O toque abre um `CurrencyPickerModal`, irmão do `IconPickerModal`, que já vive em `core/designsystem` exatamente por ser modal compartilhada entre features.
 

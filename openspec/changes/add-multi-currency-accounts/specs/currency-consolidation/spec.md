@@ -8,7 +8,25 @@ Trocar a moeda base MUST NOT alterar dado algum já gravado, e MUST NOT exigir m
 
 Trocar a moeda base MUST NOT invalidar o acervo de taxas. A taxa da base anterior contra a nova SHALL ser a inversa da que já existe, e as demais SHALL ser re-expressas por triangulação sobre as taxas de mesma data. Isso é derivação, não migração: nenhuma linha gravada muda.
 
-A moeda base MUST NOT ser confundida com a moeda padrão que uma conta nova recebe quando nenhuma é escolhida: aquela é um padrão de criação e pertence ao razão.
+A moeda base SHALL ser resolvida, na primeira execução, a partir do **locale do dispositivo**. Quando a moeda do locale não pertencer ao conjunto oferecido, o sistema SHALL recair numa moeda declarada — que é último recurso, e MUST NOT ser tratada como padrão do produto.
+
+Ela SHALL ser resolvida **uma única vez** e persistida. Uma alteração posterior do locale do dispositivo MUST NOT alterá-la: mudaria em silêncio toda figura consolidada do histórico por causa de uma viagem.
+
+A moeda base MUST NOT ser derivada de nenhuma conta. Derivá-la da conta padrão a tornaria propriedade de uma conta, o que este requisito proíbe, e a faria mudar quando a conta padrão mudasse.
+
+O razão MUST NOT prover valor padrão para a moeda de uma conta. Não existe, portanto, "a moeda que uma conta nova recebe quando nenhuma é escolhida": toda conta tem a sua moeda decidida por quem a cria, e a moeda base serve apenas como **pré-seleção** oferecida no formulário.
+
+#### Scenario: Primeira execução resolve a base pelo locale
+- **WHEN** o app é aberto pela primeira vez num dispositivo cujo locale indica euro
+- **THEN** a moeda base passa a ser o euro, e os totais consolidados são expressos em euro
+
+#### Scenario: Locale de moeda não oferecida recai na declarada
+- **WHEN** o locale do dispositivo indica uma moeda fora do conjunto oferecido
+- **THEN** a moeda base recai na moeda declarada como último recurso
+
+#### Scenario: Trocar o locale depois não move o histórico
+- **WHEN** o usuário troca o locale do dispositivo depois de a moeda base já estar resolvida
+- **THEN** a moeda base permanece a mesma, e nenhuma figura consolidada muda
 
 #### Scenario: Troca de moeda base é imediata e retroativa
 - **WHEN** o usuário troca a moeda base de BRL para USD

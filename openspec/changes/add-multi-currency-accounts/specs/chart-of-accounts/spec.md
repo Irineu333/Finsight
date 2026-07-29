@@ -74,6 +74,42 @@ O sistema MUST NOT prover conta de sistema para representar a ausência de class
 
 ## ADDED Requirements
 
+### Requirement: A migração resolve a moeda das contas legadas pelo locale
+
+Na primeira execução após a atualização, quando a moeda do locale do dispositivo diferir da moeda padrão legada e pertencer ao conjunto oferecido, o sistema SHALL **reetiquetar** as contas existentes para a moeda do locale.
+
+As contas existentes antes desta mudança estão denominadas na moeda padrão que o modelo aplicava, e essa denominação **nunca foi fato visível ao usuário**: a formatação sempre usou o locale do dispositivo, de modo que um usuário de região estrangeira sempre leu o símbolo dela sobre um dado que dizia outra coisa. Reetiquetar faz o dado dizer o que aquele usuário sempre leu. Reetiquetar SHALL alterar apenas a denominação: nenhum valor, nenhuma entry e nenhum saldo MUST ser alterado, e a invariante de soma zero por moeda SHALL continuar satisfeita, porque a moeda de todas as linhas envolvidas muda junto.
+
+A reetiquetagem SHALL ocorrer **uma única vez** e SHALL registrar que ocorreu. Uma alteração posterior da região do dispositivo MUST NOT dispará-la novamente.
+
+Isso MUST NOT ser lido como exceção à imutabilidade da moeda de uma conta: a reetiquetagem é migração, e acontece antes de aquela denominação ser observável. Após ela, a imutabilidade vale sem exceção — pelo mesmo princípio que o sistema já aplica a dado migrado, que obedece às mesmas regras que o novo mesmo quando a migração produziu o que o runtime não produz.
+
+Consequência aceita: um usuário cuja moeda real seja a legada mas cujo dispositivo esteja em região estrangeira terá as contas reetiquetadas sem aviso, e o sistema MUST NOT oferecer caminho para desfazê-lo.
+
+#### Scenario: Usuário de região estrangeira tem as contas reetiquetadas
+- **WHEN** um banco existente inteiramente na moeda legada é aberto pela primeira vez após a atualização, num dispositivo cuja região indica dólar
+- **THEN** as contas passam a ser denominadas em dólar, nenhum valor muda, e as figuras deixam de exibir o símbolo da moeda legada
+
+#### Scenario: Usuário da região de origem não é tocado
+- **WHEN** o mesmo banco é aberto num dispositivo cuja região indica a moeda legada
+- **THEN** nenhuma reetiquetagem ocorre
+
+#### Scenario: Idioma não decide
+- **WHEN** o dispositivo tem a interface em outro idioma mas a região da moeda legada
+- **THEN** nenhuma reetiquetagem ocorre, porque quem decide é a região e não o idioma
+
+#### Scenario: Moeda fora do conjunto oferecido não dispara
+- **WHEN** a região do dispositivo indica uma moeda fora do conjunto oferecido
+- **THEN** nenhuma reetiquetagem ocorre e as contas permanecem na moeda legada
+
+#### Scenario: Reetiquetagem não se repete
+- **WHEN** o usuário troca a região do dispositivo depois de a reetiquetagem já ter ocorrido
+- **THEN** nada é reetiquetado, e a moeda das contas permanece a que ficou
+
+#### Scenario: Reetiquetar preserva o balanceamento
+- **WHEN** a reetiquetagem ocorre sobre um banco com transações
+- **THEN** toda transação continua somando zero em cada moeda presente
+
 ### Requirement: A moeda de uma conta é fixada na criação e nunca muda
 
 A moeda de uma `Account` SHALL ser escolhida na sua criação e MUST NOT ser alterada depois, em nenhuma circunstância. O sistema MUST NOT oferecer a troca, e o domínio SHALL recusá-la **sem consultar condição alguma** — nem a existência de lançamentos, nem qualquer outro estado.

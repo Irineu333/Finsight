@@ -410,6 +410,24 @@ Daí a consequência que importa para o plano: **3.9 — o teste de regressão m
 
 Registrar isso como decisão, e não apenas como tarefa de teste, é o que impede que a segunda metade do gate seja lida como redundante e cortada por economia.
 
+### D30 — As contas legadas são reetiquetadas pelo locale, uma vez e em silêncio
+
+Todo banco existente tem `currency = 'BRL'` em toda linha — não porque alguém escolheu, mas porque era o default do modelo. E `CurrencyFormatter` sempre formatou pelo locale do dispositivo: um usuário nos Estados Unidos **sempre viu `$`** enquanto o seu dado dizia BRL. A divergência nunca apareceu em tela.
+
+Isso importa para o que a change faz: por D10 a moeda do dado passa a mandar no símbolo, e por D12 ela é imutável. Sem tratamento, todo usuário fora do Brasil veria o app inteiro virar `R$` e **não teria como corrigir** — as contas dele têm lançamentos, então não podem ser apagadas e recriadas.
+
+**A migração reetiqueta:** na primeira execução após a atualização, se a moeda do locale diferir da constante legada e pertencer ao catálogo oferecido, as contas existentes passam a ser denominadas na moeda do locale. É reetiquetagem, **não conversão** — nenhum valor muda, nenhuma entry é tocada, `Σ = 0` por moeda continua valendo porque a moeda de toda linha muda junto.
+
+E é a leitura mais honesta do dado: o `'BRL'` gravado nunca foi fato visível ao usuário, e a moeda que ele acreditou ter durante todo o uso do app é a que estava na tela. Reetiquetar faz o dado dizer o que o usuário sempre leu.
+
+**O falso positivo, e ele é aceito:** um brasileiro cujo dispositivo esteja em região estrangeira tem as contas reetiquetadas para a moeda daquela região, sem aviso, e D12 impede desfazer. Duas coisas o estreitam. Primeiro, quem decide é a **região** do locale e não o idioma — `NumberFormat.getCurrencyInstance()` resolve pelo país —, então a interface em inglês com região Brasil não dispara nada. Segundo, o catálogo curado barra moedas não oferecidas, que caem no caso silencioso de manter a constante.
+
+Consequência aceita e registrada: para quem cair no falso positivo, o estado é **irreversível pelo app**. A alternativa considerada era perguntar uma vez aos usuários de locale não-BRL, o que acertaria os dois casos ao preço de uma tela de migração; foi rejeitada em favor de zero atrito.
+
+**Reetiquetar contradiz D12?** Não, e o projeto já tem o precedente escrito: `balanced-ledger` registra que arquivar não gera baixa em runtime *"mas a migração gera, e o dado migrado obedece às mesmas regras que o novo"*. Uma migração pode fazer o que o runtime proíbe, porque ela acontece **antes** de a moeda daquela conta ser fato observável. Depois dela, a imutabilidade vale sem exceção.
+
+A reetiquetagem SHALL rodar **uma vez** e registrar que rodou, para que uma troca posterior de região não a dispare de novo — o que seria exatamente a mudança silenciosa de significado que D28 proíbe para a moeda base.
+
 ## Riscos / Trade-offs
 
 - **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.

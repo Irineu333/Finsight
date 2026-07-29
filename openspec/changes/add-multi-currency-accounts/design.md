@@ -373,6 +373,18 @@ A remoção na tela é o **corolário obrigatório**, não uma conveniência: se
 
 Consequência de leitura, e ela é desejável: removida a única taxa de uma moeda, as figuras daquele período voltam a exibir o termo próprio daquela moeda (D9) em vez de um valor convertido por uma taxa que ninguém mais sustenta.
 
+### D29 — A base só aparece onde houve consolidação, e o teste monomoeda é cego a isso
+
+A moeda base é exibida **apenas** em figura que passou por consolidação. Onde o razão devolveu uma única moeda — saldo de conta, devido de fatura, linha de extrato, parcela —, a exibição usa **aquela** moeda, e a base não aparece. É o que decorre de D8 e de D9, mas precisa ser afirmado por si, por causa do que vem a seguir.
+
+**A violação é invisível na configuração mais comum.** Para um usuário cujas contas estão todas na base, exibir a base e exibir a moeda da conta produzem *exatamente o mesmo texto*. Um saldo de conta ligado à base por engano passa em todo teste, em toda revisão e em todo uso — até o dia em que alguém cria uma conta em dólar e vê o saldo dela em reais, sem conversão, apenas com o símbolo errado.
+
+E o plano **cria a oportunidade** desse erro: a tarefa 1.1 instrui a passar a moeda base explicitamente nos sítios que agregam entre contas, porque ali ela é de fato a resposta certa. Os dois usos ficam a uma linha de distância um do outro, com aparência idêntica e significados opostos.
+
+Daí a consequência que importa para o plano: **3.9 — o teste de regressão monomoeda — não prova este requisito, e não pode.** Ele afirma que nada mudou para quem usa uma moeda só, e é justamente essa configuração que torna a violação inobservável. O gate precisa de um segundo lado (3.10, repetido em superfície em 7.8): uma conta cuja moeda **difere da base**, exercitando saldo, extrato, fatura e parcela.
+
+Registrar isso como decisão, e não apenas como tarefa de teste, é o que impede que a segunda metade do gate seja lida como redundante e cortada por economia.
+
 ## Riscos / Trade-offs
 
 - **Abrir o conjunto fechado de tipos de conta custa menos do que parece — e o risco real está noutro lugar.** Existem **três** `when` exaustivos sobre `AccountType` em todo o repositório (`AccountTypeMapper:13` e `:21`, e `systemAccountId` em `LedgerEntryWriter:158`, já coberto por D4); não há uso algum de `AccountType.entries`/`values()` nem `@Serializable` sobre ele. E `AccountEntity.Type` é persistido pelo suporte nativo do Room como `TEXT`, sem `TypeConverter`, de modo que **acrescentar um membro não altera o schema e não exige migração**. O risco de verdade não está nos `when`, e sim nos predicados por literal SQL da `EntryDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`), que o compilador não alcança, e nas somas cruzadas de `Double` espalhadas pelos ViewModels.

@@ -89,6 +89,30 @@ Decorre da derivação que, para um usuário cujas contas estejam todas na moeda
 - **WHEN** a mesma figura aproximada aparece numa lista, num resumo e no relatório exportado
 - **THEN** as três exibem a marca de aproximação, por consumirem o mesmo valor
 
+### Requirement: A moeda de uma figura é a da própria figura, nunca a base por omissão
+
+Uma figura monetária SHALL ser exibida na moeda em que ela **está**, e a moeda base SHALL ser usada apenas onde houve consolidação. Um valor que o razão devolveu numa única moeda — o saldo de uma conta, o devido de uma fatura, uma linha de extrato, uma parcela — MUST NOT ser exibido na moeda base quando esta difere da sua.
+
+A moeda base MUST NOT ser usada como valor de recurso para uma figura cuja moeda é conhecível. Onde a moeda é derivável da conta ou da fachada que originou a figura, é dela que a exibição SHALL vir; recair na base "porque estava à mão" é o modo de falha que este requisito existe para impedir.
+
+Este requisito precisa ser afirmado separadamente porque a sua violação é **invisível na configuração mais comum**: para um usuário cujas contas estão todas na moeda base, exibir a base e exibir a moeda da conta produzem exatamente o mesmo texto. Um teste que só exercite essa configuração MUST NOT ser considerado prova de conformidade; a verificação SHALL usar uma conta cuja moeda difira da base.
+
+#### Scenario: Saldo de conta estrangeira não é exibido na base
+- **WHEN** a moeda base é o real e o saldo de uma conta em dólar é exibido
+- **THEN** ele aparece em dólar, e o símbolo do real não aparece em lugar algum daquela figura
+
+#### Scenario: Extrato de conta estrangeira não é exibido na base
+- **WHEN** os lançamentos de uma conta em dólar são listados
+- **THEN** cada valor aparece em dólar, sem conversão e sem a moeda base
+
+#### Scenario: Fatura de cartão estrangeiro não é exibida na base
+- **WHEN** o devido e as parcelas de um cartão em dólar são exibidos
+- **THEN** aparecem em dólar, pela moeda do cartão
+
+#### Scenario: Verificação exige moeda diferente da base
+- **WHEN** a conformidade com este requisito é verificada
+- **THEN** a verificação usa uma conta cuja moeda difere da base, porque com moedas iguais a violação não é observável
+
 ### Requirement: Onde a figura multitermo não cabe, a degradação é declarada
 
 Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso, o contador de parcelas, o documento exportado —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.

@@ -10,8 +10,10 @@
 >
 > **Regra de higiene, e ela é o que corrige o erro mais fácil de cometer aqui:** nenhum grupo
 > muda assinatura sem adaptar, no mesmo grupo, quem a consome. O build fica verde ao fim de
-> **todo** grupo, e 3.9 é o gate que prova, a cada um, que o usuário monomoeda vê números
-> idênticos aos de hoje.
+> **todo** grupo, e 3.9 + 3.10 são o gate que prova, a cada um, que o usuário monomoeda vê números
+> idênticos aos de hoje **e** que uma conta de moeda diferente da base é exibida na moeda dela.
+> Os dois são necessários: 3.9 sozinho é cego a confundir a moeda da conta com a base, porque para
+> um usuário monomoeda os dois textos coincidem.
 >
 > §1 é varredura preparatória e inerte, e produz o **inventário** que os grupos 6–8 consomem.
 > §4 e §5 não dependem de §2 nem de §3 e podem correr em paralelo.
@@ -56,11 +58,12 @@
 - [ ] 3.7 Varrer os ~21 arquivos de teste que implementam `IEntryRepository` como stub completo. Avaliar antes extrair uma base compartilhada — hoje cada um redeclara a interface inteira. Nenhuma expectativa muda: toda moeda é BRL.
 - [ ] 3.8 Casos de duas moedas nas 6 suítes de query sobre `LedgerFixture` (habilitadas por 1.5): cada agregação devolve duas chaves e nenhuma soma entre elas. É a prova executável de "nenhuma agregação soma moedas".
 - [ ] 3.9 **Teste de regressão monomoeda**, e ele é o gate de todos os grupos seguintes: com todas as contas na moeda base, toda figura do app é idêntica à de antes da mudança e nenhuma recebe marca de aproximação. Escrito aqui, rodado ao fim de cada grupo.
-- [ ] 3.10 Adaptar os consumidores de contas, categorias e orçamentos: `CalculateBalanceUseCase` (o `accountId = null` é a porta pela qual o multimoeda entra no app), `AccountsViewModel`, `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (incluindo o denominador de porcentagem), `CalculateBudgetProgressUseCase` (`:feature:budgets:api`).
-- [ ] 3.11 Adaptar os consumidores de cartões: `CalculateInvoiceUseCase`, `CalculateInvoiceOverviewsUseCase`, `InvoiceTransactionsViewModel`. A redução a uma chave acontece **aqui**, com a garantia da fachada escrita onde o mapa é reduzido — não presumida no razão.
-- [ ] 3.12 Adaptar `DashboardComponentsBuilder` e `BalanceOverviewFactory` para somar `ASSET + LIABILITY` e `asset.expense + liability.expense` pela soma de 3.2, nunca por soma de mapas em linha.
-- [ ] 3.13 Adaptar `feature/report/impl`: `CalculateReportStatsUseCase` (escopo vazio = todas as contas, arquivadas inclusive — a figura mais cruzada do app), `CalculateReportCategorySpendingUseCase`, `ReportViewerViewModel`.
-- [ ] 3.14 `TransactionsViewModel` e o escopo: o perímetro decide por pernas **monetárias**, e as de conversão, fora de qualquer perímetro, não tornam fluxo um lançamento interno. Cobrir os cenários novos de `transaction-scope`.
+- [ ] 3.10 **Gate irmão de 3.9, e ele cobre o ponto cego dele:** teste com uma conta cuja moeda **difere da base**, provando que toda figura monomoeda carrega a moeda da sua conta ou fachada — saldo, extrato, devido de fatura, parcela — e **nunca** a base. Com moedas iguais a violação é invisível, porque os dois textos coincidem; 3.9 passaria com a base ligada por engano num saldo de conta. Como 1.1 instrui a passar a base nos sítios que agregam, este é o teste que separa os dois usos.
+- [ ] 3.11 Adaptar os consumidores de contas, categorias e orçamentos: `CalculateBalanceUseCase` (o `accountId = null` é a porta pela qual o multimoeda entra no app), `AccountsViewModel`, `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (incluindo o denominador de porcentagem), `CalculateBudgetProgressUseCase` (`:feature:budgets:api`).
+- [ ] 3.12 Adaptar os consumidores de cartões: `CalculateInvoiceUseCase`, `CalculateInvoiceOverviewsUseCase`, `InvoiceTransactionsViewModel`. A redução a uma chave acontece **aqui**, com a garantia da fachada escrita onde o mapa é reduzido — não presumida no razão.
+- [ ] 3.13 Adaptar `DashboardComponentsBuilder` e `BalanceOverviewFactory` para somar `ASSET + LIABILITY` e `asset.expense + liability.expense` pela soma de 3.2, nunca por soma de mapas em linha.
+- [ ] 3.14 Adaptar `feature/report/impl`: `CalculateReportStatsUseCase` (escopo vazio = todas as contas, arquivadas inclusive — a figura mais cruzada do app), `CalculateReportCategorySpendingUseCase`, `ReportViewerViewModel`.
+- [ ] 3.15 `TransactionsViewModel` e o escopo: o perímetro decide por pernas **monetárias**, e as de conversão, fora de qualquer perímetro, não tornam fluxo um lançamento interno. Cobrir os cenários novos de `transaction-scope`.
 
 ## 4. A tabela de taxas (independente de §2 e §3)
 
@@ -100,7 +103,8 @@
 - [ ] 7.5 Renderização multitermo como regra única (D22): termos empilhados, uma linha cada, alinhados à direita, o primeiro no estilo da superfície e os demais um degrau abaixo em `onSurfaceVariant`, com o `+` colado ao termo. Nenhuma superfície decide por conta própria. Cobrir com teste de duas e de um termo.
 - [ ] 7.6 Degradação declarada (D20) em `InstallmentCounter`, no rótulo de `BudgetProgressCard` e no medidor de `CreditCardCard`: só o termo na base, com a marca e a indicação de parcela não convertida; nunca truncar nem quebrar. Teste de que nenhum termo é descartado em silêncio.
 - [ ] 7.7 Eliminar as duplicatas locais que contornam `DisplayAmount`: `formatMoney` em `EditInvoiceBalanceModal:217` e `EditAccountBalanceModal:229` (ambas prependem `"-"` à mão, reimplementando a política de sinal fora do tipo) e os `parseMoneyToDouble` de `EditInvoiceBalanceModal`, `EditAccountBalanceModal` e `AdvancePaymentModal`.
-- [ ] 7.8 Rodapé de card (D21/D25) no idioma do `helperText`, renderizado só quando alguma linha do card é aproximada, no padrão condicional de `AccountCard:199-213`: explica a marca, revela a taxa usada com a sua data e navega para a tela de 6.5. Teste de que não aparece quando tudo é exato.
+- [ ] 7.8 Repetir a verificação de 3.10 **no nível de superfície**: com uma conta de moeda diferente da base, o card de conta, a lista de lançamentos, a modal de fatura e o contador de parcelas exibem o símbolo daquela conta, e o da base não aparece em nenhuma dessas figuras.
+- [ ] 7.9 Rodapé de card (D21/D25) no idioma do `helperText`, renderizado só quando alguma linha do card é aproximada, no padrão condicional de `AccountCard:199-213`: explica a marca, revela a taxa usada com a sua data e navega para a tela de 6.5. Teste de que não aparece quando tudo é exato.
 
 ## 8. O relatório e o fechamento do inventário
 

@@ -68,7 +68,7 @@
 ## 4. A tabela de taxas (independente de §2 e §3)
 
 - [ ] 4.1 `ExchangeRateEntity(currency, date, rate, source)` e `ExchangeRateDao` em `:core:database`, com `source` distinguindo colhida-de-operação de informada-pelo-usuário; a consulta "última taxa em ou antes de `:date`" com precedência da do usuário na mesma data; a listagem observável.
-- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` registrada em `Database.kt`: `CREATE TABLE` da tabela de taxas **e** `ALTER TABLE budgets ADD COLUMN` da moeda do limite (D13), com `DEFAULT` na constante de último recurso. O preenchimento é **exato, não aproximado**: todo banco existente está inteiramente em BRL, então a moeda que a coluna recebe é exatamente a que já denominava cada limite gravado. Nenhum valor é alterado. Bindar o DAO em `databaseModule`.
+- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` registrada em `Database.kt`: `CREATE TABLE` da tabela de taxas **e** `ALTER TABLE budgets ADD COLUMN` da moeda do limite (D13), preenchida com a moeda da **conta padrão** (`COALESCE` na constante de último recurso, se não houver). O preenchimento é **exato, não aproximado**: todo banco existente está inteiramente em BRL, então a moeda que a coluna recebe é exatamente a que já denominava cada limite gravado. Nenhum valor é alterado. Bindar o DAO em `databaseModule`.
 - [ ] 4.3 Exportar `schemas/…/11.json`; escrever `Migration10To11Test` no molde dos existentes e estender `MigrationSchemaEquivalenceTest`, hoje um `@Test` só cobrindo `7 → 10`.
 - [ ] 4.4 Confirmar por teste que `LedgerBalanceCheck` **não muda** — já agrupa por `(transactionId, currency)` — com um banco contendo transação cruzada.
 
@@ -112,10 +112,12 @@
 - [ ] 8.2 Ligar à consolidação de 5.4 os consumidores que exibem figura consolidada — dashboard, resumo de transações, relatório, orçamentos, categorias —, sem nenhuma multiplicação por taxa em tela, ViewModel ou modelo de UI. Teste de inspeção.
 - [ ] 8.3 Atualizar `TransactionItemSignTest`, `TransactionPerspectiveTest`, `TransactionFormCoherenceTest` e os testes de formatação de `core/common`, `core/ui` e `report`.
 - [ ] 8.4 Strings de §7 e §8 em `values/` e `values-en/`: nomes de moeda, explicação da figura aproximada, aviso de parcela não convertida.
-- [ ] 8.5 **Moeda do limite de orçamento** (D13): a entidade de orçamento ganha o campo de moeda (a coluna e o preenchimento vêm de 4.2); o formulário oferece a escolha pré-selecionada — moeda única do app quando há uma só, base quando há várias — e a apresenta **travada** na edição; `CalculateBudgetProgressUseCase` reduz o gasto à moeda do limite. Migração dos orçamentos existentes: recebem a moeda base vigente, que é a que os denominava implicitamente, sem alterar valor algum.
-- [ ] 8.6 Teste do orçamento no perfil que motiva a regra: todas as contas em moeda diferente da base, limite criado na moeda das contas, gasto inteiramente nela → **progresso exato, sem marca**. E o perfil oposto: contas em duas moedas → progresso aproximado, com marca.
-- [ ] 8.7 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
-- [ ] 8.8 **Fechar a lista de 1.2**: nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. É o critério de pronto da varredura de superfície.
+- [ ] 8.5 **Moeda do limite de orçamento** (D13): a entidade de orçamento ganha o campo de moeda (a coluna e o preenchimento vêm de 4.2); `CalculateBudgetProgressUseCase` reduz o gasto à **moeda do limite**, não à base.
+- [ ] 8.6 `BudgetFormModal`: o controle de moeda **só existe quando há mais de uma moeda entre as contas cadastradas**, pré-selecionado com a moeda da **conta padrão**; com uma só, nenhum controle é exibido e o limite assume a moeda da conta padrão. Na edição a moeda é apresentada travada. Comentar por que difere de D23 — o formulário de conta é a porta pela qual uma moeda nasce e precisa estar sempre aberta; o de orçamento só escolhe entre as que existem.
+- [ ] 8.7 Teste do `BudgetFormModal` nos dois perfis: uma moeda cadastrada → **nenhum controle**, limite na moeda da conta padrão; duas moedas → controle presente, pré-selecionado na conta padrão mesmo quando ela difere da base.
+- [ ] 8.8 Teste do progresso no perfil que motiva a regra: todas as contas em moeda diferente da base, limite na moeda das contas, gasto inteiramente nela → **progresso exato, sem marca**. E o perfil oposto: contas em duas moedas, gasto em ambas → progresso aproximado, com marca.
+- [ ] 8.9 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
+- [ ] 8.10 **Fechar a lista de 1.2**: nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. É o critério de pronto da varredura de superfície.
 
 ## 9. Os fluxos de dois valores e a porta
 

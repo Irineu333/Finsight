@@ -174,7 +174,14 @@ A consolidação SHALL produzir, junto de cada figura, se ela é exata ou aproxi
 
 ### Requirement: O limite de um orçamento carrega a moeda escolhida na sua criação
 
-O limite de um orçamento SHALL ser denominado numa moeda escolhida na sua criação, e MUST NOT herdar a moeda base. A escolha SHALL ser oferecida pré-selecionada com a moeda única do app quando houver apenas uma, e com a moeda base quando houver mais de uma.
+O limite de um orçamento SHALL ser denominado, e a sua denominação SHALL derivar das **contas cadastradas**. Ela MUST NOT herdar a moeda base: a base responde em que moeda o usuário **lê totais**, e não em que moeda ele **gasta**.
+
+A escolha SHALL ser oferecida apenas quando houver escolha a fazer, decidida pelo número de moedas distintas entre as contas cadastradas:
+
+- **uma moeda** → o formulário MUST NOT exibir controle de moeda, e o limite SHALL assumir a moeda da conta padrão. É a única resposta possível, e não um valor padrão silencioso;
+- **mais de uma moeda** → o formulário SHALL oferecer a escolha, pré-selecionada com a moeda da conta padrão.
+
+Para um usuário de uma moeda só, o formulário de orçamento SHALL permanecer idêntico ao que era antes desta mudança.
 
 A denominação escolhida MUST NOT ser alterada depois: reinterpretar um limite gravado reescreve em silêncio o significado de um número que o usuário digitou. Alterar a denominação SHALL exigir outro orçamento.
 
@@ -182,15 +189,19 @@ O progresso de um orçamento SHALL ser o gasto da sua categoria reduzido à **mo
 
 A regra existe para que o custo do multimoeda seja pago apenas por quem mistura moedas. Herdar a base cobraria esse custo de um usuário com **todas** as contas numa moeda diferente da base — que por toda leitura vê figuras exatas —, pedindo-lhe um limite na moeda base e comparando moedas distintas na barra de progresso.
 
-Um orçamento não nomeia conta alguma, então a sua denominação MUST NOT ser derivada: é o caso em que declará-la é a única alternativa a herdá-la de uma preferência que pode mudar.
+Um orçamento não nomeia **uma** conta, então a sua denominação MUST NOT ser derivada de uma conta específica no momento da leitura — ela é fixada na criação. O que as contas cadastradas fornecem é apenas *o que oferecer* e *o que sugerir* naquele instante.
 
-#### Scenario: Usuário de moeda única não é cobrado pela base
+#### Scenario: Usuário de moeda única não vê controle nem é cobrado pela base
 - **WHEN** todas as contas estão em dólar, a base é o real, e o usuário cria um orçamento
-- **THEN** o limite é oferecido pré-selecionado em dólar, e o progresso é exato
+- **THEN** nenhum controle de moeda é exibido, o limite nasce em dólar pela moeda da conta padrão, e o progresso é exato
 
-#### Scenario: Usuário com várias moedas
+#### Scenario: Usuário com várias moedas escolhe
 - **WHEN** existem contas em real e em dólar e o usuário cria um orçamento
-- **THEN** o limite é oferecido pré-selecionado na moeda base, e o progresso é aproximado quando a categoria tem gasto em outra moeda
+- **THEN** a escolha de moeda é oferecida, pré-selecionada com a moeda da conta padrão, e o progresso é aproximado quando a categoria tem gasto em outra moeda
+
+#### Scenario: A sugestão não vem da base
+- **WHEN** a moeda da conta padrão difere da moeda base e o usuário cria um orçamento com mais de uma moeda cadastrada
+- **THEN** a pré-seleção é a da conta padrão, e não a base
 
 #### Scenario: Progresso exato quando não houve conversão
 - **WHEN** o gasto de uma categoria está inteiramente na moeda do limite do seu orçamento

@@ -234,9 +234,20 @@ A base é semeada **uma vez**. Trocar o locale do dispositivo depois MUST NOT mu
 
 Uma categoria é dimensão, não conta: não tem moeda, e as suas entries podem estar em várias. O gasto de "Alimentação" é, por natureza, leitura por moeda — e cai nas duas partes de D9 sem regra própria: uma moeda passa exata, duas ou mais consolidam.
 
-**O limite de um orçamento é denominado, e a denominação é escolhida na criação** — não herdada da moeda base. A pré-seleção oferecida é a moeda única do app quando há uma só, e a base quando há várias. O progresso é o gasto da categoria **reduzido à moeda do limite**, e é exato quando não houve conversão.
+**O limite de um orçamento é denominado, e a denominação vem das contas cadastradas** — nunca da moeda base, que é preferência de exibição e não tem nada a dizer sobre um valor que o usuário digita. O progresso é o gasto da categoria **reduzido à moeda do limite**, e é exato quando não houve conversão.
 
-Denominar o limite na base era o desenho anterior, e produzia um custo indevido: um usuário com **tudo em dólar** e a base resolvida em real — que por D9 vê toda leitura exata e sem marca — teria o formulário de orçamento pedindo um limite em reais e a barra de progresso comparando reais com dólares, aproximada. Ele é monomoeda e pagaria o preço do multimoeda, pela porta da **entrada** em vez da leitura. Com o limite denominado, ele escolhe dólar, e o progresso volta a ser exato.
+A escolha só é **oferecida** quando existe escolha a fazer:
+
+| moedas distintas entre as contas cadastradas | formulário de orçamento |
+|---|---|
+| uma | **sem controle** — assume a moeda da conta padrão |
+| mais de uma | seletor, pré-selecionado com a moeda da conta padrão |
+
+A conta padrão é a sugestão porque é onde o usuário de fato transaciona; a moeda base não é, porque ela responde *em que moeda ele lê totais*, não *em que moeda ele gasta*. Para o usuário monomoeda, o formulário de orçamento fica **idêntico ao de hoje** — nem um controle a mais.
+
+Isso parece contradizer D23, que exige a linha de moeda **sempre visível** no formulário de conta, e não contradiz. A diferença não é de gosto: **o formulário de conta é a única porta pela qual uma segunda moeda nasce** — se ele esconder o controle enquanto houver uma moeda só, nunca haverá uma segunda, e a porta tem de estar sempre aberta. O formulário de orçamento não cria moeda alguma: ele escolhe entre as que já existem. Com uma existindo, não há o que escolher, e o valor não é um *default* silencioso — é a única resposta possível.
+
+Denominar o limite na base era o desenho anterior, e produzia um custo indevido: um usuário com **tudo em dólar** e a base resolvida em real — que por D9 vê toda leitura exata e sem marca — teria o formulário de orçamento pedindo um limite em reais e a barra de progresso comparando reais com dólares, aproximada. Ele é monomoeda e pagaria o preço do multimoeda, pela porta da **entrada** em vez da leitura. Agora ele não escolhe nada, não vê controle novo, e o limite nasce em dólar porque é a moeda da conta dele.
 
 É a generalização de D17 (*"um valor de fachada é denominado pela conta que ele nomeia"*) para o caso em que a fachada **não nomeia conta alguma**: um orçamento não tem escopo de conta, então a sua denominação não é derivável — e por isso é declarada, uma vez, e nunca herdada de uma preferência que pode mudar.
 

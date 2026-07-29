@@ -5,6 +5,8 @@ O sistema SHALL validar a invariante de soma zero por moeda em um único ponto n
 
 A invariante MUST NOT admitir exceção alguma — **inclusive para a operação que atravessa moedas**. Uma operação assim não é uma transação desbalanceada tolerada: ela chega **incompleta** à fronteira, que a completa com pernas de conversão até que cada moeda some zero (ver o requisito de completar a intenção cruzada). Consequentemente, `Σ entries = 0` por `(transação, moeda)` SHALL permanecer verificável **lendo apenas as entries**, sem consultar as contas das pernas, o plano de contas ou qualquer tabela de fachada — que é a condição para que a verificação continue válida antes e depois de qualquer reescrita do plano de contas.
 
+"Um único ponto" SHALL ser verdade de fato, e não apenas do ponto onde as entries são construídas: MUST NOT existir pré-validação de balanceamento em nenhum ponto anterior à fronteira. Uma pré-validação que some as pernas da intenção sem separá-las por moeda recusaria toda operação cruzada antes de a fronteira poder completá-la, e é incompatível com a moeda de uma perna derivar da sua conta — separá-las por moeda exigiria que o pré-cheque lesse o plano de contas, deixando de ser pré-cheque.
+
 Esse mesmo ponto único SHALL validar a compatibilidade entre o `kind` da dimensão de cada perna e a natureza da conta daquela perna, e o fechamento das contas monetárias referenciadas. Nenhuma dessas validações SHALL ter implementação em qualquer outro ponto de escrita.
 
 #### Scenario: Operação desbalanceada é rejeitada
@@ -19,13 +21,58 @@ Esse mesmo ponto único SHALL validar a compatibilidade entre o `kind` da dimens
 - **WHEN** uma operação que envolve duas moedas é persistida
 - **THEN** as entries gravadas somam zero em **cada** uma das duas moedas, e nenhuma exceção à invariante é registrada
 
+#### Scenario: Nenhuma pré-validação recusa a operação cruzada
+- **WHEN** uma intenção cujas pernas envolvem duas moedas é submetida ao repositório
+- **THEN** ela alcança a fronteira de escrita e é completada, sem ser recusada por nenhuma verificação anterior
+
 #### Scenario: Invariante verificável só pelas entries
 - **WHEN** a verificação de balanceamento do razão é executada sobre um banco com operações cruzadas
 - **THEN** ela agrupa por `(transação, moeda)` sobre as entries, sem consultar contas, e não encontra violação
 
 #### Scenario: Validações concentradas num ponto
 - **WHEN** o código de escrita é inspecionado
-- **THEN** soma zero, compatibilidade de dimensão e fechamento de conta são verificados no mesmo ponto, e em nenhum outro
+- **THEN** soma zero, compatibilidade de dimensão e fechamento de conta são verificados no mesmo ponto, e em nenhum outro — inclusive nenhum anterior
+
+### Requirement: Tipo de operação derivado dos tipos de conta
+O sistema SHALL derivar o rótulo de uma transação a partir dos tipos das contas envolvidas nas suas entries, e MUST NOT persistir esse rótulo como estado independente. A derivação SHALL ser uma função **total** sobre o conjunto `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`: uma contrapartida `EQUITY` SHALL produzir `ADJUSTMENT`; `ASSET`→`EXPENSE` SHALL ser despesa; `INCOME`→`ASSET` receita; `ASSET`→`LIABILITY` pagamento; `ASSET`→`ASSET` transferência.
+
+As pernas de **conversão** SHALL ser transparentes à derivação: uma perna em conta `CONVERSION` MUST NOT alterar o rótulo que a operação teria sem ela. Uma transferência entre contas de moedas diferentes SHALL ser rotulada `TRANSFER`, e o pagamento de uma fatura em moeda distinta da conta pagadora SHALL ser rotulado `PAYMENT` — a moeda de uma operação MUST NOT mudar o que ela **é**.
+
+A presença de uma contrapartida `EQUITY` SHALL ser avaliada **antes de qualquer outro caso**, e não apenas antes do caso de transferência: um ajuste pode ocorrer tanto sobre uma conta (`{ASSET, EQUITY}`) quanto sobre uma fatura de cartão (`{LIABILITY, EQUITY}`), e neste segundo caso qualquer avaliação que teste `LIABILITY` primeiro produziria `PAYMENT`. Um ajuste MUST NOT ser rotulado como transferência nem como pagamento, independentemente de a conta ajustada ser `ASSET` ou `LIABILITY`. Essa precedência é a razão pela qual a conversão cambial MUST NOT ser representada como `EQUITY`: sob `EQUITY`, toda operação cruzada seria rotulada ajuste antes de qualquer outro caso ser considerado.
+
+SHALL existir uma única derivação **de rótulo de operação** no sistema. Isso MUST NOT ser confundido com a **direção da perna** sob a perspectiva exibida (despesa/receita/ajuste), que é uma derivação distinta, com propósito distinto, e que SHALL coexistir: a interface exibe as duas simultaneamente — um pagamento de fatura mostra a direção "despesa" da perna da conta **e** o rótulo "pagamento" da operação. Cada uma SHALL ter uma única implementação; nenhuma SHALL ser reimplementada em linha pelos consumidores. A transparência das pernas de conversão SHALL valer igualmente para a derivação de direção da perna: uma perna monetária de uma operação cruzada MUST NOT ser lida como ajuste.
+
+#### Scenario: Rótulo derivado de uma transferência
+- **WHEN** uma transação tem duas entries, ambas em contas `ASSET`
+- **THEN** o sistema a apresenta como transferência sem consultar nenhum campo de tipo persistido
+
+#### Scenario: Rótulo derivado de uma transferência entre moedas
+- **WHEN** uma transação tem duas entries em contas `ASSET` de moedas diferentes e duas entries em contas `CONVERSION`
+- **THEN** o sistema a apresenta como transferência, e MUST NOT apresentá-la como ajuste
+
+#### Scenario: Rótulo derivado de um pagamento de fatura
+- **WHEN** uma transação move valor de uma conta `ASSET` para uma conta `LIABILITY`
+- **THEN** o sistema a apresenta como pagamento
+
+#### Scenario: Rótulo derivado de um pagamento de fatura entre moedas
+- **WHEN** o pagamento de uma fatura em moeda distinta da conta pagadora é exibido
+- **THEN** o sistema o apresenta como pagamento, e MUST NOT apresentá-lo como ajuste
+
+#### Scenario: Direção da perna numa operação cruzada
+- **WHEN** a perna de conta de uma transferência cruzada é exibida numa lista
+- **THEN** a sua direção é derivada do sinal do seu próprio valor, e MUST NOT ser lida como ajuste
+
+#### Scenario: Rótulo derivado de um ajuste de saldo de conta
+- **WHEN** uma transação tem uma entry em conta `ASSET` e a contrapartida em conta `EQUITY` de reconciliação
+- **THEN** o sistema a apresenta como ajuste, e MUST NOT apresentá-la como transferência
+
+#### Scenario: Rótulo derivado de um ajuste de saldo de fatura
+- **WHEN** uma transação tem uma entry na conta `LIABILITY` de um cartão e a contrapartida em conta `EQUITY` de reconciliação
+- **THEN** o sistema a apresenta como ajuste, e MUST NOT apresentá-la como pagamento
+
+#### Scenario: Derivação é total
+- **WHEN** qualquer transação válida do razão tem seu rótulo derivado
+- **THEN** o resultado pertence a `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`, sem caso não coberto
 
 ### Requirement: Intenção de escrita expressa por identidade
 A intenção de escrita submetida ao razão SHALL expressar cada perna por identidade de conta e, quando classificada, por identidade de dimensão. A intenção MUST NOT carregar objetos de fachada — conta, cartão, fatura ou categoria — nem qualquer noção de "alvo" que distinga conta de cartão: em termos de razão, essa distinção é apenas a natureza da conta.
@@ -62,6 +109,8 @@ Quando as pernas de uma intenção envolvem mais de uma moeda, a fronteira de es
 
 A regra SHALL ser uniforme, sem ramo por caso de uso: uma transferência entre contas de moedas diferentes, o pagamento de uma fatura em moeda distinta da conta pagadora e qualquer outra operação cruzada SHALL ser completadas pelo mesmo mecanismo, que MUST NOT nomear fachada alguma.
 
+A perna de conversão SHALL ser a **última calculada**, recebendo o resíduo por diferença, e MUST NOT ser calculada de forma independente e depois comparada com as demais. É o que concentra todo o erro de arredondamento do câmbio num único lugar por construção, em vez de deixá-lo emergir como desbalanceamento de centavos.
+
 Quando **uma só** moeda estiver presente, o resíduo SHALL ser zero — o comportamento existente permanece intacto —, e uma perna avulsa SHALL continuar sendo completada pela contrapartida declarada na intenção. A conta de conversão MUST NOT ser usada para completar uma operação monomoeda: ali, resíduo não nulo é desbalanceamento, e SHALL ser recusado.
 
 Quando duas ou mais moedas estiverem presentes, os resíduos MUST NOT ser todos do mesmo sinal. Uma intenção em que toda moeda envolvida ganha valor cria dinheiro sem origem: não é câmbio, e SHALL ser recusada com erro tipado.
@@ -74,9 +123,17 @@ Quando duas ou mais moedas estiverem presentes, os resíduos MUST NOT ser todos 
 - **WHEN** o usuário paga uma fatura de um cartão em USD a partir de uma conta em BRL
 - **THEN** a operação é completada pelo mesmo mecanismo de conversão, sem regra específica de fatura
 
+#### Scenario: Resíduo de arredondamento fica na perna de conversão
+- **WHEN** uma operação cruzada produz resíduo de arredondamento
+- **THEN** ele é absorvido pela perna de conversão, que é calculada por diferença, e a operação soma zero em cada moeda
+
 #### Scenario: Operação monomoeda não usa conversão
 - **WHEN** uma despesa é registrada numa conta e numa categoria, ambas na mesma moeda
 - **THEN** nenhuma perna de conversão é gravada, e a operação permanece com as suas duas entries
+
+#### Scenario: Despesa paga em moeda local não é cruzada
+- **WHEN** o usuário registra uma despesa a partir de uma conta em BRL
+- **THEN** a perna nominal posta na conta nominal em BRL, a operação é monomoeda, e nenhuma conversão participa dela
 
 #### Scenario: Desbalanceamento monomoeda continua recusado
 - **WHEN** uma intenção com uma só moeda é submetida com resíduo diferente de zero
@@ -86,11 +143,13 @@ Quando duas ou mais moedas estiverem presentes, os resíduos MUST NOT ser todos 
 - **WHEN** uma intenção cruzada é submetida em que todas as moedas envolvidas ganham valor
 - **THEN** a persistência é recusada com erro tipado, e nada é gravado
 
-### Requirement: A taxa de câmbio de uma operação é derivada, nunca persistida
+### Requirement: A taxa de câmbio de uma operação é derivada, nunca persistida na operação
 
 A taxa aplicada numa operação que atravessa moedas SHALL ser derivável das suas próprias pernas, e MUST NOT ser persistida como estado da transação, da entry ou de qualquer modelo paralelo. A intenção de escrita MUST NOT receber taxa como parâmetro: ela informa os valores de cada ponta — o que o extrato do usuário mostra —, e a relação entre eles **é** a taxa.
 
 Esta é a mesma decisão já tomada para o rótulo da operação e para o sinal de exibição, e pela mesma razão: um valor persistido ao lado de dois outros que o determinam é um terceiro número obrigado a concordar, sem nada garantindo que concorde.
+
+Isso MUST NOT ser confundido com o histórico de taxas mantido para consolidação (`currency-consolidation`), que é dado próprio, com data e origem, e vive fora do razão. Que uma operação cruzada **alimente** esse histórico é decisão daquela capability; que a operação **guarde** a sua taxa é o que este requisito proíbe.
 
 #### Scenario: Intenção sem taxa
 - **WHEN** o vocabulário de escrita é inspecionado
@@ -102,4 +161,4 @@ Esta é a mesma decisão já tomada para o rótulo da operação e para o sinal 
 
 #### Scenario: Saldo de conversão é o resultado cambial
 - **WHEN** o saldo das contas de conversão é lido por moeda
-- **THEN** ele expressa o resultado cambial acumulado das operações cruzadas, pelo mesmo mecanismo de soma de entries das demais contas
+- **THEN** ele expressa o resultado cambial realizado, pelo mesmo mecanismo de soma de entries das demais contas, sendo `CONVERSION` de natureza credora e portanto com o saldo bruto oposto em sinal ao ganho

@@ -1,13 +1,15 @@
 ## MODIFIED Requirements
 
 ### Requirement: Plano de contas unificado
-O sistema SHALL representar toda conta e cartão como uma `Account` pertencente a um plano de contas único, cada `Account` com um `type` do conjunto fechado `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` e uma `currency`. Conta corrente, poupança, dinheiro, investimento e valores a receber de terceiros SHALL ter `type = ASSET`; cartão de crédito, empréstimo e valores a pagar a terceiros SHALL ter `type = LIABILITY`; contas de reconciliação e de conversão cambial SHALL ter `type = EQUITY`. Nenhum outro tipo de conta SHALL existir.
+O sistema SHALL representar toda conta e cartão como uma `Account` pertencente a um plano de contas único, cada `Account` com um `type` do conjunto fechado `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY, CONVERSION}` e uma `currency`. Conta corrente, poupança, dinheiro, investimento e valores a receber de terceiros SHALL ter `type = ASSET`; cartão de crédito, empréstimo e valores a pagar a terceiros SHALL ter `type = LIABILITY`; contas de reconciliação SHALL ter `type = EQUITY`; contas de conversão cambial SHALL ter `type = CONVERSION`. Nenhum outro tipo de conta SHALL existir.
+
+A conversão cambial MUST NOT ser representada como `EQUITY`. A presença de uma perna `EQUITY` numa transação SHALL continuar significando exatamente uma coisa — que aquela transação é um ajuste —, e esse significado MUST NOT ser compartilhado com nenhum outro conceito. Uma perna de conversão MUST NOT tornar a sua transação um ajuste, MUST NOT ser classificada como ajuste em nenhuma leitura, e MUST NOT satisfazer nenhum predicado que identifique um ajuste existente.
 
 Toda `Account` SHALL estar denominada em **exatamente uma** moeda, e isso SHALL valer para **toda** linha do plano, sem exceção para as contas de sistema. Uma conta MUST NOT acolher entries de mais de uma moeda.
 
 O plano de contas SHALL conter **apenas o que é contábil**. Categoria MUST NOT ser uma linha do plano de contas: a classificação de um lançamento por rótulo do usuário SHALL ser expressa por dimensão, não por conta. O plano SHALL conter exatamente **duas** contas nominais **por moeda em uso** — uma de `type = EXPENSE` e uma de `type = INCOME` — sobre as quais toda perna de contrapartida nominal daquela moeda posta, qualquer que seja a sua classificação. Uma moeda que nenhuma conta usa MUST NOT ter contas nominais no plano: elas nascem sob demanda, como as demais contas de sistema.
 
-O plano de contas SHALL distinguir as contas **monetárias** (`ASSET` e `LIABILITY` — onde o dinheiro está, e que o usuário escolhe ao registrar um lançamento) das contas de **contrapartida** (`INCOME`, `EXPENSE` e `EQUITY` — por que o dinheiro se moveu, sintetizadas pelo sistema). Essa distinção SHALL ser expressa no próprio tipo de conta, e MUST NOT ser reimplementada caso a caso pelos consumidores.
+O plano de contas SHALL distinguir as contas **monetárias** (`ASSET` e `LIABILITY` — onde o dinheiro está, e que o usuário escolhe ao registrar um lançamento) das contas de **contrapartida** (`INCOME`, `EXPENSE`, `EQUITY` e `CONVERSION` — por que o dinheiro se moveu, sintetizadas pelo sistema). Essa distinção SHALL ser expressa no próprio tipo de conta, e MUST NOT ser reimplementada caso a caso pelos consumidores. `CONVERSION` SHALL ser de natureza credora, MUST NOT ser monetária e MUST NOT acolher dimensão de categoria.
 
 #### Scenario: Conta financeira do usuário
 - **WHEN** o usuário cria uma conta corrente
@@ -16,6 +18,10 @@ O plano de contas SHALL distinguir as contas **monetárias** (`ASSET` e `LIABILI
 #### Scenario: Cartão de crédito como passivo
 - **WHEN** o usuário cria um cartão de crédito
 - **THEN** ele é registrado no plano de contas com `type = LIABILITY` e a moeda escolhida
+
+#### Scenario: Conversão não é patrimônio
+- **WHEN** uma transferência entre contas de moedas diferentes é registrada
+- **THEN** as pernas de conversão postam em contas `CONVERSION`, nenhuma perna `EQUITY` existe na transação, e ela não é tratada como ajuste em nenhuma superfície ou leitura
 
 #### Scenario: Categoria não entra no plano de contas
 - **WHEN** o usuário cria uma categoria de despesa ou de receita
@@ -31,12 +37,14 @@ O plano de contas SHALL distinguir as contas **monetárias** (`ASSET` e `LIABILI
 
 #### Scenario: Contas monetárias e de contrapartida
 - **WHEN** o sistema precisa saber quais contas de uma operação representam dinheiro
-- **THEN** as contas `ASSET` e `LIABILITY` são identificadas como monetárias, e as `INCOME`, `EXPENSE` e `EQUITY` como contrapartida
+- **THEN** as contas `ASSET` e `LIABILITY` são identificadas como monetárias, e as `INCOME`, `EXPENSE`, `EQUITY` e `CONVERSION` como contrapartida
 
 ### Requirement: Contas de sistema
-O sistema SHALL prover, **por moeda**, uma conta de `type = EQUITY` para reconciliação de saldo usada como contrapartida de ajustes, uma conta de `type = EQUITY` para **conversão cambial**, e as duas contas nominais (`EXPENSE` e `INCOME`) sobre as quais toda contrapartida nominal daquela moeda posta. Essas contas SHALL existir de forma garantida quando um lançamento que as referencie for registrado, sendo criadas sob demanda ou semeadas, e MUST NOT ser apagáveis pelo usuário enquanto houver lançamentos que as referenciem.
+O sistema SHALL prover, **por moeda**, uma conta de `type = EQUITY` para reconciliação de saldo usada como contrapartida de ajustes, uma conta de `type = CONVERSION` para conversão cambial, e as duas contas nominais (`EXPENSE` e `INCOME`) sobre as quais toda contrapartida nominal daquela moeda posta. Essas contas SHALL existir de forma garantida quando um lançamento que as referencie for registrado, sendo criadas sob demanda ou semeadas, e MUST NOT ser apagáveis pelo usuário enquanto houver lançamentos que as referenciem.
 
-Uma conta de sistema SHALL ser identificada pela tripla `(type, nome, moeda)`. O nome SHALL permanecer chave de busca e MUST NOT ser renderizado ao usuário, para nenhuma das contas de sistema — a de conversão inclusive.
+Uma conta de sistema SHALL ser identificada pela tripla `(type, nome, moeda)`. A natureza da conta MUST NOT ser usada como chave: uma mesma natureza pode ter mais de uma conta de sistema por moeda. O nome SHALL permanecer chave de busca e MUST NOT ser renderizado ao usuário, para nenhuma das contas de sistema — a de conversão inclusive.
+
+As contas de conversão SHALL ser criadas exclusivamente pela fronteira de escrita, ao completar uma operação que atravessa moedas. Elas MUST NOT ser oferecidas em nenhum seletor, e o usuário MUST NOT poder lançar diretamente nelas.
 
 O sistema MUST NOT prover conta de sistema para representar a ausência de classificação: um lançamento sem categoria SHALL ser uma perna nominal **sem dimensão**, e não uma perna numa conta de sistema dedicada. O sistema MUST NOT prover uma conta de sistema de "saldo inicial" enquanto não existir um conceito de saldo inicial exposto ao usuário: contas de sistema SHALL existir apenas quando houver um uso real que as referencie.
 
@@ -46,11 +54,15 @@ O sistema MUST NOT prover conta de sistema para representar a ausência de class
 
 #### Scenario: Conversão referencia conta de conversão
 - **WHEN** uma transação que atravessa moedas é registrada e ainda não existem as contas de conversão das moedas envolvidas
-- **THEN** o sistema garante a existência de uma conta de conversão **por moeda envolvida** antes de persistir a operação
+- **THEN** o sistema garante a existência de uma conta `CONVERSION` **por moeda envolvida** antes de persistir a operação
 
-#### Scenario: Conta de sistema não é renderizada
-- **WHEN** uma transação com perna em conta de conversão é exibida
-- **THEN** o nome da conta de conversão não aparece em nenhuma superfície
+#### Scenario: Duas contas de sistema da mesma natureza
+- **WHEN** o plano de contas de uma moeda com ajustes e câmbio é inspecionado
+- **THEN** existem uma conta `EQUITY` de reconciliação e uma conta `CONVERSION`, distinguidas pela tripla que as identifica
+
+#### Scenario: Conta de sistema não é renderizada nem oferecida
+- **WHEN** uma transação com perna em conta de conversão é exibida, ou um seletor de conta é aberto
+- **THEN** o nome da conta de conversão não aparece em nenhuma superfície e ela não é oferecida como escolha
 
 #### Scenario: Lançamento sem categoria não cria conta
 - **WHEN** uma despesa sem categoria é registrada

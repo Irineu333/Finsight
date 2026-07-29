@@ -1,140 +1,132 @@
-> **Ordem deliberada, e a razão dela é de segurança, não de conveniência.** Enquanto nenhuma
-> conta puder ser criada em outra moeda, **nenhum dado errado é produzível** — as agregações
-> continuam somando uma moeda só, e todo número permanece correto. Por isso o seletor de moeda
-> (§9) e os fluxos de dois valores (§10) vêm **por último**, depois de o razão, as leituras, a
-> consolidação e a exibição já saberem lidar com a segunda moeda. Cada grupo até §8 deixa o app
-> num estado entregável e indistinguível do atual.
+> **A ordem tem uma alavanca só: a segunda moeda nasce exclusivamente no seletor do formulário
+> de conta/cartão.** Por isso ele é a **última** tarefa do plano. Antes dele, todo mapa por moeda
+> tem uma chave, toda figura é exata e nenhuma marca `≈` aparece — a janela de "grava moeda mas
+> soma moedas diferentes" não é estreitada, é **inalcançável**.
 >
-> Grupos §1–§3 tocam o razão; §4 é a única alteração de schema; §5–§6 são a camada nova; §7–§8
-> varrem a superfície; §9–§10 abrem a porta. §11 fecha.
+> E isso não é sustentado por disciplina: 1.6 escreve um **teste de inércia** afirmando que
+> nenhum sítio de produção constrói conta com moeda diferente do padrão. Ele vale de 1.6 até
+> 9.2, e 9.5 o **inverte** em vez de removê-lo, passando a valer para sempre como "exatamente
+> dois sítios escolhem moeda".
+>
+> **Regra de higiene, e ela é o que corrige o erro mais fácil de cometer aqui:** nenhum grupo
+> muda assinatura sem adaptar, no mesmo grupo, quem a consome. O build fica verde ao fim de
+> **todo** grupo, e 3.9 é o gate que prova, a cada um, que o usuário monomoeda vê números
+> idênticos aos de hoje.
+>
+> §1 é varredura preparatória e inerte, e produz o **inventário** que os grupos 6–8 consomem.
+> §4 e §5 não dependem de §2 nem de §3 e podem correr em paralelo.
 
-## 1. O tipo de conta de conversão (D2)
+## 1. Varreduras preparatórias (comportamento idêntico, nada de semântica)
 
-- [ ] 1.1 `AccountType`: acrescentar `CONVERSION`. Definir as quatro propriedades derivadas — `isDebitNatured = false` (natureza credora, como GnuCash: débito decresce), `isMonetary = false`, `isNominal = false`, `isPermanent = true` **com KDoc registrando que é vacuamente verdadeiro** (a propriedade decide se arquivar encalha saldo, e uma conta de conversão nunca é arquivada).
-- [ ] 1.2 `AccountEntity.Type`: acrescentar `CONVERSION`. KDoc registrando o fato verificado de que **não há migração**: Room persiste este enum nativamente como `TEXT`, sem `TypeConverter`, e um membro novo não altera o schema.
-- [ ] 1.3 `AccountTypeMapper`: os dois `when` exaustivos (linhas 13 e 21) ganham o novo membro. São, junto com 1.4, os **três únicos** `when` exaustivos sobre `AccountType` do repositório.
-- [ ] 1.4 `AccountType.displaySign` (`Ledger.kt:20`): `CONVERSION` é credora → `-1`.
-- [ ] 1.5 `ClosedFacade.of`: decidir explicitamente e documentar que `CONVERSION` recai em `ACCOUNT`, e que isso é inalcançável — nenhuma conta de conversão é arquivada.
-- [ ] 1.6 `SystemAccount`: acrescentar a chave `CONVERSION`. KDoc registrando que ela é criada exclusivamente pela fronteira de escrita e não é postável à mão.
-- [ ] 1.7 `LedgerTest`: acrescentar os casos `{ASSET, CONVERSION} → TRANSFER` e `{ASSET, LIABILITY, CONVERSION} → PAYMENT` em `deriveTransactionLabel`, e o caso de `deriveTransactionType` de uma perna monetária de operação cruzada **não** ler `ADJUSTMENT`. São a prova de D2 e devem existir antes de o escriturador produzir a primeira perna de conversão.
+- [ ] 1.1 `DisplayAmount` passa a carregar `currency` **obrigatório** e a exatidão, sem default em nenhum dos 7 construtores nomeados — a spec proíbe expor um sem os outros. Atualizar os sítios de construção; onde o sítio já tem a `Account`, passar `account.currency`; onde agrega entre contas, passar `BASE_CURRENCY` **explicitamente**. Reescrever o KDoc que hoje declara que o tipo não conhece moeda, com a distinção da spec: carregar a denominação não é calcular.
+- [ ] 1.2 Registrar, como saída de 1.1, a **lista dos sítios que tiveram de passar `BASE_CURRENCY`** por agregarem entre contas. Essa lista é o backlog verificável dos grupos 6–8, e 8.6 a fecha vazia. Sem ela a varredura de superfície não tem critério de pronto.
+- [ ] 1.3 `CurrencyFormatter.format`/`formatWithSign` passam a receber a moeda nos três `actual` (jvm, android, ios); o locale governa apenas separador e posição do símbolo. Decidir aqui — e registrar no KDoc — se a moeda entra pelo método ou muda o binding `single { CurrencyFormatter() }` em `CommonModule`. **A decisão precede a varredura de 8.x**; tomá-la no meio dela é retrabalho contratado. Verificável: não sobrevive sobrecarga que formate sem moeda.
+- [ ] 1.4 `CurrencyFormatter.format(DisplayAmount)`: o `≈` como prefixo **mais externo** que o sinal (`≈ +R$ 1.240,00`), pela mesma porta que já concatena `+`/`-`. Este ponto único conserta a maioria dos sítios de formatação sem tocá-los. Inerte enquanto nada for aproximado. Cobrir em `DisplayAmountTest`.
+- [ ] 1.5 `LedgerFixture` (`core/ledger/jvmTest`) ganha parâmetro de moeda em conta e em entry, com default `"BRL"` para que as 6 suítes construídas sobre ela compilem sem alterar asserção. É `internal` ao `core/ledger/jvmTest`, então serve às suítes de query (3.8) e **não** ao `LedgerEntryWriterTest`, que mora em `feature/transactions/impl/commonTest` e precisa dos seus próprios doubles (2.8).
+- [ ] 1.6 **Teste de inércia** em `app/shared/jvmTest`, ao lado de `AppModulesTest`: nenhum sítio de produção constrói conta com moeda diferente do padrão do razão. É o que torna a janela de silêncio inalcançável durante os grupos 2–8, e 9.5 o inverte.
+- [ ] 1.7 Reordenar `PayInvoiceModal` e `AdvancePaymentModal` para *quem participa → quanto → quando* (D24). Sem campo novo e sem mudança de comportamento. Isolada aqui de propósito: é a mudança de UX de maior alcance da change, atinge quem nunca verá duas moedas, e precisa ser revisável e reversível sozinha.
 
-## 2. A fronteira de escrita (D1, D5, D6, D7, D15)
+## 2. O tipo de conta e a fronteira de escrita
 
-- [ ] 2.1 **Remover** `LedgerEntryWriter.validate(legs)` e as suas duas chamadas em `TransactionRepository:219` e `:240` (D7). Remover/realocar os testes de `validate()` em `LedgerEntryWriterTest`.
-- [ ] 2.2 `AccountDao.getByTypeAndName`: acrescentar a moeda à chave, virando `getByTypeNameAndCurrency(type, name, currency)`.
-- [ ] 2.3 `ensureSystemAccount`: resolver e criar por `(type, name, currency)`, gravando a moeda pedida em vez de `BASE_CURRENCY`.
-- [ ] 2.4 `systemAccountId`: deixar de resolver por natureza — `EQUITY` passa a ter **duas** contas de sistema por moeda (reconciliação e, sob o tipo novo, conversão), então a natureza deixou de ser chave. Resolver por `(SystemAccount, currency)`.
-- [ ] 2.5 `writeEntries`: gravar `currency` lida da `AccountEntity` de cada perna, que `orRejectIfClosed` já carrega, em vez de `BASE_CURRENCY` (D5). Reaproveitar a conta já carregada — sem segunda leitura.
-- [ ] 2.6 `writeEntries`: a contrapartida de uma intenção de perna única usa a conta de sistema **da moeda da perna**.
-- [ ] 2.7 `writeEntries`: agrupar por moeda e calcular o resíduo de cada grupo. **Uma moeda** → resíduo tem de ser zero, senão recusa (comportamento atual, intacto). **Duas ou mais** → lançar o oposto do resíduo de cada moeda na conta de conversão daquela moeda.
-- [ ] 2.8 A perna de conversão é a **última calculada e recebe o resíduo por diferença** (D6) — nunca calculada de forma independente e comparada. Comentar por quê: ela concentra, por construção, todo o erro de arredondamento do câmbio.
-- [ ] 2.9 A perna de conversão é gravada **sem dimensão** (D15). Sem isso `rejectIfDimensionLandsWrong` recusa todo pagamento de fatura cruzado, porque a dimensão da fatura só pousa em `LIABILITY`.
-- [ ] 2.10 Guarda de D1: com duas ou mais moedas, os resíduos MUST NOT ser todos do mesmo sinal. Novo caso em `LedgerError` + o erro tipado correspondente.
-- [ ] 2.11 `LedgerFixture` (`core/ledger/jvmTest`): parâmetro de moeda na criação de conta e de entry. **Sem isto nenhum teste cruzado é escrevível**, então vem antes de 2.12.
-- [ ] 2.12 Testes de escrita: transferência cruzada gravando quatro entries somando zero em cada moeda; pagamento de fatura cruzado idem, com as pernas de conversão sem dimensão; operação monomoeda inalterada, sem perna de conversão; desbalanceamento monomoeda ainda recusado; resíduos de mesmo sinal recusados; resíduo de arredondamento absorvido pela perna de conversão.
+> §1 e §2 podem ser um único PR. O que **não** pode é 2.1 sem 2.2: acrescentar um membro a
+> `AccountType` sem fechar `systemAccountId` deixa um `when`-expressão não exaustivo, e
+> `:core:ledger` não compila.
 
-## 3. As leituras por moeda (D8)
+- [ ] 2.1 `AccountType` ganha `CONVERSION` — `isDebitNatured = false`, `isMonetary = false`, `isNominal = false`, `isPermanent = true` **vacuamente** (a propriedade decide se arquivar encalha saldo, e conversão nunca é arquivada). `AccountEntity.Type` idem, com KDoc registrando o fato verificado de que **não há migração**: Room persiste o enum nativamente como `TEXT`, sem `TypeConverter`. `SystemAccount` ganha a chave de conversão. `displaySign` não muda — deriva de `isDebitNatured`.
+- [ ] 2.2 Fechar os **três** `when` exaustivos sobre `AccountType` do repositório: `AccountTypeMapper:13` e `:21`, e `LedgerEntryWriter.systemAccountId:158`. Não há uso de `AccountType.entries`/`values()`.
+- [ ] 2.3 Provar D2 em `LedgerTest`: `{ASSET, CONVERSION} → TRANSFER`, `{ASSET, LIABILITY, CONVERSION} → PAYMENT`, e `deriveTransactionType` de uma perna monetária de operação cruzada **não** lendo `ADJUSTMENT`. Nenhuma mudança de produção é esperada — se falhar, o *fall-through* está errado e é isso que se conserta.
+- [ ] 2.4 Provar, também sem mudança de produção, que o gate de editabilidade (D19) recusa a operação cruzada por contagem de pernas monetárias, e que a idempotência de `AdjustBalanceUseCase`/`AdjustInvoiceUseCase` não casa com uma transação de pernas `CONVERSION`. São os dois comportamentos que a revisão apontou como quebráveis, e a prova de que o tipo próprio os salvou.
+- [ ] 2.5 `AccountDao.getByTypeAndName` passa a `(type, name, currency)`; `ensureSystemAccount` cria por moeda; `systemAccountId` resolve por `(SystemAccount, currency)` — a natureza deixou de ser chave, porque `EQUITY` passa a ter duas contas de sistema por moeda. As contas de sistema existentes, todas `'BRL'`, viram as contas de sistema **de BRL**, sem migração.
+- [ ] 2.6 `writeEntries` grava `currency` lida da `AccountEntity` que `orRejectIfClosed` já carrega, nas duas construções de `EntryEntity` e na contrapartida. `TransactionLeg` **não** ganha campo — é o que torna "poste 100 USD numa conta BRL" inexprimível. Reescrever o KDoc de `Currency.kt`: `BASE_CURRENCY` passa a ser o *default de conta nova*, não a moeda do app.
+- [ ] 2.7 **Remover** `LedgerEntryWriter.validate(legs)` e as suas duas chamadas em `TransactionRepository:219` e `:240`, e os dois testes que a exercem. Consertá-la é impossível sem quebrar D5 — agrupar por moeda exigiria ler contas —, e a invariante volta a ter um ponto único de fato.
+- [ ] 2.8 Completação cruzada em `writeEntries`: agrupar por moeda, e com duas ou mais lançar o oposto do resíduo de cada uma na conta `CONVERSION` daquela moeda — **última calculada, por diferença, e sem dimensão**. Sem a ausência de dimensão, `rejectIfDimensionLandsWrong` recusa todo pagamento de fatura cruzado. Monomoeda permanece byte a byte o comportamento de hoje. Guarda de D1 (resíduos não todos do mesmo sinal) como caso novo de `LedgerError`, com `toUiText()` e strings em `values/` **e** `values-en/`.
+- [ ] 2.9 Testes em `LedgerEntryWriterTest`, com os seus próprios doubles cientes de moeda: transferência cruzada com 4 entries somando zero em cada moeda; pagamento de fatura cruzado com a conversão sem dimensão; resíduo de arredondamento absorvido pela perna de conversão; monomoeda sem conversão sintetizada; desbalanceamento monomoeda ainda recusado; resíduos de mesmo sinal recusados sem gravar nada.
 
-- [ ] 3.1 `EntryDao`: acrescentar `GROUP BY e.currency` às agregações que atravessam contas — `balanceUpToMonthByType`, `assetMonthTotals`, `liabilityMonthTotals`, `netWorthCents`, `scopeStats`, `dimensionBalanceInMonth`, `totalsByDimensionWithSiblingLeg`, `totalsByDimensionInScope`, `naturalBalanceByDimension`, `periodTotalsByDimension`. Tipos de retorno ganham a moeda.
-- [ ] 3.2 `EntryDao`: as agregações escopadas a **uma** conta (`balanceOf`, `balanceUpToMonth`, `accountPeriodTotals`) mantêm a forma; quem as consome anexa a moeda da conta.
-- [ ] 3.3 `IEntryRepository`: expressar por moeda `netWorth`, `naturalBalanceUpTo`, `balanceUpTo` (quando `accountId == null`), `dimensionBalanceInMonth`, `totalsByDimension`, `totalsByDimensionInScope`, `dimensionBalancesInMonth`, `owedByDimension`, `flowsByDimension`, `LiabilityMonthFlows`, `AssetMonthFlows`, `ScopeStats`.
-- [ ] 3.4 `IEntryRepository`: **manter a forma** de `AccountFlows` e `DimensionFlows`, acrescentando só a moeda — monomoeda por escopo. KDoc registrando que, no caso da fatura, isso é garantia da **fachada de cartão** e não construção do razão, e que o razão MUST NOT consultar `DimensionKind` na leitura para decidir forma de retorno.
-- [ ] 3.5 `IEntryRepository`: acrescentar a operação de **soma de dois resultados por moeda**, dona única da aritmética que o widget de perímetro neutro e o `BalanceOverviewFactory` exigem (`ledger-reporting`). KDoc registrando que não é conversão e não pertence à consolidação.
-- [ ] 3.6 Atualizar os ~25 arquivos de teste que implementam `IEntryRepository` como stub completo. Considerar extrair um stub base compartilhado antes de tocar os 25 — hoje cada um redeclara a interface inteira.
-- [ ] 3.7 Atualizar as 6 suítes de query do razão construídas sobre `LedgerFixture`, acrescentando ao menos um caso multimoeda em cada agregação de 3.1.
+## 3. As leituras por moeda, com os seus consumidores
 
-## 4. A tabela de taxas e a migração (D11)
+> Grupo grande de propósito: mudar assinatura de `IEntryRepository` sem adaptar quem a consome
+> deixaria o build vermelho por vários grupos. Ele fecha verde.
 
-- [ ] 4.1 `ExchangeRateEntity` em `:core:database`: `(moeda, data, taxa, origem)`, com a origem distinguindo colhida-de-operação de informada-pelo-usuário. Índice por `(moeda, data)`.
-- [ ] 4.2 `ExchangeRateDao`: a consulta "última taxa em ou antes da data" para uma moeda; a listagem por moeda; o upsert com a regra de que a informada pelo usuário prevalece sobre a derivada na mesma data.
-- [ ] 4.3 `AppDatabase`: `version = 10` → `11`, com a entidade registrada.
-- [ ] 4.4 `MIGRATION_10_11` em `Database.kt`: apenas `CREATE TABLE`. Nenhuma tabela existente é alterada e nenhum dado migra.
-- [ ] 4.5 Exportar `schemas/com.neoutils.finsight.database.AppDatabase/11.json`.
-- [ ] 4.6 Estender `MigrationSchemaEquivalenceTest`, hoje cobrindo apenas `7 → 10`, para cobrir `10 → 11`.
-- [ ] 4.7 Verificar que `LedgerBalanceCheck` **não precisa de alteração** — já agrupa por `(transactionId, currency)` — e cobrir com um teste de banco contendo transação cruzada.
+- [ ] 3.1 Tipo de saldo por moeda em `:core:ledger`, com `zero`, `of(currency, value)` e acesso ao valor de uma moeda — as conveniências existem para que 3.7 seja substituição mecânica e não 21 decisões de desenho.
+- [ ] 3.2 Dar a esse tipo a **soma de dois resultados por moeda** (cada moeda com a sua, sem conversão), como implementação única e no razão. É o dono que `ledger-reporting` exige e que `dashboard-balance-widgets` consome; sem ele a operação nasce em linha dentro de `BalanceOverviewFactory:93`. Testes com moedas disjuntas e mapa vazio.
+- [ ] 3.3 `EntryDao`: aplicar `GROUP BY e.currency` pelo **critério**, não por lista — *toda agregação que não filtre por uma única conta*. Permanecem escalares apenas `balanceOf`, `balanceUpToMonth` e `accountPeriodTotals`. **Toda leitura por dimensão entra**, `dimensionNaturalBalance` e `dimensionPeriodTotals` inclusive: o razão MUST NOT consultar `DimensionKind` para decidir forma de retorno.
+- [ ] 3.4 Teste de regressão sobre os predicados por **literal SQL** da `EntryDao` e do `AccountDao` (`a.type = 'EQUITY'`, `IN ('ASSET','LIABILITY')`): nenhum passa a casar `CONVERSION`, e `netWorthCents` continua filtrando `ASSET`/`LIABILITY`. O compilador não os alcança, e o design os aponta como o risco real da abertura do enum.
+- [ ] 3.5 `IEntryRepository` e `EntryRepository`: novas assinaturas pelo mesmo critério de 3.3. `AccountFlows` mantém a forma e ganha a moeda; `DimensionFlows`, `dimensionOwed` e as suas versões em lote passam a por moeda.
+- [ ] 3.6 Decidir e registrar o destino de `netWorth()`: medido **sem consumidor de produção** — o saldo total do dashboard vem de `CalculateBalanceUseCase(accountId = null)`. Ou ganha consumidor, ou sai da interface. Verificável: não sobra assinatura sem chamador.
+- [ ] 3.7 Varrer os ~21 arquivos de teste que implementam `IEntryRepository` como stub completo. Avaliar antes extrair uma base compartilhada — hoje cada um redeclara a interface inteira. Nenhuma expectativa muda: toda moeda é BRL.
+- [ ] 3.8 Casos de duas moedas nas 6 suítes de query sobre `LedgerFixture` (habilitadas por 1.5): cada agregação devolve duas chaves e nenhuma soma entre elas. É a prova executável de "nenhuma agregação soma moedas".
+- [ ] 3.9 **Teste de regressão monomoeda**, e ele é o gate de todos os grupos seguintes: com todas as contas na moeda base, toda figura do app é idêntica à de antes da mudança e nenhuma recebe marca de aproximação. Escrito aqui, rodado ao fim de cada grupo.
+- [ ] 3.10 Adaptar os consumidores de contas, categorias e orçamentos: `CalculateBalanceUseCase` (o `accountId = null` é a porta pela qual o multimoeda entra no app), `AccountsViewModel`, `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (incluindo o denominador de porcentagem), `CalculateBudgetProgressUseCase` (`:feature:budgets:api`).
+- [ ] 3.11 Adaptar os consumidores de cartões: `CalculateInvoiceUseCase`, `CalculateInvoiceOverviewsUseCase`, `InvoiceTransactionsViewModel`. A redução a uma chave acontece **aqui**, com a garantia da fachada escrita onde o mapa é reduzido — não presumida no razão.
+- [ ] 3.12 Adaptar `DashboardComponentsBuilder` e `BalanceOverviewFactory` para somar `ASSET + LIABILITY` e `asset.expense + liability.expense` pela soma de 3.2, nunca por soma de mapas em linha.
+- [ ] 3.13 Adaptar `feature/report/impl`: `CalculateReportStatsUseCase` (escopo vazio = todas as contas, arquivadas inclusive — a figura mais cruzada do app), `CalculateReportCategorySpendingUseCase`, `ReportViewerViewModel`.
+- [ ] 3.14 `TransactionsViewModel` e o escopo: o perímetro decide por pernas **monetárias**, e as de conversão, fora de qualquer perímetro, não tornam fluxo um lançamento interno. Cobrir os cenários novos de `transaction-scope`.
 
-## 5. A colheita da taxa (D11)
+## 4. A tabela de taxas (independente de §2 e §3)
 
-- [ ] 5.1 Ao persistir uma operação que atravessa moedas, registrar a taxa derivada das duas pontas, na data da operação, com origem de operação. A escrita da taxa acontece **fora** do razão, consumindo a operação gravada — o razão continua sem campo de taxa (`balanced-ledger`).
-- [ ] 5.2 Decidir e documentar o que acontece com a taxa colhida quando a operação que a produziu é removida. Registrado na change como fora de escopo se a decisão for não fazer nada — mas a decisão precisa ser explícita.
-- [ ] 5.3 Teste: uma transferência de R$ 550 → US$ 100 em 12/07 registra a taxa 5,50 para USD naquela data, com origem de operação; uma taxa do usuário para a mesma data prevalece.
+- [ ] 4.1 `ExchangeRateEntity(currency, date, rate, source)` e `ExchangeRateDao` em `:core:database`, com `source` distinguindo colhida-de-operação de informada-pelo-usuário; a consulta "última taxa em ou antes de `:date`" com precedência da do usuário na mesma data; a listagem observável.
+- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` (apenas `CREATE TABLE`) registrada em `Database.kt`; bindar o DAO em `databaseModule`.
+- [ ] 4.3 Exportar `schemas/…/11.json`; escrever `Migration10To11Test` no molde dos existentes e estender `MigrationSchemaEquivalenceTest`, hoje um `@Test` só cobrindo `7 → 10`.
+- [ ] 4.4 Confirmar por teste que `LedgerBalanceCheck` **não muda** — já agrupa por `(transactionId, currency)` — com um banco contendo transação cruzada.
 
-## 6. A camada de consolidação (D8, D9, D11)
+## 5. Consolidação e catálogo (depende de §4; independente de §3)
 
-- [ ] 6.1 A moeda base em `Settings`, exposta como **fluxo observável** — toda figura consolidada reage à sua mudança. Molde: `DashboardPreferencesRepository`.
-- [ ] 6.2 `EnsureDefaultAccountUseCase` (`feature/accounts/api`): semear a moeda base junto da criação da primeira conta do app. É hoje o único ponto que cria conta sem moeda explícita.
-- [ ] 6.3 O catálogo curado de moedas oferecidas, restrito às de **duas casas decimais** (D14), em `:core:model`. KDoc registrando a premissa e o que ela custaria mudar.
-- [ ] 6.4 O redutor de saldo-por-moeda a **lista de termos** (D9): um termo na base com tudo o que a taxa permitiu converter, e um termo próprio por moeda sem taxa. Dono único, consumido por toda feature que exiba figura consolidada.
-- [ ] 6.5 O redutor produz a **exatidão** junto de cada figura, derivada conforme a tabela de D9, e é impossível obter uma figura sem ela. Um resultado que não exigiu conversão sai como exato.
-- [ ] 6.6 A conversão usa **a última taxa em ou antes da data** da figura, e não a corrente. Uma figura de período passado não muda quando uma taxa mais recente é cadastrada.
-- [ ] 6.7 Testes do redutor cobrindo as seis linhas da tabela de D9, incluindo `{BRL:100, USD:50}` sem taxa de USD → dois termos, e `{USD:50}` sem taxa → um termo em dólar, **exato**.
+- [ ] 5.1 Repositório de taxas com a política "a última em ou antes da data" e a precedência da taxa do usuário. Testes: taxa anterior escolhida em vez da posterior, ausência de taxa, precedência.
+- [ ] 5.2 Catálogo curado de moedas de duas casas decimais em `:core:model`, com a premissa de D14 em KDoc. O razão persiste só o código.
+- [ ] 5.3 A figura **multitermo** como sequência de `DisplayAmount`, com o caso de um termo como o comum, sem expor operação entre dois valores.
+- [ ] 5.4 A **única** redução de saldo-por-moeda a figura na base: converte o que a taxa da data permitir, deixa termo próprio por moeda sem taxa, e **deriva** a exatidão. Nada vira `1`, nada é omitido, nada zera a tela.
+- [ ] 5.5 Testes da redução contra as seis linhas da tabela de D9, mais o de que não existe forma de obter a figura sem a exatidão, mais o de fronteira: a camada não expõe soma de dois saldos por moeda (isso é do razão, 3.2) e o razão não recebeu dependência que forneça taxa.
 
-## 7. A exibição (D7, D10, D21, D22)
+## 6. Moeda base e a feature de configurações
 
-- [ ] 7.1 `DisplayAmount`: acrescentar moeda e exatidão, indissociáveis do valor e da política. Atualizar `DisplayAmountTest`.
-- [ ] 7.2 `CurrencyFormatter`: passar a receber a moeda a formatar, nos três `actual` (jvm, android, ios). O locale continua governando **formato** — separador e posição do símbolo —, nunca a moeda. Decidir se o parâmetro migra para o método ou muda o binding Koin (`CommonModule:10`).
-- [ ] 7.3 `CurrencyFormatter.format(DisplayAmount)`: o `≈` como prefixo textual, sempre **mais externo** que o sinal (D21). Testes de `≈ +R$`, `≈ -R$`, `≈ R$`.
-- [ ] 7.4 O tipo de figura **multitermo** e a sua renderização empilhada — primeiro termo no estilo da superfície, demais um degrau abaixo em `onSurfaceVariant` (D22). Um componente, consumido por todas as superfícies que comportem mais de um termo.
-- [ ] 7.5 O **rodapé de card** (D21): linha de 13sp `onSurfaceVariant` renderizada só quando alguma linha do card é aproximada, explicando a marca e navegando para a tela de taxas. Molde de renderização condicional: `AccountCard:199-213`.
-- [ ] 7.6 `AccountUi` e `TransactionUi` (`core/ui`) passam a carregar a moeda — hoje não a têm, e sem ela o formatador não a recebe.
-- [ ] 7.7 `MoneyInputTransformation`: exibir o símbolo da moeda da conta escolhida (D10), incluindo a troca do símbolo quando a conta muda **com o campo já preenchido** — caso real em `TransferBetweenAccountsModal` e `ConfirmRecurringModal`.
-- [ ] 7.8 Varrer os ~105 sítios de formatação nos 10 módulos, passando a formatar a partir do `DisplayAmount` completo. Eliminar as duplicatas locais que contornam o tipo: `formatMoney`/`parseMoneyToDouble` em `EditInvoiceBalanceModal`, `EditAccountBalanceModal` e `AdvancePaymentModal` — a primeira prepende `"-"` à mão, reimplementando a política de sinal fora do tipo.
-- [ ] 7.9 `BalanceCard`: a API pública recebe `balance: Double` cru; passar a receber a figura completa.
-- [ ] 7.10 Degradação declarada (D20) em `BudgetProgressCard`, `CategorySpendingCard` e no documento exportado: só o termo na base, com a marca, mais a indicação da parcela não convertida. `InstallmentCounter` e o medidor `limite − devido` **não mudam** — são monomoeda garantidos por D17.
-- [ ] 7.11 Modelos do relatório exportado (`ReportLayout`, `ReportSummaryItem`, `CategoryItem`, `TransactionItem`): hoje guardam string já formatada e recebem um único formatador, o que os torna incapazes de representar figura aproximada ou multitermo. Acrescentar a marca e a nota de rodapé por família de figura.
-- [ ] 7.12 Atualizar `TransactionItemSignTest`, `TransactionPerspectiveTest` e `TransactionFormCoherenceTest`.
+- [ ] 6.1 Criar `:feature:settings:api` e `:impl` sob os plugins de convenção, com `include` em `settings.gradle.kts`, **`export` no framework iOS de `app/ios`** e a dependência em `:app:shared`. Sem o export o alvo iOS não compila.
+- [ ] 6.2 Rota `@Serializable`, `SettingsGraph`, `NavGraphBuilder.settingsGraph()`, módulo Koin e entry point; agregar em `AppNavHost` e `appModules`; entrada em `AppNavCatalog` (`feature/shell/impl`) imediatamente **antes** de `Support`.
+- [ ] 6.3 Moeda base como preferência **observável**, no molde de `DashboardPreferencesRepository` — toda figura consolidada reage à sua mudança.
+- [ ] 6.4 Semear a moeda base em `EnsureDefaultAccountUseCase` (`:feature:accounts:api`), hoje o único ponto que cria conta sem moeda explícita. **Definir também o fallback para app já instalado**, onde o use case retorna cedo por já existir conta e o seed nunca roda.
+- [ ] 6.5 Tela de configurações e tela de taxas: lista por moeda, data **sempre visível**, procedência no idioma de `CategoryCard:58-75` (`SwapHoriz` colhida / `ModeEdit` digitada) e sinalização de desatualizada aos 30 dias com cor `Warning` **e a palavra**.
+- [ ] 6.6 Modal de edição de taxa: campo numérico, `DatePickerModal`, e a sugestão externa como **placeholder** — único ponto do app onde rede é permitida, sem estado de carregamento que bloqueie a modal. Teste: nenhuma leitura de figura consolidada depende de rede.
+- [ ] 6.7 Strings de §6 em `values/` e `values-en/`.
 
-## 8. Os consumidores que somam entre contas
+## 7. A perna primária e a exibição
 
-- [ ] 8.1 `Transaction.primaryEntry` e `Ledger.sourceLeg()`: trocar `minByOrNull { it.amount }` pela **perna monetária de valor negativo** (D16). Hoje comparam `Long` de moedas diferentes. Cobrir com teste de transferência cruzada.
-- [ ] 8.2 `CalculateBalanceUseCase` (`feature/transactions/api`): o `accountId` com default `null` é a porta pela qual o `balanceUpTo` multimoeda entra no app.
-- [ ] 8.3 `DashboardComponentsBuilder`: o saldo total (`accountId = null`) e a soma `assetMonthFlows + liabilityMonthFlows`, passando a consumir a operação de soma de 3.5.
-- [ ] 8.4 `BalanceOverviewFactory`: as somas `ASSET + LIABILITY`, `asset.expense + liability.expense` e `asset.adjustment + liability.adjustment`, idem.
-- [ ] 8.5 `CalculateBudgetProgressUseCase` (`feature/budgets/api`): progresso aproximado sobre limite na moeda base (D13). Documentar a consequência aceita — o progresso pode se mover por variação de taxa, sem gasto novo.
-- [ ] 8.6 `CalculateCategorySpendingUseCaseImpl` e `ViewCategoryViewModel` (`feature/categories/impl`): total da categoria e o denominador de porcentagem, ambos multimoeda por natureza.
-- [ ] 8.7 `CalculateReportStatsUseCase`, `CalculateReportCategorySpendingUseCase`, `ReportViewerViewModel` (`feature/report/impl`). Atenção: escopo vazio significa **todas as contas, inclusive arquivadas** — é a figura mais cruzada do app.
-- [ ] 8.8 `CalculateInvoiceOverviewsUseCase` e `InvoiceTransactionsViewModel`: somas entre faturas de cartões possivelmente de moedas distintas.
-- [ ] 8.9 `AccountsViewModel` e `EditAccountBalanceViewModel`: leituras monomoeda, que só precisam anexar a moeda da conta.
-- [ ] 8.10 Verificar que `AdjustBalanceUseCase` e `AdjustInvoiceUseCase` **não precisam de alteração** — a idempotência por perna `EQUITY` continua correta porque conversão não é `EQUITY` — e cobrir com um teste que registre uma transferência cruzada e um ajuste na mesma conta e data, provando que o ajuste não a captura.
+- [ ] 7.1 `Transaction.primaryEntry` e `Ledger.sourceLeg()` passam a nomear a perna monetária **negativa**, preservando o caso sem perna negativa (compra em cartão). Não é correção de defeito — `min` já devolve a negativa (D16) —, é remoção de dependência tácita, então o teste que prova a mudança é o de **compra em cartão** e o de duas pernas de mesmo sinal, não o de transferência cruzada. Revisar os consumidores de `primaryEntry`/`sourceLeg`.
+- [ ] 7.2 `AccountUi` e `TransactionUi` passam a carregar a moeda, alimentada pelos mappers a partir da conta — sem isso o formatador não a recebe.
+- [ ] 7.3 Trocar as APIs públicas de componente que recebem `Double` cru por valor já denominado: `BalanceCard`, `CreditCardCard`, a variante de dashboard de `AccountCard`, `CategorySpendingCard`, `TotalBalanceCard`.
+- [ ] 7.4 `MoneyInputTransformation` recebe a moeda, e o default `CurrencyFormatter()` do construtor sai — é a segunda porta de escape para o locale do dispositivo. Passar a moeda nos **11** modais que a usam, incluindo a troca do símbolo quando a conta muda com o campo já preenchido (`TransferBetweenAccountsModal`, `ConfirmRecurringModal`).
+- [ ] 7.5 Renderização multitermo como regra única (D22): termos empilhados, uma linha cada, alinhados à direita, o primeiro no estilo da superfície e os demais um degrau abaixo em `onSurfaceVariant`, com o `+` colado ao termo. Nenhuma superfície decide por conta própria. Cobrir com teste de duas e de um termo.
+- [ ] 7.6 Degradação declarada (D20) em `InstallmentCounter`, no rótulo de `BudgetProgressCard` e no medidor de `CreditCardCard`: só o termo na base, com a marca e a indicação de parcela não convertida; nunca truncar nem quebrar. Teste de que nenhum termo é descartado em silêncio.
+- [ ] 7.7 Eliminar as duplicatas locais que contornam `DisplayAmount`: `formatMoney` em `EditInvoiceBalanceModal:217` e `EditAccountBalanceModal:229` (ambas prependem `"-"` à mão, reimplementando a política de sinal fora do tipo) e os `parseMoneyToDouble` de `EditInvoiceBalanceModal`, `EditAccountBalanceModal` e `AdvancePaymentModal`.
+- [ ] 7.8 Rodapé de card (D21/D25) no idioma do `helperText`, renderizado só quando alguma linha do card é aproximada, no padrão condicional de `AccountCard:199-213`: explica a marca, revela a taxa usada com a sua data e navega para a tela de 6.5. Teste de que não aparece quando tudo é exato.
 
-## 9. A feature de configurações (D18, D25)
+## 8. O relatório e o fechamento do inventário
 
-- [ ] 9.1 `feature/settings/api`: rota `@Serializable`, `SettingsGraph`/`SettingsRoute`, o entry point.
-- [ ] 9.2 `feature/settings/impl`: `NavGraphBuilder.settingsGraph()`, módulo Koin, registro em `appModules` e no `AppNavHost`.
-- [ ] 9.3 Registrar o destino no `AppNavCatalog`, imediatamente **antes** de `Support` — cujo KDoc registra ser o último de propósito.
-- [ ] 9.4 Tela de configurações: linha de moeda base (não editável na v1, com o mesmo tratamento visual da moeda travada) e linha de taxas.
-- [ ] 9.5 Tela de taxas: uma linha por moeda não-base em uso, com valor, data e **origem** — ícone de 16dp + `labelSmall`, no formato de procedência do `CategoryCard:58-75`, usando `SwapHoriz` para a colhida e `ModeEdit` para a digitada.
-- [ ] 9.6 Sinalização de taxa **desatualizada aos 30 dias**: cor `Warning` **e a palavra**, nunca cor sozinha. A data aparece sempre.
-- [ ] 9.7 Modal de edição de taxa: campo numérico, campo de data via `DatePickerModal`, e a sugestão externa como **placeholder** — o único ponto do app onde rede é permitida, e sem estado de carregamento que bloqueie a modal.
-- [ ] 9.8 Strings em `core/resources`, com paridade `values` / `values-en`.
+- [ ] 8.1 Modelos do documento exportado (`ReportLayout`, `ReportSummaryItem`, `CategoryItem`, `TransactionItem`): hoje guardam **string já formatada** e recebem um formatador único. Acrescentar a marca — textual, e por isso sobrevive à ausência de cor — e a nota de rodapé por família de figura.
+- [ ] 8.2 Ligar à consolidação de 5.4 os consumidores que exibem figura consolidada — dashboard, resumo de transações, relatório, orçamentos, categorias —, sem nenhuma multiplicação por taxa em tela, ViewModel ou modelo de UI. Teste de inspeção.
+- [ ] 8.3 Atualizar `TransactionItemSignTest`, `TransactionPerspectiveTest`, `TransactionFormCoherenceTest` e os testes de formatação de `core/common`, `core/ui` e `report`.
+- [ ] 8.4 Strings de §7 e §8 em `values/` e `values-en/`: nomes de moeda, explicação da figura aproximada, aviso de parcela não convertida.
+- [ ] 8.5 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
+- [ ] 8.6 **Fechar a lista de 1.2**: nenhum sítio de produção passa `BASE_CURRENCY` por não saber a moeda. É o critério de pronto da varredura de superfície.
 
-## 10. A segunda moeda de fato (D12, D23, D24, D26)
+## 9. Os fluxos de dois valores e a porta
 
-> A partir daqui uma segunda moeda passa a ser criável. Nada neste grupo deve
-> entrar antes de §1–§8 estarem completos.
+> A partir de 9.2 a segunda moeda passa a existir. Os fluxos vêm **antes** dela de propósito:
+> aberto o seletor, o usuário cria uma conta em USD e tenta transferir no minuto seguinte, e
+> sem 9.1 a transferência bate na guarda de resíduos e é recusada — feature meio entregue.
 
-- [ ] 10.1 `CurrencyPickerModal` em `core/designsystem`, irmão do `IconPickerModal`.
-- [ ] 10.2 O seletor de moeda no `AccountFormModal`, reutilizando a estrutura e a mecânica de travamento do `DefaultAccountSelector` (`AccountFormModal:207-290`): símbolo como glifo na caixa de 52dp, subtítulos alternativos, caixa de `primary` → `onSurfaceVariant` e chevron ausente quando travada. **Sempre renderizado** (D23).
-- [ ] 10.3 O mesmo seletor no `CreditCardFormModal`.
-- [ ] 10.4 A regra de travamento consumindo `hasEntries(accountId)` — a mesma implementação que já decide apagar-vs-arquivar. A tela consulta o que o domínio consultaria; nunca oferece o que seria recusado.
-- [ ] 10.5 `CreditCardRepository:57`: gravar a moeda escolhida na conta `LIABILITY` do cartão, em vez de `BASE_CURRENCY` fixo.
-- [ ] 10.6 `AccountSelector` e `CreditCardSelector`: sufixo `· US$` no nome quando houver mais de uma moeda no app — sufixo de texto, não chip, porque ali não há número que porte o símbolo.
-- [ ] 10.7 **Reordenar** `PayInvoiceModal` e `AdvancePaymentModal` para pedir a conta antes do valor, alinhando os três fluxos à gramática do `TransferBetweenAccountsModal` (D24). Muda o caso comum de todo usuário.
-- [ ] 10.8 `TransferBetweenAccountsUseCase`: aceitar o valor de destino quando as moedas divergem. `UiState` ganha os valores (hoje o valor vive só no `TextFieldState` do composable), `Action.Submit` ganha o segundo valor, e `isValidTransfer` passa a validar os dois.
-- [ ] 10.9 `PayInvoicePaymentUseCase`: acrescentar o valor de entrada que **hoje não existe** — o campo somente-leitura que mostra a dívida permanece com o seu papel, e o editável é novo, abaixo dele. `PayInvoiceAction.Submit` e o `UiState` ganham o valor.
-- [ ] 10.10 `AdvanceInvoicePaymentUseCase`: o par de valores, com o teto `amount <= currentBillAmount` passando a valer sobre o campo **na moeda do cartão**. Espelhar em `AdvancePaymentModal:197-208`.
-- [ ] 10.11 Nos três modais: segundo campo revelado por `AnimatedVisibility` quando as moedas divergem (molde: `ConfirmRecurringModal:123-178`); rótulos nomeando a conta (*"Sai de Nubank"* / *"Entra em Chase"*); taxa derivada como `supportingText` do segundo campo.
-- [ ] 10.12 Pré-preenchimento do segundo valor **apenas** quando a taxa conhecida é do mesmo dia. Fora disso, o valor implícito vai para o placeholder e a data para o `supportingText`. Sem essa regra, a taxa velha é gravada como nova, em laço (§5).
-- [ ] 10.13 Estender a guarda de `enabled` dos três botões para cobrir o **segundo** campo — é o que torna a guarda de resíduos de mesmo sinal inalcançável pela UI (D26), e a alteração de validação mais fácil de esquecer.
-- [ ] 10.14 `ConfirmRecurringUseCase`: recusar redirecionar para conta ou cartão de outra moeda, com erro tipado (D17).
-- [ ] 10.15 `ConfirmRecurringModal`: filtrar o `AccountSelector`/`CreditCardSelector` para a moeda da recorrência, e exibir por que a lista encolheu. A recusa do domínio permanece como rede, nunca como caminho projetado.
-- [ ] 10.16 Strings de todos os estados novos, com paridade `values` / `values-en`.
+- [ ] 9.1 Os três fluxos de dois valores: `TransferBetweenAccountsUseCase` aceita o valor de destino; `PayInvoicePaymentUseCase` ganha um valor de entrada que **hoje não existe** (é derivado e exibido somente-leitura — o campo do devido mantém o papel, o editável é novo, abaixo dele), com `Action` e `UiState` novos; `AdvanceInvoicePaymentUseCase` ganha o par, com o teto `amount <= currentBillAmount` passando a valer sobre o campo na **moeda do cartão**. Nos três modais: segundo campo por `AnimatedVisibility`, campos nomeando a conta, taxa derivada como `supportingText`, e o `enabled` do botão cobrindo o **segundo** campo — sem isso a guarda de 2.8 fica alcançável por valor zerado.
+- [ ] 9.2 Pré-preencher o segundo valor **apenas** quando a taxa conhecida é do mesmo dia; fora disso, placeholder com a data no `supportingText`. Não é conveniência: o valor digitado vira taxa colhida, e pré-preencher com cotação velha a regravaria como nova, em laço.
+- [ ] 9.3 Colher a taxa de toda operação cruzada — derivada das duas pontas, na data da operação, origem de operação — a partir do caminho de escrita da feature, nunca do razão. Teste: a operação gravada não possui campo de taxa. **Decidir e registrar** o que acontece com a taxa colhida quando a operação que a produziu é removida.
+- [ ] 9.4 `ConfirmRecurringUseCase` recusa com erro tipado redirecionar para conta ou cartão de outra moeda (D17); `ConfirmRecurringModal` oferece apenas os da moeda da recorrência **e diz por que a lista encolheu**. Exibir valor com a moeda correta em `RecurringFormModal`, `ViewRecurringModal` e `RecurringScreen`.
+- [ ] 9.5 **Recusa de domínio** para a moeda imutável: guarda em `UpdateAccountUseCase` e no caminho de atualização do cartão, consumindo `hasEntries(accountId)`. A spec exige que a tentativa seja recusada **pelo domínio** e que a tela consulte a mesma implementação — sem isto a regra viveria só na UI, que é a inversão que o projeto proíbe.
+- [ ] 9.6 `CurrencyPickerModal` em `core/designsystem`, irmão do `IconPickerModal`, alimentado pelo catálogo de 5.2.
+- [ ] 9.7 **A porta.** Linha de moeda **sempre visível** no `AccountFormModal`, reusando inteiro o `DefaultAccountSelector:207-290` — símbolo como glifo na caixa de 52dp, subtítulos alternativos, caixa de `primary` → `onSurfaceVariant` e chevron ausente quando travada —, travada por 9.5. Idem no `CreditCardFormModal`, com `CreditCardRepository:57` gravando a moeda escolhida em vez de `BASE_CURRENCY`. Sufixo `· US$` no `AccountSelector`/`CreditCardSelector` quando houver mais de uma moeda.
+- [ ] 9.8 **Inverter** o teste de inércia de 1.6: existem exatamente **dois** sítios de produção que escolhem a moeda de uma conta — `AccountFormModal` e `CreditCardFormModal` —, e qualquer terceiro falha o teste.
+- [ ] 9.9 Strings de §9 em `values/` e `values-en/`.
 
-## 11. Fechamento
+## 10. Fechamento
 
-- [ ] 11.1 Testes de ponta a ponta do caminho cruzado: criar conta em USD, transferir de BRL, verificar as quatro entries, o rótulo `TRANSFER`, a taxa colhida, o patrimônio consolidado aproximado e o saldo de cada conta exato.
-- [ ] 11.2 Teste de regressão do usuário monomoeda: com todas as contas na moeda base, **nenhuma** figura do app recebe marca de aproximação e todo número é idêntico ao de antes da mudança.
-- [ ] 11.3 `./gradlew allTests` verde nas plataformas.
-- [ ] 11.4 Atualizar `core/ledger/README.md` — a referência normativa do módulo — com a conta de conversão, a moeda da perna vinda da conta, e as leituras por moeda.
-- [ ] 11.5 Atualizar `CLAUDE.md` na seção do razão: o conjunto de tipos de conta deixa de ser de cinco membros, e a lista de contas de sistema deixa de ser "apenas três".
-- [ ] 11.6 Revisar os Non-Goals registrados e confirmar que nenhum foi implementado por acidente: edição de transação cruzada, taxa entre duas moedas não-base, troca de moeda base, ganho cambial exposto em tela, moeda de expoente ≠ 2.
+- [ ] 10.1 Verificação de ponta a ponta: criar conta em USD, transferir de BRL, pagar de conta BRL a fatura de um cartão USD. Conferir as 4 entries somando zero por moeda, a conversão sem dimensão, o rótulo `TRANSFER` e `PAYMENT` (não `ADJUSTMENT`), a taxa colhida na data, o patrimônio com `≈` e rodapé, e o saldo de conta e a fatura exatos.
+- [ ] 10.2 Rodar 3.9 uma última vez: perfil só-BRL sem marca em superfície alguma.
+- [ ] 10.3 Atualizar `core/ledger/README.md` — referência normativa do módulo — com a conta de conversão, a moeda da perna vinda da conta e as leituras por moeda.
+- [ ] 10.4 Atualizar `CLAUDE.md`: o conjunto de tipos de conta deixa de ser de cinco membros e as contas de sistema deixam de ser "apenas três".
+- [ ] 10.5 Revisar os Non-Goals e confirmar que nenhum foi implementado por acidente: edição de transação cruzada, taxa entre duas moedas não-base, troca de moeda base, ganho cambial em tela, moeda de expoente ≠ 2.

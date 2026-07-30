@@ -68,13 +68,45 @@ data class ConsolidatedAmount(
  * joins it to the one above — an operator of juxtaposition, not of addition, which is why
  * it sits glued to the term (design D22).
  *
+ * **The joining `+` is not added to a term that already shows a sign.** A summary line is
+ * a signed figure — income reads `+`, expense reads `-` — and gluing the joiner onto it
+ * produced `++R$ 100,00` and `+-US$ 50,00` on the statement and the exported report. A
+ * term that spells its own sign already reads as a continuation of the one above it, and
+ * the joiner has nothing left to do. It is decided from the term's **policy and value**,
+ * never from the text it produced: a locale is free to place the minus wherever it likes,
+ * and this rule cannot depend on where.
+ *
  * The rule lives beside the formatter and returns text, not layout: how the terms are
  * *stacked* is the single layout rule in `:core:designsystem`, and how they *read* is
  * here, where every other money string in the app is decided.
  */
 fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
     figure.terms.mapIndexed { index, term ->
-        if (index == 0) format(term) else "+${format(term, withMark = false)}"
+        when {
+            index == 0 -> format(term)
+            term.spellsItsOwnSign -> format(term, withMark = false)
+            else -> "+${format(term, withMark = false)}"
+        }
+    }
+
+/**
+ * Whether this term already begins with a sign of its own — the fact [formatTerms] needs
+ * so that a joiner is never stacked on top of one.
+ */
+private val DisplayAmount.spellsItsOwnSign: Boolean
+    get() = when (policy) {
+        DisplayAmount.SignPolicy.FORCED_POSITIVE,
+        DisplayAmount.SignPolicy.FORCED_NEGATIVE -> true
+
+        DisplayAmount.SignPolicy.EXPLICIT_SIGN -> value != 0.0
+
+        // These print the value as it is, so only a negative one shows a sign.
+        DisplayAmount.SignPolicy.NATURAL,
+        DisplayAmount.SignPolicy.NEUTRAL -> value < 0.0
+
+        // Always a magnitude: never signed.
+        DisplayAmount.SignPolicy.MAGNITUDE,
+        DisplayAmount.SignPolicy.OWED -> false
     }
 
 /**

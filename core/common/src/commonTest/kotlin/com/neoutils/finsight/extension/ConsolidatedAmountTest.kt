@@ -25,6 +25,43 @@ class ConsolidatedAmountTest {
         assertEquals(listOf(formatter.format(100.0, BRL)), formatter.formatTerms(figure))
     }
 
+    /**
+     * The defect this closes, seen on the statement and on the exported report: a summary
+     * line is a signed figure, so gluing the joiner onto it printed `++R$ 100,00` for an
+     * income and `+-US$ 50,00` for an expense.
+     */
+    @Test
+    fun aTermThatSpellsItsOwnSignIsNotGivenAJoiner() {
+        val income = ConsolidatedAmount(
+            terms = listOf(
+                DisplayAmount.forcedPositive(100.0, BRL, isApproximate = true),
+                DisplayAmount.forcedPositive(50.0, USD, isApproximate = true),
+            ),
+            isApproximate = true,
+            baseIndex = 0,
+        )
+        val expense = ConsolidatedAmount(
+            terms = listOf(
+                DisplayAmount.forcedNegative(100.0, BRL, isApproximate = true),
+                DisplayAmount.forcedNegative(50.0, USD, isApproximate = true),
+            ),
+            isApproximate = true,
+            baseIndex = 0,
+        )
+
+        formatter.formatTerms(income).forEach {
+            assertTrue("++" !in it, "the joiner was stacked on a sign: $it")
+        }
+        formatter.formatTerms(expense).forEach {
+            assertTrue("+-" !in it, "the joiner was stacked on a sign: $it")
+        }
+
+        // The sign it spells is the continuation: nothing is added, nothing is lost.
+        assertEquals("+${formatter.format(50.0, USD)}", formatter.formatTerms(income)[1])
+        assertEquals("-${formatter.format(50.0, USD)}", formatter.formatTerms(expense)[1])
+    }
+
+    /** A magnitude spells no sign, so the joiner is what marks it as a continuation. */
     @Test
     fun twoTermsAreJoinedByAPlusAndMarkedOnce() {
         val figure = approximate()

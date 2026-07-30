@@ -57,4 +57,40 @@ class TransactionPerspectiveTest {
     fun perspectiveWithoutALegYieldsNoItem() {
         assertNull(uiFrom(accountId = 99L))
     }
+
+    /**
+     * Each end of a cross-currency transfer reads in **its own** account's currency.
+     *
+     * This is the half a single-currency suite cannot see: with both accounts in the base,
+     * denominating by the leg and denominating by a preference produce the same text, and a
+     * site wired to the wrong one passes every test until the day a dollar account exists.
+     * The conversion legs are outside both perspectives and take no part in either reading.
+     */
+    @Test
+    fun eachEndOfACrossCurrencyTransferReadsInItsOwnCurrency() {
+        val dollars = Account(currency = "USD", id = 3L, name = "Chase", type = AccountType.ASSET)
+        val conversionBrl = Account(currency = "BRL", id = 4L, name = "conversion", type = AccountType.CONVERSION)
+        val conversionUsd = Account(currency = "USD", id = 5L, name = "conversion", type = AccountType.CONVERSION)
+        val crossTransfer = Transaction(
+            id = 2L,
+            title = "Op",
+            date = LocalDate(2026, 1, 1),
+            entries = listOf(
+                Entry(currency = "BRL", account = source, amount = -55_000),
+                Entry(currency = "BRL", account = conversionBrl, amount = 55_000),
+                Entry(currency = "USD", account = dollars, amount = 10_000),
+                Entry(currency = "USD", account = conversionUsd, amount = -10_000),
+            ),
+        )
+
+        val outgoing = crossTransfer.toTransactionUi(TransactionPerspective(source.id).accountId)
+        val incoming = crossTransfer.toTransactionUi(TransactionPerspective(dollars.id).accountId)
+
+        assertEquals(DisplayAmount.explicitSign(-550.0, Denomination.exact("BRL")), outgoing?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, Denomination.exact("USD")), incoming?.amount)
+        // The conversion legs did not make it an adjustment, and did not make it two
+        // different operations either.
+        assertEquals(TransactionLabel.TRANSFER, outgoing?.label)
+        assertEquals(TransactionLabel.TRANSFER, incoming?.label)
+    }
 }

@@ -31,7 +31,12 @@ class CalculateBudgetProgressUseCaseTest {
     private val month = YearMonth(2026, 3)
 
     private fun useCase(balances: Map<Long, Double> = emptyMap()) =
-        CalculateBudgetProgressUseCase(MonthBalances(month, balances))
+        CalculateBudgetProgressUseCase(
+            entryRepository = MonthBalances(month, balances),
+            // No rate is on file, which is exactly right for a single-currency profile: the
+            // consolidation passes one currency straight through, exact.
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        )
 
     private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
@@ -41,7 +46,7 @@ class CalculateBudgetProgressUseCaseTest {
     private val budget = Budget(
         id = 1, title = "Food & Transport",
         categories = listOf(category(1, dimensionId = 10), category(2, dimensionId = 11)),
-        iconKey = "shopping", amount = 200.0, limitType = LimitType.FIXED, createdAt = 0L,
+        iconKey = "shopping", amount = 200.0, currency = "BRL", limitType = LimitType.FIXED, createdAt = 0L,
     )
 
     @Test
@@ -54,7 +59,7 @@ class CalculateBudgetProgressUseCaseTest {
             month = month,
         ).single()
 
-        assertEquals(42.5, progress.spent)
+        assertEquals(42.5, progress.spent.comparable)
         assertEquals(200.0, progress.budget.amount)
     }
 
@@ -69,7 +74,7 @@ class CalculateBudgetProgressUseCaseTest {
             month = month,
         ).single()
 
-        assertEquals(30.0, progress.spent)
+        assertEquals(30.0, progress.spent.comparable)
     }
 
     @Test
@@ -122,40 +127,16 @@ class CalculateBudgetProgressUseCaseTest {
 private class MonthBalances(
     private val month: YearMonth,
     private val balances: Map<Long, Double>,
-) : IEntryRepository {
+) : StubEntryRepository() {
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): CurrencyBalance =
         CurrencyBalance.of("BRL", if (month == this.month) balances[dimensionId] ?: 0.0 else 0.0)
+}
 
-    // Nothing else is this use case's business; reaching any of it is the test
-    // telling us the use case grew a dependency it did not declare.
-    override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
-    override fun observeLedgerChanges() = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long) = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): CurrencyBalance =
-        throw NotImplementedError()
-    override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
-    override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun balance(accountId: Long) = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun totalsByDimension(
-        nominalType: AccountType,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        siblingAccountIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
-        nominalType: AccountType,
-        scopeDimensionIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun scopeStats(
-        scopeAccountIds: List<Long>,
-        startDate: LocalDate,
-        endDate: LocalDate,
-    ) = throw NotImplementedError()
+/** No rate at all — the single-currency profile every case here exercises. */
+private object NoRates : com.neoutils.finsight.domain.repository.IExchangeRateRepository {
+    override suspend fun rateOn(currency: String, date: LocalDate) = null
+    override fun observeAll() = throw NotImplementedError()
+    override suspend fun getAll() = throw NotImplementedError()
+    override suspend fun record(rate: com.neoutils.finsight.domain.model.ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: com.neoutils.finsight.domain.model.ExchangeRate) = throw NotImplementedError()
 }

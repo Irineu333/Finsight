@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.transactions
 
 import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
@@ -80,6 +81,8 @@ class TransactionsViewModelCharacterizationTest {
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
             entryRepository = FakeLedger(transactions),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+            baseCurrencyRepository = FixedBase,
         )
 
         vm.uiState.test {
@@ -93,12 +96,12 @@ class TransactionsViewModelCharacterizationTest {
             val overview = state.balanceOverview as TransactionsUiState.BalanceOverview.Accounts
             // Each figure carries the sign it is displayed with: spending and the payment
             // leave the account perimeter, so they arrive negative.
-            assertEquals(100.0, overview.income.value)
-            assertEquals(-30.0, overview.expense.value)
-            assertEquals(40.0, overview.adjustment?.value)
-            assertEquals(-80.0, overview.invoicePayment?.value, "month-wide card payment from the ledger")
-            assertEquals(0.0, overview.openingBalance.value)
-            assertEquals(30.0, overview.finalBalance.value, "Σ signed account legs up to the month")
+            assertEquals(100.0, overview.income.amount)
+            assertEquals(-30.0, overview.expense.amount)
+            assertEquals(40.0, overview.adjustment?.amount)
+            assertEquals(-80.0, overview.invoicePayment?.amount, "month-wide card payment from the ledger")
+            assertEquals(0.0, overview.openingBalance.amount)
+            assertEquals(30.0, overview.finalBalance.amount, "Σ signed account legs up to the month")
             cancelAndIgnoreRemainingEvents()
         }
     }

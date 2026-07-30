@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
  * Where conversion is allowed to happen, asserted over the sources — because the boundary is
  * a fact about the whole app and no single module can state it.
  *
- * Three things are pinned, and each one is a rule the compiler cannot reach:
+ * Four things are pinned, and each one is a rule the compiler cannot reach:
  *
  * 1. the **ledger** knows nothing of rates or of a base currency. It is enforced by the module
  *    graph already — the consolidation layer depends on the ledger and not the other way round
@@ -17,7 +17,10 @@ import kotlin.test.assertEquals
  *    as approximate; anywhere else that would be a screen deciding, by hand, that its own
  *    number is an approximation — which is how the mark goes missing;
  * 3. **nothing converts in a screen, a ViewModel or a UI model.** One implementation reduces a
- *    per-currency result, and every consumer goes through it.
+ *    per-currency result, and every consumer goes through it;
+ * 4. **no figure samples the base currency.** It is an observable preference, and a consumer
+ *    that read it once instead of following it would render a card that quietly stops
+ *    reacting — a failure no behaviour test catches while the v1 does not offer changing it.
  */
 class ConsolidationBoundaryTest {
 
@@ -68,6 +71,50 @@ class ConsolidationBoundaryTest {
         )
     }
 
+    /**
+     * The base currency reaches a figure as a **flow**, never as a snapshot.
+     *
+     * `current()` is a legitimate method with a narrow use — a caller that *decides* something
+     * once, like which currency to pre-select for a new account — and an illegitimate one that
+     * looks identical: a figure resolving the preference inside itself. Both compile, and in a
+     * v1 that does not offer changing the base, both behave the same; the difference only
+     * shows the day it can change, when half a card follows and half does not.
+     *
+     * So the readers are named. Adding a site here is a claim that it decides rather than
+     * renders, and the claim is the point.
+     */
+    @Test
+    fun `only a decision reads the base currency, and a figure follows it`() {
+        val offenders = sourcesUnder("core", "feature", "app")
+            .filterNot { file -> baseCurrencyDeciders.any { file.path.endsWith(it) } }
+            .filter { file -> BASE_CURRENCY_SNAPSHOT.containsMatchIn(file.code) }
+            .map { it.path }
+
+        assertEquals(
+            emptyList(),
+            offenders,
+            "A consolidated figure takes the base as an argument, resolved from " +
+                "IBaseCurrencyRepository.observe() in the flow that produces it — so one " +
+                "emission has exactly one base, and forgetting to follow the preference is a " +
+                "compile error rather than a screen that stops reacting.",
+        )
+    }
+
+    /**
+     * The sites that legitimately read the base once, **none of which render a figure**: the
+     * settings screens, whose subject *is* the preference; the two paths that pre-select the
+     * currency of an account or card being created (design D28); and the dashboard preview
+     * factory, whose numbers are fabricated examples rather than reads of the ledger.
+     */
+    private val baseCurrencyDeciders = listOf(
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/settings/SettingsViewModel.kt",
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
+        "feature/accounts/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/EnsureDefaultAccountUseCase.kt",
+        "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/CreateAccountUseCase.kt",
+        "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/CreditCardRepository.kt",
+        "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
+    ).map { it.replace('/', java.io.File.separatorChar) }
+
     @Test
     fun `no consolidated figure depends on the network`() {
         val offenders = sourcesUnder("core", "feature", "app")
@@ -112,5 +159,8 @@ class ConsolidationBoundaryTest {
 
         /** A value multiplied by a rate, in either order. */
         val RATE_APPLICATION = Regex("\\*\\s*\\w*[rR]ate\\b|\\brate\\s*\\*")
+
+        /** The base currency read as a snapshot rather than followed as a flow. */
+        val BASE_CURRENCY_SNAPSHOT = Regex("baseCurrencyRepository\\.current\\(\\)")
     }
 }

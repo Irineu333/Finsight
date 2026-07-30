@@ -25,7 +25,10 @@ import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -114,6 +117,7 @@ class ViewBudgetViewModelTest {
         categories = emptyList(),
         iconKey = "shopping",
         amount = amount,
+        currency = "BRL",
         createdAt = 0L,
     )
 
@@ -161,7 +165,10 @@ class ViewBudgetViewModelTest {
         budgetRepository = budgetRepository,
         transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository()),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(
+            entryRepository = FakeEntryRepository(),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        ),
         crashlytics = crashlytics,
     )
 
@@ -214,4 +221,13 @@ class ViewBudgetViewModelTest {
             events.cancel()
         }
     }
+}
+
+/** No rate at all — the single-currency profile these cases exercise. */
+private object NoRates : IExchangeRateRepository {
+    override suspend fun rateOn(currency: String, date: LocalDate) = null
+    override fun observeAll() = throw NotImplementedError()
+    override suspend fun getAll() = throw NotImplementedError()
+    override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
 }

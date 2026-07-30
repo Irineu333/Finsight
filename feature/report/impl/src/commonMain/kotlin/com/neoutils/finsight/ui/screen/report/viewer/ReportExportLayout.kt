@@ -2,8 +2,12 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.AppliedRate
 import com.neoutils.finsight.extension.CurrencyFormatter
-import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.extension.appliedRatesOf
+import com.neoutils.finsight.extension.explanationIsOwed
+import com.neoutils.finsight.extension.formatSingleLine
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
@@ -41,7 +45,38 @@ data class ReportExportStrings(
     val columnTransaction: String,
     val columnAmount: String,
     val columnPercentage: String,
+    /**
+     * What the marks mean, printed under a family of figures that carries one. The document
+     * has no footer to tap and no rates screen to reach, so the explanation the app gives by
+     * navigation is given here by text.
+     */
+    val approximationConverted: String,
+    val approximationUnreached: String,
+    /**
+     * One quote, spelled out. It is a lambda because the rates are only known here, outside a
+     * composition, while the string and the date format belong to the UI — so the UI closes
+     * over both and hands down a function rather than letting [AppliedRate] into the layout.
+     */
+    val approximationRate: (AppliedRate) -> String,
 )
+
+/**
+ * What a family of figures owes its reader, or `null` when it owes nothing.
+ *
+ * The condition is [explanationIsOwed] and not `isApproximate`: a cell shows one line, so
+ * `formatSingleLine` **forces** the mark on a figure of several exact terms — asking only
+ * about approximation would print a mark this note never explains.
+ *
+ * With several terms and no rate at all there is nothing to reveal and the note still prints:
+ * the elision is what is being explained.
+ */
+private fun footnoteOf(figures: List<MoneyFigure>, strings: ReportExportStrings): String? {
+    if (!explanationIsOwed(figures)) return null
+
+    val rates = appliedRatesOf(figures)
+    val explanation = if (rates.isEmpty()) strings.approximationUnreached else strings.approximationConverted
+    return (listOf(explanation) + rates.map(strings.approximationRate)).joinToString(" ")
+}
 
 fun ReportViewerUiState.Content.toReportLayout(
     strings: ReportExportStrings,
@@ -56,26 +91,28 @@ fun ReportViewerUiState.Content.toReportLayout(
         is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(s.openingDate, s.closingDate)
     }
 
+    // The value of a cell goes through the single-line declaration: the document's grammar is
+    // one term per line, so leaving a term out is stated here rather than by the layout.
     val summaryItems = when (val s = stats) {
         is ReportViewerUiState.Stats.Account -> listOf(
             ReportSummaryItem(
                 label = strings.summaryBalance,
-                value = formatter.format(s.balance),
-                tone = s.balance.value.toTone(),
+                value = formatter.formatSingleLine(s.balance.figure),
+                tone = s.balance.comparable.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryOpeningBalance,
-                value = formatter.format(s.openingBalance),
-                tone = s.openingBalance.value.toTone(),
+                value = formatter.formatSingleLine(s.openingBalance.figure),
+                tone = s.openingBalance.comparable.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,
-                value = formatter.format(s.income),
+                value = formatter.formatSingleLine(s.income.figure),
                 tone = ReportTone.POSITIVE,
             ),
             ReportSummaryItem(
                 label = strings.summaryExpense,
-                value = formatter.format(s.expense),
+                value = formatter.formatSingleLine(s.expense.figure),
                 tone = ReportTone.NEGATIVE,
             ),
         )
@@ -83,17 +120,17 @@ fun ReportViewerUiState.Content.toReportLayout(
         is ReportViewerUiState.Stats.Invoice -> listOf(
             ReportSummaryItem(
                 label = strings.summaryInvoiceExpense,
-                value = formatter.format(s.expense),
+                value = formatter.formatSingleLine(s.expense.figure),
                 tone = ReportTone.NEGATIVE,
             ),
             ReportSummaryItem(
                 label = strings.summaryInvoiceTotal,
-                value = formatter.format(s.total),
-                tone = s.total.value.toTone(),
+                value = formatter.formatSingleLine(s.total.figure),
+                tone = s.total.comparable.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryAdvancePayment,
-                value = formatter.format(s.advancePayment),
+                value = formatter.formatSingleLine(s.advancePayment.figure),
                 tone = ReportTone.POSITIVE,
             ),
         )
@@ -107,13 +144,11 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categorySpending.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            // The exported document has a grammar of one term per line, so it
-                            // is a declared-degradation surface: task 8.1 gives it the mark and
-                            // the footnote that say a term was left out.
-                            amount = formatter.format(item.amount.primary),
+                            amount = formatter.formatSingleLine(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
+                    footnote = footnoteOf(categorySpending.map { it.amount }, strings),
                 )
             )
         }
@@ -125,10 +160,11 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount.primary),
+                            amount = formatter.formatSingleLine(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
+                    footnote = footnoteOf(categoryIncome.map { it.amount }, strings),
                 )
             )
         }
@@ -143,12 +179,19 @@ fun ReportViewerUiState.Content.toReportLayout(
                             items = transactions.map { ui ->
                                 TransactionItem(
                                     title = ui.exportTitle(strings),
-                                    amount = formatter.format(ui.amount),
+                                    amount = formatter.formatSingleLine(MoneyFigure.of(ui.amount)),
                                     tone = ui.exportTone(),
                                 )
                             },
                         )
                     },
+                    // A statement line is denominated by the account its leg posted in, so it
+                    // is single-term by construction and this note never prints. It is asked
+                    // anyway, of the figures themselves, rather than assumed away.
+                    footnote = footnoteOf(
+                        transactions.values.flatten().map { MoneyFigure.of(it.amount) },
+                        strings,
+                    ),
                 )
             )
         }
@@ -169,6 +212,7 @@ fun ReportViewerUiState.Content.toReportLayout(
             percentage = strings.columnPercentage,
         ),
         summaryItems = summaryItems,
+        summaryFootnote = footnoteOf(stats.figures, strings),
         sections = sections,
     )
 }

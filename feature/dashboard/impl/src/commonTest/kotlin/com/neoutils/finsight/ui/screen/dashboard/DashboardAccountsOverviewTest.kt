@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -50,18 +51,30 @@ class DashboardAccountsOverviewTest {
     private fun builder() = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = ThrowingEntryRepository),
         calculateCategorySpendingUseCase = object : CalculateCategorySpendingUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
         calculateCategoryIncomeUseCase = object : CalculateCategoryIncomeUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(ThrowingEntryRepository),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(
+            entryRepository = ThrowingEntryRepository,
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        ),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
         },
         entryRepository = ThrowingEntryRepository,
+        consolidateFigure = ConsolidateFigureUseCase(NoRates),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -75,6 +88,7 @@ class DashboardAccountsOverviewTest {
         occurrences = emptyList(),
         today = LocalDate(2026, 3, 20),
         targetMonth = YearMonth(2026, 3),
+        baseCurrency = "BRL",
     )
 
     private suspend fun overview(accounts: List<Account>, config: Map<String, String>): List<DashboardAccountUi> {
@@ -179,7 +193,7 @@ class DashboardAccountsOverviewTest {
         )
         val budget = Budget(
             id = 1, title = "Half the salary", categories = emptyList(), iconKey = "shopping",
-            amount = 0.0, limitType = LimitType.PERCENTAGE, percentage = 50.0,
+            amount = 0.0, currency = "BRL", limitType = LimitType.PERCENTAGE, percentage = 50.0,
             recurringId = salary.id, createdAt = 0L,
         )
 
@@ -217,3 +231,4 @@ private object ThrowingEntryRepository : StubEntryRepository() {
         if (month == YearMonth(2026, 3)) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = brl(100.0), expense = brl(30.0), adjustment = brl(0.0))
         else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = brl(0.0), expense = brl(0.0), adjustment = brl(0.0))
 }
+

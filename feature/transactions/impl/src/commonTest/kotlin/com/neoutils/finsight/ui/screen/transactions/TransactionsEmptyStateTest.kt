@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.transactions
 
 import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
@@ -87,6 +88,8 @@ class TransactionsEmptyStateTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+            baseCurrencyRepository = FixedBase,
     )
 
     /** The settled state after [actions], skipping the `Loading` initialValue. */

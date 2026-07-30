@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import com.neoutils.finsight.extension.ConsolidatedFigure
 import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.model.Account
@@ -66,10 +67,10 @@ class ReportExportAdjustmentToneTest {
             stats = ReportViewerUiState.Stats.Invoice(
                 openingDate = LocalDate(2026, 1, 1),
                 closingDate = LocalDate(2026, 1, 31),
-                expense = DisplayAmount.forcedNegative(0.0, Denomination.exact("BRL")),
-                advancePayment = DisplayAmount.forcedPositive(0.0, Denomination.exact("BRL")),
-                adjustment = DisplayAmount.explicitSign(100.0, Denomination.exact("BRL")),
-                total = DisplayAmount.natural(100.0, Denomination.exact("BRL")),
+                expense = exact(DisplayAmount.forcedNegative(0.0, Denomination.exact("BRL"))),
+                advancePayment = exact(DisplayAmount.forcedPositive(0.0, Denomination.exact("BRL"))),
+                adjustment = exact(DisplayAmount.explicitSign(100.0, Denomination.exact("BRL"))),
+                total = exact(DisplayAmount.natural(100.0, Denomination.exact("BRL"))),
             ),
             categorySpending = listOf(
                 CategorySpendingUi(
@@ -137,5 +138,18 @@ class ReportExportAdjustmentToneTest {
         columnTransaction = "Transaction",
         columnAmount = "Amount",
         columnPercentage = "%",
+        approximationConverted = "converted",
+        approximationUnreached = "unreached",
+        approximationRate = { "rate ${it.currency}" },
+    )
+
+    /**
+     * A figure no rate took part in: what it reads as and what it is worth are the same, so
+     * these cases keep saying exactly what they said before figures were consolidated.
+     */
+    private fun exact(amount: DisplayAmount) = ConsolidatedFigure(
+        figure = MoneyFigure.of(amount),
+        comparable = amount.value,
+        isPartial = false,
     )
 }

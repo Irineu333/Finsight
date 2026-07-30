@@ -2,19 +2,20 @@
 
 package com.neoutils.finsight.ui.modal.budgetForm
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -41,6 +42,7 @@ class BudgetFormViewModel(
     private val budgetRepository: IBudgetRepository,
     private val categoryRepository: ICategoryRepository,
     private val recurringRepository: IRecurringRepository,
+    private val accountRepository: IAccountRepository,
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
@@ -52,7 +54,10 @@ class BudgetFormViewModel(
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
-    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "")
+    // Seeded from the budget when editing and left empty when creating: the currency of a new
+    // budget is not known until the accounts are read, and the form resolves it there.
+    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it, budget.currency) } ?: "")
+    private val selectedCurrency = MutableStateFlow(budget?.currency)
     private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
     private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
     private val selectedRecurring = MutableStateFlow<Recurring?>(null)
@@ -94,7 +99,11 @@ class BudgetFormViewModel(
         combine(recurringRepository.observeAllRecurring(), formFields, validation) { rec, fields, v ->
             Triple(rec, fields, v)
         },
-    ) { categories, budgets, (allRecurrings, fields, validation) ->
+        // The currencies a limit may be stated in are the ones the user's accounts are in —
+        // not the catalog, and not the base. A budget denominates nothing new.
+        accountRepository.observeAllAccounts(),
+        selectedCurrency,
+    ) { categories, budgets, (allRecurrings, fields, validation), accounts, chosenCurrency ->
         val budgetedCategoryIds = budgets
             .filter { it.id != budget?.id }
             .flatMap { it.categories }
@@ -129,6 +138,14 @@ class BudgetFormViewModel(
                 selected = resolvedSelectedRecurring,
             ),
             selectedRecurring = resolvedSelectedRecurring,
+            // The default account's currency is the suggestion, because that is where the
+            // user actually transacts. The base answers a different question — in what
+            // currency totals are read — and has nothing to say about a limit being typed.
+            currency = chosenCurrency
+                ?: accounts.firstOrNull { it.isDefault }?.currency
+                ?: accounts.firstOrNull()?.currency
+                ?: LAST_RESORT_CURRENCY,
+            offeredCurrencies = accounts.map { it.currency }.distinct().sorted(),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -137,11 +154,12 @@ class BudgetFormViewModel(
             selectedCategories = budget?.categories ?: emptyList(),
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
-            amount = budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "",
+            amount = budget?.amount?.let { formatter.format(it, budget.currency) } ?: "",
             validation = validation,
             isEditMode = isEditMode,
             limitType = budget?.limitType ?: LimitType.FIXED,
             percentage = budget?.percentage?.toString() ?: "",
+            currency = budget?.currency ?: LAST_RESORT_CURRENCY,
         ),
     )
 
@@ -163,6 +181,7 @@ class BudgetFormViewModel(
             is BudgetFormAction.LimitTypeChanged -> limitType.update { action.limitType }
             is BudgetFormAction.PercentageChanged -> percentage.update { action.percentage }
             is BudgetFormAction.RecurringSelected -> selectedRecurring.update { action.recurring }
+            is BudgetFormAction.CurrencySelected -> selectedCurrency.update { action.currency }
             BudgetFormAction.Submit -> submit()
         }
     }
@@ -217,6 +236,8 @@ class BudgetFormViewModel(
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
+                        // Not `state.currency`: the denomination of a limit already typed is
+                        // never restated (design D13), and the form shows it locked.
                     )
                 )
             } else {
@@ -229,6 +250,7 @@ class BudgetFormViewModel(
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
+                        currency = state.currency,
                         createdAt = Clock.System.now().toEpochMilliseconds(),
                     )
                 )

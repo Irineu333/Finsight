@@ -31,6 +31,7 @@ val reportModule = module {
             categoryRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
+            consolidateFigure = get(),
         )
     }
     factory { BuildReportViewerParamsUseCase(get()) }
@@ -57,6 +58,8 @@ val reportModule = module {
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
             entryRepository = get(),
+            consolidateFigure = get(),
+            baseCurrencyRepository = get(),
             renderer = get(),
             analytics = get(),
         )

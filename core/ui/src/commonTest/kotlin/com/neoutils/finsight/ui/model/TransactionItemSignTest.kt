@@ -100,6 +100,24 @@ class TransactionItemSignTest {
         )
     }
 
+    /**
+     * A statement line is denominated by **the account its leg posted on**, and never by a
+     * preference. With every account in the base the two are the same text, so this is the
+     * only shape in which the difference is observable at all (design D29).
+     */
+    @Test
+    fun anItemReadsInTheCurrencyOfTheAccountItsLegPostedOn() {
+        val dollars = Account(currency = "USD", id = 7L, name = "Chase", type = AccountType.ASSET)
+        val dollarExpenses = Account(currency = "USD", id = 8L, name = "Expenses", type = AccountType.EXPENSE)
+        val ui = transactionOf(
+            Entry(currency = "USD", account = dollars, amount = -5_000),
+            Entry(currency = "USD", account = dollarExpenses, amount = 5_000),
+        ).toTransactionUi(accountId = dollars.id)
+
+        assertEquals("USD", ui?.amount?.currency)
+        assertEquals(formatter.format(50.0, "USD"), formatter.format(ui!!.amount))
+    }
+
     // endregion
 
     // region non-regression — the labels that already give the direction

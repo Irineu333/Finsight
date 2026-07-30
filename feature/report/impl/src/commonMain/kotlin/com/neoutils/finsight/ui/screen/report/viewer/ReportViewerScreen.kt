@@ -32,6 +32,9 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.extension.AppliedRate
+import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
@@ -122,6 +125,7 @@ private fun ReportViewerContent(
     val categoriesEntry = koinInject<CategoriesEntry>()
     val transactionsEntry = koinInject<TransactionsEntry>()
     val dateFormats = LocalDateFormats.current
+    val currencyFormatter = LocalCurrencyFormatter.current
 
     val exportStrings = ReportExportStrings(
         title = stringResource(Res.string.report_viewer_title),
@@ -144,6 +148,11 @@ private fun ReportViewerContent(
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),
         columnPercentage = stringResource(Res.string.report_output_column_percentage),
+        approximationConverted = stringResource(Res.string.report_export_approximation_converted),
+        approximationUnreached = stringResource(Res.string.report_export_approximation_unreached),
+        // Resolved here, where the string and the date format are: the layout receives a
+        // function and never learns what an applied rate is.
+        approximationRate = rateLine(currencyFormatter, stringResource(Res.string.report_export_approximation_rate)),
     )
 
     Scaffold(
@@ -308,4 +317,21 @@ private fun ReportViewerContent(
             }
         }
     }
+}
+
+/**
+ * One quote as a line of the exported document: the currency, what one unit of it was worth
+ * in the base, and the **date** of that quote.
+ *
+ * The date does on paper what the "out of date" warning does in the app: a printed document
+ * cannot warn about ageing, so it says when the quote is from and lets the reader judge.
+ */
+private fun rateLine(
+    formatter: CurrencyFormatter,
+    template: String,
+): (AppliedRate) -> String = { rate ->
+    template
+        .replace("%1${'$'}s", rate.currency)
+        .replace("%2${'$'}s", formatter.format(rate.rate, rate.baseCurrency))
+        .replace("%3${'$'}s", dayMonthYear.format(rate.date))
 }

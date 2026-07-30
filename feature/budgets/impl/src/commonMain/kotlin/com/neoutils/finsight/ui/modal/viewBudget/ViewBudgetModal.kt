@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.modal.viewBudget
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.component.ApproximationFooter
+import com.neoutils.finsight.ui.component.MoneyFigureText
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -179,14 +181,14 @@ class ViewBudgetModal(
                 }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
-                    value = formatter.format(budget.amount, ASSUMED_SINGLE_CURRENCY),
+                    value = formatter.format(budget.amount, budget.currency),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spent, ASSUMED_SINGLE_CURRENCY),
+                    figure = budgetProgress.spent.figure,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -194,12 +196,12 @@ class ViewBudgetModal(
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.spent - budget.amount, ASSUMED_SINGLE_CURRENCY),
+                        value = formatter.format(budgetProgress.spent.comparable - budget.amount, budget.currency),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remaining, ASSUMED_SINGLE_CURRENCY),
+                        value = formatter.format(budgetProgress.remaining, budget.currency),
                     )
                 }
             }
@@ -288,6 +290,34 @@ class ViewBudgetModal(
                     fontWeight = FontWeight.Medium,
                 )
             }
+        }
+    }
+
+    /** The money variant: the row has a column of its own, so a figure stacks its terms. */
+    @Composable
+    private fun DetailRow(
+        label: String,
+        figure: MoneyFigure,
+        valueColor: Color = colorScheme.onSurface,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                fontSize = 16.sp,
+                color = colorScheme.onSurfaceVariant,
+            )
+            MoneyFigureText(
+                figure = figure,
+                style = LocalTextStyle.current.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = valueColor,
+                ),
+            )
         }
     }
 

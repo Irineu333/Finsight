@@ -124,12 +124,14 @@ class ConsolidateFigureUseCaseTest {
             ExchangeRate("USD", LocalDate.parse("2026-09-01"), 6.0, ExchangeRate.Source.USER),
         )
         val useCase = ConsolidateFigureUseCase(HistoryRates(history))
-        val balance = CurrencyBalance.of(mapOf("BRL" to 0.0, "USD" to 10.0))
+        // A real reais share, not a zero one: a currency contributing nothing is not a term
+        // at all, and the figure would be single-currency USD with no conversion to date.
+        val balance = CurrencyBalance.of(mapOf("BRL" to 1.0, "USD" to 10.0))
 
         // May is governed by January's rate, not by September's — a figure of a closed period
         // does not move when a later rate is entered.
-        assertEquals(50.0, useCase(balance, base = "BRL", date = LocalDate.parse("2026-05-10")).primary.value)
-        assertEquals(60.0, useCase(balance, base = "BRL", date = LocalDate.parse("2026-10-10")).primary.value)
+        assertEquals(51.0, useCase(balance, base = "BRL", date = LocalDate.parse("2026-05-10")).comparable)
+        assertEquals(61.0, useCase(balance, base = "BRL", date = LocalDate.parse("2026-10-10")).comparable)
     }
 
     @Test
@@ -163,7 +165,7 @@ class ConsolidateFigureUseCaseTest {
             CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 10.0, "EUR" to 10.0)),
             base = "BRL",
             date = date,
-        )
+        ).figure
 
         // The date is the quote's own — January's, months before the figure — because that
         // is the one the reduction used, and explaining it with today's would be a second
@@ -205,11 +207,75 @@ class ConsolidateFigureUseCaseTest {
         assertTrue(explanationIsOwed(listOf(figure)))
     }
 
+    @Test
+    fun `the number a caller ranks by is what the rates reached, and it says when that is less than the whole`() = runTest {
+        // One currency: the figure and the number are the same thing, and nothing is left out.
+        val whole = consolidated(CurrencyBalance.of("USD", 50.0))
+        assertEquals(50.0, whole.comparable)
+        assertFalse(whole.isPartial)
+
+        // Two currencies, one rate: the number is the reduced total, and it is the whole of
+        // the figure — nothing escaped the rates.
+        val converted = consolidated(
+            CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            rates = mapOf("USD" to 5.5),
+        )
+        assertEquals(375.0, converted.comparable)
+        assertFalse(converted.isPartial)
+        assertTrue(converted.isApproximate, "a conversion took part")
+
+        // Two currencies, no rate: the number is only the base's share, and `isPartial` is
+        // what carries that into any fraction computed over it.
+        val partial = consolidated(CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 50.0)))
+        assertEquals(100.0, partial.comparable)
+        assertTrue(partial.isPartial)
+        assertTrue(partial.isApproximate)
+    }
+
+    @Test
+    fun `a figure no rate reached at all ranks as nothing, and says so`() = runTest {
+        val figure = consolidated(CurrencyBalance.of(mapOf("USD" to 50.0, "EUR" to 10.0)))
+
+        // There is no base term to rank by. Answering `50` — the first term, in dollars —
+        // would compare dollars against reais elsewhere in the same list.
+        assertEquals(0.0, figure.comparable)
+        assertTrue(figure.isPartial)
+    }
+
+    @Test
+    fun `a currency that contributes nothing is not a term`() = runTest {
+        // A grouped read answers with a row per currency it *touched*: a perimeter whose
+        // dollar legs cancel comes back with `USD: 0` beside the reais. Splitting that into
+        // two terms would mark an exact figure as approximate over nothing.
+        val figure = consolidated(CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 0.0)))
+
+        assertEquals(100.0, figure.comparable)
+        assertFalse(figure.isPartial)
+        assertFalse(figure.figure.isApproximate)
+        assertTrue(figure.figure.isSingleTerm)
+    }
+
+    @Test
+    fun `a figure of nothing at all keeps its own denomination`() = runTest {
+        // Not the base: the ledger answered in dollars, and it answered zero. Falling back to
+        // the base here would show `R$ 0,00` over a dollar perimeter.
+        val figure = consolidated(CurrencyBalance.of("USD", 0.0))
+
+        assertEquals(0.0, figure.comparable)
+        assertEquals(listOf("USD"), figure.figure.terms.map { it.currency })
+    }
+
     private suspend fun consolidate(
         balance: CurrencyBalance,
         rates: Map<String, Double> = emptyMap(),
         policy: SignPolicy = SignPolicy.NATURAL,
-    ) = ConsolidateFigureUseCase(FlatRates(rates))(balance, base = "BRL", date = date, policy = policy)
+    ) = ConsolidateFigureUseCase(FlatRates(rates))(balance, base = "BRL", date = date, policy = policy).figure
+
+    /** The whole result, for the cases that assert about the number a caller ranks by. */
+    private suspend fun consolidated(
+        balance: CurrencyBalance,
+        rates: Map<String, Double> = emptyMap(),
+    ) = ConsolidateFigureUseCase(FlatRates(rates))(balance, base = "BRL", date = date)
 
     /** One rate per currency, in force forever — the shape most of these cases need. */
     private class FlatRates(private val rates: Map<String, Double>) : IExchangeRateRepository {

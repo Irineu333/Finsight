@@ -24,7 +24,7 @@ val budgetsModule = module {
     }
     factory { BudgetMapper() }
 
-    factory { CalculateBudgetProgressUseCase(entryRepository = get()) }
+    factory { CalculateBudgetProgressUseCase(entryRepository = get(), consolidateFigure = get()) }
     factory { ValidateBudgetTitleUseCase(repository = get()) }
 
     single<BudgetsEntry> { BudgetsEntryImpl() }
@@ -54,6 +54,7 @@ val budgetsModule = module {
             budgetRepository = get(),
             categoryRepository = get(),
             recurringRepository = get(),
+            accountRepository = get(),
             validateBudgetTitle = get(),
             modalManager = get(),
             debounceManager = get(),

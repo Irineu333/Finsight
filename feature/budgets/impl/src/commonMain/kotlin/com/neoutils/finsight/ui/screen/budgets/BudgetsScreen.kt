@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.budgets
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.AnimatedContent
@@ -34,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.ApproximationFooter
+import com.neoutils.finsight.ui.component.MoneyFigureText
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -274,7 +275,7 @@ private fun BudgetProgressItem(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(progress.budget.amount, ASSUMED_SINGLE_CURRENCY),
+                    text = formatter.format(progress.budget.amount, progress.budget.currency),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -291,11 +292,15 @@ private fun BudgetProgressItem(
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
-                    Text(
-                        text = formatter.format(progress.spent, ASSUMED_SINGLE_CURRENCY),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface,
+                    // The spending spans accounts, so it is a figure: the whole of it here,
+                    // where the column has room to stack a term the rates did not reach.
+                    MoneyFigureText(
+                        figure = progress.spent.figure,
+                        style = LocalTextStyle.current.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface,
+                        ),
                     )
                 }
 
@@ -309,9 +314,11 @@ private fun BudgetProgressItem(
                     )
                     Text(
                         text = if (progress.isExceeded) {
-                            formatter.format(progress.spent - progress.budget.amount, ASSUMED_SINGLE_CURRENCY)
+                            // Both read the limit's currency, because both are the limit
+                            // measured against a spending already reduced to it.
+                            formatter.format(progress.spent.comparable - progress.budget.amount, progress.budget.currency)
                         } else {
-                            formatter.format(progress.remaining, ASSUMED_SINGLE_CURRENCY)
+                            formatter.format(progress.remaining, progress.budget.currency)
                         },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,

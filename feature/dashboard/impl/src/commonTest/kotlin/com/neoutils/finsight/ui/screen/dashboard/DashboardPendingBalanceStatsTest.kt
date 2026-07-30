@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Entry
@@ -14,6 +15,7 @@ import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -45,18 +47,30 @@ class DashboardPendingBalanceStatsTest {
     private val builder = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = NoFlowsEntryRepository),
         calculateCategorySpendingUseCase = object : CalculateCategorySpendingUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
         calculateCategoryIncomeUseCase = object : CalculateCategoryIncomeUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(NoFlowsEntryRepository),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(
+            entryRepository = NoFlowsEntryRepository,
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        ),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
         },
         entryRepository = NoFlowsEntryRepository,
+        consolidateFigure = ConsolidateFigureUseCase(NoRates),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -67,7 +81,9 @@ class DashboardPendingBalanceStatsTest {
         title = null,
         dayOfMonth = 5,
         category = null,
-        account = null,
+        // A recurring is denominated by the account it names: with neither account nor card
+        // there is no currency to state its amount in, and it contributes nothing.
+        account = Account(currency = "BRL", id = 1, name = "Checking", type = AccountType.ASSET),
         creditCard = null,
         createdAt = 0,
     )
@@ -87,6 +103,7 @@ class DashboardPendingBalanceStatsTest {
             occurrences = emptyList(),
             today = LocalDate(2026, 3, 20),
             targetMonth = march,
+            baseCurrency = "BRL",
         ),
         context = DashboardBuilderContext(pendingRecurring = pendingRecurring),
         config = config,
@@ -147,3 +164,4 @@ private object NoFlowsEntryRepository : StubEntryRepository() {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
 }
+

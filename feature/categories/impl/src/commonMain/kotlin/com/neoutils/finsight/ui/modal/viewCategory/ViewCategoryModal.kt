@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.viewCategory
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,7 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.component.MoneyFigureText
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -92,8 +92,6 @@ class ViewCategoryModal(
         uiState: ViewCategoryUiState.Content,
         onAction: (ViewCategoryAction) -> Unit,
     ) {
-        val formatter = LocalCurrencyFormatter.current
-
         val isIncome = uiState.category.type.isIncome
         val typeLabel = stringResource(
             if (isIncome) Res.string.view_category_type_income else Res.string.view_category_type_expense
@@ -155,7 +153,7 @@ class ViewCategoryModal(
 
             DetailRow(
                 label = totalLabel,
-                value = formatter.format(uiState.totalAmount, ASSUMED_SINGLE_CURRENCY),
+                figure = uiState.totalAmount,
                 valueColor = uiState.category.displayColor
             )
 
@@ -215,6 +213,33 @@ class ViewCategoryModal(
                 contentColor = Info,
                 onClick = { manager.show(CategoryFormModal(content.category)) },
                 modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    /**
+     * The money variant: the row has a whole column to itself, so a figure of several terms
+     * stacks rather than being cut down to one — the layout admits it, so nothing is declared
+     * away here.
+     */
+    @Composable
+    private fun DetailRow(
+        label: String,
+        figure: MoneyFigure,
+        valueColor: Color = colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant
+            )
+            MoneyFigureText(
+                figure = figure,
+                style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
             )
         }
     }

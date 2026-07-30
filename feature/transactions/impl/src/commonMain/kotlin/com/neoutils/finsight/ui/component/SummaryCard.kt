@@ -22,9 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
@@ -125,6 +123,10 @@ fun SummaryCard(
 
                         is BalanceOverview.Overall -> OverallBody(overview)
                     }
+
+                    // Same rule as every other card of the app: the footer appears only when
+                    // a line of *this* card owes an explanation (design D25).
+                    ApproximationFooter(figures = overview.figures)
                 }
             }
         }
@@ -377,13 +379,11 @@ private val CHIP_INSET = 6.dp
 @Composable
 private fun SummaryRow(
     label: String,
-    amount: DisplayAmount,
+    amount: MoneyFigure,
     color: Color,
     modifier: Modifier = Modifier,
     config: SummaryRowConfig = SummaryRowConfig.Default,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -394,9 +394,11 @@ private fun SummaryRow(
             style = config.labelStyle
         )
 
-        Text(
-            text = formatter.format(amount),
-            style = config.amountStyle.copy(color = color)
+        // The row has a whole column to itself, so a figure of several terms stacks: this is
+        // not a surface that has to declare a degradation.
+        MoneyFigureText(
+            figure = amount,
+            style = config.amountStyle.copy(color = color),
         )
     }
 }

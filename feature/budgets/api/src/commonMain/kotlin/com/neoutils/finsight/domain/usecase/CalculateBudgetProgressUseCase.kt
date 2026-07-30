@@ -1,6 +1,5 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CurrencyBalance
@@ -8,7 +7,9 @@ import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.todayIn
@@ -26,6 +27,7 @@ import kotlin.time.Clock
  */
 class CalculateBudgetProgressUseCase(
     private val entryRepository: IEntryRepository,
+    private val consolidateFigure: ConsolidateFigureUseCase,
 ) {
     /**
      * [month] is the month being looked at: a `PERCENTAGE` limit is based on the
@@ -37,7 +39,11 @@ class CalculateBudgetProgressUseCase(
         recurringList: List<Recurring> = emptyList(),
         transactions: List<Transaction> = emptyList(),
         month: YearMonth = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth,
+        today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     ): List<BudgetProgress> {
+        // One date for every budget of this call: two bars of the same screen explained by
+        // quotes sampled a moment apart would read as two different months.
+        val date = consolidationDateOf(month, today)
         // Σ entries carrying each budgeted category's dimension, in the month —
         // debit-positive, so an expense already reads as +spent.
         val categoryBalances = entryRepository.dimensionBalancesInMonth(
@@ -59,14 +65,19 @@ class CalculateBudgetProgressUseCase(
             }
             // A category's spending comes back per currency, and the currencies of two
             // categories of the same budget need not agree — so the categories are added
-            // by currency and only then reduced. The currency of the *limit* is what the
-            // spending must be reduced to; until the limit has one of its own (task 8.5),
-            // that is the single currency the app has.
-            val spent = budget.categories
-                .filter { it.type.isExpense }
-                .fold(CurrencyBalance.zero) { total, category ->
-                    total + (categoryBalances[category.dimensionId] ?: CurrencyBalance.zero)
-                }[ASSUMED_SINGLE_CURRENCY]
+            // by currency and only then reduced. What they are reduced to is the **limit's**
+            // currency, never the base: the limit is the number the bar compares against,
+            // and reducing to anything else would put two denominations on one bar.
+            val spent = consolidateFigure(
+                balance = budget.categories
+                    .filter { it.type.isExpense }
+                    .fold(CurrencyBalance.zero) { total, category ->
+                        total + (categoryBalances[category.dimensionId] ?: CurrencyBalance.zero)
+                    },
+                base = budget.currency,
+                date = date,
+                policy = DisplayAmount.SignPolicy.MAGNITUDE,
+            )
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
                 recurringList.find { it.id == budget.recurringId }
             } else null

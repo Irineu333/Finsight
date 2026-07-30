@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.budgetForm
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +12,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +33,10 @@ import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
+import com.neoutils.finsight.extension.currencyDisplayName
+import com.neoutils.finsight.extension.currencySymbol
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
@@ -57,8 +60,9 @@ class BudgetFormModal(
         val recurringEntry = koinInject<RecurringEntry>()
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
+        val currencyModalTitle = stringResource(Res.string.budget_form_currency_modal_title)
 
-        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "")
+        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it, budget.currency) } ?: "")
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -129,6 +133,29 @@ class BudgetFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Only where there is a choice to make. With one currency among the accounts the
+            // form is exactly the one it was before currencies existed — the budget form
+            // chooses among the currencies that exist, and never creates one, which is what
+            // separates it from the account form (design D13 against D23).
+            if (uiState.offersCurrencyChoice || (uiState.isCurrencyLocked && uiState.offeredCurrencies.size > 1)) {
+                CurrencyRow(
+                    currency = uiState.currency,
+                    isLocked = uiState.isCurrencyLocked,
+                    onClick = {
+                        modalManager.show(
+                            CurrencyPickerModal(
+                                title = currencyModalTitle,
+                                currencies = uiState.offeredCurrencies,
+                                selected = uiState.currency,
+                                onCurrencySelected = { viewModel.onAction(BudgetFormAction.CurrencySelected(it)) },
+                            )
+                        )
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             when (uiState.limitType) {
                 LimitType.FIXED -> {
                     OutlinedTextField(
@@ -140,7 +167,7 @@ class BudgetFormModal(
                                 onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
                             )
                         },
-                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
+                        inputTransformation = rememberMoneyInputTransformation(uiState.currency, amount),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
@@ -316,6 +343,78 @@ private fun RecurringIncomeSelector(
                         onSelected(recurring)
                         expanded = false
                     },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The limit's currency as a row of the form: the glyph, the code and the name, with the
+ * chevron gone and the tone dropped to `onSurfaceVariant` when it is locked — the same
+ * signifier the app already uses for "this cannot change", so a locked currency reads like a
+ * default account that cannot be unset rather than like a control that failed.
+ */
+@Composable
+private fun CurrencyRow(
+    currency: String,
+    isLocked: Boolean,
+    onClick: () -> Unit,
+) {
+    val contentColor = if (isLocked) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Surface(
+        onClick = onClick,
+        enabled = !isLocked,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Text(
+                    text = currencySymbol(currency),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = contentColor,
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.budget_form_currency_label),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "$currency · ${currencyDisplayName(currency)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                if (isLocked) {
+                    Text(
+                        text = stringResource(Res.string.budget_form_currency_locked),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            if (!isLocked) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

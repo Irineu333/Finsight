@@ -1,18 +1,22 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.ui.model.CategorySpendingUi
-import com.neoutils.finsight.extension.MoneyFigure
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.sum
-import com.neoutils.finsight.extension.Denomination
-import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
+import com.neoutils.finsight.domain.usecase.consolidationDateOf
+import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
@@ -41,6 +45,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class ReportViewerViewModel(
     private val params: ReportViewerParams,
@@ -53,6 +61,8 @@ class ReportViewerViewModel(
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val entryRepository: IEntryRepository,
+    private val consolidateFigure: ConsolidateFigureUseCase,
+    baseCurrencyRepository: IBaseCurrencyRepository,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -98,7 +108,13 @@ class ReportViewerViewModel(
         creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
         facadeLookupFlow,
-    ) { transactions, accounts, creditCards, invoices, facadeLookup ->
+        // Every figure of a report spans its whole scope, so it is consolidated — and the
+        // base enters as a flow so the report follows the preference rather than sampling it.
+        baseCurrencyRepository.observe(),
+    ) { transactions, accounts, creditCards, invoices, facadeLookup, base ->
+        // One date for the whole emission: every figure of a report is governed by the same
+        // quote, or the summary and the breakdown would explain themselves differently.
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val invoiceIds = invoices.map { it.id }.toSet()
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
@@ -110,7 +126,11 @@ class ReportViewerViewModel(
             // already loaded).
             val flows = entryRepository.flowsByDimension(invoiceDimensionIds).values
             val owed = entryRepository.owedByDimension(invoiceDimensionIds).values
-            val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
+            // A closed invoice is governed by its own closing date, for ever: what the
+            // report says about a past period must not move when a quote does.
+            val date = consolidationDateOf(invoices.maxOf { it.closingDate }, today)
+            suspend fun CurrencyBalance.figure(policy: SignPolicy) =
+                consolidateFigure(balance = this, base = base, date = date, policy = policy)
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
@@ -118,20 +138,12 @@ class ReportViewerViewModel(
                 // very report: spending subtracts, an advance payment adds, and only the
                 // adjustment needs its direction spelled out.
                 // Each figure aggregates every invoice in the report, so it spans cards and
-                // its currency is not any one card's.
-                expense = DisplayAmount.forcedNegative(
-                    flows.map { it.expense }.sum()[ASSUMED_SINGLE_CURRENCY],
-                    denomination,
-                ),
-                advancePayment = DisplayAmount.forcedPositive(
-                    flows.map { it.advancePayment }.sum()[ASSUMED_SINGLE_CURRENCY],
-                    denomination,
-                ),
-                adjustment = DisplayAmount.explicitSign(
-                    flows.map { it.adjustment }.sum()[ASSUMED_SINGLE_CURRENCY],
-                    denomination,
-                ),
-                total = DisplayAmount.natural(owed.sum()[ASSUMED_SINGLE_CURRENCY], denomination),
+                // its currency is not any one card's — which is exactly what consolidation
+                // answers for.
+                expense = flows.map { it.expense }.sum().figure(SignPolicy.FORCED_NEGATIVE),
+                advancePayment = flows.map { it.advancePayment }.sum().figure(SignPolicy.FORCED_POSITIVE),
+                adjustment = flows.map { it.adjustment }.sum().figure(SignPolicy.EXPLICIT_SIGN),
+                total = owed.sum().figure(SignPolicy.NATURAL),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(
@@ -139,17 +151,16 @@ class ReportViewerViewModel(
                 startDate = startDate,
                 endDate = endDate,
             )
-            val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
+            val date = consolidationDateOf(endDate, today)
+            suspend fun CurrencyBalance.figure(policy: SignPolicy) =
+                consolidateFigure(balance = this, base = base, date = date, policy = policy)
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                openingBalance = DisplayAmount.natural(
-                    scopeStats.openingBalance[ASSUMED_SINGLE_CURRENCY],
-                    denomination,
-                ),
-                income = DisplayAmount.forcedPositive(scopeStats.income[ASSUMED_SINGLE_CURRENCY], denomination),
-                expense = DisplayAmount.forcedNegative(scopeStats.expense[ASSUMED_SINGLE_CURRENCY], denomination),
-                balance = DisplayAmount.natural(scopeStats.balance[ASSUMED_SINGLE_CURRENCY], denomination),
+                openingBalance = scopeStats.openingBalance.figure(SignPolicy.NATURAL),
+                income = scopeStats.income.figure(SignPolicy.FORCED_POSITIVE),
+                expense = scopeStats.expense.figure(SignPolicy.FORCED_NEGATIVE),
+                balance = scopeStats.balance.figure(SignPolicy.NATURAL),
             )
         }
 
@@ -170,12 +181,16 @@ class ReportViewerViewModel(
             !params.includeSpendingByCategory -> null
             invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
                 dimensionIds = invoiceDimensionIds.toList(),
+                base = base,
+                date = consolidationDateOf(invoices.maxOf { it.closingDate }, today),
                 transactionType = TransactionType.EXPENSE,
             )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
+                base = base,
+                date = consolidationDateOf(endDate, today),
                 transactionType = TransactionType.EXPENSE,
             )
         }
@@ -184,12 +199,16 @@ class ReportViewerViewModel(
             !params.includeIncomeByCategory -> null
             invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
                 dimensionIds = invoiceDimensionIds.toList(),
+                base = base,
+                date = consolidationDateOf(invoices.maxOf { it.closingDate }, today),
                 transactionType = TransactionType.INCOME,
             )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
+                base = base,
+                date = consolidationDateOf(endDate, today),
                 transactionType = TransactionType.INCOME,
             )
         }
@@ -291,16 +310,10 @@ class ReportViewerViewModel(
         }
     }
 
-    /**
-     * A category's share, denominated for the surfaces that show it. The figure spans every
-     * account in the report's scope, so reducing it is consolidation's job (task 8.2); until
-     * then the report has a single currency to state it in.
-     */
+    /** A category's share, denominated for the surfaces that show it — already consolidated. */
     private fun CategorySpending.toUi() = CategorySpendingUi(
         category = category,
-        amount = MoneyFigure.of(
-            DisplayAmount.natural(amount, Denomination.exact(ASSUMED_SINGLE_CURRENCY))
-        ),
+        amount = amount.figure,
         percentage = percentage,
     )
 }

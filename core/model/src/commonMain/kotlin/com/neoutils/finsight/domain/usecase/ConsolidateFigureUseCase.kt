@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.extension.AppliedRate
+import com.neoutils.finsight.extension.ConsolidatedFigure
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
@@ -31,6 +32,12 @@ import kotlinx.datetime.LocalDate
  * conversion took part in it, which is why [Denomination.approximate] is this layer's to
  * hand out and no surface can mark a figure by hand.
  *
+ * It answers with a [ConsolidatedFigure] rather than a [MoneyFigure] because the same
+ * reduction has two consumers: the surface that renders it, and the caller that ranks or
+ * fractions it — a category's share, a budget's progress. Both are projections of **one**
+ * decision about which quote governs the number, and handing out only the figure would send
+ * the second caller to reduce it again.
+ *
  * Conversion lives here rather than in the ledger because a read that multiplied entries by
  * a rate would stop being `Σ entries`. Combining two per-currency results — summing disjoint
  * perimeters — is *not* this layer's business: that is arithmetic over balances, and the
@@ -51,15 +58,23 @@ class ConsolidateFigureUseCase(
         base: String,
         date: LocalDate,
         policy: SignPolicy = SignPolicy.NATURAL,
-    ): MoneyFigure {
+    ): ConsolidatedFigure {
+        // A currency that contributes exactly nothing is not a term. A grouped read answers
+        // with a row per currency it *touched*, and a perimeter whose dollar legs cancel comes
+        // back with `USD: 0` beside the reais — which would split an exact figure into two
+        // terms and mark it approximate over nothing. Dropped only where another currency
+        // survives, so a genuinely empty single-currency figure keeps its own denomination
+        // instead of falling back to the base.
         val amounts = balance.entries
+            .takeIf { it.size < 2 }
+            ?: balance.entries.filterValues { it != 0.0 }.ifEmpty { balance.entries }
 
         // Nothing at all reads as zero, and it is exact: an empty result is not an unknown
         // one. It is denominated in the base because no account named a currency for it.
-        if (amounts.isEmpty()) return MoneyFigure.of(term(0.0, base, policy))
+        if (amounts.isEmpty()) return whole(term(0.0, base, policy))
 
         amounts.entries.singleOrNull()?.let { (currency, amount) ->
-            return MoneyFigure.of(term(amount, currency, policy))
+            return whole(term(amount, currency, policy))
         }
 
         val (convertible, own) = amounts.entries
@@ -91,10 +106,28 @@ class ConsolidateFigureUseCase(
             .sortedBy { it.currency }
             .map { term(it.amount, it.currency, policy) }
 
-        return MoneyFigure.of(
-            if (convertible.isEmpty()) ownTerms else listOf(baseTerm) + ownTerms
+        // The number a caller ranks or fractions by is **the base term as it reads** — the
+        // policy already applied, so the number and the text never disagree about direction.
+        // It is what the rates reached and no more, which is why it does not travel alone: a
+        // share computed over it while a term sits outside it is an approximation, and
+        // `isPartial` is what carries that to the surface instead of leaving it to be
+        // rediscovered. With no base term at all it is zero — answering with the first
+        // foreign term would rank dollars against reais elsewhere in the same list.
+        return ConsolidatedFigure(
+            figure = MoneyFigure.of(
+                if (convertible.isEmpty()) ownTerms else listOf(baseTerm) + ownTerms
+            ),
+            comparable = if (convertible.isEmpty()) 0.0 else baseTerm.value,
+            isPartial = own.isNotEmpty(),
         )
     }
+
+    /** A figure no rate had to reach: what it reads as and what it is worth are the same. */
+    private fun whole(term: DisplayAmount) = ConsolidatedFigure(
+        figure = MoneyFigure.of(term),
+        comparable = term.value,
+        isPartial = false,
+    )
 
     /** The base is worth one of itself by definition, and no row may say otherwise. */
     private suspend fun rateOf(currency: String, base: String, date: LocalDate): ExchangeRate? =

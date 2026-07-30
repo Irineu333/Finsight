@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
@@ -13,6 +13,8 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
+import com.neoutils.finsight.domain.usecase.consolidationDateOf
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
@@ -20,7 +22,6 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
@@ -42,6 +43,12 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
+    /**
+     * The currency every figure that spans accounts is reduced to. It travels with the input,
+     * like [today] does, so one build has exactly one base — two widgets of the same screen
+     * reading the preference a moment apart would render half a dashboard in each.
+     */
+    val baseCurrency: String,
     val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
 )
 
@@ -57,6 +64,7 @@ class DashboardComponentsBuilder(
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val entryRepository: IEntryRepository,
+    private val consolidateFigure: ConsolidateFigureUseCase,
     private val navCatalog: NavCatalog,
 ) {
 
@@ -72,6 +80,7 @@ class DashboardComponentsBuilder(
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
                 pendingRecurring = context.pendingRecurring,
+                input = input,
                 config = config,
             )
 
@@ -123,11 +132,10 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
     ): DashboardComponent.TotalBalance {
         // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
-        // The read spans every account, so it comes back per currency; reducing it to one
-        // figure is consolidation, and until that layer exists (task 8.2) the app has a
-        // single currency to reduce it to.
+        // The read spans every account, so it comes back per currency and the consolidation
+        // layer is what reduces it to what the card renders.
         return DashboardComponent.TotalBalance(
-            amount = figure(calculateBalanceUseCase(target = input.targetMonth)[ASSUMED_SINGLE_CURRENCY]),
+            amount = input.figure(calculateBalanceUseCase(target = input.targetMonth)).figure,
         )
     }
 
@@ -145,17 +153,17 @@ class DashboardComponentsBuilder(
 
         // The sum of two per-currency figures is the ledger's own operation — each currency
         // added to its own, nothing converted here.
-        val income = asset.income[ASSUMED_SINGLE_CURRENCY]
-        val expense = (asset.expense + liability.expense)[ASSUMED_SINGLE_CURRENCY]
+        val income = asset.income
+        val expense = asset.expense + liability.expense
 
-        val isEmpty = income <= 0.0 && expense <= 0.0
+        val isEmpty = income.movedNothing() && expense.movedNothing()
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
 
         return DashboardComponent.OverallBalanceStats(
-            income = figure(income),
-            expense = figure(expense),
+            income = input.figure(income).figure,
+            expense = input.figure(expense).figure,
         )
     }
 
@@ -167,37 +175,55 @@ class DashboardComponentsBuilder(
         // ledger — transfers and card payments (money between the user's own accounts)
         // are excluded there, not re-derived here (spec `ledger-reporting`).
         val stats = entryRepository.assetMonthFlows(input.targetMonth)
-        val income = stats.income[ASSUMED_SINGLE_CURRENCY]
-        val expense = stats.expense[ASSUMED_SINGLE_CURRENCY]
-
-        val isEmpty = income <= 0.0 && expense <= 0.0
+        val isEmpty = stats.income.movedNothing() && stats.expense.movedNothing()
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
 
         return DashboardComponent.ConcreteBalanceStats(
-            income = figure(income),
-            expense = figure(expense),
+            income = input.figure(stats.income).figure,
+            expense = input.figure(stats.expense).figure,
         )
     }
 
-    private fun pendingBalanceStats(
+    private suspend fun pendingBalanceStats(
         pendingRecurring: List<Recurring>,
+        input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.PendingBalanceStats? {
-        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount }
-        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount }
-        val isEmpty = pendingIncome <= 0.0 && pendingExpense <= 0.0
+        // A recurring is denominated by the account or card it names, so a list of them is a
+        // per-currency figure before it is one number — the same shape a ledger read has.
+        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.balance()
+        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.balance()
+        val isEmpty = pendingIncome.movedNothing() && pendingExpense.movedNothing()
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.PendingBalanceStats(
-                pendingIncome = figure(pendingIncome),
-                pendingExpense = figure(pendingExpense),
+                pendingIncome = input.figure(pendingIncome).figure,
+                pendingExpense = input.figure(pendingExpense).figure,
             )
         } else {
             null
         }
     }
+
+    /**
+     * Whether nothing at all moved. It is asked of the per-currency result and not of the
+     * consolidated one, so a widget hides or shows for the same reason it always did — a
+     * currency no rate reached still counts as movement.
+     */
+    private fun CurrencyBalance.movedNothing() = entries.values.none { it > 0.0 }
+
+    /**
+     * A list of recurrings as a per-currency figure. One whose account and card are both gone
+     * denominates nothing and is left out: it cannot be posted either, so counting its number
+     * would put an amount in the total in a currency nobody can name.
+     */
+    private fun List<Recurring>.balance(): CurrencyBalance = CurrencyBalance.of(
+        mapNotNull { recurring -> recurring.currency?.let { it to recurring.amount } }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, amounts) -> amounts.sum() }
+    )
 
     private suspend fun creditCardBalanceStats(
         input: DashboardComponentsInput,
@@ -205,15 +231,12 @@ class DashboardComponentsBuilder(
     ): DashboardComponent.CreditCardBalanceStats? {
         // Month-wide card expense/payment from the ledger (task 4.11).
         val flows = entryRepository.liabilityMonthFlows(input.targetMonth)
-        val payment = flows.payment[ASSUMED_SINGLE_CURRENCY]
-        val expense = flows.expense[ASSUMED_SINGLE_CURRENCY]
-
-        val isEmpty = payment <= 0.0 && expense <= 0.0
+        val isEmpty = flows.payment.movedNothing() && flows.expense.movedNothing()
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.CreditCardBalanceStats(
-                payment = figure(payment),
-                expense = figure(expense),
+                payment = input.figure(flows.payment).figure,
+                expense = input.figure(flows.expense).figure,
             )
         } else {
             null
@@ -280,7 +303,7 @@ class DashboardComponentsBuilder(
                     dueDay = creditCard.dueDay,
                     limit = DisplayAmount.natural(
                         creditCard.limit,
-                        Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                        Denomination.exact(creditCard.currency),
                     ),
                     // The dashboard shows a summary and offers no reopen action, so it
                     // has no need of the sibling list `canReopen` would derive from.
@@ -311,6 +334,8 @@ class DashboardComponentsBuilder(
 
         val categorySpending = calculateCategorySpendingUseCase(
             forYearMonth = input.targetMonth,
+            base = input.baseCurrency,
+            today = input.today,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 
         return if (categorySpending.isNotEmpty()) {
@@ -331,6 +356,8 @@ class DashboardComponentsBuilder(
 
         val categoryIncome = calculateCategoryIncomeUseCase(
             forYearMonth = input.targetMonth,
+            base = input.baseCurrency,
+            today = input.today,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 
         return if (categoryIncome.isNotEmpty()) {
@@ -350,6 +377,7 @@ class DashboardComponentsBuilder(
             recurringList = input.recurringList,
             transactions = input.transactions,
             month = input.targetMonth,
+            today = input.today,
         )
 
         return if (budgetProgress.isNotEmpty()) {
@@ -419,30 +447,30 @@ class DashboardComponentsBuilder(
     }
 
     /**
-     * A widget figure as it is shown. Every one of them spans accounts, so it comes back
-     * per currency and reducing it to what the surface renders is consolidation's job (task
-     * 8.2). Until that layer is wired in there is a single currency to reduce it to, and the
-     * reading is [DisplayAmount.natural] — the same text the card printed before it carried
-     * its denomination.
+     * A widget figure as it is shown. Every one of them spans accounts, so the ledger answers
+     * per currency and this is the single reduction to what the surface renders — the base and
+     * the governing date both come from the input, so every widget of one build agrees.
      */
-    private fun figure(amount: Double) =
-        MoneyFigure.of(DisplayAmount.natural(amount, Denomination.exact(ASSUMED_SINGLE_CURRENCY)))
+    private suspend fun DashboardComponentsInput.figure(balance: CurrencyBalance) =
+        consolidateFigure(
+            balance = balance,
+            base = baseCurrency,
+            date = consolidationDateOf(targetMonth, today),
+            policy = DisplayAmount.SignPolicy.NATURAL,
+        )
 
     /**
-     * A budget's progress, denominated for the bar. The limit is set in one currency and stays
-     * in it; the spending spans accounts, so it is a figure — of one term until task 8.2 wires
-     * the consolidation in, and denominated in the limit's currency from task 8.5.
+     * A budget's progress, denominated for the bar: the limit in the currency it was stated
+     * in, and the spending already reduced to that same currency by the progress use case.
      */
     private fun BudgetProgress.toUi() = BudgetProgressUi(
         id = budget.id,
         title = budget.title,
         icon = budget.icon,
-        spent = MoneyFigure.of(
-            DisplayAmount.magnitude(spent, Denomination.exact(ASSUMED_SINGLE_CURRENCY))
-        ),
+        spent = spent.figure,
         limit = DisplayAmount.magnitude(
             budget.amount,
-            Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+            Denomination.exact(budget.currency),
         ),
         progress = progress,
     )
@@ -450,7 +478,7 @@ class DashboardComponentsBuilder(
     /** A category's share, denominated for the card. The number and the share stay the domain's. */
     private fun CategorySpending.toUi() = CategorySpendingUi(
         category = category,
-        amount = figure(amount),
+        amount = amount.figure,
         percentage = percentage,
     )
 

@@ -16,7 +16,15 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.test.StubEntryRepository
@@ -125,6 +133,8 @@ class ViewCategoryViewModelTest {
         categoryId = 1L,
         categoryRepository = categoryRepository,
         entryRepository = entryRepository,
+        consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        baseCurrencyRepository = FixedBase,
         resolveRetirability = ResolveCategoryRetirabilityUseCase(
             entryRepository = entryRepository,
             budgetRepository = budgetRepository,
@@ -180,7 +190,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(42.5, content.totalAmount)
+            assertEquals(exactly(42.5), content.totalAmount)
             assertEquals(2, content.transactionCount)
         }
     }
@@ -270,14 +280,14 @@ class ViewCategoryViewModelTest {
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
-            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount)
+            assertEquals(exactly(42.5), assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount)
 
             entries.balances = mapOf(10L to 60.0)
             entries.counts = mapOf(10L to 3)
             entries.ledger.emit(Unit)
 
             val refreshed = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(60.0, refreshed.totalAmount)
+            assertEquals(exactly(60.0), refreshed.totalAmount)
             assertEquals(3, refreshed.transactionCount)
         }
     }
@@ -291,7 +301,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, accountId = 11))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(0.0, content.totalAmount)
+            assertEquals(exactly(0.0), content.totalAmount)
             assertEquals(0, content.transactionCount)
         }
     }
@@ -346,3 +356,26 @@ class ViewCategoryViewModelTest {
         }
     }
 }
+
+/** No rate at all — the single-currency profile these cases exercise. */
+private object NoRates : IExchangeRateRepository {
+    override suspend fun rateOn(currency: String, date: LocalDate) = null
+    override fun observeAll() = throw NotImplementedError()
+    override suspend fun getAll() = throw NotImplementedError()
+    override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
+}
+
+private object FixedBase : IBaseCurrencyRepository {
+    private val state = MutableStateFlow("BRL")
+    override fun observe() = state
+    override suspend fun set(currency: String) = throw NotImplementedError()
+}
+
+/**
+ * The figure a single-currency profile produces: one term, in its own currency, exact.
+ * Asserted whole rather than by reading a term out of it — the figure is what the screen
+ * shows, and comparing the figures is comparing what the reader sees.
+ */
+private fun exactly(value: Double) =
+    MoneyFigure.of(DisplayAmount.natural(value, Denomination.exact("BRL")))

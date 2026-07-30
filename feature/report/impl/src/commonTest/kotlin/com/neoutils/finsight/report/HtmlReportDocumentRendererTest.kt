@@ -34,6 +34,7 @@ class HtmlReportDocumentRendererTest {
                 amount = "Valor",
                 percentage = "%",
             ),
+            summaryFootnote = null,
             summaryItems = listOf(
                 ReportSummaryItem(label = "Saldo", value = "R$ 100,00", tone = ReportTone.POSITIVE),
             ),
@@ -47,6 +48,7 @@ class HtmlReportDocumentRendererTest {
                             percentage = "60.0%",
                         )
                     ),
+                    footnote = null,
                 ),
                 ReportLayoutSection.Transactions(
                     title = "Transações",
@@ -62,6 +64,7 @@ class HtmlReportDocumentRendererTest {
                             ),
                         )
                     ),
+                    footnote = null,
                 ),
             ),
         )
@@ -93,6 +96,7 @@ class HtmlReportDocumentRendererTest {
                 percentage = "%",
             ),
             summaryItems = emptyList(),
+            summaryFootnote = null,
             sections = listOf(
                 ReportLayoutSection.Transactions(
                     title = "Transações",
@@ -108,6 +112,7 @@ class HtmlReportDocumentRendererTest {
                             ),
                         )
                     ),
+                    footnote = null,
                 )
             ),
         )

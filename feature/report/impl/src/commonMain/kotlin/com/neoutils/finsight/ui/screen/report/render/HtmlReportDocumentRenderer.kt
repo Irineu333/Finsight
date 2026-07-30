@@ -115,6 +115,12 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                 }
                 .table th{font-size:12px;color:var(--muted);font-weight:600;}
                 .table td.amount,.table th.amount{text-align:right;}
+                .footnote{
+                  margin-top:10px;
+                  color:var(--muted);
+                  font-size:12px;
+                  line-height:1.5;
+                }
                 .group-title{
                   margin-top:14px;
                   margin-bottom:6px;
@@ -151,6 +157,9 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                     appendLine("</article>")
                 }
                 appendLine("</section>")
+                // Outside the grid: the summary is a `repeat(auto-fit, …)` of cards, and a
+                // note inside it would become a cell of its own width.
+                layout.summaryFootnote?.let { appendLine("<p class=\"footnote\">${it.escapeHtml()}</p>") }
             }
 
             layout.sections.forEach { section ->
@@ -172,6 +181,7 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                         }
                         appendLine("</tbody>")
                         appendLine("</table>")
+                        section.footnote?.let { appendLine("<p class=\"footnote\">${it.escapeHtml()}</p>") }
                         appendLine("</section>")
                     }
 
@@ -194,6 +204,7 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                             appendLine("</tbody>")
                             appendLine("</table>")
                         }
+                        section.footnote?.let { appendLine("<p class=\"footnote\">${it.escapeHtml()}</p>") }
                         appendLine("</section>")
                     }
                 }

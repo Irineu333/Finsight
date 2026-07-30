@@ -839,4 +839,10 @@
     <string name="approximation_footer_unreached">Amounts in more than one currency. With no rate, each is shown on its own.</string>
     <string name="approximation_footer_rate">1 %1$s = %2$s, on %3$s</string>
     <string name="approximation_footer_action">See rates</string>
+    <string name="report_export_approximation_converted">Amounts in more than one currency, brought together in the base currency. The ≈ sign marks a converted amount, and “+…” means a share in another currency was not added in.</string>
+    <string name="report_export_approximation_unreached">Amounts in more than one currency, with no known rate. The ≈ sign marks the incomplete figure, and “+…” means the share that was left out.</string>
+    <string name="report_export_approximation_rate">1 %1$s = %2$s, on %3$s.</string>
+    <string name="budget_form_currency_label">Limit currency</string>
+    <string name="budget_form_currency_locked">A limit's currency does not change after it is created.</string>
+    <string name="budget_form_currency_modal_title">Limit currency</string>
 </resources>

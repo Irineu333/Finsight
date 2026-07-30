@@ -9,7 +9,10 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
+import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.toYearMonth
@@ -21,6 +24,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -33,6 +38,8 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
+    private val consolidateFigure: ConsolidateFigureUseCase,
+    baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -59,12 +66,21 @@ class TransactionsViewModel(
         categoryRepository.observeAllCategoriesIncludingClosed(),
         installmentRepository.observeAllInstallments(),
         combine(selectedYearMonth, selectedScope, ::Pair),
-        filters
-    ) { transactions, categories, installments, (yearMonth, scope), filters ->
+        filters,
+        // The summary's figures span accounts, so they are consolidated — and the base
+        // enters as a flow so the card follows the preference instead of sampling it.
+        baseCurrencyRepository.observe(),
+    ) { transactions, categories, installments, (yearMonth, scope), filters, base ->
         // Every figure comes from the ledger, per scope — never summed over the loaded
         // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
         // re-runs this block on every ledger write, and on scope or month change.
-        val balanceOverview = entryRepository.balanceOverview(scope, yearMonth)
+        val balanceOverview = entryRepository.balanceOverview(
+            scope = scope,
+            month = yearMonth,
+            base = base,
+            today = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            consolidateFigure = consolidateFigure,
+        )
 
         // The scope decides between account and card; offering the chip as well would
         // be the same decision twice, able to contradict itself.

@@ -9,7 +9,10 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +39,10 @@ class BudgetClosedCategoryTest {
 
     private val mapper = BudgetMapper()
     private fun useCase(balances: Map<Long, Double>) =
-        CalculateBudgetProgressUseCase(MonthBalances(balances))
+        CalculateBudgetProgressUseCase(
+            entryRepository = MonthBalances(balances),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        )
 
     private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
@@ -134,7 +140,7 @@ class BudgetClosedCategoryTest {
             budgets = listOf(budget),
         ).single()
 
-        assertEquals(100.0, progress.spent)
+        assertEquals(100.0, progress.spent.comparable)
     }
 
     @Test
@@ -154,7 +160,7 @@ class BudgetClosedCategoryTest {
             budgets = listOf(budget),
         ).single()
 
-        assertEquals(30.0, progress.spent)
+        assertEquals(30.0, progress.spent.comparable)
     }
 
     @Test
@@ -234,4 +240,13 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
         startDate: LocalDate,
         endDate: LocalDate,
     ) = throw NotImplementedError()
+}
+
+/** No rate at all — the single-currency profile these cases exercise. */
+private object NoRates : IExchangeRateRepository {
+    override suspend fun rateOn(currency: String, date: LocalDate) = null
+    override fun observeAll() = throw NotImplementedError()
+    override suspend fun getAll() = throw NotImplementedError()
+    override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
 }

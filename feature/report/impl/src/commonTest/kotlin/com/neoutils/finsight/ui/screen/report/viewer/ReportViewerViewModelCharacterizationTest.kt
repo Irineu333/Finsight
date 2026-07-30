@@ -29,7 +29,11 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.test.StubEntryRepository
 import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
@@ -114,8 +118,11 @@ class ReportViewerViewModelCharacterizationTest {
                 categoryRepository = fakes.categoryRepository,
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
+                consolidateFigure = ConsolidateFigureUseCase(NoRates),
             ),
             entryRepository = fakes.entryRepository(),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+            baseCurrencyRepository = FixedBase,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -127,10 +134,10 @@ class ReportViewerViewModelCharacterizationTest {
             while (state !is ReportViewerUiState.Content) state = awaitItem()
             val stats = state.stats as ReportViewerUiState.Stats.Account
             // Each figure carries the sign it is displayed with.
-            assertEquals(100.0, stats.income.value)
-            assertEquals(-30.0, stats.expense.value)
-            assertEquals(70.0, stats.balance.value)
-            assertEquals(-20.0, stats.openingBalance.value)
+            assertEquals(100.0, stats.income.comparable)
+            assertEquals(-30.0, stats.expense.comparable)
+            assertEquals(70.0, stats.balance.comparable)
+            assertEquals(-20.0, stats.openingBalance.comparable)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -188,7 +195,10 @@ class ReportViewerViewModelCharacterizationTest {
                 categoryRepository = fakes.categoryRepository,
                 accountRepository = fakes.accountRepository(emptyList()),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
+                consolidateFigure = ConsolidateFigureUseCase(NoRates),
             ),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+            baseCurrencyRepository = FixedBase,
             entryRepository = fakes.entryRepository(
                 owed = mapOf(1L to 70.0),
                 // The invoice breakdown now reads the ledger's per-dimension flows
@@ -207,11 +217,11 @@ class ReportViewerViewModelCharacterizationTest {
             val stats = state.stats as ReportViewerUiState.Stats.Invoice
             // The invoice lines now read like the account lines of the same report:
             // spending signed negative, an advance payment positive.
-            assertEquals(-100.0, stats.expense.value)
-            assertEquals(30.0, stats.advancePayment.value)
-            assertEquals(10.0, stats.adjustment.value)
+            assertEquals(-100.0, stats.expense.comparable)
+            assertEquals(30.0, stats.advancePayment.comparable)
+            assertEquals(10.0, stats.adjustment.comparable)
             // Positive-as-debt, hence NATURAL and not OWED, which would zero it.
-            assertEquals(70.0, stats.total.value, "owed comes from the ledger's dimensionOwed")
+            assertEquals(70.0, stats.total.comparable, "owed comes from the ledger's dimensionOwed")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -332,4 +342,19 @@ private object NoInstallments : IInstallmentRepository {
     override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
     override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
+}
+
+/** No rate at all — the single-currency profile these cases exercise. */
+private object NoRates : IExchangeRateRepository {
+    override suspend fun rateOn(currency: String, date: LocalDate) = null
+    override fun observeAll() = throw NotImplementedError()
+    override suspend fun getAll() = throw NotImplementedError()
+    override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
+}
+
+private object FixedBase : IBaseCurrencyRepository {
+    private val state = MutableStateFlow("BRL")
+    override fun observe() = state
+    override suspend fun set(currency: String) = throw NotImplementedError()
 }

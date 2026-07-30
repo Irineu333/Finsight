@@ -35,6 +35,11 @@ passa a ser derivada. Só então a moeda desta figura tem resposta.
 | `feature/report/.../ReportViewerScreen.kt` | os 2 `CategorySpendingCard` |
 | `feature/categories/.../ViewCategoryModal.kt` | total gasto da categoria |
 
+> **Estado após o grupo 8:** dos seis grupos, A, C, E e F estão fechados, e B está reduzido ao
+> **formulário de cartão** (`CreditCardFormViewModel`/`CreditCardFormModal`) mais o *default* de
+> `CreditCard.currency` — os dois territórios da tarefa 9.7. A lista greppável tem hoje 3 sítios
+> de produção; era 129.
+
 ### B. Valor de fachada de **cartão** → fechada por **7.2/7.3** + **9.7**
 O cartão passa a ter moeda quando `CreditCardFormModal` a escolhe e `CreditCardRepository` a grava.
 
@@ -59,24 +64,30 @@ Os sítios abaixo que tinham o cartão à mão fecharam com isso; os que ainda n
 | `feature/transactions/.../ViewTransactionModal.kt` | total do parcelamento | 9.7 |
 | `feature/transactions/.../AddTransactionModal.kt` | entrada de valor | 9.7 |
 
-### C. Valor de fachada de **recorrência** → fechada por **9.4**
-| arquivo | figura |
-|---|---|
-| `feature/recurring/.../RecurringScreen.kt`, `.../ViewRecurringModal.kt`, `.../RecurringFormModal.kt`, `.../ConfirmRecurringModal.kt` | valor da recorrência |
-| `feature/dashboard/.../DashboardComponentContent.kt` | valor da recorrência no widget |
+### C. Valor de fachada de **recorrência** → **fechado**
+Pelo mesmo veículo do cartão em 7.8: `Recurring.currency` é **derivada** do cartão ou da conta que
+o template nomeia, e é `null` quando nenhum dos dois existe mais — um template que não aponta para
+lugar nenhum não denomina nada, que é o mesmo estado que `hasUsableSource` já reporta como
+impostável. A recusa de domínio de D17 e o seletor que encolhe continuam sendo de 9.4; o espelho
+não escolhe nada.
 
-### D. Limite de **orçamento** → fechada por **8.5–8.7**
-A entidade de orçamento ganha a moeda do limite (coluna criada em 4.2).
+| arquivo | figura | estado |
+|---|---|---|
+| `feature/recurring/.../RecurringScreen.kt`, `.../ViewRecurringModal.kt`, `.../RecurringFormModal.kt`, `.../ConfirmRecurringModal.kt` | valor da recorrência | **fechado (grupo 8)** |
+| `feature/dashboard/.../DashboardComponentContent.kt` | valor da recorrência no widget | **fechado (grupo 8)** |
 
-| arquivo | figura |
-|---|---|
-| `feature/budgets/.../BudgetFormModal.kt`, `.../BudgetFormViewModel.kt` | entrada e exibição do limite |
-| `feature/budgets/.../ViewBudgetModal.kt`, `.../BudgetsScreen.kt` | limite, gasto, restante, excedido |
+### D. Limite de **orçamento** → **fechado (8.5/8.6)**
+`Budget.currency` carrega a moeda do limite, lida e gravada pela coluna criada em 4.2.
 
-### E. Documento exportado → fechada por **8.1/8.2**
-| arquivo | figura |
-|---|---|
-| `feature/report/.../ReportExportLayout.kt` | valor de cada linha de categoria do relatório |
+| arquivo | figura | estado |
+|---|---|---|
+| `feature/budgets/.../BudgetFormModal.kt`, `.../BudgetFormViewModel.kt` | entrada e exibição do limite | **fechado** |
+| `feature/budgets/.../ViewBudgetModal.kt`, `.../BudgetsScreen.kt` | limite, gasto, restante, excedido | **fechado** |
+
+### E. Documento exportado → **fechado (8.1)**
+| arquivo | figura | estado |
+|---|---|---|
+| `feature/report/.../ReportExportLayout.kt` | valor de cada linha de categoria do relatório | **fechado** |
 
 ### F. Previews → fechada por **6.8**
 | arquivo | figura |

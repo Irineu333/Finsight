@@ -41,6 +41,7 @@ class DashboardViewModel(
     private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
     private val dashboardPreviewFactory: DashboardPreviewFactory,
+    baseCurrencyRepository: IBaseCurrencyRepository,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -94,7 +95,10 @@ class DashboardViewModel(
         recurringOccurrenceRepository.observeAllOccurrences(),
         dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, transactionsAndFacades, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+        // Every consolidated figure of the dashboard reacts to the base changing, and it
+        // enters as a flow rather than being read inside so that a build has exactly one.
+        baseCurrencyRepository.observe(),
+    ) { invoices, transactionsAndFacades, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences, baseCurrency ->
         val (transactions, facadeLookup) = transactionsAndFacades
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
@@ -109,6 +113,7 @@ class DashboardViewModel(
                 occurrences = occurrences,
                 today = today,
                 targetMonth = today.yearMonth,
+                baseCurrency = baseCurrency,
                 facadeLookup = facadeLookup,
             ),
             preferences = preferences,

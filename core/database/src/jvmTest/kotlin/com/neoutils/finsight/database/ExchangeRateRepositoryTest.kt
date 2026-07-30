@@ -98,7 +98,7 @@ class ExchangeRateRepositoryTest {
         val consolidate = ConsolidateFigureUseCase(rates)
 
         // With the rate, the two currencies reconcile into one approximate term in the base.
-        val withRate = consolidate(balance, base = "BRL", date = date)
+        val withRate = consolidate(balance, base = "BRL", date = date).figure
         assertEquals(1, withRate.terms.size)
         assertEquals(375.0, withRate.terms.single().value)
 
@@ -108,7 +108,7 @@ class ExchangeRateRepositoryTest {
 
         // What the figures do next is the point: nothing is guessed and nothing is dropped.
         // The dollars go back to being stated in dollars, exactly, beside the reais.
-        val withoutRate = consolidate(balance, base = "BRL", date = date)
+        val withoutRate = consolidate(balance, base = "BRL", date = date).figure
         assertEquals(listOf(100.0, 50.0), withoutRate.terms.map { it.value })
         assertEquals(listOf("BRL", "USD"), withoutRate.terms.map { it.denomination.currency })
     }

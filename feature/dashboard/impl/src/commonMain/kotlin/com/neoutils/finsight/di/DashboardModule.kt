@@ -26,6 +26,7 @@ val dashboardModule = module {
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),
             entryRepository = get(),
+            consolidateFigure = get(),
             navCatalog = get(),
         )
     }
@@ -50,6 +51,7 @@ val dashboardModule = module {
             buildDashboardViewingUseCase = get(),
             dashboardPreferencesRepository = get(),
             dashboardPreviewFactory = get(),
+            baseCurrencyRepository = get(),
             analytics = get(),
             crashlytics = get(),
         )

@@ -63,6 +63,8 @@ val transactionsModule = module {
             categoryRepository = get(),
             installmentRepository = get(),
             entryRepository = get(),
+            consolidateFigure = get(),
+            baseCurrencyRepository = get(),
         )
     }
     viewModel {

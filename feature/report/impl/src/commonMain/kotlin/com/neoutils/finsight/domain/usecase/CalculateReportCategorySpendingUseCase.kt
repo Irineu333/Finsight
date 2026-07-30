@@ -1,6 +1,5 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CurrencyBalance
@@ -11,6 +10,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.LocalDate
 
@@ -19,12 +19,15 @@ class CalculateReportCategorySpendingUseCase(
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val consolidateFigure: ConsolidateFigureUseCase,
 ) {
     /** Account-perspective report: category totals in a date range, scoped by the perspective's legs. */
     suspend operator fun invoke(
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
+        base: String,
+        date: LocalDate,
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         val nominalType = accountType(transactionType)
@@ -43,18 +46,24 @@ class CalculateReportCategorySpendingUseCase(
         return build(
             totals = entryRepository.totalsByDimension(nominalType, startDate, endDate, siblingAccountIds),
             transactionType = transactionType,
+            base = base,
+            date = date,
         )
     }
 
     /** Sub-ledger-scoped report: category totals across a set of dimensions. */
     suspend fun forDimensions(
         dimensionIds: List<Long>,
+        base: String,
+        date: LocalDate,
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         if (dimensionIds.isEmpty()) return emptyList()
         return build(
             totals = entryRepository.totalsByDimensionInScope(accountType(transactionType), dimensionIds),
             transactionType = transactionType,
+            base = base,
+            date = date,
         )
     }
 
@@ -64,6 +73,8 @@ class CalculateReportCategorySpendingUseCase(
     private suspend fun build(
         totals: Map<Long?, CurrencyBalance>,
         transactionType: TransactionType,
+        base: String,
+        date: LocalDate,
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
         // Include closed: the ledger totals above count an archived category's
@@ -77,22 +88,28 @@ class CalculateReportCategorySpendingUseCase(
             .associateBy { it.dimensionId }
 
         // A category's total comes back per currency — the report ranks categories against
-        // each other, so it needs one figure per category, in the single currency the app
-        // has until the consolidation layer denominates it (task 8.2).
+        // each other, so the consolidation layer is what turns each one into the single
+        // figure the ranking and the row both read.
         val amounts = totals.mapNotNull { (dimensionId, natural) ->
             val category = categoriesByDimension[dimensionId] ?: return@mapNotNull null
-            val amount = natural[ASSUMED_SINGLE_CURRENCY] * displaySign
-            if (amount == 0.0) null else category to amount
+            val signed = CurrencyBalance.of(natural.entries.mapValues { (_, amount) -> amount * displaySign })
+            val figure = consolidateFigure(
+                balance = signed,
+                base = base,
+                date = date,
+                policy = DisplayAmount.SignPolicy.NATURAL,
+            )
+            if (figure.comparable == 0.0 && !figure.isPartial) null else category to figure
         }
-        val total = amounts.sumOf { it.second }
+        val total = amounts.sumOf { it.second.comparable }
         return amounts
-            .map { (category, amount) ->
+            .map { (category, figure) ->
                 CategorySpending(
                     category = category,
-                    amount = amount,
-                    percentage = if (total > 0) (amount / total) * 100 else 0.0,
+                    amount = figure,
+                    percentage = if (total > 0) (figure.comparable / total) * 100 else 0.0,
                 )
             }
-            .sortedByDescending { it.amount }
+            .sortedByDescending { it.amount.comparable }
     }
 }

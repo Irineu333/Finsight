@@ -2,13 +2,14 @@
 
 package com.neoutils.finsight.ui.screen.transactions
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -78,7 +79,20 @@ data class TransactionsUiState(
      * here, by the mapper; a `null` flow is a line the month does not have, so the card
      * never has to ask whether a number is worth showing.
      */
+    /**
+     * The defaults are the card **before the ledger has answered**, and they are denominated
+     * in [LAST_RESORT_CURRENCY] for the one reason that constant exists: nothing has named a
+     * currency yet. They are zeros that no read produced — the moment one does, every figure
+     * arrives consolidated, carrying the base or the single currency the ledger returned.
+     */
     sealed interface BalanceOverview {
+
+        /**
+         * Every figure of the summary, in no particular order — what the card's footer asks
+         * to decide whether it owes the reader an explanation. It is declared here, beside
+         * the fields, so a line added to a perimeter cannot be left out of the question.
+         */
+        val figures: List<MoneyFigure>
 
         /**
          * The `ASSET` perimeter. An invoice payment *is* a flow here — its liability
@@ -88,13 +102,16 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
          */
         data class Accounts(
-            val openingBalance: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val invoicePayment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-        ) : BalanceOverview
+            val openingBalance: MoneyFigure = MoneyFigure.of(DisplayAmount.natural(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val income: MoneyFigure = MoneyFigure.of(DisplayAmount.forcedPositive(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val expense: MoneyFigure = MoneyFigure.of(DisplayAmount.forcedNegative(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val invoicePayment: MoneyFigure? = null,
+            val adjustment: MoneyFigure? = null,
+            val finalBalance: MoneyFigure = MoneyFigure.of(DisplayAmount.natural(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+        ) : BalanceOverview {
+            override val figures
+                get() = listOfNotNull(openingBalance, income, expense, invoicePayment, adjustment, finalBalance)
+        }
 
         /**
          * The `LIABILITY` perimeter, in the ledger's own sign — a card you owe on has a
@@ -105,12 +122,15 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance − expense + payment + adjustment`
          */
         data class Cards(
-            val openingBalance: DisplayAmount = DisplayAmount.owed(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val payment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.owed(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-        ) : BalanceOverview
+            val openingBalance: MoneyFigure = MoneyFigure.of(DisplayAmount.owed(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val expense: MoneyFigure = MoneyFigure.of(DisplayAmount.forcedNegative(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val payment: MoneyFigure? = null,
+            val adjustment: MoneyFigure? = null,
+            val finalBalance: MoneyFigure = MoneyFigure.of(DisplayAmount.owed(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+        ) : BalanceOverview {
+            override val figures
+                get() = listOfNotNull(openingBalance, expense, payment, adjustment, finalBalance)
+        }
 
         /**
          * Both perimeters at once. [expense] aggregates account and card spending — the
@@ -121,12 +141,15 @@ data class TransactionsUiState(
          * `finalNet = openingNet + income − expense + adjustment`
          */
         data class Overall(
-            val openingNet: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-            val invoicePayment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalNet: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
-        ) : BalanceOverview
+            val openingNet: MoneyFigure = MoneyFigure.of(DisplayAmount.natural(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val income: MoneyFigure = MoneyFigure.of(DisplayAmount.forcedPositive(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val expense: MoneyFigure = MoneyFigure.of(DisplayAmount.forcedNegative(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+            val invoicePayment: MoneyFigure? = null,
+            val adjustment: MoneyFigure? = null,
+            val finalNet: MoneyFigure = MoneyFigure.of(DisplayAmount.natural(0.0, Denomination.exact(LAST_RESORT_CURRENCY))),
+        ) : BalanceOverview {
+            override val figures
+                get() = listOfNotNull(openingNet, income, expense, invoicePayment, adjustment, finalNet)
+        }
     }
 }

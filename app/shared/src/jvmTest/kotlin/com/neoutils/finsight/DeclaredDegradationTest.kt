@@ -23,18 +23,16 @@ import kotlin.test.assertEquals
 class DeclaredDegradationTest {
 
     /**
-     * Where a figure's terms may be read directly.
+     * Where a figure's terms may be read directly: nowhere but `MoneyFigure.kt`, which holds
+     * both the stacking of every term and the single-line declaration — the two ways a figure
+     * is allowed to become text.
      *
-     * `MoneyFigure.kt` holds both the stacking of every term and the single-line declaration,
-     * which are the two ways a figure is allowed to become text.
-     *
-     * `ReportExportLayout.kt` is a debt with a date: the exported document has a grammar of one
-     * term per line, so it belongs on the declaration — task 8.1 moves it there, along with the
-     * footnote that names what was left out. Deleting this entry is that task's proof.
+     * The exported document used to be listed here, taking `primary` for itself. It now goes
+     * through the declaration like every other one-line surface, and prints the footnote that
+     * names what was left out. This list being a single entry is that change's proof.
      */
     private val termReaders = listOf(
         "core/common/src/commonMain/kotlin/com/neoutils/finsight/extension/MoneyFigure.kt",
-        "feature/report/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/report/viewer/ReportExportLayout.kt",
     )
 
     @Test

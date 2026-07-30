@@ -9,7 +9,13 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
+import com.neoutils.finsight.extension.MoneyFigure
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
@@ -130,6 +136,8 @@ class TransactionScopeTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        baseCurrencyRepository = FixedBase,
     )
 
     /**
@@ -181,17 +189,17 @@ class TransactionScopeTest {
         // +25 adjustment. The transfer's two legs are both inside, so it is not a flow.
         // Each figure carries the sign it is displayed with, which is why the column
         // below is a plain sum: what the user reads is what adds up.
-        assertEquals(500.0, overview.openingBalance.value)
-        assertEquals(300.0, overview.income.value)
-        assertEquals(-60.0, overview.expense.value)
-        assertEquals(-120.0, overview.invoicePayment?.value)
-        assertEquals(25.0, overview.adjustment?.value)
-        assertEquals(645.0, overview.finalBalance.value)
+        assertEquals(500.0, overview.openingBalance.amount)
+        assertEquals(300.0, overview.income.amount)
+        assertEquals(-60.0, overview.expense.amount)
+        assertEquals(-120.0, overview.invoicePayment?.amount)
+        assertEquals(25.0, overview.adjustment?.amount)
+        assertEquals(645.0, overview.finalBalance.amount)
 
         assertEquals(
-            overview.finalBalance.value,
-            overview.openingBalance.value + overview.income.value + overview.expense.value +
-                overview.invoicePayment!!.value + overview.adjustment!!.value,
+            overview.finalBalance.amount,
+            overview.openingBalance.amount + overview.income.amount + overview.expense.amount +
+                overview.invoicePayment!!.amount + overview.adjustment!!.amount,
         )
     }
 
@@ -203,16 +211,16 @@ class TransactionScopeTest {
         // 15 adjusted brings it up too, leaving 75 owed. The two ends are debt lines, so
         // they read as the magnitude owed — the flows between them stay in the ledger's
         // sign, which is what makes the column read like a statement.
-        assertEquals(120.0, overview.openingBalance.value)
-        assertEquals(-90.0, overview.expense.value)
-        assertEquals(120.0, overview.payment?.value)
-        assertEquals(15.0, overview.adjustment?.value)
-        assertEquals(75.0, overview.finalBalance.value)
+        assertEquals(120.0, overview.openingBalance.amount)
+        assertEquals(-90.0, overview.expense.amount)
+        assertEquals(120.0, overview.payment?.amount)
+        assertEquals(15.0, overview.adjustment?.amount)
+        assertEquals(75.0, overview.finalBalance.amount)
 
         assertEquals(
-            -overview.finalBalance.value,
-            -overview.openingBalance.value + overview.expense.value +
-                overview.payment!!.value + overview.adjustment!!.value,
+            -overview.finalBalance.amount,
+            -overview.openingBalance.amount + overview.expense.amount +
+                overview.payment!!.amount + overview.adjustment!!.amount,
         )
     }
 
@@ -222,16 +230,16 @@ class TransactionScopeTest {
 
         // Opening net: 500 held − 120 owed = 380. Spending aggregates the account's 60
         // and the card's 90; the adjustments are +25 and +15 in natural sign.
-        assertEquals(380.0, overview.openingNet.value)
-        assertEquals(300.0, overview.income.value)
-        assertEquals(-150.0, overview.expense.value)
-        assertEquals(40.0, overview.adjustment?.value)
-        assertEquals(570.0, overview.finalNet.value)
+        assertEquals(380.0, overview.openingNet.amount)
+        assertEquals(300.0, overview.income.amount)
+        assertEquals(-150.0, overview.expense.amount)
+        assertEquals(40.0, overview.adjustment?.amount)
+        assertEquals(570.0, overview.finalNet.amount)
 
         assertEquals(
-            overview.finalNet.value,
-            overview.openingNet.value + overview.income.value + overview.expense.value +
-                overview.adjustment!!.value,
+            overview.finalNet.amount,
+            overview.openingNet.amount + overview.income.amount + overview.expense.amount +
+                overview.adjustment!!.amount,
         )
     }
 
@@ -246,8 +254,8 @@ class TransactionScopeTest {
         // Built from a real payment, not from a hand-made pair of legs: both of its legs
         // are inside the perimeter, so removing it changes nothing but its own line.
         // Shown, but signless: both legs are inside this perimeter, so it moves nothing.
-        assertEquals(120.0, withPayment.invoicePayment?.value, "it is shown")
-        assertEquals(SignPolicy.NEUTRAL, withPayment.invoicePayment?.policy)
+        assertEquals(120.0, withPayment.invoicePayment?.amount, "it is shown")
+        assertEquals(SignPolicy.NEUTRAL, withPayment.invoicePayment?.policyOfSingleTerm)
         assertNull(withoutPayment.invoicePayment)
         assertEquals(withoutPayment.finalNet, withPayment.finalNet, "and it is not summed")
         assertEquals(withoutPayment.openingNet, withPayment.openingNet)
@@ -306,8 +314,8 @@ class TransactionScopeTest {
         // month it was posted, exactly like the list beneath it.
         val overview = stateUnder(TransactionScope.CARDS).balanceOverview as BalanceOverview.Cards
 
-        assertEquals(-90.0, overview.expense.value, "only this month's purchase")
-        assertEquals(120.0, overview.openingBalance.value, "last month's purchase is the opening debt")
+        assertEquals(-90.0, overview.expense.amount, "only this month's purchase")
+        assertEquals(120.0, overview.openingBalance.amount, "last month's purchase is the opening debt")
         assertEquals(
             listOf(cardPurchase, invoicePayment, invoiceAdjustment).ids,
             stateUnder(TransactionScope.CARDS).listed.toSet(),
@@ -416,3 +424,4 @@ class TransactionScopeTest {
         assertEquals(true, stateUnder(TransactionScope.CARDS, ledger).listed.contains(crossInvoicePayment.id))
     }
 }
+

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -12,6 +13,7 @@ import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -45,18 +47,30 @@ class DashboardOverallBalanceStatsTest {
     ) = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = FlowsEntryRepository(asset, liability)),
         calculateCategorySpendingUseCase = object : CalculateCategorySpendingUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
         calculateCategoryIncomeUseCase = object : CalculateCategoryIncomeUseCase {
-            override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
+            override suspend fun invoke(
+                forYearMonth: YearMonth,
+                base: String,
+                today: LocalDate,
+            ): List<CategorySpending> = throw NotImplementedError()
         },
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FlowsEntryRepository(asset, liability)),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(
+            entryRepository = FlowsEntryRepository(asset, liability),
+            consolidateFigure = ConsolidateFigureUseCase(NoRates),
+        ),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
         },
         entryRepository = FlowsEntryRepository(asset, liability),
+        consolidateFigure = ConsolidateFigureUseCase(NoRates),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -70,6 +84,7 @@ class DashboardOverallBalanceStatsTest {
         occurrences = emptyList(),
         today = LocalDate(2026, 3, 20),
         targetMonth = march,
+        baseCurrency = "BRL",
     )
 
     private suspend fun build(
@@ -127,6 +142,44 @@ class DashboardOverallBalanceStatsTest {
         assertEquals(accounts.expense.primary.value + card.expense.primary.value, overall()!!.expense.primary.value)
     }
 
+    /**
+     * A cross-currency invoice payment is internal for exactly the reason a same-currency one
+     * is: both of its **monetary** legs are inside the perimeter. The conversion legs post to
+     * system accounts, outside every perimeter, and being outside is not the same as being a
+     * flow — what decides is where the monetary legs are.
+     */
+    @Test
+    fun `a cross-currency invoice payment is no more expense than a same-currency one`() = runTest {
+        val crossPayment = liabilityFlows.copy(
+            payment = liabilityFlows.payment + CurrencyBalance.of("USD", 100.0),
+        )
+
+        assertEquals(overall()!!.expense, overall(liability = crossPayment)!!.expense)
+    }
+
+    /**
+     * The neutral sum is the ledger's own operation over per-currency balances: each currency
+     * added to its own, and nothing converted on the way. With no rate on file the figure keeps
+     * both shares — which is the honest reading, and the proof that no conversion took part in
+     * the *derivation* even when one would later take part in the display.
+     */
+    @Test
+    fun `the neutral sum adds each currency to its own and converts nothing`() = runTest {
+        val component = overall(
+            asset = AssetMonthFlows(income = brl(0.0), expense = brl(300.0), adjustment = brl(0.0)),
+            liability = LiabilityMonthFlows(
+                expense = CurrencyBalance.of("USD", 250.0),
+                payment = brl(0.0),
+                adjustment = brl(0.0),
+            ),
+        )!!
+
+        // Two terms, 300 reais and 250 dollars: the two expense sets are disjoint and stay
+        // stated in what they were spent in.
+        assertEquals(listOf(300.0, 250.0), component.expense.terms.map { it.value })
+        assertEquals(listOf("BRL", "USD"), component.expense.terms.map { it.currency })
+    }
+
     @Test
     fun `a month with no movement keeps the neutral widget by default`() = runTest {
         val component = overall(
@@ -151,3 +204,4 @@ private class FlowsEntryRepository(
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
 }
+

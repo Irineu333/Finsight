@@ -840,4 +840,10 @@
     <string name="approximation_footer_unreached">Valores em mais de uma moeda. Sem taxa, cada uma é exibida por si.</string>
     <string name="approximation_footer_rate">1 %1$s = %2$s, em %3$s</string>
     <string name="approximation_footer_action">Ver taxas</string>
+    <string name="report_export_approximation_converted">Valores em mais de uma moeda, reunidos na moeda base. O sinal ≈ marca um valor convertido, e “+…” indica uma parcela em outra moeda que não foi somada.</string>
+    <string name="report_export_approximation_unreached">Valores em mais de uma moeda e sem taxa conhecida. O sinal ≈ marca a figura incompleta, e “+…” indica a parcela que ficou de fora.</string>
+    <string name="report_export_approximation_rate">1 %1$s = %2$s, em %3$s.</string>
+    <string name="budget_form_currency_label">Moeda do limite</string>
+    <string name="budget_form_currency_locked">A moeda de um limite não muda depois de criado.</string>
+    <string name="budget_form_currency_modal_title">Moeda do limite</string>
 </resources>

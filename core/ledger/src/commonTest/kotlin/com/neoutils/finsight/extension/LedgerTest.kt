@@ -12,7 +12,8 @@ import kotlin.test.assertTrue
 
 class LedgerTest {
 
-    private fun account(id: Long, type: AccountType) = Account(id = id, name = "acc$id", type = type)
+    private fun account(id: Long, type: AccountType, currency: String = "BRL") =
+        Account(id = id, name = "acc$id", type = type, currency = currency)
 
     private fun entry(type: AccountType, amount: Long, accountId: Long = type.ordinal.toLong()) =
         Entry(account = account(accountId, type), amount = amount)
@@ -133,10 +134,12 @@ class LedgerTest {
 
     @Test
     fun `balance is checked per currency`() {
+        // The currency of a leg is the currency of its account — there is no second
+        // place to say it, and so no way to say it differently (design D5).
         val mixed = listOf(
-            Entry(account = account(1, AccountType.ASSET), amount = -5000, currency = "BRL"),
-            Entry(account = account(2, AccountType.EXPENSE), amount = 5000, currency = "BRL"),
-            Entry(account = account(3, AccountType.ASSET), amount = -100, currency = "USD"),
+            Entry(account = account(1, AccountType.ASSET), amount = -5000),
+            Entry(account = account(2, AccountType.EXPENSE), amount = 5000),
+            Entry(account = account(3, AccountType.ASSET, currency = "USD"), amount = -100),
         )
         assertFalse(mixed.isBalanced()) // USD does not sum to zero
     }
@@ -231,7 +234,7 @@ class LedgerTest {
     // and by the screens that decide whether to offer deleting.
 
     private fun archived(type: AccountType, id: Long) = Entry(
-        account = Account(id = id, name = "acc$id", type = type, isArchived = true),
+        account = Account(id = id, name = "acc$id", type = type, currency = "BRL", isArchived = true),
         amount = 0,
     )
 

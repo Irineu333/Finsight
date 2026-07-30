@@ -46,7 +46,9 @@ class EntryRepository(
             isArchived = account.isArchived,
         ),
         amount = entry.amount,
-        currency = entry.currency,
+        // No `currency` here: it is derived from the account, and the account is
+        // hydrated whole from the join. The row's own column is what
+        // `LedgerBalanceCheck` reads, not what the model carries.
         dimensionId = entry.dimensionId,
     )
 

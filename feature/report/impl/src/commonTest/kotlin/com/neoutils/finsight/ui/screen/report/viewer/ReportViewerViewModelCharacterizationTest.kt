@@ -62,9 +62,9 @@ class ReportViewerViewModelCharacterizationTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
@@ -134,9 +134,9 @@ class ReportViewerViewModelCharacterizationTest {
 
     @Test
     fun `credit card perspective sums the card legs and reads owed from the ledger`() = runTest(dispatcher) {
-        val cardLiability = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-        val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
-        val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET)
+        val cardLiability = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+        val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY, currency = "BRL")
+        val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET, currency = "BRL")
         val card = CreditCard(
             id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15,
             accountId = cardLiability.id,

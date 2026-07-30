@@ -45,7 +45,11 @@ data class EntryEntity(
     val transactionId: Long,
     val accountId: Long,
     val amount: Long,
-    val currency: String = "BRL",
+    // No default: the currency of a leg is the currency of the account it posts to,
+    // read by the write boundary from the row it already loads (design D5). Nothing
+    // gets to leave it unsaid. The column stays NOT NULL either way — a Kotlin
+    // constructor default never emitted SQL `DEFAULT`.
+    val currency: String,
     // The analytic axis this leg is tagged with, if any: the sub-ledger it belongs
     // to inside its account. A facade's total is Σ entries carrying its dimension.
     val dimensionId: Long? = null,

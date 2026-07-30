@@ -73,8 +73,8 @@ class AdjustInvoiceUseCaseTest {
  * plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class InvoiceLedgerStore(card: CreditCard) {
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
-    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "BRL")
+    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L

@@ -7,9 +7,10 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.mapper.CreditCardMapper
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.extension.localeCurrencyCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +18,11 @@ class CreditCardRepository(
     private val database: AppDatabase,
     private val dao: CreditCardDao,
     private val accountDao: AccountDao,
-    private val mapper: CreditCardMapper
+    private val mapper: CreditCardMapper,
+    // The currency the card's `LIABILITY` account is denominated in. Was the ledger's
+    // `BASE_CURRENCY` — the only use of it outside `:core:ledger` — and is now the
+    // app's single currency, resolved from the device's region.
+    private val defaultCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode()),
 ) : ICreditCardRepository {
 
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
@@ -54,7 +59,7 @@ class CreditCardRepository(
                     AccountEntity(
                         name = creditCard.name,
                         type = AccountEntity.Type.LIABILITY,
-                        currency = BASE_CURRENCY,
+                        currency = defaultCurrency,
                         iconKey = creditCard.iconKey,
                         createdAt = creditCard.createdAt,
                     )

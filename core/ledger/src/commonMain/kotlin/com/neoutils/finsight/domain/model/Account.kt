@@ -9,7 +9,11 @@ data class Account(
     val id: Long = 0,
     val name: String,
     val type: AccountType = AccountType.ASSET,
-    val currency: String = BASE_CURRENCY,
+    // No default, deliberately: an account with no currency is unutterable, so the
+    // compiler makes somebody decide (design D28). The ledger knows that a currency
+    // exists and nothing at all about which one — the app's opinion on which
+    // currencies it offers lives in the consolidation layer.
+    val currency: String,
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),

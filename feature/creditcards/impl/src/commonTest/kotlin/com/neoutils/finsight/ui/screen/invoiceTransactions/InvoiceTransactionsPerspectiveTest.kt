@@ -52,9 +52,9 @@ class InvoiceTransactionsPerspectiveTest {
         id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 10,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val checking = Account(id = 30, name = "Checking", type = AccountType.ASSET)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val checking = Account(id = 30, name = "Checking", type = AccountType.ASSET, currency = "BRL")
+    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private val invoice = Invoice(
         id = 1, creditCard = card, dimensionId = 1,

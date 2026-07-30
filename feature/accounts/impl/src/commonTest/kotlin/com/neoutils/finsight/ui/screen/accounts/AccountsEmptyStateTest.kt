@@ -58,8 +58,8 @@ class AccountsEmptyStateTest {
 
     private val currentMonth = Clock.System.now().toYearMonth()
 
-    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true)
-    private val expenseAccount = Account(id = 99, name = "Expense", type = AccountType.EXPENSE)
+    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true, currency = "BRL")
+    private val expenseAccount = Account(id = 99, name = "Expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private val food = Category(
         id = 1,

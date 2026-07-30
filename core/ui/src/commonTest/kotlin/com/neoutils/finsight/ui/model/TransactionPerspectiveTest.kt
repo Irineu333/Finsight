@@ -21,8 +21,8 @@ import kotlin.test.assertNull
  */
 class TransactionPerspectiveTest {
 
-    private val source = Account(id = 1L, name = "Source", type = AccountType.ASSET)
-    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
+    private val source = Account(id = 1L, name = "Source", type = AccountType.ASSET, currency = "BRL")
+    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET, currency = "BRL")
 
     private val transfer = Transaction(
         id = 1L,
@@ -62,7 +62,7 @@ class TransactionPerspectiveTest {
     // which is why the cases that prove the change are the ones with *no* negative
     // monetary leg and the one with two legs of the same sign, never the crossing.
 
-    private val income = Account(id = 3L, name = "Income", type = AccountType.INCOME)
+    private val income = Account(id = 3L, name = "Income", type = AccountType.INCOME, currency = "BRL")
 
     @Test
     fun aTransactionWithNoNegativeMonetaryLegKeepsTheLegItAlreadyRead() {

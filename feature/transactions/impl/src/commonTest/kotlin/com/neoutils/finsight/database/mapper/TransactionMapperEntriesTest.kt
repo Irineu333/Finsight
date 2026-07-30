@@ -25,10 +25,10 @@ class TransactionMapperEntriesTest {
 
     @Test
     fun `mapper carries the hydrated entries onto the transaction`() {
-        val account = Account(id = 1, name = "A", type = AccountType.ASSET)
+        val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
         val entries = listOf(
             Entry(id = 1, transactionId = 7, account = account, amount = -5000),
-            Entry(id = 2, transactionId = 7, account = Account(id = 10, name = "Food", type = AccountType.EXPENSE), amount = 5000),
+            Entry(id = 2, transactionId = 7, account = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL"), amount = 5000),
         )
 
         assertEquals(entries, toDomain(entries)?.entries)

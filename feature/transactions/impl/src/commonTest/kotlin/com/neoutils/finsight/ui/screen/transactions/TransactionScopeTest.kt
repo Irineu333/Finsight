@@ -46,12 +46,12 @@ class TransactionScopeTest {
     private val month = Clock.System.now().toYearMonth()
     private val previous = month.minusMonth()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val savings = Account(id = 2, name = "B", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
-    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val savings = Account(id = 2, name = "B", type = AccountType.ASSET, currency = "BRL")
+    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
+    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY, currency = "BRL")
 
     private val groceries = Category(
         id = 7, name = "Groceries", icon = CategoryLazyIcon("food"),

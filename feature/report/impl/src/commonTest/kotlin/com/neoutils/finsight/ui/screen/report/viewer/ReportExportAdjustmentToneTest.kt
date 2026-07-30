@@ -34,8 +34,8 @@ class ReportExportAdjustmentToneTest {
 
     private val formatter = CurrencyFormatter()
 
-    private val card = Account(id = 1L, name = "Card", type = AccountType.LIABILITY)
-    private val reconciliation = Account(id = 2L, name = "Reconciliation", type = AccountType.EQUITY)
+    private val card = Account(id = 1L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val reconciliation = Account(id = 2L, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
 
     private val category = Category(
         id = 1L,

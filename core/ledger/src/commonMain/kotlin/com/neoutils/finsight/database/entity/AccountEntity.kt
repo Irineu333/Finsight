@@ -12,7 +12,10 @@ data class AccountEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val type: Type = Type.ASSET,
-    val currency: String = "BRL",
+    // No default: no row of the chart of accounts exists without somebody deciding
+    // its currency (design D28), system rows included — which is what makes
+    // `currency` mean the same thing on every line.
+    val currency: String,
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),

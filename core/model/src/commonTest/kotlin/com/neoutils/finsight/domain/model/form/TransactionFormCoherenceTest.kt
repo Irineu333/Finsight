@@ -24,7 +24,7 @@ import kotlin.test.assertNull
  */
 class TransactionFormCoherenceTest {
 
-    private val account = Account(id = 1, name = "Checking")
+    private val account = Account(id = 1, name = "Checking", currency = "BRL")
 
     private fun category(type: Category.Type) = Category(
         id = 1,

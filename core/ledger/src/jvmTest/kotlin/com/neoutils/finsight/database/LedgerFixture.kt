@@ -27,23 +27,40 @@ internal fun ledgerDatabase(): LedgerDatabase =
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 
+/**
+ * The currency every fixture defaults to, so the suites written before currency
+ * mattered read exactly as they did. Naming it here rather than repeating the literal
+ * is what makes a cross-currency case a one-word change at the call site.
+ */
+internal const val LEGACY_CURRENCY = "BRL"
+
 /** One leg of a seeded transaction: where it posts, how much, and how it is classified. */
 internal data class Leg(
     val accountId: Long,
     val cents: Long,
     val dimensionId: Long? = null,
+    val currency: String = LEGACY_CURRENCY,
 )
 
 internal infix fun Long.posts(cents: Long) = Leg(accountId = this, cents = cents)
 
 internal fun Leg.taggedWith(dimensionId: Long) = copy(dimensionId = dimensionId)
 
+/** The same leg, denominated in [currency] — how a cross-currency case is written. */
+internal fun Leg.inCurrency(currency: String) = copy(currency = currency)
+
 internal class LedgerFixture(val database: LedgerDatabase) {
 
     private var nextTransactionId = 0L
 
-    suspend fun account(id: Long, type: AccountEntity.Type, name: String = "account-$id"): Long =
-        database.accountDao().insert(AccountEntity(id = id, name = name, type = type))
+    suspend fun account(
+        id: Long,
+        type: AccountEntity.Type,
+        name: String = "account-$id",
+        currency: String = LEGACY_CURRENCY,
+    ): Long = database.accountDao().insert(
+        AccountEntity(id = id, name = name, type = type, currency = currency)
+    )
 
     suspend fun dimension(id: Long, kind: DimensionKind): Long =
         database.dimensionDao().insert(DimensionEntity(id = id, kind = kind))
@@ -60,7 +77,7 @@ internal class LedgerFixture(val database: LedgerDatabase) {
                     transactionId = id,
                     accountId = it.accountId,
                     amount = it.cents,
-                    currency = "BRL",
+                    currency = it.currency,
                     dimensionId = it.dimensionId,
                 )
             }

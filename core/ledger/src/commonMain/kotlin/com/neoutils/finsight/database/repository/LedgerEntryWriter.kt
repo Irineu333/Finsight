@@ -11,7 +11,6 @@ import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SystemAccount
@@ -65,27 +64,37 @@ class LedgerEntryWriter(
 
         val entries = buildList {
             legs.forEach { leg ->
+                // The currency comes off the account the leg posts to, read from the
+                // row `orRejectIfClosed` already loads to check closure — no extra
+                // read, and no field on `TransactionLeg` to say it with (design D5).
+                // "Post 100 USD to a BRL account" stops being refused and becomes
+                // impossible to *utter*.
+                val account = leg.accountId.orRejectIfClosed()
                 add(
                     EntryEntity(
                         transactionId = transactionId,
-                        accountId = leg.accountId.orRejectIfClosed(),
+                        accountId = account.id,
                         amount = leg.ledgerAmount(),
-                        currency = BASE_CURRENCY,
+                        currency = account.currency,
                         dimensionId = leg.dimensionId,
                     )
                 )
             }
-            // Single-leg transactions need a synthesized contra leg to balance.
+            // Single-leg transactions need a synthesized contra leg to balance. It is
+            // denominated in the same currency as the leg it balances — which is what
+            // keeps a one-sided intent monomorphic by construction: an expense, an
+            // income and an adjustment can never cross currencies.
             if (legs.size == 1) {
                 val leg = legs.first()
                 val counterpart = contra
                     ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
+                val currency = first().currency
                 add(
                     EntryEntity(
                         transactionId = transactionId,
-                        accountId = systemAccountId(counterpart.nature),
+                        accountId = systemAccountId(counterpart.nature, currency),
                         amount = -leg.ledgerAmount(),
-                        currency = BASE_CURRENCY,
+                        currency = currency,
                         // A nominal leg is classified by the category's dimension.
                         // No dimension means genuinely unclassified — there is no
                         // bucket account and no bucket dimension standing in for it.
@@ -142,12 +151,13 @@ class LedgerEntryWriter(
      * belongs to comes from its nature — the ledger reports what it knows, and the
      * error carries it so the screen can say the right word.
      */
-    private suspend fun Long.orRejectIfClosed(): Long = also { accountId ->
-        val account = accountDao.getAccountById(accountId)
+    private suspend fun Long.orRejectIfClosed(): AccountEntity {
+        val account = accountDao.getAccountById(this)
             ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
         if (account.isArchived) {
             throw ClosedAccountException(LedgerError.ClosedAccount(ClosedFacade.of(account.type.toDomain())))
         }
+        return account
     }
 
     /**
@@ -155,10 +165,15 @@ class LedgerEntryWriter(
      * nominals and reconciliation, created on demand. Their names are lookup keys,
      * never rendered (design D10).
      */
-    private suspend fun systemAccountId(nature: AccountType): Long = when (nature) {
-        AccountType.EXPENSE -> ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE)
-        AccountType.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
-        AccountType.EQUITY -> ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
+    private suspend fun systemAccountId(nature: AccountType, currency: String): Long = when (nature) {
+        AccountType.EXPENSE ->
+            ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE, currency)
+
+        AccountType.INCOME ->
+            ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME, currency)
+
+        AccountType.EQUITY ->
+            ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY, currency)
         // ASSET and LIABILITY are the user's own rows: there is no system account of
         // that nature to complete an intent with. CONVERSION is a system row, but it
         // is never a contra-leg nature — it is reached only by the cross-currency
@@ -167,11 +182,13 @@ class LedgerEntryWriter(
             throw UnbalancedTransactionException(LedgerError.Unbalanced)
     }
 
-    private suspend fun ensureSystemAccount(name: String, type: AccountEntity.Type): Long {
+    private suspend fun ensureSystemAccount(
+        name: String,
+        type: AccountEntity.Type,
+        currency: String,
+    ): Long {
         accountDao.getByTypeAndName(type, name)?.let { return it.id }
-        return accountDao.insert(
-            AccountEntity(name = name, type = type, currency = BASE_CURRENCY)
-        )
+        return accountDao.insert(AccountEntity(name = name, type = type, currency = currency))
     }
 
     /**

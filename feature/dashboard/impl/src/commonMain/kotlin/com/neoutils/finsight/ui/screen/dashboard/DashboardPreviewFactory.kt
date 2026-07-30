@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.extension.localeCurrencyCode
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -12,6 +13,15 @@ import org.jetbrains.compose.resources.getString
 class DashboardPreviewFactory(
     private val navCatalog: NavCatalog,
 ) {
+    /**
+     * The currency the fabricated accounts of a preview are denominated in.
+     *
+     * A preview has to look like the app, and the app denominates an account in the
+     * currency of the device's region — so this is the same resolution, not a literal
+     * that would render `R$` on a preview beside real accounts reading `$`.
+     */
+    private val previewCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode())
+
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
         DashboardComponentType.TOTAL_BALANCE.key -> {
             DashboardComponentVariant.TotalBalance.Preview(
@@ -204,6 +214,7 @@ class DashboardPreviewFactory(
                             category = null,
                             account = Account(
                                 id = 1,
+                                currency = previewCurrency,
                                 name = getString(Res.string.preview_account_main),
                                 iconKey = "wallet",
                                 isDefault = true,
@@ -227,6 +238,7 @@ class DashboardPreviewFactory(
                             ),
                             account = Account(
                                 id = 1,
+                                currency = previewCurrency,
                                 name = getString(Res.string.preview_account_main),
                                 iconKey = "wallet",
                                 isDefault = true,
@@ -244,6 +256,7 @@ class DashboardPreviewFactory(
         DashboardComponentType.RECENTS.key -> {
             val mainAccount = Account(
                 id = 1,
+                currency = previewCurrency,
                 name = getString(Res.string.preview_account_main),
                 iconKey = "wallet",
                 isDefault = true,
@@ -258,12 +271,14 @@ class DashboardPreviewFactory(
             )
             val foodAccount = Account(
                 id = 101,
+                currency = previewCurrency,
                 name = foodCategory.name,
                 type = AccountType.EXPENSE,
                 createdAt = 0,
             )
             val salaryAccount = Account(
                 id = 102,
+                currency = previewCurrency,
                 name = getString(Res.string.preview_category_salary),
                 type = AccountType.INCOME,
                 createdAt = 0,

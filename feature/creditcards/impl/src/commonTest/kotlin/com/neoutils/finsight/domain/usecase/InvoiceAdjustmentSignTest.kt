@@ -43,7 +43,7 @@ class InvoiceAdjustmentSignTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
+    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "BRL")
 
     /**
      * Adjusts the invoice to [target], optionally over an existing purchase of

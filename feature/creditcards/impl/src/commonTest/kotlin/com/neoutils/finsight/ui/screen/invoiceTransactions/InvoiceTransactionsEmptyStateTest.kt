@@ -47,8 +47,8 @@ class InvoiceTransactionsEmptyStateTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private fun purchase(id: Long, dimensionId: Long) = Transaction(
         id = id,

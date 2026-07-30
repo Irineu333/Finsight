@@ -39,7 +39,7 @@ class LedgerEntryWriterTest {
     private val writer = LedgerEntryWriter(entryDao, accountDao, dimensionDao)
 
     /** The user's own account, id 1, open. */
-    private fun openAsset(id: Long = 1) = AccountEntity(id = id, name = "Acc $id", type = AccountEntity.Type.ASSET)
+    private fun openAsset(id: Long = 1) = AccountEntity(id = id, name = "Acc $id", type = AccountEntity.Type.ASSET, currency = "BRL")
         .also { accountDao.accounts[id] = it }
 
     @Test
@@ -147,7 +147,7 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an invoice payment when written then only the liability leg tags the sub-ledger`() = runTest {
         openAsset()
-        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY)
+        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, currency = "BRL")
         dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
 
         writer.writeEntries(
@@ -191,7 +191,7 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an archived account when written then the write is rejected`() = runTest {
         // Closing an ASSET required a zero balance, so a new entry there strands money.
-        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, isArchived = true)
+        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, isArchived = true, currency = "BRL")
 
         val error = assertFailsWith<ClosedAccountException> {
             writer.writeEntries(
@@ -206,7 +206,7 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an archived card when written then the error names the card`() = runTest {
-        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, isArchived = true)
+        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, isArchived = true, currency = "BRL")
 
         val error = assertFailsWith<ClosedAccountException> {
             writer.writeEntries(

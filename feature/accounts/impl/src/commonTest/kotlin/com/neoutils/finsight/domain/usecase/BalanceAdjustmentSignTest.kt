@@ -20,8 +20,8 @@ import kotlin.test.assertEquals
 class BalanceAdjustmentSignTest {
 
     private val date = LocalDate(2026, 1, 10)
-    private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET)
-    private val salary = Account(id = 2, name = "Salary", type = AccountType.INCOME)
+    private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET, currency = "BRL")
+    private val salary = Account(id = 2, name = "Salary", type = AccountType.INCOME, currency = "BRL")
 
     /**
      * Adjusts the account to [target] over an existing balance of [balanceBefore]. The

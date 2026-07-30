@@ -39,8 +39,8 @@ import kotlin.test.assertEquals
  */
 class DashboardAccountsOverviewTest {
 
-    private val accountA = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val accountB = Account(id = 2, name = "B", type = AccountType.ASSET)
+    private val accountA = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val accountB = Account(id = 2, name = "B", type = AccountType.ASSET, currency = "BRL")
 
     private fun builder() = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = ThrowingEntryRepository),
@@ -113,8 +113,8 @@ class DashboardAccountsOverviewTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private fun transaction(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
@@ -169,7 +169,7 @@ class DashboardAccountsOverviewTest {
             recurringId = salary.id, recurringCycle = 1,
             entries = listOf(
                 Entry(account = accountA, amount = -200_000),
-                Entry(account = Account(id = 3, name = "Salary", type = AccountType.INCOME), amount = 200_000),
+                Entry(account = Account(id = 3, name = "Salary", type = AccountType.INCOME, currency = "BRL"), amount = 200_000),
             ),
         )
         val budget = Budget(

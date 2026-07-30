@@ -808,4 +808,28 @@
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>
     <string name="view_recurring_title">Recorrência</string>
+
+    <!-- Nomes das moedas oferecidas (catálogo curado: só as de duas casas decimais) -->
+    <string name="currency_name_aed">Dirham dos Emirados Árabes Unidos</string>
+    <string name="currency_name_ars">Peso argentino</string>
+    <string name="currency_name_aud">Dólar australiano</string>
+    <string name="currency_name_brl">Real brasileiro</string>
+    <string name="currency_name_cad">Dólar canadense</string>
+    <string name="currency_name_chf">Franco suíço</string>
+    <string name="currency_name_cny">Yuan chinês</string>
+    <string name="currency_name_dkk">Coroa dinamarquesa</string>
+    <string name="currency_name_eur">Euro</string>
+    <string name="currency_name_gbp">Libra esterlina</string>
+    <string name="currency_name_ils">Novo shekel israelense</string>
+    <string name="currency_name_inr">Rupia indiana</string>
+    <string name="currency_name_mxn">Peso mexicano</string>
+    <string name="currency_name_nok">Coroa norueguesa</string>
+    <string name="currency_name_nzd">Dólar neozelandês</string>
+    <string name="currency_name_pen">Sol peruano</string>
+    <string name="currency_name_pln">Zloty polonês</string>
+    <string name="currency_name_sek">Coroa sueca</string>
+    <string name="currency_name_try">Lira turca</string>
+    <string name="currency_name_usd">Dólar americano</string>
+    <string name="currency_name_uyu">Peso uruguaio</string>
+    <string name="currency_name_zar">Rand sul-africano</string>
 </resources>

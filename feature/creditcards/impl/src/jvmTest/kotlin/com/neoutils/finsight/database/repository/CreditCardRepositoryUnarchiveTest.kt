@@ -35,7 +35,7 @@ class CreditCardRepositoryUnarchiveTest {
     @Test
     fun `unarchive flips the account's archived flag back off`() = runTest {
         val accountId = db.accountDao().insert(
-            AccountEntity(name = "Card", type = AccountEntity.Type.LIABILITY),
+            AccountEntity(name = "Card", type = AccountEntity.Type.LIABILITY, currency = "BRL"),
         )
         db.accountDao().close(accountId)
         assertTrue(db.accountDao().getAccountById(accountId)!!.isArchived)

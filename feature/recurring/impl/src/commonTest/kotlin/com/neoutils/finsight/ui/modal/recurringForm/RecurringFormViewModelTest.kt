@@ -51,7 +51,7 @@ class RecurringFormViewModelTest {
         name = "Checking",
         type = com.neoutils.finsight.domain.model.AccountType.ASSET,
         isDefault = true,
-    )
+    currency = "BRL",)
 
     private val categoryRepository = object : ICategoryRepository {
         override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())

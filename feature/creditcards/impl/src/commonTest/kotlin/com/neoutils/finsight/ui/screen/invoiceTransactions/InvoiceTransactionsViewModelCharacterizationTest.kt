@@ -63,8 +63,8 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val contraAccount = Account(id = 20, name = "Contra", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val contraAccount = Account(id = 20, name = "Contra", type = AccountType.EXPENSE, currency = "BRL")
 
     /** The card's LIABILITY leg — the only one carrying the invoice — plus its contra leg. */
     private fun op(id: Long, type: TransactionType, amount: Double): Transaction {

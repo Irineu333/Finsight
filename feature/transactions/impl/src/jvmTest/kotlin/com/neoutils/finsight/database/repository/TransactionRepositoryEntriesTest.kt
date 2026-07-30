@@ -64,18 +64,18 @@ class TransactionRepositoryEntriesTest {
 
     @Test
     fun `getTransactionById hydrates the transaction's ledger entries`() = runTest {
-        val asset = Account(id = 1, name = "A", type = AccountType.ASSET)
-        val expense = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
-        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
-        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
+        val asset = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+        val expense = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL")
+        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET, currency = "BRL"))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL"))
 
         val transactionId = db.transactionDao().insert(
             TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10)),
         )
         db.entryDao().insertAll(
             listOf(
-                EntryEntity(transactionId = transactionId, accountId = 1, amount = -5000),
-                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000),
+                EntryEntity(transactionId = transactionId, accountId = 1, amount = -5000, currency = "BRL"),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000, currency = "BRL"),
             ),
         )
 
@@ -97,18 +97,18 @@ class TransactionRepositoryEntriesTest {
         // user sees, so hydrating from the ASSET facade dropped both entries, the
         // mapper returned null, and `createTransaction` threw on `!!` — the modal
         // simply never closed, while the invoice grew from the rows already written.
-        val card = Account(id = 2, name = "Card", type = AccountType.LIABILITY)
-        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
-        db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
-        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
+        val card = Account(id = 2, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL")
+        db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY, currency = "BRL"))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL"))
 
         val transactionId = db.transactionDao().insert(
             TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10)),
         )
         db.entryDao().insertAll(
             listOf(
-                EntryEntity(transactionId = transactionId, accountId = 2, amount = -5000),
-                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000),
+                EntryEntity(transactionId = transactionId, accountId = 2, amount = -5000, currency = "BRL"),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000, currency = "BRL"),
             ),
         )
 
@@ -121,20 +121,20 @@ class TransactionRepositoryEntriesTest {
     @Test
     fun `a closed account still hydrates the history that references it`() = runTest {
         // Closure hides an account from the selectors, not from the past.
-        val closed = Account(id = 1, name = "Old wallet", type = AccountType.ASSET, isArchived = true)
-        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        val closed = Account(id = 1, name = "Old wallet", type = AccountType.ASSET, isArchived = true, currency = "BRL")
+        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL")
         db.accountDao().insert(
-            AccountEntity(id = 1, name = "Old wallet", type = AccountEntity.Type.ASSET, isArchived = true),
+            AccountEntity(id = 1, name = "Old wallet", type = AccountEntity.Type.ASSET, isArchived = true, currency = "BRL"),
         )
-        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL"))
 
         val transactionId = db.transactionDao().insert(
             TransactionEntity(title = "Old", date = LocalDate(2026, 1, 5)),
         )
         db.entryDao().insertAll(
             listOf(
-                EntryEntity(transactionId = transactionId, accountId = 1, amount = -1000),
-                EntryEntity(transactionId = transactionId, accountId = 10, amount = 1000),
+                EntryEntity(transactionId = transactionId, accountId = 1, amount = -1000, currency = "BRL"),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 1000, currency = "BRL"),
             ),
         )
 
@@ -150,10 +150,10 @@ class TransactionRepositoryEntriesTest {
         // carries only the money leg leaves the transaction one-sided — refused at
         // the boundary, and the whole edit rolled back with it. That is what a
         // nullable `contra` with a default let a caller do by omission.
-        val asset = Account(id = 1, name = "A", type = AccountType.ASSET)
-        val nominal = Account(id = 10, name = "Despesas", type = AccountType.EXPENSE)
-        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
-        db.accountDao().insert(AccountEntity(id = 10, name = "Despesas", type = AccountEntity.Type.EXPENSE))
+        val asset = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+        val nominal = Account(id = 10, name = "Despesas", type = AccountType.EXPENSE, currency = "BRL")
+        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET, currency = "BRL"))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Despesas", type = AccountEntity.Type.EXPENSE, currency = "BRL"))
         db.dimensionDao().insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
         val repository = repository(listOf(asset, nominal))
 

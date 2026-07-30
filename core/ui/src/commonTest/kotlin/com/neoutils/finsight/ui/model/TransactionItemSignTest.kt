@@ -27,12 +27,12 @@ class TransactionItemSignTest {
 
     private val formatter = CurrencyFormatter()
 
-    private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET)
-    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
-    private val card = Account(id = 3L, name = "Card", type = AccountType.LIABILITY)
-    private val reconciliation = Account(id = 4L, name = "Reconciliation", type = AccountType.EQUITY)
-    private val expense = Account(id = 5L, name = "Expenses", type = AccountType.EXPENSE)
-    private val income = Account(id = 6L, name = "Income", type = AccountType.INCOME)
+    private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET, currency = "BRL")
+    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET, currency = "BRL")
+    private val card = Account(id = 3L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val reconciliation = Account(id = 4L, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val expense = Account(id = 5L, name = "Expenses", type = AccountType.EXPENSE, currency = "BRL")
+    private val income = Account(id = 6L, name = "Income", type = AccountType.INCOME, currency = "BRL")
 
     private fun transactionOf(vararg entries: Entry) = Transaction(
         id = 1L,

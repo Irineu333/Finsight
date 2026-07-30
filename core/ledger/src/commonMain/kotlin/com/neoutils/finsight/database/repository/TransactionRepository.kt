@@ -69,7 +69,7 @@ class TransactionRepository(
                     transactionId = entity.transactionId,
                     account = account,
                     amount = entity.amount,
-                    currency = entity.currency,
+                    // Derived from the account, which the chart map hydrates whole.
                     dimensionId = entity.dimensionId,
                 )
             }

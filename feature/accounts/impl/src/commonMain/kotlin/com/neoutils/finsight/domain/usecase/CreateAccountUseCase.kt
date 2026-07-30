@@ -7,7 +7,9 @@ import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.extension.localeCurrencyCode
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -15,11 +17,17 @@ class CreateAccountUseCase(
     private val repository: IAccountRepository,
     private val validateAccountName: ValidateAccountNameUseCase,
     private val setDefaultAccount: SetDefaultAccountUseCase,
+    // The app's single currency, resolved from the device's region. It is a parameter
+    // rather than a literal because this is the one production path that will later
+    // carry the user's choice — the account form is the only door a second currency
+    // is ever born through.
+    private val defaultCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode()),
 ) {
     suspend operator fun invoke(
         name: String,
         isDefault: Boolean,
         iconKey: String,
+        currency: String = defaultCurrency,
     ): Either<Throwable, Account> {
         return either {
             validateAccountName(
@@ -31,6 +39,7 @@ class CreateAccountUseCase(
             val account = catch {
                 Account(
                     name = name.trim(),
+                    currency = currency,
                     iconKey = iconKey,
                     isDefault = false,
                     createdAt = Clock.System.now().toEpochMilliseconds()

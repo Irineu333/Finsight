@@ -31,7 +31,7 @@ import kotlin.test.assertEquals
 class AdjustBalanceUseCaseTest {
 
     private val date = LocalDate(2026, 1, 10)
-    private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET)
+    private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET, currency = "BRL")
 
     @Test
     fun `re-adjusting a balance rewrites the adjustment from the ledger`() = runTest {
@@ -55,7 +55,7 @@ class AdjustBalanceUseCaseTest {
  * account plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class LedgerStore(private val account: Account) {
-    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L

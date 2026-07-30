@@ -1,5 +1,6 @@
 package com.neoutils.finsight.extension
 
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -18,7 +19,8 @@ class MoneyFigureTest {
 
     private val brl = Denomination.exact("BRL")
     private val usd = Denomination.exact("USD")
-    private val approximateBrl = Denomination.approximate("BRL")
+    private val usdRate = AppliedRate("USD", "BRL", 5.5, LocalDate.parse("2026-01-01"))
+    private val approximateBrl = Denomination.approximate("BRL", listOf(usdRate))
 
     private fun formatted(value: Double, currency: String) = formatter.format(value, currency)
 
@@ -186,4 +188,53 @@ class MoneyFigureTest {
     fun aFigureOfNoTermsIsNotBuildable() {
         assertFailsWith<IllegalArgumentException> { MoneyFigure.of(emptyList()) }
     }
+
+    @Test
+    fun `a card of exact single-term figures owes no explanation`() {
+        val figures = listOf(
+            MoneyFigure.of(DisplayAmount.natural(100.0, brl)),
+            MoneyFigure.of(DisplayAmount.forcedNegative(30.0, brl)),
+        )
+
+        // The whole of the single-currency app, and the reason the footer is a condition
+        // rather than a slot: nothing renders, and the card is the card it always was.
+        assertFalse(explanationIsOwed(figures))
+        assertTrue(appliedRatesOf(figures).isEmpty())
+    }
+
+    @Test
+    fun `one converted figure is enough to owe one`() {
+        val figures = listOf(
+            MoneyFigure.of(DisplayAmount.natural(100.0, brl)),
+            MoneyFigure.of(DisplayAmount.natural(375.0, Denomination.approximate("BRL", listOf(usdRate)))),
+        )
+
+        assertTrue(explanationIsOwed(figures))
+        assertEquals(listOf(usdRate), appliedRatesOf(figures))
+    }
+
+    @Test
+    fun `several terms owe one even when every term is exact`() {
+        // `formatSingleLine` forces the mark here, so a card asking only `isApproximate`
+        // would print a mark it never explains.
+        val figure = MoneyFigure.of(
+            listOf(DisplayAmount.natural(100.0, brl), DisplayAmount.natural(50.0, Denomination.exact("USD")))
+        )
+
+        assertFalse(figure.terms.all { it.isApproximate })
+        assertTrue(explanationIsOwed(listOf(figure)))
+        assertTrue(appliedRatesOf(listOf(figure)).isEmpty(), "there is no rate to name")
+    }
+
+    @Test
+    fun `a rate shared by several figures of a card is revealed once`() {
+        val figures = List(3) {
+            MoneyFigure.of(DisplayAmount.natural(1.0, Denomination.approximate("BRL", listOf(usdRate))))
+        }
+
+        // Opening balance, income and expense of one account all convert at the same quote;
+        // three lines saying it would read as three rates.
+        assertEquals(listOf(usdRate), appliedRatesOf(figures))
+    }
+
 }

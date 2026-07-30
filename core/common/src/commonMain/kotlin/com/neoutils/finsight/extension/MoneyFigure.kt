@@ -42,6 +42,14 @@ class MoneyFigure private constructor(val terms: List<DisplayAmount>) {
      */
     val isApproximate: Boolean get() = terms.any { it.isApproximate }
 
+    /**
+     * The rates that took part, in the order the terms carry them — derived from the terms
+     * exactly like [isApproximate], because it answers the same question one level down:
+     * the mark says *that* something was converted, this says *by what*.
+     */
+    val appliedRates: List<AppliedRate>
+        get() = terms.flatMap { it.denomination.appliedRates }
+
     override fun equals(other: Any?) = other is MoneyFigure && terms == other.terms
 
     override fun hashCode() = terms.hashCode()
@@ -106,6 +114,32 @@ fun CurrencyFormatter.formatTerms(figure: MoneyFigure): List<String> =
  * footer that explains the mark — must ask `isApproximate || !isSingleTerm`, not
  * [MoneyFigure.isApproximate] alone, or the mark would appear with nothing to explain it.
  */
+/**
+ * Whether a card of these figures owes its reader an explanation — the one condition the
+ * footer of design D25 is rendered on.
+ *
+ * It asks two things and not one. A converted figure carries the mark, and that is the
+ * obvious half. The other is a figure of several terms on a surface that shows one line:
+ * `formatSingleLine` **forces** the mark there even when every term is exact, so a card
+ * asking only [MoneyFigure.isApproximate] would print a mark it never explains.
+ *
+ * It lives here, beside the two rules it reconciles, so no card decides it on its own —
+ * and so the "no footer when everything is exact" of task 7.9 is a fact about a function
+ * rather than about a pixel.
+ */
+fun explanationIsOwed(figures: List<MoneyFigure>): Boolean =
+    figures.any { it.isApproximate || !it.isSingleTerm }
+
+/**
+ * The rates behind [figures], each one once — what the footer reveals.
+ *
+ * Distinct because one card holds several figures over the same currencies: opening
+ * balance, income and expense of one account all convert at the same quote, and repeating
+ * it three times would read as three rates.
+ */
+fun appliedRatesOf(figures: List<MoneyFigure>): List<AppliedRate> =
+    figures.flatMap { it.appliedRates }.distinct().sortedBy { it.currency }
+
 fun CurrencyFormatter.formatSingleLine(figure: MoneyFigure): String {
     val primary = format(figure.primary)
 

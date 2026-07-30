@@ -64,6 +64,7 @@ import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
+import com.neoutils.finsight.ui.component.ApproximationFooter
 import com.neoutils.finsight.ui.component.MoneyFigureText
 import com.neoutils.finsight.ui.component.BalanceCardConfig
 import com.neoutils.finsight.ui.component.BudgetProgressCard
@@ -883,6 +884,13 @@ private fun TotalBalanceCard(
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                 ),
+            )
+
+            // The figure that spans every account is the likeliest of the app to need an
+            // explanation, and the one a reader is least able to check on their own.
+            ApproximationFooter(
+                figures = listOf(component.amount),
+                modifier = Modifier.padding(top = 6.dp),
             )
         }
     }

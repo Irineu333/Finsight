@@ -1,7 +1,9 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.CurrencyBalance
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.extension.AppliedRate
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
@@ -54,10 +56,10 @@ class ConsolidateFigureUseCase(
 
         // Nothing at all reads as zero, and it is exact: an empty result is not an unknown
         // one. It is denominated in the base because no account named a currency for it.
-        if (amounts.isEmpty()) return MoneyFigure.of(term(0.0, base, policy, converted = false))
+        if (amounts.isEmpty()) return MoneyFigure.of(term(0.0, base, policy))
 
         amounts.entries.singleOrNull()?.let { (currency, amount) ->
-            return MoneyFigure.of(term(amount, currency, policy, converted = false))
+            return MoneyFigure.of(term(amount, currency, policy))
         }
 
         val (convertible, own) = amounts.entries
@@ -67,15 +69,27 @@ class ConsolidateFigureUseCase(
         // Everything the rates reached, in one term in the base. It is approximate because
         // some conversion happened — and it is approximate even when the base's own share is
         // the whole of it, since the figure as a whole passed through a rate.
-        val convertedTotal = convertible.sumOf { it.amount * it.rate!! }
-        val baseTerm = term(convertedTotal, base, policy, converted = true)
+        val convertedTotal = convertible.sumOf { it.amount * it.rate!!.rate }
+        // The quotes that produced the term travel inside it: the surface showing the mark
+        // has to explain it (design D25), and asking the repository a second time would be
+        // a second decision about which quote governs this number. The base's own share is
+        // not one of them — it is worth one of itself by definition, not by a rate.
+        val baseTerm = term(
+            convertedTotal,
+            base,
+            policy,
+            appliedRates = convertible
+                .filter { it.currency != base }
+                .sortedBy { it.currency }
+                .map { AppliedRate(it.currency, base, it.rate!!.rate, it.rate.date) },
+        )
 
         // What no rate reached keeps its own currency, and keeps it exactly: that share of
         // the figure was not converted, and saying otherwise would be the invented value this
         // rule exists to refuse.
         val ownTerms = own
             .sortedBy { it.currency }
-            .map { term(it.amount, it.currency, policy, converted = false) }
+            .map { term(it.amount, it.currency, policy) }
 
         return MoneyFigure.of(
             if (convertible.isEmpty()) ownTerms else listOf(baseTerm) + ownTerms
@@ -83,11 +97,24 @@ class ConsolidateFigureUseCase(
     }
 
     /** The base is worth one of itself by definition, and no row may say otherwise. */
-    private suspend fun rateOf(currency: String, base: String, date: LocalDate): Double? =
-        if (currency == base) 1.0 else exchangeRateRepository.rateOn(currency, date)?.rate
+    private suspend fun rateOf(currency: String, base: String, date: LocalDate): ExchangeRate? =
+        if (currency == base) {
+            ExchangeRate(base, date, rate = 1.0, source = ExchangeRate.Source.OPERATION)
+        } else {
+            exchangeRateRepository.rateOn(currency, date)
+        }
 
-    private fun term(value: Double, currency: String, policy: SignPolicy, converted: Boolean): DisplayAmount {
-        val denomination = if (converted) Denomination.approximate(currency) else Denomination.exact(currency)
+    private fun term(
+        value: Double,
+        currency: String,
+        policy: SignPolicy,
+        appliedRates: List<AppliedRate>? = null,
+    ): DisplayAmount {
+        val denomination = if (appliedRates == null) {
+            Denomination.exact(currency)
+        } else {
+            Denomination.approximate(currency, appliedRates)
+        }
         return when (policy) {
             SignPolicy.MAGNITUDE -> DisplayAmount.magnitude(value, denomination)
             SignPolicy.NATURAL -> DisplayAmount.natural(value, denomination)
@@ -99,5 +126,5 @@ class ConsolidateFigureUseCase(
         }
     }
 
-    private class Term(val currency: String, val amount: Double, val rate: Double?)
+    private class Term(val currency: String, val amount: Double, val rate: ExchangeRate?)
 }

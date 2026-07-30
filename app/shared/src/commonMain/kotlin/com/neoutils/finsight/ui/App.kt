@@ -14,6 +14,8 @@ import com.neoutils.finsight.domain.usecase.RelabelLegacyAccountCurrencyUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.ProvideNavController
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.ui.component.LocalOpenExchangeRates
 import com.neoutils.finsight.ui.component.DetailPaneHost
 import com.neoutils.finsight.ui.component.FormattingLocalsHost
 import com.neoutils.finsight.ui.component.ModalManagerHost
@@ -46,15 +48,21 @@ fun App() {
             ProvidePlatformContext {
                 FormattingLocalsHost {
                     ProvideNavController {
-                        ModalManagerHost {
-                            DetailPaneHost {
-                                // The layout wraps the shell, so the chrome can declare itself
-                                // in the transition overlay — above any shared element.
-                                SharedTransitionProvider {
-                                    ChromeHost { paddingValues ->
-                                        AppNavHost(
-                                            modifier = Modifier.padding(paddingValues),
-                                        )
+                        // The one place that knows both the footer's need and where the
+                        // rates live: no `:core:` module may name a feature, and no card
+                        // should carry a navigation callback it almost never uses.
+                        ProvideExchangeRatesRoute {
+                            ModalManagerHost {
+                                DetailPaneHost {
+                                    // The layout wraps the shell, so the chrome can declare
+                                    // itself in the transition overlay — above any shared
+                                    // element.
+                                    SharedTransitionProvider {
+                                        ChromeHost { paddingValues ->
+                                            AppNavHost(
+                                                modifier = Modifier.padding(paddingValues),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -64,4 +72,14 @@ fun App() {
             }
         }
     }
+}
+
+@Composable
+private fun ProvideExchangeRatesRoute(content: @Composable () -> Unit) {
+    val navController = LocalNavController.current
+
+    CompositionLocalProvider(
+        LocalOpenExchangeRates provides { navController.navigate(ExchangeRatesRoute) },
+        content = content,
+    )
 }

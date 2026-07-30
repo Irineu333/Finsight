@@ -835,4 +835,8 @@
     <string name="exchange_rate_form_last_known">By the rate of %1$s</string>
     <string name="exchange_rate_delete">Remove</string>
     <string name="exchange_rate_delete_description">Remove the last rate of a currency and the figures that relied on it go back to showing that currency as a term of its own.</string>
+    <string name="approximation_footer_converted">Amounts in more than one currency, brought together in your base currency.</string>
+    <string name="approximation_footer_unreached">Amounts in more than one currency. With no rate, each is shown on its own.</string>
+    <string name="approximation_footer_rate">1 %1$s = %2$s, on %3$s</string>
+    <string name="approximation_footer_action">See rates</string>
 </resources>

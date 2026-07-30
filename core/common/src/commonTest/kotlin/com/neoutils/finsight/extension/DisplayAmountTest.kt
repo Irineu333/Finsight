@@ -1,6 +1,7 @@
 package com.neoutils.finsight.extension
 
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -100,7 +101,7 @@ class DisplayAmountTest {
 
     @Test
     fun theApproximationMarkIsOutermost() {
-        val approximate = Denomination.approximate("BRL")
+        val approximate = Denomination.approximate("BRL", listOf(AppliedRate("USD", "BRL", 5.5, LocalDate.parse("2026-01-01"))))
         assertEquals(
             "≈ +" + formatted(1240.0),
             formatter.format(DisplayAmount.forcedPositive(1240.0, approximate)),
@@ -119,7 +120,7 @@ class DisplayAmountTest {
     fun exactnessTravelsWithTheValue() {
         assertNotEquals(
             DisplayAmount.natural(1.0, Denomination.exact("BRL")),
-            DisplayAmount.natural(1.0, Denomination.approximate("BRL")),
+            DisplayAmount.natural(1.0, Denomination.approximate("BRL", listOf(AppliedRate("USD", "BRL", 5.5, LocalDate.parse("2026-01-01"))))),
         )
     }
 }

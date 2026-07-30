@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
+import com.neoutils.finsight.extension.explanationIsOwed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -150,6 +151,58 @@ class ConsolidateFigureUseCaseTest {
         val figure = consolidate(CurrencyBalance.of("BRL", 10.0))
 
         assertEquals(figure.terms.map { it.denomination.isApproximate }, figure.terms.map { false })
+    }
+
+    @Test
+    fun `a converted figure carries the quotes that produced it`() = runTest {
+        val history = listOf(
+            ExchangeRate("USD", LocalDate.parse("2026-01-01"), 5.0, ExchangeRate.Source.USER),
+            ExchangeRate("EUR", LocalDate.parse("2026-02-01"), 6.0, ExchangeRate.Source.OPERATION),
+        )
+        val figure = ConsolidateFigureUseCase(HistoryRates(history))(
+            CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 10.0, "EUR" to 10.0)),
+            base = "BRL",
+            date = date,
+        )
+
+        // The date is the quote's own — January's, months before the figure — because that
+        // is the one the reduction used, and explaining it with today's would be a second
+        // answer to a question already answered.
+        assertEquals(
+            listOf("EUR" to LocalDate.parse("2026-02-01"), "USD" to LocalDate.parse("2026-01-01")),
+            figure.appliedRates.map { it.currency to it.date },
+        )
+        assertEquals(listOf(6.0, 5.0), figure.appliedRates.map { it.rate })
+        assertTrue(figure.appliedRates.all { it.baseCurrency == "BRL" })
+    }
+
+    @Test
+    fun `the base's own share is not a rate to reveal`() = runTest {
+        val figure = consolidate(
+            CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            rates = mapOf("USD" to 5.5),
+        )
+
+        // It is worth one of itself by definition, and a footer reading "1 BRL = R$ 1,00"
+        // explains nothing.
+        assertEquals(listOf("USD"), figure.appliedRates.map { it.currency })
+    }
+
+    @Test
+    fun `an exact figure carries no rate at all`() = runTest {
+        assertTrue(consolidate(CurrencyBalance.of("USD", 50.0), rates = mapOf("USD" to 5.5)).appliedRates.isEmpty())
+        assertTrue(consolidate(CurrencyBalance.of("BRL", 10.0)).appliedRates.isEmpty())
+        assertTrue(consolidate(CurrencyBalance.zero).appliedRates.isEmpty())
+    }
+
+    @Test
+    fun `terms no rate reached leave the figure with nothing to reveal`() = runTest {
+        val figure = consolidate(CurrencyBalance.of(mapOf("BRL" to 100.0, "USD" to 50.0)))
+
+        // Two terms, both exact, and the figure still owes an explanation — of the elision
+        // rather than of a conversion. There is simply no rate to name in it.
+        assertTrue(figure.appliedRates.isEmpty())
+        assertTrue(explanationIsOwed(listOf(figure)))
     }
 
     private suspend fun consolidate(

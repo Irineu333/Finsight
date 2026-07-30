@@ -158,6 +158,13 @@ fun BalanceCard(
                 )
             }
         }
+
+        // Nothing at all unless the figure above owes an explanation — which is every card
+        // of every user whose money is in one currency.
+        ApproximationFooter(
+            figures = listOf(balance),
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
 }
 }

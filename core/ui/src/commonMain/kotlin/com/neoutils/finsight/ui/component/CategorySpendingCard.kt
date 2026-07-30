@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import androidx.compose.ui.text.TextStyle
+import com.neoutils.finsight.ui.component.ApproximationFooter
 import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.resources.Res
@@ -57,6 +58,14 @@ fun CategorySpendingCard(
                         .padding(horizontal = 16.dp)
                 )
             }
+
+            // One footer for the card, over every line of it: the rate that explains one
+            // category's figure explains its neighbour's, and repeating it per row would
+            // read as several rates.
+            ApproximationFooter(
+                figures = categorySpending.map { it.amount },
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
         }
     }
 }

@@ -836,4 +836,8 @@
     <string name="exchange_rate_form_last_known">Pela taxa de %1$s</string>
     <string name="exchange_rate_delete">Remover</string>
     <string name="exchange_rate_delete_description">Removida a última taxa de uma moeda, as figuras que dependiam dela voltam a exibir aquela moeda como termo próprio.</string>
+    <string name="approximation_footer_converted">Valores em mais de uma moeda, reunidos na sua moeda base.</string>
+    <string name="approximation_footer_unreached">Valores em mais de uma moeda. Sem taxa, cada uma é exibida por si.</string>
+    <string name="approximation_footer_rate">1 %1$s = %2$s, em %3$s</string>
+    <string name="approximation_footer_action">Ver taxas</string>
 </resources>

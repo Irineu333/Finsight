@@ -34,9 +34,23 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getAccountById(id: Long): AccountEntity?
 
-    // Ledger account lookups (chart of accounts includes non-ASSET rows).
-    @Query("SELECT * FROM accounts WHERE type = :type AND name = :name LIMIT 1")
-    suspend fun getByTypeAndName(type: AccountEntity.Type, name: String): AccountEntity?
+    /**
+     * A system row of the chart, by the triple that identifies one:
+     * `(type, name, currency)`.
+     *
+     * The currency is part of the key, not a detail of the row it returns. There is
+     * one nominal per nature **per currency in use** — an expense in USD lands on
+     * `EXPENSES/USD` — because that is what keeps `Account.currency` meaning the same
+     * thing on every line of the chart, user rows and system rows alike (design D4).
+     * With a single nominal, an expense in USD would land on the `EXPENSES` row whose
+     * currency says `BRL`, and the column would start meaning two things.
+     */
+    @Query("SELECT * FROM accounts WHERE type = :type AND name = :name AND currency = :currency LIMIT 1")
+    suspend fun getByTypeAndName(
+        type: AccountEntity.Type,
+        name: String,
+        currency: String,
+    ): AccountEntity?
 
     @Query("SELECT * FROM accounts WHERE id = :id")
     fun observeAccountById(id: Long): Flow<AccountEntity?>

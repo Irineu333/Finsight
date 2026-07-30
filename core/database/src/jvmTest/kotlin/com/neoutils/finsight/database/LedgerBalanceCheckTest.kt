@@ -88,6 +88,28 @@ class LedgerBalanceCheckTest {
         )
     }
 
+    /**
+     * The transaction that crosses currencies passes, and passes **here** — reading
+     * `entries` alone, with no idea that a conversion account exists.
+     *
+     * It is the whole reason the invariant was not given an exception for the
+     * crossing. Had it been, this four-line `HAVING total <> 0` would have to tell a
+     * legitimate exception apart from corrupt data, and the only way to know would be
+     * to consult the accounts of the legs — which is exactly what it avoids doing in
+     * order to stay valid before and after any rewrite of the chart.
+     */
+    @Test
+    fun `given a cross-currency transaction then the check passes reading only the entries`() {
+        // BRL 550 left one account, USD 100 arrived in another, and the residue of
+        // each currency sits on that currency's conversion account.
+        insert(transactionId = 1, amount = -55_000, currency = "BRL")
+        insert(transactionId = 1, amount = 55_000, currency = "BRL")
+        insert(transactionId = 1, amount = -10_000, currency = "USD")
+        insert(transactionId = 1, amount = 10_000, currency = "USD")
+
+        connection.verifyLedgerBalanced(stage = "test")
+    }
+
     private fun insert(transactionId: Long, amount: Long, currency: String) {
         connection.execSQL(
             "INSERT INTO `entries` (`transactionId`,`accountId`,`amount`,`currency`) " +

@@ -65,6 +65,37 @@ class AdjustInvoiceUseCaseTest {
 
         assertEquals(200.0, ledger.dimensionOwed(invoice.id))
     }
+
+    /**
+     * The proof that `AdjustInvoiceUseCase` did not have to change either.
+     *
+     * Its idempotency is even broader than the account one — "any transaction on that
+     * date carrying this invoice, with an `EQUITY` leg" — so a cross-currency invoice
+     * payment made the same day would have been rewritten as the adjustment had the
+     * conversion account been an `EQUITY` row. It stops matching because a conversion
+     * leg is not `EQUITY`, and the owed amount is untouched because the conversion leg
+     * carries no dimension (design D15).
+     */
+    @Test
+    fun `a same-day cross-currency invoice payment is not rewritten as the adjustment`() = runTest {
+        val ledger = InvoiceLedgerStore(card)
+        val useCase = AdjustInvoiceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        val dimensionId = invoice.dimensionId!!
+        val paymentId = ledger.seedCrossCurrencyPayment(date, dimensionId)
+        val paymentEntries = ledger.entriesByTransaction.getValue(paymentId)
+        val owedAfterPayment = ledger.dimensionOwed(dimensionId)
+
+        useCase(invoice = invoice, target = 300.0, adjustmentDate = date).getOrNull()
+
+        assertEquals(paymentEntries, ledger.entriesByTransaction.getValue(paymentId))
+        assertEquals(2, ledger.entriesByTransaction.size)
+        // The adjustment moved the owed amount; the payment's own legs did not change.
+        assertEquals(-100.0, owedAfterPayment)
+    }
 }
 
 /**
@@ -75,6 +106,12 @@ class AdjustInvoiceUseCaseTest {
 class InvoiceLedgerStore(card: CreditCard) {
     private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "BRL")
     private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val payingAccount = Account(id = 2, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
+    private val conversionLocal =
+        Account(id = 900, name = "Conversão", type = AccountType.CONVERSION, currency = "BRL")
+    private val conversionForeign =
+        Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
+    private val foreignCard = Account(id = 11, name = "Chase card", type = AccountType.LIABILITY, currency = "USD")
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L
@@ -98,6 +135,24 @@ class InvoiceLedgerStore(card: CreditCard) {
         val transactionId = ++nextTransactionId
         dateByTransaction[transactionId] = date
         write(transactionId, legs)
+        return transactionId
+    }
+
+    /** BRL 550 out of an account, settling USD 100 of a foreign card's invoice. */
+    fun seedCrossCurrencyPayment(date: LocalDate, dimensionId: Long): Long {
+        val transactionId = ++nextTransactionId
+        dateByTransaction[transactionId] = date
+        entriesByTransaction[transactionId] = listOf(
+            Entry(transactionId = transactionId, account = payingAccount, amount = -55_000),
+            Entry(transactionId = transactionId, account = conversionLocal, amount = 55_000),
+            Entry(transactionId = transactionId, account = conversionForeign, amount = -10_000),
+            Entry(
+                transactionId = transactionId,
+                account = foreignCard,
+                amount = 10_000,
+                dimensionId = dimensionId,
+            ),
+        )
         return transactionId
     }
 

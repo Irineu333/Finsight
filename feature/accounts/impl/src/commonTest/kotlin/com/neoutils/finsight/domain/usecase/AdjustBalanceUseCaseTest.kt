@@ -48,6 +48,53 @@ class AdjustBalanceUseCaseTest {
 
         assertEquals(150.0, ledger.accountBalance())
     }
+
+    /**
+     * The proof that `AdjustBalanceUseCase` did not have to change at all.
+     *
+     * Its idempotency defines "the existing adjustment" as *any* transaction on that
+     * date, on that account, carrying an `EQUITY` leg. Had the conversion account
+     * been an `EQUITY` row, a cross-currency transfer made on the same day would have
+     * matched that predicate and been **rewritten** as the adjustment — losing the
+     * transfer and inventing an adjustment nobody made. A type of its own is what
+     * makes the predicate stop matching, with no line of this use case touched.
+     */
+    @Test
+    fun `a same-day cross-currency transfer is not rewritten as the adjustment`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        val transferId = ledger.seedCrossCurrencyTransfer(date)
+        val transferEntries = ledger.entriesByTransaction.getValue(transferId)
+
+        useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
+
+        // The transfer is untouched, and the adjustment is a transaction of its own.
+        assertEquals(transferEntries, ledger.entriesByTransaction.getValue(transferId))
+        assertEquals(2, ledger.entriesByTransaction.size)
+    }
+
+    /**
+     * And the editability gate refuses the crossing without a gate of its own: it
+     * counts **monetary** legs, and a conversion leg is not one (design D19).
+     */
+    @Test
+    fun `a cross-currency transfer has two monetary legs and so falls in the existing gate`() = runTest {
+        val ledger = LedgerStore(account)
+        val transferId = ledger.seedCrossCurrencyTransfer(date)
+        val transaction = Transaction(
+            id = transferId,
+            title = null,
+            date = date,
+            entries = ledger.entriesByTransaction.getValue(transferId),
+        )
+
+        assertEquals(2, transaction.monetaryEntries.size)
+        assertEquals(4, transaction.entries.size)
+    }
 }
 
 /**
@@ -56,6 +103,11 @@ class AdjustBalanceUseCaseTest {
  */
 class LedgerStore(private val account: Account) {
     private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val foreignAccount = Account(id = 2, name = "Chase", type = AccountType.ASSET, currency = "USD")
+    private val conversionLocal =
+        Account(id = 900, name = "Conversão", type = AccountType.CONVERSION, currency = "BRL")
+    private val conversionForeign =
+        Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L
@@ -74,6 +126,19 @@ class LedgerStore(private val account: Account) {
         val transactionId = ++nextTransactionId
         dateByTransaction[transactionId] = date
         write(transactionId, legs)
+        return transactionId
+    }
+
+    /** BRL 550 out of [account] into a USD account, as the write boundary completes it. */
+    fun seedCrossCurrencyTransfer(date: LocalDate): Long {
+        val transactionId = ++nextTransactionId
+        dateByTransaction[transactionId] = date
+        entriesByTransaction[transactionId] = listOf(
+            Entry(transactionId = transactionId, account = account, amount = -55_000),
+            Entry(transactionId = transactionId, account = conversionLocal, amount = 55_000),
+            Entry(transactionId = transactionId, account = conversionForeign, amount = -10_000),
+            Entry(transactionId = transactionId, account = foreignAccount, amount = 10_000),
+        )
         return transactionId
     }
 

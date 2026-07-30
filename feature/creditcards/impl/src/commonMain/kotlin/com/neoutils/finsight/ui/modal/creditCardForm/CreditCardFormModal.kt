@@ -27,6 +27,10 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_form_closing_day_label
 import com.neoutils.finsight.resources.credit_card_form_due_day_label
+import com.neoutils.finsight.resources.credit_card_form_currency_label
+import com.neoutils.finsight.resources.credit_card_form_currency_modal_title
+import com.neoutils.finsight.resources.credit_card_form_currency_state_locked
+import com.neoutils.finsight.resources.credit_card_form_currency_state_new
 import com.neoutils.finsight.resources.credit_card_form_edit_title
 import com.neoutils.finsight.resources.credit_card_form_icon_helper
 import com.neoutils.finsight.resources.credit_card_form_icon_label
@@ -35,9 +39,12 @@ import com.neoutils.finsight.resources.credit_card_form_limit_label
 import com.neoutils.finsight.resources.credit_card_form_name_label
 import com.neoutils.finsight.resources.credit_card_form_new_title
 import com.neoutils.finsight.resources.credit_card_form_save
+import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.DayInputTransformation
 import com.neoutils.finsight.util.FeatureIconCatalog
@@ -60,6 +67,10 @@ class CreditCardFormModal(
         val modalManager = LocalModalManager.current
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.credit_card_form_icon_modal_title)
+        val currencyModalTitle = stringResource(Res.string.credit_card_form_currency_modal_title)
+        val currencyOptions = uiState.selectableCurrencies.map {
+            CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+        }
 
         val name = rememberTextFieldState(uiState.form.name)
         val limit = rememberTextFieldState(uiState.form.limit)
@@ -156,6 +167,37 @@ class CreditCardFormModal(
                 modifier = Modifier
                     .animateContentSize()
                     .fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // The card is denominated by its `LIABILITY` account, and this is where that
+            // account's currency is chosen — the second and last production site where a
+            // currency is picked at all (design D23).
+            CurrencyRow(
+                currency = uiState.currency.orEmpty(),
+                label = stringResource(
+                    Res.string.credit_card_form_currency_label,
+                    uiState.currency.orEmpty(),
+                ),
+                subtitle = if (uiState.canChangeCurrency) {
+                    stringResource(Res.string.credit_card_form_currency_state_new)
+                } else {
+                    stringResource(Res.string.credit_card_form_currency_state_locked)
+                },
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = currencyOptions,
+                            selectedCode = uiState.currency,
+                            onCurrencySelected = { option ->
+                                viewModel.onAction(CreditCardFormAction.CurrencySelected(option.code))
+                            },
+                        )
+                    )
+                },
             )
 
             Spacer(modifier = Modifier.height(8.dp))

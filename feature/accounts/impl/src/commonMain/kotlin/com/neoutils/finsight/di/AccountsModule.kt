@@ -11,6 +11,8 @@ import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -61,6 +63,9 @@ val accountsModule = module {
             setDefaultAccount = get(),
         )
     }
+    factory<GetAccountCurrenciesUseCase> {
+        GetAccountCurrenciesUseCaseImpl(accountDao = get())
+    }
     factory<ArchiveAccountUseCase> {
         ArchiveAccountUseCaseImpl(
             accountDao = get(),
@@ -107,6 +112,7 @@ val accountsModule = module {
         AccountFormViewModel(
             account = it.getOrNull(),
             validateAccountName = get(),
+            baseCurrencyRepository = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
             modalManager = get(),

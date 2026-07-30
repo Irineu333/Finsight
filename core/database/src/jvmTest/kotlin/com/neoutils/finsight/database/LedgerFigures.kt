@@ -120,7 +120,7 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
             .filter { it.type == AccountEntity.Type.ASSET && !it.isArchived }
             .associate { it.id to entryDao.balanceOf(it.id) },
         owedByCardId = creditCardDao().getAllCreditCardsList()
-            .associate { it.id to entryDao.balanceOf(it.accountId) },
+            .associate { it.creditCard.id to entryDao.balanceOf(it.creditCard.accountId) },
         // Keyed by invoice id, read through the dimension.
         owedByInvoiceId = invoiceDao().getAllInvoices()
             .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d).soleTotal() }.orZero() },

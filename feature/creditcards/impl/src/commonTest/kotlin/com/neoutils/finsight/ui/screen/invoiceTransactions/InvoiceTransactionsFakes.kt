@@ -50,7 +50,7 @@ internal class FakeCreditCardRepository(private val card: CreditCard) : ICreditC
     override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = getAllCreditCards()
     override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = card
-    override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun unarchive(accountId: Long) = throw NotImplementedError()

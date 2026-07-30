@@ -23,6 +23,14 @@ data class ConfirmRecurringUiState(
      * currency (design D17).
      */
     val creditCardCurrency: String? = null,
+    /**
+     * Whether [accounts] is shorter than what the user holds, because accounts of
+     * another currency cannot take this recurring's amount (design D17/D26). The modal
+     * says so: a list that quietly got shorter is a lie by omission.
+     */
+    val hiddenByCurrency: Boolean = false,
+    /** What the recurring's amount is denominated in, when it names an account or card. */
+    val recurringCurrency: String? = null,
 ) {
     val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 

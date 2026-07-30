@@ -20,7 +20,7 @@ class UnarchiveCreditCardUseCaseTest {
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
-        override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     }

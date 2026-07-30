@@ -551,6 +551,7 @@ private class FakeAccountDao : AccountDao {
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = throw NotImplementedError()
     override suspend fun getAllAccounts(): List<AccountEntity> = accounts.values.toList()
     override suspend fun getAccountById(id: Long): AccountEntity? = accounts[id]
+    override suspend fun currenciesInUse(systemNames: List<String>): List<String> = throw NotImplementedError()
     override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): AccountEntity? = null
     override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()

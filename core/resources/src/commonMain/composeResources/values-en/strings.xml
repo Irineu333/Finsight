@@ -13,6 +13,7 @@
     <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Archive it to preserve the history.</string>
     <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before archiving the account.</string>
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or delete them before deleting this.</string>
+    <string name="account_error_currency_immutable">An account's currency is set when it is created and cannot be changed. To correct it, delete the account (if it has no entries) and create another.</string>
     <string name="account_error_has_budget">This category is in a budget. Remove it from the budget before deleting.</string>
     <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
 
@@ -313,6 +314,10 @@
     <string name="account_form_edit_title">Edit Account</string>
     <string name="account_form_new_title">New Account</string>
     <string name="account_form_name_label">Name</string>
+    <string name="account_form_currency_label">Currency · %1$s</string>
+    <string name="account_form_currency_state_new">Chosen now and fixed for good</string>
+    <string name="account_form_currency_state_locked">Set at creation and cannot change</string>
+    <string name="account_form_currency_modal_title">Account currency</string>
     <string name="account_form_icon_label">Account icon</string>
     <string name="account_form_icon_helper">Tap to open the icon list</string>
     <string name="account_form_icon_modal_title">Choose an account icon</string>
@@ -326,6 +331,10 @@
     <string name="credit_card_form_edit_title">Edit Card</string>
     <string name="credit_card_form_new_title">New Card</string>
     <string name="credit_card_form_name_label">Card Name</string>
+    <string name="credit_card_form_currency_label">Currency · %1$s</string>
+    <string name="credit_card_form_currency_state_new">Chosen now and fixed for good</string>
+    <string name="credit_card_form_currency_state_locked">Set at creation and cannot change</string>
+    <string name="credit_card_form_currency_modal_title">Card currency</string>
     <string name="credit_card_form_icon_label">Card icon</string>
     <string name="credit_card_form_icon_helper">Tap to open the icon list</string>
     <string name="credit_card_form_icon_modal_title">Choose a card icon</string>
@@ -352,6 +361,9 @@
     <string name="budget_form_icon_label">Budget icon</string>
     <string name="budget_form_icon_helper">Tap to open the icon list</string>
     <string name="budget_form_icon_modal_title">Choose a budget icon</string>
+    <string name="budget_form_currency_label">Limit currency · %1$s</string>
+    <string name="budget_form_currency_state_new">Chosen now and fixed for this budget</string>
+    <string name="budget_form_currency_modal_title">Limit currency</string>
     <string name="budget_form_limit_label">Limit</string>
     <string name="budget_form_limit_type_fixed">$</string>
     <string name="budget_form_limit_type_percentage">%</string>
@@ -701,6 +713,7 @@
     <string name="view_recurring_amount_label">Amount</string>
     <string name="view_recurring_day_label">Day of month</string>
     <string name="view_recurring_status_label">Status</string>
+    <string name="confirm_recurring_currency_filter">Only accounts in %1$s are listed: it is the currency this recurring was created in.</string>
     <string name="view_recurring_account_label">Account</string>
     <string name="view_recurring_credit_card_label">Credit card</string>
     <string name="view_recurring_category_label">Category</string>

@@ -56,6 +56,13 @@ class ConfirmRecurringViewModel(
     } else {
         TransactionTarget.ACCOUNT
     }
+    /**
+     * What the recurring's own amount is denominated in — the currency of the account or
+     * card it names (design D17). `null` when it names neither, in which case there is
+     * nothing to constrain and every account is offered.
+     */
+    private val recurringCurrency = recurring.account?.currency ?: recurring.creditCard?.currency
+
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)
     private val selectedAccount = MutableStateFlow(initialAccount)
@@ -101,11 +108,24 @@ class ConfirmRecurringViewModel(
         // No fallback to the default account: substituting where the money moves
         // through is not a detail the app gets to decide in silence. With nothing
         // selected the modal keeps Confirm disabled until the user says where.
+        // The selector offers only what the domain accepts — D5's doctrine applied to
+        // the UI, and what `TransferBetweenAccountsModal` already practises by leaving
+        // the source out of the destinations. Redirecting a confirmation to an account
+        // of another currency would write the raw number as if it were that currency,
+        // so the refusal is prevented in the control instead of reported as an error;
+        // the domain guard stays as a net, and is never the designed path.
+        val offeredAccounts = recurringCurrency
+            ?.let { currency -> accounts.filter { it.currency == currency } }
+            ?: accounts
+
         ConfirmRecurringUiState(
             recurring = recurring,
             confirmDate = date,
             selectedTarget = target,
-            accounts = accounts,
+            accounts = offeredAccounts,
+            // A silently shorter list is a lie by omission, so the modal says why.
+            hiddenByCurrency = offeredAccounts.size < accounts.size,
+            recurringCurrency = recurringCurrency,
             selectedAccount = account,
             creditCards = creditCards,
             selectedCreditCard = creditCard,

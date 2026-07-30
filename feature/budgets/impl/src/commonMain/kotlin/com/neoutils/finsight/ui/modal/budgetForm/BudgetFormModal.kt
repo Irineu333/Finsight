@@ -26,12 +26,15 @@ import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
@@ -52,6 +55,10 @@ class BudgetFormModal(
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
+        val currencyModalTitle = stringResource(Res.string.budget_form_currency_modal_title)
+        val currencyOptions = uiState.selectableCurrencies.map {
+            CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+        }
         val categoriesEntry = koinInject<CategoriesEntry>()
         val recurringEntry = koinInject<RecurringEntry>()
         val accentColor = MaterialTheme.colorScheme.primary
@@ -128,6 +135,34 @@ class BudgetFormModal(
                 onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            // Offered only where there is a choice to make (design D13): the user who
+            // holds one currency meets the form he always met, and the limit takes that
+            // currency because it is the only possible answer, not a silent default.
+            AnimatedVisibility(visible = uiState.canChangeCurrency) {
+                CurrencyRow(
+                    currency = uiState.currency.orEmpty(),
+                    label = stringResource(
+                        Res.string.budget_form_currency_label,
+                        uiState.currency.orEmpty(),
+                    ),
+                    subtitle = stringResource(Res.string.budget_form_currency_state_new),
+                    canChange = true,
+                    onClick = {
+                        modalManager.show(
+                            CurrencyPickerModal(
+                                title = currencyModalTitle,
+                                currencies = currencyOptions,
+                                selectedCode = uiState.currency,
+                                onCurrencySelected = { option ->
+                                    viewModel.onAction(BudgetFormAction.CurrencySelected(option.code))
+                                },
+                            )
+                        )
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

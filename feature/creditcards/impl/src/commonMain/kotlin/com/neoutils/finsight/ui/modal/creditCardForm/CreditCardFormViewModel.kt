@@ -6,6 +6,7 @@ import arrow.core.flatMap
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
@@ -51,26 +52,27 @@ class CreditCardFormViewModel(
 ) : ViewModel() {
 
     /**
-     * What the limit is typed and read back in (design D17). An existing card has an
-     * account, and that account states it. A card being *created* does not — its
-     * `LIABILITY` account is only born on insert — so the repository that will
-     * denominate it is asked what it is about to write, rather than the question being
-     * answered a second time here.
+     * What the card is denominated in — the limit is typed and read back in it (design
+     * D17), and every figure of the card follows.
+     *
+     * An existing card has an account, and that account states it; a card being
+     * *created* does not — its `LIABILITY` account is only born on insert — so the
+     * repository that will denominate it says what it is **pre-selected** with, and the
+     * user is free to change it until the card exists. After that it never changes
+     * (design D12), which is why the row locks in edit mode.
      *
      * Either answer is a suspending read, so the form starts without a currency and the
      * limit field simply does not format until it arrives.
      */
-    private val currency = flow {
-        emit(
-            creditCard
+    private val currency = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            currency.value = creditCard
                 ?.let { accountRepository.currencyOf(it) }
                 ?: creditCardRepository.currencyForNewCard()
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = null,
-    )
+        }
+    }
 
     private fun prefilledLimit(currency: String?): String {
         if (creditCard == null || currency == null) return ""
@@ -153,8 +155,10 @@ class CreditCardFormViewModel(
             selectedIcon = selectedIcon,
             validation = validation,
             isEditMode = isEditMode,
-            canSubmit = form.isValid(),
+            canSubmit = form.isValid() && currency != null,
             currency = currency,
+            canChangeCurrency = !isEditMode,
+            selectableCurrencies = CurrencyCatalog.currencies,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -188,6 +192,12 @@ class CreditCardFormViewModel(
 
             is CreditCardFormAction.IconSelected -> {
                 selectedIcon.value = action.icon
+            }
+
+            is CreditCardFormAction.CurrencySelected -> {
+                // Only while creating: an existing card's account already denominates
+                // every figure it ever produced.
+                if (!isEditMode) currency.value = action.code
             }
 
             is CreditCardFormAction.Submit -> submit()
@@ -240,6 +250,10 @@ class CreditCardFormViewModel(
 
         addCreditCardUseCase(
             form = form.value,
+            // The form cannot submit before the currency arrives, so this is a state
+            // that does not happen; returning is still the honest response to it,
+            // because inventing a currency here is exactly what D28 forbids.
+            currency = currency.value ?: return@launch,
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {

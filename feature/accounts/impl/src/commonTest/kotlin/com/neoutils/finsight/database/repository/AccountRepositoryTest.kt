@@ -23,6 +23,7 @@ class AccountRepositoryTest {
         override suspend fun getAllLedgerAccounts(): List<AccountEntity> = emptyList()
         override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
         override suspend fun getAccountById(id: Long): AccountEntity? = throw NotImplementedError()
+        override suspend fun currenciesInUse(systemNames: List<String>): List<String> = throw NotImplementedError()
         override suspend fun getByTypeAndName(type: AccountEntity.Type, name: String, currency: String): AccountEntity? = throw NotImplementedError()
         override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): AccountEntity? = throw NotImplementedError()

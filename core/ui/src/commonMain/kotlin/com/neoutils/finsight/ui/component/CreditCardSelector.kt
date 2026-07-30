@@ -17,11 +17,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_selector_label
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * Picks one of the user's cards.
+ *
+ * Like [AccountSelector], each name carries its currency's symbol — `Chase · US$` —
+ * only when more than one currency is on offer, derived from the list rather than
+ * declared by a caller. A card states its currency because its `LIABILITY` account
+ * does, hydrated on read; a card with none did not come from such a read, and is left
+ * unmarked rather than denominated by a guess.
+ */
 @Composable
 fun CreditCardSelector(
     creditCards: List<CreditCard>,
@@ -31,6 +41,15 @@ fun CreditCardSelector(
     onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
+
+    val showsCurrency = remember(creditCards) {
+        creditCards.mapNotNull { it.currency }.distinct().size > 1
+    }
+
+    fun CreditCard.label() = currency
+        ?.takeIf { showsCurrency }
+        ?.let { "$name · ${CurrencyCatalog.symbolOf(it)}" }
+        ?: name
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -42,7 +61,7 @@ fun CreditCardSelector(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = creditCard?.name.orEmpty(),
+            value = creditCard?.label().orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
@@ -97,7 +116,7 @@ fun CreditCardSelector(
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = creditCard.name,
+                                text = creditCard.label(),
                                 fontSize = 14.sp
                             )
                         }

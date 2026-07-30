@@ -35,6 +35,26 @@ interface AccountDao {
     suspend fun getAccountById(id: Long): AccountEntity?
 
     /**
+     * The currencies the user actually holds money in.
+     *
+     * `ASSET` and `LIABILITY` together, because an account and the card's own row are
+     * lines of this same table and a user whose foreign spending is all on a card holds
+     * that currency just as much. The nominals, reconciliation and conversion are out by
+     * the type filter alone; the reconstructed [SystemAccount.CLOSED_ACCOUNT] and
+     * [SystemAccount.CLOSED_CARD] rows are excluded by name, since they are stand-ins
+     * for facades the user deleted and not currencies they chose.
+     *
+     * Archived rows are out too: a currency nobody holds any more must not keep
+     * offering a choice to a user who is single-currency again.
+     */
+    @Query(
+        "SELECT DISTINCT currency FROM accounts " +
+            "WHERE type IN ('ASSET', 'LIABILITY') AND isArchived = 0 " +
+            "AND name NOT IN (:systemNames)"
+    )
+    suspend fun currenciesInUse(systemNames: List<String>): List<String>
+
+    /**
      * A system row of the chart, by the triple that identifies one:
      * `(type, name, currency)`.
      *

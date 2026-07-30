@@ -54,14 +54,14 @@ class CreditCardRepository(
     }
 
     /** The card and its `LIABILITY` account are one creation — see `CategoryRepository`. */
-    override suspend fun insert(creditCard: CreditCard): Long {
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long {
         return database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val accountId = accountDao.insert(
                     AccountEntity(
                         name = creditCard.name,
                         type = AccountEntity.Type.LIABILITY,
-                        currency = defaultCurrency,
+                        currency = currency,
                         iconKey = creditCard.iconKey,
                         createdAt = creditCard.createdAt,
                     )

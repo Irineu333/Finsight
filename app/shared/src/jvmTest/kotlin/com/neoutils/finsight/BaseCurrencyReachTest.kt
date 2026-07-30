@@ -52,6 +52,11 @@ class BaseCurrencyReachTest {
         // here, which the spec allows in as many words — it is not denominating a figure,
         // it is answering "what currency should this first account be created in".
         "feature/accounts/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/EnsureDefaultAccountUseCase.kt",
+        // The account form: the base is the currency a **new** account is
+        // pre-selected with, exactly as it is for the account a fresh install starts
+        // with. It denominates nothing — what the account ends up in is whatever the
+        // user leaves in the row, and from then on the account states it itself.
+        "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/accountForm/AccountFormViewModel.kt",
         // The settings feature owns the preference: it implements it, states it, and
         // names it as the direction rates are stored in.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",

@@ -147,17 +147,35 @@ class ConfirmRecurringModal(
             AnimatedVisibility(
                 uiState.selectedTarget.isAccount || recurring.type.isIncome
             ) {
-                AccountSelector(
-                    selectedAccount = uiState.selectedAccount,
-                    accounts = uiState.accounts,
-                    onAccountSelected = { account ->
-                        viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
-                    },
-                    label = stringResource(Res.string.view_recurring_account_label),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
+                Column {
+                    AccountSelector(
+                        selectedAccount = uiState.selectedAccount,
+                        accounts = uiState.accounts,
+                        onAccountSelected = { account ->
+                            viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
+                        },
+                        label = stringResource(Res.string.view_recurring_account_label),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    // Why the list is shorter than what the user holds. Without this the
+                    // selector would simply be missing accounts, which reads as a bug
+                    // rather than as a rule.
+                    val recurringCurrency = uiState.recurringCurrency
+                    if (uiState.hiddenByCurrency && recurringCurrency != null) {
+                        Text(
+                            text = stringResource(
+                                Res.string.confirm_recurring_currency_filter,
+                                recurringCurrency,
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp, start = 4.dp),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             AnimatedVisibility(uiState.selectedTarget.isCreditCard && recurring.type.isExpense) {

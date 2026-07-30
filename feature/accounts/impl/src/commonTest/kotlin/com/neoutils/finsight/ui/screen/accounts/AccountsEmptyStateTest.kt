@@ -63,8 +63,8 @@ class AccountsEmptyStateTest {
 
     private val currentMonth = Clock.System.now().toYearMonth()
 
-    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true)
-    private val expenseAccount = Account(id = 99, name = "Expense", type = AccountType.EXPENSE)
+    private val account = Account(currency = "BRL", id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true)
+    private val expenseAccount = Account(currency = "BRL", id = 99, name = "Expense", type = AccountType.EXPENSE)
 
     private val food = Category(
         id = 1,
@@ -80,8 +80,8 @@ class AccountsEmptyStateTest {
         title = "Lunch",
         date = LocalDate(month.year, month.month, 10),
         entries = listOf(
-            Entry(transactionId = id, account = account, amount = -1_000),
-            Entry(transactionId = id, account = expenseAccount, amount = 1_000, dimensionId = dimensionId),
+            Entry(currency = "BRL", transactionId = id, account = account, amount = -1_000),
+            Entry(currency = "BRL", transactionId = id, account = expenseAccount, amount = 1_000, dimensionId = dimensionId),
         ),
     )
 

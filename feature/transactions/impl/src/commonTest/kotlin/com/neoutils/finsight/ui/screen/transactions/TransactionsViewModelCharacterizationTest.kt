@@ -48,15 +48,15 @@ class TransactionsViewModelCharacterizationTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val month = Clock.System.now().toYearMonth()
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
-    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val account = Account(currency = "BRL", id = 1, name = "A", type = AccountType.ASSET)
+    private val cardAcc = Account(currency = "BRL", id = 200, name = "Card", type = AccountType.LIABILITY)
+    private val incomeAcc = Account(currency = "BRL", id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(currency = "BRL", id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val equityAcc = Account(currency = "BRL", id = 102, name = "reconciliation", type = AccountType.EQUITY)
 
     private fun date(day: Int) = LocalDate(month.year, month.month, day)
 
-    private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = (amount * 100).toLong())
+    private fun entry(acc: Account, amount: Double) = Entry(currency = "BRL", account = acc, amount = (amount * 100).toLong())
 
     private fun op(id: Long, day: Int, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date(day), entries = entries)

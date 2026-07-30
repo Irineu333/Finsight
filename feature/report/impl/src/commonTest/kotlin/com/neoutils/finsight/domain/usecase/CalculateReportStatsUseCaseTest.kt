@@ -54,8 +54,8 @@ class CalculateReportStatsUseCaseTest {
     fun `an empty selection resolves to every account including archived`() = runTest {
         val entry = CapturingEntryRepository()
         val accounts = listOf(
-            Account(id = 1, name = "open", type = AccountType.ASSET),
-            Account(id = 2, name = "archived", type = AccountType.ASSET, isArchived = true),
+            Account(currency = "BRL", id = 1, name = "open", type = AccountType.ASSET),
+            Account(currency = "BRL", id = 2, name = "archived", type = AccountType.ASSET, isArchived = true),
         )
         useCase(entry, accounts = accounts)(ReportPerspective.AccountPerspective(emptyList()), start, end)
         assertEquals(listOf(1L, 2L), entry.capturedScope)

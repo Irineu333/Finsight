@@ -12,7 +12,7 @@ package com.neoutils.finsight.domain.model
  * amount, a budget's limit) has no honest answer until the per-currency reads and the
  * resolved base currency exist.
  *
- * Naming that non-answer is the point. `BASE_CURRENCY` has legitimate uses that are *not*
+ * Naming that non-answer is the point. `LAST_RESORT_CURRENCY` has a legitimate use that is *not*
  * this one, so it cannot be told apart by grep; and the failure this whole change guards
  * against is precisely a figure showing the base currency "because it was at hand".
  *
@@ -22,4 +22,4 @@ package com.neoutils.finsight.domain.model
  * base — and when none is left, deleting it compiles. That is a stronger check than a
  * hand-kept list, and it is why the placeholder cannot quietly become permanent.
  */
-const val ASSUMED_SINGLE_CURRENCY: String = BASE_CURRENCY
+const val ASSUMED_SINGLE_CURRENCY: String = LAST_RESORT_CURRENCY

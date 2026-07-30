@@ -35,8 +35,8 @@ class ReportExportAdjustmentToneTest {
 
     private val formatter = CurrencyFormatter()
 
-    private val card = Account(id = 1L, name = "Card", type = AccountType.LIABILITY)
-    private val reconciliation = Account(id = 2L, name = "Reconciliation", type = AccountType.EQUITY)
+    private val card = Account(currency = "BRL", id = 1L, name = "Card", type = AccountType.LIABILITY)
+    private val reconciliation = Account(currency = "BRL", id = 2L, name = "Reconciliation", type = AccountType.EQUITY)
 
     private val category = Category(
         id = 1L,
@@ -52,8 +52,8 @@ class ReportExportAdjustmentToneTest {
             title = "Adjustment",
             date = LocalDate(2026, 1, 1),
             entries = listOf(
-                Entry(account = card, amount = legAmountCents),
-                Entry(account = reconciliation, amount = -legAmountCents),
+                Entry(currency = "BRL", account = card, amount = legAmountCents),
+                Entry(currency = "BRL", account = reconciliation, amount = -legAmountCents),
             ),
         )
 

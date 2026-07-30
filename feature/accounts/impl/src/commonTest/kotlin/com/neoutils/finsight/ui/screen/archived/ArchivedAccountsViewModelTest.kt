@@ -49,6 +49,7 @@ class ArchivedAccountsViewModelTest {
     }
 
     private fun account(id: Long, isArchived: Boolean) = Account(
+        currency = "BRL",
         id = id,
         name = "Account $id",
         type = AccountType.ASSET,

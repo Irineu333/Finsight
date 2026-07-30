@@ -53,9 +53,9 @@ class InvoiceTransactionsPerspectiveTest {
         id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 10,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val checking = Account(id = 30, name = "Checking", type = AccountType.ASSET)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(currency = "BRL", id = 10, name = "Card", type = AccountType.LIABILITY)
+    private val checking = Account(currency = "BRL", id = 30, name = "Checking", type = AccountType.ASSET)
+    private val expenseAccount = Account(currency = "BRL", id = 20, name = "Expense", type = AccountType.EXPENSE)
 
     private val invoice = Invoice(
         id = 1, creditCard = card, dimensionId = 1,
@@ -68,8 +68,8 @@ class InvoiceTransactionsPerspectiveTest {
     private val purchase = Transaction(
         id = 1, title = "Purchase", date = LocalDate(2026, 3, 10),
         entries = listOf(
-            Entry(transactionId = 1, account = cardAccount, amount = -6_000, dimensionId = 1),
-            Entry(transactionId = 1, account = expenseAccount, amount = 6_000, dimensionId = 77),
+            Entry(currency = "BRL", transactionId = 1, account = cardAccount, amount = -6_000, dimensionId = 1),
+            Entry(currency = "BRL", transactionId = 1, account = expenseAccount, amount = 6_000, dimensionId = 77),
         ),
     )
 
@@ -77,8 +77,8 @@ class InvoiceTransactionsPerspectiveTest {
     private val payment = Transaction(
         id = 2, title = "Payment", date = LocalDate(2026, 3, 20),
         entries = listOf(
-            Entry(transactionId = 2, account = checking, amount = -6_000),
-            Entry(transactionId = 2, account = cardAccount, amount = 6_000, dimensionId = 1),
+            Entry(currency = "BRL", transactionId = 2, account = checking, amount = -6_000),
+            Entry(currency = "BRL", transactionId = 2, account = cardAccount, amount = 6_000, dimensionId = 1),
         ),
     )
 

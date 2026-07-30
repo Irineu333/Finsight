@@ -48,16 +48,16 @@ class InvoiceTransactionsEmptyStateTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(currency = "BRL", id = 10, name = "Card", type = AccountType.LIABILITY)
+    private val expenseAccount = Account(currency = "BRL", id = 20, name = "Expense", type = AccountType.EXPENSE)
 
     private fun purchase(id: Long, dimensionId: Long) = Transaction(
         id = id,
         title = "Purchase",
         date = LocalDate(2026, 3, 10),
         entries = listOf(
-            Entry(transactionId = id, account = cardAccount, amount = -6_000, dimensionId = dimensionId),
-            Entry(transactionId = id, account = expenseAccount, amount = 6_000, dimensionId = 77),
+            Entry(currency = "BRL", transactionId = id, account = cardAccount, amount = -6_000, dimensionId = dimensionId),
+            Entry(currency = "BRL", transactionId = id, account = expenseAccount, amount = 6_000, dimensionId = 77),
         ),
     )
 

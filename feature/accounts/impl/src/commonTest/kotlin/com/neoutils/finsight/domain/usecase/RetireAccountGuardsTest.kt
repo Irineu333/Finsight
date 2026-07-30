@@ -35,7 +35,7 @@ import kotlinx.datetime.YearMonth
  */
 class RetireAccountGuardsTest {
 
-    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET)
+    private val account = Account(currency = "BRL", id = 1, name = "Wallet", type = AccountType.ASSET)
 
     @Test
     fun `deleting an account with transactions is refused and not silently closed`() = runTest {
@@ -126,7 +126,7 @@ class RetireAccountGuardsTest {
         // A category is an EXPENSE account: its balance is accumulated spending, not
         // money sitting anywhere, and it is never zero once used. Requiring zero here
         // made closing a used category impossible.
-        val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        val category = Account(currency = "BRL", id = 10, name = "Food", type = AccountType.EXPENSE)
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(
             accountDao = dao,

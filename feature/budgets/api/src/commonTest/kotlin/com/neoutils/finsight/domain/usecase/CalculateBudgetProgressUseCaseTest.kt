@@ -109,8 +109,8 @@ class CalculateBudgetProgressUseCaseTest {
         id = 1, title = recurring.title, date = date,
         recurringId = recurring.id, recurringCycle = 1,
         entries = listOf(
-            Entry(account = Account(id = 100, name = "Checking", type = AccountType.ASSET), amount = -cents),
-            Entry(account = Account(id = 101, name = "Salary", type = AccountType.INCOME), amount = cents),
+            Entry(currency = "BRL", account = Account(currency = "BRL", id = 100, name = "Checking", type = AccountType.ASSET), amount = -cents),
+            Entry(currency = "BRL", account = Account(currency = "BRL", id = 101, name = "Salary", type = AccountType.INCOME), amount = cents),
         ),
     )
 }

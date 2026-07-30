@@ -46,10 +46,10 @@ class TransactionsEmptyStateTest {
     private val previous = month.minusMonth()
     private val next = month.plusMonth()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val account = Account(currency = "BRL", id = 1, name = "A", type = AccountType.ASSET)
+    private val cardAcc = Account(currency = "BRL", id = 200, name = "Card", type = AccountType.LIABILITY)
+    private val incomeAcc = Account(currency = "BRL", id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(currency = "BRL", id = 101, name = "expense", type = AccountType.EXPENSE)
 
     private val groceries = Category(
         id = 7, name = "Groceries", icon = CategoryLazyIcon("food"),
@@ -57,7 +57,7 @@ class TransactionsEmptyStateTest {
     )
 
     private fun entry(acc: Account, amount: Double, dimensionId: Long? = null) =
-        Entry(account = acc, amount = (amount * 100).toLong(), dimensionId = dimensionId)
+        Entry(currency = "BRL", account = acc, amount = (amount * 100).toLong(), dimensionId = dimensionId)
 
     private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)

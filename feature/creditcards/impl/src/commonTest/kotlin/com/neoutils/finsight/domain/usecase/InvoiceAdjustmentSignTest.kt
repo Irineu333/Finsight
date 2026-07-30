@@ -44,7 +44,7 @@ class InvoiceAdjustmentSignTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
+    private val cardAccount = Account(currency = "BRL", id = card.accountId, name = card.name, type = AccountType.LIABILITY)
 
     /**
      * Adjusts the invoice to [target], optionally over an existing purchase of
@@ -59,6 +59,7 @@ class InvoiceAdjustmentSignTest {
             ledger.dateByTransaction[PURCHASE_ID] = date
             ledger.entriesByTransaction[PURCHASE_ID] = listOf(
                 Entry(
+                    currency = "BRL",
                     transactionId = PURCHASE_ID,
                     account = cardAccount,
                     amount = -(owedBefore * 100).toLong(),

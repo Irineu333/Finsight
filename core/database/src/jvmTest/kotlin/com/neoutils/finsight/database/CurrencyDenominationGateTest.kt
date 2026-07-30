@@ -8,7 +8,7 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.repository.EntryRepository
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -53,9 +53,9 @@ class CurrencyDenominationGateTest {
 
     @Test
     fun `every figure of a base-currency user is one exact figure in the base`() = runTest {
-        val ledger = seed(currency = BASE_CURRENCY)
+        val ledger = seed(currency = LAST_RESORT_CURRENCY)
 
-        ledger.assertEveryFigureIsDenominatedIn(BASE_CURRENCY)
+        ledger.assertEveryFigureIsDenominatedIn(LAST_RESORT_CURRENCY)
     }
 
     @Test
@@ -70,16 +70,16 @@ class CurrencyDenominationGateTest {
 
     @Test
     fun `the figures themselves are the ones they were before the reads became per currency`() = runTest {
-        val ledger = seed(currency = BASE_CURRENCY)
+        val ledger = seed(currency = LAST_RESORT_CURRENCY)
 
         // Exactly the arithmetic of the seed, and the same numbers a single-currency user
         // read before any of this: nothing about grouping by currency moves a figure.
         // 1000 in, 100 spent, 20 paid off the card.
         assertEquals(880.0, ledger.balanceUpTo(MONTH, ACCOUNT_ID).amount)
-        assertEquals(CurrencyBalance.of(BASE_CURRENCY, 880.0), ledger.naturalBalanceUpTo(MONTH, AccountType.ASSET))
-        assertEquals(CurrencyBalance.of(BASE_CURRENCY, -60.0), ledger.naturalBalanceUpTo(MONTH, AccountType.LIABILITY))
-        assertEquals(CurrencyBalance.of(BASE_CURRENCY, 60.0), ledger.dimensionOwed(INVOICE_DIMENSION))
-        assertEquals(CurrencyBalance.of(BASE_CURRENCY, 100.0), ledger.dimensionBalanceInMonth(MONTH, CATEGORY_DIMENSION))
+        assertEquals(CurrencyBalance.of(LAST_RESORT_CURRENCY, 880.0), ledger.naturalBalanceUpTo(MONTH, AccountType.ASSET))
+        assertEquals(CurrencyBalance.of(LAST_RESORT_CURRENCY, -60.0), ledger.naturalBalanceUpTo(MONTH, AccountType.LIABILITY))
+        assertEquals(CurrencyBalance.of(LAST_RESORT_CURRENCY, 60.0), ledger.dimensionOwed(INVOICE_DIMENSION))
+        assertEquals(CurrencyBalance.of(LAST_RESORT_CURRENCY, 100.0), ledger.dimensionBalanceInMonth(MONTH, CATEGORY_DIMENSION))
 
         val flows = ledger.accountFlows(MONTH, ACCOUNT_ID)
         assertEquals(1_000.0, flows.income)

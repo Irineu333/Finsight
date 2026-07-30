@@ -34,7 +34,7 @@ class UnarchiveAccountUseCaseTest {
     @Test
     fun `unarchive reopens the account by its id and returns Right`() = runTest {
         val repository = RecordingAccountRepository()
-        val account = Account(id = 7, name = "Wallet", type = AccountType.ASSET, isArchived = true)
+        val account = Account(currency = "BRL", id = 7, name = "Wallet", type = AccountType.ASSET, isArchived = true)
 
         val result = UnarchiveAccountUseCase(repository)(account)
 

@@ -82,10 +82,10 @@ class InvoiceWriteGuardTest {
         accountId = 2,
     )
 
-    private val payer = Account(id = 1, name = "Checking", type = AccountType.ASSET)
+    private val payer = Account(currency = "BRL", id = 1, name = "Checking", type = AccountType.ASSET)
 
     /** A second open account, so an edit has somewhere to retarget to. */
-    private val other = Account(id = 3, name = "Savings", type = AccountType.ASSET)
+    private val other = Account(currency = "BRL", id = 3, name = "Savings", type = AccountType.ASSET)
 
     private fun invoice(status: Invoice.Status) = Invoice(
         id = 1,
@@ -109,9 +109,9 @@ class InvoiceWriteGuardTest {
     }
 
     private suspend fun seed() {
-        db.accountDao().insert(AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET))
-        db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
-        db.accountDao().insert(AccountEntity(id = 3, name = "Savings", type = AccountEntity.Type.ASSET))
+        db.accountDao().insert(AccountEntity(currency = "BRL", id = 1, name = "Checking", type = AccountEntity.Type.ASSET))
+        db.accountDao().insert(AccountEntity(currency = "BRL", id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
+        db.accountDao().insert(AccountEntity(currency = "BRL", id = 3, name = "Savings", type = AccountEntity.Type.ASSET))
         db.creditCardDao().insert(
             CreditCardEntity(id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 2)
         )

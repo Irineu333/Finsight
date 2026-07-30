@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -29,6 +32,13 @@ import kotlin.time.Duration.Companion.seconds
  */
 class InvoiceRepositoryLookupTest {
 
+    /** The base currency a real app resolves from the locale; here it is simply stated. */
+    private val baseCurrency = object : IBaseCurrencyRepository {
+        override fun observe(): StateFlow<String> = MutableStateFlow("BRL")
+        override suspend fun set(currency: String) = Unit
+    }
+
+
     private val db = Room.inMemoryDatabaseBuilder<AppDatabase>()
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
@@ -41,7 +51,9 @@ class InvoiceRepositoryLookupTest {
         dao = db.creditCardDao(),
         accountDao = db.accountDao(),
         mapper = CreditCardMapper(),
+        baseCurrencyRepository = baseCurrency,
     )
+
 
     private val repository = InvoiceRepository(
         database = db,

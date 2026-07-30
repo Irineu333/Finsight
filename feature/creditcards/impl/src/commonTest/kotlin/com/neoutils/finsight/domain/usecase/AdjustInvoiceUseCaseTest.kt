@@ -80,15 +80,15 @@ class AdjustInvoiceUseCaseTest {
     fun `a cross-currency invoice payment of the same day is not mistaken for the adjustment`() = runTest {
         val ledger = InvoiceLedgerStore(card)
         val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "USD")
-        val payer = Account(id = 20, name = "Checking", type = AccountType.ASSET)
-        val conversionBrl = Account(id = 900, name = "Conversão", type = AccountType.CONVERSION)
+        val payer = Account(currency = "BRL", id = 20, name = "Checking", type = AccountType.ASSET)
+        val conversionBrl = Account(currency = "BRL", id = 900, name = "Conversão", type = AccountType.CONVERSION)
         val conversionUsd =
             Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
 
         ledger.dateByTransaction[PAYMENT_ID] = date
         ledger.entriesByTransaction[PAYMENT_ID] = listOf(
-            Entry(transactionId = PAYMENT_ID, account = payer, amount = -55_000),
-            Entry(transactionId = PAYMENT_ID, account = conversionBrl, amount = 55_000),
+            Entry(currency = "BRL", transactionId = PAYMENT_ID, account = payer, amount = -55_000),
+            Entry(currency = "BRL", transactionId = PAYMENT_ID, account = conversionBrl, amount = 55_000),
             Entry(transactionId = PAYMENT_ID, account = conversionUsd, amount = -10_000, currency = "USD"),
             Entry(
                 transactionId = PAYMENT_ID,
@@ -124,8 +124,8 @@ class AdjustInvoiceUseCaseTest {
  * plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class InvoiceLedgerStore(card: CreditCard) {
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
-    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+    private val cardAccount = Account(currency = "BRL", id = card.accountId, name = card.name, type = AccountType.LIABILITY)
+    private val equity = Account(currency = "BRL", id = 999, name = "Reconciliation", type = AccountType.EQUITY)
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L
@@ -135,12 +135,13 @@ class InvoiceLedgerStore(card: CreditCard) {
             val cents = (leg.amount * 100).roundToLong()
             listOf(
                 Entry(
+                    currency = "BRL",
                     transactionId = transactionId,
                     account = cardAccount,
                     amount = cents,
                     dimensionId = leg.dimensionId,
                 ),
-                Entry(transactionId = transactionId, account = equity, amount = -cents),
+                Entry(currency = "BRL", transactionId = transactionId, account = equity, amount = -cents),
             )
         }
     }

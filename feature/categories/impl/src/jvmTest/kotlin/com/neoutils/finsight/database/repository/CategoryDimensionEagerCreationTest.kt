@@ -79,15 +79,15 @@ class CategoryDimensionEagerCreationTest {
         repository.insert(category("Food", Category.Type.EXPENSE))
         val stored = db.categoryDao().getAllCategories().single()
 
-        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
-        db.accountDao().insert(AccountEntity(id = 2, name = "Despesas", type = AccountEntity.Type.EXPENSE))
+        db.accountDao().insert(AccountEntity(currency = "BRL", id = 1, name = "A", type = AccountEntity.Type.ASSET))
+        db.accountDao().insert(AccountEntity(currency = "BRL", id = 2, name = "Despesas", type = AccountEntity.Type.EXPENSE))
         val transactionId = db.transactionDao().insert(
             TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10)),
         )
         db.entryDao().insertAll(
             listOf(
-                EntryEntity(transactionId = transactionId, accountId = 1, amount = -5000),
-                EntryEntity(transactionId = transactionId, accountId = 2, amount = 5000, dimensionId = stored.dimensionId),
+                EntryEntity(currency = "BRL", transactionId = transactionId, accountId = 1, amount = -5000),
+                EntryEntity(currency = "BRL", transactionId = transactionId, accountId = 2, amount = 5000, dimensionId = stored.dimensionId),
             )
         )
 

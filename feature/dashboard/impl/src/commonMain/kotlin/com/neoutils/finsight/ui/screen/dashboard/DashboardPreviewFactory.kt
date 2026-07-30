@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -12,6 +13,12 @@ import org.jetbrains.compose.resources.getString
 
 class DashboardPreviewFactory(
     private val navCatalog: NavCatalog,
+    /**
+     * The example accounts are made up, but their denomination is not: a preview reads in
+     * the currency the user reads totals in, so choosing a widget shows the symbol they
+     * will actually see once it is on the dashboard.
+     */
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
         DashboardComponentType.TOTAL_BALANCE.key -> {
@@ -206,6 +213,7 @@ class DashboardPreviewFactory(
                             dayOfMonth = 15,
                             category = null,
                             account = Account(
+                                currency = baseCurrencyRepository.current(),
                                 id = 1,
                                 name = getString(Res.string.preview_account_main),
                                 iconKey = "wallet",
@@ -229,6 +237,7 @@ class DashboardPreviewFactory(
                                 createdAt = 0,
                             ),
                             account = Account(
+                                currency = baseCurrencyRepository.current(),
                                 id = 1,
                                 name = getString(Res.string.preview_account_main),
                                 iconKey = "wallet",
@@ -245,7 +254,9 @@ class DashboardPreviewFactory(
         }
 
         DashboardComponentType.RECENTS.key -> {
+            val currency = baseCurrencyRepository.current()
             val mainAccount = Account(
+                currency = currency,
                 id = 1,
                 name = getString(Res.string.preview_account_main),
                 iconKey = "wallet",
@@ -260,12 +271,14 @@ class DashboardPreviewFactory(
                 createdAt = 0,
             )
             val foodAccount = Account(
+                currency = currency,
                 id = 101,
                 name = foodCategory.name,
                 type = AccountType.EXPENSE,
                 createdAt = 0,
             )
             val salaryAccount = Account(
+                currency = currency,
                 id = 102,
                 name = getString(Res.string.preview_category_salary),
                 type = AccountType.INCOME,
@@ -282,8 +295,8 @@ class DashboardPreviewFactory(
                             title = getString(Res.string.preview_transaction_supermarket),
                             date = LocalDate(2026, 3, 20),
                             entries = listOf(
-                                Entry(id = 1, account = mainAccount, amount = -15680),
-                                Entry(id = 2, account = foodAccount, amount = 15680),
+                                Entry(id = 1, account = mainAccount, amount = -15680, currency = currency),
+                                Entry(id = 2, account = foodAccount, amount = 15680, currency = currency),
                             ),
                         ),
                         Transaction(
@@ -291,8 +304,8 @@ class DashboardPreviewFactory(
                             title = getString(Res.string.preview_category_salary),
                             date = LocalDate(2026, 3, 5),
                             entries = listOf(
-                                Entry(id = 3, account = mainAccount, amount = 350000),
-                                Entry(id = 4, account = salaryAccount, amount = -350000),
+                                Entry(id = 3, account = mainAccount, amount = 350000, currency = currency),
+                                Entry(id = 4, account = salaryAccount, amount = -350000, currency = currency),
                             ),
                         ),
                         Transaction(
@@ -300,8 +313,8 @@ class DashboardPreviewFactory(
                             title = getString(Res.string.preview_transaction_spotify),
                             date = LocalDate(2026, 3, 1),
                             entries = listOf(
-                                Entry(id = 5, account = mainAccount, amount = -2190),
-                                Entry(id = 6, account = foodAccount, amount = 2190),
+                                Entry(id = 5, account = mainAccount, amount = -2190, currency = currency),
+                                Entry(id = 6, account = foodAccount, amount = 2190, currency = currency),
                             ),
                         ),
                     ).mapNotNull { it.toTransactionUi() },

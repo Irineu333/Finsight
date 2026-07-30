@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -24,9 +25,18 @@ import kotlin.test.assertNotNull
  */
 class DashboardBalanceWidgetsCatalogTest {
 
+    /** The base currency a real app resolves from the locale; here it is simply stated. */
+    private val baseCurrency = object : IBaseCurrencyRepository {
+        override fun observe(): StateFlow<String> = MutableStateFlow("BRL")
+        override suspend fun set(currency: String) = Unit
+    }
+
+
     private val previewFactory = DashboardPreviewFactory(
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
+        baseCurrencyRepository = baseCurrency,
     )
+
 
     // The edit mode offers every type that is not already present and has a preview
     // (`DashboardViewModel.buildEditingState`).

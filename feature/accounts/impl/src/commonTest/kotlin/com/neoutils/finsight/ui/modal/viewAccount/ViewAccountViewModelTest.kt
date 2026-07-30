@@ -59,6 +59,7 @@ class ViewAccountViewModelTest {
     }
 
     private fun account(id: Long = 1L, isArchived: Boolean = true) = Account(
+        currency = "BRL",
         id = id,
         name = "Wallet",
         type = AccountType.ASSET,

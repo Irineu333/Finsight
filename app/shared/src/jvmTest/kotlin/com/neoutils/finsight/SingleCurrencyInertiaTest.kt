@@ -32,12 +32,30 @@ import kotlin.test.assertTrue
  */
 class SingleCurrencyInertiaTest {
 
-    /** Where the one currency the app uses is declared. */
+    /**
+     * Where the one currency literal the app may name is declared.
+     *
+     * It moved out of the ledger together with the model's default: the ledger now knows
+     * that a currency exists and nothing about which, and the constant that remains is the
+     * consolidation layer's **last resort** for a locale naming a currency the app does not
+     * offer — not a product default.
+     */
     private val declarationFile =
-        "core/ledger/src/commonMain/kotlin/com/neoutils/finsight/domain/model/Currency.kt"
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/BaseCurrency.kt"
 
-    /** The names through which a currency may be referred to while there is only one. */
-    private val allowedReferences = setOf("BASE_CURRENCY", "ASSUMED_SINGLE_CURRENCY")
+    /**
+     * The names through which an account's currency may be decided while there is only one.
+     *
+     * `baseCurrencyRepository.current` joined this list when the model lost its default: a
+     * site that reads the resolved base is not *choosing* a currency, it defers to the one
+     * preference the user has — which is what keeps a second currency unproducible until a
+     * form offers the choice.
+     */
+    private val allowedReferences = setOf(
+        "LAST_RESORT_CURRENCY",
+        "ASSUMED_SINGLE_CURRENCY",
+        "baseCurrencyRepository.current",
+    )
 
     /**
      * The one file allowed to name other currencies by literal: the catalog of what the app

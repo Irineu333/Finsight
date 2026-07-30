@@ -45,7 +45,7 @@ data class EntryEntity(
     val transactionId: Long,
     val accountId: Long,
     val amount: Long,
-    val currency: String = "BRL",
+    val currency: String,
     // The analytic axis this leg is tagged with, if any: the sub-ledger it belongs
     // to inside its account. A facade's total is Σ entries carrying its dimension.
     val dimensionId: Long? = null,

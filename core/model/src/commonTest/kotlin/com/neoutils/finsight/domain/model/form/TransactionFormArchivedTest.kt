@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 class TransactionFormArchivedTest {
 
     private fun account(isArchived: Boolean = false) =
-        Account(id = 1, name = "Bank", type = AccountType.ASSET, isArchived = isArchived)
+        Account(currency = "BRL", id = 1, name = "Bank", type = AccountType.ASSET, isArchived = isArchived)
 
     private fun category(isArchived: Boolean = false) = Category(
         id = 1,

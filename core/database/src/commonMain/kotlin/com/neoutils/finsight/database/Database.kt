@@ -5,7 +5,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import kotlinx.coroutines.Dispatchers
 
 // 1.2.0
@@ -658,7 +658,7 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
                 "(`id`, `iconCategoryId`, `iconKey`, `title`, `amount`, `currency`, `period`, " +
                 "`limitType`, `percentage`, `recurringId`, `createdAt`) " +
                 "SELECT `id`, `iconCategoryId`, `iconKey`, `title`, `amount`, " +
-                "COALESCE((SELECT `currency` FROM `accounts` WHERE `isDefault` = 1 LIMIT 1), '" + BASE_CURRENCY + "'), " +
+                "COALESCE((SELECT `currency` FROM `accounts` WHERE `isDefault` = 1 LIMIT 1), '" + LAST_RESORT_CURRENCY + "'), " +
                 "`period`, `limitType`, `percentage`, `recurringId`, `createdAt` FROM `budgets`"
         )
         connection.execSQL("DROP TABLE `budgets`")

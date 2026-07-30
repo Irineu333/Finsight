@@ -46,15 +46,15 @@ class TransactionScopeTest {
     private val month = Clock.System.now().toYearMonth()
     private val previous = month.minusMonth()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val savings = Account(id = 2, name = "B", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
-    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val account = Account(currency = "BRL", id = 1, name = "A", type = AccountType.ASSET)
+    private val savings = Account(currency = "BRL", id = 2, name = "B", type = AccountType.ASSET)
+    private val cardAcc = Account(currency = "BRL", id = 200, name = "Card", type = AccountType.LIABILITY)
+    private val incomeAcc = Account(currency = "BRL", id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(currency = "BRL", id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val equityAcc = Account(currency = "BRL", id = 102, name = "reconciliation", type = AccountType.EQUITY)
     private val dollars = Account(id = 3, name = "Dollars", type = AccountType.ASSET, currency = "USD")
     private val dollarCard = Account(id = 201, name = "Dollar card", type = AccountType.LIABILITY, currency = "USD")
-    private val conversionBrl = Account(id = 300, name = "câmbio BRL", type = AccountType.CONVERSION)
+    private val conversionBrl = Account(currency = "BRL", id = 300, name = "câmbio BRL", type = AccountType.CONVERSION)
     private val conversionUsd = Account(
         id = 301, name = "câmbio USD", type = AccountType.CONVERSION, currency = "USD",
     )

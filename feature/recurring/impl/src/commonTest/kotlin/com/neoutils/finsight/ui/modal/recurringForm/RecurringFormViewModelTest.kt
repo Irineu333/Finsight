@@ -47,6 +47,7 @@ class RecurringFormViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private val account = Account(
+        currency = "BRL",
         id = 1L,
         name = "Checking",
         type = com.neoutils.finsight.domain.model.AccountType.ASSET,

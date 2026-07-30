@@ -28,12 +28,12 @@ class TransactionItemSignTest {
 
     private val formatter = CurrencyFormatter()
 
-    private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET)
-    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
-    private val card = Account(id = 3L, name = "Card", type = AccountType.LIABILITY)
-    private val reconciliation = Account(id = 4L, name = "Reconciliation", type = AccountType.EQUITY)
-    private val expense = Account(id = 5L, name = "Expenses", type = AccountType.EXPENSE)
-    private val income = Account(id = 6L, name = "Income", type = AccountType.INCOME)
+    private val account = Account(currency = "BRL", id = 1L, name = "Account", type = AccountType.ASSET)
+    private val destination = Account(currency = "BRL", id = 2L, name = "Destination", type = AccountType.ASSET)
+    private val card = Account(currency = "BRL", id = 3L, name = "Card", type = AccountType.LIABILITY)
+    private val reconciliation = Account(currency = "BRL", id = 4L, name = "Reconciliation", type = AccountType.EQUITY)
+    private val expense = Account(currency = "BRL", id = 5L, name = "Expenses", type = AccountType.EXPENSE)
+    private val income = Account(currency = "BRL", id = 6L, name = "Income", type = AccountType.INCOME)
 
     private fun transactionOf(vararg entries: Entry) = Transaction(
         id = 1L,
@@ -48,8 +48,8 @@ class TransactionItemSignTest {
     fun anAdjustmentThatRaisesACardDebtReadsNegative() {
         // R$ 0,00 → R$ 100,00 of debt: a credit on the liability leg.
         val ui = transactionOf(
-            Entry(account = card, amount = -10_000),
-            Entry(account = reconciliation, amount = 10_000),
+            Entry(currency = "BRL", account = card, amount = -10_000),
+            Entry(currency = "BRL", account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = card.id)
 
         assertEquals(DisplayAmount.explicitSign(-100.0, Denomination.exact("BRL")), ui?.amount)
@@ -59,8 +59,8 @@ class TransactionItemSignTest {
     @Test
     fun anAdjustmentThatLowersACardDebtReadsPositive() {
         val ui = transactionOf(
-            Entry(account = card, amount = 10_000),
-            Entry(account = reconciliation, amount = -10_000),
+            Entry(currency = "BRL", account = card, amount = 10_000),
+            Entry(currency = "BRL", account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = card.id)
 
         assertEquals(DisplayAmount.explicitSign(100.0, Denomination.exact("BRL")), ui?.amount)
@@ -70,8 +70,8 @@ class TransactionItemSignTest {
     @Test
     fun anAdjustmentThatLowersAnAccountBalanceReadsNegative() {
         val ui = transactionOf(
-            Entry(account = account, amount = -10_000),
-            Entry(account = reconciliation, amount = 10_000),
+            Entry(currency = "BRL", account = account, amount = -10_000),
+            Entry(currency = "BRL", account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = account.id)
 
         assertEquals(DisplayAmount.explicitSign(-100.0, Denomination.exact("BRL")), ui?.amount)
@@ -80,8 +80,8 @@ class TransactionItemSignTest {
     @Test
     fun anAdjustmentThatRaisesAnAccountBalanceReadsPositive() {
         val ui = transactionOf(
-            Entry(account = account, amount = 10_000),
-            Entry(account = reconciliation, amount = -10_000),
+            Entry(currency = "BRL", account = account, amount = 10_000),
+            Entry(currency = "BRL", account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = account.id)
 
         assertEquals(DisplayAmount.explicitSign(100.0, Denomination.exact("BRL")), ui?.amount)
@@ -90,8 +90,8 @@ class TransactionItemSignTest {
     @Test
     fun anAdjustmentReadsTheSameWithAndWithoutPerspective() {
         val transaction = transactionOf(
-            Entry(account = card, amount = -10_000),
-            Entry(account = reconciliation, amount = 10_000),
+            Entry(currency = "BRL", account = card, amount = -10_000),
+            Entry(currency = "BRL", account = reconciliation, amount = 10_000),
         )
 
         assertEquals(
@@ -107,8 +107,8 @@ class TransactionItemSignTest {
     @Test
     fun anExpenseOnAnAccountKeepsItsMagnitude() {
         val ui = transactionOf(
-            Entry(account = account, amount = -10_000),
-            Entry(account = expense, amount = 10_000),
+            Entry(currency = "BRL", account = account, amount = -10_000),
+            Entry(currency = "BRL", account = expense, amount = 10_000),
         ).toTransactionUi(accountId = account.id)
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
@@ -118,8 +118,8 @@ class TransactionItemSignTest {
     @Test
     fun anExpenseOnACardKeepsItsMagnitude() {
         val ui = transactionOf(
-            Entry(account = card, amount = -10_000),
-            Entry(account = expense, amount = 10_000),
+            Entry(currency = "BRL", account = card, amount = -10_000),
+            Entry(currency = "BRL", account = expense, amount = 10_000),
         ).toTransactionUi(accountId = card.id)
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
@@ -129,8 +129,8 @@ class TransactionItemSignTest {
     @Test
     fun anIncomeKeepsItsMagnitude() {
         val ui = transactionOf(
-            Entry(account = account, amount = 10_000),
-            Entry(account = income, amount = -10_000),
+            Entry(currency = "BRL", account = account, amount = 10_000),
+            Entry(currency = "BRL", account = income, amount = -10_000),
         ).toTransactionUi(accountId = account.id)
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
@@ -140,8 +140,8 @@ class TransactionItemSignTest {
     @Test
     fun anInvoicePaymentKeepsItsMagnitude() {
         val ui = transactionOf(
-            Entry(account = account, amount = -10_000),
-            Entry(account = card, amount = 10_000),
+            Entry(currency = "BRL", account = account, amount = -10_000),
+            Entry(currency = "BRL", account = card, amount = 10_000),
         ).toTransactionUi(accountId = account.id)
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
@@ -153,8 +153,8 @@ class TransactionItemSignTest {
     // region transfer — signed at both ends under a perspective, signless without one
 
     private val transfer = transactionOf(
-        Entry(account = account, amount = -10_000),
-        Entry(account = destination, amount = 10_000),
+        Entry(currency = "BRL", account = account, amount = -10_000),
+        Entry(currency = "BRL", account = destination, amount = 10_000),
     )
 
     @Test

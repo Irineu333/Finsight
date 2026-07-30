@@ -12,10 +12,10 @@ import kotlin.test.assertTrue
 
 class LedgerTest {
 
-    private fun account(id: Long, type: AccountType) = Account(id = id, name = "acc$id", type = type)
+    private fun account(id: Long, type: AccountType) = Account(currency = "BRL", id = id, name = "acc$id", type = type)
 
     private fun entry(type: AccountType, amount: Long, accountId: Long = type.ordinal.toLong()) =
-        Entry(account = account(accountId, type), amount = amount)
+        Entry(currency = "BRL", account = account(accountId, type), amount = amount)
 
     // --- deriveTransactionLabel (task 1.5: label from account types) ---
 
@@ -132,9 +132,9 @@ class LedgerTest {
     @Test
     fun `natural balance sums the entries of one account`() {
         val entries = listOf(
-            Entry(account = account(1, AccountType.ASSET), amount = 5000),
-            Entry(account = account(1, AccountType.ASSET), amount = -2000),
-            Entry(account = account(2, AccountType.ASSET), amount = 9999),
+            Entry(currency = "BRL", account = account(1, AccountType.ASSET), amount = 5000),
+            Entry(currency = "BRL", account = account(1, AccountType.ASSET), amount = -2000),
+            Entry(currency = "BRL", account = account(2, AccountType.ASSET), amount = 9999),
         )
         assertEquals(3000L, entries.naturalBalanceOf(1))
     }
@@ -224,7 +224,8 @@ class LedgerTest {
     // and by the screens that decide whether to offer deleting.
 
     private fun archived(type: AccountType, id: Long) = Entry(
-        account = Account(id = id, name = "acc$id", type = type, isArchived = true),
+        currency = "BRL",
+        account = Account(currency = "BRL", id = id, name = "acc$id", type = type, isArchived = true),
         amount = 0,
     )
 

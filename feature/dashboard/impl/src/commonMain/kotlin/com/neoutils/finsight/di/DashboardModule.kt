@@ -32,7 +32,7 @@ val dashboardModule = module {
 
     single { GetDashboardPreferencesUseCase(get(), get()) }
     factory { BuildDashboardViewingUseCase(get()) }
-    single { DashboardPreviewFactory(get()) }
+    single { DashboardPreviewFactory(navCatalog = get(), baseCurrencyRepository = get()) }
 
     viewModel {
         DashboardViewModel(

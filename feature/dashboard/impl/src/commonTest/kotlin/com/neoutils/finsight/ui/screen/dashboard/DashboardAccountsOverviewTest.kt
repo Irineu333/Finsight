@@ -44,8 +44,8 @@ import kotlinx.datetime.YearMonth
  */
 class DashboardAccountsOverviewTest {
 
-    private val accountA = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val accountB = Account(id = 2, name = "B", type = AccountType.ASSET)
+    private val accountA = Account(currency = "BRL", id = 1, name = "A", type = AccountType.ASSET)
+    private val accountB = Account(currency = "BRL", id = 2, name = "B", type = AccountType.ASSET)
 
     private fun builder() = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = ThrowingEntryRepository),
@@ -118,14 +118,14 @@ class DashboardAccountsOverviewTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val incomeAcc = Account(currency = "BRL", id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(currency = "BRL", id = 101, name = "expense", type = AccountType.EXPENSE)
 
     private fun transaction(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
 
     private fun statsEntries(counter: Account, assetAmount: Double, counterAmount: Double) =
-        listOf(Entry(account = accountA, amount = (assetAmount * 100).toLong()), Entry(account = counter, amount = (counterAmount * 100).toLong()))
+        listOf(Entry(currency = "BRL", account = accountA, amount = (assetAmount * 100).toLong()), Entry(currency = "BRL", account = counter, amount = (counterAmount * 100).toLong()))
 
     @Test
     fun `concrete balance stats sum account income and expense for the month`() = runTest {
@@ -173,8 +173,8 @@ class DashboardAccountsOverviewTest {
             id = 1, title = "Salary", date = LocalDate(2026, 3, 5),
             recurringId = salary.id, recurringCycle = 1,
             entries = listOf(
-                Entry(account = accountA, amount = -200_000),
-                Entry(account = Account(id = 3, name = "Salary", type = AccountType.INCOME), amount = 200_000),
+                Entry(currency = "BRL", account = accountA, amount = -200_000),
+                Entry(currency = "BRL", account = Account(currency = "BRL", id = 3, name = "Salary", type = AccountType.INCOME), amount = 200_000),
             ),
         )
         val budget = Budget(

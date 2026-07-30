@@ -8,11 +8,19 @@ import arrow.core.raise.either
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class CreateAccountUseCase(
     private val repository: IAccountRepository,
+    /**
+     * A new account has to be denominated by someone. Until the form offers the choice, the
+     * currency this user reads totals in is the honest answer — and reading it here, rather
+     * than letting the model default, is what keeps the decision visible at the one site
+     * that will later hand it over to the form.
+     */
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val validateAccountName: ValidateAccountNameUseCase,
     private val setDefaultAccount: SetDefaultAccountUseCase,
 ) {
@@ -31,6 +39,7 @@ class CreateAccountUseCase(
             val account = catch {
                 Account(
                     name = name.trim(),
+                    currency = baseCurrencyRepository.current(),
                     iconKey = iconKey,
                     isDefault = false,
                     createdAt = Clock.System.now().toEpochMilliseconds()

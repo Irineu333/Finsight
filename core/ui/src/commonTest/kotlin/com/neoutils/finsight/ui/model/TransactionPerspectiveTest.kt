@@ -22,16 +22,16 @@ import kotlin.test.assertNull
  */
 class TransactionPerspectiveTest {
 
-    private val source = Account(id = 1L, name = "Source", type = AccountType.ASSET)
-    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
+    private val source = Account(currency = "BRL", id = 1L, name = "Source", type = AccountType.ASSET)
+    private val destination = Account(currency = "BRL", id = 2L, name = "Destination", type = AccountType.ASSET)
 
     private val transfer = Transaction(
         id = 1L,
         title = "Op",
         date = LocalDate(2026, 1, 1),
         entries = listOf(
-            Entry(account = source, amount = -10_000),
-            Entry(account = destination, amount = 10_000),
+            Entry(currency = "BRL", account = source, amount = -10_000),
+            Entry(currency = "BRL", account = destination, amount = 10_000),
         ),
     )
 

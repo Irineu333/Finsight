@@ -147,7 +147,7 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an invoice payment when written then only the liability leg tags the sub-ledger`() = runTest {
         openAsset()
-        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY)
+        accountDao.accounts[200L] = AccountEntity(currency = "BRL", id = 200, name = "Card", type = AccountEntity.Type.LIABILITY)
         dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
 
         writer.writeEntries(
@@ -191,7 +191,7 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an archived account when written then the write is rejected`() = runTest {
         // Closing an ASSET required a zero balance, so a new entry there strands money.
-        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, isArchived = true)
+        accountDao.accounts[1L] = AccountEntity(currency = "BRL", id = 1, name = "Checking", type = AccountEntity.Type.ASSET, isArchived = true)
 
         val error = assertFailsWith<ClosedAccountException> {
             writer.writeEntries(
@@ -206,7 +206,7 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an archived card when written then the error names the card`() = runTest {
-        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, isArchived = true)
+        accountDao.accounts[200L] = AccountEntity(currency = "BRL", id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, isArchived = true)
 
         val error = assertFailsWith<ClosedAccountException> {
             writer.writeEntries(

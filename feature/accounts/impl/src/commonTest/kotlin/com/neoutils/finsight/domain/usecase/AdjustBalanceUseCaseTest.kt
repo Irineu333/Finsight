@@ -33,7 +33,7 @@ import kotlinx.datetime.YearMonth
 class AdjustBalanceUseCaseTest {
 
     private val date = LocalDate(2026, 1, 10)
-    private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET)
+    private val account = Account(currency = "BRL", id = 1, name = "Checking", type = AccountType.ASSET)
 
     @Test
     fun `re-adjusting a balance rewrites the adjustment from the ledger`() = runTest {
@@ -65,14 +65,14 @@ class AdjustBalanceUseCaseTest {
     fun `a cross-currency transfer of the same day is not mistaken for the adjustment`() = runTest {
         val ledger = LedgerStore(account)
         val foreign = Account(id = 2, name = "Chase", type = AccountType.ASSET, currency = "USD")
-        val conversionBrl = Account(id = 900, name = "Conversão", type = AccountType.CONVERSION)
+        val conversionBrl = Account(currency = "BRL", id = 900, name = "Conversão", type = AccountType.CONVERSION)
         val conversionUsd =
             Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
 
         ledger.dateByTransaction[TRANSFER_ID] = date
         ledger.entriesByTransaction[TRANSFER_ID] = listOf(
-            Entry(transactionId = TRANSFER_ID, account = account, amount = -55_000),
-            Entry(transactionId = TRANSFER_ID, account = conversionBrl, amount = 55_000),
+            Entry(currency = "BRL", transactionId = TRANSFER_ID, account = account, amount = -55_000),
+            Entry(currency = "BRL", transactionId = TRANSFER_ID, account = conversionBrl, amount = 55_000),
             Entry(transactionId = TRANSFER_ID, account = conversionUsd, amount = -10_000, currency = "USD"),
             Entry(transactionId = TRANSFER_ID, account = foreign, amount = 10_000, currency = "USD"),
         )
@@ -102,7 +102,7 @@ class AdjustBalanceUseCaseTest {
  * account plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class LedgerStore(private val account: Account) {
-    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+    private val equity = Account(currency = "BRL", id = 999, name = "Reconciliation", type = AccountType.EQUITY)
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L
@@ -111,8 +111,8 @@ class LedgerStore(private val account: Account) {
         entriesByTransaction[transactionId] = legs.flatMap { leg ->
             val cents = (leg.amount * 100).roundToLong()
             listOf(
-                Entry(transactionId = transactionId, account = account, amount = cents),
-                Entry(transactionId = transactionId, account = equity, amount = -cents),
+                Entry(currency = "BRL", transactionId = transactionId, account = account, amount = cents),
+                Entry(currency = "BRL", transactionId = transactionId, account = equity, amount = -cents),
             )
         }
     }

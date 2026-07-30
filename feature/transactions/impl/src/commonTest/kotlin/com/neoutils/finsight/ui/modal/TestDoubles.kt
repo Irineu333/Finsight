@@ -59,9 +59,9 @@ fun transaction(
 ): Transaction {
     val cents = (amount * 100).toLong()
     val (moneyAmount, counterpart) = when (type) {
-        TransactionType.EXPENSE -> -cents to Account(id = 10, name = "Food", type = AccountType.EXPENSE)
-        TransactionType.INCOME -> cents to Account(id = 11, name = "Salary", type = AccountType.INCOME)
-        TransactionType.ADJUSTMENT -> cents to Account(id = 12, name = "Reconciliation", type = AccountType.EQUITY)
+        TransactionType.EXPENSE -> -cents to Account(currency = "BRL", id = 10, name = "Food", type = AccountType.EXPENSE)
+        TransactionType.INCOME -> cents to Account(currency = "BRL", id = 11, name = "Salary", type = AccountType.INCOME)
+        TransactionType.ADJUSTMENT -> cents to Account(currency = "BRL", id = 12, name = "Reconciliation", type = AccountType.EQUITY)
     }
 
     return Transaction(
@@ -69,8 +69,8 @@ fun transaction(
         title = "Op $id",
         date = LocalDate(2026, 1, 1),
         entries = listOf(
-            Entry(account = Account(id = 1, name = "Account", type = AccountType.ASSET), amount = moneyAmount),
-            Entry(account = counterpart, amount = -moneyAmount),
+            Entry(currency = "BRL", account = Account(currency = "BRL", id = 1, name = "Account", type = AccountType.ASSET), amount = moneyAmount),
+            Entry(currency = "BRL", account = counterpart, amount = -moneyAmount),
         ),
     )
 }

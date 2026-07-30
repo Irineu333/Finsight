@@ -7,8 +7,8 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.mapper.CreditCardMapper
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,7 +17,14 @@ class CreditCardRepository(
     private val database: AppDatabase,
     private val dao: CreditCardDao,
     private val accountDao: AccountDao,
-    private val mapper: CreditCardMapper
+    private val mapper: CreditCardMapper,
+    /**
+     * The card's row in the chart of accounts has to be denominated by someone, and until
+     * the card form offers the choice the honest answer is the currency this user reads
+     * totals in. Reading it here rather than defaulting in the model is the point of the
+     * model having no default: the decision is named at the site that makes it.
+     */
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ICreditCardRepository {
 
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
@@ -54,7 +61,7 @@ class CreditCardRepository(
                     AccountEntity(
                         name = creditCard.name,
                         type = AccountEntity.Type.LIABILITY,
-                        currency = BASE_CURRENCY,
+                        currency = baseCurrencyRepository.current(),
                         iconKey = creditCard.iconKey,
                         createdAt = creditCard.createdAt,
                     )

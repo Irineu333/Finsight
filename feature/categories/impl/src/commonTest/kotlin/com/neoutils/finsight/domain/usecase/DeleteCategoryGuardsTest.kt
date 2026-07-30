@@ -8,22 +8,24 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brlBalance
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 /**
  * A category with no movement is deletable — unless a budget or a recurring still
@@ -141,32 +143,9 @@ class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
     override suspend fun delete(budget: Budget) = throw NotImplementedError()
 }
 
-class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
+internal class FakeEntries(private val hasEntries: Boolean) : StubEntryRepository() {
     override suspend fun hasEntries(accountId: Long): Boolean = hasEntries
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = hasEntries
-    override suspend fun balance(accountId: Long): Double = 0.0
+    override suspend fun balance(accountId: Long) = brlBalance(0.0)
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(
-        nominalType: AccountType,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
-        nominalType: AccountType,
-        scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }

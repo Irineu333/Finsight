@@ -17,16 +17,18 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.InvoiceUi
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 /**
  * The neutral perimeter (`ASSET` + `LIABILITY`) is derived by *summing* the two per-nature
@@ -84,8 +86,8 @@ class DashboardOverallBalanceStatsTest {
 
     // A card purchase lands only on the LIABILITY leg — the two expense sets are disjoint,
     // so summing them counts it exactly once.
-    private val assetFlows = AssetMonthFlows(income = 1000.0, expense = 300.0, adjustment = 0.0)
-    private val liabilityFlows = LiabilityMonthFlows(expense = 250.0, payment = 400.0, adjustment = 0.0)
+    private val assetFlows = AssetMonthFlows(income = brl(1000.0), expense = brl(300.0), adjustment = brl(0.0))
+    private val liabilityFlows = LiabilityMonthFlows(expense = brl(250.0), payment = brl(400.0), adjustment = brl(0.0))
 
     private suspend fun overall(
         asset: AssetMonthFlows = assetFlows,
@@ -103,7 +105,7 @@ class DashboardOverallBalanceStatsTest {
     fun `an invoice payment is not expense in the neutral perimeter`() = runTest {
         // Both legs of a payment sit inside the perimeter, so it is internal movement:
         // doubling the payment must not move the expense by a cent.
-        val doubledPayment = liabilityFlows.copy(payment = liabilityFlows.payment * 2)
+        val doubledPayment = liabilityFlows.copy(payment = liabilityFlows.payment + liabilityFlows.payment)
         assertEquals(overall()!!.expense, overall(liability = doubledPayment)!!.expense)
     }
 
@@ -128,8 +130,8 @@ class DashboardOverallBalanceStatsTest {
     @Test
     fun `a month with no movement keeps the neutral widget by default`() = runTest {
         val component = overall(
-            asset = AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0),
-            liability = LiabilityMonthFlows(expense = 0.0, payment = 0.0, adjustment = 0.0),
+            asset = AssetMonthFlows(income = brl(0.0), expense = brl(0.0), adjustment = brl(0.0)),
+            liability = LiabilityMonthFlows(expense = brl(0.0), payment = brl(0.0), adjustment = brl(0.0)),
         )
 
         assertNotNull(component)
@@ -141,25 +143,11 @@ class DashboardOverallBalanceStatsTest {
 private class FlowsEntryRepository(
     private val asset: AssetMonthFlows,
     private val liability: LiabilityMonthFlows,
-) : IEntryRepository {
+) : StubEntryRepository() {
     override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = asset
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = liability
 
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double = throw NotImplementedError()
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
 }

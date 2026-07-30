@@ -11,7 +11,13 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -20,11 +26,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
 /**
  * The two emptinesses of the invoice list, and the loading state that used to look
@@ -72,7 +73,7 @@ class InvoiceTransactionsEmptyStateTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = emptyMap(),
-            flowsByInvoiceId = invoices.associate { it.id to DimensionFlows(0.0, 0.0, 0.0) },
+            flowsByInvoiceId = invoices.associate { it.id to DimensionFlows(brl(0.0), brl(0.0), brl(0.0)) },
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),

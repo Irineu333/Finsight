@@ -26,11 +26,13 @@ class AdjustBalanceUseCase(
         adjustmentDate: LocalDate,
         account: Account
     ): Either<Throwable, Unit> = either {
+        // One account, so one number in that account's own currency — the figure the
+        // user is adjusting *to* is denominated the same way, by the form's own account.
         val currentBalance = catch {
             calculateBalanceUseCase(
                 target = adjustmentDate.yearMonth,
                 accountId = account.id,
-            )
+            ).amount
         }.bind()
 
         ensure(targetBalance != currentBalance) { AccountNotAdjustedException() }

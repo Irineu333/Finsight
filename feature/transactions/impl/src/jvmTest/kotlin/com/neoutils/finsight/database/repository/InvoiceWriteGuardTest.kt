@@ -270,7 +270,7 @@ class InvoiceWriteGuardTest {
         assertEquals(LedgerError.ClosedAccountRemoval(ClosedFacade.ACCOUNT), error.error)
         // The legs are untouched: the balance the archive precondition guaranteed
         // is still there.
-        assertEquals(-1000L, db.entryDao().balanceOf(1))
+        assertEquals(-1000L, db.entryDao().balanceOf(1)?.total)
     }
 
     @Test

@@ -46,7 +46,7 @@ class EntryCategoryQueryTest {
         seed()
 
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 5_000)),
+            listOf(DimensionTotal(dimensionId = 10, currency = "BRL", total = 5_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1)),
         )
     }
@@ -56,7 +56,7 @@ class EntryCategoryQueryTest {
         seed()
 
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            listOf(DimensionTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(2)),
         )
     }
@@ -68,7 +68,7 @@ class EntryCategoryQueryTest {
         // Both asset accounts as siblings — still only the first, since the card
         // purchase has no asset leg at all.
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 5_000)),
+            listOf(DimensionTotal(dimensionId = 10, currency = "BRL", total = 5_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1, 3)),
         )
     }
@@ -81,7 +81,7 @@ class EntryCategoryQueryTest {
 
         val totals = entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1))
 
-        assertEquals(setOf(DimensionTotal(null, 1_500), DimensionTotal(10, 5_000)), totals.toSet())
+        assertEquals(setOf(DimensionTotal(null, "BRL", 1_500), DimensionTotal(10, "BRL", 5_000)), totals.toSet())
     }
 
     @Test
@@ -91,9 +91,9 @@ class EntryCategoryQueryTest {
         // asserted it, and every fixture until now was debits only.
         seed().transaction("2026-01-25", (10L posts -2_000).taggedWith(10), 1L posts 2_000)
 
-        assertEquals(6_000L, entryDao.dimensionBalanceInMonth(10, "2026-01"), "8000 spent less 2000 refunded")
+        assertEquals(6_000L, entryDao.dimensionBalanceInMonth(10, "2026-01").cents(), "8000 spent less 2000 refunded")
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            listOf(DimensionTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1)),
             "and the perspective total nets the refund against the purchase it reverses",
         )
@@ -103,8 +103,8 @@ class EntryCategoryQueryTest {
     fun `month total sums the legs carrying a dimension within the month`() = runTest {
         seed()
 
-        assertEquals(8_000L, entryDao.dimensionBalanceInMonth(10, "2026-01"))
-        assertEquals(0L, entryDao.dimensionBalanceInMonth(10, "2026-02"))
+        assertEquals(8_000L, entryDao.dimensionBalanceInMonth(10, "2026-01").cents())
+        assertEquals(0L, entryDao.dimensionBalanceInMonth(10, "2026-02").cents())
     }
 
     @Test
@@ -113,8 +113,33 @@ class EntryCategoryQueryTest {
 
         // Invoice 1 is carried by the card leg of the second transaction only.
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            listOf(DimensionTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionInScope("EXPENSE", listOf(1)),
         )
+    }
+
+    @Test
+    fun `a category spent in two currencies reports each one, and adds neither`() = runTest {
+        // A category is a dimension, not an account: nothing stops its legs from being
+        // denominated differently, and this is the read that must not add them.
+        seed().apply {
+            account(4, AccountEntity.Type.ASSET, "Dollars", currency = "USD")
+            transaction(
+                "2026-01-18",
+                (10L posts 2_000).taggedWith(10).denominatedIn("USD"),
+                (4L posts -2_000).denominatedIn("USD"),
+            )
+        }
+
+        val month = entryDao.dimensionBalanceInMonth(10, "2026-01")
+
+        assertEquals(2, month.size)
+        assertEquals(8_000L, month.cents())
+        assertEquals(2_000L, month.cents("USD"))
+
+        // And the same for the perspective read, keyed by (dimension, currency).
+        val seenFromDollars = entryDao
+            .totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(4))
+        assertEquals(listOf(DimensionTotal(dimensionId = 10, currency = "USD", total = 2_000)), seenFromDollars)
     }
 }

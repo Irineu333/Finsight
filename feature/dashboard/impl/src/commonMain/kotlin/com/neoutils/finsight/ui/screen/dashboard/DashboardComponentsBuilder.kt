@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CreditCard
@@ -115,8 +116,11 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
     ): DashboardComponent.TotalBalance {
         // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
+        // The read spans every account, so it comes back per currency; reducing it to one
+        // figure is consolidation, and until that layer exists (task 8.2) the app has a
+        // single currency to reduce it to.
         return DashboardComponent.TotalBalance(
-            amount = calculateBalanceUseCase(target = input.targetMonth),
+            amount = calculateBalanceUseCase(target = input.targetMonth)[ASSUMED_SINGLE_CURRENCY],
         )
     }
 
@@ -132,8 +136,10 @@ class DashboardComponentsBuilder(
         val asset = entryRepository.assetMonthFlows(input.targetMonth)
         val liability = entryRepository.liabilityMonthFlows(input.targetMonth)
 
-        val income = asset.income
-        val expense = asset.expense + liability.expense
+        // The sum of two per-currency figures is the ledger's own operation — each currency
+        // added to its own, nothing converted here.
+        val income = asset.income[ASSUMED_SINGLE_CURRENCY]
+        val expense = (asset.expense + liability.expense)[ASSUMED_SINGLE_CURRENCY]
 
         val isEmpty = income <= 0.0 && expense <= 0.0
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
@@ -154,15 +160,17 @@ class DashboardComponentsBuilder(
         // ledger — transfers and card payments (money between the user's own accounts)
         // are excluded there, not re-derived here (spec `ledger-reporting`).
         val stats = entryRepository.assetMonthFlows(input.targetMonth)
+        val income = stats.income[ASSUMED_SINGLE_CURRENCY]
+        val expense = stats.expense[ASSUMED_SINGLE_CURRENCY]
 
-        val isEmpty = stats.income <= 0.0 && stats.expense <= 0.0
+        val isEmpty = income <= 0.0 && expense <= 0.0
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
 
         return DashboardComponent.ConcreteBalanceStats(
-            income = stats.income,
-            expense = stats.expense,
+            income = income,
+            expense = expense,
         )
     }
 
@@ -190,8 +198,8 @@ class DashboardComponentsBuilder(
     ): DashboardComponent.CreditCardBalanceStats? {
         // Month-wide card expense/payment from the ledger (task 4.11).
         val flows = entryRepository.liabilityMonthFlows(input.targetMonth)
-        val payment = flows.payment
-        val expense = flows.expense
+        val payment = flows.payment[ASSUMED_SINGLE_CURRENCY]
+        val expense = flows.expense[ASSUMED_SINGLE_CURRENCY]
 
         val isEmpty = payment <= 0.0 && expense <= 0.0
 
@@ -226,7 +234,7 @@ class DashboardComponentsBuilder(
                     iconKey = account.iconKey,
                     name = account.name,
                     isDefault = account.isDefault,
-                    balance = entryRepository.balance(account.id),
+                    balance = entryRepository.balance(account.id).amount,
                     currency = account.currency,
                 )
             }

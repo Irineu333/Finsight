@@ -3,14 +3,16 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.YearMonth
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 private val MONTH = YearMonth(2026, 1)
 
@@ -109,32 +111,9 @@ private class FakeCategoryRepository(private val categories: List<Category>) : I
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private class FakeEntryRepository(private val balances: Map<Long, Double>) : IEntryRepository {
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<com.neoutils.finsight.domain.model.Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): kotlinx.coroutines.flow.Flow<List<com.neoutils.finsight.domain.model.Entry>> = throw NotImplementedError()
+private class FakeEntryRepository(private val balances: Map<Long, Double>) : StubEntryRepository() {
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = balances[dimensionId] ?: 0.0
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): com.neoutils.finsight.domain.repository.AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(
-        categoryType: com.neoutils.finsight.domain.model.AccountType,
-        startDate: kotlinx.datetime.LocalDate,
-        endDate: kotlinx.datetime.LocalDate,
-        siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
-        categoryType: com.neoutils.finsight.domain.model.AccountType,
-        scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long) = brl(balances[dimensionId] ?: 0.0)
 }

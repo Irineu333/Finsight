@@ -5,6 +5,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * The month-cutoff behind both balance figures the app shows — the running balance
@@ -40,24 +41,36 @@ class BalanceUpToMonthQueryTest {
     fun `the target month is included and later months are not`() = runTest {
         seed()
 
-        assertEquals(10_000L, entryDao.balanceUpToMonth(1, "2026-01"))
+        assertEquals(10_000L, entryDao.balanceUpToMonth(1, "2026-01").cents())
         // February's last day counts; March does not.
-        assertEquals(7_500L, entryDao.balanceUpToMonth(1, "2026-02"))
-        assertEquals(7_400L, entryDao.balanceUpToMonth(1, "2026-03"))
+        assertEquals(7_500L, entryDao.balanceUpToMonth(1, "2026-02").cents())
+        assertEquals(7_400L, entryDao.balanceUpToMonth(1, "2026-03").cents())
     }
 
     @Test
     fun `a month before any movement reads zero`() = runTest {
         seed()
 
-        assertEquals(0L, entryDao.balanceUpToMonth(1, "2025-12"))
+        assertEquals(0L, entryDao.balanceUpToMonth(1, "2025-12").cents())
     }
 
     @Test
-    fun `an account with no entries reads zero rather than null`() = runTest {
+    fun `an account that is not in the chart has no balance at all`() = runTest {
         seed()
 
-        assertEquals(0L, entryDao.balanceUpToMonth(99, "2026-03"))
+        // Not zero: the figure is denominated by the account, so with no account there is
+        // no currency to denominate it in, and `0` would be a number in nobody's currency.
+        assertNull(entryDao.balanceUpToMonth(99, "2026-03"))
+    }
+
+    @Test
+    fun `an account with no entries still reads its own currency, at zero`() = runTest {
+        seed().account(5, AccountEntity.Type.ASSET, currency = "USD")
+
+        val balance = entryDao.balanceUpToMonth(5, "2026-03")
+
+        assertEquals("USD", balance?.currency)
+        assertEquals(0L, balance.cents())
     }
 
     @Test
@@ -65,25 +78,41 @@ class BalanceUpToMonthQueryTest {
         seed()
 
         // 7500 on account 1 plus 700 on account 2; the EXPENSE leg is not an asset.
-        assertEquals(8_200L, entryDao.balanceUpToMonthByType("ASSET", "2026-02"))
+        assertEquals(8_200L, entryDao.balanceUpToMonthByType("ASSET", "2026-02").cents())
     }
 
     @Test
     fun `liabilities accumulate by the same mechanism, in credit`() = runTest {
         seed()
 
-        assertEquals(-3_000L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-02"))
-        assertEquals(-4_500L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-03"))
+        assertEquals(-3_000L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-02").cents())
+        assertEquals(-4_500L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-03").cents())
     }
 
     @Test
     fun `the consolidated figure is the sum of the two natures`() = runTest {
         seed()
 
-        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-03")
-        val liabilities = entryDao.balanceUpToMonthByType("LIABILITY", "2026-03")
+        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-03").cents()
+        val liabilities = entryDao.balanceUpToMonthByType("LIABILITY", "2026-03").cents()
 
         // 8100 held minus 4500 owed — no aggregate of its own and no sign rule of its own.
         assertEquals(3_600L, assets + liabilities)
+    }
+
+    @Test
+    fun `the assets total keeps two currencies apart instead of adding them`() = runTest {
+        seed().apply {
+            account(5, AccountEntity.Type.ASSET, currency = "USD")
+            transaction("2026-02-15", (5L posts 4_000).denominatedIn("USD"))
+        }
+
+        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-02")
+
+        // Two groups, and neither number is the sum of the two: 8200 BRL and 40 USD are not
+        // 12_200 of anything.
+        assertEquals(2, assets.size)
+        assertEquals(8_200L, assets.cents())
+        assertEquals(4_000L, assets.cents("USD"))
     }
 }

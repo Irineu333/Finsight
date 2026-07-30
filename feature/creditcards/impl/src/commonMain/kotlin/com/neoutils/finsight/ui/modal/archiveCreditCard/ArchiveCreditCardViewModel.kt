@@ -30,7 +30,7 @@ class ArchiveCreditCardViewModel(
     val balance = MutableStateFlow<Double?>(null)
 
     init {
-        viewModelScope.launch { balance.value = entryRepository.balance(creditCard.accountId) }
+        viewModelScope.launch { balance.value = entryRepository.balance(creditCard.accountId).amount }
     }
 
 

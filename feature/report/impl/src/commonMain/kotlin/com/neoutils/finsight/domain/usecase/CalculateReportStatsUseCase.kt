@@ -18,6 +18,10 @@ import kotlinx.datetime.LocalDate
  * income/expense magnitudes; `balance` their signed sum (adjustments included);
  * `openingBalance` the signed scope balance before the period. Internal transfers among
  * the scope's accounts are excluded, exactly as before.
+ *
+ * An empty scope means *every* account, archived included, which makes this the most
+ * currency-crossing figure in the app — so each of its four figures comes back **per
+ * currency**, and reducing them to one is the reader's choice, not this use case's.
  */
 class CalculateReportStatsUseCase(
     private val entryRepository: IEntryRepository,

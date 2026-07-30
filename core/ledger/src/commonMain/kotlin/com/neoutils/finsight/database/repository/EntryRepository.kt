@@ -1,11 +1,15 @@
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.database.dao.CurrencyGrouped
+import com.neoutils.finsight.database.dao.CurrencyTotal
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.EntryWithAccount
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.repository.AccountBalance
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -57,27 +61,28 @@ class EntryRepository(
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean =
         entryDao.hasEntriesForDimension(dimensionId)
 
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double {
-        // No account named means "every ASSET account" — the same read by nature,
-        // so the accumulated balance has one path, not two.
-        if (accountId == null) return naturalBalanceUpTo(target, AccountType.ASSET)
-        return entryDao.balanceUpToMonth(accountId, target.toString()) / CENTS_PER_UNIT
-    }
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long): AccountBalance =
+        entryDao.balanceUpToMonth(accountId, target.toString())
+            .orNoSuchAccount(accountId)
+            .toAccountBalance()
 
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double =
-        entryDao.balanceUpToMonthByType(type.name, target.toString()) / CENTS_PER_UNIT
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): CurrencyBalance =
+        entryDao.balanceUpToMonthByType(type.name, target.toString()).toCurrencyBalance()
 
-    override suspend fun balance(accountId: Long): Double {
-        return entryDao.balanceOf(accountId) / CENTS_PER_UNIT
-    }
+    override suspend fun balance(accountId: Long): AccountBalance =
+        entryDao.balanceOf(accountId).orNoSuchAccount(accountId).toAccountBalance()
 
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double {
-        return entryDao.dimensionBalanceInMonth(dimensionId, month.toString()) / CENTS_PER_UNIT
-    }
+    override suspend fun dimensionBalanceInMonth(
+        month: YearMonth,
+        dimensionId: Long,
+    ): CurrencyBalance =
+        entryDao.dimensionBalanceInMonth(dimensionId, month.toString()).toCurrencyBalance()
 
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows {
         val totals = entryDao.accountPeriodTotals(accountId, month.toString())
+            .orNoSuchAccount(accountId)
         return AccountFlows(
+            currency = totals.currency,
             income = totals.income / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,
@@ -89,59 +94,57 @@ class EntryRepository(
         return entryDao.dimensionEntryCountInMonth(dimensionId, month.toString())
     }
 
-    override suspend fun dimensionOwed(dimensionId: Long): Double {
+    override suspend fun dimensionOwed(dimensionId: Long): CurrencyBalance {
         // Liability entries are stored negative (credit); owed reads positive.
-        return -entryDao.dimensionNaturalBalance(dimensionId) / CENTS_PER_UNIT
+        return entryDao.dimensionNaturalBalance(dimensionId).toCurrencyBalance(negated = true)
     }
 
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows {
-        val totals = entryDao.dimensionPeriodTotals(dimensionId)
+        val rows = entryDao.dimensionPeriodTotals(dimensionId)
         return DimensionFlows(
-            expense = totals.expense / CENTS_PER_UNIT,
-            advancePayment = totals.advancePayment / CENTS_PER_UNIT,
-            adjustment = totals.adjustment / CENTS_PER_UNIT,
+            expense = rows.balanceOf { it.expense },
+            advancePayment = rows.balanceOf { it.advancePayment },
+            adjustment = rows.balanceOf { it.adjustment },
         )
     }
 
-    override suspend fun owedByDimension(dimensionIds: Collection<Long>): Map<Long, Double> {
+    override suspend fun owedByDimension(dimensionIds: Collection<Long>): Map<Long, CurrencyBalance> {
         if (dimensionIds.isEmpty()) return emptyMap()
         // Liability entries are stored negative (credit); owed reads positive.
         return entryDao.naturalBalanceByDimension(dimensionIds.distinct())
-            .associate { it.dimensionId!! to -it.total / CENTS_PER_UNIT }
+            .groupBy { it.dimensionId!! }
+            .mapValues { (_, rows) -> rows.balanceOf { -it.total } }
     }
 
     override suspend fun flowsByDimension(dimensionIds: Collection<Long>): Map<Long, DimensionFlows> {
         if (dimensionIds.isEmpty()) return emptyMap()
         return entryDao.periodTotalsByDimension(dimensionIds.distinct())
-            .associate {
-                it.dimensionId to DimensionFlows(
-                    expense = it.expense / CENTS_PER_UNIT,
-                    advancePayment = it.advancePayment / CENTS_PER_UNIT,
-                    adjustment = it.adjustment / CENTS_PER_UNIT,
+            .groupBy { it.dimensionId }
+            .mapValues { (_, rows) ->
+                DimensionFlows(
+                    expense = rows.balanceOf { it.expense },
+                    advancePayment = rows.balanceOf { it.advancePayment },
+                    adjustment = rows.balanceOf { it.adjustment },
                 )
             }
     }
 
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
-        val totals = entryDao.liabilityMonthTotals(month.toString())
+        val rows = entryDao.liabilityMonthTotals(month.toString())
         return LiabilityMonthFlows(
-            expense = totals.expense / CENTS_PER_UNIT,
-            payment = totals.payment / CENTS_PER_UNIT,
-            adjustment = totals.adjustment / CENTS_PER_UNIT,
+            expense = rows.balanceOf { it.expense },
+            payment = rows.balanceOf { it.payment },
+            adjustment = rows.balanceOf { it.adjustment },
         )
     }
 
     override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
-        val totals = entryDao.assetMonthTotals(month.toString())
+        val rows = entryDao.assetMonthTotals(month.toString())
         return AssetMonthFlows(
-            income = totals.income / CENTS_PER_UNIT,
-            expense = totals.expense / CENTS_PER_UNIT,
-            adjustment = totals.adjustment / CENTS_PER_UNIT,
+            income = rows.balanceOf { it.income },
+            expense = rows.balanceOf { it.expense },
+            adjustment = rows.balanceOf { it.adjustment },
         )
-    }
-
-    override suspend fun netWorth(): Double {
-        return entryDao.netWorthCents() / CENTS_PER_UNIT
     }
 
     override suspend fun totalsByDimension(
@@ -149,21 +152,23 @@ class EntryRepository(
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> {
+    ): Map<Long?, CurrencyBalance> {
         if (siblingAccountIds.isEmpty()) return emptyMap()
         return entryDao
             .totalsByDimensionWithSiblingLeg(nominalType.name, startDate, endDate, siblingAccountIds)
-            .associate { it.dimensionId to it.total / CENTS_PER_UNIT }
+            .groupBy { it.dimensionId }
+            .mapValues { (_, rows) -> rows.balanceOf { it.total } }
     }
 
     override suspend fun totalsByDimensionInScope(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> {
+    ): Map<Long?, CurrencyBalance> {
         if (scopeDimensionIds.isEmpty()) return emptyMap()
         return entryDao
             .totalsByDimensionInScope(nominalType.name, scopeDimensionIds)
-            .associate { it.dimensionId to it.total / CENTS_PER_UNIT }
+            .groupBy { it.dimensionId }
+            .mapValues { (_, rows) -> rows.balanceOf { it.total } }
     }
 
     override suspend fun scopeStats(
@@ -171,13 +176,35 @@ class EntryRepository(
         startDate: LocalDate,
         endDate: LocalDate,
     ): ScopeStats {
-        if (scopeAccountIds.isEmpty()) return ScopeStats(0.0, 0.0, 0.0, 0.0)
-        val totals = entryDao.scopeStats(scopeAccountIds, startDate, endDate)
+        if (scopeAccountIds.isEmpty()) return ScopeStats()
+        val rows = entryDao.scopeStats(scopeAccountIds, startDate, endDate)
         return ScopeStats(
-            income = totals.income / CENTS_PER_UNIT,
-            expense = totals.expense / CENTS_PER_UNIT,
-            balance = totals.balance / CENTS_PER_UNIT,
-            openingBalance = totals.openingBalance / CENTS_PER_UNIT,
+            income = rows.balanceOf { it.income },
+            expense = rows.balanceOf { it.expense },
+            balance = rows.balanceOf { it.balance },
+            openingBalance = rows.balanceOf { it.openingBalance },
         )
     }
+
+    /**
+     * The one place cents become the major unit and grouped rows become a per-currency
+     * figure. Every grouped read goes through it, so no aggregate invents its own way of
+     * keying by currency and none of them can accidentally add two currencies up.
+     */
+    private fun <T : CurrencyGrouped> List<T>.balanceOf(value: (T) -> Long) =
+        CurrencyBalance.of(associate { it.currency to value(it) / CENTS_PER_UNIT })
+
+    private fun List<CurrencyTotal>.toCurrencyBalance(negated: Boolean = false) =
+        balanceOf { if (negated) -it.total else it.total }
+
+    private fun CurrencyTotal.toAccountBalance() =
+        AccountBalance(currency = currency, amount = total / CENTS_PER_UNIT)
+
+    /**
+     * A figure scoped to one account has no answer when that account is not in the chart —
+     * and a `0` would be a lie in a currency nobody named. Every production caller reaches
+     * these reads holding the account itself, so this cannot be reached by asking.
+     */
+    private fun <T> T?.orNoSuchAccount(accountId: Long): T =
+        requireNotNull(this) { "No account $accountId in the chart of accounts" }
 }

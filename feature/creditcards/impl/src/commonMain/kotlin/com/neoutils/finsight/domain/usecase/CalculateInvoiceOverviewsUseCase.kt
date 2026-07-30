@@ -1,6 +1,10 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.sum
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.datetime.YearMonth
 
@@ -18,27 +22,39 @@ class CalculateInvoiceOverviewsUseCase(
         invoices: List<Invoice>,
         forYearMonth: YearMonth,
     ): InvoiceOverviewStats {
-        val invoiceOverviews = invoices
+        // Each invoice is single-currency by this facade's guarantee, so its own figures
+        // reduce to that currency. The card overview, on the other hand, spans every invoice
+        // of the month and therefore every card — so it is summed **per currency** and only
+        // then reduced. Summing the already-reduced invoice figures would be the one thing
+        // the ledger refuses to do: adding two currencies into one number.
+        val perInvoice = invoices
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
                 val dimensionId = invoice.dimensionId
-                val flows = dimensionId?.let { entryRepository.dimensionFlows(it) }
-                InvoiceOverviewResult(
-                    invoiceId = invoice.id,
-                    creditCardName = invoice.creditCard.name,
-                    invoiceStatus = invoice.status,
-                    expense = flows?.expense ?: 0.0,
-                    advancePayment = flows?.advancePayment ?: 0.0,
-                    adjustment = flows?.adjustment ?: 0.0,
-                    total = dimensionId?.let { entryRepository.dimensionOwed(it) } ?: 0.0,
+                InvoiceFigures(
+                    invoice = invoice,
+                    flows = dimensionId?.let { entryRepository.dimensionFlows(it) } ?: DimensionFlows(),
+                    owed = dimensionId?.let { entryRepository.dimensionOwed(it) } ?: CurrencyBalance.zero,
                 )
             }
 
+        val invoiceOverviews = perInvoice.map { figures ->
+            InvoiceOverviewResult(
+                invoiceId = figures.invoice.id,
+                creditCardName = figures.invoice.creditCard.name,
+                invoiceStatus = figures.invoice.status,
+                expense = figures.flows.expense.soleAmount,
+                advancePayment = figures.flows.advancePayment.soleAmount,
+                adjustment = figures.flows.adjustment.soleAmount,
+                total = figures.owed.soleAmount,
+            )
+        }
+
         val creditCardOverview = CreditCardOverviewResult(
-            expense = invoiceOverviews.sumOf { it.expense },
-            advancePayment = invoiceOverviews.sumOf { it.advancePayment },
-            adjustment = invoiceOverviews.sumOf { it.adjustment },
-            total = invoiceOverviews.sumOf { it.total }
+            expense = perInvoice.map { it.flows.expense }.sum()[ASSUMED_SINGLE_CURRENCY],
+            advancePayment = perInvoice.map { it.flows.advancePayment }.sum()[ASSUMED_SINGLE_CURRENCY],
+            adjustment = perInvoice.map { it.flows.adjustment }.sum()[ASSUMED_SINGLE_CURRENCY],
+            total = perInvoice.map { it.owed }.sum()[ASSUMED_SINGLE_CURRENCY],
         )
 
         return InvoiceOverviewStats(
@@ -46,6 +62,13 @@ class CalculateInvoiceOverviewsUseCase(
             creditCardOverview = creditCardOverview
         )
     }
+
+    /** One invoice's ledger figures before reduction — per currency, as the ledger gave them. */
+    private data class InvoiceFigures(
+        val invoice: Invoice,
+        val flows: DimensionFlows,
+        val owed: CurrencyBalance,
+    )
 
     data class InvoiceOverviewStats(
         val invoiceOverviews: List<InvoiceOverviewResult>,

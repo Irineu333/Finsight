@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
+import com.neoutils.finsight.database.dao.CurrencyTotal
 import com.neoutils.finsight.database.entity.AccountEntity
 
 /**
@@ -117,16 +118,16 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
         // happened to their money is answered by `netWorth`.
         balanceByAccountId = accounts
             .filter { it.type == AccountEntity.Type.ASSET && !it.isArchived }
-            .associate { it.id to entryDao.balanceOf(it.id) },
+            .associate { it.id to entryDao.balanceOf(it.id).cents() },
         owedByCardId = creditCardDao().getAllCreditCardsList()
-            .associate { it.id to entryDao.balanceOf(it.accountId) },
+            .associate { it.id to entryDao.balanceOf(it.accountId).cents() },
         // Keyed by invoice id, read through the dimension.
         owedByInvoiceId = invoiceDao().getAllInvoices()
-            .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d) }.orZero() },
+            .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d).cents() }.orZero() },
         // Archived included: parity is about every figure the ledger can produce,
         // not only the ones a given screen currently lists.
         totalByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
-            .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId) },
+            .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId).cents() },
         // After, it is the nature of the nominal the dimension's entries landed on.
         nominalNatureByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
             .mapNotNull { category ->
@@ -137,11 +138,26 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
                     ?.let { category.id to it.type.name }
             }
             .toMap(),
-        netWorth = entryDao.netWorthCents(),
+        netWorth = entryDao.netWorthCents().cents(),
     )
 }
 
 private fun Long?.orZero(): Long = this ?: 0L
+
+/**
+ * The cents of a grouped read, for parity against a legacy database. Every row of every
+ * database that can be migrated is denominated in one currency, so a figure that comes back
+ * per currency has exactly one group here — and if it ever had two, summing them would be
+ * the one thing the ledger refuses, which is why this asserts instead of folding.
+ */
+internal fun List<CurrencyTotal>.cents(): Long = when (size) {
+    0 -> 0L
+    1 -> single().total
+    else -> error("A legacy database is single-currency, got ${map { it.currency }}")
+}
+
+/** The same, for a read scoped to one account: no row means no such account. */
+internal fun CurrencyTotal?.cents(): Long = this?.total ?: 0L
 
 private fun SQLiteConnection.queryMap(sql: String): Map<Long, Long> {
     val statement = prepare(sql)

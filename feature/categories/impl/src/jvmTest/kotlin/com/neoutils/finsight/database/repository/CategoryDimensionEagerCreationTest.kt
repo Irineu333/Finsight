@@ -98,7 +98,7 @@ class CategoryDimensionEagerCreationTest {
         // The legs survive, unclassified: same amounts, same accounts, same balances.
         val entries = db.entryDao().getByTransactionId(transactionId)
         assertEquals(listOf(null, null), entries.map { it.dimensionId })
-        assertEquals(-5000L, db.entryDao().balanceOf(1))
-        assertEquals(5000L, db.entryDao().balanceOf(2))
+        assertEquals(-5000L, db.entryDao().balanceOf(1)?.total)
+        assertEquals(5000L, db.entryDao().balanceOf(2)?.total)
     }
 }

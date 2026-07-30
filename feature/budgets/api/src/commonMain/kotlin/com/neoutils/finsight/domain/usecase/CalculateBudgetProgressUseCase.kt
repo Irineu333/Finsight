@@ -1,7 +1,9 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.BudgetProgress
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
@@ -55,9 +57,16 @@ class CalculateBudgetProgressUseCase(
                     (confirmedAmount ?: fallbackAmount) * (budget.percentage ?: 0.0) / 100.0
                 }
             }
+            // A category's spending comes back per currency, and the currencies of two
+            // categories of the same budget need not agree — so the categories are added
+            // by currency and only then reduced. The currency of the *limit* is what the
+            // spending must be reduced to; until the limit has one of its own (task 8.5),
+            // that is the single currency the app has.
             val spent = budget.categories
                 .filter { it.type.isExpense }
-                .sumOf { category -> categoryBalances[category.dimensionId] ?: 0.0 }
+                .fold(CurrencyBalance.zero) { total, category ->
+                    total + (categoryBalances[category.dimensionId] ?: CurrencyBalance.zero)
+                }[ASSUMED_SINGLE_CURRENCY]
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
                 recurringList.find { it.id == budget.recurringId }
             } else null

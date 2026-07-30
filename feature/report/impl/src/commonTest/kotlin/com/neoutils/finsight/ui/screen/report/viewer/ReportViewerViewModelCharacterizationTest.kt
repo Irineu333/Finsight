@@ -7,46 +7,49 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.ContraLeg
-import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.ScopeStats
-import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
  * Characterizes the account-perspective stats of [ReportViewerViewModel] (sites
@@ -101,7 +104,7 @@ class ReportViewerViewModelCharacterizationTest {
             invoiceRepository = fakes.invoiceRepository(),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(
                 entryRepository = fakes.entryRepository(
-                    stats = ScopeStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
+                    stats = ScopeStats(income = brl(100.0), expense = brl(30.0), balance = brl(70.0), openingBalance = brl(-20.0)),
                 ),
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
@@ -190,7 +193,7 @@ class ReportViewerViewModelCharacterizationTest {
                 owed = mapOf(1L to 70.0),
                 // The invoice breakdown now reads the ledger's per-dimension flows
                 // (spec `ledger-reporting`): expense 100, advance payment 30, adjustment 10.
-                flows = mapOf(1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
+                flows = mapOf(1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = brl(100.0), advancePayment = brl(30.0), adjustment = brl(10.0))),
             ),
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
@@ -298,28 +301,15 @@ private class Fakes {
 
     fun entryRepository(
         owed: Map<Long, Double> = emptyMap(),
-        stats: ScopeStats = ScopeStats(0.0, 0.0, 0.0, 0.0),
+        stats: ScopeStats = ScopeStats(brl(0.0), brl(0.0), brl(0.0), brl(0.0)),
         flows: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
-    ) = object : IEntryRepository {
-        override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    ) = object : StubEntryRepository() {
         override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = owed[dimensionId] ?: 0.0
+        override suspend fun dimensionOwed(dimensionId: Long) = brl(owed[dimensionId] ?: 0.0)
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
-            flows[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(expense = 0.0, advancePayment = 0.0, adjustment = 0.0)
-        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-        override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
+            flows[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(expense = brl(0.0), advancePayment = brl(0.0), adjustment = brl(0.0))
         override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = stats
     }
 

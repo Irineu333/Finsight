@@ -34,7 +34,7 @@ class ArchiveAccountViewModel(
     val balance = MutableStateFlow<Double?>(null)
 
     init {
-        viewModelScope.launch { balance.value = entryRepository.balance(account.id) }
+        viewModelScope.launch { balance.value = entryRepository.balance(account.id).amount }
     }
 
 

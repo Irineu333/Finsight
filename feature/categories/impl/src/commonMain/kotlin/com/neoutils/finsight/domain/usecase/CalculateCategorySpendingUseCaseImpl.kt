@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -19,8 +20,13 @@ internal suspend fun categoryTotals(
     forYearMonth: YearMonth,
     entryRepository: IEntryRepository,
 ): List<CategorySpending> {
+    // A category is a dimension, not an account: its entries may be denominated in several
+    // currencies, so the ledger answers per currency. The breakdown ranks categories against
+    // one another and so needs one figure each, in the single currency the app has until the
+    // consolidation layer denominates it (task 8.2).
     val amounts = categories.mapNotNull { category ->
-        val natural = entryRepository.dimensionBalanceInMonth(forYearMonth, category.dimensionId)
+        val natural = entryRepository
+            .dimensionBalanceInMonth(forYearMonth, category.dimensionId)[ASSUMED_SINGLE_CURRENCY]
         val amount = natural * category.type.accountType.displaySign
         if (amount == 0.0) null else category to amount
     }

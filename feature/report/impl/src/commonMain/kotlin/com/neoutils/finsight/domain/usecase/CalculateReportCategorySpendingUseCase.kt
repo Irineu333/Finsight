@@ -1,7 +1,9 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
@@ -60,7 +62,7 @@ class CalculateReportCategorySpendingUseCase(
         if (transactionType.isIncome) AccountType.INCOME else AccountType.EXPENSE
 
     private suspend fun build(
-        totals: Map<Long?, Double>,
+        totals: Map<Long?, CurrencyBalance>,
         transactionType: TransactionType,
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
@@ -74,9 +76,12 @@ class CalculateReportCategorySpendingUseCase(
         val categoriesByDimension: Map<Long, Category> = categoryRepository.getAllCategoriesIncludingClosed()
             .associateBy { it.dimensionId }
 
+        // A category's total comes back per currency — the report ranks categories against
+        // each other, so it needs one figure per category, in the single currency the app
+        // has until the consolidation layer denominates it (task 8.2).
         val amounts = totals.mapNotNull { (dimensionId, natural) ->
             val category = categoriesByDimension[dimensionId] ?: return@mapNotNull null
-            val amount = natural * displaySign
+            val amount = natural[ASSUMED_SINGLE_CURRENCY] * displaySign
             if (amount == 0.0) null else category to amount
         }
         val total = amounts.sumOf { it.second }

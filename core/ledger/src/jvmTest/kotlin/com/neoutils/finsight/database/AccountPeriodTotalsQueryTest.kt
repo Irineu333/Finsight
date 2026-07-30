@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * The aggregates behind the account screen: income/expense/adjustment/invoice-payment
@@ -51,6 +52,7 @@ class AccountPeriodTotalsQueryTest {
 
         assertEquals(
             AccountPeriodTotals(
+                currency = "BRL",     // the account's own, which is what denominates it
                 income = 10_000,      // the salary
                 expense = 8_000,      // the expense (3000) plus the transfer out (5000)
                 adjustment = 4_000,   // signed, and kept out of income
@@ -65,7 +67,7 @@ class AccountPeriodTotalsQueryTest {
         seed()
 
         assertEquals(
-            AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, settlement = 0),
+            AccountPeriodTotals(currency = "BRL", income = 5_000, expense = 0, adjustment = 0, settlement = 0),
             entryDao.accountPeriodTotals(3, "2026-01"),
         )
     }
@@ -81,13 +83,39 @@ class AccountPeriodTotalsQueryTest {
         // `accountPeriodTotals` deliberately does *not* do, and why the summary needs
         // its own read.
         assertEquals(
-            AssetMonthTotals(income = 10_000, expense = 3_000, adjustment = 4_000),
+            listOf(AssetMonthTotals(currency = "BRL", income = 10_000, expense = 3_000, adjustment = 4_000)),
             entryDao.assetMonthTotals("2026-01"),
         )
-        assertEquals(
-            AssetMonthTotals(income = 0, expense = 0, adjustment = 0),
-            entryDao.assetMonthTotals("2026-03"),
-        )
+        // A month with nothing in it has no currency to report, so it has no rows —
+        // rather than a row of zeros in a currency nobody named.
+        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03"))
+    }
+
+    @Test
+    fun `asset month totals report each currency on its own row`() = runTest {
+        seed().apply {
+            account(4, AccountEntity.Type.ASSET, "Dollars", currency = "USD")
+            transaction(
+                "2026-01-25",
+                (4L posts -2_000).denominatedIn("USD"),
+                (10L posts 2_000).taggedWith(10).denominatedIn("USD"),
+            )
+        }
+
+        val totals = entryDao.assetMonthTotals("2026-01")
+
+        assertEquals(2, totals.size)
+        assertEquals(3_000L, totals.inCurrency()?.expense)
+        assertEquals(2_000L, totals.inCurrency("USD")?.expense)
+        // Nothing adds the two: the dollar row has no reais in it and no income of its own.
+        assertEquals(0L, totals.inCurrency("USD")?.income)
+    }
+
+    @Test
+    fun `an account outside the chart has no flows at all`() = runTest {
+        seed()
+
+        assertNull(entryDao.accountPeriodTotals(99, "2026-01"))
     }
 
     @Test

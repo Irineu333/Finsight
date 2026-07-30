@@ -45,33 +45,33 @@ class MigrationLedgerReadParityTest {
 
         // Account balance: A = -50 (expense) - 100 (transfer out) + 30 (adjustment)
         // + 900 (salary) = 780.00.
-        assertEquals(78000L, entryDao.balanceOf(aId))
+        assertEquals(78000L, entryDao.balanceOf(aId).cents())
 
         // Net worth (ASSET + LIABILITY): A(+78000) + B(+20000) + C(-4000) + card(-6000);
         // the two reconstructed closed accounts are zeroed by their write-off.
-        assertEquals(88000L, entryDao.netWorthCents())
+        assertEquals(88000L, entryDao.netWorthCents().cents())
 
         // Invoice owed, natural: purchase -10000 + payment +4000 = -6000 (60.00 owed).
         // Read through the invoice's dimension, which is what carries it since v10.
         val liabilityDimensionId = database.invoiceDao().getAllInvoices().first { it.id == 1L }.dimensionId!!
-        assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId))
+        assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId).cents())
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
-        assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId))
+        assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId).cents())
 
         // The income side: an income category lands on the INCOME nominal,
         // credit-natured, so its total is negative — and it must not have been routed
         // to the expense one.
         val categories = database.categoryDao().getAllCategories()
         val salaryDimensionId = categories.first { it.name == "Salary" }.dimensionId
-        assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId))
+        assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId).cents())
         val nominals = accounts.filter { it.type.name == "INCOME" || it.type.name == "EXPENSE" }
         assertEquals(2, nominals.size, "the whole chart holds exactly two nominal accounts")
 
         // Temporal cut, read through the production query: nothing before A's first
         // movement, everything by the month of its last.
-        assertEquals(0L, entryDao.balanceUpToMonth(aId, "2023-12"))
-        assertEquals(78000L, entryDao.balanceUpToMonth(aId, "2024-01"))
+        assertEquals(0L, entryDao.balanceUpToMonth(aId, "2023-12").cents())
+        assertEquals(78000L, entryDao.balanceUpToMonth(aId, "2024-01").cents())
 
         database.close()
     }

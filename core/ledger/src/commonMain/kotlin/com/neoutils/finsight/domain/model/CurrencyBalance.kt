@@ -29,6 +29,28 @@ class CurrencyBalance private constructor(private val amounts: Map<String, Doubl
     operator fun get(currency: String): Double = amounts[currency] ?: 0.0
 
     /**
+     * The single currency this figure is denominated in, or `null` when it is empty. It is
+     * how a facade that guarantees its own dimension is single-currency — a card invoice
+     * always lands on one card — reads the denomination back out.
+     */
+    val soleCurrency: String? get() = amounts.keys.singleOrNull()
+
+    /**
+     * The amount of that single currency, zero when there is nothing at all. It refuses
+     * several currencies rather than picking one: the guarantee belongs to the caller, and a
+     * figure that quietly returned one of two would be the silent wrong-currency reading
+     * this whole change exists to make impossible.
+     */
+    val soleAmount: Double
+        get() {
+            if (isEmpty) return 0.0
+            val currency = requireNotNull(soleCurrency) {
+                "Expected a single-currency figure, got ${amounts.keys}"
+            }
+            return amounts.getValue(currency)
+        }
+
+    /**
      * The sum of two per-currency figures: each currency added to its own, no conversion
      * anywhere.
      *
@@ -65,3 +87,11 @@ class CurrencyBalance private constructor(private val amounts: Map<String, Doubl
             if (amounts.isEmpty()) zero else CurrencyBalance(amounts.toMap())
     }
 }
+
+/**
+ * The total of many per-currency figures — the fold over [CurrencyBalance.plus], so summing
+ * a list of them is still the one implementation the ledger owns rather than a loop each
+ * caller writes.
+ */
+fun Iterable<CurrencyBalance>.sum(): CurrencyBalance =
+    fold(CurrencyBalance.zero) { total, balance -> total + balance }

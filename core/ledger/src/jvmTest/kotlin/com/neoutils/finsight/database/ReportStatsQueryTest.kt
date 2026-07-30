@@ -28,8 +28,17 @@ class ReportStatsQueryTest {
 
     @AfterTest fun tearDown() = database.close()
 
-    private suspend fun stats(scope: List<Long>, start: String, end: String): ScopeStatsTotals =
-        entryDao.scopeStats(scope, LocalDate.parse(start), LocalDate.parse(end))
+    /**
+     * The report figures of one currency. The aggregate is grouped, because a scope may hold
+     * accounts of several — a suite that seeds one reads the same numbers it always did.
+     */
+    private suspend fun stats(
+        scope: List<Long>,
+        start: String,
+        end: String,
+        currency: String = "BRL",
+    ): ScopeStatsTotals = entryDao.scopeStats(scope, LocalDate.parse(start), LocalDate.parse(end))
+        .inCurrency(currency) ?: ScopeStatsTotals(currency, 0, 0, 0, 0)
 
     @Test
     fun `account perspective includes adjustments in the period and the opening balance`() = runTest {
@@ -48,7 +57,7 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ScopeStatsTotals(income = 0, expense = 4_000, balance = -1_500, openingBalance = 7_000),
+            ScopeStatsTotals(currency = "BRL", income = 0, expense = 4_000, balance = -1_500, openingBalance = 7_000),
             stats(listOf(1), start = "2026-03-10", end = "2026-03-31"),
         )
     }
@@ -72,7 +81,7 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ScopeStatsTotals(income = 8_000, expense = 20_000, balance = -11_000, openingBalance = -7_500),
+            ScopeStatsTotals(currency = "BRL", income = 8_000, expense = 20_000, balance = -11_000, openingBalance = -7_500),
             stats(listOf(200), start = "2026-03-01", end = "2026-03-31"),
         )
     }
@@ -114,5 +123,32 @@ class ReportStatsQueryTest {
         assertEquals(10_000L, result.openingBalance)
         assertEquals(4_000L, result.income)
         assertEquals(4_000L, result.balance)
+    }
+
+    @Test
+    fun `a scope holding two currencies reports each on its own, adding neither`() = runTest {
+        // The emptiest scope of all — every account, archived included — is the figure most
+        // likely to cross currencies, and this is the aggregate behind it.
+        with(fixture) {
+            account(1, AccountEntity.Type.ASSET)
+            account(2, AccountEntity.Type.ASSET, currency = "USD")
+            account(100, AccountEntity.Type.INCOME)
+
+            transaction("2026-03-10", 1L posts 10_000, 100L posts -10_000)
+            transaction(
+                "2026-03-11",
+                (2L posts 4_000).denominatedIn("USD"),
+                (100L posts -4_000).denominatedIn("USD"),
+            )
+        }
+
+        val rows = entryDao.scopeStats(listOf(1, 2), LocalDate.parse("2026-03-01"), LocalDate.parse("2026-03-31"))
+
+        assertEquals(2, rows.size)
+        assertEquals(10_000L, rows.inCurrency()?.income)
+        assertEquals(4_000L, rows.inCurrency("USD")?.income)
+        // And no row holds the two together: reducing 100 reais and 40 dollars to one number
+        // needs a rate, which this read neither has nor may ask for.
+        assertEquals(setOf("BRL", "USD"), rows.map { it.currency }.toSet())
     }
 }

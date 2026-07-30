@@ -3,8 +3,10 @@
 package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.repository.AccountBalance
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.DimensionFlows
@@ -40,18 +42,35 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
                 transaction.entries.filter { it.account.type == type }.map { transaction to it }
             }
 
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double =
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): CurrencyBalance =
         transactions.filter { it.date.yearMonth <= target }
             .flatMap { it.entries }
             .filter { it.account.type == type }
-            .sumOf { it.amount } / 100.0
+            .perCurrency { it.amount }
 
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double =
-        if (accountId == null) naturalBalanceUpTo(target, AccountType.ASSET)
-        else transactions.filter { it.date.yearMonth <= target }
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long): AccountBalance {
+        val legs = transactions.filter { it.date.yearMonth <= target }
             .flatMap { it.entries }
             .filter { it.account.id == accountId }
-            .sumOf { it.amount } / 100.0
+        // One account, one currency: the fake reads it off the account, as the query does.
+        return AccountBalance(
+            currency = legs.firstOrNull()?.account?.currency ?: "BRL",
+            amount = legs.sumOf { it.amount } / 100.0,
+        )
+    }
+
+    /** Grouped by currency, because that is the shape every cross-account read has. */
+    private fun List<Entry>.perCurrency(cents: (Entry) -> Long): CurrencyBalance = CurrencyBalance.of(
+        groupBy { it.currency }.mapValues { (_, legs) -> legs.sumOf(cents) / 100.0 }
+    )
+
+    /** The same, for legs still paired with the transaction that classifies them. */
+    private fun List<Pair<Transaction, Entry>>.perCurrency(
+        cents: (Transaction, Entry) -> Long,
+    ): CurrencyBalance = CurrencyBalance.of(
+        groupBy { (_, entry) -> entry.currency }
+            .mapValues { (_, rows) -> rows.sumOf { (transaction, entry) -> cents(transaction, entry) } / 100.0 }
+    )
 
     /**
      * Only transactions with a nominal or equity counter-leg count — which is exactly
@@ -59,36 +78,24 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
      * the user's own accounts.
      */
     override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
-        var income = 0L
-        var expense = 0L
-        var adjustment = 0L
+        val legs = legsOf(AccountType.ASSET, month)
+            .filter { (transaction, _) -> transaction.hasEquityLeg() || transaction.hasNominalLeg() }
 
-        legsOf(AccountType.ASSET, month).forEach { (transaction, entry) ->
-            if (!transaction.hasEquityLeg() && !transaction.hasNominalLeg()) return@forEach
-            when {
-                transaction.hasEquityLeg() -> adjustment += entry.amount
-                entry.amount > 0 -> income += entry.amount
-                entry.amount < 0 -> expense += -entry.amount
-            }
-        }
-
-        return AssetMonthFlows(income / 100.0, expense / 100.0, adjustment / 100.0)
+        return AssetMonthFlows(
+            income = legs.perCurrency { t, e -> if (!t.hasEquityLeg() && e.amount > 0) e.amount else 0L },
+            expense = legs.perCurrency { t, e -> if (!t.hasEquityLeg() && e.amount < 0) -e.amount else 0L },
+            adjustment = legs.perCurrency { t, e -> if (t.hasEquityLeg()) e.amount else 0L },
+        )
     }
 
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
-        var expense = 0L
-        var payment = 0L
-        var adjustment = 0L
+        val legs = legsOf(AccountType.LIABILITY, month)
 
-        legsOf(AccountType.LIABILITY, month).forEach { (transaction, entry) ->
-            when {
-                transaction.hasEquityLeg() -> adjustment += entry.amount
-                entry.amount < 0 -> expense += -entry.amount
-                entry.amount > 0 -> payment += entry.amount
-            }
-        }
-
-        return LiabilityMonthFlows(expense / 100.0, payment / 100.0, adjustment / 100.0)
+        return LiabilityMonthFlows(
+            expense = legs.perCurrency { t, e -> if (!t.hasEquityLeg() && e.amount < 0) -e.amount else 0L },
+            payment = legs.perCurrency { t, e -> if (!t.hasEquityLeg() && e.amount > 0) e.amount else 0L },
+            adjustment = legs.perCurrency { t, e -> if (t.hasEquityLeg()) e.amount else 0L },
+        )
     }
 
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
@@ -96,14 +103,14 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): AccountBalance = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): CurrencyBalance =
+        throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionOwed(dimensionId: Long): CurrencyBalance = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
+    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, CurrencyBalance> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, CurrencyBalance> = throw NotImplementedError()
     override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
 }

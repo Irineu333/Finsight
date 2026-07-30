@@ -100,11 +100,11 @@ class AccountsViewModel(
                 // The card only renders: the sign of each line is the effect of that
                 // figure on the account's balance, and it is decided here, once.
                 openingBalance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id).amount,
                     denomination,
                 ),
                 balance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month, accountId = account.id),
+                    entryRepository.balanceUpTo(target = month, accountId = account.id).amount,
                     denomination,
                 ),
                 income = DisplayAmount.forcedPositive(flows.income, denomination),

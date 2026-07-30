@@ -1,43 +1,46 @@
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.repository.IInstallmentRepository
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
-import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
  * The fakes the invoice-transactions tests share. They answer just enough for the
@@ -110,27 +113,13 @@ internal class FakeCategoryRepository : ICategoryRepository {
 internal class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
     private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
-) : IEntryRepository {
-    override suspend fun dimensionOwed(dimensionId: Long): Double = owedByInvoiceId[dimensionId] ?: 0.0
+) : StubEntryRepository() {
+    override suspend fun dimensionOwed(dimensionId: Long) = brl(owedByInvoiceId[dimensionId] ?: 0.0)
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
-        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(brl(0.0), brl(0.0), brl(0.0))
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }
 
 /** No installment badge is under test here; the list only needs the read to answer. */

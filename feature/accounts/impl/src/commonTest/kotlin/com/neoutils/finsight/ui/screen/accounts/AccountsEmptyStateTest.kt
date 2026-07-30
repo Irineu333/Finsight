@@ -7,11 +7,13 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.ContraLeg
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
+import com.neoutils.finsight.domain.repository.AccountBalance
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.DimensionFlows
@@ -23,8 +25,18 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
+import com.neoutils.finsight.test.brlBalance
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.screen.accounts.AccountsUiState.ListState
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,13 +49,6 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
  * The two emptinesses of the accounts list, and the one way out of the second.
@@ -225,38 +230,29 @@ private object NoInstallments : IInstallmentRepository {
 }
 
 /** No figure is under test here; the card at the top only needs the reads to answer. */
-private object FlatEntryRepository : IEntryRepository {
+private object FlatEntryRepository : StubEntryRepository() {
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = emptyList()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = flowOf(emptyList())
-    override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = 0.0
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double = 0.0
-    override suspend fun balance(accountId: Long): Double = 0.0
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long) = brlBalance(0.0)
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType) = CurrencyBalance.zero
+    override suspend fun balance(accountId: Long) = brlBalance(0.0)
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows(0.0, 0.0, 0.0, 0.0)
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long) = CurrencyBalance.zero
+    override suspend fun accountFlows(month: YearMonth, accountId: Long) =
+        AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
-    override suspend fun dimensionOwed(dimensionId: Long): Double = 0.0
-    override suspend fun dimensionFlows(dimensionId: Long) = DimensionFlows(0.0, 0.0, 0.0)
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = 0.0
+    override suspend fun dimensionOwed(dimensionId: Long) = CurrencyBalance.zero
+    override suspend fun dimensionFlows(dimensionId: Long) = DimensionFlows()
     override suspend fun totalsByDimension(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = emptyMap()
+    ): Map<Long?, CurrencyBalance> = emptyMap()
 
     override suspend fun totalsByDimensionInScope(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = emptyMap()
-
-    override suspend fun scopeStats(
-        scopeAccountIds: List<Long>,
-        startDate: LocalDate,
-        endDate: LocalDate,
-    ): ScopeStats = throw NotImplementedError()
+    ): Map<Long?, CurrencyBalance> = emptyMap()
 }

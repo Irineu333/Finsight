@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -99,13 +100,15 @@ class InvoiceTransactionsViewModel(
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }
         val owedByDimension = entryRepository.owedByDimension(invoiceDimensionIds)
         val flowsByDimension = entryRepository.flowsByDimension(invoiceDimensionIds)
+        // Each figure comes back per currency, and each invoice is single-currency by this
+        // facade's guarantee — its dimension only ever lands on its own card's account — so
+        // the reduction happens here, one invoice at a time, never over the set of them.
         val owedByInvoiceId = mutableMapOf<Long, Double>()
-        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
+        val flowsByInvoiceId = mutableMapOf<Long, DimensionFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
-            owedByInvoiceId[inv.id] = owedByDimension[dimensionId] ?: 0.0
-            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
-                ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
+            owedByInvoiceId[inv.id] = owedByDimension[dimensionId]?.soleAmount ?: 0.0
+            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId] ?: DimensionFlows()
         }
 
         val invoice = invoices.getOrNull(index)
@@ -157,9 +160,9 @@ class InvoiceTransactionsViewModel(
                 // Every figure of an invoice is denominated by the card it belongs to.
                 val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
                 val flows = flowsByInvoiceId.getValue(invoice.id)
-                val expense = flows.expense
-                val advancePayment = flows.advancePayment
-                val adjustment = flows.adjustment
+                val expense = flows.expense.soleAmount
+                val advancePayment = flows.advancePayment.soleAmount
+                val adjustment = flows.adjustment.soleAmount
 
                 val nextDateLabel = when (invoice.status) {
                     Invoice.Status.OPEN -> UiText.ResWithArgs(

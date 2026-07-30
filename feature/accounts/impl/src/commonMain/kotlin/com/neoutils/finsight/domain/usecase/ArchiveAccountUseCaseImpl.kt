@@ -34,7 +34,7 @@ class ArchiveAccountUseCaseImpl(
         // period total, not money sitting anywhere, and real accounting zeroes it
         // only at period close — which this app never performs. Requiring zero there
         // would make archiving a used category impossible.
-        if (account.type.isPermanent && entryRepository.balance(account.id) != 0.0) {
+        if (account.type.isPermanent && entryRepository.balance(account.id).amount != 0.0) {
             return AccountException(AccountError.HAS_BALANCE).left()
         }
 

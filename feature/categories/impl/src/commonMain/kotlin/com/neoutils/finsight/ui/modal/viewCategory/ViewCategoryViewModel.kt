@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.CategoryRetirability
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -58,7 +59,10 @@ class ViewCategoryViewModel(
         // ledger. The natural balance is debit-positive; the ledger's own display
         // convention turns it into the positive figure a category reads as.
         val displaySign = category.type.accountType.displaySign
-        val totalAmount = entryRepository.dimensionBalanceInMonth(yearMonth, category.dimensionId) * displaySign
+        // Per currency, because a category's entries are not bound to one account; reduced
+        // here to the single currency the app has, until consolidation denominates it (8.2).
+        val totalAmount = entryRepository
+            .dimensionBalanceInMonth(yearMonth, category.dimensionId)[ASSUMED_SINGLE_CURRENCY] * displaySign
         val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
         // Whether deleting is refused (so the screen offers archiving instead) is one
         // rule with a single owner — the same one DeleteCategoryUseCase consumes.

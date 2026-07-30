@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.sum
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -113,10 +114,21 @@ class ReportViewerViewModel(
                 // The invoice lines follow the same rule as the account lines of this
                 // very report: spending subtracts, an advance payment adds, and only the
                 // adjustment needs its direction spelled out.
-                expense = DisplayAmount.forcedNegative(flows.sumOf { it.expense }, denomination),
-                advancePayment = DisplayAmount.forcedPositive(flows.sumOf { it.advancePayment }, denomination),
-                adjustment = DisplayAmount.explicitSign(flows.sumOf { it.adjustment }, denomination),
-                total = DisplayAmount.natural(owed.sum(), denomination),
+                // Each figure aggregates every invoice in the report, so it spans cards and
+                // its currency is not any one card's.
+                expense = DisplayAmount.forcedNegative(
+                    flows.map { it.expense }.sum()[ASSUMED_SINGLE_CURRENCY],
+                    denomination,
+                ),
+                advancePayment = DisplayAmount.forcedPositive(
+                    flows.map { it.advancePayment }.sum()[ASSUMED_SINGLE_CURRENCY],
+                    denomination,
+                ),
+                adjustment = DisplayAmount.explicitSign(
+                    flows.map { it.adjustment }.sum()[ASSUMED_SINGLE_CURRENCY],
+                    denomination,
+                ),
+                total = DisplayAmount.natural(owed.sum()[ASSUMED_SINGLE_CURRENCY], denomination),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(
@@ -128,10 +140,13 @@ class ReportViewerViewModel(
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                openingBalance = DisplayAmount.natural(scopeStats.openingBalance, denomination),
-                income = DisplayAmount.forcedPositive(scopeStats.income, denomination),
-                expense = DisplayAmount.forcedNegative(scopeStats.expense, denomination),
-                balance = DisplayAmount.natural(scopeStats.balance, denomination),
+                openingBalance = DisplayAmount.natural(
+                    scopeStats.openingBalance[ASSUMED_SINGLE_CURRENCY],
+                    denomination,
+                ),
+                income = DisplayAmount.forcedPositive(scopeStats.income[ASSUMED_SINGLE_CURRENCY], denomination),
+                expense = DisplayAmount.forcedNegative(scopeStats.expense[ASSUMED_SINGLE_CURRENCY], denomination),
+                balance = DisplayAmount.natural(scopeStats.balance[ASSUMED_SINGLE_CURRENCY], denomination),
             )
         }
 

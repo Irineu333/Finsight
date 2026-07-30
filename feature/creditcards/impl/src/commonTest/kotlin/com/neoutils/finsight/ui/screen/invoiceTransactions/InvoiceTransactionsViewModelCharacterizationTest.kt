@@ -3,45 +3,46 @@
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
 import app.cash.turbine.test
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.repository.IInstallmentRepository
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
-import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
+import com.neoutils.finsight.test.brl
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
-import kotlin.test.assertEquals
 
 /**
  * Characterizes the per-invoice sums of [InvoiceTransactionsViewModel] (sites
@@ -99,7 +100,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             entryRepository = FakeEntryRepository(
                 owedByInvoiceId = mapOf(1L to 70.0),
                 flowsByInvoiceId = mapOf(
-                    1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
+                    1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = brl(100.0), advancePayment = brl(30.0), adjustment = brl(10.0)),
                 ),
             ),
             recurringRepository = NoRecurring,

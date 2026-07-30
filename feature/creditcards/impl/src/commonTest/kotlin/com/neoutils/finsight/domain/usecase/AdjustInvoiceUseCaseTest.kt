@@ -2,26 +2,28 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
+import kotlin.math.roundToLong
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.math.roundToLong
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
  * Characterizes [AdjustInvoiceUseCase] over the ledger, the mirror image of
@@ -202,34 +204,11 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
 }
 
-class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryRepository {
-    override suspend fun dimensionOwed(dimensionId: Long): Double = ledger.dimensionOwed(dimensionId)
+internal class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : StubEntryRepository() {
+    override suspend fun dimensionOwed(dimensionId: Long) = brl(ledger.dimensionOwed(dimensionId))
 
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(
-        nominalType: AccountType,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
 
-    override suspend fun totalsByDimensionInScope(
-        nominalType: AccountType,
-        scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }

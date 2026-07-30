@@ -4,32 +4,37 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.feature.shell.api.NavCatalog
-import com.neoutils.finsight.feature.shell.api.NavDestination
-import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
-import com.neoutils.finsight.ui.model.InvoiceUi
+import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.AssetMonthFlows
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
-import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.feature.shell.api.NavCatalog
+import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
+import com.neoutils.finsight.test.brlBalance
+import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.model.InvoiceUi
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
  * Characterizes the dashboard's own per-account balance (DashboardComponentsBuilder
@@ -196,32 +201,19 @@ class DashboardAccountsOverviewTest {
     }
 }
 
-private object ThrowingEntryRepository : IEntryRepository {
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+private object ThrowingEntryRepository : StubEntryRepository() {
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
     // 100 − 30 = 70, account 2 = 50 − 20 = 30 — the figures the screen showed before.
-    override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
+    override suspend fun balance(accountId: Long) = brlBalance(mapOf(1L to 70.0, 2L to 30.0).getValue(accountId))
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
     override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
-        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0, adjustment = 0.0)
+        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = brl(60.0), payment = brl(25.0), adjustment = brl(0.0))
     // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
     // March holds income 100, expense 30; other months are empty.
     override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =
-        if (month == YearMonth(2026, 3)) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 100.0, expense = 30.0, adjustment = 0.0)
-        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0)
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+        if (month == YearMonth(2026, 3)) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = brl(100.0), expense = brl(30.0), adjustment = brl(0.0))
+        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = brl(0.0), expense = brl(0.0), adjustment = brl(0.0))
 }

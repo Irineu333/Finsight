@@ -2,6 +2,8 @@ package com.neoutils.finsight.database
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neoutils.finsight.database.dao.CurrencyGrouped
+import com.neoutils.finsight.database.dao.CurrencyTotal
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.database.entity.EntryEntity
@@ -47,6 +49,28 @@ internal infix fun Long.posts(cents: Long) = Leg(accountId = this, cents = cents
 internal fun Leg.taggedWith(dimensionId: Long) = copy(dimensionId = dimensionId)
 
 internal fun Leg.denominatedIn(currency: String) = copy(currency = currency)
+
+/**
+ * The cents one currency holds in a grouped result. Every aggregate able to span accounts
+ * comes back per currency, so a suite reads the currency it seeded — and a suite that seeded
+ * one currency reads the same number it always did.
+ *
+ * Absence reads zero, by the same rule the SQL `COALESCE` follows: a currency with no entry
+ * in this aggregate has no group, and no group is no money.
+ */
+internal fun List<CurrencyGrouped>.cents(currency: String = "BRL"): Long =
+    when (val row = firstOrNull { it.currency == currency }) {
+        null -> 0L
+        is CurrencyTotal -> row.total
+        else -> error("${row::class.simpleName} has no single total; read its own column")
+    }
+
+/** The single-account reading: no row at all means the account is not in the chart. */
+internal fun CurrencyTotal?.cents(): Long = this?.total ?: 0L
+
+/** The row denominated in [currency], for the aggregates whose group has several columns. */
+internal fun <T : CurrencyGrouped> List<T>.inCurrency(currency: String = "BRL"): T? =
+    firstOrNull { it.currency == currency }
 
 internal class LedgerFixture(val database: LedgerDatabase) {
 

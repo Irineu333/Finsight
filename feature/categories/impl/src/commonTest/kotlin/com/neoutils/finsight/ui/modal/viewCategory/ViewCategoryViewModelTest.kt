@@ -7,9 +7,9 @@ import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
@@ -18,22 +18,11 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
-import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.test.StubEntryRepository
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.YearMonth
-import kotlin.time.Clock
+import com.neoutils.finsight.ui.model.RetireAction
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -41,6 +30,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 
 class ViewCategoryViewModelTest {
 
@@ -87,36 +89,14 @@ class ViewCategoryViewModelTest {
     private class FakeEntryRepository(
         var balances: Map<Long, Double> = emptyMap(),
         var counts: Map<Long, Int> = emptyMap(),
-    ) : IEntryRepository {
+    ) : StubEntryRepository() {
         /** Stands in for Room's invalidation: emit after moving the ledger. */
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = balances[dimensionId] ?: 0.0
-        override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long) = brl(balances[dimensionId] ?: 0.0)
         override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = counts[dimensionId] ?: 0
-        override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-        override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun totalsByDimension(
-            nominalType: AccountType,
-            startDate: LocalDate,
-            endDate: LocalDate,
-            siblingAccountIds: List<Long>,
-        ): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun totalsByDimensionInScope(
-            nominalType: AccountType,
-            scopeDimensionIds: List<Long>,
-        ): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
     }
 
     private fun category(

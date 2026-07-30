@@ -12,8 +12,14 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.test.brl
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,11 +28,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
 /**
  * This screen shows one card, so it reads a transaction through the card's own leg.
@@ -90,7 +91,7 @@ class InvoiceTransactionsPerspectiveTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = mapOf(1L to 0.0),
-            flowsByInvoiceId = mapOf(1L to DimensionFlows(0.0, 0.0, 0.0)),
+            flowsByInvoiceId = mapOf(1L to DimensionFlows(brl(0.0), brl(0.0), brl(0.0))),
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),

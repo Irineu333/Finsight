@@ -4,19 +4,20 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import kotlinx.coroutines.test.runTest
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 
 /**
  * Characterizes the `spent` figure of [CalculateBudgetProgressUseCase]: Σ entries
@@ -122,16 +123,17 @@ private class MonthBalances(
     private val month: YearMonth,
     private val balances: Map<Long, Double>,
 ) : IEntryRepository {
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
-        if (month == this.month) balances[dimensionId] ?: 0.0 else 0.0
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): CurrencyBalance =
+        CurrencyBalance.of("BRL", if (month == this.month) balances[dimensionId] ?: 0.0 else 0.0)
 
     // Nothing else is this use case's business; reaching any of it is the test
     // telling us the use case grew a dependency it did not declare.
     override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeLedgerChanges() = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?) = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long) = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): CurrencyBalance =
+        throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
@@ -141,7 +143,6 @@ private class MonthBalances(
     override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
     override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth() = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,
         startDate: LocalDate,

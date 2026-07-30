@@ -53,7 +53,7 @@ class EditAccountBalanceViewModel(
             calculateBalanceUseCase(
                 target = targetMonth,
                 accountId = it.id
-            )
+            ).amount
         }
     }
 

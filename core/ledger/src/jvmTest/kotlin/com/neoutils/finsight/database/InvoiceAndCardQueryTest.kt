@@ -49,7 +49,14 @@ class InvoiceAndCardQueryTest {
         seed()
 
         assertEquals(
-            DimensionPeriodTotals(expense = 10_000, advancePayment = 3_000, adjustment = 1_000),
+            listOf(
+                DimensionPeriodTotals(
+                    currency = "BRL",
+                    expense = 10_000,
+                    advancePayment = 3_000,
+                    adjustment = 1_000,
+                )
+            ),
             entryDao.dimensionPeriodTotals(dimensionId = 1),
         )
     }
@@ -61,7 +68,7 @@ class InvoiceAndCardQueryTest {
         // The adjustment has a class of its own — signed, in the ledger's natural sign —
         // instead of falling silently outside both expense and payment.
         assertEquals(
-            LiabilityMonthTotals(expense = 10_000, payment = 3_000, adjustment = 1_000),
+            listOf(LiabilityMonthTotals(currency = "BRL", expense = 10_000, payment = 3_000, adjustment = 1_000)),
             entryDao.liabilityMonthTotals("2026-03"),
         )
     }
@@ -71,7 +78,7 @@ class InvoiceAndCardQueryTest {
         seed()
 
         // -6000 -4000 +3000 +1000 -9900 = -15900 owed, across both invoices.
-        assertEquals(-15_900L, entryDao.balanceOf(accountId = 2))
+        assertEquals(-15_900L, entryDao.balanceOf(accountId = 2).cents())
     }
 
     @Test
@@ -79,6 +86,58 @@ class InvoiceAndCardQueryTest {
         seed()
 
         // Bank(-3000) + Card(-15900); the expense and equity legs are not money.
-        assertEquals(-18_900L, entryDao.netWorthCents())
+        assertEquals(-18_900L, entryDao.netWorthCents().cents())
+    }
+
+    @Test
+    fun `net worth keeps a foreign card apart from the home ones`() = runTest {
+        seed().apply {
+            account(3, AccountEntity.Type.LIABILITY, "Dollar card", currency = "USD")
+            dimension(3, DimensionKind.INVOICE)
+            transaction(
+                "2026-03-20",
+                (3L posts -5_000).taggedWith(3).denominatedIn("USD"),
+                (10L posts 5_000).taggedWith(10).denominatedIn("USD"),
+            )
+        }
+
+        val netWorth = entryDao.netWorthCents()
+
+        // Two figures, and the app's net worth is not one of them yet: reconciling them is
+        // consolidation, and it does not happen in the ledger.
+        assertEquals(2, netWorth.size)
+        assertEquals(-18_900L, netWorth.cents())
+        assertEquals(-5_000L, netWorth.cents("USD"))
+    }
+
+    @Test
+    fun `a card invoice paid across currencies still owes in the card's currency only`() = runTest {
+        // The payment leaves a real account, the card leg lands in the card's currency, and
+        // the exchange residue carries no dimension — which is what keeps the sub-ledger
+        // single-currency and lets the card facade reduce its own figure.
+        seed().apply {
+            account(3, AccountEntity.Type.LIABILITY, "Dollar card", currency = "USD")
+            account(40, AccountEntity.Type.CONVERSION, "Câmbio BRL", currency = "BRL")
+            account(41, AccountEntity.Type.CONVERSION, "Câmbio USD", currency = "USD")
+            dimension(3, DimensionKind.INVOICE)
+            transaction(
+                "2026-03-21",
+                (3L posts -5_000).taggedWith(3).denominatedIn("USD"),
+                (10L posts 5_000).taggedWith(10).denominatedIn("USD"),
+            )
+            // Paying 50 USD with 275 BRL: two currencies, each balanced by its conversion leg.
+            transaction(
+                "2026-03-22",
+                (3L posts 5_000).taggedWith(3).denominatedIn("USD"),
+                (41L posts -5_000).denominatedIn("USD"),
+                1L posts -27_500,
+                40L posts 27_500,
+            )
+        }
+
+        val owed = entryDao.dimensionNaturalBalance(dimensionId = 3)
+
+        assertEquals(1, owed.size, "the invoice's own dimension never leaves the card's currency")
+        assertEquals(0L, owed.cents("USD"))
     }
 }

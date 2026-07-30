@@ -17,11 +17,20 @@
 >
 > §1 é varredura preparatória e inerte, e produz o **inventário** que os grupos 6–8 consomem.
 > §4 e §5 não dependem de §2 nem de §3 e podem correr em paralelo.
+>
+> **O inventário de 1.2 mora em [`inventory-assumed-single-currency.md`](./inventory-assumed-single-currency.md),
+> ao lado deste arquivo.** Ele lista, agrupado por tarefa que o fecha, todo sítio que teve de
+> informar uma moeda que não era derivável ali — e diz que a lista é **derivada**, não mantida à
+> mão: cada sítio usa a constante marcadora `ASSUMED_SINGLE_CURRENCY` (`:core:model`), então
+> `grep -rn ASSUMED_SINGLE_CURRENCY` a reproduz. Quem retomar a change em qualquer ponto dos
+> grupos 3–9 deve ler esse arquivo antes: é o backlog de superfície, e o critério de pronto de
+> 8.10 é apagar a constante e compilar. Ele deixa de ter uso quando isso acontecer, e 10.6 o
+> remove.
 
 ## 1. Varreduras preparatórias (comportamento idêntico, nada de semântica)
 
 - [x] 1.1 (D10) `DisplayAmount` passa a carregar `currency` **obrigatório** e a exatidão, sem default em nenhum dos 7 construtores nomeados — a spec proíbe expor um sem os outros. Atualizar os sítios de construção; onde o sítio já tem a `Account`, passar `account.currency`; onde agrega entre contas, passar **explicitamente** a moeda única que o app tem neste ponto do plano — que em 6.6 passa a ser a moeda base. Reescrever o KDoc que hoje declara que o tipo não conhece moeda, com a distinção da spec: carregar a denominação não é calcular.
-- [x] 1.2 Registrar, como saída de 1.1, a **lista dos sítios que tiveram de passar a moeda explicitamente** por agregarem entre contas. Essa lista é o backlog verificável dos grupos 6–8, e 8.6 a fecha vazia. Sem ela a varredura de superfície não tem critério de pronto.
+- [x] 1.2 Registrar, como saída de 1.1, a **lista dos sítios que tiveram de passar a moeda explicitamente** por agregarem entre contas. Essa lista é o backlog verificável dos grupos 6–8, e 8.6 a fecha vazia. Sem ela a varredura de superfície não tem critério de pronto. **Registrada em `inventory-assumed-single-currency.md`**, nesta mesma pasta, com a constante marcadora `ASSUMED_SINGLE_CURRENCY` (`:core:model`) tornando-a greppável em vez de mantida à mão.
 - [x] 1.3 `CurrencyFormatter.format`/`formatWithSign` passam a receber a moeda nos três `actual` (jvm, android, ios); o locale governa apenas separador e posição do símbolo. Decidir aqui — e registrar no KDoc — se a moeda entra pelo método ou muda o binding `single { CurrencyFormatter() }` em `CommonModule`. **A decisão precede a varredura de 8.x**; tomá-la no meio dela é retrabalho contratado. Verificável: não sobrevive sobrecarga que formate sem moeda.
 - [x] 1.4 `CurrencyFormatter.format(DisplayAmount)`: o `≈` como prefixo **mais externo** que o sinal (`≈ +R$ 1.240,00`), pela mesma porta que já concatena `+`/`-`. Este ponto único conserta a maioria dos sítios de formatação sem tocá-los. Inerte enquanto nada for aproximado. Cobrir em `DisplayAmountTest`.
 - [x] 1.5 `LedgerFixture` (`core/ledger/jvmTest`) ganha parâmetro de moeda em conta e em entry, com default `"BRL"` para que as 6 suítes construídas sobre ela compilem sem alterar asserção. É `internal` ao `core/ledger/jvmTest`, então serve às suítes de query (3.8) e **não** ao `LedgerEntryWriterTest`, que mora em `feature/transactions/impl/commonTest` e precisa dos seus próprios doubles (2.8).
@@ -119,7 +128,7 @@
 - [ ] 8.7 Teste do `BudgetFormModal` nos dois perfis: uma moeda cadastrada → **nenhum controle**, limite na moeda da conta padrão; duas moedas → controle presente, pré-selecionado na conta padrão mesmo quando ela difere da base.
 - [ ] 8.8 Teste do progresso no perfil que motiva a regra: todas as contas em moeda diferente da base, limite na moeda das contas, gasto inteiramente nela → **progresso exato, sem marca**. E o perfil oposto: contas em duas moedas, gasto em ambas → progresso aproximado, com marca.
 - [ ] 8.9 Verificar que os cenários de `dashboard-balance-widgets` e `transaction-scope` estão cobertos por teste, inclusive o do pagamento de fatura cruzado permanecendo interno ao perímetro neutro.
-- [ ] 8.10 **Fechar a lista de 1.2**: nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. É o critério de pronto da varredura de superfície.
+- [ ] 8.10 **Fechar a lista de 1.2** (`inventory-assumed-single-currency.md`): nenhum sítio de produção passa a moeda base por não saber qual é a moeda da figura. O critério de pronto é mecânico e não uma auditoria — **apagar `ASSUMED_SINGLE_CURRENCY` de `:core:model` e compilar**: se compila, a lista está vazia. É por isso que a constante existe em vez de só um documento, e é o que impede que o provisório sobreviva.
 
 ## 9. Os fluxos de dois valores e a porta
 
@@ -144,3 +153,4 @@
 - [ ] 10.3 Atualizar `core/ledger/README.md` — referência normativa do módulo — com a conta de conversão, a moeda da perna vinda da conta e as leituras por moeda.
 - [ ] 10.4 Atualizar `CLAUDE.md`: o conjunto de tipos de conta deixa de ser de cinco membros e as contas de sistema deixam de ser "apenas três".
 - [ ] 10.5 Revisar os Non-Goals e confirmar que nenhum foi implementado por acidente: edição de transação cruzada, taxa entre duas moedas não-base, troca de moeda base, ganho cambial em tela, moeda de expoente ≠ 2.
+- [ ] 10.6 **Apagar `inventory-assumed-single-currency.md`** e a referência a ele no cabeçalho deste arquivo. Ele é andaime da implementação, não documento da change: existe para dar backlog aos grupos 3–9 enquanto a moeda de uma figura ainda não é conhecível em todo sítio, e 8.10 já provou — apagando a constante — que não sobrou nenhum. Mantê-lo depois disso descreveria um estado que o código não tem mais.

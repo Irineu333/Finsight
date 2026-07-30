@@ -108,6 +108,7 @@ class ViewBudgetViewModelTest {
         categories = emptyList(),
         iconKey = "shopping",
         amount = amount,
+        currency = "BRL",
         createdAt = 0L,
     )
 

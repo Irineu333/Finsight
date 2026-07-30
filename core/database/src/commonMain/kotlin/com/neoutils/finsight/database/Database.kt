@@ -608,8 +608,64 @@ val MIGRATION_7_10 = object : Migration(7, 10) {
     }
 }
 
+/**
+ * Schema 11: the rate archive, and a budget limit that says what it is denominated in.
+ *
+ * **No stored value changes.** Every existing database is entirely in `'BRL'` — not
+ * because anybody chose it, but because it was the model's default — so the currency
+ * the new column receives is exactly the one that already denominated each stored
+ * limit. The fill is *exact*, not approximate.
+ *
+ * @param relabelCurrency the currency the legacy chart of accounts should be
+ * re-denominated to, already resolved and validated outside this module — `core/database`
+ * receives a currency code and knows nothing of locales or catalogues. `null` means "do
+ * not relabel", which is the common case. **The parameter exists here, unused, on
+ * purpose:** task 9.2 gives it its effect, and declaring it now is what keeps that task
+ * from having to reopen the `getRoomDatabase` seam. Nothing passes a non-null value yet.
+ */
+fun migration1011(
+    @Suppress("UNUSED_PARAMETER") relabelCurrency: String? = null,
+) = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        // --- 1. The rate archive. A surrogate key with a unique triple, so that a
+        //        user's correction and the rate an operation observed can coexist on
+        //        the same (currency, date) — which is what makes precedence mean
+        //        something instead of destroying the other row. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `exchange_rates` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`currency` TEXT NOT NULL, " +
+                "`date` TEXT NOT NULL, " +
+                "`rate` REAL NOT NULL, " +
+                "`source` TEXT NOT NULL)"
+        )
+        connection.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_exchange_rates_currency_date_source` " +
+                "ON `exchange_rates` (`currency`, `date`, `source`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_exchange_rates_currency_date` " +
+                "ON `exchange_rates` (`currency`, `date`)"
+        )
+
+        // --- 2. A budget limit becomes denominated. `'BRL'` is not a guess: it is what
+        //        every existing limit was already denominated in. The SQL default is
+        //        only how SQLite accepts a NOT NULL column on an existing table — the
+        //        entity declares none, exactly as `budgets.limitType` already does. ---
+        connection.execSQL(
+            "ALTER TABLE `budgets` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'BRL'"
+        )
+
+        // --- 3. Verification, the same three guards `v7 → v10` closes with. ---
+        connection.verifyLedgerBalanced(stage = "v10 → v11")
+        connection.verifyNoOrphanDimensions(stage = "v10 → v11")
+        connection.verifyForeignKeys(stage = "v10 → v11")
+    }
+}
+
 fun getRoomDatabase(
-    builder: RoomDatabase.Builder<AppDatabase>
+    builder: RoomDatabase.Builder<AppDatabase>,
+    relabelCurrency: String? = null,
 ): AppDatabase {
     return builder
         .addMigrations(
@@ -620,6 +676,7 @@ fun getRoomDatabase(
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_10,
+            migration1011(relabelCurrency),
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)

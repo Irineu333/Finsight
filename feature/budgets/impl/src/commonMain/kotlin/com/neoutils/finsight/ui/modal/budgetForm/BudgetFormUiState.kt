@@ -13,6 +13,17 @@ data class BudgetFormUiState(
     val selectedIcon: AppIcon = AppIcon.BUDGET,
     val title: String = "",
     val amount: String = "",
+    /**
+     * What [amount] will be denominated in: the currency of the budget being edited, or
+     * of the default account when creating one — where the user actually spends, and
+     * never the base currency, which only says where he reads totals (design D13).
+     *
+     * `null` only while it is still being resolved, and [canSubmit] refuses until it is:
+     * a limit with an invented denomination is the failure this field exists to prevent.
+     * The control that lets a multi-currency user choose it comes later (task 12.5); a
+     * user with one currency never sees one, because there is nothing to choose.
+     */
+    val currency: String? = null,
     val validation: Map<BudgetField, Validation> = mapOf(),
     val isEditMode: Boolean = false,
     val limitType: LimitType = LimitType.FIXED,
@@ -22,6 +33,7 @@ data class BudgetFormUiState(
 ) {
     val canSubmit: Boolean
         get() = validation[BudgetField.TITLE] == Validation.Valid &&
+            currency != null &&
             selectedCategories.isNotEmpty() &&
             when (limitType) {
                 LimitType.FIXED -> amount.moneyToDouble() > 0

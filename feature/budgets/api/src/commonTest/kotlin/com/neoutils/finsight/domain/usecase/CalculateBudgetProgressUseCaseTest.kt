@@ -40,7 +40,8 @@ class CalculateBudgetProgressUseCaseTest {
     private val budget = Budget(
         id = 1, title = "Food & Transport",
         categories = listOf(category(1, dimensionId = 10), category(2, dimensionId = 11)),
-        iconKey = "shopping", amount = 200.0, limitType = LimitType.FIXED, createdAt = 0L,
+        iconKey = "shopping", amount = 200.0, currency = "BRL",
+        limitType = LimitType.FIXED, createdAt = 0L,
     )
 
     @Test

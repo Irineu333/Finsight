@@ -174,7 +174,7 @@ class DashboardAccountsOverviewTest {
         )
         val budget = Budget(
             id = 1, title = "Half the salary", categories = emptyList(), iconKey = "shopping",
-            amount = 0.0, limitType = LimitType.PERCENTAGE, percentage = 50.0,
+            amount = 0.0, currency = "BRL", limitType = LimitType.PERCENTAGE, percentage = 50.0,
             recurringId = salary.id, createdAt = 0L,
         )
 

@@ -47,7 +47,7 @@ class BudgetClosedCategoryTest {
 
     private fun budgetEntity(id: Long) = BudgetEntity(
         id = id, iconCategoryId = 0, iconKey = "shopping", title = "Budget $id",
-        amount = 200.0, period = "MONTHLY", createdAt = 0L,
+        amount = 200.0, currency = "BRL", period = "MONTHLY", createdAt = 0L,
     )
 
     /** Mutable, so an edit round-trip (delete + reinsert links) can be observed. */

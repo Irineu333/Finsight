@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -25,9 +26,12 @@ import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,6 +42,7 @@ class BudgetFormViewModel(
     private val formatter: CurrencyFormatter,
     private val budget: Budget? = null,
     private val budgetRepository: IBudgetRepository,
+    private val accountRepository: IAccountRepository,
     private val categoryRepository: ICategoryRepository,
     private val recurringRepository: IRecurringRepository,
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
@@ -55,6 +60,20 @@ class BudgetFormViewModel(
     private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
     private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
     private val selectedRecurring = MutableStateFlow<Recurring?>(null)
+    /**
+     * What the limit is denominated in. Editing never re-reads it — the denomination of
+     * a stored limit is fixed for the same reason an account's is (design D12/D13), and
+     * reinterpreting it would rewrite in silence the meaning of a number the user typed.
+     * Creating takes it from the **default account**, because that is where the user
+     * actually transacts; the base currency is not the answer, since it only says in
+     * which currency he reads totals.
+     */
+    private val limitCurrency: Flow<String?> = if (budget != null) {
+        flowOf(budget.currency)
+    } else {
+        accountRepository.observeDefaultAccount().map { it?.currency }
+    }
+
     private val validation = ObservableMutableMap(
         map = mutableMapOf(
             if (isEditMode) {
@@ -93,7 +112,8 @@ class BudgetFormViewModel(
         combine(recurringRepository.observeAllRecurring(), formFields, validation) { rec, fields, v ->
             Triple(rec, fields, v)
         },
-    ) { categories, budgets, (allRecurrings, fields, validation) ->
+        limitCurrency,
+    ) { categories, budgets, (allRecurrings, fields, validation), currency ->
         val budgetedCategoryIds = budgets
             .filter { it.id != budget?.id }
             .flatMap { it.categories }
@@ -119,6 +139,7 @@ class BudgetFormViewModel(
             selectedIcon = fields.selectedIcon,
             title = fields.title,
             amount = fields.amount,
+            currency = currency,
             validation = validation,
             isEditMode = isEditMode,
             limitType = fields.limitType,
@@ -137,6 +158,7 @@ class BudgetFormViewModel(
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
             amount = budget?.amount?.let { formatter.format(it) } ?: "",
+            currency = budget?.currency,
             validation = validation,
             isEditMode = isEditMode,
             limitType = budget?.limitType ?: LimitType.FIXED,
@@ -197,6 +219,9 @@ class BudgetFormViewModel(
 
             val state = uiState.value
             if (!state.canSubmit) return@launch
+            // Guaranteed by `canSubmit`; re-read because a limit must never be stored
+            // with a denomination nobody chose.
+            val currency = state.currency ?: return@launch
 
             val resolvedAmount = when (state.limitType) {
                 LimitType.FIXED -> state.amount.moneyToDouble()
@@ -213,6 +238,8 @@ class BudgetFormViewModel(
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
+                        // `currency` is deliberately absent from this copy: the
+                        // denomination of a stored limit never changes.
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
@@ -225,6 +252,7 @@ class BudgetFormViewModel(
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
+                        currency = currency,
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,

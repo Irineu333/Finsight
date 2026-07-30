@@ -19,6 +19,12 @@ data class BudgetEntity(
     val iconKey: String,
     val title: String,
     val amount: Double,
+    // What [amount] is denominated in, chosen once when the budget is created and never
+    // rewritten (design D13). It is not the base currency: the base answers *in which
+    // currency the user reads totals*, not *in which one he spends*, and it can change
+    // — reinterpreting a stored limit would silently rewrite the meaning of a number
+    // the user typed.
+    val currency: String,
     val period: String,
     val limitType: String = "FIXED",
     val percentage: Double? = null,

@@ -192,6 +192,7 @@ class DashboardPreviewFactory(
                                 ),
                                 iconKey = "shopping",
                                 amount = 600.0,
+                                currency = previewCurrency,
                                 createdAt = 0,
                             ),
                             spent = 450.0,

@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.confirmRecurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -87,6 +89,14 @@ class ConfirmRecurringViewModel(
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
     ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards ->
+        // Only what the domain would accept is offered: a template's amount is stated in the
+        // currency of what it names, and posting it elsewhere would restate the number as
+        // another currency (design D17). Making it unofferable is the designed path; the
+        // refusal in the use case is the net (design D26).
+        val currency = recurring.currency
+        val offeredAccounts = accounts.filter { currency == null || it.currency == currency }
+        val offeredCreditCards = creditCards.filter { currency == null || it.currency == currency }
+
         // No fallback to the default account: substituting where the money moves
         // through is not a detail the app gets to decide in silence. With nothing
         // selected the modal keeps Confirm disabled until the user says where.
@@ -94,12 +104,14 @@ class ConfirmRecurringViewModel(
             recurring = recurring,
             confirmDate = date,
             selectedTarget = target,
-            accounts = accounts,
+            accounts = offeredAccounts,
             selectedAccount = account,
-            creditCards = creditCards,
+            creditCards = offeredCreditCards,
             selectedCreditCard = creditCard,
             invoices = invoiceList,
             selectedInvoice = invoice,
+            hiddenByCurrency = offeredAccounts.size < accounts.size ||
+                offeredCreditCards.size < creditCards.size,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -153,7 +165,14 @@ class ConfirmRecurringViewModel(
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
         ).onLeft {
             crashlytics.recordException(it)
-            modalManager.showError(UiText.Res(Res.string.retire_action_error_generic))
+            // A typed refusal says which one it was; anything else stays neutral.
+            modalManager.showError(
+                if (it is RecurringException) {
+                    it.error.toUiText()
+                } else {
+                    UiText.Res(Res.string.retire_action_error_generic)
+                }
+            )
         }.onRight {
             analytics.logEvent(ConfirmRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()

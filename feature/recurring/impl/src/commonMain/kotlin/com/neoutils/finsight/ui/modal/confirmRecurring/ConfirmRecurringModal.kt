@@ -125,6 +125,23 @@ class ConfirmRecurringModal(
                 )
             }
 
+            // A list that quietly got shorter is a lie by omission: it says why, once, above
+            // the selectors it explains — and it is a statement of fact, not a refusal
+            // (design D26).
+            AnimatedVisibility(uiState.hiddenByCurrency) {
+                Text(
+                    text = stringResource(
+                        Res.string.recurring_confirm_currency_filtered,
+                        uiState.currency.orEmpty(),
+                    ),
+                    fontSize = 13.sp,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                )
+            }
+
             AnimatedVisibility(recurring.type.isExpense) {
                 TargetSelector(
                     selectedTarget = uiState.selectedTarget,

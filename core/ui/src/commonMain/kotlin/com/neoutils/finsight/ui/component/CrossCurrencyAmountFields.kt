@@ -60,7 +60,7 @@ fun AmountField(
     OutlinedTextField(
         state = state,
         label = { Text(text = label) },
-        inputTransformation = rememberMoneyInputTransformation(currency),
+        inputTransformation = rememberMoneyInputTransformation(currency, state),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = imeAction,

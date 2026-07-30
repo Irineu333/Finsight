@@ -237,6 +237,41 @@ class Migration10To11Test {
     }
 
     /**
+     * **A budget limit is relabelled with the chart it is measured against.**
+     *
+     * Its denomination was never a choice either — the column was filled with the legacy
+     * code because that is what already denominated it. Left behind, the relabelled user
+     * gets a limit in a currency he holds nothing in, and a progress bar that
+     * consolidates and reads `≈` forever: exactly the cost design D13 keeps off the
+     * single-currency user, arriving through the migration instead of through the form.
+     */
+    @Test
+    fun `a relabelled chart takes the budget limits with it`() {
+        seedBudget(id = 1, title = "Alimentação", amount = 500.0)
+        seedBudget(id = 2, title = "Transporte", amount = 120.55)
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        val stmt = connection.prepare("SELECT `amount`, `currency` FROM `budgets` ORDER BY `id`")
+        var rows = 0
+        while (stmt.step()) {
+            rows++
+            assertEquals("USD", stmt.getText(1), "a limit left in the legacy currency the user no longer holds")
+        }
+        stmt.close()
+        assertEquals(2, rows)
+
+        // Re-denomination, not conversion — here as everywhere else.
+        val amounts = connection.prepare("SELECT `amount` FROM `budgets` ORDER BY `id`")
+        assertTrue(amounts.step())
+        assertEquals(500.0, amounts.getDouble(0))
+        assertTrue(amounts.step())
+        assertEquals(120.55, amounts.getDouble(0))
+        amounts.close()
+    }
+
+    /**
      * The system rows go with the rest. They are lines of the chart like any other, and
      * `Account.currency` has to mean the same thing on every one of them — which is
      * what makes "the currency of an account is immutable" a rule of the chart rather

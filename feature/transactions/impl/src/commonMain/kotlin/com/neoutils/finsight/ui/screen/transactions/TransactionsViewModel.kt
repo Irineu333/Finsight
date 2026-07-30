@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -35,6 +36,7 @@ class TransactionsViewModel(
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -60,7 +62,13 @@ class TransactionsViewModel(
         // data, not a selector for a new transaction (which stays open-only).
         categoryRepository.observeAllCategoriesIncludingClosed(),
         installmentRepository.observeAllInstallments(),
-        combine(selectedYearMonth, selectedScope, ::Pair),
+        // The month, the scope, and the signal that something under a consolidated
+        // figure moved — folded together because this combine is already at five
+        // sources. A rate registered in settings writes no entry, so the ledger's own
+        // trigger would not carry it here.
+        combine(selectedYearMonth, selectedScope, observeConsolidationChanges()) { month, scope, _ ->
+            month to scope
+        },
         filters
     ) { transactions, categories, installments, (yearMonth, scope), filters ->
         // Every figure comes from the ledger, per scope — never summed over the loaded

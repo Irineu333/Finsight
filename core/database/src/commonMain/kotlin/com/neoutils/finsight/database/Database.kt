@@ -707,6 +707,14 @@ fun migration1011(
             }
             connection.execSQL("UPDATE `accounts` SET `currency` = '$relabelCurrency'")
             connection.execSQL("UPDATE `entries` SET `currency` = '$relabelCurrency'")
+            // A budget limit goes with them, for the same reason and by the same
+            // argument. Its denomination was never a choice either — step 2 above filled
+            // it with the legacy code because that is what denominated it — so leaving
+            // it behind would hand the relabelled user a limit in a currency he holds
+            // nothing in, and a progress bar consolidating and marked `≈` forever. That
+            // is precisely the cost design D13 exists to keep off the single-currency
+            // user, arriving through the migration instead of through the form.
+            connection.execSQL("UPDATE `budgets` SET `currency` = '$relabelCurrency'")
         }
 
         // --- 4. Verification, the same three guards `v7 → v10` closes with. ---

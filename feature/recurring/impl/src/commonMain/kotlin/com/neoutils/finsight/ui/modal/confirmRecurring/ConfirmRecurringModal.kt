@@ -212,7 +212,7 @@ class ConfirmRecurringModal(
                 // Nothing selected denominates nothing: the field does not format, and
                 // Confirm is already refused in that state.
                 inputTransformation = uiState.currency?.let {
-                    rememberMoneyInputTransformation(it)
+                    rememberMoneyInputTransformation(it, amount)
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,

@@ -81,6 +81,7 @@ class TransactionsViewModelCharacterizationTest {
             installmentRepository = NoInstallments,
             entryRepository = FakeLedger(transactions),
             consolidateMoney = consolidator(),
+            observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
         )
 
         vm.uiState.test {

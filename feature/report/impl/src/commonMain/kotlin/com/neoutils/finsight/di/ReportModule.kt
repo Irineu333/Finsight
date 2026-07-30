@@ -59,6 +59,7 @@ val reportModule = module {
             calculateReportCategorySpendingUseCase = get(),
             entryRepository = get(),
             consolidateMoney = get(),
+            observeConsolidationChanges = get(),
             renderer = get(),
             analytics = get(),
         )

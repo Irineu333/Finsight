@@ -18,3 +18,25 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+
+# Per-artifact rules
+rules:
+  tasks:
+    - |
+      Registre no `tasks.md` toda correção, ajuste ou implementação **imprevista** — isto
+      é, cuja diretriz de execução não se originou de nenhuma tarefa do próprio `tasks.md`.
+      Vale para o que entrou por build quebrado, revisão, bug encontrado durante a
+      execução, dependência descoberta ou pedido feito fora do plano. Registre **depois do
+      fato**, num grupo próprio ao fim do arquivo (ex.: "Fora do plano"), com uma tarefa já
+      marcada `[x]` por item.
+    - |
+      Cada item imprevisto diz três coisas, nesta ordem: **a origem** (o que obrigou a
+      mexer — o comando que falhou, a revisão, o defeito observado), **o que foi feito** e
+      **como se prova** (o teste ou a verificação). Se contradiz ou completa uma tarefa já
+      marcada pronta, nomeie essa tarefa: uma tarefa marcada `[x]` que não entregou o que
+      dizia é a informação mais valiosa do registro, e some se o conserto for anotado como
+      item novo e independente.
+    - |
+      O registro é do trabalho, não do acerto: não reescreva a tarefa original para fazer
+      parecer que o plano previa. O valor de um grupo "fora do plano" é permitir perguntar
+      por que aquilo não estava previsto.

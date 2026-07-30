@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,6 +171,17 @@ internal fun consolidator(baseCurrency: String = "BRL") = ConsolidateMoneyUseCas
     baseCurrencyRepository = FakeBaseCurrency(baseCurrency),
     exchangeRateRepository = NoExchangeRates,
 )
+
+/**
+ * The composed invalidation trigger over the same fakes — what a view model listens to
+ * so that a rate registered elsewhere reaches a figure that was already on screen.
+ */
+internal fun FakeLedger.consolidationChanges(baseCurrency: String = "BRL") =
+    ObserveConsolidationChangesUseCase(
+        entryRepository = this,
+        baseCurrencyRepository = FakeBaseCurrency(baseCurrency),
+        exchangeRateRepository = NoExchangeRates,
+    )
 
 /**
  * The single term of a summary figure. Every figure here is mono-currency by

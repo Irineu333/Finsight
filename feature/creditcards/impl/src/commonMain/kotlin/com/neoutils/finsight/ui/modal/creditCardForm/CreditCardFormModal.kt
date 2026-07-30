@@ -212,7 +212,7 @@ class CreditCardFormModal(
                 // The limit is denominated by the card's account. Until that currency is
                 // read there is nothing to denominate the field with.
                 inputTransformation = uiState.currency?.let {
-                    rememberMoneyInputTransformation(it)
+                    rememberMoneyInputTransformation(it, limit)
                 },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,

@@ -64,6 +64,7 @@ val transactionsModule = module {
             installmentRepository = get(),
             entryRepository = get(),
             consolidateMoney = get(),
+            observeConsolidationChanges = get(),
         )
     }
     viewModel {

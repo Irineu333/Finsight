@@ -221,7 +221,7 @@ class RecurringFormModal(
                 // already filled changes symbol when the target does (design D10).
                 // Without a target there is nothing to denominate it with.
                 inputTransformation = uiState.currencyOf(target)?.let {
-                    rememberMoneyInputTransformation(it)
+                    rememberMoneyInputTransformation(it, amount)
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,

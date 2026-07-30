@@ -21,6 +21,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
@@ -50,6 +51,7 @@ class ReportViewerViewModel(
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val entryRepository: IEntryRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -84,6 +86,17 @@ class ReportViewerViewModel(
         installmentRepository.observeAllInstallments(),
     ) { categories, installments -> TransactionFacadeLookup.of(categories, installments) }
 
+    /**
+     * The facades, plus the signal that something under a consolidated figure moved.
+     * Fused here rather than added to the combine below for the same reason the facades
+     * themselves are: that combine is at the arity ceiling. A rate writes no entry, so
+     * the ledger's own trigger does not carry it.
+     */
+    private val facadesAndConsolidation = combine(
+        facadeLookupFlow,
+        observeConsolidationChanges(),
+    ) { lookup, _ -> lookup }
+
     // A report may be scoped to an account or card that has since been archived (the
     // config picker offers closed ones too), so the viewer resolves the perspective
     // label, icon and — for cards — the LIABILITY account id from the *including
@@ -94,7 +107,7 @@ class ReportViewerViewModel(
         accountRepository.observeAllAccountsIncludingClosed(),
         creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
-        facadeLookupFlow,
+        facadesAndConsolidation,
     ) { transactions, accounts, creditCards, invoices, facadeLookup ->
         val invoiceIds = invoices.map { it.id }.toSet()
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()

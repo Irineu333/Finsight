@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
@@ -40,6 +41,7 @@ class DashboardViewModel(
     private val getDashboardPreferences: GetDashboardPreferencesUseCase,
     private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val dashboardPreviewFactory: DashboardPreviewFactory,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -80,7 +82,13 @@ class DashboardViewModel(
         transactionRepository.observeAllTransactions(),
         categoryRepository.observeAllCategoriesIncludingClosed(),
         installmentRepository.observeAllInstallments(),
-    ) { transactions, categories, installments ->
+        // The total balance of this screen is the app's most consolidated figure, and a
+        // rate is what turns two currencies into it — but registering a rate writes no
+        // entry, so the ledger's own trigger never reaches here. Fused into this flow
+        // rather than added below for the same reason the facades are: that combine is
+        // at the arity ceiling.
+        observeConsolidationChanges(),
+    ) { transactions, categories, installments, _ ->
         transactions to TransactionFacadeLookup.of(categories, installments)
     }
 

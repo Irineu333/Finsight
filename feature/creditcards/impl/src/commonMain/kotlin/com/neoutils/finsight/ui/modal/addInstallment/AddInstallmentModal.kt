@@ -161,7 +161,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     // is chosen there is nothing to denominate the field with, and the
                     // form already refuses to submit that state.
                     inputTransformation = uiState.currency?.let {
-                        rememberMoneyInputTransformation(it)
+                        rememberMoneyInputTransformation(it, amount)
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,

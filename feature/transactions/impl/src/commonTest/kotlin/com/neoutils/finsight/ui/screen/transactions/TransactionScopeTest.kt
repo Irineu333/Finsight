@@ -98,6 +98,7 @@ class TransactionScopeTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
         consolidateMoney = consolidator(),
+        observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
     )
 
     /**

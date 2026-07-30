@@ -120,12 +120,13 @@ class ConsolidateMoneyUseCaseTest {
 
     @Test
     fun `removing the only rate returns the figure to its own term`() = runTest {
-        val money = MoneyByCurrency.of(mapOf("BRL" to 0.0, "USD" to 50.0))
+        val money = MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0))
 
         val withRate = reducer(rates = arrayOf("USD" to 5.5))(money, march, DisplayAmount::natural)
         val without = reducer()(money, march, DisplayAmount::natural)
 
         assertEquals(listOf("BRL"), withRate.terms.map { it.currency })
+        assertEquals(375.0, withRate.terms.single().value)
         assertEquals(listOf("BRL", "USD"), without.terms.map { it.currency })
     }
 
@@ -158,13 +159,48 @@ class ConsolidateMoneyUseCaseTest {
     @Test
     fun `conversion is rounded to cents, once, here`() = runTest {
         val figure = reducer(rates = arrayOf("USD" to 5.4321))(
-            MoneyByCurrency.of(mapOf("BRL" to 0.0, "USD" to 33.33)),
+            MoneyByCurrency.of(mapOf("BRL" to 10.0, "USD" to 33.33)),
             march,
             DisplayAmount::natural,
         )
 
-        // 33.33 × 5.4321 = 181.0518... — the reducer is where that becomes money.
-        assertEquals(181.05, figure.terms.single().value)
+        // 33.33 × 5.4321 = 181.0518... — the reducer is where that becomes money, and
+        // it becomes it once: 10 + 181.05, never 191.0518 rounded later by a surface.
+        assertEquals(191.05, figure.terms.single().value)
+    }
+
+    /**
+     * **A currency the user holds nothing in is not a share of the figure.**
+     *
+     * Opening a second account and spending it back to zero is not an event that should
+     * mark every total in the app. Carried in, `{BRL: 1000, USD: 0}` would read
+     * `R$ 1.000,00 + US$ 0,00 ≈` on the dashboard — the mark over a number nothing was
+     * converted for, and forever, since no rate ever removes a term.
+     */
+    @Test
+    fun `a currency sitting at zero does not make a figure approximate`() = runTest {
+        val figure = reducer()(
+            MoneyByCurrency.of(mapOf("BRL" to 1_000.0, "USD" to 0.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(listOf("BRL"), figure.terms.map { it.currency })
+        assertEquals(1_000.0, figure.terms.single().value)
+        assertFalse(figure.isApproximate, "nothing was converted, so nothing is approximate")
+    }
+
+    /**
+     * And a figure that is nothing *but* zero keeps its own denomination: the rule drops
+     * zeros only where another currency survives. A dollar account with no movement
+     * reads `US$ 0,00`, not the base's zero.
+     */
+    @Test
+    fun `an empty figure in one currency is still denominated by it`() = runTest {
+        val figure = reducer()(MoneyByCurrency.of("USD", 0.0), march, DisplayAmount::natural)
+
+        assertEquals("USD", figure.terms.single().currency)
+        assertFalse(figure.isApproximate)
     }
 
     @Test

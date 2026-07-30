@@ -51,6 +51,7 @@ val dashboardModule = module {
             getDashboardPreferences = get(),
             buildDashboardViewingUseCase = get(),
             dashboardPreferencesRepository = get(),
+            observeConsolidationChanges = get(),
             dashboardPreviewFactory = get(),
             analytics = get(),
             crashlytics = get(),

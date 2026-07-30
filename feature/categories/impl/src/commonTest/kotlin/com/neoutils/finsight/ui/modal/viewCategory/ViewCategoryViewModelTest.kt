@@ -20,6 +20,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.RetireAction
@@ -174,6 +175,11 @@ class ViewCategoryViewModelTest {
         ),
         unarchiveCategory = unarchiveCategory,
         consolidateMoney = ConsolidateMoneyUseCase(
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            exchangeRateRepository = FakeExchangeRateRepository(),
+        ),
+        observeConsolidationChanges = ObserveConsolidationChangesUseCase(
+            entryRepository = entryRepository,
             baseCurrencyRepository = FakeBaseCurrencyRepository(),
             exchangeRateRepository = FakeExchangeRateRepository(),
         ),

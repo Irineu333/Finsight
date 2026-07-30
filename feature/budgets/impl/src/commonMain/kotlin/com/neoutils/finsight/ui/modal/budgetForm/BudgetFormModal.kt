@@ -181,7 +181,7 @@ class BudgetFormModal(
                         // has one there is nothing to denominate the field with, and
                         // `canSubmit` already refuses that state.
                         inputTransformation = uiState.currency?.let {
-                            rememberMoneyInputTransformation(it)
+                            rememberMoneyInputTransformation(it, amount)
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),

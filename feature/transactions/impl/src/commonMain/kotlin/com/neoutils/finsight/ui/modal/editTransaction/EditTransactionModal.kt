@@ -263,7 +263,7 @@ class EditTransactionModal(
                     // Without a target there is nothing to denominate it with.
                     inputTransformation = uiState.currencyOf(
                         if (type.isExpense) target else TransactionTarget.ACCOUNT
-                    )?.let { rememberMoneyInputTransformation(it) },
+                    )?.let { rememberMoneyInputTransformation(it, amount) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

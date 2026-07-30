@@ -227,7 +227,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 // target there is nothing to denominate it with, and it does not format.
                 inputTransformation = uiState.currencyOf(
                     if (type.isExpense) target else TransactionTarget.ACCOUNT
-                )?.let { rememberMoneyInputTransformation(it) },
+                )?.let { rememberMoneyInputTransformation(it, amount) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next

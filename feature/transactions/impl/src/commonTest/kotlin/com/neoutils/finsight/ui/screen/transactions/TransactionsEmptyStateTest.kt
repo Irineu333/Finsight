@@ -88,6 +88,7 @@ class TransactionsEmptyStateTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
         consolidateMoney = consolidator(),
+        observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
     )
 
     /** The settled state after [actions], skipping the `Loading` initialValue. */

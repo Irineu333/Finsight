@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.retireActionOf
@@ -39,6 +40,7 @@ class ViewCategoryViewModel(
     private val resolveRetirability: ResolveCategoryRetirabilityUseCase,
     private val unarchiveCategory: UnarchiveCategoryUseCase,
     private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -54,9 +56,10 @@ class ViewCategoryViewModel(
                 onDisappeared = { _events.send(ViewCategoryEvent.Dismiss) },
             ),
         selectedYearMonth,
-        // Same reason as the accounts screen: the totals below are SQL aggregates,
-        // so the ledger has to say when it moved.
-        entryRepository.observeLedgerChanges(),
+        // Same reason as the accounts screen: the totals below are SQL aggregates, so
+        // the ledger has to say when it moved — and this figure is consolidated, so a
+        // rate registered in settings has to say so too. Neither writes an entry.
+        observeConsolidationChanges(),
     ) { category, yearMonth, _ ->
         category ?: return@combine ViewCategoryUiState.Error
         // Σ entries carrying the category's dimension in the month, read from the

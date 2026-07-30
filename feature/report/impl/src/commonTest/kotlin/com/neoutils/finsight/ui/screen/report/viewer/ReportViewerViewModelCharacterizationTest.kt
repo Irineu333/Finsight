@@ -33,6 +33,7 @@ import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.degradedTerm
@@ -123,6 +124,7 @@ class ReportViewerViewModelCharacterizationTest {
             ),
             entryRepository = fakes.entryRepository(),
             consolidateMoney = fakes.consolidateMoney,
+            observeConsolidationChanges = fakes.consolidationChanges(),
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -207,6 +209,7 @@ class ReportViewerViewModelCharacterizationTest {
                 flows = mapOf(1L to brlFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
             ),
             consolidateMoney = fakes.consolidateMoney,
+            observeConsolidationChanges = fakes.consolidationChanges(),
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -376,6 +379,13 @@ private class Fakes {
     }
 
     val consolidateMoney = ConsolidateMoneyUseCase(
+        baseCurrencyRepository = baseCurrencyRepository,
+        exchangeRateRepository = exchangeRateRepository,
+    )
+
+    /** The composed trigger over the same fakes — a rate moves a figure already on screen. */
+    fun consolidationChanges() = ObserveConsolidationChangesUseCase(
+        entryRepository = entryRepository(),
         baseCurrencyRepository = baseCurrencyRepository,
         exchangeRateRepository = exchangeRateRepository,
     )

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.CurrencyAmount
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
@@ -59,7 +60,7 @@ class ConsolidateMoneyUseCase(
         policy: (value: Double, currency: String, isApproximate: Boolean) -> DisplayAmount,
     ): ConsolidatedAmount {
         val base = baseCurrencyRepository.observe().value
-        val terms = money.toList()
+        val terms = money.significantTerms()
 
         if (terms.isEmpty()) {
             // Nothing at all. Zero is exact, and the base is the only currency there is
@@ -137,7 +138,9 @@ class ConsolidateMoneyUseCase(
         figures: Map<K, MoneyByCurrency>,
         on: LocalDate,
     ): ComparativeMagnitudes<K> {
-        val currencies = figures.values.flatMapTo(mutableSetOf()) { it.currencies }
+        val currencies = figures.values.flatMapTo(mutableSetOf()) { money ->
+            money.significantTerms().map { it.currency }
+        }
 
         // One currency across the whole family — whichever it is — is the mono-currency
         // case of design D9: every magnitude is its own exact value, and no rate is read.
@@ -145,7 +148,9 @@ class ConsolidateMoneyUseCase(
         // byte-identical, by construction rather than by a test.
         if (currencies.size <= 1) {
             return ComparativeMagnitudes(
-                magnitudes = figures.mapValues { (_, money) -> money.singleOrNull()?.value ?: 0.0 },
+                magnitudes = figures.mapValues { (_, money) ->
+                    money.significantTerms().singleOrNull()?.value ?: 0.0
+                },
                 isApproximate = false,
             )
         }
@@ -155,8 +160,9 @@ class ConsolidateMoneyUseCase(
 
         return ComparativeMagnitudes(
             magnitudes = figures.mapValues { (_, money) ->
-                val convertible = money.toList().filter { it.currency == base || it.currency in rates }
-                if (convertible.isEmpty() && money.isNotEmpty) {
+                val significant = money.significantTerms()
+                val convertible = significant.filter { it.currency == base || it.currency in rates }
+                if (convertible.isEmpty() && significant.isNotEmpty()) {
                     // Nothing about this figure can be placed on the scale. It is not
                     // zero — zero is an assertion — so it has no magnitude at all.
                     null
@@ -189,7 +195,7 @@ class ConsolidateMoneyUseCase(
         money: MoneyByCurrency,
         on: LocalDate,
     ): ReducedAmount {
-        val terms = money.toList()
+        val terms = money.significantTerms()
         if (terms.isEmpty()) return ReducedAmount(0.0, isApproximate = false, hasUnconvertedPart = false)
 
         terms.singleOrNull()?.takeIf { it.currency == target }?.let {
@@ -232,6 +238,27 @@ class ConsolidateMoneyUseCase(
     private companion object {
         const val CENTS_PER_UNIT = 100.0
     }
+}
+
+/**
+ * The terms of a figure that actually say something, in the order the ledger answered.
+ *
+ * A currency whose amount is exactly zero is **not** a share of the figure — it is a
+ * currency the user happens to hold an account in, sitting empty. Carried into the
+ * reduction it would turn `{BRL: 1000, USD: 0}` into a two-term approximate figure: the
+ * `≈` mark over a number nothing was converted for, and, with no dollar rate on file,
+ * `R$ 1.000,00 + US$ 0,00` on the dashboard forever. Opening a second account and
+ * spending it back to zero is not an event that should mark every total in the app.
+ *
+ * The zeros are dropped **only where another currency survives**. A figure that is
+ * nothing but zero keeps its own denomination — a dollar account with no movement reads
+ * `US$ 0,00` and not the base's zero, which is the same rule as everywhere else: the
+ * currency of a figure is the figure's own.
+ */
+private fun MoneyByCurrency.significantTerms(): List<CurrencyAmount> {
+    val terms = toList()
+    if (terms.size < 2) return terms
+    return terms.filter { it.value != 0.0 }.ifEmpty { terms }
 }
 
 /**

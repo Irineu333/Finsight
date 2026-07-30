@@ -128,6 +128,7 @@ val categoriesModule = module {
             resolveRetirability = get(),
             unarchiveCategory = get(),
             consolidateMoney = get(),
+            observeConsolidationChanges = get(),
             crashlytics = get(),
         )
     }

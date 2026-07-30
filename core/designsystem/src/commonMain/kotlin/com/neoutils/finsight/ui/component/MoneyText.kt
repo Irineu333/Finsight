@@ -1,19 +1,26 @@
 package com.neoutils.finsight.ui.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.extension.APPROXIMATION_MARK
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.extension.formatTerms
+import com.neoutils.finsight.extension.figureTerms
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.money_unconverted_term
 import org.jetbrains.compose.resources.stringResource
@@ -21,7 +28,7 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The **one** way a money figure is rendered, however many terms it has.
  *
- * Terms take one line each, right-aligned. The first keeps the surface's own typographic
+ * Terms take one line each. The first keeps the surface's own typographic
  * style; the ones below it drop a step and go to `onSurfaceVariant` — the same shape
  * `CreditCardCard` already gives *available* at 20sp beside the limit at 14sp. The step
  * does not mean "worth less": it means "same figure, second line". Juxtaposing in a
@@ -38,13 +45,17 @@ fun MoneyText(
     style: TextStyle,
     modifier: Modifier = Modifier,
     singleTerm: Boolean = false,
+    align: TextAlign = TextAlign.End,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
     if (singleTerm && !figure.isSingleTerm) {
         // Declared degradation: the base term, its mark, and the fact that something is
         // not in it. Never a silent truncation.
-        Column(modifier = modifier, horizontalAlignment = Alignment.End) {
+        Column(
+            modifier = modifier,
+            horizontalAlignment = if (align == TextAlign.Start) Alignment.Start else Alignment.End,
+        ) {
             Text(text = formatter.format(figure.degradedTerm()), style = style)
             Text(
                 text = stringResource(Res.string.money_unconverted_term),
@@ -52,29 +63,64 @@ fun MoneyText(
                     fontSize = style.fontSize * SECONDARY_TERM_SCALE,
                     color = colorScheme.onSurfaceVariant,
                 ),
-                textAlign = TextAlign.End,
+                textAlign = align,
             )
         }
         return
     }
 
-    val terms = formatter.formatTerms(figure)
+    val terms = formatter.figureTerms(figure)
 
     if (terms.size == 1) {
-        Text(text = terms.single(), style = style, modifier = modifier)
+        Text(text = terms.single().amount, style = style, modifier = modifier)
         return
     }
 
-    Column(modifier = modifier, horizontalAlignment = Alignment.End) {
+    val secondaryStyle = style.copy(
+        fontSize = style.fontSize * SECONDARY_TERM_SCALE,
+        color = colorScheme.onSurfaceVariant,
+    )
+
+    // Where the amounts of a left-aligned stack begin: under the first term's amount,
+    // past whatever precedes it. Measured rather than guessed, because the mark is a
+    // glyph of the surface's own type and no fixed inset follows it across styles.
+    val measurer = rememberTextMeasurer()
+    val indent = if (align == TextAlign.Start && figure.isApproximate) {
+        with(LocalDensity.current) {
+            measurer.measure(AnnotatedString("$APPROXIMATION_MARK "), style).size.width.toDp()
+        }
+    } else {
+        0.dp
+    }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = if (align == TextAlign.Start) Alignment.Start else Alignment.End,
+    ) {
         terms.forEachIndexed { index, term ->
-            Text(
-                text = term,
-                style = if (index == 0) style else style.copy(
-                    fontSize = style.fontSize * SECONDARY_TERM_SCALE,
-                    color = colorScheme.onSurfaceVariant,
-                ),
-                textAlign = TextAlign.End,
-            )
+            val termStyle = if (index == 0) style else secondaryStyle
+
+            if (index == 0 || term.joiner == null) {
+                Text(text = term.amount, style = termStyle, textAlign = align)
+                return@forEachIndexed
+            }
+
+            when (align) {
+                // Left-aligned: the joiner is a bullet under the mark, and the amounts
+                // line up with the first one — the shape a reader follows down a column.
+                TextAlign.Start -> Row(modifier = Modifier.padding(start = indent)) {
+                    Text(text = "${term.joiner} ", style = termStyle)
+                    Text(text = term.amount, style = termStyle)
+                }
+
+                // Right-aligned: glued, because there the column's edge is what says
+                // "same figure, second line" and a gap would break it (design D22).
+                else -> Text(
+                    text = term.joiner + term.amount,
+                    style = termStyle,
+                    textAlign = TextAlign.End,
+                )
+            }
         }
     }
 }

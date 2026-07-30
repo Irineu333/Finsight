@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -133,6 +134,9 @@ internal fun ReportContextCard(
                                 // which is the one a narrow surface would keep.
                                 color = if (stats.balance.degradedTerm().value >= 0) Income else Expense,
                             ),
+                            // This card reads from its left edge: each label above its
+                            // own figure.
+                            align = TextAlign.Start,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))

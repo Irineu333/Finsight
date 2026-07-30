@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,7 +79,9 @@ fun BalanceCard(
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) = BalanceCard(modifier, config, onEditClick, onPayClick, onClick) { style ->
-    MoneyText(figure = balance, style = style)
+    // The card reads from its left edge — title above, figure below — so a figure of
+    // several terms stacks that way too.
+    MoneyText(figure = balance, style = style, align = TextAlign.Start)
 }
 
 @Composable

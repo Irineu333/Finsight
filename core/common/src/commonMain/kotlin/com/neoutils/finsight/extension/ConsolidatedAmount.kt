@@ -81,13 +81,37 @@ data class ConsolidatedAmount(
  * here, where every other money string in the app is decided.
  */
 fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
+    figureTerms(figure).map { it.joiner.orEmpty() + it.amount }
+
+/**
+ * The same terms, with the joiner **kept apart from the amount** — for the one renderer
+ * that stacks them (design D22), which needs to place the two rather than print them.
+ *
+ * Stacked and left-aligned, the joiner reads as a bullet of a list and wants the room a
+ * bullet has; right-aligned it is glued to the amount, because there the column edge is
+ * what says "same figure". Both are layout, and layout has one owner — but it cannot own
+ * this while the joiner is already baked into a string.
+ */
+fun CurrencyFormatter.figureTerms(figure: ConsolidatedAmount): List<MoneyTermText> =
     figure.terms.mapIndexed { index, term ->
         when {
-            index == 0 -> format(term)
-            term.spellsItsOwnSign -> format(term, withMark = false)
-            else -> "+${format(term, withMark = false)}"
+            index == 0 -> MoneyTermText(joiner = null, amount = format(term))
+            term.spellsItsOwnSign -> MoneyTermText(joiner = null, amount = format(term, withMark = false))
+            else -> MoneyTermText(joiner = "+", amount = format(term, withMark = false))
         }
     }
+
+/**
+ * One term of a figure as text: what joins it to the term above, when anything does, and
+ * the amount itself.
+ *
+ * [joiner] is `null` for the first term — nothing precedes it — and for any term that
+ * spells its own sign, which already reads as a continuation.
+ */
+data class MoneyTermText(
+    val joiner: String?,
+    val amount: String,
+)
 
 /**
  * Whether this term already begins with a sign of its own — the fact [formatTerms] needs

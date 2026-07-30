@@ -909,6 +909,8 @@ private fun TotalBalanceCard(
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                 ),
+                // This card reads from its left edge: the label above, the figure below.
+                align = TextAlign.Start,
             )
         }
     }

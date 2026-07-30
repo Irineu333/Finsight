@@ -51,6 +51,7 @@ class AccountPeriodTotalsQueryTest {
 
         assertEquals(
             AccountPeriodTotals(
+                currency = "BRL",     // the account's own, not a group: one account, one currency
                 income = 10_000,      // the salary
                 expense = 8_000,      // the expense (3000) plus the transfer out (5000)
                 adjustment = 4_000,   // signed, and kept out of income
@@ -65,7 +66,13 @@ class AccountPeriodTotalsQueryTest {
         seed()
 
         assertEquals(
-            AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, settlement = 0),
+            AccountPeriodTotals(
+                currency = "BRL",
+                income = 5_000,
+                expense = 0,
+                adjustment = 0,
+                settlement = 0,
+            ),
             entryDao.accountPeriodTotals(3, "2026-01"),
         )
     }
@@ -81,13 +88,17 @@ class AccountPeriodTotalsQueryTest {
         // `accountPeriodTotals` deliberately does *not* do, and why the summary needs
         // its own read.
         assertEquals(
-            AssetMonthTotals(income = 10_000, expense = 3_000, adjustment = 4_000),
-            entryDao.assetMonthTotals("2026-01"),
+            AssetMonthTotals(
+                currency = "BRL",
+                income = 10_000,
+                expense = 3_000,
+                adjustment = 4_000,
+            ),
+            entryDao.assetMonthTotals("2026-01").sole(),
         )
-        assertEquals(
-            AssetMonthTotals(income = 0, expense = 0, adjustment = 0),
-            entryDao.assetMonthTotals("2026-03"),
-        )
+        // A month with no movement has no group to report, so no row at all — not a
+        // row of zeros, which is what the ungrouped aggregate used to return.
+        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03"))
     }
 
     @Test
@@ -97,5 +108,63 @@ class AccountPeriodTotalsQueryTest {
         assertEquals(1, entryDao.dimensionEntryCountInMonth(10, "2026-01"))
         assertEquals(1, entryDao.dimensionEntryCountInMonth(20, "2026-01"))
         assertEquals(0, entryDao.dimensionEntryCountInMonth(10, "2026-03"))
+    }
+
+    // --- the month-wide asset totals are per currency (task 4.4) ---
+
+    @Test
+    fun `asset month totals keep each currency apart`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET, "Nubank")
+            account(2, AccountEntity.Type.ASSET, "Chase", currency = "USD")
+            account(10, AccountEntity.Type.EXPENSE, "Despesas")
+            account(11, AccountEntity.Type.EXPENSE, "Expenses", currency = "USD")
+            account(20, AccountEntity.Type.INCOME, "Receitas")
+
+            transaction("2026-01-05", 1L posts 10_000, 20L posts -10_000)
+            transaction("2026-01-10", 1L posts -3_000, 10L posts 3_000)
+            transaction(
+                "2026-01-12",
+                2L posts -1_500 inCurrency "USD",
+                11L posts 1_500 inCurrency "USD",
+            )
+        }
+
+        val totals = entryDao.assetMonthTotals("2026-01")
+
+        assertEquals(
+            AssetMonthTotals(currency = "BRL", income = 10_000, expense = 3_000, adjustment = 0),
+            totals.forCurrency("BRL"),
+        )
+        assertEquals(
+            AssetMonthTotals(currency = "USD", income = 0, expense = 1_500, adjustment = 0),
+            totals.forCurrency("USD"),
+        )
+        assertEquals(2, totals.size)
+    }
+
+    @Test
+    fun `an account's own flows stay scalar, denominated in its currency`() = runTest {
+        LedgerFixture(database).apply {
+            account(2, AccountEntity.Type.ASSET, "Chase", currency = "USD")
+            account(11, AccountEntity.Type.EXPENSE, "Expenses", currency = "USD")
+
+            transaction(
+                "2026-01-12",
+                2L posts -1_500 inCurrency "USD",
+                11L posts 1_500 inCurrency "USD",
+            )
+        }
+
+        assertEquals(
+            AccountPeriodTotals(
+                currency = "USD",
+                income = 0,
+                expense = 1_500,
+                adjustment = 0,
+                settlement = 0,
+            ),
+            entryDao.accountPeriodTotals(2, "2026-01"),
+        )
     }
 }

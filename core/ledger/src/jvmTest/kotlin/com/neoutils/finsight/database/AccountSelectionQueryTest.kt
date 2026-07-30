@@ -34,6 +34,8 @@ class AccountSelectionQueryTest {
         fixture.account(4, AccountEntity.Type.EXPENSE, "Despesas")
         fixture.account(5, AccountEntity.Type.INCOME, "Receitas")
         fixture.account(6, AccountEntity.Type.EQUITY, "Reconciliação")
+        fixture.account(7, AccountEntity.Type.CONVERSION, "CONVERSION")
+        fixture.account(8, AccountEntity.Type.CONVERSION, "CONVERSION", currency = "USD")
     }
 
     @Test
@@ -67,7 +69,45 @@ class AccountSelectionQueryTest {
             accountDao.getAllAccountsIncludingClosed().map { it.name },
             "closing keeps the row: its entries stay valid and its name still renders",
         )
-        assertEquals(6, accountDao.getAllLedgerAccounts().size, "and the chart itself is untouched")
+        assertEquals(8, accountDao.getAllLedgerAccounts().size, "and the chart itself is untouched")
+    }
+
+    // --- the conversion accounts are hidden by the same predicate (task 4.9) ---
+
+    @Test
+    fun `a conversion account is never offered, in any currency`() = runTest {
+        seed()
+
+        // No hiding of its own: `type = 'ASSET'` already excludes it, exactly as it
+        // excludes the two nominals and reconciliation. The write boundary creates one
+        // per currency on demand and nothing else may post to it, so its name — a
+        // lookup key, never a label — has no business reaching a screen.
+        assertEquals(listOf("Checking", "Savings"), accountDao.getAllAccounts().map { it.name })
+        assertEquals(
+            listOf("Checking", "Savings"),
+            accountDao.getAllAccountsIncludingClosed().map { it.name },
+            "not even among the closed ones, where history is rendered",
+        )
+        assertEquals(2, accountDao.getAccountCount())
+    }
+
+    @Test
+    fun `a conversion account is resolved by the triple, one per currency`() = runTest {
+        seed()
+
+        assertEquals(
+            7L,
+            accountDao.getByTypeAndName(AccountEntity.Type.CONVERSION, "CONVERSION", "BRL")?.id,
+        )
+        assertEquals(
+            8L,
+            accountDao.getByTypeAndName(AccountEntity.Type.CONVERSION, "CONVERSION", "USD")?.id,
+        )
+        assertEquals(
+            null,
+            accountDao.getByTypeAndName(AccountEntity.Type.CONVERSION, "CONVERSION", "EUR"),
+            "a currency with no conversion account yet is absent, not somebody else's row",
+        )
     }
 
     @Test

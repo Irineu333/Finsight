@@ -235,13 +235,12 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows(0.0, 0.0, 0.0, 0.0)
+    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
     override suspend fun dimensionOwed(dimensionId: Long): Double = 0.0
     override suspend fun dimensionFlows(dimensionId: Long) = DimensionFlows(0.0, 0.0, 0.0)
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = 0.0
     override suspend fun totalsByDimension(
         nominalType: AccountType,
         startDate: LocalDate,

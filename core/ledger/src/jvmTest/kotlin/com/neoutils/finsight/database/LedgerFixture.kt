@@ -2,6 +2,7 @@ package com.neoutils.finsight.database
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neoutils.finsight.database.dao.CurrencyScoped
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.database.entity.EntryEntity
@@ -47,7 +48,19 @@ internal infix fun Long.posts(cents: Long) = Leg(accountId = this, cents = cents
 internal fun Leg.taggedWith(dimensionId: Long) = copy(dimensionId = dimensionId)
 
 /** The same leg, denominated in [currency] — how a cross-currency case is written. */
-internal fun Leg.inCurrency(currency: String) = copy(currency = currency)
+internal infix fun Leg.inCurrency(currency: String) = copy(currency = currency)
+
+/**
+ * The one row a grouped aggregate produced, asserting there is exactly one. Most
+ * suites seed a single currency, and reading the sole row keeps their assertions
+ * saying what they said before the `GROUP BY` — while failing loudly if a second
+ * currency ever appears where the suite assumes one.
+ */
+internal fun <T : CurrencyScoped> List<T>.sole(): T = single()
+
+/** The row denominated in [currency], or `null` when the aggregate produced none. */
+internal fun <T : CurrencyScoped> List<T>.forCurrency(currency: String): T? =
+    firstOrNull { it.currency == currency }
 
 internal class LedgerFixture(val database: LedgerDatabase) {
 
@@ -58,8 +71,15 @@ internal class LedgerFixture(val database: LedgerDatabase) {
         type: AccountEntity.Type,
         name: String = "account-$id",
         currency: String = LEGACY_CURRENCY,
+        isArchived: Boolean = false,
     ): Long = database.accountDao().insert(
-        AccountEntity(id = id, name = name, type = type, currency = currency)
+        AccountEntity(
+            id = id,
+            name = name,
+            type = type,
+            currency = currency,
+            isArchived = isArchived,
+        )
     )
 
     suspend fun dimension(id: Long, kind: DimensionKind): Long =

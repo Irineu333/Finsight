@@ -49,22 +49,22 @@ class MigrationLedgerReadParityTest {
 
         // Net worth (ASSET + LIABILITY): A(+78000) + B(+20000) + C(-4000) + card(-6000);
         // the two reconstructed closed accounts are zeroed by their write-off.
-        assertEquals(88000L, entryDao.netWorthCents())
+        assertEquals(88000L, entryDao.netWorthCents().single().total, "and all of it in one currency")
 
         // Invoice owed, natural: purchase -10000 + payment +4000 = -6000 (60.00 owed).
         // Read through the invoice's dimension, which is what carries it since v10.
         val liabilityDimensionId = database.invoiceDao().getAllInvoices().first { it.id == 1L }.dimensionId!!
-        assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId))
+        assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId).single().total)
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
-        assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId))
+        assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId).single().total)
 
         // The income side: an income category lands on the INCOME nominal,
         // credit-natured, so its total is negative — and it must not have been routed
         // to the expense one.
         val categories = database.categoryDao().getAllCategories()
         val salaryDimensionId = categories.first { it.name == "Salary" }.dimensionId
-        assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId))
+        assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId).single().total)
         val nominals = accounts.filter { it.type.name == "INCOME" || it.type.name == "EXPENSE" }
         assertEquals(2, nominals.size, "the whole chart holds exactly two nominal accounts")
 

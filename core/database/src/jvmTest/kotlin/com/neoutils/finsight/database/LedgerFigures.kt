@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
+import com.neoutils.finsight.database.dao.CurrencyTotal
 import com.neoutils.finsight.database.entity.AccountEntity
 
 /**
@@ -122,11 +123,11 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
             .associate { it.id to entryDao.balanceOf(it.accountId) },
         // Keyed by invoice id, read through the dimension.
         owedByInvoiceId = invoiceDao().getAllInvoices()
-            .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d) }.orZero() },
+            .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d).soleTotal() }.orZero() },
         // Archived included: parity is about every figure the ledger can produce,
         // not only the ones a given screen currently lists.
         totalByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
-            .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId) },
+            .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId).soleTotal() },
         // After, it is the nature of the nominal the dimension's entries landed on.
         nominalNatureByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
             .mapNotNull { category ->
@@ -137,11 +138,21 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
                     ?.let { category.id to it.type.name }
             }
             .toMap(),
-        netWorth = entryDao.netWorthCents(),
+        netWorth = entryDao.netWorthCents().soleTotal(),
     )
 }
 
 private fun Long?.orZero(): Long = this ?: 0L
+
+/**
+ * The one currency a migrated database holds. Every legacy row is `'BRL'` — nobody
+ * ever chose it, it was the model's default — so a grouped aggregate returns exactly
+ * one row, or none when there is no movement at all. Reading it with [single] rather
+ * than by summing is what keeps this side of the parity honest: a second currency here
+ * would mean the relabelling split an account's history in two, and the assertion
+ * should fail loudly rather than add reais to dollars.
+ */
+private fun List<CurrencyTotal>.soleTotal(): Long = if (isEmpty()) 0L else single().total
 
 private fun SQLiteConnection.queryMap(sql: String): Map<Long, Long> {
     val statement = prepare(sql)

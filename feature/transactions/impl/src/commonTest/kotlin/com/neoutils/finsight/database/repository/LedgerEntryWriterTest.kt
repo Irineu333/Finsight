@@ -464,31 +464,44 @@ private class FakeEntryDao : EntryDao {
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
-    override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
-    override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()
-    override suspend fun assetMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.AssetMonthTotals = throw NotImplementedError()
+    override suspend fun dimensionPeriodTotals(dimensionId: Long): List<com.neoutils.finsight.database.dao.DimensionPeriodTotals> = throw NotImplementedError()
+    override suspend fun liabilityMonthTotals(yearMonth: String): List<com.neoutils.finsight.database.dao.LiabilityMonthTotals> = throw NotImplementedError()
+    override suspend fun assetMonthTotals(yearMonth: String): List<com.neoutils.finsight.database.dao.AssetMonthTotals> = throw NotImplementedError()
     override suspend fun totalsByDimensionWithSiblingLeg(
         nominalType: String,
         start: kotlinx.datetime.LocalDate,
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
-    ): List<com.neoutils.finsight.database.dao.DimensionTotal> = throw NotImplementedError()
+    ): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(
         nominalType: String,
         scopeDimensionIds: List<Long>,
-    ): List<com.neoutils.finsight.database.dao.DimensionTotal> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ScopeStatsTotals = throw NotImplementedError()
+    ): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> = throw NotImplementedError()
+    override suspend fun scopeStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): List<com.neoutils.finsight.database.dao.ScopeStatsTotals> = throw NotImplementedError()
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
-    override suspend fun balanceUpToMonthByType(type: String, yearMonth: String): Long = inserted.sumOf { it.amount }
-    override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
-    override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
-    override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionTotal> =
+    override suspend fun balanceUpToMonthByType(type: String, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
+        inserted.groupedByCurrency()
+    override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
+        inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
+    override suspend fun dimensionNaturalBalance(dimensionId: Long): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
+        inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
+    override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> =
         inserted.filter { it.dimensionId in dimensionIds }
-            .groupBy { it.dimensionId!! }
-            .map { (id, entries) -> com.neoutils.finsight.database.dao.DimensionTotal(id, entries.sumOf { it.amount }) }
+            .groupBy { it.dimensionId!! to it.currency }
+            .map { (key, entries) ->
+                com.neoutils.finsight.database.dao.DimensionCurrencyTotal(key.first, key.second, entries.sumOf { it.amount })
+            }
     override suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionPeriodTotalsRow> = throw NotImplementedError()
-    override suspend fun netWorthCents(): Long = inserted.sumOf { it.amount }
+    override suspend fun netWorthCents(): List<com.neoutils.finsight.database.dao.CurrencyTotal> = inserted.groupedByCurrency()
 }
+
+/**
+ * What a `GROUP BY currency` produces: one row per currency present, and no row at all
+ * when there is nothing — which is what the real aggregates return.
+ */
+private fun List<EntryEntity>.groupedByCurrency() =
+    groupBy { it.currency }
+        .map { (currency, entries) -> com.neoutils.finsight.database.dao.CurrencyTotal(currency, entries.sumOf { it.amount }) }
 
 private class FakeDimensionDao : DimensionDao {
     val dimensions = linkedMapOf<Long, DimensionEntity>()

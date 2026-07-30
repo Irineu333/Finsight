@@ -90,12 +90,15 @@ fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
 fun ConsolidatedAmount.degradedTerm(): DisplayAmount = base ?: terms.first()
 
 /**
- * The date to explain, when a surface holds several figures and at least one of them is
+ * The figure a surface has to explain, when it holds several and at least one of them is
  * approximate — `null` when every figure on it is exact.
  *
- * It is the rule behind the footer of design D21, kept here rather than in the component
- * so that "the footer does not appear when nothing was converted" is a fact a test can
- * state, and so that no screen decides it.
+ * It is the rule behind the badge of design D21, kept here rather than in the component
+ * so that "the badge does not appear when nothing was converted" is a fact a test can
+ * state, and so that no screen decides it. The whole figure and not just its date,
+ * because what has to be explained is *what the reduction did*: a figure of several
+ * currencies with no rate at all converted nothing, and naming a rate there would name
+ * one that was never applied.
  */
-fun List<ConsolidatedAmount>.approximationDate(): LocalDate? =
-    firstOrNull { it.isApproximate }?.asOf
+fun List<ConsolidatedAmount>.approximateFigure(): ConsolidatedAmount? =
+    firstOrNull { it.isApproximate }

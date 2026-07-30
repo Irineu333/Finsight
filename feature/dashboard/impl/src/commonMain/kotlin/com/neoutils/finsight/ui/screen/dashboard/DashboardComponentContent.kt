@@ -63,7 +63,7 @@ import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
-import com.neoutils.finsight.ui.component.ApproximationFooter
+import com.neoutils.finsight.ui.component.ApproximationBadge
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
 import com.neoutils.finsight.ui.component.BalanceCardConfig
@@ -884,26 +884,31 @@ private fun TotalBalanceCard(
                     vertical = 22.dp
                 ),
         ) {
-            Text(
-                text = stringResource(Res.string.dashboard_total_balance),
-                style = MaterialTheme.typography.titleMedium,
-                color = colorScheme.onSurfaceVariant,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.dashboard_total_balance),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colorScheme.onSurfaceVariant,
+                )
+
+                // Beside the label rather than under the figure: `≈` at headline size is
+                // not a touch target, and the explanation it needs is one tap for the
+                // user who wants it instead of a permanent line for everyone (D21/D25).
+                ApproximationBadge(
+                    figures = listOf(component.amount),
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                )
+            }
+
             MoneyText(
                 figure = component.amount,
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                 ),
-            )
-
-            // `≈` at headline size is still not a touch target, so the explanation and
-            // the way out live here: one element that says what the mark means, when the
-            // rate behind it is from, and leads to where it can be corrected. It renders
-            // itself only when something on this card is approximate (design D21/D25).
-            ApproximationFooter(
-                figures = listOf(component.amount),
-                onSeeRates = { navController.navigate(ExchangeRatesRoute) },
             )
         }
     }

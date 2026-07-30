@@ -851,7 +851,12 @@
     <string name="currency_name_uyu">Peso uruguaio</string>
     <string name="currency_name_zar">Rand sul-africano</string>
     <string name="money_unconverted_term">+ parcela não convertida</string>
-    <string name="money_approximate_footer">≈ valor aproximado pela taxa de %1$s. Ver taxas</string>
+    <string name="money_approximate_badge">Por que este valor é aproximado</string>
+    <string name="money_approximate_title">Valor aproximado</string>
+    <string name="money_approximate_converted">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s.</string>
+    <string name="money_approximate_partial">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s; o restante está em moeda sem taxa cadastrada e aparece à parte, sem conversão.</string>
+    <string name="money_approximate_none">Este valor reúne moedas diferentes e nenhuma taxa está cadastrada, então nada foi convertido: cada moeda aparece por si.</string>
+    <string name="money_approximate_see_rates">Ver taxas</string>
 
     <string name="nav_settings">Configurações</string>
     <string name="settings_screen_title">Configurações</string>

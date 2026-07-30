@@ -69,8 +69,8 @@ class ConsolidatedAmountTest {
             baseIndex = 0,
         )
 
-        assertNull(listOf(exact, exact).approximationDate())
-        assertNull(emptyList<ConsolidatedAmount>().approximationDate())
+        assertNull(listOf(exact, exact).approximateFigure())
+        assertNull(emptyList<ConsolidatedAmount>().approximateFigure())
     }
 
     @Test
@@ -82,7 +82,7 @@ class ConsolidatedAmountTest {
             baseIndex = 0,
         )
 
-        assertEquals(march, listOf(exact, approximate(on = march)).approximationDate())
+        assertEquals(march, listOf(exact, approximate(on = march)).approximateFigure()?.asOf)
     }
 
     private fun approximate(on: LocalDate? = null) = ConsolidatedAmount(

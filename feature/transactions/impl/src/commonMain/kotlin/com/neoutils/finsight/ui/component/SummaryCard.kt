@@ -102,6 +102,17 @@ fun SummaryCard(
                     selectedScope = selectedScope,
                     onScopeSelected = onScopeSelected
                 )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Up to six lines of money live in this card, which is why the mark is a
+                // prefix on each and the thing that explains it is one button for the
+                // whole card — here, beside the chips, instead of a permanent line under
+                // the figures (design D21).
+                ApproximationBadge(
+                    figures = balanceOverview?.figures.orEmpty(),
+                    onSeeRates = onSeeRates,
+                )
             }
 
             AnimatedContent(
@@ -129,15 +140,6 @@ fun SummaryCard(
 
                         is BalanceOverview.Overall -> OverallBody(overview)
                     }
-
-                    // Up to six lines of money live in this column, which is why the
-                    // mark is a prefix and not an icon or a suffix — and why the thing
-                    // that explains it is one footer for the whole card rather than
-                    // something attached to each line (design D21).
-                    ApproximationFooter(
-                        figures = overview?.figures.orEmpty(),
-                        onSeeRates = onSeeRates,
-                    )
                 }
             }
         }

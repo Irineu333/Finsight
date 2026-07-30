@@ -26,6 +26,15 @@ object SystemAccount {
     const val INCOMES = "Receitas"
 
     /**
+     * Where the residue of a transaction that crosses currencies lands — one row per
+     * currency, so the whole chart means the same thing by `currency` in every line.
+     *
+     * Created by the write boundary alone, and offered by no selector: like the
+     * others, this is a lookup key and never a rendered name.
+     */
+    const val CONVERSION = "Conversão"
+
+    /**
      * The reconstructed home of legs whose account or card was deleted back when
      * the app removed them instead of closing them. One per type: the real type
      * survives in the legacy `target`, the name and the multiplicity do not.

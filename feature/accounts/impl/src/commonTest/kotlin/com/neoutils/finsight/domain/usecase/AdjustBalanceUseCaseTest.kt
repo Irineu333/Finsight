@@ -48,6 +48,51 @@ class AdjustBalanceUseCaseTest {
 
         assertEquals(150.0, ledger.accountBalance())
     }
+
+    /**
+     * The behaviour a conversion account of its own type exists to save.
+     *
+     * The idempotence above finds "the existing adjustment" as *the transaction on this
+     * date with a leg on this account and an `EQUITY` counter-leg*. Had the exchange
+     * residue been posted to `EQUITY`, a cross-currency transfer made the same day on the
+     * same account would satisfy that predicate — and the use case would rewrite the
+     * transfer instead of writing an adjustment. Nothing in production changes to make
+     * this pass; if it fails, the residue is landing on the wrong type.
+     */
+    @Test
+    fun `a cross-currency transfer of the same day is not mistaken for the adjustment`() = runTest {
+        val ledger = LedgerStore(account)
+        val foreign = Account(id = 2, name = "Chase", type = AccountType.ASSET, currency = "USD")
+        val conversionBrl = Account(id = 900, name = "Conversão", type = AccountType.CONVERSION)
+        val conversionUsd =
+            Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
+
+        ledger.dateByTransaction[TRANSFER_ID] = date
+        ledger.entriesByTransaction[TRANSFER_ID] = listOf(
+            Entry(transactionId = TRANSFER_ID, account = account, amount = -55_000),
+            Entry(transactionId = TRANSFER_ID, account = conversionBrl, amount = 55_000),
+            Entry(transactionId = TRANSFER_ID, account = conversionUsd, amount = -10_000, currency = "USD"),
+            Entry(transactionId = TRANSFER_ID, account = foreign, amount = 10_000, currency = "USD"),
+        )
+
+        AdjustBalanceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )(targetBalance = 0.0, adjustmentDate = date, account = account).getOrNull()
+
+        // The transfer is untouched, and the adjustment is a transaction of its own.
+        assertEquals(4, ledger.entriesByTransaction.getValue(TRANSFER_ID).size)
+        assertEquals(
+            1,
+            ledger.entriesByTransaction
+                .filterKeys { it != TRANSFER_ID }
+                .count { (_, entries) -> entries.any { it.account.type == AccountType.EQUITY } },
+        )
+    }
+
+    private companion object {
+        const val TRANSFER_ID = 500L
+    }
 }
 
 /**

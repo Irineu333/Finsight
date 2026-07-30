@@ -65,6 +65,55 @@ class AdjustInvoiceUseCaseTest {
 
         assertEquals(200.0, ledger.dimensionOwed(invoice.id))
     }
+
+    /**
+     * The invoice-side mirror of the same rescue: this idempotence is even easier to
+     * break, because it does not even ask which account the `EQUITY` leg is on — any
+     * `EQUITY` leg on a transaction carrying this invoice is "the adjustment". A
+     * cross-currency invoice payment made the same day would have matched it, and the
+     * payment would have been rewritten into an adjustment. It does not, because a
+     * conversion leg is not an `EQUITY` leg.
+     */
+    @Test
+    fun `a cross-currency invoice payment of the same day is not mistaken for the adjustment`() = runTest {
+        val ledger = InvoiceLedgerStore(card)
+        val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "USD")
+        val payer = Account(id = 20, name = "Checking", type = AccountType.ASSET)
+        val conversionBrl = Account(id = 900, name = "Conversão", type = AccountType.CONVERSION)
+        val conversionUsd =
+            Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
+
+        ledger.dateByTransaction[PAYMENT_ID] = date
+        ledger.entriesByTransaction[PAYMENT_ID] = listOf(
+            Entry(transactionId = PAYMENT_ID, account = payer, amount = -55_000),
+            Entry(transactionId = PAYMENT_ID, account = conversionBrl, amount = 55_000),
+            Entry(transactionId = PAYMENT_ID, account = conversionUsd, amount = -10_000, currency = "USD"),
+            Entry(
+                transactionId = PAYMENT_ID,
+                account = cardAccount,
+                amount = 10_000,
+                currency = "USD",
+                dimensionId = invoice.dimensionId,
+            ),
+        )
+
+        AdjustInvoiceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+        )(invoice = invoice, target = 500.0, adjustmentDate = date).getOrNull()
+
+        assertEquals(4, ledger.entriesByTransaction.getValue(PAYMENT_ID).size)
+        assertEquals(
+            1,
+            ledger.entriesByTransaction
+                .filterKeys { it != PAYMENT_ID }
+                .count { (_, entries) -> entries.any { it.account.type == AccountType.EQUITY } },
+        )
+    }
+
+    private companion object {
+        const val PAYMENT_ID = 500L
+    }
 }
 
 /**

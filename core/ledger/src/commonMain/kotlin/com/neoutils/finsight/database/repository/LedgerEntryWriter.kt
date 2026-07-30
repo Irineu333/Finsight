@@ -159,6 +159,7 @@ class LedgerEntryWriter(
         AccountType.EXPENSE -> ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE)
         AccountType.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
         AccountType.EQUITY -> ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
+        AccountType.CONVERSION -> ensureSystemAccount(SystemAccount.CONVERSION, AccountEntity.Type.CONVERSION)
         // ASSET and LIABILITY are the user's own rows: there is no system account of
         // that nature to complete an intent with.
         AccountType.ASSET, AccountType.LIABILITY ->

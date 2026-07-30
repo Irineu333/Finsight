@@ -61,6 +61,50 @@ class LedgerTest {
         assertEquals(TransactionLabel.ADJUSTMENT, entries.deriveTransactionLabel())
     }
 
+    // --- CONVERSION is transparent to the derivation (design D2) ---
+    //
+    // Nothing below is expected to change production code: the conversion legs fall
+    // through every case of the label derivation, which is the whole reason the
+    // conversion account has a type of its own instead of being EQUITY. If one of these
+    // fails, the fall-through is wrong and that is what gets fixed.
+
+    @Test
+    fun `a transfer across currencies is still a transfer`() {
+        val entries = listOf(
+            entry(AccountType.ASSET, -55_000, 1),
+            entry(AccountType.CONVERSION, 55_000, 2),
+            entry(AccountType.CONVERSION, -10_000, 3),
+            entry(AccountType.ASSET, 10_000, 4),
+        )
+        assertEquals(TransactionLabel.TRANSFER, entries.deriveTransactionLabel())
+    }
+
+    @Test
+    fun `an invoice payment across currencies is still a payment`() {
+        val entries = listOf(
+            entry(AccountType.ASSET, -55_000, 1),
+            entry(AccountType.CONVERSION, 55_000, 2),
+            entry(AccountType.CONVERSION, -10_000, 3),
+            entry(AccountType.LIABILITY, 10_000, 4),
+        )
+        assertEquals(TransactionLabel.PAYMENT, entries.deriveTransactionLabel())
+    }
+
+    @Test
+    fun `a monetary leg of a cross-currency operation does not read as an adjustment`() {
+        // The direction derivation reads "adjustment" off an EQUITY leg. A conversion
+        // leg is not one, so the leg's own sign still decides — which is what the user
+        // sees on the line.
+        val entries = listOf(
+            entry(AccountType.ASSET, -55_000, 1),
+            entry(AccountType.CONVERSION, 55_000, 2),
+            entry(AccountType.CONVERSION, -10_000, 3),
+            entry(AccountType.ASSET, 10_000, 4),
+        )
+        assertEquals(TransactionType.EXPENSE, deriveTransactionType(-55_000, entries))
+        assertEquals(TransactionType.INCOME, deriveTransactionType(10_000, entries))
+    }
+
     // --- isBalanced (Σ = 0 per currency) ---
 
     @Test
@@ -142,6 +186,8 @@ class LedgerTest {
     fun `account nature partitions debit and credit`() {
         assertTrue(AccountType.ASSET.isDebitNatured && AccountType.EXPENSE.isDebitNatured)
         assertTrue(AccountType.LIABILITY.isCreditNatured && AccountType.INCOME.isCreditNatured && AccountType.EQUITY.isCreditNatured)
+        // GnuCash reads a debit on a trading account as a *decrease*, and so does this.
+        assertTrue(AccountType.CONVERSION.isCreditNatured)
     }
 
     // --- isMonetary: the money-bearing types vs the synthesized counter-legs (task 1.2) ---
@@ -153,6 +199,10 @@ class LedgerTest {
         assertFalse(AccountType.INCOME.isMonetary)
         assertFalse(AccountType.EXPENSE.isMonetary)
         assertFalse(AccountType.EQUITY.isMonetary)
+        // Not where money is, and offered by no form — which is also what keeps a
+        // cross-currency operation out of the editability gate's leg count.
+        assertFalse(AccountType.CONVERSION.isMonetary)
+        assertFalse(AccountType.CONVERSION.isNominal)
     }
 
     // --- isPermanent: real vs nominal accounts, which is what decides whether a
@@ -162,6 +212,9 @@ class LedgerTest {
         assertTrue(AccountType.ASSET.isPermanent)
         assertTrue(AccountType.LIABILITY.isPermanent)
         assertTrue(AccountType.EQUITY.isPermanent)
+        // Vacuously: its balance is the realized exchange result, and no screen
+        // archives it, so the question this property answers cannot arise for it.
+        assertTrue(AccountType.CONVERSION.isPermanent)
         // Temporary: their balance is a period total, zeroed only by a closing entry.
         assertFalse(AccountType.INCOME.isPermanent)
         assertFalse(AccountType.EXPENSE.isPermanent)

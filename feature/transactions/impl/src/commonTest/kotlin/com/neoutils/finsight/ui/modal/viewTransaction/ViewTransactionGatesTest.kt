@@ -61,6 +61,42 @@ class ViewTransactionGatesTest {
         assertTrue(content.isEditable)
     }
 
+    /**
+     * A cross-currency operation falls into the gate that already exists, with no gate of
+     * its own: it has **two** monetary legs, exactly like a same-currency transfer. Its
+     * conversion legs do not count, because they are not monetary — which is also why the
+     * label below is `TRANSFER` and not `ADJUSTMENT`.
+     */
+    @Test
+    fun crossCurrencyTransferIsNotEditable_monetaryLegCountGate() {
+        val content = content(
+            entries = listOf(
+                entry(AccountType.ASSET, -55_000),
+                entry(AccountType.CONVERSION, 55_000),
+                entry(AccountType.CONVERSION, -10_000),
+                entry(AccountType.ASSET, 10_000),
+            ),
+        )
+        assertEquals(TransactionLabel.TRANSFER, content.label)
+        assertEquals(2, content.transaction.monetaryEntries.size)
+        assertFalse(content.isEditable)
+    }
+
+    /** The same gate, for the other cross-currency operation the plan admits. */
+    @Test
+    fun crossCurrencyInvoicePaymentIsNotEditable_monetaryLegCountGate() {
+        val content = content(
+            entries = listOf(
+                entry(AccountType.ASSET, -55_000),
+                entry(AccountType.CONVERSION, 55_000),
+                entry(AccountType.CONVERSION, -10_000),
+                entry(AccountType.LIABILITY, 10_000),
+            ),
+        )
+        assertEquals(TransactionLabel.PAYMENT, content.label)
+        assertFalse(content.isEditable)
+    }
+
     @Test
     fun adjustmentIsNotEditable_labelGate() {
         val content = content(

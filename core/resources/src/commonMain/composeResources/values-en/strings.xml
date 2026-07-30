@@ -807,4 +807,32 @@
     <string name="view_category_title">Category</string>
     <string name="view_budget_title">Budget</string>
     <string name="view_recurring_title">Recurring</string>
+
+    <!-- Settings -->
+    <string name="dashboard_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_base_currency">Base currency</string>
+    <string name="settings_base_currency_description">Used only to bring amounts held in more than one currency into a single number.</string>
+    <string name="settings_exchange_rates">Exchange rates</string>
+    <string name="settings_exchange_rates_description">What each currency is worth in your base currency, and since when.</string>
+
+    <!-- Exchange rates -->
+    <string name="exchange_rates_title">Exchange rates</string>
+    <string name="exchange_rates_empty_title">No rates yet</string>
+    <string name="exchange_rates_empty">No rates yet. An operation across currencies records its own, and you can enter the others here.</string>
+    <string name="exchange_rates_add">New rate</string>
+    <string name="exchange_rate_value">1 %1$s = %2$s</string>
+    <string name="exchange_rate_source_operation">From an operation</string>
+    <string name="exchange_rate_source_user">Entered by you</string>
+    <string name="exchange_rate_outdated">Out of date</string>
+    <string name="exchange_rate_form_new_title">New rate</string>
+    <string name="exchange_rate_form_edit_title">Edit rate</string>
+    <string name="exchange_rate_form_currency">Currency</string>
+    <string name="exchange_rate_form_rate">What one %1$s is worth</string>
+    <string name="exchange_rate_form_date">Date</string>
+    <string name="exchange_rate_form_save">Save</string>
+    <string name="exchange_rate_form_cancel">Cancel</string>
+    <string name="exchange_rate_form_last_known">By the rate of %1$s</string>
+    <string name="exchange_rate_delete">Remove</string>
+    <string name="exchange_rate_delete_description">Remove the last rate of a currency and the figures that relied on it go back to showing that currency as a term of its own.</string>
 </resources>

@@ -166,6 +166,7 @@ class ConsolidateFigureUseCaseTest {
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun getAll(): List<ExchangeRate> = emptyList()
         override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+        override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
     }
 
     /** A history, resolved by the same policy the real repository's query applies. */
@@ -177,5 +178,6 @@ class ConsolidateFigureUseCaseTest {
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(history)
         override suspend fun getAll(): List<ExchangeRate> = history
         override suspend fun record(rate: ExchangeRate) = throw NotImplementedError()
+        override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
     }
 }

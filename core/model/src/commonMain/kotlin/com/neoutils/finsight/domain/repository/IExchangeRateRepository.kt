@@ -35,4 +35,13 @@ interface IExchangeRateRepository {
      * Re-editing a cross-currency operation must not leave two collected rates for one day.
      */
     suspend fun record(rate: ExchangeRate)
+
+    /**
+     * Removes a rate, which is the corollary of a rate outliving the operation that
+     * collected it: without this, one gathered from an operation the user has since deleted
+     * has no path that reaches it. Remove the last rate of a currency and the figures that
+     * relied on it go back to showing that currency as a term of its own — which is the
+     * honest reading, rather than a value converted at a rate nobody stands behind.
+     */
+    suspend fun remove(rate: ExchangeRate)
 }

@@ -27,6 +27,8 @@ class ExchangeRateRepository(
 
     override suspend fun record(rate: ExchangeRate) = exchangeRateDao.upsert(rate.toEntity())
 
+    override suspend fun remove(rate: ExchangeRate) = exchangeRateDao.delete(rate.toEntity())
+
     private fun ExchangeRateEntity.toDomain() = ExchangeRate(
         currency = currency,
         date = date,

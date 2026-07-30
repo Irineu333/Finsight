@@ -3,8 +3,10 @@ package com.neoutils.finsight.database
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -83,6 +85,32 @@ class ExchangeRateRepositoryTest {
         rates.record(rate("USD", "2026-05-01", 5.50))
 
         assertNull(rates.rateOn("EUR", LocalDate.parse("2026-05-01")))
+    }
+
+    @Test
+    fun `removing the only rate of a currency gives that currency back its own term`() = runTest {
+        val rates = repository()
+        val collected = rate("USD", "2026-05-01", 5.50, ExchangeRate.Source.OPERATION)
+        rates.record(collected)
+
+        val date = LocalDate.parse("2026-05-01")
+        val balance = CurrencyBalance.of("BRL", 100.0) + CurrencyBalance.of("USD", 50.0)
+        val consolidate = ConsolidateFigureUseCase(rates)
+
+        // With the rate, the two currencies reconcile into one approximate term in the base.
+        val withRate = consolidate(balance, base = "BRL", date = date)
+        assertEquals(1, withRate.terms.size)
+        assertEquals(375.0, withRate.terms.single().value)
+
+        // The rate was collected from an operation the user has since deleted, and removing
+        // it here is the only path that reaches it — which is why the removal exists.
+        rates.remove(collected)
+
+        // What the figures do next is the point: nothing is guessed and nothing is dropped.
+        // The dollars go back to being stated in dollars, exactly, beside the reais.
+        val withoutRate = consolidate(balance, base = "BRL", date = date)
+        assertEquals(listOf(100.0, 50.0), withoutRate.terms.map { it.value })
+        assertEquals(listOf("BRL", "USD"), withoutRate.terms.map { it.denomination.currency })
     }
 
     private fun rate(

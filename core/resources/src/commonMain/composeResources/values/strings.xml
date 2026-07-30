@@ -808,4 +808,32 @@
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>
     <string name="view_recurring_title">Recorrência</string>
+
+    <!-- Settings -->
+    <string name="dashboard_settings">Configurações</string>
+    <string name="settings_title">Configurações</string>
+    <string name="settings_base_currency">Moeda base</string>
+    <string name="settings_base_currency_description">Usada apenas para reunir num único número valores que estão em mais de uma moeda.</string>
+    <string name="settings_exchange_rates">Taxas de câmbio</string>
+    <string name="settings_exchange_rates_description">Quanto vale cada moeda na sua moeda base, e desde quando.</string>
+
+    <!-- Exchange rates -->
+    <string name="exchange_rates_title">Taxas de câmbio</string>
+    <string name="exchange_rates_empty_title">Nenhuma taxa cadastrada</string>
+    <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua, e você pode informar as outras aqui.</string>
+    <string name="exchange_rates_add">Nova taxa</string>
+    <string name="exchange_rate_value">1 %1$s = %2$s</string>
+    <string name="exchange_rate_source_operation">De uma operação</string>
+    <string name="exchange_rate_source_user">Informada por você</string>
+    <string name="exchange_rate_outdated">Desatualizada</string>
+    <string name="exchange_rate_form_new_title">Nova taxa</string>
+    <string name="exchange_rate_form_edit_title">Editar taxa</string>
+    <string name="exchange_rate_form_currency">Moeda</string>
+    <string name="exchange_rate_form_rate">Quanto vale 1 %1$s</string>
+    <string name="exchange_rate_form_date">Data</string>
+    <string name="exchange_rate_form_save">Salvar</string>
+    <string name="exchange_rate_form_cancel">Cancelar</string>
+    <string name="exchange_rate_form_last_known">Pela taxa de %1$s</string>
+    <string name="exchange_rate_delete">Remover</string>
+    <string name="exchange_rate_delete_description">Removida a última taxa de uma moeda, as figuras que dependiam dela voltam a exibir aquela moeda como termo próprio.</string>
 </resources>

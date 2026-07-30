@@ -69,6 +69,39 @@ class ConsolidationBoundaryTest {
         )
     }
 
+    @Test
+    fun `no consolidated figure depends on the network`() {
+        val offenders = sourcesUnder("core", "feature", "app")
+            .filterNot { file -> networkOwners.any { file.path.startsWith(it) } }
+            .filter { file -> NETWORK_REFERENCE.containsMatchIn(file.code) }
+            .map { it.path }
+
+        assertEquals(
+            emptyList(),
+            offenders,
+            "The locally recorded rate is the only authority in any conversion: no reading " +
+                "of this app waits on a service, shows a loading state, or fails because one " +
+                "is down. An external source may suggest a value inside the screen that " +
+                "edits a rate — a MAY this change leaves unexercised — and nowhere else.",
+        )
+    }
+
+    /**
+     * The parts of the app that legitimately reach a service, **none of which produce a
+     * figure**: support conversations, the analytics/crashlytics/auth services, and the
+     * per-platform bootstrap that starts them. If the rate screen ever takes up the
+     * suggestion the spec permits, it joins this list — and that doing so means editing this
+     * test is the point.
+     */
+    private val networkOwners = listOf(
+        "feature/support/",
+        "core/analytics/",
+        "core/crashlytics/",
+        "core/auth/",
+        "app/desktop/src/main/kotlin/com/neoutils/finsight/firebase/",
+        "app/desktop/src/main/kotlin/com/neoutils/finsight/main.kt",
+    )
+
     private class Source(val path: String, val text: String) {
         /**
          * The file with its comments removed. Without this, prose *about* multiplying by a
@@ -107,6 +140,11 @@ class ConsolidationBoundaryTest {
 
         /** A rate or a base-currency preference, named at all. */
         val RATE_REFERENCE = Regex("ExchangeRate|IExchangeRateRepository|baseCurrency")
+
+        /** Anything that reaches a service. */
+        val NETWORK_REFERENCE = Regex(
+            "HttpClient|io\\.ktor|HttpURLConnection|URLConnection|NSURLSession|Firebase|Firestore",
+        )
 
         /** A value multiplied by a rate, in either order. */
         val RATE_APPLICATION = Regex("\\*\\s*\\w*[rR]ate\\b|\\brate\\s*\\*")

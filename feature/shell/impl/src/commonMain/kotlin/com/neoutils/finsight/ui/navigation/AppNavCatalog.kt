@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupportAgent
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
@@ -19,6 +20,7 @@ import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.dashboard.api.DashboardRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.report.api.ReportGraph
+import com.neoutils.finsight.feature.settings.api.SettingsRoute
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.support.api.SupportGraph
@@ -29,6 +31,7 @@ import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_reports
+import com.neoutils.finsight.resources.dashboard_settings
 import com.neoutils.finsight.resources.dashboard_support
 import com.neoutils.finsight.resources.nav_credit_cards
 import com.neoutils.finsight.resources.nav_dashboard
@@ -88,6 +91,13 @@ internal object AppNavCatalog : NavCatalog {
             icon = Icons.Default.CalendarMonth,
             labelRes = Res.string.nav_installments,
             route = InstallmentsRoute,
+        ),
+        // Immediately before Support, which the catalog's KDoc records as deliberately
+        // last: the two are "about the app" rather than about a month's money.
+        NavDestination(
+            icon = Icons.Default.Settings,
+            labelRes = Res.string.dashboard_settings,
+            route = SettingsRoute,
         ),
         NavDestination(
             icon = Icons.Default.SupportAgent,

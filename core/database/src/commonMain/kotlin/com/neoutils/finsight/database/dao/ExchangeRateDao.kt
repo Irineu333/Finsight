@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.neoutils.finsight.database.entity.ExchangeRateEntity
@@ -34,6 +35,18 @@ interface ExchangeRateDao {
         """
     )
     suspend fun rateOn(currency: String, date: LocalDate): ExchangeRateEntity?
+
+    /**
+     * Removes one rate.
+     *
+     * It is the obligatory corollary of a rate outliving the operation that collected it: a
+     * rate gathered from an operation the user has since deleted would otherwise have no
+     * path that reaches it. Correcting is not enough — a rate collected by mistake on a day
+     * no other rate covers has to be able to stop existing, rather than be replaced by a
+     * guess. GnuCash ships a Price Editor for the same reason.
+     */
+    @Delete
+    suspend fun delete(rate: ExchangeRateEntity)
 
     /** Every rate, newest first — what the rates screen lists and reacts to. */
     @Query("SELECT * FROM exchange_rates ORDER BY date DESC, currency ASC")

@@ -3,8 +3,10 @@ package com.neoutils.finsight.extension
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -255,5 +257,47 @@ class LedgerTest {
         // precondition that let the account close.
         val entries = listOf(entry(AccountType.ASSET, -5000), archived(AccountType.EXPENSE, 3))
         assertEquals(null, entries.closedLegBlockingChange())
+    }
+
+    // --- The primary leg names the negative one (D16) ---
+
+    private fun transactionOf(entries: List<Entry>) =
+        Transaction(title = "op", date = LocalDate(2026, 3, 20), entries = entries)
+
+    @Test
+    fun `a card purchase is still read through its liability leg, which is positive`() {
+        // The case the change has to preserve, and the reason `min` cannot simply be
+        // replaced by "the negative leg": a card purchase has no negative monetary leg at
+        // all — the only one is the credited liability.
+        val entries = listOf(entry(AccountType.LIABILITY, 5000), entry(AccountType.EXPENSE, -5000))
+
+        assertEquals(AccountType.LIABILITY, transactionOf(entries).primaryEntry?.account?.type)
+        assertEquals(5000L, transactionOf(entries).primaryEntry?.amount)
+    }
+
+    @Test
+    fun `with two monetary legs of the same sign, the smallest is no longer mistaken for the source`() {
+        // The state `min` was right about only by an invariant it never stated. It is not
+        // reachable through today's write boundary; naming the negative leg is what keeps it
+        // from becoming a silent defect the day it is.
+        val entries = listOf(
+            entry(AccountType.ASSET, 3000, accountId = 1),
+            entry(AccountType.ASSET, 8000, accountId = 2),
+        )
+
+        // No leg the money left: both received. The old criterion would have answered "the
+        // 3000 one", which is a leg that nothing left.
+        assertEquals(null, entries.sourceLeg()?.takeIf { it.amount < 0 })
+    }
+
+    @Test
+    fun `a transfer is read through the leg the money left`() {
+        val entries = listOf(
+            entry(AccountType.ASSET, -10000, accountId = 1),
+            entry(AccountType.ASSET, 10000, accountId = 2),
+        )
+
+        assertEquals(1L, entries.sourceLeg()?.account?.id)
+        assertEquals(1L, transactionOf(entries).primaryEntry?.account?.id)
     }
 }

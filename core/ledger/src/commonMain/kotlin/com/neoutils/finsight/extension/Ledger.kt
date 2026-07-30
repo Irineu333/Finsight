@@ -78,9 +78,16 @@ fun List<Entry>.liabilityLeg(): Entry? = firstOrNull { it.account.type == Accoun
 
 fun List<Entry>.nominalLeg(): Entry? = firstOrNull { it.account.type.isNominal }
 
-/** The money-out `ASSET` leg — where a movement came from, when it came from one. */
+/**
+ * The money-out `ASSET` leg — where a movement came from, when it came from one.
+ *
+ * The negative leg, said outright. `min` over amounts picks the same one and always has,
+ * because a balanced pair holds one of each sign; what it does not do is state the rule it
+ * depends on, and a comparison of amounts across currencies that is correct only by an
+ * unstated invariant is a defect waiting for the day the invariant lapses.
+ */
 fun List<Entry>.sourceLeg(): Entry? = filter { it.account.type == AccountType.ASSET }
-    .let { assets -> assets.minByOrNull { it.amount } }
+    .let { assets -> assets.firstOrNull { it.amount < 0 } ?: assets.minByOrNull { it.amount } }
 
 /** True when the entries balance to zero for every currency present. */
 fun List<Entry>.isBalanced(): Boolean =

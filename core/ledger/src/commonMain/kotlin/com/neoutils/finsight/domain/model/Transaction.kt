@@ -46,8 +46,16 @@ data class Transaction(
     /**
      * The leg a neutral list looks through: the outgoing one, which is how a
      * transfer or a card payment reads when no perspective is given.
+     *
+     * "Outgoing" is now named rather than implied. It used to be `minByOrNull { amount }`,
+     * which returns the same leg — a balanced transaction with two monetary legs has exactly
+     * one negative and one positive — but says so only through an invariant it does not
+     * state. Comparing `Long` across currencies is right by accident there, and stops being
+     * right the day two monetary legs share a sign. A card purchase, whose only monetary leg
+     * is the credited liability, keeps being read through the leg it always was.
      */
-    val primaryEntry: Entry? get() = monetaryEntries.minByOrNull { it.amount }
+    val primaryEntry: Entry? get() = monetaryEntries.firstOrNull { it.amount < 0 }
+        ?: monetaryEntries.minByOrNull { it.amount }
 
     /**
      * The transaction's amount as a magnitude. The sign is a display concern and is

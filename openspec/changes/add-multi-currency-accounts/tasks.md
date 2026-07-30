@@ -107,7 +107,7 @@
 
 ## 7. A perna primária e a exibição
 
-- [ ] 7.1 `Transaction.primaryEntry` e `Ledger.sourceLeg()` passam a nomear a perna monetária **negativa**, preservando o caso sem perna negativa (compra em cartão). Não é correção de defeito — `min` já devolve a negativa (D16) —, é remoção de dependência tácita, então o teste que prova a mudança é o de **compra em cartão** e o de duas pernas de mesmo sinal, não o de transferência cruzada. Revisar os consumidores de `primaryEntry`/`sourceLeg`.
+- [x] 7.1 `Transaction.primaryEntry` e `Ledger.sourceLeg()` passam a nomear a perna monetária **negativa**, preservando o caso sem perna negativa (compra em cartão). Não é correção de defeito — `min` já devolve a negativa (D16) —, é remoção de dependência tácita, então o teste que prova a mudança é o de **compra em cartão** e o de duas pernas de mesmo sinal, não o de transferência cruzada. Revisar os consumidores de `primaryEntry`/`sourceLeg`.
 - [ ] 7.2 `AccountUi` e `TransactionUi` passam a carregar a moeda, alimentada pelos mappers a partir da conta — sem isso o formatador não a recebe.
 - [ ] 7.3 Trocar as APIs públicas de componente que recebem `Double` cru por valor já denominado: `BalanceCard`, `CreditCardCard`, a variante de dashboard de `AccountCard`, `CategorySpendingCard`, `TotalBalanceCard`.
 - [ ] 7.4 `MoneyInputTransformation` recebe a moeda, e o default `CurrencyFormatter()` do construtor sai — é a segunda porta de escape para o locale do dispositivo. Passar a moeda nos **11** modais que a usam, incluindo a troca do símbolo quando a conta muda com o campo já preenchido (`TransferBetweenAccountsModal`, `ConfirmRecurringModal`).

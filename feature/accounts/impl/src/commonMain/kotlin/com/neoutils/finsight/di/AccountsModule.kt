@@ -88,6 +88,7 @@ val accountsModule = module {
         TransferBetweenAccountsUseCase(
             transactionRepository = get(),
             accountRepository = get(),
+            collectOperationRate = get(),
         )
     }
 
@@ -167,6 +168,7 @@ val accountsModule = module {
         TransferBetweenAccountsViewModel(
             initialSourceAccount = it.get(),
             transferBetweenAccountsUseCase = get(),
+            suggestConvertedAmount = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),

@@ -24,17 +24,28 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
+/**
+ * A transfer of two amounts, one per end.
+ *
+ * [destinationAmount] has **no default**: when the two accounts share a currency the caller
+ * passes the same number twice, and when they do not, forgetting it is a compile error rather
+ * than a transfer that silently credits the wrong figure. The two ends being equal in the
+ * same-currency case is not re-checked here — `Σ = 0` per currency has one owner, the write
+ * boundary, and it refuses an unbalanced single-currency operation exactly as it does today.
+ */
 class TransferBetweenAccountsUseCase(
     private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
+    private val collectOperationRate: CollectOperationRateUseCase,
 ) {
     suspend operator fun invoke(
         sourceAccountId: Long,
         destinationAccountId: Long,
-        amount: Double,
+        sourceAmount: Double,
+        destinationAmount: Double,
         date: LocalDate,
     ): Either<TransferException, Transaction> = either {
-        ensure(amount > 0.0) {
+        ensure(sourceAmount > 0.0 && destinationAmount > 0.0) {
             TransferException(TransferError.InvalidAmount)
         }
 
@@ -56,7 +67,7 @@ class TransferBetweenAccountsUseCase(
             TransferException(TransferError.DestinationAccountNotFound)
         }
 
-        catch {
+        val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
                     title = null,
@@ -64,12 +75,12 @@ class TransferBetweenAccountsUseCase(
                     legs = listOf(
                         TransactionLeg(
                             type = TransactionType.EXPENSE,
-                            amount = amount,
+                            amount = sourceAmount,
                             accountId = sourceAccount.id,
                         ),
                         TransactionLeg(
                             type = TransactionType.INCOME,
-                            amount = amount,
+                            amount = destinationAmount,
                             accountId = destinationAccount.id,
                         ),
                     ),
@@ -78,5 +89,21 @@ class TransferBetweenAccountsUseCase(
         }.mapLeft {
             TransferException(TransferError.Unknown)
         }.bind()
+
+        // After the operation, and unable to undo it: the transfer is the fact, the rate is
+        // what it taught. A rate that fails to record leaves a figure approximate until the
+        // next operation or a typed quote — a state design D9 already defines as legitimate —
+        // whereas refusing a valid transfer over it would invert the two.
+        catch {
+            collectOperationRate(
+                sourceCurrency = sourceAccount.currency,
+                sourceAmount = sourceAmount,
+                destinationCurrency = destinationAccount.currency,
+                destinationAmount = destinationAmount,
+                date = date,
+            )
+        }
+
+        transaction
     }
 }

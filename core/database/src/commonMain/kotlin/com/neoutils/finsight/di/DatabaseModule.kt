@@ -11,7 +11,9 @@ import com.neoutils.finsight.database.dao.AccountCurrencyRelabelDao
 import com.neoutils.finsight.database.dao.ExchangeRateDao
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.CollectOperationRateUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
+import com.neoutils.finsight.domain.usecase.SuggestConvertedAmountUseCase
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.RecurringDao
@@ -48,6 +50,21 @@ val databaseModule = module {
     single<IExchangeRateRepository> { ExchangeRateRepository(exchangeRateDao = get()) }
     single<AccountCurrencyRelabelDao> { get<AppDatabase>().accountCurrencyRelabelDao() }
     factory { ConsolidateFigureUseCase(exchangeRateRepository = get()) }
+
+    // Beside the consolidation for the same reason: both are owned by the layer that holds
+    // the rate history, and both are consumed by features that cannot see each other.
+    factory {
+        CollectOperationRateUseCase(
+            exchangeRateRepository = get(),
+            baseCurrencyRepository = get(),
+        )
+    }
+    factory {
+        SuggestConvertedAmountUseCase(
+            exchangeRateRepository = get(),
+            baseCurrencyRepository = get(),
+        )
+    }
 }
 
 expect val databasePlatformModule: Module

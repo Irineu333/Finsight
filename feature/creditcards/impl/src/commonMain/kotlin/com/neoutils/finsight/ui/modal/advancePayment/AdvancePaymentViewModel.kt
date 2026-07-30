@@ -8,6 +8,8 @@ import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.usecase.SuggestConvertedAmountUseCase
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdvanceInvoicePayment
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -28,12 +30,16 @@ class AdvancePaymentViewModel(
     private val invoiceId: Long,
     private val advanceInvoicePaymentUseCase: AdvanceInvoicePaymentUseCase,
     private val accountRepository: IAccountRepository,
+    private val invoiceRepository: IInvoiceRepository,
+    private val suggestConvertedAmount: SuggestConvertedAmountUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
+    private val amount = MutableStateFlow(0.0)
+    private val date = MutableStateFlow<LocalDate?>(null)
 
     private val accounts = flow {
         emit(accountRepository.getAllAccounts())
@@ -42,10 +48,28 @@ class AdvancePaymentViewModel(
     val uiState = combine(
         accounts,
         selectedAccount,
-    ) { accounts, account ->
+        amount,
+        date,
+    ) { accounts, account, amount, date ->
+        val selected = account ?: accounts.firstOrNull { it.isDefault }
+        val card = invoiceRepository.getInvoiceById(invoiceId)?.creditCard
+
         AdvancePaymentUiState(
             accounts = accounts,
-            selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
+            selectedAccount = selected,
+            cardCurrency = card?.currency,
+            // The known end is what the user is paying towards the invoice, in the card's
+            // currency; what is suggested is what that costs in the account's.
+            suggestion = if (selected != null && card != null && date != null) {
+                suggestConvertedAmount(
+                    fromCurrency = card.currency,
+                    toCurrency = selected.currency,
+                    amount = amount,
+                    date = date,
+                )
+            } else {
+                null
+            },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -59,9 +83,18 @@ class AdvancePaymentViewModel(
                 selectedAccount.value = action.account
             }
 
+            is AdvancePaymentAction.AmountChanged -> {
+                amount.value = action.amount
+            }
+
+            is AdvancePaymentAction.DateChanged -> {
+                date.value = action.date
+            }
+
             is AdvancePaymentAction.Submit -> {
                 submit(
                     amount = action.amount,
+                    accountAmount = action.accountAmount,
                     date = action.date,
                     account = action.account,
                 )
@@ -71,12 +104,15 @@ class AdvancePaymentViewModel(
 
     private fun submit(
         amount: Double,
+        accountAmount: Double?,
         date: LocalDate,
         account: Account? = selectedAccount.value,
     ) = viewModelScope.launch {
         advanceInvoicePaymentUseCase(
             invoiceId = invoiceId,
             amount = amount,
+            // Single currency: the same number leaves the account and reaches the card.
+            accountAmount = accountAmount ?: amount,
             date = date,
             account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
         ).onLeft {

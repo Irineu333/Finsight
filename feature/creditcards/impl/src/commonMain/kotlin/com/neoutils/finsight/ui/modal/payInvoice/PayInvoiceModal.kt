@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.payInvoice
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,8 +13,10 @@ import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.ui.component.CrossCurrencyAmountField
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -70,6 +75,17 @@ class PayInvoiceModal(
                 currentDate.coerceIn(invoice.closingDate, maxDate)
             )
         )
+
+        val accountAmount = rememberTextFieldState()
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .collect { typed ->
+                    runCatching { dayMonthYear.parse(typed) }.getOrNull()?.let {
+                        viewModel.onAction(PayInvoiceAction.DateChanged(it))
+                    }
+                }
+        }
 
         Column(
             modifier = Modifier
@@ -121,6 +137,32 @@ class PayInvoiceModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // The read-only field above keeps its meaning — what the card is owed, exact, in
+            // its own currency. What leaves the paying account is a **new** field below it,
+            // shown only when the two currencies disagree; turning the existing one editable
+            // would have changed what it says.
+            AnimatedVisibility(visible = uiState.isCrossCurrency) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CrossCurrencyAmountField(
+                        state = accountAmount,
+                        currency = uiState.selectedAccount?.currency.orEmpty(),
+                        label = stringResource(
+                            Res.string.pay_invoice_account_amount_label,
+                            uiState.selectedAccount?.name.orEmpty(),
+                        ),
+                        counterpartAmount = outstandingDebt,
+                        counterpartCurrency = invoice.creditCard.currency,
+                        suggestedAmount = uiState.suggestion?.amount,
+                        suggestedRateDate = uiState.suggestion?.rate?.date,
+                        isSuggestionFromOperationDate =
+                            uiState.suggestion?.isFromOperationDate == true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
             OutlinedTextField(
                 state = date,
                 label = {
@@ -169,6 +211,9 @@ class PayInvoiceModal(
                         PayInvoiceAction.Submit(
                             date = dayMonthYear.parse(date.text.toString()),
                             account = uiState.selectedAccount,
+                            accountAmount = accountAmount.text.toString()
+                                .moneyToDouble()
+                                .takeIf { uiState.isCrossCurrency },
                         )
                     )
                 },
@@ -177,6 +222,10 @@ class PayInvoiceModal(
                     minDate = invoice.closingDate,
                     maxDate = maxDate,
                     outstandingDebt = outstandingDebt,
+                    // Without this the residue guard of a cross-currency write would be
+                    // reachable by an empty second field.
+                    accountAmount = accountAmount.text.toString()
+                        .takeIf { uiState.isCrossCurrency },
                 ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -195,10 +244,14 @@ class PayInvoiceModal(
         minDate: LocalDate,
         maxDate: LocalDate,
         outstandingDebt: Double,
+        /** `null` when the payment is single-currency and there is no second field. */
+        accountAmount: String?,
     ): Boolean {
         if (date.isEmpty()) return false
 
         if (outstandingDebt <= 0.0) return false
+
+        if (accountAmount != null && accountAmount.moneyToDouble() <= 0.0) return false
 
         val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
 

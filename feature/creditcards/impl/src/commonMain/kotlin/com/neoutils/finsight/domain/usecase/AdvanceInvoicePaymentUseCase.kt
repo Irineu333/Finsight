@@ -25,18 +25,29 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
+/**
+ * Paying part of an open invoice: [amount] is what the card receives, in the card's currency,
+ * and [accountAmount] is what leaves the paying account.
+ *
+ * The ceiling `amount <= currentBillAmount` holds over [amount] and not over [accountAmount],
+ * because the bill is denominated in the card's currency — comparing it against the account's
+ * would be comparing two different currencies. [accountAmount] is free, and carries no default
+ * so that a cross-currency payment cannot be written by omission.
+ */
 class AdvanceInvoicePaymentUseCase(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val calculateInvoiceUseCase: CalculateInvoiceUseCase
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val collectOperationRate: CollectOperationRateUseCase,
 ) {
     suspend operator fun invoke(
         invoiceId: Long,
         amount: Double,
+        accountAmount: Double,
         date: LocalDate,
         account: Account,
     ): Either<Throwable, Transaction> = either {
-        ensure(amount > 0) {
+        ensure(amount > 0 && accountAmount > 0) {
             InvoiceException(InvoiceError.NegativeAmount)
         }
 
@@ -64,7 +75,7 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.AmountExceedsInvoice)
         }
         
-        catch {
+        val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
                     title = null,
@@ -75,7 +86,7 @@ class AdvanceInvoicePaymentUseCase(
                         // cancel it out.
                         TransactionLeg(
                             type = TransactionType.EXPENSE,
-                            amount = amount,
+                            amount = accountAmount,
                             accountId = account.id,
                         ),
                         TransactionLeg(
@@ -88,5 +99,19 @@ class AdvanceInvoicePaymentUseCase(
                 )
             )
         }.bind()
+
+        // After the write and unable to undo it, for the reason design D27 gives: the rate
+        // and the operation that taught it have separate lives.
+        catch {
+            collectOperationRate(
+                sourceCurrency = account.currency,
+                sourceAmount = accountAmount,
+                destinationCurrency = invoice.creditCard.currency,
+                destinationAmount = amount,
+                date = date,
+            )
+        }
+
+        transaction
     }
 }

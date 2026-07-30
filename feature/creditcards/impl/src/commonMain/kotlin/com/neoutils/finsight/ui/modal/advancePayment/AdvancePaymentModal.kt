@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.advancePayment
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,8 +13,10 @@ import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +28,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.ui.component.CrossCurrencyAmountField
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -69,6 +73,24 @@ class AdvancePaymentModal(
             )
         )
 
+        val accountAmount = rememberTextFieldState()
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }
+                .collect {
+                    viewModel.onAction(AdvancePaymentAction.AmountChanged(it.moneyToDouble()))
+                }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .collect { typed ->
+                    runCatching { dayMonthYear.parse(typed) }.getOrNull()?.let {
+                        viewModel.onAction(AdvancePaymentAction.DateChanged(it))
+                    }
+                }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,7 +129,16 @@ class AdvancePaymentModal(
             OutlinedTextField(
                 state = amount,
                 label = {
-                    Text(text = stringResource(Res.string.advance_payment_amount_label))
+                    Text(
+                        text = if (uiState.isCrossCurrency) {
+                            stringResource(
+                                Res.string.advance_payment_card_amount_label,
+                                invoice.creditCard.name,
+                            )
+                        } else {
+                            stringResource(Res.string.advance_payment_amount_label)
+                        }
+                    )
                 },
                 inputTransformation = rememberMoneyInputTransformation(invoice.creditCard.currency, amount),
                 keyboardOptions = KeyboardOptions(
@@ -120,6 +151,30 @@ class AdvancePaymentModal(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // The ceiling holds over the field above, in the card's currency; this one is
+            // free, because comparing it against the bill would compare two currencies.
+            AnimatedVisibility(visible = uiState.isCrossCurrency) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CrossCurrencyAmountField(
+                        state = accountAmount,
+                        currency = uiState.selectedAccount?.currency.orEmpty(),
+                        label = stringResource(
+                            Res.string.advance_payment_account_amount_label,
+                            uiState.selectedAccount?.name.orEmpty(),
+                        ),
+                        counterpartAmount = amount.text.toString().moneyToDouble(),
+                        counterpartCurrency = invoice.creditCard.currency,
+                        suggestedAmount = uiState.suggestion?.amount,
+                        suggestedRateDate = uiState.suggestion?.rate?.date,
+                        isSuggestionFromOperationDate =
+                            uiState.suggestion?.isFromOperationDate == true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
 
             OutlinedTextField(
                 state = date,
@@ -170,11 +225,18 @@ class AdvancePaymentModal(
                             amount = amount.text.toString().moneyToDouble(),
                             date = dayMonthYear.parse(date.text.toString()),
                             account = uiState.selectedAccount,
+                            accountAmount = accountAmount.text.toString()
+                                .moneyToDouble()
+                                .takeIf { uiState.isCrossCurrency },
                         )
                     )
                 },
                 enabled = isValidPayment(
                     amount = amount.text.toString(),
+                    // Without this the residue guard of a cross-currency write would be
+                    // reachable by an empty second field.
+                    accountAmount = accountAmount.text.toString()
+                        .takeIf { uiState.isCrossCurrency },
                     date = date.text.toString(),
                     minDate = invoice.openingDate,
                     maxDate = maxDate,
@@ -198,6 +260,8 @@ class AdvancePaymentModal(
 
     private fun isValidPayment(
         amount: String,
+        /** `null` when the payment is single-currency and there is no second field. */
+        accountAmount: String?,
         date: String,
         minDate: LocalDate,
         maxDate: LocalDate,
@@ -206,6 +270,7 @@ class AdvancePaymentModal(
         if (amount.isEmpty()) return false
         val parsedAmount = amount.moneyToDouble()
         if (parsedAmount <= 0.0) return false
+        if (accountAmount != null && accountAmount.moneyToDouble() <= 0.0) return false
         if (outstandingDebt <= 0.0) return false
         if (parsedAmount > outstandingDebt) return false
         if (date.isEmpty()) return false

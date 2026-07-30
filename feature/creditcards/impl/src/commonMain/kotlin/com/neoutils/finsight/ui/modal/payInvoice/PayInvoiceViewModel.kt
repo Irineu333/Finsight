@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.analytics.event.PayInvoice
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.SuggestConvertedAmountUseCase
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.ledger_action_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
@@ -33,20 +34,40 @@ class PayInvoiceViewModel(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
+    private val suggestConvertedAmount: SuggestConvertedAmountUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
+    private val date = MutableStateFlow<LocalDate?>(null)
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),
         selectedAccount,
-    ) { accounts, account ->
+        date,
+    ) { accounts, account, date ->
+        val selected = account ?: accounts.firstOrNull { it.isDefault }
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+        val card = invoice?.creditCard
+
         PayInvoiceUiState(
             accounts = accounts,
-            selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
+            selectedAccount = selected,
+            cardCurrency = card?.currency,
+            // The known end is the debt, in the card's currency; what is suggested is the
+            // other one — what has to leave the account to settle it.
+            suggestion = if (selected != null && invoice != null && card != null && date != null) {
+                suggestConvertedAmount(
+                    fromCurrency = card.currency,
+                    toCurrency = selected.currency,
+                    amount = calculateInvoiceUseCase(invoice),
+                    date = date,
+                )
+            } else {
+                null
+            },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -60,10 +81,15 @@ class PayInvoiceViewModel(
                 selectedAccount.value = action.account
             }
 
+            is PayInvoiceAction.DateChanged -> {
+                date.value = action.date
+            }
+
             is PayInvoiceAction.Submit -> {
                 submit(
                     date = action.date,
                     account = action.account,
+                    accountAmount = action.accountAmount,
                 )
             }
         }
@@ -72,6 +98,7 @@ class PayInvoiceViewModel(
     private fun submit(
         date: LocalDate,
         account: Account? = selectedAccount.value,
+        accountAmount: Double?,
     ) = viewModelScope.launch {
         // The screen holds an id; resolving it to the facade is its job, because the
         // ledger only knows the dimension the facade carries.
@@ -91,6 +118,9 @@ class PayInvoiceViewModel(
                 invoiceId = invoiceId,
                 date = date,
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
+                // Single currency: what leaves the account is the debt itself, and the
+                // number comes from the same read the card side uses.
+                accountAmount = accountAmount ?: invoiceAmount,
             )
         }
 

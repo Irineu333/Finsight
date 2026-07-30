@@ -24,9 +24,23 @@ import kotlin.test.assertEquals
  */
 class ConsolidationBoundaryTest {
 
-    /** The one place a rate may be applied to a value. */
+    /** The one place a rate may be applied to a **figure**. */
     private val consolidationLayer =
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateFigureUseCase.kt"
+
+    /**
+     * The sites allowed to multiply by a rate at all: the consolidation, and the suggestion of
+     * the second amount of a cross-currency operation.
+     *
+     * The second is not a figure and never becomes one — it is a value offered *into a field*,
+     * which the user overwrites at will and which the ledger then records as two typed
+     * amounts. Keeping it out of the consolidation is the point: a figure is reduced in one
+     * place, and a form suggesting a number is not reducing anything.
+     */
+    private val rateAppliers = listOf(
+        consolidationLayer,
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestConvertedAmountUseCase.kt",
+    )
 
     @Test
     fun `the ledger names no rate and no base-currency preference`() {
@@ -59,7 +73,7 @@ class ConsolidationBoundaryTest {
     @Test
     fun `no screen, ViewModel or UI model applies a rate`() {
         val offenders = sourcesUnder("core", "feature", "app")
-            .filterNot { it.path == consolidationLayer }
+            .filterNot { it.path in rateAppliers }
             .filter { file -> RATE_APPLICATION.containsMatchIn(file.code) }
             .map { it.path }
 
@@ -112,6 +126,15 @@ class ConsolidationBoundaryTest {
         "feature/accounts/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/EnsureDefaultAccountUseCase.kt",
         "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/CreateAccountUseCase.kt",
         "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/CreditCardRepository.kt",
+        // The two forms that pre-select the currency of a row being created — the doors of
+        // design D23, and the only sites that choose one at all.
+        "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/accountForm/AccountFormViewModel.kt",
+        "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/creditCardForm/CreditCardFormViewModel.kt",
+        // The two sites that decide what a cross-currency operation taught, or would suggest,
+        // on its own date. Neither renders a figure: one writes a line of the rate history,
+        // the other offers a number into a field.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/CollectOperationRateUseCase.kt",
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestConvertedAmountUseCase.kt",
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
     ).map { it.replace('/', java.io.File.separatorChar) }
 

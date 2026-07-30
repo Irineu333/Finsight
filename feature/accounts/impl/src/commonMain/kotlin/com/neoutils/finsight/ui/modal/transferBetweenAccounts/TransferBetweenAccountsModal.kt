@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +24,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.ui.component.CrossCurrencyAmountField
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -54,7 +56,31 @@ class TransferBetweenAccountsModal(
         val modalManager = LocalModalManager.current
 
         val amount = rememberTextFieldState()
+        val destinationAmount = rememberTextFieldState()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
+
+        val sourceCurrency = uiState.selectedSourceAccount?.currency
+        val destinationCurrency = uiState.selectedDestinationAccount?.currency
+
+        // The first amount and the date reach the ViewModel as they are typed: which quote
+        // governs this operation depends on both, and that decision is not the form's.
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }
+                .collect {
+                    viewModel.onAction(
+                        TransferBetweenAccountsAction.SourceAmountChanged(it.moneyToDouble())
+                    )
+                }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .collect { typed ->
+                    runCatching { dayMonthYear.parse(typed) }.getOrNull()?.let {
+                        viewModel.onAction(TransferBetweenAccountsAction.DateChanged(it))
+                    }
+                }
+        }
 
 
         Box {
@@ -99,9 +125,21 @@ class TransferBetweenAccountsModal(
                 OutlinedTextField(
                     state = amount,
                     label = {
-                        Text(text = stringResource(Res.string.transfer_amount_label))
+                        Text(
+                            text = if (uiState.isCrossCurrency) {
+                                stringResource(
+                                    Res.string.transfer_amount_from_label,
+                                    uiState.selectedSourceAccount?.name.orEmpty(),
+                                )
+                            } else {
+                                stringResource(Res.string.transfer_amount_label)
+                            }
+                        )
                     },
-                    inputTransformation = rememberMoneyInputTransformation(sourceAccount.currency, amount),
+                    inputTransformation = rememberMoneyInputTransformation(
+                        currency = sourceCurrency ?: sourceAccount.currency,
+                        state = amount,
+                    ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -112,6 +150,30 @@ class TransferBetweenAccountsModal(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Revealed only where the two ends disagree about the currency: a transfer
+                // inside one currency reads exactly as it did before this change.
+                AnimatedVisibility(visible = uiState.isCrossCurrency) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        CrossCurrencyAmountField(
+                            state = destinationAmount,
+                            currency = destinationCurrency.orEmpty(),
+                            label = stringResource(
+                                Res.string.transfer_amount_to_label,
+                                uiState.selectedDestinationAccount?.name.orEmpty(),
+                            ),
+                            counterpartAmount = amount.text.toString().moneyToDouble(),
+                            counterpartCurrency = sourceCurrency.orEmpty(),
+                            suggestedAmount = uiState.suggestion?.amount,
+                            suggestedRateDate = uiState.suggestion?.rate?.date,
+                            isSuggestionFromOperationDate =
+                                uiState.suggestion?.isFromOperationDate == true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
 
                 OutlinedTextField(
                     state = date,
@@ -156,9 +218,17 @@ class TransferBetweenAccountsModal(
 
                 Button(
                     onClick = {
+                        val source = amount.text.toString().moneyToDouble()
                         viewModel.onAction(
                             TransferBetweenAccountsAction.Submit(
-                                amount = amount.text.toString().moneyToDouble(),
+                                sourceAmount = source,
+                                // Inside one currency the two ends are the same number, and
+                                // the field that would say so is not even on screen.
+                                destinationAmount = if (uiState.isCrossCurrency) {
+                                    destinationAmount.text.toString().moneyToDouble()
+                                } else {
+                                    source
+                                },
                                 date = dayMonthYear.parse(date.text.toString()),
                             )
                         )
@@ -168,6 +238,10 @@ class TransferBetweenAccountsModal(
                         date = date.text.toString(),
                         sourceAccount = uiState.selectedSourceAccount,
                         destinationAccount = uiState.selectedDestinationAccount,
+                        // Without this the residue guard of a cross-currency write would be
+                        // reachable by an empty second field.
+                        destinationAmount = destinationAmount.text.toString()
+                            .takeIf { uiState.isCrossCurrency },
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -188,9 +262,12 @@ class TransferBetweenAccountsModal(
         date: String,
         sourceAccount: Account?,
         destinationAccount: Account?,
+        /** `null` when the operation is single-currency and there is no second field. */
+        destinationAmount: String?,
     ): Boolean {
         if (amount.isEmpty()) return false
         if (amount.moneyToDouble() <= 0.0) return false
+        if (destinationAmount != null && destinationAmount.moneyToDouble() <= 0.0) return false
         if (date.isEmpty()) return false
         if (sourceAccount == null || destinationAccount == null) return false
         if (sourceAccount.id == destinationAccount.id) return false

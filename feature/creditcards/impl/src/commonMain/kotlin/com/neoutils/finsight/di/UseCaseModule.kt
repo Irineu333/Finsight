@@ -68,6 +68,7 @@ val useCaseModules = module {
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
+            collectOperationRate = get(),
         )
     }
 
@@ -76,6 +77,7 @@ val useCaseModules = module {
             transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
+            collectOperationRate = get(),
         )
     }
 

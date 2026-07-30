@@ -435,7 +435,6 @@ private fun CreditCardPager(
             closingDay = creditCards[page].closingDay,
             dueDay = creditCards[page].dueDay,
             limit = creditCards[page].limit,
-            currency = ASSUMED_SINGLE_CURRENCY,
             invoiceUi = creditCards[page].invoiceUi,
             // Only the selected page is promoted: a neighbour composed by the pager's
             // contentPadding would be lifted to the overlay and lose its clip.
@@ -540,7 +539,7 @@ private fun CardActions(
                         modalManager.show(
                             AdvancePaymentModal(
                                 invoice = invoice,
-                                currentBillAmount = invoiceUi.amount,
+                                currentBillAmount = invoiceUi.amount.value,
                             )
                         )
                     },
@@ -632,7 +631,7 @@ private fun CardActions(
                         modalManager.show(
                             PayInvoiceModal(
                                 invoice = invoice,
-                                currentBillAmount = invoiceUi.amount
+                                currentBillAmount = invoiceUi.amount.value
                             )
                         )
                     },

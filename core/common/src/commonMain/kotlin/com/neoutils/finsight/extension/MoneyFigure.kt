@@ -60,3 +60,24 @@ class MoneyFigure private constructor(val terms: List<DisplayAmount>) {
         fun of(terms: List<DisplayAmount>) = MoneyFigure(terms)
     }
 }
+
+/**
+ * The figure's terms as the lines a surface shows, in order — one line per term, and one
+ * line in the common case.
+ *
+ * Every term after the first is juxtaposed onto the one above it, and the operator is
+ * **glued** to its term: `+US$ 50,00`, never `+ US$ 50,00`. Spaced apart it would read as
+ * arithmetic, and arithmetic is exactly what a second term means did *not* happen. Where a
+ * term already spells its own direction ([DisplayAmount.spellsOwnSign]) that sign is the
+ * operator, so an expense of two terms reads `-R$ 100,00` over `-US$ 50,00` rather than
+ * growing a second sign.
+ *
+ * It returns text rather than drawing, so the rule is one testable function shared by the
+ * composable that stacks the lines and by any surface that cannot stack (see the declared
+ * degradation of a fixed-width surface).
+ */
+fun CurrencyFormatter.formatTerms(figure: MoneyFigure): List<String> =
+    figure.terms.mapIndexed { index, term ->
+        val text = format(term)
+        if (index == 0 || term.spellsOwnSign) text else "+$text"
+    }

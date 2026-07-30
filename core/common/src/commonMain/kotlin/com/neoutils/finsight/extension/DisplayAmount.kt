@@ -41,6 +41,23 @@ class DisplayAmount private constructor(
     val isApproximate: Boolean get() = denomination.isApproximate
 
     /**
+     * Whether this figure's own reading already opens with a `+` or a `-`.
+     *
+     * It is derived from the policy and the value, which is the only place both are known,
+     * and it exists for the one caller that has to *not* add a sign: juxtaposing the terms
+     * of a [MoneyFigure] glues a `+` to each term after the first, and a term that already
+     * spells its own direction would read `++US$ 50,00`. Where the term spells one, that
+     * sign **is** the juxtaposition operator.
+     */
+    val spellsOwnSign: Boolean
+        get() = when (policy) {
+            SignPolicy.FORCED_POSITIVE, SignPolicy.FORCED_NEGATIVE -> true
+            SignPolicy.EXPLICIT_SIGN -> value != 0.0
+            SignPolicy.NATURAL -> value < 0
+            SignPolicy.MAGNITUDE, SignPolicy.NEUTRAL, SignPolicy.OWED -> false
+        }
+
+    /**
      * The closed set of ways a figure reads. [NEUTRAL] and [NATURAL] behave alike today
      * and mean different things: a line that means "this moves nothing here" must stay
      * signless if its value ever turns negative, which is only decidable if the intent

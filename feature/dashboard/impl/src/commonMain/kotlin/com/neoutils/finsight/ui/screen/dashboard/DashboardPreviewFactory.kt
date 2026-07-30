@@ -1,7 +1,10 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
@@ -20,319 +23,324 @@ class DashboardPreviewFactory(
      */
     private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
-    suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
-        DashboardComponentType.TOTAL_BALANCE.key -> {
-            DashboardComponentVariant.TotalBalance.Preview(
-                component = DashboardComponent.TotalBalance(
-                    amount = 5432.10,
-                ),
-            )
-        }
+    suspend fun createPreview(key: String): DashboardComponentVariant? {
+        val denomination = Denomination.exact(baseCurrencyRepository.current())
+        fun figure(amount: Double) = MoneyFigure.of(DisplayAmount.natural(amount, denomination))
+        fun spending(category: Category, amount: Double, percentage: Double) =
+            CategorySpendingUi(category, figure(amount), percentage)
 
-        DashboardComponentType.OVERALL_BALANCE_STATS.key -> {
-            DashboardComponentVariant.OverallBalanceStats.Preview(
-                component = DashboardComponent.OverallBalanceStats(
-                    income = 3200.0,
-                    expense = 3950.0,
-                ),
-            )
-        }
-
-        DashboardComponentType.CONCRETE_BALANCE_STATS.key -> {
-            DashboardComponentVariant.ConcreteBalanceStats.Preview(
-                component = DashboardComponent.ConcreteBalanceStats(
-                    income = 3200.0,
-                    expense = 1800.0,
-                ),
-            )
-        }
-
-        DashboardComponentType.PENDING_BALANCE_STATS.key -> {
-            DashboardComponentVariant.PendingBalanceStats.Preview(
-                component = DashboardComponent.PendingBalanceStats(
-                    pendingIncome = 500.0,
-                    pendingExpense = 300.0,
-                ),
-            )
-        }
-
-        DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key -> {
-            DashboardComponentVariant.CreditCardBalanceStats.Preview(
-                component = DashboardComponent.CreditCardBalanceStats(
-                    payment = 640.0,
-                    expense = 2150.0,
-                ),
-            )
-        }
-
-        DashboardComponentType.ACCOUNTS_OVERVIEW.key -> {
-            DashboardComponentVariant.AccountsOverview.Preview(
-                component = DashboardComponent.AccountsOverview(
-                    accounts = listOf(
-                        DashboardAccountUi(
-                            id = 1,
-                            iconKey = "wallet",
-                            name = getString(Res.string.preview_account_main),
-                            isDefault = true,
-                            balance = 2500.0,
-                            currency = ASSUMED_SINGLE_CURRENCY,
-                        ),
-                        DashboardAccountUi(
-                            id = 2,
-                            iconKey = "piggy_bank",
-                            name = getString(Res.string.preview_account_savings),
-                            isDefault = false,
-                            balance = 1200.0,
-                            currency = ASSUMED_SINGLE_CURRENCY,
-                        ),
-                    ),
-                ),
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
-            )
-        }
-
-        DashboardComponentType.CREDIT_CARDS_PAGER.key -> {
-            DashboardComponentVariant.CreditCardsPager.Preview(
-                component = DashboardComponent.CreditCardsPager.Content(
-                    creditCards = listOf(
-                        CreditCardUi(
-                            cardId = 1,
-                            iconKey = "card",
-                            name = getString(Res.string.preview_card_nubank),
-                            closingDay = 5,
-                            dueDay = 12,
-                            limit = 5000.0,
-                            invoiceUi = null,
-                        ),
-                    ),
-                    domainInvoices = listOf(null),
-                ),
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
-            )
-        }
-
-        DashboardComponentType.SPENDING_BY_CATEGORY.key -> {
-            DashboardComponentVariant.SpendingByCategory.Preview(
-                component = DashboardComponent.SpendingByCategory(
-                    categorySpending = listOf(
-                        CategorySpending(
-                            category = Category(
-                                id = 1,
-                                name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
-                            ),
-                            amount = 450.0,
-                            percentage = 61.64
-                        ),
-                        CategorySpending(
-                            category = Category(
-                                id = 3,
-                                name = getString(Res.string.preview_category_transport),
-                                icon = CategoryLazyIcon("directions_car"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
-                            ),
-                            amount = 280.0,
-                            percentage = 38.36,
-                        ),
-                    ),
-                ),
-            )
-        }
-
-        DashboardComponentType.INCOME_BY_CATEGORY.key -> {
-            DashboardComponentVariant.IncomeByCategory.Preview(
-                component = DashboardComponent.IncomeByCategory(
-                    categoryIncome = listOf(
-                        CategorySpending(
-                            category = Category(
-                                id = 2,
-                                name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
-                                type = Category.Type.INCOME,
-                                createdAt = 0,
-                            ),
-                            amount = 3200.0,
-                            percentage = 84.21
-                        ),
-                        CategorySpending(
-                            category = Category(
-                                id = 4,
-                                name = getString(Res.string.preview_category_freelance),
-                                icon = CategoryLazyIcon("laptop"),
-                                type = Category.Type.INCOME,
-                                createdAt = 0,
-                            ),
-                            amount = 600.0,
-                            percentage = 15.79,
-                        ),
+        return when (key) {
+            DashboardComponentType.TOTAL_BALANCE.key -> {
+                DashboardComponentVariant.TotalBalance.Preview(
+                    component = DashboardComponent.TotalBalance(
+                        amount = figure(5432.10),
                     ),
                 )
-            )
-        }
+            }
 
-        DashboardComponentType.BUDGETS.key -> {
-            DashboardComponentVariant.Budgets.Preview(
-                component = DashboardComponent.Budgets(
-                    budgetProgress = listOf(
-                        BudgetProgress(
-                            budget = Budget(
+            DashboardComponentType.OVERALL_BALANCE_STATS.key -> {
+                DashboardComponentVariant.OverallBalanceStats.Preview(
+                    component = DashboardComponent.OverallBalanceStats(
+                        income = figure(3200.0),
+                        expense = figure(3950.0),
+                    ),
+                )
+            }
+
+            DashboardComponentType.CONCRETE_BALANCE_STATS.key -> {
+                DashboardComponentVariant.ConcreteBalanceStats.Preview(
+                    component = DashboardComponent.ConcreteBalanceStats(
+                        income = figure(3200.0),
+                        expense = figure(1800.0),
+                    ),
+                )
+            }
+
+            DashboardComponentType.PENDING_BALANCE_STATS.key -> {
+                DashboardComponentVariant.PendingBalanceStats.Preview(
+                    component = DashboardComponent.PendingBalanceStats(
+                        pendingIncome = figure(500.0),
+                        pendingExpense = figure(300.0),
+                    ),
+                )
+            }
+
+            DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key -> {
+                DashboardComponentVariant.CreditCardBalanceStats.Preview(
+                    component = DashboardComponent.CreditCardBalanceStats(
+                        payment = figure(640.0),
+                        expense = figure(2150.0),
+                    ),
+                )
+            }
+
+            DashboardComponentType.ACCOUNTS_OVERVIEW.key -> {
+                DashboardComponentVariant.AccountsOverview.Preview(
+                    component = DashboardComponent.AccountsOverview(
+                        accounts = listOf(
+                            DashboardAccountUi(
                                 id = 1,
-                                title = getString(Res.string.preview_budget_food),
-                                categories = listOf(
-                                    Category(
-                                        id = 1,
-                                        name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
-                                        type = Category.Type.EXPENSE,
-                                        createdAt = 0,
-                                    )
+                                iconKey = "wallet",
+                                name = getString(Res.string.preview_account_main),
+                                isDefault = true,
+                                balance = DisplayAmount.natural(2500.0, denomination),
+                            ),
+                            DashboardAccountUi(
+                                id = 2,
+                                iconKey = "piggy_bank",
+                                name = getString(Res.string.preview_account_savings),
+                                isDefault = false,
+                                balance = DisplayAmount.natural(1200.0, denomination),
+                            ),
+                        ),
+                    ),
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
+                )
+            }
+
+            DashboardComponentType.CREDIT_CARDS_PAGER.key -> {
+                DashboardComponentVariant.CreditCardsPager.Preview(
+                    component = DashboardComponent.CreditCardsPager.Content(
+                        creditCards = listOf(
+                            CreditCardUi(
+                                cardId = 1,
+                                iconKey = "card",
+                                name = getString(Res.string.preview_card_nubank),
+                                closingDay = 5,
+                                dueDay = 12,
+                                limit = DisplayAmount.natural(5000.0, denomination),
+                                invoiceUi = null,
+                            ),
+                        ),
+                        domainInvoices = listOf(null),
+                    ),
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
+                )
+            }
+
+            DashboardComponentType.SPENDING_BY_CATEGORY.key -> {
+                DashboardComponentVariant.SpendingByCategory.Preview(
+                    component = DashboardComponent.SpendingByCategory(
+                        categorySpending = listOf(
+                            spending(
+                                category = Category(
+                                    id = 1,
+                                    name = getString(Res.string.preview_category_food),
+                                    icon = CategoryLazyIcon("shopping"),
+                                    type = Category.Type.EXPENSE,
+                                    createdAt = 0,
                                 ),
-                                iconKey = "shopping",
-                                amount = 600.0,
-                                createdAt = 0,
+                                amount = 450.0,
+                                percentage = 61.64,
                             ),
-                            spent = 450.0,
+                            spending(
+                                category = Category(
+                                    id = 3,
+                                    name = getString(Res.string.preview_category_transport),
+                                    icon = CategoryLazyIcon("directions_car"),
+                                    type = Category.Type.EXPENSE,
+                                    createdAt = 0,
+                                ),
+                                amount = 280.0,
+                                percentage = 38.36,
+                            ),
                         ),
                     ),
                 )
-            )
-        }
+            }
 
-        DashboardComponentType.PENDING_RECURRING.key -> {
-            DashboardComponentVariant.PendingRecurring.Preview(
-                component = DashboardComponent.PendingRecurring(
-                    recurringList = listOf(
-                        Recurring(
-                            id = 1,
-                            type = TransactionType.EXPENSE,
-                            amount = 49.90,
-                            title = getString(Res.string.preview_transaction_netflix),
-                            dayOfMonth = 15,
-                            category = null,
-                            account = Account(
-                                currency = baseCurrencyRepository.current(),
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
+            DashboardComponentType.INCOME_BY_CATEGORY.key -> {
+                DashboardComponentVariant.IncomeByCategory.Preview(
+                    component = DashboardComponent.IncomeByCategory(
+                        categoryIncome = listOf(
+                            spending(
+                                category = Category(
+                                    id = 2,
+                                    name = getString(Res.string.preview_category_salary),
+                                    icon = CategoryLazyIcon("payments"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                ),
+                                amount = 3200.0,
+                                percentage = 84.21,
                             ),
-                            creditCard = null,
-                            createdAt = 0,
+                            spending(
+                                category = Category(
+                                    id = 4,
+                                    name = getString(Res.string.preview_category_freelance),
+                                    icon = CategoryLazyIcon("laptop"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                ),
+                                amount = 600.0,
+                                percentage = 15.79,
+                            ),
                         ),
-                        Recurring(
-                            id = 2,
-                            type = TransactionType.INCOME,
-                            amount = 3500.0,
-                            title = getString(Res.string.preview_category_salary),
-                            dayOfMonth = 5,
-                            category = Category(
-                                id = 2,
-                                name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
-                                type = Category.Type.INCOME,
-                                createdAt = 0,
+                    )
+                )
+            }
+
+            DashboardComponentType.BUDGETS.key -> {
+                DashboardComponentVariant.Budgets.Preview(
+                    component = DashboardComponent.Budgets(
+                        budgetProgress = listOf(
+                            BudgetProgress(
+                                budget = Budget(
+                                    id = 1,
+                                    title = getString(Res.string.preview_budget_food),
+                                    categories = listOf(
+                                        Category(
+                                            id = 1,
+                                            name = getString(Res.string.preview_category_food),
+                                            icon = CategoryLazyIcon("shopping"),
+                                            type = Category.Type.EXPENSE,
+                                            createdAt = 0,
+                                        )
+                                    ),
+                                    iconKey = "shopping",
+                                    amount = 600.0,
+                                    createdAt = 0,
+                                ),
+                                spent = 450.0,
                             ),
-                            account = Account(
-                                currency = baseCurrencyRepository.current(),
+                        ),
+                    )
+                )
+            }
+
+            DashboardComponentType.PENDING_RECURRING.key -> {
+                DashboardComponentVariant.PendingRecurring.Preview(
+                    component = DashboardComponent.PendingRecurring(
+                        recurringList = listOf(
+                            Recurring(
                                 id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
+                                type = TransactionType.EXPENSE,
+                                amount = 49.90,
+                                title = getString(Res.string.preview_transaction_netflix),
+                                dayOfMonth = 15,
+                                category = null,
+                                account = Account(
+                                    currency = baseCurrencyRepository.current(),
+                                    id = 1,
+                                    name = getString(Res.string.preview_account_main),
+                                    iconKey = "wallet",
+                                    isDefault = true,
+                                    createdAt = 0,
+                                ),
+                                creditCard = null,
                                 createdAt = 0,
                             ),
-                            creditCard = null,
-                            createdAt = 0,
+                            Recurring(
+                                id = 2,
+                                type = TransactionType.INCOME,
+                                amount = 3500.0,
+                                title = getString(Res.string.preview_category_salary),
+                                dayOfMonth = 5,
+                                category = Category(
+                                    id = 2,
+                                    name = getString(Res.string.preview_category_salary),
+                                    icon = CategoryLazyIcon("payments"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                ),
+                                account = Account(
+                                    currency = baseCurrencyRepository.current(),
+                                    id = 1,
+                                    name = getString(Res.string.preview_account_main),
+                                    iconKey = "wallet",
+                                    isDefault = true,
+                                    createdAt = 0,
+                                ),
+                                creditCard = null,
+                                createdAt = 0,
+                            ),
                         ),
                     ),
-                ),
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
-            )
-        }
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
+                )
+            }
 
-        DashboardComponentType.RECENTS.key -> {
-            val currency = baseCurrencyRepository.current()
-            val mainAccount = Account(
-                currency = currency,
-                id = 1,
-                name = getString(Res.string.preview_account_main),
-                iconKey = "wallet",
-                isDefault = true,
-                createdAt = 0,
-            )
-            val foodCategory = Category(
-                id = 1,
-                name = getString(Res.string.preview_category_food),
-                icon = CategoryLazyIcon("shopping"),
-                type = Category.Type.EXPENSE,
-                createdAt = 0,
-            )
-            val foodAccount = Account(
-                currency = currency,
-                id = 101,
-                name = foodCategory.name,
-                type = AccountType.EXPENSE,
-                createdAt = 0,
-            )
-            val salaryAccount = Account(
-                currency = currency,
-                id = 102,
-                name = getString(Res.string.preview_category_salary),
-                type = AccountType.INCOME,
-                createdAt = 0,
-            )
+            DashboardComponentType.RECENTS.key -> {
+                val currency = baseCurrencyRepository.current()
+                val mainAccount = Account(
+                    currency = currency,
+                    id = 1,
+                    name = getString(Res.string.preview_account_main),
+                    iconKey = "wallet",
+                    isDefault = true,
+                    createdAt = 0,
+                )
+                val foodCategory = Category(
+                    id = 1,
+                    name = getString(Res.string.preview_category_food),
+                    icon = CategoryLazyIcon("shopping"),
+                    type = Category.Type.EXPENSE,
+                    createdAt = 0,
+                )
+                val foodAccount = Account(
+                    currency = currency,
+                    id = 101,
+                    name = foodCategory.name,
+                    type = AccountType.EXPENSE,
+                    createdAt = 0,
+                )
+                val salaryAccount = Account(
+                    currency = currency,
+                    id = 102,
+                    name = getString(Res.string.preview_category_salary),
+                    type = AccountType.INCOME,
+                    createdAt = 0,
+                )
 
-            DashboardComponentVariant.Recents.Preview(
-                component = DashboardComponent.Recents(
-                    // Built from the ledger and mapped here, exactly as the builder does,
-                    // so the preview cannot read differently from the real section.
-                    transactions = listOf(
-                        Transaction(
-                            id = 1,
-                            title = getString(Res.string.preview_transaction_supermarket),
-                            date = LocalDate(2026, 3, 20),
-                            entries = listOf(
-                                Entry(id = 1, account = mainAccount, amount = -15680, currency = currency),
-                                Entry(id = 2, account = foodAccount, amount = 15680, currency = currency),
+                DashboardComponentVariant.Recents.Preview(
+                    component = DashboardComponent.Recents(
+                        // Built from the ledger and mapped here, exactly as the builder does,
+                        // so the preview cannot read differently from the real section.
+                        transactions = listOf(
+                            Transaction(
+                                id = 1,
+                                title = getString(Res.string.preview_transaction_supermarket),
+                                date = LocalDate(2026, 3, 20),
+                                entries = listOf(
+                                    Entry(id = 1, account = mainAccount, amount = -15680, currency = currency),
+                                    Entry(id = 2, account = foodAccount, amount = 15680, currency = currency),
+                                ),
                             ),
-                        ),
-                        Transaction(
-                            id = 2,
-                            title = getString(Res.string.preview_category_salary),
-                            date = LocalDate(2026, 3, 5),
-                            entries = listOf(
-                                Entry(id = 3, account = mainAccount, amount = 350000, currency = currency),
-                                Entry(id = 4, account = salaryAccount, amount = -350000, currency = currency),
+                            Transaction(
+                                id = 2,
+                                title = getString(Res.string.preview_category_salary),
+                                date = LocalDate(2026, 3, 5),
+                                entries = listOf(
+                                    Entry(id = 3, account = mainAccount, amount = 350000, currency = currency),
+                                    Entry(id = 4, account = salaryAccount, amount = -350000, currency = currency),
+                                ),
                             ),
-                        ),
-                        Transaction(
-                            id = 3,
-                            title = getString(Res.string.preview_transaction_spotify),
-                            date = LocalDate(2026, 3, 1),
-                            entries = listOf(
-                                Entry(id = 5, account = mainAccount, amount = -2190, currency = currency),
-                                Entry(id = 6, account = foodAccount, amount = 2190, currency = currency),
+                            Transaction(
+                                id = 3,
+                                title = getString(Res.string.preview_transaction_spotify),
+                                date = LocalDate(2026, 3, 1),
+                                entries = listOf(
+                                    Entry(id = 5, account = mainAccount, amount = -2190, currency = currency),
+                                    Entry(id = 6, account = foodAccount, amount = 2190, currency = currency),
+                                ),
                             ),
-                        ),
-                    ).mapNotNull { it.toTransactionUi() },
-                    hasMore = true,
-                ),
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
-            )
-        }
+                        ).mapNotNull { it.toTransactionUi() },
+                        hasMore = true,
+                    ),
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
+                )
+            }
 
-        DashboardComponentType.QUICK_ACTIONS.key -> {
-            DashboardComponentVariant.QuickActions.Preview(
-                component = DashboardComponent.QuickActions(
-                    actions = navCatalog.destinations.filter { !it.primaryTab },
-                ),
-                config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
-            )
-        }
+            DashboardComponentType.QUICK_ACTIONS.key -> {
+                DashboardComponentVariant.QuickActions.Preview(
+                    component = DashboardComponent.QuickActions(
+                        actions = navCatalog.destinations.filter { !it.primaryTab },
+                    ),
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
+                )
+            }
 
-        else -> null
+            else -> null
+        }
     }
 }

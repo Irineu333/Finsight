@@ -2,6 +2,9 @@
 
 package com.neoutils.finsight.ui.screen.creditCards
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.extension.deriveTransactionType
@@ -144,7 +147,10 @@ class CreditCardsViewModel(
                 name = creditCard.name,
                 closingDay = creditCard.closingDay,
                 dueDay = creditCard.dueDay,
-                limit = creditCard.limit,
+                limit = DisplayAmount.natural(
+                    creditCard.limit,
+                    Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                ),
                 invoiceUi = invoice?.let {
                     invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
                 },

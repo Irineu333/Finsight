@@ -21,7 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.util.AppIcon
@@ -74,8 +76,7 @@ fun CreditCardCard(
     name: String,
     closingDay: Int,
     dueDay: Int,
-    limit: Double,
-    currency: String,
+    limit: DisplayAmount,
     variant: CreditCardCardVariant,
     modifier: Modifier = Modifier,
     invoiceUi: InvoiceUi? = null,
@@ -213,7 +214,7 @@ fun CreditCardCard(
                     ) {
                         invoiceUi?.let {
                             Text(
-                                text = formatter.format(it.amount, currency),
+                                text = formatter.format(it.amount),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface,
@@ -255,15 +256,14 @@ fun CreditCardCard(
                         )
                         Row {
                             Text(
-                                text = invoiceUi?.availableLimit?.let { formatter.format(it, currency) }
-                                    ?: formatter.format(limit, currency),
+                                text = formatter.format(invoiceUi?.availableLimit ?: limit),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colorScheme.onSurface,
                                 modifier = Modifier.alignByBaseline(),
                             )
                             Text(
-                                text = " / ${formatter.format(limit, currency)}",
+                                text = " / ${formatter.format(limit)}",
                                 fontSize = 14.sp,
                                 color = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.alignByBaseline(),

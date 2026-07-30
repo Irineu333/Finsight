@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -241,7 +240,6 @@ private fun ReportViewerContent(
                             item {
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
-                                    currency = ASSUMED_SINGLE_CURRENCY,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
                                     onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier
@@ -255,7 +253,6 @@ private fun ReportViewerContent(
                             item {
                                 CategorySpendingCard(
                                     categorySpending = state.categoryIncome,
-                                    currency = ASSUMED_SINGLE_CURRENCY,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
                                     onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier

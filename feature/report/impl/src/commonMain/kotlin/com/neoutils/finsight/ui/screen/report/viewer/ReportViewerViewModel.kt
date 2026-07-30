@@ -1,6 +1,9 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.ui.model.CategorySpendingUi
+import com.neoutils.finsight.extension.MoneyFigure
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -264,8 +267,8 @@ class ReportViewerViewModel(
             perspectiveBadge = perspectiveBadge,
             perspectiveIconKey = perspectiveIconKey,
             stats = stats,
-            categorySpending = categorySpending,
-            categoryIncome = categoryIncome,
+            categorySpending = categorySpending?.map { it.toUi() },
+            categoryIncome = categoryIncome?.map { it.toUi() },
             transactions = transactionsMap,
         )
     }.stateIn(
@@ -287,4 +290,17 @@ class ReportViewerViewModel(
             }
         }
     }
+
+    /**
+     * A category's share, denominated for the surfaces that show it. The figure spans every
+     * account in the report's scope, so reducing it is consolidation's job (task 8.2); until
+     * then the report has a single currency to state it in.
+     */
+    private fun CategorySpending.toUi() = CategorySpendingUi(
+        category = category,
+        amount = MoneyFigure.of(
+            DisplayAmount.natural(amount, Denomination.exact(ASSUMED_SINGLE_CURRENCY))
+        ),
+        percentage = percentage,
+    )
 }

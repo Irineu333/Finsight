@@ -14,19 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CategorySpending
+import androidx.compose.ui.text.TextStyle
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.ui.model.displayColor
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_card_title
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CategorySpendingCard(
-    categorySpending: List<CategorySpending>,
-    currency: String,
+    categorySpending: List<CategorySpendingUi>,
     title: String? = null,
     modifier: Modifier = Modifier,
     onCategoryClick: (Category) -> Unit = {}
@@ -55,7 +52,6 @@ fun CategorySpendingCard(
             categorySpending.forEach { spending ->
                 CategorySpendingItem(
                     spending = spending,
-                    currency = currency,
                     modifier = Modifier
                         .clickable { onCategoryClick(spending.category) }
                         .padding(horizontal = 16.dp)
@@ -67,12 +63,9 @@ fun CategorySpendingCard(
 
 @Composable
 private fun CategorySpendingItem(
-    spending: CategorySpending,
-    currency: String,
+    spending: CategorySpendingUi,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-
     Row(
         modifier = modifier
             .height(IntrinsicSize.Min)
@@ -105,10 +98,13 @@ private fun CategorySpendingItem(
                     fontWeight = FontWeight.Medium,
                 )
 
-                Text(
-                    text = formatter.format(spending.amount, currency),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                MoneyFigureText(
+                    figure = spending.amount,
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LocalContentColor.current,
+                    ),
                 )
             }
 

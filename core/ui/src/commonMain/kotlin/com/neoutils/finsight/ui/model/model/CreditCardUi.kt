@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.model
 
+import com.neoutils.finsight.extension.DisplayAmount
+
 /**
  * A flat, display-ready view of a credit card: the fields the card renders, its current
  * [invoiceUi], and whether it [mustPreserve] rather than be deleted — the fact behind
@@ -12,7 +14,7 @@ data class CreditCardUi(
     val name: String,
     val closingDay: Int,
     val dueDay: Int,
-    val limit: Double,
+    val limit: DisplayAmount,
     val invoiceUi: InvoiceUi?,
     // Everything DeleteCreditCardUseCase refuses on: movement (entries) or a recurring
     // still pointing at the card. Deriving this from entries alone would let the screen

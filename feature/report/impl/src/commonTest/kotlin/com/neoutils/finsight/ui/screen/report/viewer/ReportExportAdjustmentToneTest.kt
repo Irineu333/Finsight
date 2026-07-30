@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
@@ -69,7 +71,13 @@ class ReportExportAdjustmentToneTest {
                 adjustment = DisplayAmount.explicitSign(100.0, Denomination.exact("BRL")),
                 total = DisplayAmount.natural(100.0, Denomination.exact("BRL")),
             ),
-            categorySpending = listOf(CategorySpending(category, amount = 100.0, percentage = 100.0)),
+            categorySpending = listOf(
+                CategorySpendingUi(
+                    category = category,
+                    amount = MoneyFigure.of(DisplayAmount.natural(100.0, Denomination.exact("BRL"))),
+                    percentage = 100.0,
+                )
+            ),
             categoryIncome = null,
             // The state carries display models, mapped under the card's perspective, as
             // the view model hands them over.

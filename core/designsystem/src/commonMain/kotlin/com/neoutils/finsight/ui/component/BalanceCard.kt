@@ -29,7 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.balance_card_account_expense
 import com.neoutils.finsight.resources.balance_card_account_income
@@ -50,15 +50,13 @@ import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
 @Composable
 fun BalanceCard(
-    balance: Double,
-    currency: String,
+    balance: MoneyFigure,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val formatter = LocalCurrencyFormatter.current
     Card(
     modifier = modifier.then(
         if (onClick != null) {
@@ -124,8 +122,8 @@ fun BalanceCard(
                     }
                 )
         ) {
-            Text(
-                text = formatter.format(balance, currency),
+            MoneyFigureText(
+                figure = balance,
                 style = config.style,
             )
 

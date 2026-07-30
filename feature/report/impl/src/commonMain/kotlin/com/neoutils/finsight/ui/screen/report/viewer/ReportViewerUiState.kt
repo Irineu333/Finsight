@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.util.UiText
@@ -39,8 +39,8 @@ sealed class ReportViewerUiState {
         val perspectiveBadge: UiText,
         val perspectiveIconKey: String,
         val stats: Stats,
-        val categorySpending: List<CategorySpending>?,
-        val categoryIncome: List<CategorySpending>?,
+        val categorySpending: List<CategorySpendingUi>?,
+        val categoryIncome: List<CategorySpendingUi>?,
         /**
          * Already mapped, under this report's perspective when it has one: the card's
          * ledger account under a credit-card perspective, and nothing under an account

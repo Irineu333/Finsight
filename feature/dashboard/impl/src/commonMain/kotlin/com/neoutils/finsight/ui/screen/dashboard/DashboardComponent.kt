@@ -1,8 +1,9 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.Recurring
@@ -13,35 +14,35 @@ sealed interface DashboardComponent {
     val key: String
 
     data class TotalBalance(
-        val amount: Double,
+        val amount: MoneyFigure,
     ) : DashboardComponent {
         override val key = DashboardComponentType.TOTAL_BALANCE.key
     }
 
     data class OverallBalanceStats(
-        val income: Double,
-        val expense: Double,
+        val income: MoneyFigure,
+        val expense: MoneyFigure,
     ) : DashboardComponent {
         override val key = DashboardComponentType.OVERALL_BALANCE_STATS.key
     }
 
     data class ConcreteBalanceStats(
-        val income: Double,
-        val expense: Double,
+        val income: MoneyFigure,
+        val expense: MoneyFigure,
     ) : DashboardComponent {
         override val key = DashboardComponentType.CONCRETE_BALANCE_STATS.key
     }
 
     data class PendingBalanceStats(
-        val pendingIncome: Double,
-        val pendingExpense: Double,
+        val pendingIncome: MoneyFigure,
+        val pendingExpense: MoneyFigure,
     ) : DashboardComponent {
         override val key = DashboardComponentType.PENDING_BALANCE_STATS.key
     }
 
     data class CreditCardBalanceStats(
-        val payment: Double,
-        val expense: Double,
+        val payment: MoneyFigure,
+        val expense: MoneyFigure,
     ) : DashboardComponent {
         override val key = DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key
     }
@@ -67,13 +68,13 @@ sealed interface DashboardComponent {
     }
 
     data class SpendingByCategory(
-        val categorySpending: List<CategorySpending>,
+        val categorySpending: List<CategorySpendingUi>,
     ) : DashboardComponent {
         override val key = DashboardComponentType.SPENDING_BY_CATEGORY.key
     }
 
     data class IncomeByCategory(
-        val categoryIncome: List<CategorySpending>,
+        val categoryIncome: List<CategorySpendingUi>,
     ) : DashboardComponent {
         override val key = DashboardComponentType.INCOME_BY_CATEGORY.key
     }

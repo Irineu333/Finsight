@@ -5,7 +5,9 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.core.common)
+            // `api`, not `implementation`: `MoneyFigureText` and `BalanceCard` take a
+            // `MoneyFigure`, so `:core:common` is part of this module's public surface.
+            api(projects.core.common)
             implementation(projects.core.resources)
 
             implementation(libs.kotlinx.datetime)

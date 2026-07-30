@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -16,10 +17,14 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.MoneyFigure
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -120,7 +125,7 @@ class DashboardComponentsBuilder(
         // figure is consolidation, and until that layer exists (task 8.2) the app has a
         // single currency to reduce it to.
         return DashboardComponent.TotalBalance(
-            amount = calculateBalanceUseCase(target = input.targetMonth)[ASSUMED_SINGLE_CURRENCY],
+            amount = figure(calculateBalanceUseCase(target = input.targetMonth)[ASSUMED_SINGLE_CURRENCY]),
         )
     }
 
@@ -147,8 +152,8 @@ class DashboardComponentsBuilder(
         }
 
         return DashboardComponent.OverallBalanceStats(
-            income = income,
-            expense = expense,
+            income = figure(income),
+            expense = figure(expense),
         )
     }
 
@@ -169,8 +174,8 @@ class DashboardComponentsBuilder(
         }
 
         return DashboardComponent.ConcreteBalanceStats(
-            income = income,
-            expense = expense,
+            income = figure(income),
+            expense = figure(expense),
         )
     }
 
@@ -184,8 +189,8 @@ class DashboardComponentsBuilder(
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.PendingBalanceStats(
-                pendingIncome = pendingIncome,
-                pendingExpense = pendingExpense,
+                pendingIncome = figure(pendingIncome),
+                pendingExpense = figure(pendingExpense),
             )
         } else {
             null
@@ -205,8 +210,8 @@ class DashboardComponentsBuilder(
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.CreditCardBalanceStats(
-                payment = payment,
-                expense = expense,
+                payment = figure(payment),
+                expense = figure(expense),
             )
         } else {
             null
@@ -234,8 +239,10 @@ class DashboardComponentsBuilder(
                     iconKey = account.iconKey,
                     name = account.name,
                     isDefault = account.isDefault,
-                    balance = entryRepository.balance(account.id).amount,
-                    currency = account.currency,
+                    balance = DisplayAmount.natural(
+                        entryRepository.balance(account.id).amount,
+                        Denomination.exact(account.currency),
+                    ),
                 )
             }
 
@@ -269,7 +276,10 @@ class DashboardComponentsBuilder(
                     name = creditCard.name,
                     closingDay = creditCard.closingDay,
                     dueDay = creditCard.dueDay,
-                    limit = creditCard.limit,
+                    limit = DisplayAmount.natural(
+                        creditCard.limit,
+                        Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                    ),
                     // The dashboard shows a summary and offers no reopen action, so it
                     // has no need of the sibling list `canReopen` would derive from.
                     invoiceUi = invoice?.let {
@@ -303,7 +313,7 @@ class DashboardComponentsBuilder(
 
         return if (categorySpending.isNotEmpty()) {
             DashboardComponent.SpendingByCategory(
-                categorySpending = categorySpending,
+                categorySpending = categorySpending.map { it.toUi() },
             )
         } else {
             null
@@ -323,7 +333,7 @@ class DashboardComponentsBuilder(
 
         return if (categoryIncome.isNotEmpty()) {
             DashboardComponent.IncomeByCategory(
-                categoryIncome = categoryIncome,
+                categoryIncome = categoryIncome.map { it.toUi() },
             )
         } else {
             null
@@ -405,6 +415,23 @@ class DashboardComponentsBuilder(
             null
         }
     }
+
+    /**
+     * A widget figure as it is shown. Every one of them spans accounts, so it comes back
+     * per currency and reducing it to what the surface renders is consolidation's job (task
+     * 8.2). Until that layer is wired in there is a single currency to reduce it to, and the
+     * reading is [DisplayAmount.natural] — the same text the card printed before it carried
+     * its denomination.
+     */
+    private fun figure(amount: Double) =
+        MoneyFigure.of(DisplayAmount.natural(amount, Denomination.exact(ASSUMED_SINGLE_CURRENCY)))
+
+    /** A category's share, denominated for the card. The number and the share stay the domain's. */
+    private fun CategorySpending.toUi() = CategorySpendingUi(
+        category = category,
+        amount = figure(amount),
+        percentage = percentage,
+    )
 
     private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions? {
         // On desktop the persistent rail already exposes every feature, so the quick-actions grid is

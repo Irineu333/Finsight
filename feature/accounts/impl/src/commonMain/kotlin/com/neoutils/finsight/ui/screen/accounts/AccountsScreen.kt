@@ -454,7 +454,6 @@ private fun AccountPager(
             iconKey = domainAccounts[page].iconKey,
             name = domainAccounts[page].name,
             isDefault = domainAccounts[page].isDefault,
-            currency = domainAccounts[page].currency,
             variant = AccountCardVariant.Detail(
                 accountUi = accounts[page],
                 onEditBalance = { onEditBalance(domainAccounts[page]) },

@@ -97,8 +97,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(listOf(recurring(TransactionType.INCOME, 1200.0)))
 
         assertNotNull(component)
-        assertEquals(1200.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(1200.0, component.pendingIncome.primary.value)
+        assertEquals(0.0, component.pendingExpense.primary.value)
     }
 
     @Test
@@ -106,8 +106,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(listOf(recurring(TransactionType.EXPENSE, 350.0)))
 
         assertNotNull(component)
-        assertEquals(0.0, component.pendingIncome)
-        assertEquals(350.0, component.pendingExpense)
+        assertEquals(0.0, component.pendingIncome.primary.value)
+        assertEquals(350.0, component.pendingExpense.primary.value)
     }
 
     @Test
@@ -115,8 +115,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(emptyList())
 
         assertNotNull(component)
-        assertEquals(0.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(0.0, component.pendingIncome.primary.value)
+        assertEquals(0.0, component.pendingExpense.primary.value)
     }
 
     @Test
@@ -137,8 +137,8 @@ class DashboardPendingBalanceStatsTest {
         )
 
         assertNotNull(component)
-        assertEquals(1200.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(1200.0, component.pendingIncome.primary.value)
+        assertEquals(0.0, component.pendingExpense.primary.value)
     }
 }
 

@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
@@ -108,7 +107,10 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categorySpending.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount, ASSUMED_SINGLE_CURRENCY),
+                            // The exported document has a grammar of one term per line, so it
+                            // is a declared-degradation surface: task 8.1 gives it the mark and
+                            // the footnote that say a term was left out.
+                            amount = formatter.format(item.amount.primary),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -123,7 +125,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount, ASSUMED_SINGLE_CURRENCY),
+                            amount = formatter.format(item.amount.primary),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },

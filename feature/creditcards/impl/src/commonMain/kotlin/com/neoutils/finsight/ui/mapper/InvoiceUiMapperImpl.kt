@@ -2,8 +2,11 @@
 
 package com.neoutils.finsight.ui.mapper
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.isReopenable
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.extension.toUiText
@@ -30,11 +33,15 @@ class InvoiceUiMapperImpl(
 
         // The status is decomposed into flat facts here, so no UI model or component
         // re-derives an invoice rule — they consume what the domain already decided.
+        // Every figure of an invoice is denominated by its card. Until the card form offers
+        // the choice (task 9.7) the card's currency is the only one the app has.
+        val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
+
         return InvoiceUi(
             id = invoice.id,
-            amount = outstandingDebt,
-            totalUnpaidAmount = limit.totalUnpaidAmount,
-            availableLimit = limit.available,
+            amount = DisplayAmount.natural(outstandingDebt, denomination),
+            totalUnpaidAmount = DisplayAmount.natural(limit.totalUnpaidAmount, denomination),
+            availableLimit = DisplayAmount.natural(limit.available, denomination),
             usagePercentage = if (hasProgress) limit.usage else 0.0,
             showProgress = hasProgress,
             closingDate = invoice.closingDate,

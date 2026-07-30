@@ -8,6 +8,9 @@ import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.ExchangeRateDao
+import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateFigureUseCase
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.RecurringDao
@@ -41,6 +44,8 @@ val databaseModule = module {
     single<EntryDao> { get<AppDatabase>().entryDao() }
     single<DimensionDao> { get<AppDatabase>().dimensionDao() }
     single<ExchangeRateDao> { get<AppDatabase>().exchangeRateDao() }
+    single<IExchangeRateRepository> { ExchangeRateRepository(exchangeRateDao = get()) }
+    factory { ConsolidateFigureUseCase(exchangeRateRepository = get()) }
 }
 
 expect val databasePlatformModule: Module

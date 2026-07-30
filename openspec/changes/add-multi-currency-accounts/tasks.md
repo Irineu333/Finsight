@@ -83,11 +83,11 @@
 
 ## 5. Consolidação e catálogo (depende de §4; independente de §3)
 
-- [ ] 5.1 Repositório de taxas com a política "a última em ou antes da data" e a precedência da taxa do usuário. Testes: taxa anterior escolhida em vez da posterior, ausência de taxa, precedência.
-- [ ] 5.2 Catálogo curado de moedas de duas casas decimais em `:core:model`, com a premissa de D14 em KDoc. O razão persiste só o código.
-- [ ] 5.3 A figura **multitermo** como sequência de `DisplayAmount`, com o caso de um termo como o comum, sem expor operação entre dois valores.
-- [ ] 5.4 A **única** redução de saldo-por-moeda a figura na base: **uma moeda passa direto, na sua própria moeda, exata** — a redução só age com duas ou mais; a partir de duas, converte o que a taxa da data permitir, deixa termo próprio por moeda sem taxa, e **deriva** a exatidão. Nada vira `1`, nada é omitido, nada zera a tela.
-- [ ] 5.5 Testes da redução contra as cinco linhas da tabela de D9 — incluindo **moeda única diferente da base com taxa cadastrada, que não converte** —, mais o de que não existe forma de obter a figura sem a exatidão, mais o de fronteira: a camada não expõe soma de dois saldos por moeda (isso é do razão, 3.2) e o razão não recebeu dependência que forneça taxa.
+- [x] 5.1 Repositório de taxas com a política "a última em ou antes da data" e a precedência da taxa do usuário. **Interface em `:core:model`, implementação em `:core:database`** ao lado do DAO — a camada é consumida por cinco features, então não pode morar num `impl`; o molde é o do `EntryRepository`, que vive junto do seu DAO. Testes: taxa anterior escolhida em vez da posterior, ausência de taxa, precedência.
+- [x] 5.2 Catálogo curado de moedas de duas casas decimais em `:core:model`, com a premissa de D14 em KDoc. O razão persiste só o código.
+- [x] 5.3 A figura **multitermo** como sequência de `DisplayAmount`, com o caso de um termo como o comum, sem expor operação entre dois valores.
+- [x] 5.4 A **única** redução de saldo-por-moeda a figura na base: **uma moeda passa direto, na sua própria moeda, exata** — a redução só age com duas ou mais; a partir de duas, converte o que a taxa da data permitir, deixa termo próprio por moeda sem taxa, e **deriva** a exatidão. Nada vira `1`, nada é omitido, nada zera a tela.
+- [x] 5.5 Testes da redução contra as cinco linhas da tabela de D9 — incluindo **moeda única diferente da base com taxa cadastrada, que não converte** —, mais o de que não existe forma de obter a figura sem a exatidão, mais o de fronteira: a camada não expõe soma de dois saldos por moeda (isso é do razão, 3.2) e o razão não recebeu dependência que forneça taxa.
 
 ## 6. Moeda base e a feature de configurações
 

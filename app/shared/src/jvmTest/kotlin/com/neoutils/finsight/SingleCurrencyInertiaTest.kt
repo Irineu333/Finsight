@@ -39,11 +39,22 @@ class SingleCurrencyInertiaTest {
     /** The names through which a currency may be referred to while there is only one. */
     private val allowedReferences = setOf("BASE_CURRENCY", "ASSUMED_SINGLE_CURRENCY")
 
+    /**
+     * The one file allowed to name other currencies by literal: the catalog of what the app
+     * *offers*. Listing a currency is not producing one — nothing is denominated in a code
+     * because it appears in a list, and the only door that turns an offer into an account is
+     * the form, which is the last task of the plan. The exemption is a single named file
+     * rather than a pattern, so a second one cannot appear without this test being edited.
+     */
+    private val catalogFile =
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/CurrencyCatalog.kt"
+
     @Test
     fun `no production source names a currency other than the one the app uses`() {
         val theOne = theOneCurrency()
 
         val offenders = productionSources()
+            .filterNot { it.path == catalogFile }
             .flatMap { file ->
                 CURRENCY_LITERAL.findAll(file.text)
                     .filter { it.value != theOne }

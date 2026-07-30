@@ -134,7 +134,7 @@ class EditInvoiceBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, balanceState),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(

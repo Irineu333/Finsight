@@ -101,7 +101,7 @@ class TransferBetweenAccountsModal(
                     label = {
                         Text(text = stringResource(Res.string.transfer_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(sourceAccount.currency),
+                    inputTransformation = rememberMoneyInputTransformation(sourceAccount.currency, amount),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

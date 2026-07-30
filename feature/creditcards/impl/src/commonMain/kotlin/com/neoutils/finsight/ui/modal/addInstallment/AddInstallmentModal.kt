@@ -158,7 +158,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     label = {
                         Text(text = stringResource(Res.string.add_installment_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                    inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next,

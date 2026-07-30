@@ -252,7 +252,7 @@ class EditTransactionModal(
                     label = {
                         Text(text = stringResource(Res.string.edit_transaction_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(transactionCurrency),
+                    inputTransformation = rememberMoneyInputTransformation(transactionCurrency, amount),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

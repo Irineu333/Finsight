@@ -145,7 +145,7 @@ class EditAccountBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_account_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(account.currency),
+                        inputTransformation = rememberMoneyInputTransformation(account.currency, balanceState),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(

@@ -181,7 +181,7 @@ class ConfirmRecurringModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_confirm_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,

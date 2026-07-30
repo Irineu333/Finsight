@@ -158,7 +158,7 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, limit),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),

@@ -140,7 +140,7 @@ class BudgetFormModal(
                                 onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
                             )
                         },
-                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,

@@ -109,7 +109,7 @@ class AdvancePaymentModal(
                 label = {
                     Text(text = stringResource(Res.string.advance_payment_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next

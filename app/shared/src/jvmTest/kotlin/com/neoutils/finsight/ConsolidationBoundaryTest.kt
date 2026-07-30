@@ -1,6 +1,5 @@
 package com.neoutils.finsight
 
-import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -102,42 +101,7 @@ class ConsolidationBoundaryTest {
         "app/desktop/src/main/kotlin/com/neoutils/finsight/main.kt",
     )
 
-    private class Source(val path: String, val text: String) {
-        /**
-         * The file with its comments removed. Without this, prose *about* multiplying by a
-         * rate reads as multiplying by a rate — a KDoc line starts with an asterisk, and the
-         * pattern that finds the operator finds that too.
-         */
-        val code: String get() = text
-            .replace(BLOCK_COMMENT, "")
-            .replace(LINE_COMMENT, "")
-    }
-
-    private fun sourcesUnder(vararg roots: String): List<Source> {
-        val repository = repositoryRoot()
-        return roots
-            .map { repository.resolve(it) }
-            .flatMap { it.walkTopDown().toList() }
-            .filter { it.isFile && it.extension == "kt" }
-            .map { it.relativeTo(repository).path }
-            .filterNot { it.contains("/build/") }
-            // Test sources are where the boundary is exercised from both sides.
-            .filterNot { it.contains("Test/kotlin") }
-            .map { Source(it, repository.resolve(it).readText()) }
-    }
-
-    private fun repositoryRoot(): File {
-        var candidate: File? = File("").absoluteFile
-        while (candidate != null && !candidate.resolve("settings.gradle.kts").isFile) {
-            candidate = candidate.parentFile
-        }
-        return requireNotNull(candidate) { "Could not locate the repository root." }
-    }
-
     private companion object {
-        val BLOCK_COMMENT = Regex("/\\*.*?\\*/", RegexOption.DOT_MATCHES_ALL)
-        val LINE_COMMENT = Regex("//[^\n]*")
-
         /** A rate or a base-currency preference, named at all. */
         val RATE_REFERENCE = Regex("ExchangeRate|IExchangeRateRepository|baseCurrency")
 

@@ -20,22 +20,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 
+/**
+ * An instalment plan as the counter reads it: how many, over what [total].
+ *
+ * [total] is a single denominated amount, and that is this surface's **declared degradation**
+ * (design D20). Its grammar — "3x de …" — holds one term and no more, so being handed a figure
+ * that spans currencies would leave the layout to decide, by truncation, what a reader sees of
+ * an incomplete number. The declaration costs nothing here, because an instalment plan is
+ * denominated by the card it is charged to and a card holds one currency (D17): there is no
+ * term to leave out, and the type is what says so.
+ */
 data class InstallmentState(
     val count: Int,
-    val total: Double,
-    val currency: String,
+    val total: DisplayAmount,
 ) {
-    val installment = total / count
+    /** The share of one instalment. Dividing a single figure is presentation, not arithmetic. */
+    val installment = total.value / count
 
     fun format(formatter: CurrencyFormatter): String {
         if (count == 1) {
             return "${count}x"
         }
 
-        return "${count}x de ${formatter.format(installment, currency)}"
+        return "${count}x de ${formatter.format(installment, total.currency)}"
     }
 }
 

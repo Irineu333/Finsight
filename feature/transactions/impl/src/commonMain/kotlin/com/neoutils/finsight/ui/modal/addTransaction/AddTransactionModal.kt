@@ -2,6 +2,8 @@
 
 package com.neoutils.finsight.ui.modal.addTransaction
 
+import com.neoutils.finsight.extension.Denomination
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
@@ -228,8 +230,10 @@ class AddTransactionModal : ModalBottomSheet() {
                         InstallmentCounter(
                             state = InstallmentState(
                                 count = installments,
-                                total = amount.text.toString().moneyToDouble(),
-                                currency = ASSUMED_SINGLE_CURRENCY,
+                                total = DisplayAmount.natural(
+                                    amount.text.toString().moneyToDouble(),
+                                    Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                                ),
                             ),
                             onInstallmentsChange = { installments = it },
                         )

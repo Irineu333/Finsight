@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -24,6 +25,7 @@ import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.model.BudgetProgressUi
 import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
@@ -352,7 +354,7 @@ class DashboardComponentsBuilder(
 
         return if (budgetProgress.isNotEmpty()) {
             DashboardComponent.Budgets(
-                budgetProgress = budgetProgress,
+                budgetProgress = budgetProgress.map { it.toUi() },
             )
         } else {
             null
@@ -425,6 +427,25 @@ class DashboardComponentsBuilder(
      */
     private fun figure(amount: Double) =
         MoneyFigure.of(DisplayAmount.natural(amount, Denomination.exact(ASSUMED_SINGLE_CURRENCY)))
+
+    /**
+     * A budget's progress, denominated for the bar. The limit is set in one currency and stays
+     * in it; the spending spans accounts, so it is a figure — of one term until task 8.2 wires
+     * the consolidation in, and denominated in the limit's currency from task 8.5.
+     */
+    private fun BudgetProgress.toUi() = BudgetProgressUi(
+        id = budget.id,
+        title = budget.title,
+        icon = budget.icon,
+        spent = MoneyFigure.of(
+            DisplayAmount.magnitude(spent, Denomination.exact(ASSUMED_SINGLE_CURRENCY))
+        ),
+        limit = DisplayAmount.magnitude(
+            budget.amount,
+            Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+        ),
+        progress = progress,
+    )
 
     /** A category's share, denominated for the card. The number and the share stay the domain's. */
     private fun CategorySpending.toUi() = CategorySpendingUi(

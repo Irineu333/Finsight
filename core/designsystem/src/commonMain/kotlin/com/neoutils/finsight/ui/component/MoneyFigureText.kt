@@ -27,7 +27,8 @@ import com.neoutils.finsight.extension.formatTerms
  * does not add, and a surface free to lay it out its own way is a surface free to truncate a
  * term — which is how a number starts lying without anyone having chosen it. A surface whose
  * width or grammar genuinely admits one line does not call this: it declares the degradation
- * and shows [MoneyFigure.primary] with the approximation mark.
+ * by going through `CurrencyFormatter.formatSingleLine`, which is the only legitimate way to
+ * show less of a figure than it holds.
  *
  * The common case is one term, and it costs exactly one [Text].
  */

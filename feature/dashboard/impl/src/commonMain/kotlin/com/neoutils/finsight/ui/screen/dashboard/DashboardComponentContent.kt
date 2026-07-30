@@ -701,15 +701,12 @@ private fun DashboardBudgetsSection(
 
     BudgetProgressCard(
         budgetProgress = component.budgetProgress,
-        // Untouched here on purpose: a budget's limit is a declared-degradation surface,
-        // and task 7.6 gives it its denominated contract in one piece.
-        currency = ASSUMED_SINGLE_CURRENCY,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id))
+                detailController.show(budgetsEntry.viewBudgetModal(budget.id))
             }
         },
     )

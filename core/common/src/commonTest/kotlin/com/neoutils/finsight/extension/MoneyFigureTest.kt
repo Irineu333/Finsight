@@ -127,6 +127,62 @@ class MoneyFigureTest {
     }
 
     @Test
+    fun `one term needs no declaration, so the single line is the plain reading`() {
+        val figure = MoneyFigure.of(DisplayAmount.natural(100.0, brl))
+
+        assertEquals(formatted(100.0, "BRL"), formatter.formatSingleLine(figure))
+    }
+
+    @Test
+    fun `a single approximate term keeps its own mark, and gains no marker`() {
+        val figure = MoneyFigure.of(DisplayAmount.natural(100.0, approximateBrl))
+
+        assertEquals("≈ " + formatted(100.0, "BRL"), formatter.formatSingleLine(figure))
+    }
+
+    @Test
+    fun `two exact terms on one line are marked, because one of them is not the figure`() {
+        // The reachable case the forced mark exists for: no rate at all, so nothing was
+        // converted and every term is exact — and one of them alone is still not the figure.
+        val figure = MoneyFigure.of(
+            listOf(
+                DisplayAmount.natural(100.0, usd),
+                DisplayAmount.natural(50.0, Denomination.exact("EUR")),
+            )
+        )
+
+        assertFalse(figure.isApproximate)
+        assertEquals("≈ " + formatted(100.0, "USD") + " +…", formatter.formatSingleLine(figure))
+    }
+
+    @Test
+    fun `an already approximate primary is not marked twice`() {
+        val figure = MoneyFigure.of(
+            listOf(
+                DisplayAmount.natural(100.0, approximateBrl),
+                DisplayAmount.natural(50.0, usd),
+            )
+        )
+
+        val line = formatter.formatSingleLine(figure)
+
+        assertEquals("≈ " + formatted(100.0, "BRL") + " +…", line)
+        assertEquals(1, line.count { it == '≈' })
+    }
+
+    @Test
+    fun `no term is dropped without the line saying so`() {
+        val exact = MoneyFigure.of(DisplayAmount.natural(100.0, brl))
+        val twoTerms = MoneyFigure.of(
+            listOf(DisplayAmount.natural(100.0, brl), DisplayAmount.natural(50.0, usd))
+        )
+
+        // The marker is there exactly when a term was left out, and never otherwise.
+        assertFalse(formatter.formatSingleLine(exact).contains("+…"))
+        assertTrue(formatter.formatSingleLine(twoTerms).contains("+…"))
+    }
+
+    @Test
     fun aFigureOfNoTermsIsNotBuildable() {
         assertFailsWith<IllegalArgumentException> { MoneyFigure.of(emptyList()) }
     }

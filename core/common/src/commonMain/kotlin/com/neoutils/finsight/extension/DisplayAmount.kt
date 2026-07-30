@@ -172,5 +172,15 @@ fun CurrencyFormatter.format(amount: DisplayAmount): String {
         }
     }
 
-    return if (amount.isApproximate) "≈ $signed" else signed
+    return if (amount.isApproximate) approximated(signed) else signed
 }
+
+/**
+ * [text] marked as approximate.
+ *
+ * The mark lives here, beside the sign, because it goes through the same door and must come
+ * out the same in every surface — including the ones without colour. It is a prefix, and the
+ * outermost one: it qualifies the whole figure rather than its direction, and outermost is the
+ * only position that survives a locale placing the symbol on the right.
+ */
+internal fun approximated(text: String) = "≈ $text"

@@ -197,7 +197,7 @@ class DashboardAccountsOverviewTest {
         )
 
         val budgets = component as DashboardComponent.Budgets
-        assertEquals(1000.0, budgets.budgetProgress.single().budget.amount)
+        assertEquals(1000.0, budgets.budgetProgress.single().limit.value)
     }
 }
 

@@ -12,8 +12,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatSingleLine
+import com.neoutils.finsight.ui.model.BudgetProgressUi
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
@@ -21,10 +23,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BudgetProgressCard(
-    budgetProgress: List<BudgetProgress>,
-    currency: String,
+    budgetProgress: List<BudgetProgressUi>,
     modifier: Modifier = Modifier,
-    onBudgetClick: (BudgetProgress) -> Unit = {},
+    onBudgetClick: (BudgetProgressUi) -> Unit = {},
 ) {
     Card(
         modifier = modifier,
@@ -50,7 +51,6 @@ fun BudgetProgressCard(
             budgetProgress.take(3).forEach { progress ->
                 BudgetProgressRow(
                     progress = progress,
-                    currency = currency,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .clickable { onBudgetClick(progress) },
@@ -62,8 +62,7 @@ fun BudgetProgressCard(
 
 @Composable
 private fun BudgetProgressRow(
-    progress: BudgetProgress,
-    currency: String,
+    progress: BudgetProgressUi,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -77,7 +76,7 @@ private fun BudgetProgressRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CategoryIconBox(
-            icon = progress.budget.icon,
+            icon = progress.icon,
             tint = accentColor,
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(8.dp),
@@ -96,12 +95,15 @@ private fun BudgetProgressRow(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = progress.budget.title,
+                    text = progress.title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "${formatter.format(progress.spent, currency)} / ${formatter.format(progress.budget.amount, currency)}",
+                    // Declared degradation (design D20): "spent / limit" is a grammar of one
+                    // term a side, so the spending is shown as a single line — marked, and
+                    // saying a term was left out — rather than truncated by the layout.
+                    text = "${formatter.formatSingleLine(progress.spent)} / ${formatter.format(progress.limit)}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,

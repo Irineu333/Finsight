@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.model.BudgetProgressUi
 import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -184,24 +185,13 @@ class DashboardPreviewFactory(
                 DashboardComponentVariant.Budgets.Preview(
                     component = DashboardComponent.Budgets(
                         budgetProgress = listOf(
-                            BudgetProgress(
-                                budget = Budget(
-                                    id = 1,
-                                    title = getString(Res.string.preview_budget_food),
-                                    categories = listOf(
-                                        Category(
-                                            id = 1,
-                                            name = getString(Res.string.preview_category_food),
-                                            icon = CategoryLazyIcon("shopping"),
-                                            type = Category.Type.EXPENSE,
-                                            createdAt = 0,
-                                        )
-                                    ),
-                                    iconKey = "shopping",
-                                    amount = 600.0,
-                                    createdAt = 0,
-                                ),
-                                spent = 450.0,
+                            BudgetProgressUi(
+                                id = 1,
+                                title = getString(Res.string.preview_budget_food),
+                                icon = CategoryLazyIcon("shopping"),
+                                spent = MoneyFigure.of(DisplayAmount.magnitude(450.0, denomination)),
+                                limit = DisplayAmount.magnitude(600.0, denomination),
+                                progress = 0.75f,
                             ),
                         ),
                     )

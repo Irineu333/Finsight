@@ -81,3 +81,37 @@ fun CurrencyFormatter.formatTerms(figure: MoneyFigure): List<String> =
         val text = format(term)
         if (index == 0 || term.spellsOwnSign) text else "+$text"
     }
+
+/**
+ * The figure as **one** line, for a surface whose width or grammar admits no more — a limit
+ * meter, the label of a progress bar, an instalment counter, a cell of the exported document.
+ *
+ * A surface calls this to *declare* that it cannot show the whole figure. That declaration is
+ * the point: the alternative is not "render everything", it is the layout deciding on its own,
+ * by truncation or by wrapping, what a reader sees of an incomplete number — which is how a
+ * figure starts lying without anyone having chosen it.
+ *
+ * What is shown is [MoneyFigure.primary] — the base term whenever one exists, and otherwise the
+ * first of the terms no rate reached, since a figure can have no base term at all (every
+ * currency in it unknown to the rates).
+ *
+ * Two things say a term was left out, and both are textual:
+ * - the approximation mark, **forced** whatever the terms say. A figure of two unconverted
+ *   terms is made of exact parts, and one of them alone is still not the figure — reading it
+ *   as exact is precisely the silent loss the mark exists to prevent;
+ * - a continuation marker glued to a `+`, the same juxtaposition operator [formatTerms] uses,
+ *   with the term itself elided.
+ *
+ * Because of the forced mark, a surface asking "is anything here approximate?" — the card
+ * footer that explains the mark — must ask `isApproximate || !isSingleTerm`, not
+ * [MoneyFigure.isApproximate] alone, or the mark would appear with nothing to explain it.
+ */
+fun CurrencyFormatter.formatSingleLine(figure: MoneyFigure): String {
+    val primary = format(figure.primary)
+
+    if (figure.isSingleTerm) return primary
+
+    val marked = if (figure.primary.isApproximate) primary else approximated(primary)
+
+    return "$marked +…"
+}

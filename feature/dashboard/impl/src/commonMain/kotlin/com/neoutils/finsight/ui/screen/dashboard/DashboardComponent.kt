@@ -1,8 +1,8 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.MoneyFigure
+import com.neoutils.finsight.ui.model.BudgetProgressUi
 import com.neoutils.finsight.ui.model.CategorySpendingUi
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.TransactionUi
@@ -80,7 +80,7 @@ sealed interface DashboardComponent {
     }
 
     data class Budgets(
-        val budgetProgress: List<BudgetProgress>,
+        val budgetProgress: List<BudgetProgressUi>,
     ) : DashboardComponent {
         override val key = DashboardComponentType.BUDGETS.key
     }

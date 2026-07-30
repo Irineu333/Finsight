@@ -42,9 +42,20 @@ class ConsolidationBoundaryTest {
         val readsARate = Regex("""\.rate\b""")
         // An allow-list, and it is meant to grow by a line at a time, deliberately: a
         // mapper that carries the number between an entity and the domain model is a
-        // legitimate entry; a screen, a view model or a UI model never is.
+        // legitimate entry; a screen, a view model or a UI model of some *other*
+        // feature never is.
+        //
+        // The settings feature is the documented exception, and it is one because it
+        // is the feature that *is about* rates: it lists them, edits them and removes
+        // them. Reading the number in order to show it is not converting money by it —
+        // no amount of money passes through these files at all. Every other surface of
+        // the app asks the reducer.
         val allowed = setOf(
             "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateMoneyUseCase.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/mapper/ExchangeRateMapper.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesScreen.kt",
         )
 
         val found = productionSources
@@ -59,6 +70,32 @@ class ConsolidationBoundaryTest {
                 "owner; a screen or view model that multiplies by a rate puts a second " +
                 "answer to 'how much is this worth' one line away from the first.\n" +
                 (found - allowed).joinToString("\n") { "  NEW: $it" },
+        )
+    }
+
+    /**
+     * The edge the allow-list above would otherwise blunt.
+     *
+     * The settings feature is allowed to *name* a rate because it is the screen that
+     * edits one. It is still not allowed to **apply** one: the moment a rate appears
+     * beside a `*` or a `/` outside the reducer, "how much is this worth" has a second
+     * answer.
+     */
+    @Test
+    fun `no surface outside the reducer applies a rate to anything`() {
+        val appliesARate = Regex("""[*/]\s*[\w.]*\.rate\b|\.rate\s*[*/]""")
+
+        val found = productionSources
+            .filterNot { "core/model/src/commonMain" in it.relativePath() }
+            .filter { appliesARate.containsMatchIn(it.readText()) }
+            .map { it.relativePath() }
+            .toSet()
+
+        assertEquals(
+            emptySet(),
+            found,
+            "A rate is applied outside the consolidation layer.\n" +
+                found.joinToString("\n") { "  NEW: $it" },
         )
     }
 

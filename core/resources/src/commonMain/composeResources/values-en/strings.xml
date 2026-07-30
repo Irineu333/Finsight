@@ -833,4 +833,30 @@
     <string name="currency_name_zar">South African rand</string>
     <string name="money_unconverted_term">+ unconverted part</string>
     <string name="money_approximate_footer">≈ approximate, by the rate of %1$s. See rates</string>
+
+    <string name="nav_settings">Settings</string>
+    <string name="settings_screen_title">Settings</string>
+    <string name="settings_base_currency_title">Base currency</string>
+    <string name="settings_base_currency_description">It is the currency totals that mix more than one currency are expressed in. A balance, an invoice or a transaction already in a single currency goes on being shown in that one.</string>
+    <string name="settings_exchange_rates_title">Exchange rates</string>
+    <string name="settings_exchange_rates_subtitle">Register, correct or remove the rates used in conversions</string>
+
+    <string name="exchange_rates_screen_title">Exchange rates</string>
+    <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>
+    <string name="exchange_rates_add">Add rate</string>
+    <string name="exchange_rates_quote">1 %1$s = %2$s %3$s</string>
+    <string name="exchange_rates_source_derived">From an operation</string>
+    <string name="exchange_rates_source_user">Entered by you</string>
+    <string name="exchange_rates_outdated">Out of date</string>
+
+    <string name="exchange_rate_form_title_new">New rate</string>
+    <string name="exchange_rate_form_title_edit">Edit rate</string>
+    <string name="exchange_rate_form_currency">Currency</string>
+    <string name="exchange_rate_form_rate">Rate</string>
+    <string name="exchange_rate_form_rate_helper">How many %1$s one %2$s is worth</string>
+    <string name="exchange_rate_form_rate_placeholder">Enter the rate</string>
+    <string name="exchange_rate_form_date">Date</string>
+    <string name="exchange_rate_form_save">Save</string>
+    <string name="exchange_rate_form_remove">Remove</string>
+    <string name="decimal_separator">.</string>
 </resources>

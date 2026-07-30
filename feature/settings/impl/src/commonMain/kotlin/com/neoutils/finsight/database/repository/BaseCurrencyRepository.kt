@@ -1,0 +1,51 @@
+package com.neoutils.finsight.database.repository
+
+import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.extension.localeCurrencyCode
+import com.russhwolf.settings.Settings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * The base currency, seeded **once** from the device's region and stable afterwards.
+ *
+ * Seeding happens on the **absence of the persisted value**, not on the creation of
+ * the first account — which also covers the already-installed app, where
+ * `EnsureDefaultAccountUseCase` returns early because an account exists. And it is
+ * read once, in `init`: a later trip abroad changes the locale but not this, because
+ * moving it would silently re-express every consolidated figure in the history
+ * (design D28).
+ *
+ * The write path exists and no screen in v1 calls it (design D18). Its presence is
+ * what keeps offering the change later from being a rewrite of every read.
+ */
+class BaseCurrencyRepository(
+    private val settings: Settings,
+) : IBaseCurrencyRepository {
+
+    private val _currency = MutableStateFlow(seed())
+
+    override fun observe(): StateFlow<String> = _currency
+
+    override suspend fun set(currency: String) {
+        val resolved = CurrencyCatalog.reduce(currency)
+        settings.putString(KEY, resolved)
+        _currency.value = resolved
+    }
+
+    private fun seed(): String {
+        settings.getStringOrNull(KEY)?.let { return it }
+
+        // The device says what it says; the catalog decides what the app accepts.
+        // Anything it does not accept lands on the currency of last resort, which is
+        // last resort and not a product default.
+        val resolved = CurrencyCatalog.reduce(localeCurrencyCode())
+        settings.putString(KEY, resolved)
+        return resolved
+    }
+
+    companion object {
+        private const val KEY = "base_currency"
+    }
+}

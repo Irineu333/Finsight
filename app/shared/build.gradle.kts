@@ -32,6 +32,8 @@ kotlin {
             implementation(projects.feature.recurring.impl)
             api(projects.feature.report.api)
             implementation(projects.feature.report.impl)
+            api(projects.feature.settings.api)
+            implementation(projects.feature.settings.impl)
             api(projects.feature.support.api)
             implementation(projects.feature.support.impl)
             api(projects.feature.transactions.api)

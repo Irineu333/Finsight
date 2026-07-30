@@ -58,6 +58,11 @@ class SingleCurrencyInertiaTest {
         // Fabricated accounts of a dashboard component preview, which has to look
         // like the app it previews.
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
+        // The base currency of consolidation — the *other* thing the locale resolves
+        // (design D28). It denominates no account, so it does not widen the window
+        // this test closes; it is here because it uses the same one resolver, and a
+        // second way of deciding must fail whichever of the two it decides.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",
     )
 
     @Test

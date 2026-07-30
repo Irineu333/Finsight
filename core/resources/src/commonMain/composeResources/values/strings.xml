@@ -834,4 +834,30 @@
     <string name="currency_name_zar">Rand sul-africano</string>
     <string name="money_unconverted_term">+ parcela não convertida</string>
     <string name="money_approximate_footer">≈ valor aproximado pela taxa de %1$s. Ver taxas</string>
+
+    <string name="nav_settings">Configurações</string>
+    <string name="settings_screen_title">Configurações</string>
+    <string name="settings_base_currency_title">Moeda base</string>
+    <string name="settings_base_currency_description">É a moeda em que totais que misturam mais de uma moeda são expressos. Um saldo, uma fatura ou um lançamento que já está numa moeda só continua sendo exibido nela.</string>
+    <string name="settings_exchange_rates_title">Taxas de câmbio</string>
+    <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
+
+    <string name="exchange_rates_screen_title">Taxas de câmbio</string>
+    <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
+    <string name="exchange_rates_add">Cadastrar taxa</string>
+    <string name="exchange_rates_quote">1 %1$s = %2$s %3$s</string>
+    <string name="exchange_rates_source_derived">De uma operação</string>
+    <string name="exchange_rates_source_user">Informada por você</string>
+    <string name="exchange_rates_outdated">Desatualizada</string>
+
+    <string name="exchange_rate_form_title_new">Nova taxa</string>
+    <string name="exchange_rate_form_title_edit">Editar taxa</string>
+    <string name="exchange_rate_form_currency">Moeda</string>
+    <string name="exchange_rate_form_rate">Taxa</string>
+    <string name="exchange_rate_form_rate_helper">Quantos %1$s vale 1 %2$s</string>
+    <string name="exchange_rate_form_rate_placeholder">Informe a taxa</string>
+    <string name="exchange_rate_form_date">Data</string>
+    <string name="exchange_rate_form_save">Salvar</string>
+    <string name="exchange_rate_form_remove">Remover</string>
+    <string name="decimal_separator">,</string>
 </resources>

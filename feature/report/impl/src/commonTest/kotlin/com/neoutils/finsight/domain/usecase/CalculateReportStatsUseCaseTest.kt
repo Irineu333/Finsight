@@ -77,10 +77,17 @@ class CalculateReportStatsUseCaseTest {
 
 private class CapturingEntryRepository : IEntryRepository {
     var capturedScope: List<Long> = emptyList()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats {
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): com.neoutils.finsight.domain.repository.ScopeStatsByCurrency {
         capturedScope = scopeAccountIds
-        return ScopeStats(0.0, 0.0, 0.0, 0.0)
+        return com.neoutils.finsight.domain.repository.ScopeStatsByCurrency.zero
     }
+
+    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats =
+        throw NotImplementedError()
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

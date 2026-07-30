@@ -1,5 +1,14 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
@@ -30,7 +39,15 @@ class CalculateBudgetProgressUseCaseTest {
     private val month = YearMonth(2026, 3)
 
     private fun useCase(balances: Map<Long, Double> = emptyMap()) =
-        CalculateBudgetProgressUseCase(MonthBalances(month, balances))
+        CalculateBudgetProgressUseCase(MonthBalances(month, balances), reducer())
+
+    private fun useCase(
+        multi: Map<Long, Map<String, Double>>,
+        rates: Map<String, Double> = emptyMap(),
+    ) = CalculateBudgetProgressUseCase(
+        MonthBalances(month, emptyMap(), multi),
+        reducer(rates = rates),
+    )
 
     private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
@@ -113,6 +130,60 @@ class CalculateBudgetProgressUseCaseTest {
             Entry(account = Account(id = 101, name = "Salary", type = AccountType.INCOME, currency = "BRL"), amount = cents),
         ),
     )
+
+    /**
+     * The single-currency user pays nothing for multi-currency. The spending is already
+     * in the limit's currency, so nothing is converted, no rate is read, and the figure
+     * is **exact** — even with a rate sitting in the archive.
+     */
+    @Test
+    fun `spending already in the limit's currency is exact`() = runTest {
+        val progress = useCase(
+            multi = mapOf(10L to mapOf("BRL" to 30.0), 11L to mapOf("BRL" to 12.5)),
+            rates = mapOf("USD" to 5.0),
+        )(budgets = listOf(budget), month = month).single()
+
+        assertEquals(42.5, progress.spent)
+        assertEquals(false, progress.isApproximate)
+        assertEquals(false, progress.hasUnpricedSpending)
+    }
+
+    /**
+     * **The limit's currency is the target, not the base.** A budget in dollars whose
+     * spending happened in reais is reduced into dollars — triangulated over the base,
+     * which is where rates are stored — and marked approximate because a rate took part.
+     */
+    @Test
+    fun `spending in another currency is reduced into the limit's currency`() = runTest {
+        val inDollars = budget.copy(currency = "USD", amount = 100.0)
+
+        val progress = useCase(
+            multi = mapOf(10L to mapOf("BRL" to 100.0)),
+            rates = mapOf("USD" to 5.0),
+        )(budgets = listOf(inDollars), month = month).single()
+
+        assertEquals(20.0, progress.spent, "R$ 100 at 5,00 is US$ 20")
+        assertEquals(true, progress.isApproximate)
+        assertEquals(false, progress.hasUnpricedSpending)
+    }
+
+    /**
+     * Part of the spending in a currency no rate reaches makes the bar a **floor**, and
+     * the flag is what lets the surface say so. Leaving it out silently would read as
+     * "less spent than you have", which is the one direction a budget must not err in —
+     * and inventing a rate of `1` for it would be worse.
+     */
+    @Test
+    fun `spending no rate reaches is left out, and the progress says so`() = runTest {
+        val progress = useCase(
+            multi = mapOf(10L to mapOf("BRL" to 30.0), 11L to mapOf("JPY" to 5000.0)),
+        )(budgets = listOf(budget), month = month).single()
+
+        assertEquals(30.0, progress.spent, "only what could be priced is in the number")
+        assertEquals(true, progress.isApproximate)
+        assertEquals(true, progress.hasUnpricedSpending)
+    }
+
 }
 
 /**
@@ -122,9 +193,21 @@ class CalculateBudgetProgressUseCaseTest {
 private class MonthBalances(
     private val month: YearMonth,
     private val balances: Map<Long, Double>,
+    private val multi: Map<Long, Map<String, Double>> = emptyMap(),
 ) : IEntryRepository {
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+        if (month == this.month) {
+            multi[dimensionId]
+                ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of(it) }
+                ?: balances[dimensionId]
+                    ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }
+                ?: com.neoutils.finsight.domain.model.MoneyByCurrency.zero
+        } else {
+            com.neoutils.finsight.domain.model.MoneyByCurrency.zero
+        }
+
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
-        if (month == this.month) balances[dimensionId] ?: 0.0 else 0.0
+        throw NotImplementedError()
 
     // Nothing else is this use case's business; reaching any of it is the test
     // telling us the use case grew a dependency it did not declare.
@@ -158,3 +241,24 @@ private class MonthBalances(
         endDate: LocalDate,
     ) = throw NotImplementedError()
 }
+
+/** The reducer over an archive holding [rates]; the budget's own currency is the target. */
+private fun reducer(
+    base: String = "BRL",
+    rates: Map<String, Double> = emptyMap(),
+) = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = object : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(currency: String) { flow.value = currency }
+    },
+    exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
+        override suspend fun ratesAsOf(date: LocalDate) = rates.mapValues { (code, rate) ->
+            ExchangeRate(currency = code, date = date, rate = rate, source = ExchangeRate.Source.USER)
+        }
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+    },
+)

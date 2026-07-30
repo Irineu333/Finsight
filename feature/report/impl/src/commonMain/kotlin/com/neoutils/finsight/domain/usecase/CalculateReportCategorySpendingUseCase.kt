@@ -7,7 +7,6 @@ import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -21,7 +20,6 @@ class CalculateReportCategorySpendingUseCase(
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
     /** Account-perspective report: category totals in a date range, scoped by the perspective's legs. */
     suspend operator fun invoke(
@@ -44,7 +42,7 @@ class CalculateReportCategorySpendingUseCase(
         if (siblingAccountIds.isEmpty()) return emptyList()
 
         return build(
-            totals = entryRepository.totalsByDimension(nominalType, startDate, endDate, siblingAccountIds),
+            totals = entryRepository.totalsByDimensionByCurrency(nominalType, startDate, endDate, siblingAccountIds),
             transactionType = transactionType,
             on = endDate,
         )
@@ -64,7 +62,7 @@ class CalculateReportCategorySpendingUseCase(
     ): List<CategorySpending> {
         if (dimensionIds.isEmpty()) return emptyList()
         return build(
-            totals = entryRepository.totalsByDimensionInScope(accountType(transactionType), dimensionIds),
+            totals = entryRepository.totalsByDimensionInScopeByCurrency(accountType(transactionType), dimensionIds),
             transactionType = transactionType,
             on = on,
         )
@@ -74,7 +72,7 @@ class CalculateReportCategorySpendingUseCase(
         if (transactionType.isIncome) AccountType.INCOME else AccountType.EXPENSE
 
     private suspend fun build(
-        totals: Map<Long?, Double>,
+        totals: Map<Long?, MoneyByCurrency>,
         transactionType: TransactionType,
         on: LocalDate,
     ): List<CategorySpending> {
@@ -91,19 +89,26 @@ class CalculateReportCategorySpendingUseCase(
 
         val amounts = totals.mapNotNull { (dimensionId, natural) ->
             val category = categoriesByDimension[dimensionId] ?: return@mapNotNull null
-            val amount = natural * displaySign
-            if (amount == 0.0) null else category to amount
+            // The display sign is a property of the nature, not of the currency, so it
+            // applies term by term.
+            val amount = MoneyByCurrency.of(natural.toList().associate { it.currency to it.value * displaySign })
+            if (amount.isEmpty || amount.toList().all { it.value == 0.0 }) null else category to amount
         }
-        val total = amounts.sumOf { it.second }
+
         // A category is a dimension and not an account, so it has no currency of its
         // own and its entries may sit in several: what a breakdown line shows is a
         // consolidated figure, and the reducer is the only thing that denominates one
-        // (design D9, D13). The ledger still answers a single scalar here — swapping
-        // that source for a per-currency read is group 10 — but the base currency
-        // reaches the screen through the reducer's mouth and nowhere else (D29).
-        val base = baseCurrencyRepository.observe().value
+        // (design D9, D13). The base currency reaches the screen through the reducer's
+        // mouth and nowhere else (D29).
+        //
+        // Ordering and the share come from the same reducer, on one common scale built
+        // from the same rates and the same date as the figures — the report's ranking
+        // and its numbers cannot disagree. With a single currency in play no rate is
+        // read at all, and both are what they always were.
+        val scale = consolidateMoney.comparativeMagnitudes(figures = amounts.associate { it }, on = on)
+
         return amounts
-            .sortedByDescending { it.second }
+            .sortedByDescending { (category, _) -> scale.magnitudeOf(category) ?: Double.NEGATIVE_INFINITY }
             .map { (category, amount) ->
                 CategorySpending(
                     category = category,
@@ -111,11 +116,11 @@ class CalculateReportCategorySpendingUseCase(
                     // income category into a positive figure; the line reads its
                     // direction off its own section's title.
                     amount = consolidateMoney(
-                        money = MoneyByCurrency.of(base, amount),
+                        money = amount,
                         on = on,
                         policy = DisplayAmount::magnitude,
                     ),
-                    percentage = if (total > 0) (amount / total) * 100 else 0.0,
+                    percentage = scale.shareOf(category)?.let { it * 100 },
                 )
             }
     }

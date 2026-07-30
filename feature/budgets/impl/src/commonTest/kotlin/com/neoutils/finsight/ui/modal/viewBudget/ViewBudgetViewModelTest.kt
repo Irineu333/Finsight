@@ -2,6 +2,13 @@
 
 package com.neoutils.finsight.ui.modal.viewBudget
 
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -113,7 +120,11 @@ class ViewBudgetViewModelTest {
     )
 
     private class FakeEntryRepository : IEntryRepository {
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
+        override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+            com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", 0.0)
+
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
+            throw NotImplementedError()
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
@@ -149,7 +160,7 @@ class ViewBudgetViewModelTest {
         budgetRepository = budgetRepository,
         transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository()),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository(), reducer()),
         crashlytics = crashlytics,
     )
 
@@ -203,3 +214,24 @@ class ViewBudgetViewModelTest {
         }
     }
 }
+
+/** The reducer over an archive holding [rates]; the budget's own currency is the target. */
+private fun reducer(
+    base: String = "BRL",
+    rates: Map<String, Double> = emptyMap(),
+) = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = object : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(currency: String) { flow.value = currency }
+    },
+    exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
+        override suspend fun ratesAsOf(date: LocalDate) = rates.mapValues { (code, rate) ->
+            ExchangeRate(currency = code, date = date, rate = rate, source = ExchangeRate.Source.USER)
+        }
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+    },
+)

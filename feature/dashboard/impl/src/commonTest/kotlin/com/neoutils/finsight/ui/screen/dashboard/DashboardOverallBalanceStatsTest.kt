@@ -52,7 +52,7 @@ class DashboardOverallBalanceStatsTest {
         calculateCategoryIncomeUseCase = object : CalculateCategoryIncomeUseCase {
             override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
         },
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FlowsEntryRepository(asset, liability)),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FlowsEntryRepository(asset, liability), reducer()),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =

@@ -1,5 +1,12 @@
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
@@ -35,7 +42,7 @@ class BudgetClosedCategoryTest {
 
     private val mapper = BudgetMapper()
     private fun useCase(balances: Map<Long, Double>) =
-        CalculateBudgetProgressUseCase(MonthBalances(balances))
+        CalculateBudgetProgressUseCase(MonthBalances(balances), reducer())
 
     private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
@@ -200,8 +207,13 @@ class BudgetClosedCategoryTest {
 
 /** The one ledger read the budget use case makes; anything else is out of scope. */
 private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRepository {
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+        balances[dimensionId]
+            ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }
+            ?: com.neoutils.finsight.domain.model.MoneyByCurrency.zero
+
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
-        balances[dimensionId] ?: 0.0
+        throw NotImplementedError()
 
     override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
@@ -233,3 +245,24 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
         endDate: LocalDate,
     ) = throw NotImplementedError()
 }
+
+/** The reducer over an archive holding [rates]; the budget's own currency is the target. */
+private fun reducer(
+    base: String = "BRL",
+    rates: Map<String, Double> = emptyMap(),
+) = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = object : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(currency: String) { flow.value = currency }
+    },
+    exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
+        override suspend fun ratesAsOf(date: LocalDate) = rates.mapValues { (code, rate) ->
+            ExchangeRate(currency = code, date = date, rate = rate, source = ExchangeRate.Source.USER)
+        }
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+    },
+)

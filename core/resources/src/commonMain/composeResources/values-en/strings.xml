@@ -859,4 +859,5 @@
     <string name="exchange_rate_form_save">Save</string>
     <string name="exchange_rate_form_remove">Remove</string>
     <string name="decimal_separator">.</string>
+    <string name="recurring_error_currency_mismatch">This recurring is in another currency. Pick an account or card in the same one.</string>
 </resources>

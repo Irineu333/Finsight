@@ -3,7 +3,6 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.MoneyByCurrency
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.extension.DisplayAmount
@@ -20,45 +19,58 @@ import kotlinx.datetime.YearMonth
  *
  * A category is a dimension and not an account, so it has no currency of its own and
  * its entries may sit in several (design D13): the line shows a **consolidated
- * figure**, and the reducer is the only thing that denominates one. The ledger still
- * answers a single scalar here — swapping that source for a per-currency read is
- * group 10 — but the base currency reaches the screen through the reducer's mouth and
- * nowhere else (design D29).
+ * figure**, and the reducer is the only thing that denominates one. The base currency
+ * reaches the screen through the reducer's mouth and nowhere else (design D29).
  *
- * Ordering and the percentage are settled on the numbers, before consolidation: a
- * figure of several terms has no single magnitude to sort or divide by.
+ * **Ordering and the percentage are settled on a common scale the reducer builds**, from
+ * the same rates and the same date as the figures on screen — so the ranking and the
+ * numbers beside it can never disagree. A figure of several terms has no magnitude of
+ * its own to sort or divide by, and a family of figures in different currencies has no
+ * shared one until something says what the shared scale is. With a single currency in
+ * play — whichever it is — no rate is read and both come out exactly as before.
+ *
+ * A category nothing could be priced against sorts last and shows **no** percentage. Not
+ * `0%`: zero is an assertion, and a missing rate is the absence of an answer.
  */
 internal suspend fun categoryTotals(
     categories: List<Category>,
     forYearMonth: YearMonth,
     entryRepository: IEntryRepository,
-    baseCurrencyRepository: IBaseCurrencyRepository,
     consolidateMoney: ConsolidateMoneyUseCase,
 ): List<CategorySpending> {
     val amounts = categories.mapNotNull { category ->
-        val natural = entryRepository.dimensionBalanceInMonth(forYearMonth, category.dimensionId)
-        val amount = natural * category.type.accountType.displaySign
-        if (amount == 0.0) null else category to amount
+        // Σ entries carrying the dimension in the month, per currency. The display sign
+        // is applied term by term: it turns both an expense and an income category into
+        // a positive figure, and it is a property of the nature, not of the currency.
+        val natural = entryRepository.dimensionBalanceInMonthByCurrency(forYearMonth, category.dimensionId)
+        val sign = category.type.accountType.displaySign
+        val amount = MoneyByCurrency.of(natural.toList().associate { it.currency to it.value * sign })
+        if (amount.isEmpty || amount.toList().all { it.value == 0.0 }) null else category to amount
     }
-    val total = amounts.sumOf { it.second }
-    val base = baseCurrencyRepository.observe().value
+
     // The month's rates are the ones that apply: a figure about March consolidates at
     // March's rates, or the past would move whenever a rate changed.
     val on = forYearMonth.safeOnDay(forYearMonth.numberOfDays)
+
+    val scale = consolidateMoney.comparativeMagnitudes(
+        figures = amounts.associate { it },
+        on = on,
+    )
+
     return amounts
-        .sortedByDescending { it.second }
+        // A category with no magnitude cannot be ranked against the others, so it goes
+        // last rather than being dropped or ordered by accident.
+        .sortedByDescending { (category, _) -> scale.magnitudeOf(category) ?: Double.NEGATIVE_INFINITY }
         .map { (category, amount) ->
             CategorySpending(
                 category = category,
-                // The display sign above already turns both an expense and an income
-                // category into a positive figure; the line reads its direction off
-                // its own section's title.
+                // The line reads its direction off its own section's title.
                 amount = consolidateMoney(
-                    money = MoneyByCurrency.of(base, amount),
+                    money = amount,
                     on = on,
                     policy = DisplayAmount::magnitude,
                 ),
-                percentage = if (total > 0) (amount / total) * 100 else 0.0,
+                percentage = scale.shareOf(category)?.let { it * 100 },
             )
         }
 }
@@ -66,7 +78,6 @@ internal suspend fun categoryTotals(
 class CalculateCategorySpendingUseCaseImpl(
     private val categoryRepository: ICategoryRepository,
     private val entryRepository: IEntryRepository,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
 ) : CalculateCategorySpendingUseCase {
     override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> =
@@ -76,7 +87,6 @@ class CalculateCategorySpendingUseCaseImpl(
             categories = categoryRepository.getAllCategoriesIncludingClosed().filter { it.type.isExpense },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
-            baseCurrencyRepository = baseCurrencyRepository,
             consolidateMoney = consolidateMoney,
         )
 }
@@ -84,7 +94,6 @@ class CalculateCategorySpendingUseCaseImpl(
 class CalculateCategoryIncomeUseCaseImpl(
     private val categoryRepository: ICategoryRepository,
     private val entryRepository: IEntryRepository,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
 ) : CalculateCategoryIncomeUseCase {
     override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> =
@@ -92,7 +101,6 @@ class CalculateCategoryIncomeUseCaseImpl(
             categories = categoryRepository.getAllCategoriesIncludingClosed().filter { it.type.isIncome },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
-            baseCurrencyRepository = baseCurrencyRepository,
             consolidateMoney = consolidateMoney,
         )
 }

@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.CategoryRetirability
 import com.neoutils.finsight.domain.model.MoneyByCurrency
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
@@ -39,7 +38,6 @@ class ViewCategoryViewModel(
     private val entryRepository: IEntryRepository,
     private val resolveRetirability: ResolveCategoryRetirabilityUseCase,
     private val unarchiveCategory: UnarchiveCategoryUseCase,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -65,7 +63,10 @@ class ViewCategoryViewModel(
         // ledger. The natural balance is debit-positive; the ledger's own display
         // convention turns it into the positive figure a category reads as.
         val displaySign = category.type.accountType.displaySign
-        val totalAmount = entryRepository.dimensionBalanceInMonth(yearMonth, category.dimensionId) * displaySign
+        val natural = entryRepository.dimensionBalanceInMonthByCurrency(yearMonth, category.dimensionId)
+        val totalAmount = MoneyByCurrency.of(
+            natural.toList().associate { it.currency to it.value * displaySign },
+        )
         val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
         // Whether deleting is refused (so the screen offers archiving instead) is one
         // rule with a single owner — the same one DeleteCategoryUseCase consumes.
@@ -76,10 +77,9 @@ class ViewCategoryViewModel(
             selectedYearMonth = yearMonth,
             // The category spans whatever currencies its entries sit in, so the total
             // is a figure the reducer denominates — the base never reaches the screen
-            // any other way (design D9, D13, D29). The per-currency read itself is
-            // group 10; here the scalar the ledger still answers goes in as one term.
+            // any other way (design D9, D13, D29).
             totalAmount = consolidateMoney(
-                money = MoneyByCurrency.of(baseCurrencyRepository.observe().value, totalAmount),
+                money = totalAmount,
                 on = yearMonth.safeOnDay(yearMonth.numberOfDays),
                 policy = DisplayAmount::magnitude,
             ),

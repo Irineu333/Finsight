@@ -13,5 +13,14 @@ import com.neoutils.finsight.extension.ConsolidatedAmount
 data class CategorySpending(
     val category: Category,
     val amount: ConsolidatedAmount,
-    val percentage: Double
+    /**
+     * The share of the period's total, or `null` when there is no answer: nothing about
+     * this category could be placed on the family's common scale, because no rate
+     * reaches its currency.
+     *
+     * `null` rather than `0.0`, and the difference is the whole point — zero is an
+     * assertion about the share, and a missing rate is the absence of one. A surface
+     * shows a dash.
+     */
+    val percentage: Double?,
 )

@@ -860,4 +860,5 @@
     <string name="exchange_rate_form_save">Salvar</string>
     <string name="exchange_rate_form_remove">Remover</string>
     <string name="decimal_separator">,</string>
+    <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
 </resources>

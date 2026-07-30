@@ -17,6 +17,10 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.error.RecurringError
+import com.neoutils.finsight.domain.exception.RecurringException
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.monthsUntil
@@ -27,9 +31,24 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+/**
+ * Confirms one cycle of a recurring, optionally redirecting it to another account or
+ * card.
+ *
+ * **A redirection to a different currency is refused, never converted** (design D17).
+ * This is the one place a facade value could be written down as if it were another
+ * currency: the amount defaults to `recurring.amount`, and confirming a template created
+ * on a BRL account against a USD one would record the raw number as dollars. Converting
+ * instead would mean picking a rate on the user's behalf, mid-confirmation, in a
+ * decision they neither asked for nor can see.
+ *
+ * The selector is what makes this unreachable by the designed path — it offers only
+ * accounts of the template's own currency. This is the net behind it.
+ */
 class ConfirmRecurringUseCase(
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val accountRepository: IAccountRepository,
 ) {
     suspend operator fun invoke(
         recurring: Recurring,
@@ -51,9 +70,19 @@ class ConfirmRecurringUseCase(
             .monthsUntil(yearMonth) + 1
 
         return catch {
+            // The template's own denomination, and the one the confirmation has to land
+            // in. `null` means the template names no account any more — there is nothing
+            // to disagree with, so the check has nothing to say.
+            val templateCurrency = accountRepository.currencyOf(recurring)
+
             val intent = if (target.isCreditCard) {
                 val targetCreditCard = creditCard ?: recurring.creditCard
                 requireNotNull(targetCreditCard) { "Credit card is required for recurring confirmation" }
+
+                accountRepository.rejectIfCurrencyDiffers(
+                    templateCurrency = templateCurrency,
+                    targetCurrency = accountRepository.currencyOf(targetCreditCard),
+                )
 
                 // Deliberately outside the unit of work below: an invoice created here
                 // and left unused is a smaller harm than undoing invoice structure —
@@ -79,6 +108,12 @@ class ConfirmRecurringUseCase(
                 )
             } else {
                 val sourceAccount = account ?: recurring.account
+
+                accountRepository.rejectIfCurrencyDiffers(
+                    templateCurrency = templateCurrency,
+                    targetCurrency = sourceAccount?.currency,
+                )
+
                 TransactionIntent(
                     title = recurring.title,
                     date = date,
@@ -112,4 +147,19 @@ class ConfirmRecurringUseCase(
             )
         }
     }
+}
+
+/**
+ * Refuses a confirmation aimed at a currency other than the template's.
+ *
+ * A `null` on either side is not a disagreement: a template whose account is gone, or a
+ * card whose ledger account cannot be resolved, is a different failure with a different
+ * message, and this guard has nothing to add to it.
+ */
+private fun IAccountRepository.rejectIfCurrencyDiffers(
+    templateCurrency: String?,
+    targetCurrency: String?,
+) {
+    if (templateCurrency == null || targetCurrency == null) return
+    if (templateCurrency != targetCurrency) throw RecurringException(RecurringError.CURRENCY_MISMATCH)
 }

@@ -96,7 +96,12 @@ class ViewCategoryViewModelTest {
     ) : IEntryRepository {
         /** Stands in for Room's invalidation: emit after moving the ledger. */
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = balances[dimensionId] ?: 0.0
+        override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+            balances[dimensionId]
+                ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }
+                ?: com.neoutils.finsight.domain.model.MoneyByCurrency.zero
+
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
@@ -156,7 +161,6 @@ class ViewCategoryViewModelTest {
             recurringRepository = recurringRepository,
         ),
         unarchiveCategory = unarchiveCategory,
-        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         consolidateMoney = ConsolidateMoneyUseCase(
             baseCurrencyRepository = FakeBaseCurrencyRepository(),
             exchangeRateRepository = FakeExchangeRateRepository(),

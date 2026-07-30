@@ -11,7 +11,6 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -51,7 +50,6 @@ class ReportViewerViewModel(
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val entryRepository: IEntryRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -117,8 +115,8 @@ class ReportViewerViewModel(
             // use, each a single grouped read over every invoice dimension rather than one
             // query per invoice (spec `ledger-reporting`: no alternative that sums entries
             // already loaded).
-            val flows = entryRepository.flowsByDimension(invoiceDimensionIds).values
-            val owed = entryRepository.owedByDimension(invoiceDimensionIds).values
+            val flows = entryRepository.flowsByDimensionByCurrency(invoiceDimensionIds).values
+            val owed = entryRepository.owedByDimensionByCurrency(invoiceDimensionIds).values
             // Every one of these figures belongs to a single facade — the card whose
             // invoices this report is about — so it is denominated by the LIABILITY
             // account the card projects onto and by nothing else, base included
@@ -132,16 +130,22 @@ class ReportViewerViewModel(
                 // The invoice lines follow the same rule as the account lines of this
                 // very report: spending subtracts, an advance payment adds, and only the
                 // adjustment needs its direction spelled out.
+                // Every invoice here belongs to the one card the report is about, so
+                // every figure is in `cardCurrency` and the sum of them is exact —
+                // reduced at each invoice by the facade's own guarantee, never by the
+                // ledger presuming it (design D8).
                 expense = DisplayAmount.forcedNegative(
-                    flows.sumOf { it.expense }, cardCurrency, isApproximate = false,
+                    flows.sumOf { it.expense.only(cardCurrency) }, cardCurrency, isApproximate = false,
                 ),
                 advancePayment = DisplayAmount.forcedPositive(
-                    flows.sumOf { it.advancePayment }, cardCurrency, isApproximate = false,
+                    flows.sumOf { it.advancePayment.only(cardCurrency) }, cardCurrency, isApproximate = false,
                 ),
                 adjustment = DisplayAmount.explicitSign(
-                    flows.sumOf { it.adjustment }, cardCurrency, isApproximate = false,
+                    flows.sumOf { it.adjustment.only(cardCurrency) }, cardCurrency, isApproximate = false,
                 ),
-                total = DisplayAmount.natural(owed.sum(), cardCurrency, isApproximate = false),
+                total = DisplayAmount.natural(
+                    owed.sumOf { it.only(cardCurrency) }, cardCurrency, isApproximate = false,
+                ),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(
@@ -152,30 +156,28 @@ class ReportViewerViewModel(
             // A scope spans accounts, and accounts may differ in currency, so these four
             // are consolidated figures by nature: the reducer denominates them, at the
             // rates of the day the period ends — a report about March must not move when
-            // a rate changes in April. The ledger still answers one scalar per figure;
-            // making that read per-currency is group 10, and until then the base reaches
-            // the screen only through the reducer's mouth (design D9, D29).
-            val base = baseCurrencyRepository.observe().value
+            // a rate changes in April. The base reaches the screen only through the
+            // reducer's mouth (design D9, D29).
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
                 openingBalance = consolidateMoney(
-                    MoneyByCurrency.of(base, scopeStats.openingBalance),
+                    scopeStats.openingBalance,
                     on = endDate,
                     policy = DisplayAmount::natural,
                 ),
                 income = consolidateMoney(
-                    MoneyByCurrency.of(base, scopeStats.income),
+                    scopeStats.income,
                     on = endDate,
                     policy = DisplayAmount::forcedPositive,
                 ),
                 expense = consolidateMoney(
-                    MoneyByCurrency.of(base, scopeStats.expense),
+                    scopeStats.expense,
                     on = endDate,
                     policy = DisplayAmount::forcedNegative,
                 ),
                 balance = consolidateMoney(
-                    MoneyByCurrency.of(base, scopeStats.balance),
+                    scopeStats.balance,
                     on = endDate,
                     policy = DisplayAmount::natural,
                 ),
@@ -312,3 +314,12 @@ class ReportViewerViewModel(
         }
     }
 }
+
+/**
+ * The one term of a figure the card facade guarantees is mono-currency.
+ *
+ * Stated as a fallback to zero rather than an assertion: a broken guarantee is a bug
+ * elsewhere, and a report is not the place to crash over it.
+ */
+private fun com.neoutils.finsight.domain.model.MoneyByCurrency.only(currency: String): Double =
+    this[currency] ?: 0.0

@@ -109,8 +109,13 @@ private fun CategorySpendingItem(
                 )
             }
 
+            // No share means no bar. A category whose currency no rate reaches cannot
+            // be measured against the period's total, and a bar at zero would assert
+            // that it spent nothing (design D9).
+            val share = spending.percentage ?: return@Column
+
             LinearProgressIndicator(
-                progress = { (spending.percentage / 100).toFloat() },
+                progress = { (share / 100).toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),

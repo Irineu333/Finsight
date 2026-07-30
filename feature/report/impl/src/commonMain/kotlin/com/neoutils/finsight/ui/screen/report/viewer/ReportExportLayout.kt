@@ -198,7 +198,18 @@ private fun TransactionUi.exportTone(): ReportTone {
     }
 }
 
-private fun Double.toRoundedPercent(): String {
+/**
+ * A share with no answer renders as a dash, and it survives having no colour — which is
+ * what design D20 asks of an exported document. `0%` would be a claim the app cannot
+ * make: no rate reaches that category's currency, so its share of the total is unknown
+ * rather than nil.
+ */
+private fun Double?.toRoundedPercent(): String {
+    if (this == null) return "—"
+    return roundedPercent()
+}
+
+private fun Double.roundedPercent(): String {
     val rounded = (this * 10).roundToInt() / 10.0
     return "$rounded%"
 }

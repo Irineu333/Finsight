@@ -66,6 +66,7 @@ val recurringModule = module {
     factory { ArchiveRecurringUseCase(repository = get()) }
     factory {
         ConfirmRecurringUseCase(
+            accountRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )

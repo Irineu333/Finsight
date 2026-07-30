@@ -38,7 +38,6 @@ val categoriesModule = module {
         CalculateCategorySpendingUseCaseImpl(
             categoryRepository = get(),
             entryRepository = get(),
-            baseCurrencyRepository = get(),
             consolidateMoney = get(),
         )
     }
@@ -46,7 +45,6 @@ val categoriesModule = module {
         CalculateCategoryIncomeUseCaseImpl(
             categoryRepository = get(),
             entryRepository = get(),
-            baseCurrencyRepository = get(),
             consolidateMoney = get(),
         )
     }
@@ -129,7 +127,6 @@ val categoriesModule = module {
             entryRepository = get(),
             resolveRetirability = get(),
             unarchiveCategory = get(),
-            baseCurrencyRepository = get(),
             consolidateMoney = get(),
             crashlytics = get(),
         )

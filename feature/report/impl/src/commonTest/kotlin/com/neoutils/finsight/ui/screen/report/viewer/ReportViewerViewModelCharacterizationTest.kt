@@ -118,11 +118,9 @@ class ReportViewerViewModelCharacterizationTest {
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
                 consolidateMoney = fakes.consolidateMoney,
-                baseCurrencyRepository = fakes.baseCurrencyRepository,
             ),
             entryRepository = fakes.entryRepository(),
             consolidateMoney = fakes.consolidateMoney,
-            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -199,7 +197,6 @@ class ReportViewerViewModelCharacterizationTest {
                 accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
                 consolidateMoney = fakes.consolidateMoney,
-                baseCurrencyRepository = fakes.baseCurrencyRepository,
             ),
             entryRepository = fakes.entryRepository(
                 owed = mapOf(1L to 70.0),
@@ -208,7 +205,6 @@ class ReportViewerViewModelCharacterizationTest {
                 flows = mapOf(1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
             ),
             consolidateMoney = fakes.consolidateMoney,
-            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -330,14 +326,47 @@ private class Fakes {
         override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = owed[dimensionId] ?: 0.0
+        override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) =
+            dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
+
+        override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>) =
+            dimensionIds.distinct().associateWith { dimensionFlowsByCurrency(it) }
+
+        override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+            com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", owed[dimensionId] ?: 0.0)
+
+        override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
+            dimensionFlowsRaw(dimensionId).let {
+                com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency(
+                    expense = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.expense),
+                    advancePayment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.advancePayment),
+                    adjustment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.adjustment),
+                )
+            }
+
+        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
+            throw NotImplementedError()
+
+        private fun dimensionFlowsRaw(dimensionId: Long) =
             flows[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(expense = 0.0, advancePayment = 0.0, adjustment = 0.0)
         override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
         override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
         override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = stats
+        override suspend fun scopeStatsByCurrency(
+            scopeAccountIds: List<Long>,
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ) = com.neoutils.finsight.domain.repository.ScopeStatsByCurrency(
+            income = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", stats.income),
+            expense = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", stats.expense),
+            balance = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", stats.balance),
+            openingBalance = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", stats.openingBalance),
+        )
+
+        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats =
+            throw NotImplementedError()
     }
 
     val baseCurrencyRepository = object : IBaseCurrencyRepository {

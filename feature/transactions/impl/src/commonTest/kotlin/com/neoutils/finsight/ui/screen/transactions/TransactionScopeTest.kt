@@ -52,6 +52,12 @@ class TransactionScopeTest {
     private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
     private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
     private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val dollars = Account(id = 3, name = "Dollars", type = AccountType.ASSET, currency = "USD")
+    private val dollarCard = Account(id = 201, name = "Dollar card", type = AccountType.LIABILITY, currency = "USD")
+    private val conversionBrl = Account(id = 300, name = "câmbio BRL", type = AccountType.CONVERSION)
+    private val conversionUsd = Account(
+        id = 301, name = "câmbio USD", type = AccountType.CONVERSION, currency = "USD",
+    )
 
     private val groceries = Category(
         id = 7, name = "Groceries", icon = CategoryLazyIcon("food"),
@@ -64,7 +70,14 @@ class TransactionScopeTest {
     private fun previousDate(day: Int) = LocalDate(previous.year, previous.month, day)
 
     private fun entry(acc: Account, amount: Double, dimensionId: Long? = null) =
-        Entry(account = acc, amount = (amount * 100).toLong(), dimensionId = dimensionId)
+        Entry(
+            account = acc,
+            amount = (amount * 100).toLong(),
+            // A leg is denominated by the account it lands on — the writer's invariant,
+            // and what makes "post dollars into a reais account" unwritable.
+            currency = acc.currency,
+            dimensionId = dimensionId,
+        )
 
     private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
@@ -84,6 +97,26 @@ class TransactionScopeTest {
     private val invoicePayment = op(14, date(10), listOf(entry(account, -120.0), entry(cardAcc, 120.0)))
     private val accountAdjustment = op(15, date(12), listOf(entry(account, 25.0), entry(equityAcc, -25.0)))
     private val invoiceAdjustment = op(16, date(14), listOf(entry(cardAcc, 15.0), entry(equityAcc, -15.0)))
+
+    // A cross-currency transfer: two monetary legs, one in each currency, each balanced by
+    // the conversion account of its own currency. The conversion legs are in no perimeter,
+    // and it is where the *monetary* legs are that decides the classification.
+    private val crossTransfer = op(
+        17, date(16),
+        listOf(
+            entry(account, -55.0), entry(conversionBrl, 55.0),
+            entry(dollars, 10.0), entry(conversionUsd, -10.0),
+        ),
+    )
+
+    // The same shape, paying a dollar card from a reais account.
+    private val crossInvoicePayment = op(
+        18, date(18),
+        listOf(
+            entry(account, -110.0), entry(conversionBrl, 110.0),
+            entry(dollarCard, 20.0), entry(conversionUsd, -20.0),
+        ),
+    )
 
     private val everything = listOf(
         openingSalary, openingPurchase,
@@ -334,5 +367,52 @@ class TransactionScopeTest {
 
         assertNull(accounts.selectedTarget)
         assertEquals(stateUnder(TransactionScope.ACCOUNTS).listed.toSet(), accounts.listed.toSet())
+    }
+
+    // --- Cross-currency movement: the perimeter still decides, by monetary leg ---
+
+    @Test
+    fun `a cross-currency transfer is no more a flow than a same-currency one`() = runTest(dispatcher) {
+        // The conversion legs sit outside every perimeter. If one of them were mistaken for
+        // an equity or nominal counter-leg, this transfer would surface as an adjustment or
+        // as spending — the two ways the classification can break when the chart grows a
+        // type. What the perimeter's own figures do is a different question: per currency
+        // they move (fewer reais, more dollars), and it is consolidation that makes the pair
+        // neutral, which is why the assertion here is about classification.
+        val ledger = everything + crossTransfer
+        val withCross = stateUnder(TransactionScope.ACCOUNTS, ledger).balanceOverview as BalanceOverview.Accounts
+        val without = stateUnder(TransactionScope.ACCOUNTS).balanceOverview as BalanceOverview.Accounts
+
+        assertEquals(without.income, withCross.income)
+        assertEquals(without.expense, withCross.expense)
+        assertEquals(without.adjustment, withCross.adjustment)
+    }
+
+    @Test
+    fun `a cross-currency transfer is listed by the perimeter its monetary legs are in`() =
+        runTest(dispatcher) {
+            val ledger = everything + crossTransfer
+
+            assertEquals(true, stateUnder(TransactionScope.ACCOUNTS, ledger).listed.contains(crossTransfer.id))
+            // Not in the cards perimeter: it has no liability leg, and a conversion leg is
+            // not one — the conversion accounts belong to no perimeter at all.
+            assertEquals(false, stateUnder(TransactionScope.CARDS, ledger).listed.contains(crossTransfer.id))
+        }
+
+    @Test
+    fun `a cross-currency invoice payment stays internal to the neutral perimeter`() = runTest(dispatcher) {
+        // Both of its monetary legs are inside the overall perimeter — one asset, one card —
+        // so it is neither income nor expense there, exactly as the same-currency payment is
+        // not. It is listed in both perimeters it touches.
+        val ledger = everything + crossInvoicePayment
+        val withCross = stateUnder(TransactionScope.ALL, ledger).balanceOverview as BalanceOverview.Overall
+        val without = stateUnder(TransactionScope.ALL).balanceOverview as BalanceOverview.Overall
+
+        assertEquals(without.income, withCross.income)
+        assertEquals(without.expense, withCross.expense)
+        assertEquals(without.adjustment, withCross.adjustment)
+
+        assertEquals(true, stateUnder(TransactionScope.ACCOUNTS, ledger).listed.contains(crossInvoicePayment.id))
+        assertEquals(true, stateUnder(TransactionScope.CARDS, ledger).listed.contains(crossInvoicePayment.id))
     }
 }

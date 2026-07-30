@@ -17,7 +17,9 @@ persistido, não existe uma segunda forma de calcular um número.
 
 Três frases resumem o módulo inteiro:
 
-1. **Toda escrita é um conjunto de lançamentos que soma zero**, por moeda.
+1. **Toda escrita é um conjunto de lançamentos que soma zero**, por moeda — **sem
+   exceção**, a transação que atravessa moedas inclusive: ela não desbalanceia o razão,
+   chega *incompleta* à fronteira e é completada lá.
 2. **Toda leitura é `Σ lançamentos`** — saldo, saldo inicial, devido de fatura, gasto por
    categoria e patrimônio compartilham um só mecanismo.
 3. **O razão não conhece nenhuma fachada.** Ele não sabe o que é uma fatura, um cartão,
@@ -34,24 +36,40 @@ serialization e Koin.
 ### `Account` + `AccountType` — o plano de contas
 
 Toda conta e todo cartão do usuário é uma `Account` com um `type` do conjunto **fechado**
-`{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}`. Um cartão é uma fachada ligada à sua
-`Account` por `accountId`, e lê o próprio encerramento de lá — não há cópia.
+`{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY, CONVERSION}`. Um cartão é uma fachada ligada
+à sua `Account` por `accountId`, e lê o próprio encerramento de lá — não há cópia.
+
+Toda `Account` declara **uma** moeda, sem default e imutável: uma conta sem moeda é
+inexprimível, e trocá-la depois reescreveria em silêncio o significado de toda perna já
+gravada. O razão sabe que moeda existe e nada sobre qual — a opinião sobre quais o app
+oferece vive na camada de consolidação.
+
+`CONVERSION` é a conta que absorve o resíduo de uma transação que atravessa moedas, e tem
+**tipo próprio** justamente para não ser `EQUITY`: aqui `EQUITY` já significa "o usuário
+reconciliou algo à mão", e emprestá-lo à conversão faria toda transferência cruzada ser
+lida como ajuste — na derivação de rótulo, nos predicados `eq` da `EntryDao` e na
+idempotência de `AdjustBalanceUseCase`. Ela é de natureza credora, não é monetária (não
+aparece em formulário algum), não é nominal e é permanente vacuamente — nunca é
+arquivada. O seu saldo é o **resultado cambial realizado**, com o sinal invertido por ser
+credora.
 
 Os predicados do tipo são o que os consumidores usam, nunca um `when` próprio:
 
 | Predicado | Verdadeiro para | Serve para |
 |---|---|---|
 | `isDebitNatured` | `ASSET`, `EXPENSE` | aumenta com valor positivo (débito) |
-| `isCreditNatured` | `LIABILITY`, `INCOME`, `EQUITY` | aumenta com valor negativo (crédito) |
+| `isCreditNatured` | `LIABILITY`, `INCOME`, `EQUITY`, `CONVERSION` | aumenta com valor negativo (crédito) |
 | `isMonetary` | `ASSET`, `LIABILITY` | onde o dinheiro fisicamente está; é o que o usuário escolhe no formulário |
-| `isPermanent` | `ASSET`, `LIABILITY`, `EQUITY` | saldo que atravessa períodos — pode ficar *encalhado* |
+| `isPermanent` | `ASSET`, `LIABILITY`, `EQUITY`, `CONVERSION` | saldo que atravessa períodos — pode ficar *encalhado* |
 | `isNominal` | `INCOME`, `EXPENSE` | contas de resultado; as únicas onde uma dimensão de categoria pousa |
 
-Além das contas e cartões do usuário, o plano guarda **apenas três linhas de sistema**
-(`SystemAccount`): as duas nominais em que toda despesa e toda receita pousam, e a de
-reconciliação. Elas são criadas sob demanda pela fronteira de escrita, seus nomes são
-chaves de busca e **nunca são renderizados** — são invisíveis por construção, porque todo
-seletor e toda listagem filtra por `ASSET`/`isMonetary`.
+Além das contas e cartões do usuário, o plano guarda quatro linhas de sistema
+(`SystemAccount`) **por moeda em uso**: as duas nominais em que toda despesa e toda
+receita pousam, a de reconciliação e a de conversão. Elas são resolvidas por
+`(type, name, currency)` — a natureza deixou de ser chave desde que `EQUITY` passou a ter
+duas —, criadas sob demanda pela fronteira de escrita; os seus nomes são chaves de busca e
+**nunca são renderizados** — são invisíveis por construção, porque todo seletor e toda
+listagem filtra por `ASSET`/`isMonetary`.
 
 ### `Entry` — a perna
 
@@ -61,10 +79,17 @@ data class Entry(
     val transactionId: Long? = null,
     val account: Account,
     val amount: Long,          // centavos, com sinal, débito-positivo
-    val currency: String = BASE_CURRENCY,
     val dimensionId: Long? = null,
-)
+) {
+    // Derivada, não declarada: a moeda de uma perna é a da conta em que ela posta, e
+    // "poste 100 USD numa conta BRL" não tem como ser dito.
+    val currency: String get() = account.currency
+}
 ```
+
+A **coluna** `entries.currency` continua existindo, e não por inércia: `LedgerBalanceCheck`
+verifica a invariante agrupando por `(transactionId, currency)` sem tocar em `accounts`, e
+a spec exige que ela seja verificável lendo apenas as entries.
 
 `amount` é **signed `Long` em centavos**, convenção débito-positivo: positivo debita a
 conta, negativo credita. Para toda moeda presente numa transação, a soma das pernas é
@@ -347,13 +372,23 @@ Num ponto só, para toda escrita do app:
 
 1. Recusa um conjunto **vazio** de pernas (uma partida dobrada tem duas, por definição).
 2. Traduz o `TransactionType` em sinal contábil — **o único lugar** onde isso acontece.
-3. Completa a intenção unilateral, criando a conta de sistema da natureza pedida sob
-   demanda.
-4. Recusa uma perna cuja conta esteja **encerrada** (`ClosedAccountException`).
-5. Valida **`Σ = 0` por moeda** (`UnbalancedTransactionException`).
-6. Valida a **regra de pouso**: `account.type in kind.landsOn` — uniforme, sem `when` por
+3. Lê a **moeda de cada perna da conta em que ela posta** — `TransactionLeg` não tem campo
+   de moeda, e a conta já está carregada para a verificação de encerramento.
+4. Completa a intenção unilateral, criando a conta de sistema da natureza **e da moeda**
+   pedidas sob demanda.
+5. Completa a intenção **cruzada**: agrupa as pernas por moeda e lança o oposto do resíduo
+   de cada uma na conta `CONVERSION` daquela moeda, **por diferença e sempre por último**
+   (é onde todo o arredondamento do sistema se concentra) e **sem dimensão**. Recusa
+   quando os resíduos são todos do mesmo sinal — isso não é câmbio, é dinheiro criado do
+   nada.
+6. Recusa uma perna cuja conta esteja **encerrada** (`ClosedAccountException`).
+7. Valida **`Σ = 0` por moeda** (`UnbalancedTransactionException`), aqui e **em nenhum
+   outro ponto**: o pré-cheque plano que existia antes da fronteira foi removido, porque
+   somar pernas cruas sem moeda recusaria toda intenção cruzada antes de ela poder ser
+   completada.
+8. Valida a **regra de pouso**: `account.type in kind.landsOn` — uniforme, sem `when` por
    kind (`LedgerError.MisplacedDimension`).
-7. Consulta o `DimensionWriteGuard` registrado.
+9. Consulta o `DimensionWriteGuard` registrado.
 
 Falhou qualquer uma, nada é escrito.
 

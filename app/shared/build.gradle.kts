@@ -43,5 +43,14 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            // A base currency the test decides, over a `Settings` that is not the
+            // machine's: the gates below are about what the app shows for a given
+            // base, and reading the developer's own preferences would decide it.
+            implementation(libs.arrow.core)
+            implementation(libs.multiplatform.settings)
+            implementation(libs.multiplatform.settings.test)
+        }
     }
 }

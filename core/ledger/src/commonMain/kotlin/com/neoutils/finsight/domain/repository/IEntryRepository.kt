@@ -40,17 +40,6 @@ data class AccountFlows(
     val settlement: Double,
 )
 
-/**
- * The money flows of one sub-ledger, derived from the entries carrying its
- * dimension. [adjustment] is signed; the rest are positive magnitudes.
- */
-@Deprecated(SCALAR_DEPRECATION, ReplaceWith("DimensionFlowsByCurrency"))
-data class DimensionFlows(
-    val expense: Double,
-    val advancePayment: Double,
-    val adjustment: Double,
-)
-
 /** [DimensionFlows] expressed per currency — the shape a dimension's flows really have. */
 data class DimensionFlowsByCurrency(
     val expense: MoneyByCurrency,
@@ -65,18 +54,6 @@ data class DimensionFlowsByCurrency(
         )
     }
 }
-
-/**
- * Month-wide card expense/payment across every card, both positive, plus the
- * signed [adjustment] — in symmetry with [AssetMonthFlows], so an invoice adjustment
- * has a class of its own instead of disappearing from the report.
- */
-@Deprecated(SCALAR_DEPRECATION, ReplaceWith("LiabilityMonthFlowsByCurrency"))
-data class LiabilityMonthFlows(
-    val expense: Double,
-    val payment: Double,
-    val adjustment: Double,
-)
 
 /** [LiabilityMonthFlows] expressed per currency. */
 data class LiabilityMonthFlowsByCurrency(
@@ -93,18 +70,6 @@ data class LiabilityMonthFlowsByCurrency(
     }
 }
 
-/**
- * The month-wide income/expense/adjustment across every ASSET account, derived from
- * the ledger. Transfers and card payments are excluded — neither is income or
- * expense. [income]/[expense] are positive magnitudes; [adjustment] is signed.
- */
-@Deprecated(SCALAR_DEPRECATION, ReplaceWith("AssetMonthFlowsByCurrency"))
-data class AssetMonthFlows(
-    val income: Double,
-    val expense: Double,
-    val adjustment: Double,
-)
-
 /** [AssetMonthFlows] expressed per currency. */
 data class AssetMonthFlowsByCurrency(
     val income: MoneyByCurrency,
@@ -119,19 +84,6 @@ data class AssetMonthFlowsByCurrency(
         )
     }
 }
-
-/**
- * The report figures for an account/card scope over a period, derived from the
- * ledger. [income]/[expense] are positive magnitudes; [balance] is signed and includes
- * adjustments; [openingBalance] is the signed scope balance before the period.
- */
-@Deprecated(SCALAR_DEPRECATION, ReplaceWith("ScopeStatsByCurrency"))
-data class ScopeStats(
-    val income: Double,
-    val expense: Double,
-    val balance: Double,
-    val openingBalance: Double,
-)
 
 /** [ScopeStats] expressed per currency. */
 data class ScopeStatsByCurrency(
@@ -150,26 +102,6 @@ data class ScopeStatsByCurrency(
     }
 }
 
-internal const val SCALAR_DEPRECATION: String =
-    "Sums currencies into one number. Use the per-currency read (design D8); this " +
-        "goes away once every caller has migrated (task 13.1)."
-
-/**
- * The body every per-currency read below carries while the app migrates to it.
- *
- * It is what lets the per-currency surface land without touching the 21 hand-written
- * fakes of this interface: a member with a body is invisible to whoever does not
- * implement it, and an abstract one would break every fake at once. Task 13.1 removes
- * **the bodies**, not the signatures — that removal is the mechanical proof that
- * nobody was left behind. A *working* body is impossible here: it would need a
- * currency, and design D28 takes the ledger's opinion on which one away.
- */
-private fun noPerCurrencyImplementation(): Nothing = throw NotImplementedError(
-    "This per-currency ledger read has no implementation in this class. Only the " +
-        "ledger's own EntryRepository implements it; a fake that reaches this has " +
-        "not been migrated yet.",
-)
-
 interface IEntryRepository {
 
     /** The entries (legs) of a transaction, each hydrated with its account. */
@@ -185,31 +117,18 @@ interface IEntryRepository {
      */
     fun observeLedgerChanges(): Flow<Unit>
 
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun balanceUpTo(target: YearMonth, accountId: Long? = null): Double
-
     /**
      * Natural balance of [accountId] up to and including [target]. Scalar, and it
      * stays scalar: one account is one currency, which the caller already knows.
-     *
-     * A name of its own rather than an overload of [balanceUpTo]: the two would have
-     * the same parameter *names*, so every existing named-argument call would silently
-     * re-resolve to whichever signature is more specific — a caller moved to a
-     * different member without anybody editing it.
      */
-    suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
-        noPerCurrencyImplementation()
+    suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double
 
     /**
      * Natural balance of every ASSET account up to and including [target], per
      * currency — the read the dashboard's total balance comes through, and therefore
      * the door multi-currency enters the app by.
      */
-    suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency =
-        noPerCurrencyImplementation()
-
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double
+    suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency
 
     /**
      * Natural balance of every account of [type] up to and including [target], per
@@ -221,7 +140,7 @@ interface IEntryRepository {
     suspend fun naturalBalanceUpToByCurrency(
         target: YearMonth,
         type: AccountType,
-    ): MoneyByCurrency = noPerCurrencyImplementation()
+    ): MoneyByCurrency
 
     /**
      * Whether [accountId] has any movement. The fact behind "can this be removed
@@ -239,14 +158,11 @@ interface IEntryRepository {
     /** All-time natural balance of [accountId], across every date. Scoped to one account, so scalar. */
     suspend fun balance(accountId: Long): Double
 
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double
-
     /** Natural balance of [dimensionId] within [month], per currency — category spending. */
     suspend fun dimensionBalanceInMonthByCurrency(
         month: YearMonth,
         dimensionId: Long,
-    ): MoneyByCurrency = noPerCurrencyImplementation()
+    ): MoneyByCurrency
 
     /** The income/expense/adjustment/invoice-payment flows of [accountId] in [month]. */
     suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows
@@ -254,69 +170,40 @@ interface IEntryRepository {
     /** Number of ledger entries carrying [dimensionId] within [month]. */
     suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int
 
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun dimensionOwed(dimensionId: Long): Double
-
     /** Amount owed on a sub-ledger (positive), per currency, from the entries carrying its dimension. */
-    suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency =
-        noPerCurrencyImplementation()
-
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun dimensionFlows(dimensionId: Long): DimensionFlows
+    suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency
 
     /** The expense/advance-payment/adjustment breakdown of a sub-ledger, per currency. */
-    suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency =
-        noPerCurrencyImplementation()
-
-    /**
-     * The owed total of each sub-ledger in [dimensionIds], keyed by dimension — the
-     * batched [dimensionOwed] a screen listing many invoices needs. A dimension with
-     * no entries is absent from the map (its owed is 0). The default fans out over
-     * [dimensionOwed]; the ledger's own implementation overrides it with a single
-     * grouped query so N invoices cost one read, not N.
-     */
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun owedByDimension(dimensionIds: Collection<Long>): Map<Long, Double> =
-        dimensionIds.distinct().associateWith { dimensionOwed(it) }
+    suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency
 
     /**
      * The owed total of each sub-ledger in [dimensionIds], per currency, keyed by
-     * dimension. Same one-query-not-N contract as [owedByDimension].
+     * dimension — the batched [dimensionOwedByCurrency] a screen listing many invoices
+     * needs. A dimension with no entries is absent from the map (its owed is 0), and
+     * N invoices cost one read, not N.
      */
     suspend fun owedByDimensionByCurrency(
         dimensionIds: Collection<Long>,
-    ): Map<Long, MoneyByCurrency> = noPerCurrencyImplementation()
+    ): Map<Long, MoneyByCurrency>
 
     /**
-     * The flows breakdown of each sub-ledger in [dimensionIds], keyed by dimension —
-     * the batched [dimensionFlows]. Same one-query-not-N contract as [owedByDimension].
+     * The flows breakdown of each sub-ledger in [dimensionIds], per currency — the
+     * batched [dimensionFlowsByCurrency]. Same one-query-not-N contract as
+     * [owedByDimensionByCurrency].
      */
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun flowsByDimension(dimensionIds: Collection<Long>): Map<Long, DimensionFlows> =
-        dimensionIds.distinct().associateWith { dimensionFlows(it) }
-
-    /** The flows breakdown of each sub-ledger in [dimensionIds], per currency. */
     suspend fun flowsByDimensionByCurrency(
         dimensionIds: Collection<Long>,
-    ): Map<Long, DimensionFlowsByCurrency> = noPerCurrencyImplementation()
-
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows
+    ): Map<Long, DimensionFlowsByCurrency>
 
     /** Month-wide card expense/payment across every card account, per currency. */
-    suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency =
-        noPerCurrencyImplementation()
-
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows
+    suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency
 
     /**
      * The month-wide income/expense/adjustment across every ASSET account, per
      * currency, excluding transfers and card payments — the summary a transaction
      * list or dashboard shows.
      */
-    suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency =
-        noPerCurrencyImplementation()
+    suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency
 
     // No net-worth read here, deliberately (task 4.11). `Σ ASSET − Σ LIABILITY` is a
     // real capability and `ledger-reporting` requires it per currency — but the figure
@@ -336,72 +223,39 @@ interface IEntryRepository {
      * The `null` key is the unclassified total: legs on a nominal account carrying
      * no dimension. It is a group of the same aggregate, not a separate read.
      */
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun totalsByDimension(
-        nominalType: AccountType,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        siblingAccountIds: List<Long>,
-    ): Map<Long?, Double>
-
-    /** The same totals, per currency. */
     suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long?, MoneyByCurrency> = noPerCurrencyImplementation()
+    ): Map<Long?, MoneyByCurrency>
 
     /** The same totals, scoped to the transactions touching a set of sub-ledgers. */
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun totalsByDimensionInScope(
-        nominalType: AccountType,
-        scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double>
-
-    /** The same scoped totals, per currency. */
     suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ): Map<Long?, MoneyByCurrency> = noPerCurrencyImplementation()
+    ): Map<Long?, MoneyByCurrency>
 
     /**
      * The income/expense/balance/opening-balance a report shows for an account or card
      * scope, over [startDate]..[endDate], derived from the ledger. [scopeAccountIds] are
      * the accounts the report is seen from (a perspective's ASSET accounts, or a card's
      * LIABILITY account); internal transfers among them are excluded. Empty scope yields
-     * zeros — the caller resolves "all accounts" before calling.
-     */
-    @Deprecated(SCALAR_DEPRECATION)
-    suspend fun scopeStats(
-        scopeAccountIds: List<Long>,
-        startDate: LocalDate,
-        endDate: LocalDate,
-    ): ScopeStats
-
-    /**
-     * The same report figures, per currency. The empty scope yields
-     * [ScopeStatsByCurrency.zero] — figures about nothing, in no currency.
+     * [ScopeStatsByCurrency.zero] — figures about nothing, in no currency; the caller
+     * resolves "all accounts" before calling.
      */
     suspend fun scopeStatsByCurrency(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ScopeStatsByCurrency = noPerCurrencyImplementation()
+    ): ScopeStatsByCurrency
 }
 
 /**
- * Natural balance of each dimension in [dimensionIds] within [month]. A thin
- * fan over [IEntryRepository.dimensionBalanceInMonth] so callers in different feature
- * `impl`s share one way to gather per-dimension month balances from the ledger.
+ * Natural balance of each dimension in [dimensionIds] within [month], per currency. A
+ * thin fan over [IEntryRepository.dimensionBalanceInMonthByCurrency] so callers in
+ * different feature `impl`s share one way to gather per-dimension month balances.
  */
-@Deprecated(SCALAR_DEPRECATION)
-suspend fun IEntryRepository.dimensionBalancesInMonth(
-    month: YearMonth,
-    dimensionIds: Collection<Long>,
-): Map<Long, Double> = dimensionIds.distinct().associateWith { dimensionBalanceInMonth(month, it) }
-
-/** The same fan, per currency — one figure per dimension, each expressed by currency. */
 suspend fun IEntryRepository.dimensionBalancesInMonthByCurrency(
     month: YearMonth,
     dimensionIds: Collection<Long>,

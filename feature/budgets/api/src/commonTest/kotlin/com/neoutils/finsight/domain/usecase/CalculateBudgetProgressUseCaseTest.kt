@@ -26,6 +26,11 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * Characterizes the `spent` figure of [CalculateBudgetProgressUseCase]: Σ entries
@@ -206,40 +211,41 @@ private class MonthBalances(
             com.neoutils.finsight.domain.model.MoneyByCurrency.zero
         }
 
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
-        throw NotImplementedError()
-
     // Nothing else is this use case's business; reaching any of it is the test
     // telling us the use case grew a dependency it did not declare.
     override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeLedgerChanges() = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?) = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long) = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun totalsByDimension(
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun scopeStats(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ) = throw NotImplementedError()
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
 /** The reducer over an archive holding [rates]; the budget's own currency is the target. */

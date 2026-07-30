@@ -101,7 +101,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             entryRepository = FakeEntryRepository(
                 owedByInvoiceId = mapOf(1L to 70.0),
                 flowsByInvoiceId = mapOf(
-                    1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
+                    1L to brlFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
                 ),
             ),
             recurringRepository = NoRecurring,

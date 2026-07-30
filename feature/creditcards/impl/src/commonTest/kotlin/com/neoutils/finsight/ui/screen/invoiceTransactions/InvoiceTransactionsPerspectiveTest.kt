@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
@@ -92,7 +92,7 @@ class InvoiceTransactionsPerspectiveTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = mapOf(1L to 0.0),
-            flowsByInvoiceId = mapOf(1L to DimensionFlows(0.0, 0.0, 0.0)),
+            flowsByInvoiceId = mapOf(1L to DimensionFlowsByCurrency.zero),
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),

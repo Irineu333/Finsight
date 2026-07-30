@@ -15,19 +15,17 @@ import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
-import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
-import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * A ledger in memory over a list of transactions, classifying entries by the same rules
@@ -71,9 +69,6 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
             .filter { it.account.id == accountId }
             .sumOf { it.amount } / 100.0
 
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-
     /**
      * Only transactions with a nominal or equity counter-leg count — which is exactly
      * "not a transfer and not a card payment", the two forms whose money never leaves
@@ -112,9 +107,6 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
         return LiabilityMonthFlowsByCurrency(expense.money(), payment.money(), adjustment.money())
     }
 
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-
     /** Cents accumulated per currency, the way a `GROUP BY e.currency` accumulates them. */
     private class Bucket {
         private val cents = mutableMapOf<String, Long>()
@@ -130,14 +122,29 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
+
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
+        nominalType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
 /** The base currency in force. One currency, which is all the app has until group 12. */

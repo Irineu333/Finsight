@@ -1,11 +1,10 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.util
 
-import com.neoutils.finsight.util.toRateOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class RateFormatTest {
+class RateParseTest {
 
     @Test
     fun `a typed rate is read with either separator`() {

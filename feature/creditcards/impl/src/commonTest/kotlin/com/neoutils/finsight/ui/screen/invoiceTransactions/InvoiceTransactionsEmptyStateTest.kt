@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +74,7 @@ class InvoiceTransactionsEmptyStateTest {
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = emptyMap(),
-            flowsByInvoiceId = invoices.associate { it.id to DimensionFlows(0.0, 0.0, 0.0) },
+            flowsByInvoiceId = invoices.associate { it.id to DimensionFlowsByCurrency.zero },
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),

@@ -22,6 +22,9 @@ feature/
 | **api** | Rotas de navegação **externamente navegáveis** (data classes), interfaces de repositório, interfaces de use cases públicos, entry point de UI (`<Nome>Entry`) | Qualquer implementação |
 | **impl** | Telas, ViewModels, modais, use cases (públicos e privados), implementações de repositório, mappers, rotas de destinos internos, módulo Koin da feature | Tipos consumidos por outras features |
 
+Features: `home`, `dashboard`, `transactions`, `accounts`, `creditcards`, `categories`, `budgets`,
+`recurring`, `report`, `settings` (moeda base e acervo de taxas de câmbio) e `support`.
+
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
 
 ---
@@ -219,8 +222,8 @@ que "quem são as rotas do app" e "quem navega" sejam uma busca por implementaç
 que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam tipados como `Any`.
 
 **Onde o `<Nome>Graph` mora segue o mesmo critério de triagem de qualquer tipo:** na `api` só se
-outro módulo navegar até ele. `SupportGraph` e `ReportGraph` estão na `api` porque o dashboard abre
-essas features pela entrada. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
+outro módulo navegar até ele. `SupportGraph`, `ReportGraph` e `SettingsGraph` estão na `api` porque
+o dashboard abre as duas primeiras pela entrada e o `AppNavCatalog` do shell nomeia a terceira. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
 porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
 nunca o grafo. `DashboardGraph` está na `api` porque o `home:impl` o nomeia como `startDestination`
 do subgrafo de abas — o `startDestination` precisa ser um filho direto do grafo, e o filho direto é

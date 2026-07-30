@@ -38,6 +38,10 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * The fakes the invoice-transactions tests share. They answer just enough for the
@@ -110,7 +114,7 @@ internal class FakeCategoryRepository : ICategoryRepository {
 
 internal class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
-    private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
+    private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency> = emptyMap(),
 ) : IEntryRepository {
     // An invoice's figure holds one currency, by the card facade's guarantee — the
     // fake answers in the shape the ledger really answers in, so the reduction the
@@ -125,34 +129,38 @@ internal class FakeEntryRepository(
         com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", owedByInvoiceId[dimensionId] ?: 0.0)
 
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
-        (flowsByInvoiceId[dimensionId]
-            ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)).let {
-            com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency(
-                expense = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.expense),
-                advancePayment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.advancePayment),
-                adjustment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.adjustment),
-            )
-        }
-
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
-        throw NotImplementedError()
+        flowsByInvoiceId[dimensionId]
+            ?: com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency.zero
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
+        nominalType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
 /** No installment badge is under test here; the list only needs the read to answer. */
@@ -183,3 +191,17 @@ internal object NoRecurring : IRecurringRepository {
     override suspend fun update(recurring: Recurring) = throw NotImplementedError()
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }
+
+/**
+ * A sub-ledger's flows in the single currency a card holds — the shape the ledger
+ * answers in, so that the reduction under test is the production one.
+ */
+internal fun brlFlows(
+    expense: Double = 0.0,
+    advancePayment: Double = 0.0,
+    adjustment: Double = 0.0,
+) = com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency(
+    expense = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", expense),
+    advancePayment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", advancePayment),
+    adjustment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", adjustment),
+)

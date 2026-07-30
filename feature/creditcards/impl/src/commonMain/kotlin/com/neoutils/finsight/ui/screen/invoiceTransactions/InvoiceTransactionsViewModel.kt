@@ -106,12 +106,12 @@ class InvoiceTransactionsViewModel(
         val owedByDimension = entryRepository.owedByDimensionByCurrency(invoiceDimensionIds)
         val flowsByDimension = entryRepository.flowsByDimensionByCurrency(invoiceDimensionIds)
         val owedByInvoiceId = mutableMapOf<Long, Double>()
-        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
+        val flowsByInvoiceId = mutableMapOf<Long, InvoiceFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
             owedByInvoiceId[inv.id] = owedByDimension[dimensionId]?.singleOrNull()?.value ?: 0.0
             val flows = flowsByDimension[dimensionId]
-            flowsByInvoiceId[inv.id] = com.neoutils.finsight.domain.repository.DimensionFlows(
+            flowsByInvoiceId[inv.id] = InvoiceFlows(
                 expense = flows?.expense?.singleOrNull()?.value ?: 0.0,
                 advancePayment = flows?.advancePayment?.singleOrNull()?.value ?: 0.0,
                 adjustment = flows?.adjustment?.singleOrNull()?.value ?: 0.0,
@@ -341,3 +341,15 @@ private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<
     if (!installmentOnly) return this
     return filter { transaction -> transaction.installmentId != null }
 }
+
+/**
+ * One invoice's expense/advance-payment/adjustment, already reduced to the single
+ * currency its card holds. It is this screen's own shape, not the ledger's: the ledger
+ * answers per currency, and the reduction happens here, beside the facade guarantee
+ * that makes it valid (design D8).
+ */
+private data class InvoiceFlows(
+    val expense: Double,
+    val advancePayment: Double,
+    val adjustment: Double,
+)

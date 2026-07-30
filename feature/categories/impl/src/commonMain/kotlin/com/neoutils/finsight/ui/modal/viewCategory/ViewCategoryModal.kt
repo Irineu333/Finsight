@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewCategory
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -154,7 +155,7 @@ class ViewCategoryModal(
 
             DetailRow(
                 label = totalLabel,
-                value = formatter.format(uiState.totalAmount),
+                value = formatter.format(uiState.totalAmount, ASSUMED_SINGLE_CURRENCY),
                 valueColor = uiState.category.displayColor
             )
 

@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.neoutils.finsight.ui.screen.installments
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -520,7 +521,7 @@ private fun InstallmentSummaryCard(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(ui.totalAmount),
+                    text = formatter.format(ui.totalAmount, ASSUMED_SINGLE_CURRENCY),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -563,7 +564,7 @@ private fun InstallmentSummaryCard(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(ui.remainingAmount),
+                        text = formatter.format(ui.remainingAmount, ASSUMED_SINGLE_CURRENCY),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface,

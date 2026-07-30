@@ -10,8 +10,16 @@ import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import kotlin.math.abs
 
+/**
+ * Formats what the user types as money, in [currency].
+ *
+ * The currency is a constructor parameter and has no default: the field shows the symbol
+ * of the account the entry is going to, and typing 100 dollars into a field that says
+ * `R$` is the display failure of `money-display`, seen from the writing side.
+ */
 class MoneyInputTransformation(
-    private val formatter: CurrencyFormatter = CurrencyFormatter()
+    private val currency: String,
+    private val formatter: CurrencyFormatter,
 ) : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
@@ -41,13 +49,13 @@ class MoneyInputTransformation(
 
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
-        val formatted = formatter.format(abs(cents).toDouble() / 100)
+        val formatted = formatter.format(abs(cents).toDouble() / 100, currency)
         return if (isNegative) "-$formatted" else formatted
     }
 }
 
 @Composable
-fun rememberMoneyInputTransformation(): MoneyInputTransformation {
+fun rememberMoneyInputTransformation(currency: String): MoneyInputTransformation {
     val formatter = LocalCurrencyFormatter.current
-    return remember(formatter) { MoneyInputTransformation(formatter) }
+    return remember(formatter, currency) { MoneyInputTransformation(currency, formatter) }
 }

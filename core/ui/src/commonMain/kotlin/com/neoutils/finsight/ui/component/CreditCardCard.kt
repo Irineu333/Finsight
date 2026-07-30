@@ -75,6 +75,7 @@ fun CreditCardCard(
     closingDay: Int,
     dueDay: Int,
     limit: Double,
+    currency: String,
     variant: CreditCardCardVariant,
     modifier: Modifier = Modifier,
     invoiceUi: InvoiceUi? = null,
@@ -212,7 +213,7 @@ fun CreditCardCard(
                     ) {
                         invoiceUi?.let {
                             Text(
-                                text = formatter.format(it.amount),
+                                text = formatter.format(it.amount, currency),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface,
@@ -254,15 +255,15 @@ fun CreditCardCard(
                         )
                         Row {
                             Text(
-                                text = invoiceUi?.availableLimit?.let { formatter.format(it) }
-                                    ?: formatter.format(limit),
+                                text = invoiceUi?.availableLimit?.let { formatter.format(it, currency) }
+                                    ?: formatter.format(limit, currency),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colorScheme.onSurface,
                                 modifier = Modifier.alignByBaseline(),
                             )
                             Text(
-                                text = " / ${formatter.format(limit)}",
+                                text = " / ${formatter.format(limit, currency)}",
                                 fontSize = 14.sp,
                                 color = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.alignByBaseline(),

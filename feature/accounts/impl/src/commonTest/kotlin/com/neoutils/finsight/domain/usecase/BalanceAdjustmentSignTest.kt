@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.coroutines.test.runTest
@@ -57,7 +58,7 @@ class BalanceAdjustmentSignTest {
         val ui = adjustmentOf(target = 150.0, balanceBefore = 200.0)
             .toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(-50.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-50.0, Denomination.exact("BRL")), ui?.amount)
     }
 
     @Test
@@ -65,7 +66,7 @@ class BalanceAdjustmentSignTest {
         val ui = adjustmentOf(target = 250.0, balanceBefore = 200.0)
             .toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(50.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(50.0, Denomination.exact("BRL")), ui?.amount)
     }
 
     private companion object {

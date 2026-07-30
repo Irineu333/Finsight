@@ -1,11 +1,13 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.ReportPerspective
@@ -104,16 +106,17 @@ class ReportViewerViewModel(
             // already loaded).
             val flows = entryRepository.flowsByDimension(invoiceDimensionIds).values
             val owed = entryRepository.owedByDimension(invoiceDimensionIds).values
+            val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
                 // The invoice lines follow the same rule as the account lines of this
                 // very report: spending subtracts, an advance payment adds, and only the
                 // adjustment needs its direction spelled out.
-                expense = DisplayAmount.forcedNegative(flows.sumOf { it.expense }),
-                advancePayment = DisplayAmount.forcedPositive(flows.sumOf { it.advancePayment }),
-                adjustment = DisplayAmount.explicitSign(flows.sumOf { it.adjustment }),
-                total = DisplayAmount.natural(owed.sum()),
+                expense = DisplayAmount.forcedNegative(flows.sumOf { it.expense }, denomination),
+                advancePayment = DisplayAmount.forcedPositive(flows.sumOf { it.advancePayment }, denomination),
+                adjustment = DisplayAmount.explicitSign(flows.sumOf { it.adjustment }, denomination),
+                total = DisplayAmount.natural(owed.sum(), denomination),
             )
         } else {
             val scopeStats = calculateReportStatsUseCase(
@@ -121,13 +124,14 @@ class ReportViewerViewModel(
                 startDate = startDate,
                 endDate = endDate,
             )
+            val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                openingBalance = DisplayAmount.natural(scopeStats.openingBalance),
-                income = DisplayAmount.forcedPositive(scopeStats.income),
-                expense = DisplayAmount.forcedNegative(scopeStats.expense),
-                balance = DisplayAmount.natural(scopeStats.balance),
+                openingBalance = DisplayAmount.natural(scopeStats.openingBalance, denomination),
+                income = DisplayAmount.forcedPositive(scopeStats.income, denomination),
+                expense = DisplayAmount.forcedNegative(scopeStats.expense, denomination),
+                balance = DisplayAmount.natural(scopeStats.balance, denomination),
             )
         }
 

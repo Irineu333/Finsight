@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.viewBudget
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -178,14 +179,14 @@ class ViewBudgetModal(
                 }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
-                    value = formatter.format(budget.amount),
+                    value = formatter.format(budget.amount, ASSUMED_SINGLE_CURRENCY),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spent),
+                    value = formatter.format(budgetProgress.spent, ASSUMED_SINGLE_CURRENCY),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -193,12 +194,12 @@ class ViewBudgetModal(
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.spent - budget.amount),
+                        value = formatter.format(budgetProgress.spent - budget.amount, ASSUMED_SINGLE_CURRENCY),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remaining),
+                        value = formatter.format(budgetProgress.remaining, ASSUMED_SINGLE_CURRENCY),
                     )
                 }
             }

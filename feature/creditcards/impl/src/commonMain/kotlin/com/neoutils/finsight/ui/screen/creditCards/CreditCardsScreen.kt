@@ -4,6 +4,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.creditCards
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
@@ -434,6 +435,7 @@ private fun CreditCardPager(
             closingDay = creditCards[page].closingDay,
             dueDay = creditCards[page].dueDay,
             limit = creditCards[page].limit,
+            currency = ASSUMED_SINGLE_CURRENCY,
             invoiceUi = creditCards[page].invoiceUi,
             // Only the selected page is promoted: a neighbour composed by the pager's
             // contentPadding would be lifted to the overlay and lose its clip.

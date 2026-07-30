@@ -227,6 +227,7 @@ class DashboardComponentsBuilder(
                     name = account.name,
                     isDefault = account.isDefault,
                     balance = entryRepository.balance(account.id),
+                    currency = account.currency,
                 )
             }
 

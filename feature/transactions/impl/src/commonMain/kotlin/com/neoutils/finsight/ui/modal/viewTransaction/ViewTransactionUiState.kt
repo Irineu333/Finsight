@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.viewTransaction
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -66,6 +67,7 @@ sealed interface ViewTransactionUiState {
         val amount = itemDisplayAmount(
             label = label,
             legAmountCents = perspectiveEntry?.amount ?: 0L,
+            currency = perspectiveEntry?.currency ?: ASSUMED_SINGLE_CURRENCY,
             hasPerspective = perspective != null,
         )
 

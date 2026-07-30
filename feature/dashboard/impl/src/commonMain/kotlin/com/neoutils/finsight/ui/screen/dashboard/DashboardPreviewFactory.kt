@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
@@ -67,6 +68,7 @@ class DashboardPreviewFactory(
                             name = getString(Res.string.preview_account_main),
                             isDefault = true,
                             balance = 2500.0,
+                            currency = ASSUMED_SINGLE_CURRENCY,
                         ),
                         DashboardAccountUi(
                             id = 2,
@@ -74,6 +76,7 @@ class DashboardPreviewFactory(
                             name = getString(Res.string.preview_account_savings),
                             isDefault = false,
                             balance = 1200.0,
+                            currency = ASSUMED_SINGLE_CURRENCY,
                         ),
                     ),
                 ),

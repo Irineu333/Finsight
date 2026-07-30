@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
@@ -153,6 +154,8 @@ class InvoiceTransactionsViewModel(
                     recurringRepository.hasRecurringForCreditCard(creditCard.id)
             ),
             invoices = invoices.map { invoice ->
+                // Every figure of an invoice is denominated by the card it belongs to.
+                val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
                 val flows = flowsByInvoiceId.getValue(invoice.id)
                 val expense = flows.expense
                 val advancePayment = flows.advancePayment
@@ -189,10 +192,10 @@ class InvoiceTransactionsViewModel(
                     // The row only renders: spending subtracts from what the card is
                     // worth to the user, an advance payment adds, and an adjustment is
                     // the one line whose direction its label withholds.
-                    expense = DisplayAmount.forcedNegative(expense),
-                    advancePayment = DisplayAmount.forcedPositive(advancePayment),
-                    adjustment = DisplayAmount.explicitSign(adjustment),
-                    total = DisplayAmount.natural(owedByInvoiceId.getValue(invoice.id)),
+                    expense = DisplayAmount.forcedNegative(expense, denomination),
+                    advancePayment = DisplayAmount.forcedPositive(advancePayment, denomination),
+                    adjustment = DisplayAmount.explicitSign(adjustment, denomination),
+                    total = DisplayAmount.natural(owedByInvoiceId.getValue(invoice.id), denomination),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,

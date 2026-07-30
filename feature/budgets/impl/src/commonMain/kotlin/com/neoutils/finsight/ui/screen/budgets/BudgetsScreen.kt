@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.budgets
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.AnimatedContent
@@ -273,7 +274,7 @@ private fun BudgetProgressItem(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(progress.budget.amount),
+                    text = formatter.format(progress.budget.amount, ASSUMED_SINGLE_CURRENCY),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -291,7 +292,7 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(progress.spent),
+                        text = formatter.format(progress.spent, ASSUMED_SINGLE_CURRENCY),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -308,9 +309,9 @@ private fun BudgetProgressItem(
                     )
                     Text(
                         text = if (progress.isExceeded) {
-                            formatter.format(progress.spent - progress.budget.amount)
+                            formatter.format(progress.spent - progress.budget.amount, ASSUMED_SINGLE_CURRENCY)
                         } else {
-                            formatter.format(progress.remaining)
+                            formatter.format(progress.remaining, ASSUMED_SINGLE_CURRENCY)
                         },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,

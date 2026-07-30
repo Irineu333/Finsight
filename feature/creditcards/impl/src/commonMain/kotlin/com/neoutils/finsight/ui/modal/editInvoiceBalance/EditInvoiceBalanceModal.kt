@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -133,7 +134,7 @@ class EditInvoiceBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(
@@ -206,7 +207,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatter.formatWithSign(adjustment),
+                text = formatter.formatWithSign(adjustment, ASSUMED_SINGLE_CURRENCY),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
@@ -216,7 +217,7 @@ class EditInvoiceBalanceModal(
 
     private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
         val isNegative = cents < 0
-        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
+        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100, ASSUMED_SINGLE_CURRENCY)
         return if (isNegative) "-$formatted" else formatted
     }
 

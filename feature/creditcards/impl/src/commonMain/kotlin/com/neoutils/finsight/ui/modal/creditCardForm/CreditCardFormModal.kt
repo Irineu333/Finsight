@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -157,7 +158,7 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = rememberMoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),

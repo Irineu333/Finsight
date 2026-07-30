@@ -11,4 +11,5 @@ data class DashboardAccountUi(
     val name: String,
     val isDefault: Boolean,
     val balance: Double,
+    val currency: String,
 )

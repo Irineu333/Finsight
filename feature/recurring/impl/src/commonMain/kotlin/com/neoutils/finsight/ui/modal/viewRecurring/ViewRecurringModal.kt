@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.viewRecurring
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -176,7 +177,7 @@ class ViewRecurringModal(
 
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_amount_label),
-                    value = formatter.format(recurring.amount),
+                    value = formatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

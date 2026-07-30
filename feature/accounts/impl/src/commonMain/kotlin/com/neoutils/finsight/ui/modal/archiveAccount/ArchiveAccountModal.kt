@@ -69,7 +69,7 @@ class ArchiveAccountModal(
 
             Text(
                 text = if (blocked) {
-                    stringResource(Res.string.archive_account_blocked, formatter.format(balance ?: 0.0))
+                    stringResource(Res.string.archive_account_blocked, formatter.format(balance ?: 0.0, account.currency))
                 } else {
                     stringResource(Res.string.archive_account_message)
                 },

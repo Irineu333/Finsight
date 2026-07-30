@@ -8,16 +8,27 @@ import platform.Foundation.currentLocale
 import kotlin.math.absoluteValue
 
 actual class CurrencyFormatter actual constructor() {
-    private val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterCurrencyStyle
-        locale = NSLocale.currentLocale
+
+    /**
+     * One formatter per currency, all of them on the device's locale: the locale decides
+     * the *format*, the currency decides the symbol and the denomination.
+     */
+    private val formatters = mutableMapOf<String, NSNumberFormatter>()
+
+    private fun formatterOf(currency: String) = formatters.getOrPut(currency) {
+        NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterCurrencyStyle
+            locale = NSLocale.currentLocale
+            currencyCode = currency
+        }
     }
 
-    actual fun format(amount: Double) =
-        formatter.stringFromNumber(NSNumber(double = amount)) ?: ""
+    actual fun format(amount: Double, currency: String) =
+        formatterOf(currency).stringFromNumber(NSNumber(double = amount)) ?: ""
 
-    actual fun formatWithSign(amount: Double): String {
-        val formatted = formatter.stringFromNumber(NSNumber(double = amount.absoluteValue)) ?: ""
+    actual fun formatWithSign(amount: Double, currency: String): String {
+        val formatted = formatterOf(currency)
+            .stringFromNumber(NSNumber(double = amount.absoluteValue)) ?: ""
         return when {
             amount > 0 -> "+$formatted"
             amount < 0 -> "-$formatted"

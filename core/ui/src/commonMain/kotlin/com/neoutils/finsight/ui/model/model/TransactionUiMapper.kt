@@ -34,7 +34,12 @@ fun Transaction.toTransactionUi(
         label = label,
         direction = deriveTransactionType(leg.amount, entries),
         title = displayTitleOf(title, category),
-        amount = itemDisplayAmount(label, leg.amount, hasPerspective = accountId != null),
+        amount = itemDisplayAmount(
+            label = label,
+            legAmountCents = leg.amount,
+            currency = leg.currency,
+            hasPerspective = accountId != null,
+        ),
         date = date,
         categoryId = category?.id,
         categoryIcon = category?.icon,

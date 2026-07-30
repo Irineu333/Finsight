@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
@@ -107,7 +108,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categorySpending.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.format(item.amount, ASSUMED_SINGLE_CURRENCY),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -122,7 +123,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.format(item.amount, ASSUMED_SINGLE_CURRENCY),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },

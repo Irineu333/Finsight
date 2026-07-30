@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.budgetForm
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
@@ -51,7 +52,7 @@ class BudgetFormViewModel(
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
-    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
+    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "")
     private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
     private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
     private val selectedRecurring = MutableStateFlow<Recurring?>(null)
@@ -136,7 +137,7 @@ class BudgetFormViewModel(
             selectedCategories = budget?.categories ?: emptyList(),
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
-            amount = budget?.amount?.let { formatter.format(it) } ?: "",
+            amount = budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "",
             validation = validation,
             isEditMode = isEditMode,
             limitType = budget?.limitType ?: LimitType.FIXED,

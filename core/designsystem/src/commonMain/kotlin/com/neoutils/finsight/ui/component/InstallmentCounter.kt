@@ -26,6 +26,7 @@ import com.neoutils.finsight.extension.CurrencyFormatter
 data class InstallmentState(
     val count: Int,
     val total: Double,
+    val currency: String,
 ) {
     val installment = total / count
 
@@ -34,7 +35,7 @@ data class InstallmentState(
             return "${count}x"
         }
 
-        return "${count}x de ${formatter.format(installment)}"
+        return "${count}x de ${formatter.format(installment, currency)}"
     }
 }
 

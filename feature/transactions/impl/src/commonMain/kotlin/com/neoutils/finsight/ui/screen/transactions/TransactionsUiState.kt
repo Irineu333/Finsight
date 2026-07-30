@@ -2,10 +2,12 @@
 
 package com.neoutils.finsight.ui.screen.transactions
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
@@ -86,12 +88,12 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
          */
         data class Accounts(
-            val openingBalance: DisplayAmount = DisplayAmount.natural(0.0),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val openingBalance: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
+            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
             val invoicePayment: DisplayAmount? = null,
             val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.natural(0.0),
+            val finalBalance: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
         ) : BalanceOverview
 
         /**
@@ -103,11 +105,11 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance − expense + payment + adjustment`
          */
         data class Cards(
-            val openingBalance: DisplayAmount = DisplayAmount.owed(0.0),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val openingBalance: DisplayAmount = DisplayAmount.owed(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
             val payment: DisplayAmount? = null,
             val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.owed(0.0),
+            val finalBalance: DisplayAmount = DisplayAmount.owed(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
         ) : BalanceOverview
 
         /**
@@ -119,12 +121,12 @@ data class TransactionsUiState(
          * `finalNet = openingNet + income − expense + adjustment`
          */
         data class Overall(
-            val openingNet: DisplayAmount = DisplayAmount.natural(0.0),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
+            val openingNet: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
+            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
+            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
             val invoicePayment: DisplayAmount? = null,
             val adjustment: DisplayAmount? = null,
-            val finalNet: DisplayAmount = DisplayAmount.natural(0.0),
+            val finalNet: DisplayAmount = DisplayAmount.natural(0.0, Denomination.exact(ASSUMED_SINGLE_CURRENCY)),
         ) : BalanceOverview
     }
 }

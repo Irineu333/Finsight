@@ -145,7 +145,7 @@ class EditAccountBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_account_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        inputTransformation = rememberMoneyInputTransformation(account.currency),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(
@@ -218,7 +218,7 @@ class EditAccountBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatter.formatWithSign(adjustment),
+                text = formatter.formatWithSign(adjustment, account.currency),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
@@ -228,7 +228,7 @@ class EditAccountBalanceModal(
 
     private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
         val isNegative = cents < 0
-        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
+        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100, account.currency)
         return if (isNegative) "-$formatted" else formatted
     }
 

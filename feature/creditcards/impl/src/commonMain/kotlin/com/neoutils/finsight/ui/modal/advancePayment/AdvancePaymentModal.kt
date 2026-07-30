@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.advancePayment
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -95,7 +96,7 @@ class AdvancePaymentModal(
                 label = {
                     Text(text = stringResource(Res.string.advance_payment_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next

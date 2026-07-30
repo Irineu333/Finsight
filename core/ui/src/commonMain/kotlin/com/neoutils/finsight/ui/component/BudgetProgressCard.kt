@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun BudgetProgressCard(
     budgetProgress: List<BudgetProgress>,
+    currency: String,
     modifier: Modifier = Modifier,
     onBudgetClick: (BudgetProgress) -> Unit = {},
 ) {
@@ -49,6 +50,7 @@ fun BudgetProgressCard(
             budgetProgress.take(3).forEach { progress ->
                 BudgetProgressRow(
                     progress = progress,
+                    currency = currency,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .clickable { onBudgetClick(progress) },
@@ -61,6 +63,7 @@ fun BudgetProgressCard(
 @Composable
 private fun BudgetProgressRow(
     progress: BudgetProgress,
+    currency: String,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -98,7 +101,7 @@ private fun BudgetProgressRow(
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "${formatter.format(progress.spent)} / ${formatter.format(progress.budget.amount)}",
+                    text = "${formatter.format(progress.spent, currency)} / ${formatter.format(progress.budget.amount, currency)}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,

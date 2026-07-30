@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.editTransaction
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import org.koin.compose.koinInject
@@ -85,7 +86,9 @@ class EditTransactionModal(
         }
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount))
+        // The amount is denominated by the account the money leg posts on.
+        val transactionCurrency = transaction.primaryEntry?.currency ?: ASSUMED_SINGLE_CURRENCY
+        val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount, transactionCurrency))
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
@@ -249,7 +252,7 @@ class EditTransactionModal(
                     label = {
                         Text(text = stringResource(Res.string.edit_transaction_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(),
+                    inputTransformation = rememberMoneyInputTransformation(transactionCurrency),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

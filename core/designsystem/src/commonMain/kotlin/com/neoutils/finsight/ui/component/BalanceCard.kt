@@ -51,6 +51,7 @@ import com.neoutils.finsight.ui.theme.Income as IncomeColor
 @Composable
 fun BalanceCard(
     balance: Double,
+    currency: String,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
     onEditClick: (() -> Unit)? = null,
@@ -124,7 +125,7 @@ fun BalanceCard(
                 )
         ) {
             Text(
-                text = formatter.format(balance),
+                text = formatter.format(balance, currency),
                 style = config.style,
             )
 

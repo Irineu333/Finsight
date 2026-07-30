@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.model
 
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 
 import kotlin.test.Test
@@ -20,7 +21,7 @@ class RetireActionTest {
     }
 
     // The figures are irrelevant to the rule under test; only their presence is.
-    private val zero = DisplayAmount.natural(0.0)
+    private val zero = DisplayAmount.natural(0.0, Denomination.exact("BRL"))
 
     @Test
     fun `the ui models expose the same rule so the two screens cannot drift`() {

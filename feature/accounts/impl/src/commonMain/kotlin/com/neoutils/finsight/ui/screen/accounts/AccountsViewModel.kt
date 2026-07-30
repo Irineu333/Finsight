@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
@@ -93,21 +94,24 @@ class AccountsViewModel(
         // from the per-account aggregate (task 2.4). No summing of legs in memory.
         accounts.map { account ->
             val flows = entryRepository.accountFlows(month = month, accountId = account.id)
+            val denomination = Denomination.exact(account.currency)
             account to AccountUi(
                 id = account.id,
                 // The card only renders: the sign of each line is the effect of that
                 // figure on the account's balance, and it is decided here, once.
                 openingBalance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id)
+                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                    denomination,
                 ),
                 balance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month, accountId = account.id)
+                    entryRepository.balanceUpTo(target = month, accountId = account.id),
+                    denomination,
                 ),
-                income = DisplayAmount.forcedPositive(flows.income),
-                expense = DisplayAmount.forcedNegative(flows.expense),
+                income = DisplayAmount.forcedPositive(flows.income, denomination),
+                expense = DisplayAmount.forcedNegative(flows.expense, denomination),
                 // The only line whose direction its label withholds.
-                adjustment = DisplayAmount.explicitSign(flows.adjustment),
-                settlement = DisplayAmount.forcedNegative(flows.settlement),
+                adjustment = DisplayAmount.explicitSign(flows.adjustment, denomination),
+                settlement = DisplayAmount.forcedNegative(flows.settlement, denomination),
                 hasMovement = entryRepository.hasEntries(account.id),
                 isDefault = account.isDefault,
             )

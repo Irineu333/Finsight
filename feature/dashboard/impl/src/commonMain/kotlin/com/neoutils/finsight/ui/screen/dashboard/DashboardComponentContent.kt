@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsEntry
@@ -399,6 +400,7 @@ private fun DashboardOverallBalanceSection(
     ) {
         BalanceCard(
             balance = component.income,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Income,
             onClick = {
@@ -410,6 +412,7 @@ private fun DashboardOverallBalanceSection(
 
         BalanceCard(
             balance = component.expense,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Expense,
             onClick = {
@@ -436,6 +439,7 @@ private fun DashboardConcreteBalanceSection(
     ) {
         BalanceCard(
             balance = component.income,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountIncome,
             onClick = {
@@ -447,6 +451,7 @@ private fun DashboardConcreteBalanceSection(
 
         BalanceCard(
             balance = component.expense,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountExpense,
             onClick = {
@@ -473,12 +478,14 @@ private fun DashboardPendingBalanceSection(
     ) {
         BalanceCard(
             balance = component.pendingIncome,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingIncome,
         )
 
         BalanceCard(
             balance = component.pendingExpense,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingExpense,
         )
@@ -499,12 +506,14 @@ private fun DashboardCreditCardBalanceSection(
     ) {
         BalanceCard(
             balance = component.payment,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.InvoicePayment,
         )
 
         BalanceCard(
             balance = component.expense,
+            currency = ASSUMED_SINGLE_CURRENCY,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.CreditCardExpense,
         )
@@ -577,6 +586,7 @@ private fun DashboardCreditCardsSection(
                         closingDay = creditCardUi.closingDay,
                         dueDay = creditCardUi.dueDay,
                         limit = creditCardUi.limit,
+                        currency = ASSUMED_SINGLE_CURRENCY,
                         invoiceUi = creditCardUi.invoiceUi,
                         // Only the current page is promoted: a neighbour composed by the pager's
                         // contentPadding would be lifted to the overlay and lose its clip.
@@ -654,6 +664,7 @@ private fun DashboardSpendingByCategorySection(
 
     CategorySpendingCard(
         categorySpending = component.categorySpending,
+        currency = ASSUMED_SINGLE_CURRENCY,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -676,6 +687,7 @@ private fun DashboardIncomeByCategorySection(
 
     CategorySpendingCard(
         categorySpending = component.categoryIncome,
+        currency = ASSUMED_SINGLE_CURRENCY,
         title = stringResource(Res.string.component_income_by_category),
         modifier = modifier
             .fillMaxWidth()
@@ -699,6 +711,7 @@ private fun DashboardBudgetsSection(
 
     BudgetProgressCard(
         budgetProgress = component.budgetProgress,
+        currency = ASSUMED_SINGLE_CURRENCY,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -834,7 +847,7 @@ private fun PendingRecurringCard(
             }
 
             Text(
-                text = formatter.format(recurring.amount),
+                text = formatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = typeColor,
@@ -876,7 +889,7 @@ private fun TotalBalanceCard(
                 color = colorScheme.onSurfaceVariant,
             )
             Text(
-                text = formatter.format(component.amount),
+                text = formatter.format(component.amount, ASSUMED_SINGLE_CURRENCY),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,
@@ -929,6 +942,7 @@ private fun DashboardAccountsRow(
                     iconKey = accountUi.iconKey,
                     name = accountUi.name,
                     isDefault = accountUi.isDefault,
+                    currency = accountUi.currency,
                     variant = AccountCardVariant.Dashboard(
                         balance = accountUi.balance,
                         onClick = {

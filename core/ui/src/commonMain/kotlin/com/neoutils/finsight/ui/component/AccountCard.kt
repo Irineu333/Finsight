@@ -62,6 +62,7 @@ fun AccountCard(
     iconKey: String,
     name: String,
     isDefault: Boolean,
+    currency: String,
     variant: AccountCardVariant,
     modifier: Modifier = Modifier,
 ) {
@@ -105,6 +106,7 @@ fun AccountCard(
                 iconKey = iconKey,
                 name = name,
                 isDefault = isDefault,
+                currency = currency,
                 variant = variant,
             )
         }
@@ -229,6 +231,7 @@ private fun CompactContent(
     iconKey: String,
     name: String,
     isDefault: Boolean,
+    currency: String,
     variant: AccountCardVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -279,7 +282,7 @@ private fun CompactContent(
 
             if (variant is AccountCardVariant.Dashboard) {
                 Text(
-                    text = formatter.format(variant.balance),
+                    text = formatter.format(variant.balance, currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,

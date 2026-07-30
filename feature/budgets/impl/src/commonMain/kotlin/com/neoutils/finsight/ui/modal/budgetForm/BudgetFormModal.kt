@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.budgetForm
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -57,7 +58,7 @@ class BudgetFormModal(
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
-        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
+        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) } ?: "")
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -139,7 +140,7 @@ class BudgetFormModal(
                                 onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
                             )
                         },
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,

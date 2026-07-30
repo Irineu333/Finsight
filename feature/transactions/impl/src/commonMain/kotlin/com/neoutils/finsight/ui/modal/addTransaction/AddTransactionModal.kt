@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.addTransaction
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import org.koin.compose.koinInject
@@ -217,7 +218,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 label = {
                     Text(text = stringResource(Res.string.add_transaction_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -228,6 +229,7 @@ class AddTransactionModal : ModalBottomSheet() {
                             state = InstallmentState(
                                 count = installments,
                                 total = amount.text.toString().moneyToDouble(),
+                                currency = ASSUMED_SINGLE_CURRENCY,
                             ),
                             onInstallmentsChange = { installments = it },
                         )

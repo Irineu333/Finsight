@@ -26,6 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun CategorySpendingCard(
     categorySpending: List<CategorySpending>,
+    currency: String,
     title: String? = null,
     modifier: Modifier = Modifier,
     onCategoryClick: (Category) -> Unit = {}
@@ -54,6 +55,7 @@ fun CategorySpendingCard(
             categorySpending.forEach { spending ->
                 CategorySpendingItem(
                     spending = spending,
+                    currency = currency,
                     modifier = Modifier
                         .clickable { onCategoryClick(spending.category) }
                         .padding(horizontal = 16.dp)
@@ -66,6 +68,7 @@ fun CategorySpendingCard(
 @Composable
 private fun CategorySpendingItem(
     spending: CategorySpending,
+    currency: String,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -103,7 +106,7 @@ private fun CategorySpendingItem(
                 )
 
                 Text(
-                    text = formatter.format(spending.amount),
+                    text = formatter.format(spending.amount, currency),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

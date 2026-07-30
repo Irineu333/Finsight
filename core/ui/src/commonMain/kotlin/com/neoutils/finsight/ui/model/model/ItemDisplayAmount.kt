@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.TransactionLabel
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 
 /**
@@ -27,20 +28,26 @@ import com.neoutils.finsight.extension.DisplayAmount
 fun itemDisplayAmount(
     label: TransactionLabel,
     legAmountCents: Long,
+    currency: String,
     hasPerspective: Boolean,
 ): DisplayAmount {
     val value = legAmountCents / 100.0
 
+    // A leg is denominated by the account it posts on, and the entry carries that
+    // currency — so a line of a foreign account's statement reads in that account's
+    // currency, never in the base.
+    val denomination = Denomination.exact(currency)
+
     return when (label) {
-        TransactionLabel.ADJUSTMENT -> DisplayAmount.explicitSign(value)
+        TransactionLabel.ADJUSTMENT -> DisplayAmount.explicitSign(value, denomination)
         TransactionLabel.TRANSFER -> if (hasPerspective) {
-            DisplayAmount.explicitSign(value)
+            DisplayAmount.explicitSign(value, denomination)
         } else {
-            DisplayAmount.magnitude(value)
+            DisplayAmount.magnitude(value, denomination)
         }
 
         TransactionLabel.EXPENSE,
         TransactionLabel.INCOME,
-        TransactionLabel.PAYMENT -> DisplayAmount.magnitude(value)
+        TransactionLabel.PAYMENT -> DisplayAmount.magnitude(value, denomination)
     }
 }

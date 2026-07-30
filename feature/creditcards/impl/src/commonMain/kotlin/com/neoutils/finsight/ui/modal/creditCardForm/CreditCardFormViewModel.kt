@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.flatMap
@@ -52,7 +53,7 @@ class CreditCardFormViewModel(
     )
 
     private val limit = MutableStateFlow(
-        creditCard?.limit?.let { formatter.format(it) }.orEmpty()
+        creditCard?.limit?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) }.orEmpty()
     )
 
     private val closingDay = MutableStateFlow(
@@ -88,7 +89,7 @@ class CreditCardFormViewModel(
         initialValue = creditCard?.let {
             CreditCardForm(
                 name = it.name,
-                limit = formatter.format(it.limit),
+                limit = formatter.format(it.limit, ASSUMED_SINGLE_CURRENCY),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
                 iconKey = it.iconKey,

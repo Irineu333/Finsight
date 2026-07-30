@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.ReportTone
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionItem
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -63,10 +64,10 @@ class ReportExportAdjustmentToneTest {
             stats = ReportViewerUiState.Stats.Invoice(
                 openingDate = LocalDate(2026, 1, 1),
                 closingDate = LocalDate(2026, 1, 31),
-                expense = DisplayAmount.forcedNegative(0.0),
-                advancePayment = DisplayAmount.forcedPositive(0.0),
-                adjustment = DisplayAmount.explicitSign(100.0),
-                total = DisplayAmount.natural(100.0),
+                expense = DisplayAmount.forcedNegative(0.0, Denomination.exact("BRL")),
+                advancePayment = DisplayAmount.forcedPositive(0.0, Denomination.exact("BRL")),
+                adjustment = DisplayAmount.explicitSign(100.0, Denomination.exact("BRL")),
+                total = DisplayAmount.natural(100.0, Denomination.exact("BRL")),
             ),
             categorySpending = listOf(CategorySpending(category, amount = 100.0, percentage = 100.0)),
             categoryIncome = null,
@@ -96,7 +97,7 @@ class ReportExportAdjustmentToneTest {
         val item = exportedItemOf(legAmountCents = -10_000)
 
         assertEquals(ReportTone.NEGATIVE, item.tone)
-        assertEquals("-" + formatter.format(100.0), item.amount)
+        assertEquals("-" + formatter.format(100.0, "BRL"), item.amount)
     }
 
     @Test

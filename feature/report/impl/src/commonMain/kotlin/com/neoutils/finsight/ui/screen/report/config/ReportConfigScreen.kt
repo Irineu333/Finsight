@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.config
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.util.isWideWindow
 
@@ -220,6 +221,7 @@ private fun ReportConfigContent(
                                     iconKey = account.iconKey,
                                     name = account.name,
                                     isDefault = account.isDefault,
+                                    currency = account.currency,
                                     variant = AccountCardVariant.Selection(
                                         selected = account.id in uiState.config.selectedAccountIds,
                                         onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
@@ -279,6 +281,7 @@ private fun ReportConfigContent(
                             closingDay = uiState.creditCards[page].closingDay,
                             dueDay = uiState.creditCards[page].dueDay,
                             limit = uiState.creditCards[page].limit,
+                            currency = ASSUMED_SINGLE_CURRENCY,
                             variant = CreditCardCardVariant.Selection,
                         )
                     }

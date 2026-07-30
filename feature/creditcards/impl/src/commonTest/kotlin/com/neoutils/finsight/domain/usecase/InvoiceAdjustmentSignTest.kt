@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.coroutines.test.runTest
@@ -83,7 +84,7 @@ class InvoiceAdjustmentSignTest {
     fun raisingTheOwedAmountIsShownNegative() = runTest {
         val ui = adjustmentOf(target = 100.0).toTransactionUi(accountId = card.accountId)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-100.0, Denomination.exact("BRL")), ui?.amount)
     }
 
     @Test
@@ -91,7 +92,7 @@ class InvoiceAdjustmentSignTest {
         val ui = adjustmentOf(target = 40.0, owedBefore = 100.0)
             .toTransactionUi(accountId = card.accountId)
 
-        assertEquals(DisplayAmount.explicitSign(60.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(60.0, Denomination.exact("BRL")), ui?.amount)
     }
 
     private companion object {

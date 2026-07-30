@@ -53,8 +53,8 @@ class CalculateInvoiceOverviewsUseCaseTest {
         assertEquals(30.0, overview.advancePayment)
         assertEquals(10.0, overview.adjustment)
         assertEquals(60.0, overview.total)
-        assertEquals(100.0, stats.creditCardOverview.expense)
-        assertEquals(60.0, stats.creditCardOverview.total)
+        assertEquals(100.0, stats.creditCardOverview.expense.soleAmount)
+        assertEquals(60.0, stats.creditCardOverview.total.soleAmount)
     }
 }
 

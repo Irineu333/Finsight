@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.config
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.extension.color
@@ -283,7 +282,7 @@ private fun ReportConfigContent(
                             dueDay = uiState.creditCards[page].dueDay,
                             limit = DisplayAmount.natural(
                                 uiState.creditCards[page].limit,
-                                Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                                Denomination.exact(uiState.creditCards[page].currency),
                             ),
                             variant = CreditCardCardVariant.Selection,
                         )

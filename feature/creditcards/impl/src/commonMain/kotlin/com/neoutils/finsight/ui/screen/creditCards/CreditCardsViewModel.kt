@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.screen.creditCards
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
 import androidx.lifecycle.ViewModel
@@ -149,7 +148,7 @@ class CreditCardsViewModel(
                 dueDay = creditCard.dueDay,
                 limit = DisplayAmount.natural(
                     creditCard.limit,
-                    Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                    Denomination.exact(creditCard.currency),
                 ),
                 invoiceUi = invoice?.let {
                     invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)

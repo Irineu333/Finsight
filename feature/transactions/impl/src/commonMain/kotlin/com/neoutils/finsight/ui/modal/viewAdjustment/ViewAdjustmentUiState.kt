@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -34,7 +34,7 @@ sealed interface ViewAdjustmentUiState {
         val signedAmount = itemDisplayAmount(
             label = transaction.label,
             legAmountCents = transaction.primaryEntry?.amount ?: 0L,
-            currency = transaction.primaryEntry?.currency ?: ASSUMED_SINGLE_CURRENCY,
+            currency = transaction.primaryEntry?.currency ?: LAST_RESORT_CURRENCY,
             hasPerspective = false,
         )
 

@@ -17,6 +17,19 @@ data class Recurring(
     val label get() = displayTitleOf(title, category)
 
     /**
+     * The currency [amount] is stated in: the one of the card or account this template names.
+     * It is **derived** and never stored — a facade value is denominated by the account it
+     * names (design D17), and a second copy beside it would be free to disagree with the
+     * account it came from.
+     *
+     * `null` when neither the card nor the account exists any more. A template pointing
+     * nowhere denominates nothing, which is the same state [hasUsableSource] reports as
+     * unpostable: there is no currency to read the number in until the user points it
+     * somewhere real again.
+     */
+    val currency: String? get() = creditCard?.currency ?: account?.currency
+
+    /**
      * Whether the money still has somewhere to move through.
      *
      * False when the account or card was deleted (the reference is gone) or

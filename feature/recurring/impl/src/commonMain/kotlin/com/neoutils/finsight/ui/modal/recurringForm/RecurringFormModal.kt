@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.recurringForm
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -82,11 +82,19 @@ class RecurringFormModal(
 
         var type by remember { mutableStateOf(initialType) }
 
+        // The value being typed is denominated by the destination the form names — the card
+        // when it charges one, the account otherwise (design D17). The symbol in the field
+        // follows the selection, which is the same rule read from the writing side.
+        val formCurrency = uiState.selectedCreditCard?.currency
+            ?: uiState.selectedAccount?.currency
+            ?: recurring?.currency
+            ?: LAST_RESORT_CURRENCY
+
         val title = rememberTextFieldState(recurring?.title.orEmpty())
 
         val amount = rememberTextFieldState(
             recurring?.let {
-                currencyFormatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY)
+                currencyFormatter.format(recurring.amount, formCurrency)
             }.orEmpty()
         )
 
@@ -207,7 +215,7 @@ class RecurringFormModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_form_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
+                inputTransformation = rememberMoneyInputTransformation(formCurrency, amount),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,

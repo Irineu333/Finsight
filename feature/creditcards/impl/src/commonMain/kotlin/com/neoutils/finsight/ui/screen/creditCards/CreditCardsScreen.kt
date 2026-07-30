@@ -4,7 +4,6 @@
 )
 
 package com.neoutils.finsight.ui.screen.creditCards
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute

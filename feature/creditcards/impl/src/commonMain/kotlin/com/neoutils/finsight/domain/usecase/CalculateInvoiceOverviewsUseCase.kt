@@ -1,6 +1,5 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.CurrencyBalance
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.sum
@@ -51,10 +50,10 @@ class CalculateInvoiceOverviewsUseCase(
         }
 
         val creditCardOverview = CreditCardOverviewResult(
-            expense = perInvoice.map { it.flows.expense }.sum()[ASSUMED_SINGLE_CURRENCY],
-            advancePayment = perInvoice.map { it.flows.advancePayment }.sum()[ASSUMED_SINGLE_CURRENCY],
-            adjustment = perInvoice.map { it.flows.adjustment }.sum()[ASSUMED_SINGLE_CURRENCY],
-            total = perInvoice.map { it.owed }.sum()[ASSUMED_SINGLE_CURRENCY],
+            expense = perInvoice.map { it.flows.expense }.sum(),
+            advancePayment = perInvoice.map { it.flows.advancePayment }.sum(),
+            adjustment = perInvoice.map { it.flows.adjustment }.sum(),
+            total = perInvoice.map { it.owed }.sum(),
         )
 
         return InvoiceOverviewStats(
@@ -85,10 +84,17 @@ class CalculateInvoiceOverviewsUseCase(
         val total: Double
     )
 
+    /**
+     * The month across **every** card, so it can span currencies and is stated per currency —
+     * the same shape the ledger answered in. Reducing it to one number is consolidation's job
+     * and belongs to whichever surface shows it; there is none today, and inventing a base
+     * currency here to satisfy a type would be the silent wrong-denomination reading this
+     * change exists to prevent.
+     */
     data class CreditCardOverviewResult(
-        val expense: Double,
-        val advancePayment: Double,
-        val adjustment: Double,
-        val total: Double
+        val expense: CurrencyBalance,
+        val advancePayment: CurrencyBalance,
+        val adjustment: CurrencyBalance,
+        val total: CurrencyBalance,
     )
 }

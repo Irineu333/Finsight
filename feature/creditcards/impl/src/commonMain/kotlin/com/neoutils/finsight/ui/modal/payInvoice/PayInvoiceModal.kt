@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.payInvoice
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -62,7 +61,7 @@ class PayInvoiceModal(
         } else {
             currentBillAmount
         }.coerceAtLeast(0.0)
-        val amount = LocalCurrencyFormatter.current.format(outstandingDebt, ASSUMED_SINGLE_CURRENCY)
+        val amount = LocalCurrencyFormatter.current.format(outstandingDebt, invoice.creditCard.currency)
 
         val maxDate = invoice.dueDate.coerceAtMost(currentDate)
 

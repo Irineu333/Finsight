@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -78,7 +77,8 @@ class EditInvoiceBalanceModal(
                 val balanceState = rememberTextFieldState(
                     currencyFormatter.moneyInput(
                         (state.currentBalance * 100).toLong(),
-                        ASSUMED_SINGLE_CURRENCY,
+                        // An invoice is denominated by the card it belongs to (design D17).
+                        state.selectedCreditCard.currency,
                     )
                 )
 
@@ -101,7 +101,7 @@ class EditInvoiceBalanceModal(
                             length,
                             currencyFormatter.moneyInput(
                                 cents = (state.currentBalance * 100).toLong(),
-                                currency = ASSUMED_SINGLE_CURRENCY,
+                                currency = state.selectedCreditCard.currency,
                             )
                         )
                     }
@@ -146,7 +146,7 @@ class EditInvoiceBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, balanceState),
+                        inputTransformation = rememberMoneyInputTransformation(state.selectedCreditCard.currency, balanceState),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(
@@ -168,6 +168,7 @@ class EditInvoiceBalanceModal(
                                     ) { currentAdjustment ->
                                         AdjustmentLabel(
                                             adjustment = currentAdjustment,
+                                            currency = state.selectedCreditCard.currency,
                                             modifier = Modifier.padding(end = 16.dp),
                                         )
                                     }
@@ -200,6 +201,7 @@ class EditInvoiceBalanceModal(
     @Composable
     private fun AdjustmentLabel(
         adjustment: Double,
+        currency: String,
         modifier: Modifier = Modifier
     ) {
         val formatter = LocalCurrencyFormatter.current
@@ -219,7 +221,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatter.formatWithSign(adjustment, ASSUMED_SINGLE_CURRENCY),
+                text = formatter.formatWithSign(adjustment, currency),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium

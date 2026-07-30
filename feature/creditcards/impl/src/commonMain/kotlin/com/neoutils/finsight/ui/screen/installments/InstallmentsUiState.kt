@@ -66,6 +66,12 @@ data class InstallmentUi(
     val totalAmount: Double,
     val installmentAmount: Double,
     val remainingAmount: Double,
+    /**
+     * The currency the three figures above are stated in: the one of the card the plan is
+     * charged to, read off the ledger legs that carry it. A plan is monomoeda by construction
+     * (design D17), so one code answers for all of them.
+     */
+    val currency: String,
     val progress: Float,
     val isDeletable: Boolean,
 )

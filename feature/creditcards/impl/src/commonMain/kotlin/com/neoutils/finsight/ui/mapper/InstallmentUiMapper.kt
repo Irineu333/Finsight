@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.mapper
 
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -57,6 +58,9 @@ class InstallmentUiMapper {
             totalAmount = installment.totalAmount,
             installmentAmount = installmentAmount,
             remainingAmount = (installment.count - paidCount) * installmentAmount,
+            // Off the leg the plan posted on, not off a preference: the plan is charged to a
+            // card, and that card's row is what denominates every figure above.
+            currency = firstTransaction.primaryEntry?.currency ?: LAST_RESORT_CURRENCY,
             progress = currentNumber.toFloat() / installment.count,
             // Deleting an installment erases every one of its transactions, so each
             // invoice must still accept edits (`Invoice.Status.isEditable` — not

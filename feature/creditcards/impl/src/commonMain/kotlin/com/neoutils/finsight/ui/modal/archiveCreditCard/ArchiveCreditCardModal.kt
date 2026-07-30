@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.modal.archiveCreditCard
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -61,7 +60,7 @@ class ArchiveCreditCardModal(
             Text(
                 text = if (blocked) {
                     // A card balance is a debt, so it reads positive to the user.
-                    stringResource(Res.string.archive_credit_card_blocked, formatter.format(-(balance ?: 0.0), ASSUMED_SINGLE_CURRENCY))
+                    stringResource(Res.string.archive_credit_card_blocked, formatter.format(-(balance ?: 0.0), creditCard.currency))
                 } else {
                     stringResource(Res.string.archive_credit_card_message)
                 },

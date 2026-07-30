@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.screen.archived
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_archived
 import com.neoutils.finsight.resources.credit_card_form_limit_label
@@ -98,7 +98,7 @@ fun ArchivedCreditCardCard(
 
             Attribute(
                 label = stringResource(Res.string.credit_card_form_limit_label),
-                value = formatter.format(creditCard.limit, ASSUMED_SINGLE_CURRENCY),
+                value = formatter.format(creditCard.limit),
                 valueSize = 20.sp,
             )
 

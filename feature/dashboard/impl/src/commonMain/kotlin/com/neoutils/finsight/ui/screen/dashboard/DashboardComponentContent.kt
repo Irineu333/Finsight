@@ -54,7 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
@@ -837,7 +837,7 @@ private fun PendingRecurringCard(
             }
 
             Text(
-                text = formatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY),
+                text = formatter.format(recurring.amount, recurring.currency ?: LAST_RESORT_CURRENCY),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = typeColor,

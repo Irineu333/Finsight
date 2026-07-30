@@ -4,7 +4,6 @@ package com.neoutils.finsight.ui.modal.addInstallment
 
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import org.koin.compose.koinInject
 
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
@@ -64,6 +64,10 @@ class AddInstallmentModal : ModalBottomSheet() {
         val title = rememberTextFieldState()
         val amount = rememberTextFieldState()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
+
+        // An instalment plan is denominated by the card it is charged to (design D17), and
+        // the card mirrors the currency of the ledger row it stands for.
+        val installmentCurrency = uiState.selectedCreditCard?.currency ?: LAST_RESORT_CURRENCY
 
         var selectedCategory by remember { mutableStateOf<Category?>(null) }
         var installments by remember { mutableStateOf(2) }
@@ -160,7 +164,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     label = {
                         Text(text = stringResource(Res.string.add_installment_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
+                    inputTransformation = rememberMoneyInputTransformation(installmentCurrency, amount),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next,
@@ -173,10 +177,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                                     amount.text.toString().moneyToDouble(),
                                     // An instalment plan is denominated by the card it is
                                     // charged to (D17), and the card mirrors its account's.
-                                    Denomination.exact(
-                                        uiState.selectedCreditCard?.currency
-                                            ?: ASSUMED_SINGLE_CURRENCY
-                                    ),
+                                    Denomination.exact(installmentCurrency),
                                 ),
                             ),
                             onInstallmentsChange = {

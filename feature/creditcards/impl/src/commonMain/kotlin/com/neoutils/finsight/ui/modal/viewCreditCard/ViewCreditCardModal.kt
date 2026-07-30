@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.viewCreditCard
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_form_limit_label
 import com.neoutils.finsight.resources.credit_card_invoices_label
@@ -106,7 +106,7 @@ class ViewCreditCardModal(
 
             DetailRow(
                 label = stringResource(Res.string.credit_card_form_limit_label),
-                value = formatter.format(card.limit, ASSUMED_SINGLE_CURRENCY),
+                value = formatter.format(card.limit),
             )
 
             Spacer(Modifier.height(8.dp))

@@ -4,7 +4,6 @@ package com.neoutils.finsight.ui.modal.addTransaction
 
 import com.neoutils.finsight.extension.Denomination
 import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import org.koin.compose.koinInject
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
@@ -215,12 +215,21 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // The entry is denominated by where it will post — the card for a card expense,
+            // the account otherwise. The symbol in the field is the writing side of the same
+            // rule the reading side keeps (design D10).
+            val entryCurrency = if (target == TransactionTarget.CREDIT_CARD) {
+                uiState.selectedCreditCard?.currency
+            } else {
+                uiState.selectedAccount?.currency
+            } ?: LAST_RESORT_CURRENCY
+
             OutlinedTextField(
                 state = amount,
                 label = {
                     Text(text = stringResource(Res.string.add_transaction_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
+                inputTransformation = rememberMoneyInputTransformation(entryCurrency, amount),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -234,10 +243,7 @@ class AddTransactionModal : ModalBottomSheet() {
                                     amount.text.toString().moneyToDouble(),
                                     // The counter only shows for a card expense, and an
                                     // instalment plan is denominated by that card (D17).
-                                    Denomination.exact(
-                                        uiState.selectedCreditCard?.currency
-                                            ?: ASSUMED_SINGLE_CURRENCY
-                                    ),
+                                    Denomination.exact(entryCurrency),
                                 ),
                             ),
                             onInstallmentsChange = { installments = it },

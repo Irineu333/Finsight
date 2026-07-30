@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.viewTransaction
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -64,10 +64,17 @@ sealed interface ViewTransactionUiState {
         val isCardTarget = transaction.hasLiabilityLeg
         // The same item-surface rule the list reads through, not a second copy of it:
         // a detail that disagreed with the card it was opened from would be a defect.
+        /**
+         * The currency this transaction reads in — the leg's own, which is the account it
+         * posted on. Named beside [amount] because the detail shows figures the item surface
+         * does not (an instalment plan's total), and all of them are that one currency.
+         */
+        val currency: String = perspectiveEntry?.currency ?: LAST_RESORT_CURRENCY
+
         val amount = itemDisplayAmount(
             label = label,
             legAmountCents = perspectiveEntry?.amount ?: 0L,
-            currency = perspectiveEntry?.currency ?: ASSUMED_SINGLE_CURRENCY,
+            currency = currency,
             hasPerspective = perspective != null,
         )
 

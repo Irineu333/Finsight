@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.viewTransaction
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -317,7 +316,7 @@ class ViewTransactionModal(
             uiState.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_installment_label),
-                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount, ASSUMED_SINGLE_CURRENCY)}",
+                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount, uiState.currency)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         detailController.dismiss()

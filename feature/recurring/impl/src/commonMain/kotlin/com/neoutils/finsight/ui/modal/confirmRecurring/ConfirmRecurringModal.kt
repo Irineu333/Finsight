@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.confirmRecurring
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -60,7 +60,11 @@ class ConfirmRecurringModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY))
+        // A facade value is denominated by the account it names (design D17), and confirming
+        // never moves it to another currency — the selectors below offer only accounts and
+        // cards of this one.
+        val recurringCurrency = recurring.currency ?: LAST_RESORT_CURRENCY
+        val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount, recurringCurrency))
         val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
 
         val typeLabel = if (recurring.type.isIncome) {
@@ -181,7 +185,7 @@ class ConfirmRecurringModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_confirm_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, amount),
+                inputTransformation = rememberMoneyInputTransformation(recurringCurrency, amount),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,

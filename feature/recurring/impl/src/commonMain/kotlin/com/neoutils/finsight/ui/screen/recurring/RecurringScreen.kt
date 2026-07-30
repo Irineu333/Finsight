@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.recurring
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.LAST_RESORT_CURRENCY
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*
@@ -419,7 +419,7 @@ private fun RecurringCard(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(recurring.amount, ASSUMED_SINGLE_CURRENCY),
+                    text = formatter.format(recurring.amount, recurring.currency ?: LAST_RESORT_CURRENCY),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = typeColor,

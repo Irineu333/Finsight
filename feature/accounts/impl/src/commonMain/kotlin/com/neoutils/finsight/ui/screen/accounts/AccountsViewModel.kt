@@ -101,12 +101,12 @@ class AccountsViewModel(
                 // by that account and never by the base currency (design D29), and it is
                 // exact because nothing was converted to get it.
                 openingBalance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                    entryRepository.accountBalanceUpTo(accountId = account.id, target = month.minusMonth()),
                     account.currency,
                     isApproximate = false,
                 ),
                 balance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month, accountId = account.id),
+                    entryRepository.accountBalanceUpTo(accountId = account.id, target = month),
                     account.currency,
                     isApproximate = false,
                 ),

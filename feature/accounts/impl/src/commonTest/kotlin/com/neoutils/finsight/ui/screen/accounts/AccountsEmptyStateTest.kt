@@ -229,7 +229,8 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = emptyList()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = flowOf(emptyList())
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = 0.0
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = 0.0
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double = 0.0
     override suspend fun balance(accountId: Long): Double = 0.0
     override suspend fun hasEntries(accountId: Long): Boolean = false

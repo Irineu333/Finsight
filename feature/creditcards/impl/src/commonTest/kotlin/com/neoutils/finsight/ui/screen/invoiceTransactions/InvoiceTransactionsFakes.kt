@@ -112,9 +112,31 @@ internal class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
     private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
 ) : IEntryRepository {
-    override suspend fun dimensionOwed(dimensionId: Long): Double = owedByInvoiceId[dimensionId] ?: 0.0
+    // An invoice's figure holds one currency, by the card facade's guarantee — the
+    // fake answers in the shape the ledger really answers in, so the reduction the
+    // view model performs is the one under test.
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) =
+        dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
+
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>) =
+        dimensionIds.distinct().associateWith { dimensionFlowsByCurrency(it) }
+
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+        com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", owedByInvoiceId[dimensionId] ?: 0.0)
+
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
+        (flowsByInvoiceId[dimensionId]
+            ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)).let {
+            com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency(
+                expense = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.expense),
+                advancePayment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.advancePayment),
+                adjustment = com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it.adjustment),
+            )
+        }
+
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
-        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
+        throw NotImplementedError()
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

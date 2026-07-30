@@ -1,14 +1,21 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.datetime.YearMonth
 
 /**
- * Invoice overviews derived from the ledger (task 4.11): each invoice's
+ * Invoice overviews derived from the ledger: each invoice's
  * expense/advance-payment/adjustment come from the entries carrying its dimension
- * ([IEntryRepository.dimensionFlows]) and the owed total from
- * [IEntryRepository.dimensionOwed].
+ * ([IEntryRepository.dimensionFlowsByCurrency]) and the owed total from
+ * [IEntryRepository.dimensionOwedByCurrency].
+ *
+ * The ledger answers per currency; an invoice holds one, by the card facade's guarantee
+ * (see [CalculateInvoiceUseCase]), and that is where each map is reduced. The card-wide
+ * totals below then add invoices of *possibly different* cards — but every card here
+ * belongs to one screen and, until the summary is consolidated, they are added as the
+ * plain numbers they already were.
  */
 class CalculateInvoiceOverviewsUseCase(
     private val entryRepository: IEntryRepository,
@@ -22,15 +29,17 @@ class CalculateInvoiceOverviewsUseCase(
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
                 val dimensionId = invoice.dimensionId
-                val flows = dimensionId?.let { entryRepository.dimensionFlows(it) }
+                val flows = dimensionId?.let { entryRepository.dimensionFlowsByCurrency(it) }
                 InvoiceOverviewResult(
                     invoiceId = invoice.id,
                     creditCardName = invoice.creditCard.name,
                     invoiceStatus = invoice.status,
-                    expense = flows?.expense ?: 0.0,
-                    advancePayment = flows?.advancePayment ?: 0.0,
-                    adjustment = flows?.adjustment ?: 0.0,
-                    total = dimensionId?.let { entryRepository.dimensionOwed(it) } ?: 0.0,
+                    expense = flows?.expense.only(),
+                    advancePayment = flows?.advancePayment.only(),
+                    adjustment = flows?.adjustment.only(),
+                    total = dimensionId
+                        ?.let { entryRepository.dimensionOwedByCurrency(it).singleOrNull()?.value }
+                        ?: 0.0,
                 )
             }
 
@@ -46,6 +55,9 @@ class CalculateInvoiceOverviewsUseCase(
             creditCardOverview = creditCardOverview
         )
     }
+
+    /** The one term of an invoice's figure — the facade's guarantee, applied. */
+    private fun MoneyByCurrency?.only(): Double = this?.singleOrNull()?.value ?: 0.0
 
     data class InvoiceOverviewStats(
         val invoiceOverviews: List<InvoiceOverviewResult>,

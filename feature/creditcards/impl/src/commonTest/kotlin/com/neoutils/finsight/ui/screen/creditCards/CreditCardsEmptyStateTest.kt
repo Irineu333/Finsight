@@ -17,7 +17,9 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -258,8 +260,15 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
     override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
-    override suspend fun dimensionOwed(dimensionId: Long): Double = 0.0
-    override suspend fun dimensionFlows(dimensionId: Long) = DimensionFlows(0.0, 0.0, 0.0)
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long) = MoneyByCurrency.of("BRL", 0.0)
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long) = DimensionFlowsByCurrency(
+        expense = MoneyByCurrency.of("BRL", 0.0),
+        advancePayment = MoneyByCurrency.of("BRL", 0.0),
+        adjustment = MoneyByCurrency.of("BRL", 0.0),
+    )
+
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
     override suspend fun totalsByDimension(

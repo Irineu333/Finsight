@@ -6,7 +6,9 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -60,8 +62,20 @@ private class FakeInvoiceOverviewEntryRepository(
     private val flows: Map<Long, DimensionFlows>,
     private val owed: Map<Long, Double>,
 ) : IEntryRepository {
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = flows.getValue(dimensionId)
-    override suspend fun dimensionOwed(dimensionId: Long): Double = owed.getValue(dimensionId)
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
+        flows.getValue(dimensionId).let {
+            DimensionFlowsByCurrency(
+                expense = MoneyByCurrency.of("BRL", it.expense),
+                advancePayment = MoneyByCurrency.of("BRL", it.advancePayment),
+                adjustment = MoneyByCurrency.of("BRL", it.adjustment),
+            )
+        }
+
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+        MoneyByCurrency.of("BRL", owed.getValue(dimensionId))
+
+    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

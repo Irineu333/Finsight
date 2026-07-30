@@ -7,7 +7,6 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
@@ -60,7 +59,6 @@ class DashboardComponentsBuilder(
     // widget below that spans accounts leaves through it, denominated and marked by it,
     // rather than being tagged with the base at the point of formatting (design D29).
     private val consolidateMoney: ConsolidateMoneyUseCase,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val navCatalog: NavCatalog,
 ) {
 
@@ -68,18 +66,46 @@ class DashboardComponentsBuilder(
      * A figure of the month displayed, consolidated at that month's rates — the past
      * would move on its own if a figure about March were reduced at today's.
      *
-     * Until the ledger answers per currency (group 10) the read is still a scalar, so
-     * what goes in is the single term the app has and what comes out already carries the
+     * What goes in is what the ledger answered, per currency; what comes out carries the
      * currency, the exactness, and — where a rate is missing — more than one term.
      */
     private suspend fun DashboardComponentsInput.figure(
-        value: Double,
+        money: MoneyByCurrency,
         policy: (Double, String, Boolean) -> DisplayAmount,
     ): ConsolidatedAmount = consolidateMoney(
-        money = MoneyByCurrency.of(baseCurrencyRepository.observe().value, value),
+        money = money,
         on = targetMonth.lastDay,
         policy = policy,
     )
+
+    /**
+     * A figure of money the ledger did not answer for — the pending total of a set of
+     * recurring templates, which are facade rows and not entries.
+     *
+     * Each template is denominated by the account or card it names (design D17), so the
+     * total is grouped by that currency and never by the base. A template whose source
+     * was deleted names nothing and is left out, exactly as the list of them is.
+     */
+    private suspend fun List<Recurring>.moneyByCurrency(): MoneyByCurrency =
+        fold(MoneyByCurrency.zero) { total, recurring ->
+            val currency = currencyOf(recurring) ?: return@fold total
+            total + MoneyByCurrency.of(currency, recurring.amount)
+        }
+
+    /** The account or card a template posts to is what denominates its amount (D17). */
+    private suspend fun currencyOf(recurring: Recurring): String? =
+        recurring.account?.currency
+            ?: recurring.creditCard?.let { accountRepository.getAccountById(it.accountId)?.currency }
+
+    /**
+     * Nothing worth a widget: no term of the figure is positive.
+     *
+     * The per-currency form of the `<= 0.0` the scalar reads used. A widget hidden when
+     * empty stays hidden only when it is empty in **every** currency — one dollar of
+     * expense is a reason to show it, whatever the reais did.
+     */
+    private val MoneyByCurrency.isNothing: Boolean
+        get() = toList().all { it.value <= 0.0 }
 
     suspend fun build(
         key: String,
@@ -164,13 +190,16 @@ class DashboardComponentsBuilder(
         // for it (design D2). The two expense sets are disjoint: a card purchase has no
         // ASSET leg, so nothing is double-counted; and neither read reports an invoice
         // payment, which is internal to this perimeter. Income only ever lands on ASSET.
-        val asset = entryRepository.assetMonthFlows(input.targetMonth)
-        val liability = entryRepository.liabilityMonthFlows(input.targetMonth)
+        val asset = entryRepository.assetMonthFlowsByCurrency(input.targetMonth)
+        val liability = entryRepository.liabilityMonthFlowsByCurrency(input.targetMonth)
 
         val income = asset.income
+        // Each currency summed with its own, by the ledger's one implementation — never
+        // a map added up in line here, and never the consolidation layer's, which
+        // answers for conversion and nothing else.
         val expense = asset.expense + liability.expense
 
-        val isEmpty = income <= 0.0 && expense <= 0.0
+        val isEmpty = income.isNothing && expense.isNothing
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
@@ -190,9 +219,9 @@ class DashboardComponentsBuilder(
         // Month-wide income/expense across the user's ASSET accounts, straight from the
         // ledger — transfers and card payments (money between the user's own accounts)
         // are excluded there, not re-derived here (spec `ledger-reporting`).
-        val stats = entryRepository.assetMonthFlows(input.targetMonth)
+        val stats = entryRepository.assetMonthFlowsByCurrency(input.targetMonth)
 
-        val isEmpty = stats.income <= 0.0 && stats.expense <= 0.0
+        val isEmpty = stats.income.isNothing && stats.expense.isNothing
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
@@ -208,9 +237,9 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.PendingBalanceStats? {
-        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount }
-        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount }
-        val isEmpty = pendingIncome <= 0.0 && pendingExpense <= 0.0
+        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.moneyByCurrency()
+        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.moneyByCurrency()
+        val isEmpty = pendingIncome.isNothing && pendingExpense.isNothing
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.PendingBalanceStats(
@@ -227,11 +256,11 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent.CreditCardBalanceStats? {
         // Month-wide card expense/payment from the ledger (task 4.11).
-        val flows = entryRepository.liabilityMonthFlows(input.targetMonth)
+        val flows = entryRepository.liabilityMonthFlowsByCurrency(input.targetMonth)
         val payment = flows.payment
         val expense = flows.expense
 
-        val isEmpty = payment <= 0.0 && expense <= 0.0
+        val isEmpty = payment.isNothing && expense.isNothing
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.CreditCardBalanceStats(
@@ -432,11 +461,7 @@ class DashboardComponentsBuilder(
         // deleted names no account, and a row no account denominates is left out rather
         // than shown in a guessed currency.
         val recurringUi = visibleRecurring.mapNotNull { recurring ->
-            val currency = recurring.account?.currency
-                ?: recurring.creditCard?.let {
-                    accountRepository.getAccountById(it.accountId)?.currency
-                }
-                ?: return@mapNotNull null
+            val currency = currencyOf(recurring) ?: return@mapNotNull null
 
             PendingRecurringUi(
                 recurring = recurring,

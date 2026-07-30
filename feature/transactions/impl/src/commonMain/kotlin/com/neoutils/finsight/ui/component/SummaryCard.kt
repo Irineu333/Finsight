@@ -68,6 +68,7 @@ fun SummaryCard(
     selectedYearMonth: YearMonth,
     onScopeSelected: (TransactionScope) -> Unit,
     onMonthSelected: (YearMonth) -> Unit,
+    onSeeRates: () -> Unit,
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
 ) {
@@ -128,6 +129,15 @@ fun SummaryCard(
 
                         is BalanceOverview.Overall -> OverallBody(overview)
                     }
+
+                    // Up to six lines of money live in this column, which is why the
+                    // mark is a prefix and not an icon or a suffix — and why the thing
+                    // that explains it is one footer for the whole card rather than
+                    // something attached to each line (design D21).
+                    ApproximationFooter(
+                        figures = overview?.figures.orEmpty(),
+                        onSeeRates = onSeeRates,
+                    )
                 }
             }
         }

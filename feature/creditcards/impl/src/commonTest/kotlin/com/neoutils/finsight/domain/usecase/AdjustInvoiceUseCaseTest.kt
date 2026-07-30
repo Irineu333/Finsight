@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.DimensionFlows
@@ -209,7 +210,10 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
 }
 
 class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryRepository {
-    override suspend fun dimensionOwed(dimensionId: Long): Double = ledger.dimensionOwed(dimensionId)
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+        MoneyByCurrency.of("BRL", ledger.dimensionOwed(dimensionId))
+
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

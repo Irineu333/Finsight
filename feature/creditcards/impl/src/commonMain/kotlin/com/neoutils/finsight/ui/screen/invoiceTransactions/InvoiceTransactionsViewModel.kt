@@ -99,15 +99,23 @@ class InvoiceTransactionsViewModel(
         // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
         // Read for every invoice's dimension in one grouped query each, not one per invoice.
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }
-        val owedByDimension = entryRepository.owedByDimension(invoiceDimensionIds)
-        val flowsByDimension = entryRepository.flowsByDimension(invoiceDimensionIds)
+        // Each answer is per currency; an invoice holds one, by this feature's own
+        // guarantee that an invoice's dimension only ever lands on the single LIABILITY
+        // account of its card. The reduction is here, beside that guarantee, and never
+        // presumed by the ledger (design D8).
+        val owedByDimension = entryRepository.owedByDimensionByCurrency(invoiceDimensionIds)
+        val flowsByDimension = entryRepository.flowsByDimensionByCurrency(invoiceDimensionIds)
         val owedByInvoiceId = mutableMapOf<Long, Double>()
         val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
-            owedByInvoiceId[inv.id] = owedByDimension[dimensionId] ?: 0.0
-            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
-                ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
+            owedByInvoiceId[inv.id] = owedByDimension[dimensionId]?.singleOrNull()?.value ?: 0.0
+            val flows = flowsByDimension[dimensionId]
+            flowsByInvoiceId[inv.id] = com.neoutils.finsight.domain.repository.DimensionFlows(
+                expense = flows?.expense?.singleOrNull()?.value ?: 0.0,
+                advancePayment = flows?.advancePayment?.singleOrNull()?.value ?: 0.0,
+                adjustment = flows?.adjustment?.singleOrNull()?.value ?: 0.0,
+            )
         }
 
         // Every figure of this screen is the card's money, so all of them read in the

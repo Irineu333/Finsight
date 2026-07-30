@@ -50,9 +50,10 @@ class EditAccountBalanceViewModel(
 
     private val currentBalance = selectedAccount.map { selected ->
         selected?.let {
-            calculateBalanceUseCase(
+            // One account, one currency — the account's. Nothing is consolidated here.
+            calculateBalanceUseCase.forAccount(
+                accountId = it.id,
                 target = targetMonth,
-                accountId = it.id
             )
         }
     }

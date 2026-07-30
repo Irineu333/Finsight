@@ -4,11 +4,14 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -31,15 +34,16 @@ import kotlin.test.assertNotNull
 /**
  * The neutral perimeter (`ASSET` + `LIABILITY`) is derived by *summing* the two per-nature
  * flow reads the ledger already exposes — never by a third aggregate (design D2). What is
- * pinned here is the arithmetic that makes the three flow widgets readable side by side.
+ * pinned here is the arithmetic that makes the three flow widgets readable side by side,
+ * and that the sum is **per currency**: each summed with its own, never converted.
  */
 class DashboardOverallBalanceStatsTest {
 
     private val march = YearMonth(2026, 3)
 
     private fun builder(
-        asset: AssetMonthFlows,
-        liability: LiabilityMonthFlows,
+        asset: AssetMonthFlowsByCurrency,
+        liability: LiabilityMonthFlowsByCurrency,
     ) = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = FlowsEntryRepository(asset, liability)),
         calculateCategorySpendingUseCase = object : CalculateCategorySpendingUseCase {
@@ -57,7 +61,6 @@ class DashboardOverallBalanceStatsTest {
         entryRepository = FlowsEntryRepository(asset, liability),
         accountRepository = FakeAccountRepository(),
         consolidateMoney = reducer(),
-        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -75,8 +78,8 @@ class DashboardOverallBalanceStatsTest {
 
     private suspend fun build(
         key: String,
-        asset: AssetMonthFlows,
-        liability: LiabilityMonthFlows,
+        asset: AssetMonthFlowsByCurrency,
+        liability: LiabilityMonthFlowsByCurrency,
         config: Map<String, String> = emptyMap(),
     ) = builder(asset, liability).build(
         key = key,
@@ -85,14 +88,24 @@ class DashboardOverallBalanceStatsTest {
         config = config,
     )
 
+    private fun brl(value: Double) = MoneyByCurrency.of("BRL", value)
+
     // A card purchase lands only on the LIABILITY leg — the two expense sets are disjoint,
     // so summing them counts it exactly once.
-    private val assetFlows = AssetMonthFlows(income = 1000.0, expense = 300.0, adjustment = 0.0)
-    private val liabilityFlows = LiabilityMonthFlows(expense = 250.0, payment = 400.0, adjustment = 0.0)
+    private val assetFlows = AssetMonthFlowsByCurrency(
+        income = brl(1000.0),
+        expense = brl(300.0),
+        adjustment = MoneyByCurrency.zero,
+    )
+    private val liabilityFlows = LiabilityMonthFlowsByCurrency(
+        expense = brl(250.0),
+        payment = brl(400.0),
+        adjustment = MoneyByCurrency.zero,
+    )
 
     private suspend fun overall(
-        asset: AssetMonthFlows = assetFlows,
-        liability: LiabilityMonthFlows = liabilityFlows,
+        asset: AssetMonthFlowsByCurrency = assetFlows,
+        liability: LiabilityMonthFlowsByCurrency = liabilityFlows,
         config: Map<String, String> = emptyMap(),
     ) = build(DashboardComponentType.OVERALL_BALANCE_STATS.key, asset, liability, config)
         as? DashboardComponent.OverallBalanceStats
@@ -106,7 +119,7 @@ class DashboardOverallBalanceStatsTest {
     fun `an invoice payment is not expense in the neutral perimeter`() = runTest {
         // Both legs of a payment sit inside the perimeter, so it is internal movement:
         // doubling the payment must not move the expense by a cent.
-        val doubledPayment = liabilityFlows.copy(payment = liabilityFlows.payment * 2)
+        val doubledPayment = liabilityFlows.copy(payment = brl(800.0))
         assertEquals(overall()!!.expense.value, overall(liability = doubledPayment)!!.expense.value)
     }
 
@@ -131,23 +144,57 @@ class DashboardOverallBalanceStatsTest {
     @Test
     fun `a month with no movement keeps the neutral widget by default`() = runTest {
         val component = overall(
-            asset = AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0),
-            liability = LiabilityMonthFlows(expense = 0.0, payment = 0.0, adjustment = 0.0),
+            asset = AssetMonthFlowsByCurrency.zero,
+            liability = LiabilityMonthFlowsByCurrency.zero,
         )
 
         assertNotNull(component)
         assertEquals(0.0, component.income.value)
         assertEquals(0.0, component.expense.value)
     }
+
+    /**
+     * **Two currencies, each summed with its own.** Account expense in reais and card
+     * expense in dollars are two facts, and the neutral perimeter is both of them — not
+     * one number that added them. With no rate in the archive the figure keeps a term
+     * each, which is what the reducer does when it cannot reduce (design D9).
+     */
+    @Test
+    fun `two currencies are each summed with their own and neither is converted`() = runTest {
+        val component = overall(
+            asset = assetFlows.copy(expense = brl(300.0)),
+            liability = liabilityFlows.copy(expense = MoneyByCurrency.of("USD", 50.0)),
+        )!!
+
+        val terms = component.expense.terms.associate { it.currency to it.value }
+
+        assertEquals(mapOf("BRL" to 300.0, "USD" to 50.0), terms)
+        assertEquals(true, component.expense.isApproximate, "more than one currency went in")
+    }
+
+    /** And with a shared currency on both sides, the two do add — into that one currency. */
+    @Test
+    fun `the same currency on both sides adds into one term`() = runTest {
+        val component = overall(
+            asset = assetFlows.copy(expense = MoneyByCurrency.of("USD", 20.0)),
+            liability = liabilityFlows.copy(expense = MoneyByCurrency.of("USD", 30.0)),
+        )!!
+
+        assertEquals(50.0, component.expense.value)
+        assertEquals("USD", component.expense.terms.single().currency)
+        assertEquals(false, component.expense.isApproximate, "one currency, nothing reconciled")
+    }
 }
 
 private class FlowsEntryRepository(
-    private val asset: AssetMonthFlows,
-    private val liability: LiabilityMonthFlows,
+    private val asset: AssetMonthFlowsByCurrency,
+    private val liability: LiabilityMonthFlowsByCurrency,
 ) : IEntryRepository {
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = asset
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = liability
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth) = asset
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = liability
 
+    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

@@ -29,6 +29,8 @@ import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
@@ -68,6 +70,7 @@ private fun TransactionsContent(
 ) {
     val detailController = LocalDetailPaneController.current
     val dateFormats = LocalDateFormats.current
+    val navController = LocalNavController.current
 
     Scaffold(
         contentWindowInsets = WindowInsets(),
@@ -86,6 +89,7 @@ private fun TransactionsContent(
                 key = "summary_card"
             ) {
                 SummaryCard(
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                     balanceOverview = uiState.balanceOverview,
                     selectedScope = uiState.selectedScope,
                     selectedYearMonth = uiState.selectedYearMonth,

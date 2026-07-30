@@ -5,6 +5,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.LimitType
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionType
@@ -59,7 +60,6 @@ class DashboardAccountsOverviewTest {
         entryRepository = ThrowingEntryRepository,
         accountRepository = FakeAccountRepository(),
         consolidateMoney = reducer(),
-        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -216,13 +216,28 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
-        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0, adjustment = 0.0)
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) =
+        com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency(
+            expense = MoneyByCurrency.of("BRL", 60.0),
+            payment = MoneyByCurrency.of("BRL", 25.0),
+            adjustment = MoneyByCurrency.zero,
+        )
+
     // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
-    // March holds income 100, expense 30; other months are empty.
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =
-        if (month == YearMonth(2026, 3)) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 100.0, expense = 30.0, adjustment = 0.0)
-        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0)
+    // March holds income 100, expense 30; other months are empty — and "empty" is the
+    // figure with no currency at all, which is not the same fact as zero in one.
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth) =
+        if (month == YearMonth(2026, 3)) {
+            com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency(
+                income = MoneyByCurrency.of("BRL", 100.0),
+                expense = MoneyByCurrency.of("BRL", 30.0),
+                adjustment = MoneyByCurrency.zero,
+            )
+        } else {
+            com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency.zero
+        }
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()

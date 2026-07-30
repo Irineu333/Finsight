@@ -92,6 +92,14 @@ data class TransactionsUiState(
     sealed interface BalanceOverview {
 
         /**
+         * Every figure the card shows, in no particular order — what the approximation
+         * footer reads to decide whether it appears at all, and from which date. It is
+         * declared here rather than assembled by the card so that adding a line to a
+         * variant cannot silently leave it out of that decision.
+         */
+        val figures: List<ConsolidatedAmount>
+
+        /**
          * The `ASSET` perimeter. An invoice payment *is* a flow here — its liability
          * leg lies outside the perimeter — which is why [invoicePayment] exists and a
          * transfer between accounts does not appear at all.
@@ -105,7 +113,11 @@ data class TransactionsUiState(
             val invoicePayment: ConsolidatedAmount? = null,
             val adjustment: ConsolidatedAmount? = null,
             val finalBalance: ConsolidatedAmount,
-        ) : BalanceOverview
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingBalance, income, expense, invoicePayment, adjustment, finalBalance,
+            )
+        }
 
         /**
          * The `LIABILITY` perimeter, in the ledger's own sign — a card you owe on has a
@@ -121,7 +133,11 @@ data class TransactionsUiState(
             val payment: ConsolidatedAmount? = null,
             val adjustment: ConsolidatedAmount? = null,
             val finalBalance: ConsolidatedAmount,
-        ) : BalanceOverview
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingBalance, expense, payment, adjustment, finalBalance,
+            )
+        }
 
         /**
          * Both perimeters at once. [expense] aggregates account and card spending — the
@@ -138,6 +154,10 @@ data class TransactionsUiState(
             val invoicePayment: ConsolidatedAmount? = null,
             val adjustment: ConsolidatedAmount? = null,
             val finalNet: ConsolidatedAmount,
-        ) : BalanceOverview
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingNet, income, expense, invoicePayment, adjustment, finalNet,
+            )
+        }
     }
 }

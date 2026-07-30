@@ -13,6 +13,7 @@ import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.NavRoute
 import org.koin.compose.koinInject
@@ -62,6 +63,7 @@ import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
+import com.neoutils.finsight.ui.component.ApproximationFooter
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
 import com.neoutils.finsight.ui.component.BalanceCardConfig
@@ -861,6 +863,7 @@ private fun TotalBalanceCard(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val navController = LocalNavController.current
 
     Card(
         modifier = modifier
@@ -892,6 +895,15 @@ private fun TotalBalanceCard(
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                 ),
+            )
+
+            // `≈` at headline size is still not a touch target, so the explanation and
+            // the way out live here: one element that says what the mark means, when the
+            // rate behind it is from, and leads to where it can be corrected. It renders
+            // itself only when something on this card is approximate (design D21/D25).
+            ApproximationFooter(
+                figures = listOf(component.amount),
+                onSeeRates = { navController.navigate(ExchangeRatesRoute) },
             )
         }
     }

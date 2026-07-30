@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Entry
@@ -58,9 +59,13 @@ class DashboardPendingBalanceStatsTest {
         entryRepository = NoFlowsEntryRepository,
         accountRepository = FakeAccountRepository(),
         consolidateMoney = reducer(),
-        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
+
+    // A template is denominated by the account it names (design D17). One with no
+    // account names nothing, and a figure nobody can denominate is left out — so the
+    // fixture gives it one, which is also what the real screen always has.
+    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
 
     private fun recurring(type: TransactionType, amount: Double) = Recurring(
         id = amount.toLong(),
@@ -69,7 +74,7 @@ class DashboardPendingBalanceStatsTest {
         title = null,
         dayOfMonth = 5,
         category = null,
-        account = null,
+        account = account,
         creditCard = null,
         createdAt = 0,
     )

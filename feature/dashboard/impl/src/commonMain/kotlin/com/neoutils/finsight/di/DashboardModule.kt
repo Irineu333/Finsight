@@ -28,7 +28,6 @@ val dashboardModule = module {
             entryRepository = get(),
             accountRepository = get(),
             consolidateMoney = get(),
-            baseCurrencyRepository = get(),
             navCatalog = get(),
         )
     }

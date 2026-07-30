@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -35,7 +34,6 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
 ) : ViewModel() {
 
@@ -69,13 +67,12 @@ class TransactionsViewModel(
         // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
         // re-runs this block on every ledger write, and on scope or month change.
         // Every line of it spans accounts, so every line is a consolidated figure: the
-        // reducer is what denominates them, and the base currency only ever goes *into*
-        // it (design D29).
+        // reducer is what denominates them, and the base currency is never named here
+        // (design D29).
         val balanceOverview = entryRepository.balanceOverview(
             scope = scope,
             month = yearMonth,
             consolidate = consolidateMoney,
-            baseCurrency = baseCurrencyRepository.observe().value,
         )
 
         // The scope decides between account and card; offering the chip as well would

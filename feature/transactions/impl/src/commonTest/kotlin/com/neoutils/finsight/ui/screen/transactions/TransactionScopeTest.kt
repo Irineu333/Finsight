@@ -97,7 +97,6 @@ class TransactionScopeTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
-        baseCurrencyRepository = FakeBaseCurrency(),
         consolidateMoney = consolidator(),
     )
 
@@ -336,5 +335,79 @@ class TransactionScopeTest {
 
         assertNull(accounts.selectedTarget)
         assertEquals(stateUnder(TransactionScope.ACCOUNTS).listed.toSet(), accounts.listed.toSet())
+    }
+
+    /**
+     * **A cross-currency transfer is internal too**, and it takes the per-currency read
+     * to see it. Both monetary legs are inside the accounts perimeter; the conversion
+     * legs post to system accounts, which are outside every perimeter — and being
+     * outside must not turn an otherwise internal movement into a flow. What decides is
+     * where the **monetary** legs are.
+     *
+     * The zero contribution is exact *per currency*, which is precisely what the spec
+     * claims: consolidated at some later rate the same two legs would sum to the
+     * exchange drift, not to zero.
+     */
+    @Test
+    fun `a cross-currency transfer is internal to the accounts scope`() = runTest(dispatcher) {
+        val dollars = Account(id = 3, name = "Chase", type = AccountType.ASSET, currency = "USD")
+        val conversionBrl = Account(id = 300, name = "CONVERSION", type = AccountType.CONVERSION, currency = "BRL")
+        val conversionUsd = Account(id = 301, name = "CONVERSION", type = AccountType.CONVERSION, currency = "USD")
+
+        // R$ 550 leave, US$ 100 arrive, and each currency sums to zero on its own.
+        val crossTransfer = op(
+            20, date(16),
+            listOf(
+                entry(account, -550.0),
+                entry(conversionBrl, 550.0),
+                entry(conversionUsd, -100.0),
+                entry(dollars, 100.0),
+            ),
+        )
+
+        val without = stateUnder(TransactionScope.ACCOUNTS)
+        val with = stateUnder(TransactionScope.ACCOUNTS, transactions = everything + crossTransfer)
+
+        val before = without.balanceOverview as BalanceOverview.Accounts
+        val after = with.balanceOverview as BalanceOverview.Accounts
+
+        // It is on the list...
+        assertEquals(true, crossTransfer.id in with.listed)
+
+        // ...and it moved no flow line. Income, expense and adjustment are untouched.
+        assertEquals(before.income.value, after.income.value)
+        assertEquals(before.expense.value, after.expense.value)
+        assertEquals(before.adjustment?.value, after.adjustment?.value)
+    }
+
+    /**
+     * And what the closing balance gains is the two legs *as they are*: reais down by
+     * 550, dollars up by 100, side by side. Nothing added them, because with no rate in
+     * the archive there is nothing to add them with — and even with one, adding them is
+     * the reducer's decision and not the ledger's.
+     */
+    @Test
+    fun `the closing balance of a cross-currency month keeps a term per currency`() = runTest(dispatcher) {
+        val dollars = Account(id = 3, name = "Chase", type = AccountType.ASSET, currency = "USD")
+        val conversionBrl = Account(id = 300, name = "CONVERSION", type = AccountType.CONVERSION, currency = "BRL")
+        val conversionUsd = Account(id = 301, name = "CONVERSION", type = AccountType.CONVERSION, currency = "USD")
+
+        val crossTransfer = op(
+            20, date(16),
+            listOf(
+                entry(account, -550.0),
+                entry(conversionBrl, 550.0),
+                entry(conversionUsd, -100.0),
+                entry(dollars, 100.0),
+            ),
+        )
+
+        val overview = stateUnder(TransactionScope.ACCOUNTS, transactions = everything + crossTransfer)
+            .balanceOverview as BalanceOverview.Accounts
+
+        val terms = overview.finalBalance.terms.associate { it.currency to it.value }
+
+        assertEquals(mapOf("BRL" to 95.0, "USD" to 100.0), terms)
+        assertEquals(true, overview.finalBalance.isApproximate, "two currencies went in")
     }
 }

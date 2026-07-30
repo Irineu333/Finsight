@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -15,9 +16,11 @@ import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -48,55 +51,77 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
                 transaction.entries.filter { it.account.type == type }.map { transaction to it }
             }
 
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double =
+    /** Cents grouped by the currency of the account the leg posted to (design D5). */
+    private fun List<Entry>.byCurrency(): MoneyByCurrency = MoneyByCurrency.of(
+        groupBy { it.currency }.mapValues { (_, legs) -> legs.sumOf { it.amount } / 100.0 },
+    )
+
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType) =
         transactions.filter { it.date.yearMonth <= target }
             .flatMap { it.entries }
             .filter { it.account.type == type }
-            .sumOf { it.amount } / 100.0
+            .byCurrency()
 
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double =
-        if (accountId == null) naturalBalanceUpTo(target, AccountType.ASSET)
-        else transactions.filter { it.date.yearMonth <= target }
+    override suspend fun balanceUpToByCurrency(target: YearMonth) =
+        naturalBalanceUpToByCurrency(target, AccountType.ASSET)
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
+        transactions.filter { it.date.yearMonth <= target }
             .flatMap { it.entries }
             .filter { it.account.id == accountId }
             .sumOf { it.amount } / 100.0
+
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double = throw NotImplementedError()
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
 
     /**
      * Only transactions with a nominal or equity counter-leg count — which is exactly
      * "not a transfer and not a card payment", the two forms whose money never leaves
      * the user's own accounts.
      */
-    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
-        var income = 0L
-        var expense = 0L
-        var adjustment = 0L
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency {
+        val income = Bucket()
+        val expense = Bucket()
+        val adjustment = Bucket()
 
         legsOf(AccountType.ASSET, month).forEach { (transaction, entry) ->
             if (!transaction.hasEquityLeg() && !transaction.hasNominalLeg()) return@forEach
             when {
-                transaction.hasEquityLeg() -> adjustment += entry.amount
-                entry.amount > 0 -> income += entry.amount
-                entry.amount < 0 -> expense += -entry.amount
+                transaction.hasEquityLeg() -> adjustment.add(entry, entry.amount)
+                entry.amount > 0 -> income.add(entry, entry.amount)
+                entry.amount < 0 -> expense.add(entry, -entry.amount)
             }
         }
 
-        return AssetMonthFlows(income / 100.0, expense / 100.0, adjustment / 100.0)
+        return AssetMonthFlowsByCurrency(income.money(), expense.money(), adjustment.money())
     }
 
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
-        var expense = 0L
-        var payment = 0L
-        var adjustment = 0L
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency {
+        val expense = Bucket()
+        val payment = Bucket()
+        val adjustment = Bucket()
 
         legsOf(AccountType.LIABILITY, month).forEach { (transaction, entry) ->
             when {
-                transaction.hasEquityLeg() -> adjustment += entry.amount
-                entry.amount < 0 -> expense += -entry.amount
-                entry.amount > 0 -> payment += entry.amount
+                transaction.hasEquityLeg() -> adjustment.add(entry, entry.amount)
+                entry.amount < 0 -> expense.add(entry, -entry.amount)
+                entry.amount > 0 -> payment.add(entry, entry.amount)
             }
         }
 
-        return LiabilityMonthFlows(expense / 100.0, payment / 100.0, adjustment / 100.0)
+        return LiabilityMonthFlowsByCurrency(expense.money(), payment.money(), adjustment.money())
+    }
+
+    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
+
+    /** Cents accumulated per currency, the way a `GROUP BY e.currency` accumulates them. */
+    private class Bucket {
+        private val cents = mutableMapOf<String, Long>()
+        fun add(entry: Entry, amount: Long) {
+            cents[entry.currency] = (cents[entry.currency] ?: 0L) + amount
+        }
+        fun money() = MoneyByCurrency.of(cents.mapValues { it.value / 100.0 })
     }
 
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

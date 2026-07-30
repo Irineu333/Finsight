@@ -7,6 +7,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
+import com.neoutils.finsight.database.dao.AccountCurrencyRelabelDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.DimensionDao
@@ -27,6 +28,8 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.ExchangeRateEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.entity.InstallmentEntity
+import com.neoutils.finsight.database.entity.AccountCurrencyRelabelLogEntity
+import com.neoutils.finsight.database.entity.AppMigrationLogEntity
 import com.neoutils.finsight.database.entity.RecurringEntity
 import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
@@ -46,6 +49,8 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         EntryEntity::class,
         DimensionEntity::class,
         ExchangeRateEntity::class,
+        AccountCurrencyRelabelLogEntity::class,
+        AppMigrationLogEntity::class,
     ],
     version = 11,
     exportSchema = true
@@ -65,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun entryDao(): EntryDao
     abstract fun dimensionDao(): DimensionDao
     abstract fun exchangeRateDao(): ExchangeRateDao
+    abstract fun accountCurrencyRelabelDao(): AccountCurrencyRelabelDao
 }
 
 // Room compiler generates the actual implementations

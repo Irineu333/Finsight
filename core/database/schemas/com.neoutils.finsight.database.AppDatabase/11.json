@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "cd6e17c9e6d8f374ff4c9e49879becf1",
+    "identityHash": "0c834f495b5bc2155555684a572df7a0",
     "entities": [
       {
         "tableName": "transactions",
@@ -1054,11 +1054,71 @@
             "source"
           ]
         }
+      },
+      {
+        "tableName": "account_currency_relabel_log",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`accountId` INTEGER NOT NULL, `previousCurrency` TEXT NOT NULL, `newCurrency` TEXT NOT NULL, `migratedAt` INTEGER NOT NULL, PRIMARY KEY(`accountId`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "accountId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousCurrency",
+            "columnName": "previousCurrency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "newCurrency",
+            "columnName": "newCurrency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "migratedAt",
+            "columnName": "migratedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "accountId"
+          ]
+        }
+      },
+      {
+        "tableName": "app_migration_log",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`step` TEXT NOT NULL, `migratedAt` INTEGER NOT NULL, PRIMARY KEY(`step`))",
+        "fields": [
+          {
+            "fieldPath": "step",
+            "columnName": "step",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "migratedAt",
+            "columnName": "migratedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "step"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cd6e17c9e6d8f374ff4c9e49879becf1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0c834f495b5bc2155555684a572df7a0')"
     ]
   }
 }

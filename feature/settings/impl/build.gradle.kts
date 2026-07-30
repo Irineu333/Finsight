@@ -6,6 +6,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.common)
+            implementation(projects.core.database)
+            implementation(projects.core.ledger)
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)

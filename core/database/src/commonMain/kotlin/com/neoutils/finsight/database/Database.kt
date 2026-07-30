@@ -666,6 +666,30 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         connection.execSQL("DELETE FROM `budget_categories`")
         connection.execSQL("INSERT INTO `budget_categories` SELECT * FROM `_bc_v11`")
         connection.execSQL("DROP TABLE `_bc_v11`")
+
+        // --- 3. Two tables the relabelling step needs, and it needs both **in the database**
+        //         rather than beside it. The step rewrites the denomination of every legacy
+        //         account when the device's region says the user never held reais; the
+        //         snapshot is what makes that irreversible rewrite accountable, and the claim
+        //         that it ran has to roll back with it. A flag kept in the settings store
+        //         cannot, so a crash between the update and the flag would leave the work
+        //         done and the app believing it never happened. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `account_currency_relabel_log` (" +
+                "`accountId` INTEGER NOT NULL, " +
+                "`previousCurrency` TEXT NOT NULL, " +
+                "`newCurrency` TEXT NOT NULL, " +
+                "`migratedAt` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`accountId`)" +
+                ")"
+        )
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `app_migration_log` (" +
+                "`step` TEXT NOT NULL, " +
+                "`migratedAt` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`step`)" +
+                ")"
+        )
     }
 }
 

@@ -7,6 +7,7 @@ import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
+import com.neoutils.finsight.database.dao.AccountCurrencyRelabelDao
 import com.neoutils.finsight.database.dao.ExchangeRateDao
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
@@ -45,6 +46,7 @@ val databaseModule = module {
     single<DimensionDao> { get<AppDatabase>().dimensionDao() }
     single<ExchangeRateDao> { get<AppDatabase>().exchangeRateDao() }
     single<IExchangeRateRepository> { ExchangeRateRepository(exchangeRateDao = get()) }
+    single<AccountCurrencyRelabelDao> { get<AppDatabase>().accountCurrencyRelabelDao() }
     factory { ConsolidateFigureUseCase(exchangeRateRepository = get()) }
 }
 

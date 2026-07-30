@@ -111,6 +111,21 @@ class Migration10To11Test {
         )
     }
 
+    @Test
+    fun `the relabel snapshot and the step log are created, empty`() {
+        MIGRATION_10_11.migrate(connection)
+
+        // Both belong to the relabelling step, and both have to be *in the database*: the
+        // claim that the step ran must roll back with the rows it rewrote, which a flag kept
+        // in the settings store cannot do.
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM `account_currency_relabel_log`"))
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM `app_migration_log`"))
+
+        connection.execSQL("INSERT INTO `app_migration_log` (`step`,`migratedAt`) VALUES ('x',1)")
+        connection.execSQL("INSERT OR IGNORE INTO `app_migration_log` (`step`,`migratedAt`) VALUES ('x',2)")
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM `app_migration_log`"), "step is the key")
+    }
+
     /** Each budget as `(id, amount, currency)`, currency empty while the column is absent. */
     private fun budgets(): List<Triple<Long, Double, String>> {
         val hasCurrency = scalar(

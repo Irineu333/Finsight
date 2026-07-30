@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.RelabelLegacyAccountCurrencyUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.ProvideNavController
@@ -26,11 +27,18 @@ fun App() {
     val analytics = koinInject<Analytics>()
     val crashlytics = koinInject<Crashlytics>()
     val authService = koinInject<AuthService>()
+    val relabelLegacyAccountCurrency = koinInject<RelabelLegacyAccountCurrencyUseCase>()
 
     LaunchedEffect(Unit) {
         val userId = authService.getUserId()
         analytics.setUserId(userId)
         crashlytics.setUserId(userId)
+
+        // A one-off step, and one the schema version cannot carry because it depends on the
+        // device's region. It is idempotent by the claim it writes, so running it from a
+        // composition is safe; what it must not be is skipped, since a database written
+        // before this change says reais while its user has been reading dollars.
+        relabelLegacyAccountCurrency()
     }
 
     FinsightTheme {

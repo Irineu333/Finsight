@@ -11,7 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import kotlin.math.abs
+import com.neoutils.finsight.extension.moneyInput
 
 /**
  * Formats what the user types as money, in [currency].
@@ -56,13 +56,7 @@ class MoneyInputTransformation(
             cents = -cents
         }
 
-        return formatMoney(cents)
-    }
-
-    private fun formatMoney(cents: Long): String {
-        val isNegative = cents < 0
-        val formatted = formatter.format(abs(cents).toDouble() / 100, currency)
-        return if (isNegative) "-$formatted" else formatted
+        return formatter.moneyInput(cents, currency)
     }
 }
 

@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.moneyInput
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -85,12 +87,12 @@ class EditAccountBalanceModal(
 
             is EditAccountBalanceUiState.Content -> {
                 val balanceState = rememberTextFieldState(
-                    formatMoney((state.currentBalance * 100).toLong(), currencyFormatter)
+                    currencyFormatter.moneyInput((state.currentBalance * 100).toLong(), account.currency)
                 )
 
                 val newBalance by remember {
                     derivedStateOf {
-                        parseMoneyToDouble(balanceState.text.toString())
+                        balanceState.text.toString().moneyToDouble()
                     }
                 }
 
@@ -102,7 +104,14 @@ class EditAccountBalanceModal(
 
                 LaunchedEffect(state.currentBalance) {
                     balanceState.edit {
-                        replace(0, length, formatMoney((state.currentBalance * 100).toLong(), currencyFormatter))
+                        replace(
+                            0,
+                            length,
+                            currencyFormatter.moneyInput(
+                                cents = (state.currentBalance * 100).toLong(),
+                                currency = account.currency,
+                            )
+                        )
                     }
                 }
 
@@ -224,19 +233,6 @@ class EditAccountBalanceModal(
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
-        val isNegative = cents < 0
-        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100, account.currency)
-        return if (isNegative) "-$formatted" else formatted
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val isNegative = formatted.startsWith("-")
-        val digits = formatted.filter { it.isDigit() }
-        val cents = digits.toLongOrNull() ?: return 0.0
-        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 
     enum class Type(val titleRes: StringResource) {

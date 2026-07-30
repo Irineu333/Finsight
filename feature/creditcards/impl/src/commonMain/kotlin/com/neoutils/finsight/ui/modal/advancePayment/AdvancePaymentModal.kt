@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -167,7 +168,7 @@ class AdvancePaymentModal(
                 onClick = {
                     viewModel.onAction(
                         AdvancePaymentAction.Submit(
-                            amount = parseMoneyToDouble(amount.text.toString()),
+                            amount = amount.text.toString().moneyToDouble(),
                             date = dayMonthYear.parse(date.text.toString()),
                             account = uiState.selectedAccount,
                         )
@@ -204,19 +205,12 @@ class AdvancePaymentModal(
         outstandingDebt: Double,
     ): Boolean {
         if (amount.isEmpty()) return false
-        val parsedAmount = parseMoneyToDouble(amount)
+        val parsedAmount = amount.moneyToDouble()
         if (parsedAmount <= 0.0) return false
         if (outstandingDebt <= 0.0) return false
         if (parsedAmount > outstandingDebt) return false
         if (date.isEmpty()) return false
         val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
         return parsedDate in minDate..maxDate
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val isNegative = formatted.startsWith("-")
-        val digits = formatted.filter { it.isDigit() }
-        val cents = digits.toLongOrNull() ?: return 0.0
-        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 }

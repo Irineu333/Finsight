@@ -24,17 +24,38 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
+/**
+ * Money moving between two of the user's own accounts.
+ *
+ * **When the two differ in currency the caller states both ends**, because that is what
+ * the statement shows: R$ 550 left here, US$ 100 arrived there. No rate is a parameter
+ * anywhere on this path — the rate is a quotient of the two ends and is *derived* from
+ * them afterwards (design D6). The write boundary is what completes the intent, posting
+ * the residue of each currency to that currency's conversion account, so nothing here
+ * has to know how a cross-currency transaction balances.
+ */
 class TransferBetweenAccountsUseCase(
     private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
 ) {
+    /**
+     * @param destinationAmount what arrives, when it is not what left. `null` means the
+     * two ends are the same number, which is the whole of the mono-currency case and
+     * stays byte-identical to what it was.
+     */
     suspend operator fun invoke(
         sourceAccountId: Long,
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
+        destinationAmount: Double? = null,
     ): Either<TransferException, Transaction> = either {
         ensure(amount > 0.0) {
+            TransferException(TransferError.InvalidAmount)
+        }
+
+        ensure(destinationAmount == null || destinationAmount > 0.0) {
             TransferException(TransferError.InvalidAmount)
         }
 
@@ -56,7 +77,13 @@ class TransferBetweenAccountsUseCase(
             TransferException(TransferError.DestinationAccountNotFound)
         }
 
-        catch {
+        // The two ends are the same number unless the caller said otherwise. A
+        // same-currency transfer therefore cannot be given two, and a cross-currency one
+        // that arrives without a second value simply moves the same figure — which the
+        // write boundary will then balance through the conversion accounts.
+        val arriving = destinationAmount ?: amount
+
+        val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
                     title = null,
@@ -69,7 +96,7 @@ class TransferBetweenAccountsUseCase(
                         ),
                         TransactionLeg(
                             type = TransactionType.INCOME,
-                            amount = amount,
+                            amount = arriving,
                             accountId = destinationAccount.id,
                         ),
                     ),
@@ -78,5 +105,21 @@ class TransferBetweenAccountsUseCase(
         }.mapLeft {
             TransferException(TransferError.Unknown)
         }.bind()
+
+        // The rate the operation just applied, learned from its own two ends and written
+        // to the archive — not to the transaction, which has no rate field (design D11).
+        // Deliberately after the write and deliberately not undone if it fails: a rate is
+        // an observation about a day, and it outlives the operation that revealed it.
+        catch {
+            harvestExchangeRate(
+                sourceAmount = amount,
+                sourceCurrency = sourceAccount.currency,
+                targetAmount = arriving,
+                targetCurrency = destinationAccount.currency,
+                date = date,
+            )
+        }
+
+        transaction
     }
 }

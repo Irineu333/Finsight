@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
@@ -25,18 +26,39 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
+/**
+ * Pays part of an open invoice ahead of time.
+ *
+ * **[amount] is in the card's currency and always has been**, and that is what makes the
+ * ceiling below correct: `amount <= currentBillAmount` compares two figures denominated
+ * the same way. When the paying account is denominated differently the caller adds
+ * [paidAmount], which is what leaves the *account* — and that side carries no ceiling at
+ * all, because comparing it to the invoice would be comparing two currencies.
+ */
 class AdvanceInvoicePaymentUseCase(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val calculateInvoiceUseCase: CalculateInvoiceUseCase
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
+    private val accountRepository: IAccountRepository,
 ) {
+    /**
+     * @param amount how much of the invoice is being settled, in the **card's** currency.
+     * @param paidAmount what leaves [account], when it is denominated differently.
+     * `null` is the same-currency case, unchanged.
+     */
     suspend operator fun invoke(
         invoiceId: Long,
         amount: Double,
         date: LocalDate,
         account: Account,
+        paidAmount: Double? = null,
     ): Either<Throwable, Transaction> = either {
         ensure(amount > 0) {
+            InvoiceException(InvoiceError.NegativeAmount)
+        }
+
+        ensure(paidAmount == null || paidAmount > 0) {
             InvoiceException(InvoiceError.NegativeAmount)
         }
 
@@ -60,11 +82,15 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.InvoiceNotInDebt)
         }
 
+        // The ceiling holds over the card's side only. The account's side is free,
+        // because a limit on it would be a limit expressed in the wrong currency.
         ensure(amount <= currentBillAmount) {
             InvoiceException(InvoiceError.AmountExceedsInvoice)
         }
-        
-        catch {
+
+        val leaving = paidAmount ?: amount
+
+        val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
                     title = null,
@@ -75,7 +101,7 @@ class AdvanceInvoicePaymentUseCase(
                         // cancel it out.
                         TransactionLeg(
                             type = TransactionType.EXPENSE,
-                            amount = amount,
+                            amount = leaving,
                             accountId = account.id,
                         ),
                         TransactionLeg(
@@ -88,5 +114,22 @@ class AdvanceInvoicePaymentUseCase(
                 )
             )
         }.bind()
+
+        // The rate this payment applied, written to the archive and never to the
+        // transaction (design D11).
+        catch {
+            val cardCurrency = accountRepository.getAccountById(invoice.creditCard.accountId)?.currency
+            if (cardCurrency != null) {
+                harvestExchangeRate(
+                    sourceAmount = leaving,
+                    sourceCurrency = account.currency,
+                    targetAmount = amount,
+                    targetCurrency = cardCurrency,
+                    date = date,
+                )
+            }
+        }
+
+        transaction
     }
 }

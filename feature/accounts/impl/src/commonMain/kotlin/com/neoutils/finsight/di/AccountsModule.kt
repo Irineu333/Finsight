@@ -85,6 +85,7 @@ val accountsModule = module {
     factory { AdjustOpeningBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
+            harvestExchangeRate = get(),
             transactionRepository = get(),
             accountRepository = get(),
         )

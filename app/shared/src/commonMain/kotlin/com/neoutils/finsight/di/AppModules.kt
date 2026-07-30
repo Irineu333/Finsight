@@ -6,6 +6,7 @@ val appModules: List<Module> = listOf(
     databaseModule,
     ledgerModule,
     commonModule,
+    modelModule,
     designsystemModule,
     analyticsModule,
     crashlyticsModule,

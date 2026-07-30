@@ -16,6 +16,7 @@ fun AccountEntity.Type.toDomain(): AccountType = when (this) {
     AccountEntity.Type.INCOME -> AccountType.INCOME
     AccountEntity.Type.EXPENSE -> AccountType.EXPENSE
     AccountEntity.Type.EQUITY -> AccountType.EQUITY
+    AccountEntity.Type.CONVERSION -> AccountType.CONVERSION
 }
 
 fun AccountType.toEntity(): AccountEntity.Type = when (this) {
@@ -24,4 +25,5 @@ fun AccountType.toEntity(): AccountEntity.Type = when (this) {
     AccountType.INCOME -> AccountEntity.Type.INCOME
     AccountType.EXPENSE -> AccountEntity.Type.EXPENSE
     AccountType.EQUITY -> AccountEntity.Type.EQUITY
+    AccountType.CONVERSION -> AccountEntity.Type.CONVERSION
 }

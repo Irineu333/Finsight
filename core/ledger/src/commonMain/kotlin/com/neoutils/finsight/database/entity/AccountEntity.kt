@@ -21,11 +21,14 @@ data class AccountEntity(
     // their real type; they are only hidden from the active selectors.
     val isArchived: Boolean = false,
 ) {
+    // Persisted by Room's native enum support as TEXT, with no TypeConverter —
+    // which is why adding a member changes no schema and needs no migration.
     enum class Type {
         ASSET,
         LIABILITY,
         INCOME,
         EXPENSE,
-        EQUITY
+        EQUITY,
+        CONVERSION
     }
 }

@@ -160,8 +160,10 @@ class LedgerEntryWriter(
         AccountType.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
         AccountType.EQUITY -> ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
         // ASSET and LIABILITY are the user's own rows: there is no system account of
-        // that nature to complete an intent with.
-        AccountType.ASSET, AccountType.LIABILITY ->
+        // that nature to complete an intent with. CONVERSION is a system row, but it
+        // is never a contra-leg nature — it is reached only by the cross-currency
+        // completion, which resolves it by currency rather than by nature.
+        AccountType.ASSET, AccountType.LIABILITY, AccountType.CONVERSION ->
             throw UnbalancedTransactionException(LedgerError.Unbalanced)
     }
 

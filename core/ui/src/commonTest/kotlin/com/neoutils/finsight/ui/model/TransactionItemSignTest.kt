@@ -173,5 +173,27 @@ class TransactionItemSignTest {
         assertEquals(formatter.format(100.0), formatter.format(ui!!.amount))
     }
 
+    @Test
+    fun aTransferWithoutPerspectiveIsReadThroughItsOutgoingLeg() {
+        // The neutral read goes through `primaryEntry`, whose criterion is now named
+        // — the negative monetary leg — rather than implied by `min` (D16).
+        assertEquals(account.id, transfer.primaryEntry?.account?.id)
+    }
+
+    // endregion
+
+    // region the neutral leg's fallback: a form with no negative monetary leg
+
+    @Test
+    fun anIncomeWithoutPerspectiveIsReadThroughItsOnlyMonetaryLeg() {
+        val received = transactionOf(
+            Entry(account = account, amount = 10_000),
+            Entry(account = income, amount = -10_000),
+        )
+
+        assertEquals(account.id, received.primaryEntry?.account?.id)
+        assertEquals(100.0, received.toTransactionUi()?.amount?.value)
+    }
+
     // endregion
 }

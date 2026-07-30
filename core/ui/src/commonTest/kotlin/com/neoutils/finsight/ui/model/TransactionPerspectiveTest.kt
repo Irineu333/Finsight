@@ -56,4 +56,45 @@ class TransactionPerspectiveTest {
     fun perspectiveWithoutALegYieldsNoItem() {
         assertNull(uiFrom(accountId = 99L))
     }
+
+    // --- The neutral leg names its criterion: the negative monetary leg (D16) ---
+    // Not a defect fix — `min` returned the same leg on every balanced transaction,
+    // which is why the cases that prove the change are the ones with *no* negative
+    // monetary leg and the one with two legs of the same sign, never the crossing.
+
+    private val income = Account(id = 3L, name = "Income", type = AccountType.INCOME)
+
+    @Test
+    fun aTransactionWithNoNegativeMonetaryLegKeepsTheLegItAlreadyRead() {
+        val received = Transaction(
+            id = 2L,
+            title = "Op",
+            date = LocalDate(2026, 1, 1),
+            entries = listOf(
+                Entry(account = source, amount = 10_000),
+                Entry(account = income, amount = -10_000),
+            ),
+        )
+
+        assertEquals(source.id, received.primaryEntry?.account?.id)
+    }
+
+    @Test
+    fun theNeutralLegIsChosenBySignAndNotByMagnitude() {
+        // Two monetary legs sharing a sign is what `min` was silently wrong about:
+        // it would have answered "the largest outflow", a magnitude comparison that
+        // means nothing once the two legs can be in different currencies.
+        val sameSign = Transaction(
+            id = 3L,
+            title = "Op",
+            date = LocalDate(2026, 1, 1),
+            entries = listOf(
+                Entry(account = source, amount = -10_000),
+                Entry(account = destination, amount = -90_000),
+                Entry(account = income, amount = 100_000),
+            ),
+        )
+
+        assertEquals(source.id, sameSign.primaryEntry?.account?.id)
+    }
 }

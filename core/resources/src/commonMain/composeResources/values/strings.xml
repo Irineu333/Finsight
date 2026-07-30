@@ -43,6 +43,7 @@
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
     <string name="ledger_error_unbalanced">A operação não está balanceada (as pernas não somam zero).</string>
+    <string name="ledger_error_same_sign_residues">Os valores informados não descrevem uma troca de moeda: em uma delas o dinheiro tem de sair.</string>
     <string name="ledger_error_paid_invoice">Esta fatura já foi paga e não pode mais ser alterada.</string>
     <string name="ledger_error_closed_invoice">Esta fatura está fechada. Só o pagamento dela pode ser registrado.</string>
     <string name="ledger_error_closed_account">Esta conta está arquivada e não aceita novos lançamentos. Escolha outra conta.</string>

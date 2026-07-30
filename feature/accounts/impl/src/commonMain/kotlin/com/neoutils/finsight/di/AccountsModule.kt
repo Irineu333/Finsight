@@ -44,7 +44,7 @@ val accountsModule = module {
     }
     factory { AccountMapper() }
 
-    factory { EnsureDefaultAccountUseCase(repository = get()) }
+    factory { EnsureDefaultAccountUseCase(repository = get(), baseCurrencyRepository = get()) }
     factory { ValidateAccountNameUseCase(repository = get()) }
     factory { SetDefaultAccountUseCase(repository = get()) }
     factory {

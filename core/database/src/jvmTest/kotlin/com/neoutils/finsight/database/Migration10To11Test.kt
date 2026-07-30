@@ -7,6 +7,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -159,5 +160,130 @@ class Migration10To11Test {
         assertTrue(stmt.step())
         assertEquals("BRL", stmt.getText(0), "not relabelling is the common case")
         stmt.close()
+    }
+
+    /**
+     * Seeds a chart and a balanced transaction, all in the legacy denomination — the
+     * shape every existing database actually has.
+     */
+    private fun seedLegacyLedger() {
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
+                "VALUES (1, 'Nubank', 'ASSET', 'BRL', 'wallet', 1, 1000, 0), " +
+                "(2, 'EXPENSES', 'EXPENSE', 'BRL', 'wallet', 0, 1000, 0), " +
+                "(3, 'CLOSED_ACCOUNT', 'EQUITY', 'BRL', 'wallet', 0, 1000, 0)"
+        )
+        connection.execSQL(
+            "INSERT INTO `transactions` (`id`, `title`, `date`) VALUES (1, 'Mercado', '2026-03-10')"
+        )
+        connection.execSQL(
+            "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, `dimensionId`) " +
+                "VALUES (1, 1, -5000, 'BRL', NULL), (1, 2, 5000, 'BRL', NULL)"
+        )
+    }
+
+    private fun currenciesOf(table: String): List<String> {
+        val stmt = connection.prepare("SELECT `currency` FROM `$table` ORDER BY rowid")
+        val out = buildList { while (stmt.step()) add(stmt.getText(0)) }
+        stmt.close()
+        return out
+    }
+
+    /**
+     * The user who has been reading `$` over data that said BRL all along. The data
+     * starts saying what they always read, and not one figure moves.
+     */
+    @Test
+    fun `a foreign region relabels accounts and entries in the same transaction`() {
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        assertEquals(listOf("USD", "USD", "USD"), currenciesOf("accounts"))
+        assertEquals(listOf("USD", "USD"), currenciesOf("entries"))
+
+        val stmt = connection.prepare("SELECT `amount` FROM `entries` ORDER BY rowid")
+        assertTrue(stmt.step())
+        assertEquals(-5000L, stmt.getLong(0), "relabelling is re-denomination, never conversion")
+        assertTrue(stmt.step())
+        assertEquals(5000L, stmt.getLong(0))
+        stmt.close()
+    }
+
+    /**
+     * The account and its entries move **together**. Relabelling one without the other
+     * would split that account's history into two currencies, and `LedgerBalanceCheck`
+     * — which groups by `(transactionId, currency)` without consulting `accounts` —
+     * would stop being readable as the truth about the account.
+     */
+    @Test
+    fun `relabelling preserves the per-currency balance`() {
+        seedLegacyLedger()
+
+        // The guard runs inside `migrate`; reaching the assertion is half the proof.
+        migrate(relabelCurrency = "EUR")
+
+        val stmt = connection.prepare(
+            "SELECT `currency`, SUM(`amount`) FROM `entries` GROUP BY `transactionId`, `currency`"
+        )
+        var groups = 0
+        while (stmt.step()) {
+            groups++
+            assertEquals("EUR", stmt.getText(0))
+            assertEquals(0L, stmt.getLong(1), "every transaction still sums to zero in each currency")
+        }
+        stmt.close()
+        assertEquals(1, groups, "one currency, one group — the history was not split")
+    }
+
+    /**
+     * The system rows go with the rest. They are lines of the chart like any other, and
+     * `Account.currency` has to mean the same thing on every one of them — which is
+     * what makes "the currency of an account is immutable" a rule of the chart rather
+     * than a rule of the account facade.
+     */
+    @Test
+    fun `the system rows are relabelled too`() {
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        val stmt = connection.prepare(
+            "SELECT `currency` FROM `accounts` WHERE `name` IN ('EXPENSES', 'CLOSED_ACCOUNT')"
+        )
+        var rows = 0
+        while (stmt.step()) {
+            rows++
+            assertEquals("USD", stmt.getText(0))
+        }
+        stmt.close()
+        assertEquals(2, rows)
+    }
+
+    /**
+     * **Relabelling does not repeat**, and no flag records that it ran: the migration
+     * is declared for `10 → 11` and `user_version` is what stops it. A later change of
+     * device region cannot fire it again, because there is no version left for it to
+     * migrate from.
+     */
+    @Test
+    fun `the record that it ran is the schema version, not a flag of its own`() {
+        val migration = migration1011("USD")
+
+        assertEquals(10, migration.startVersion)
+        assertEquals(11, migration.endVersion)
+    }
+
+    /**
+     * `execSQL` binds nothing, so the code is interpolated. The caller validates it
+     * against the catalog; this is the module declining to depend on that being true.
+     */
+    @Test
+    fun `a code that is not a code never reaches the statement`() {
+        seedLegacyLedger()
+
+        assertFailsWith<IllegalArgumentException> { migrate(relabelCurrency = "US'; DROP TABLE accounts; --") }
+
+        assertEquals(listOf("BRL", "BRL", "BRL"), currenciesOf("accounts"))
     }
 }

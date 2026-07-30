@@ -48,8 +48,9 @@ class SingleCurrencyInertiaTest {
     private val theOneResolver = "CurrencyCatalog.reduce(localeCurrencyCode())"
 
     private val expectedDeciders = setOf(
-        // The account a brand-new install starts with.
-        "feature/accounts/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/EnsureDefaultAccountUseCase.kt",
+        // The account a brand-new install starts with no longer appears here: it
+        // reads the seeded base currency instead of resolving one of its own, which
+        // is the whole point of 9.1 — one resolution, not two that can disagree.
         // Every account the user creates — the door a second currency will be born
         // through, once the form offers the choice.
         "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/CreateAccountUseCase.kt",

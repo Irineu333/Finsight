@@ -14,6 +14,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
+import com.neoutils.finsight.domain.model.legacyRelabelCurrency
 import androidx.room.RoomDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -28,7 +29,14 @@ val databaseModule = module {
     // of. A second instance here would not just waste a connection — the removal hook
     // runs inside the ledger's write transaction and opens the facade's, and two
     // pools would deadlock instead of nesting.
-    single<AppDatabase> { getRoomDatabase(builder = get()) } bind RoomDatabase::class
+    //
+    // The relabel target is resolved *outside* this module and arrives as a plain
+    // code: the migration needs a currency, not a locale and not a catalog. It is
+    // recomputed on every start and that is harmless — the migration it feeds runs
+    // once, and `user_version` is what records that it did.
+    single<AppDatabase> {
+        getRoomDatabase(builder = get(), relabelCurrency = legacyRelabelCurrency())
+    } bind RoomDatabase::class
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single<CreditCardDao> { get<AppDatabase>().creditCardDao() }

@@ -3,9 +3,8 @@ package com.neoutils.finsight.domain.usecase
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.extension.localeCurrencyCode
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_default_name
 import com.neoutils.finsight.util.UiText
@@ -20,14 +19,16 @@ import com.neoutils.finsight.util.UiText
  * landing on the ledger's `BASE_CURRENCY = "BRL"`. The base derived BRL from BRL, and
  * no user outside Brazil had a path to anything else (design D28).
  *
- * The answer comes from the device's **region**, reduced to a currency the app
- * actually offers. It is not persisted preference yet — that is the base currency,
- * seeded once on first run; until it exists, the resolver is the answer.
+ * The answer is the **base currency**, which is itself resolved from the device's
+ * region on the first run and persisted there (design D28). Reading the seeded value
+ * rather than the resolver directly is what keeps the two from being able to disagree:
+ * a device whose region changes between the app first opening and this account being
+ * created would otherwise give one answer to the base and another to the account.
  */
 class EnsureDefaultAccountUseCase(
     private val repository: IAccountRepository,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val name: UiText = UiText.Res(Res.string.account_default_name),
-    private val currency: String = CurrencyCatalog.reduce(localeCurrencyCode()),
 ) {
     suspend operator fun invoke(): Either<Throwable, Account> = catch {
 
@@ -47,7 +48,7 @@ class EnsureDefaultAccountUseCase(
         } else {
             Account(
                 name = name.asString(),
-                currency = currency,
+                currency = baseCurrencyRepository.observe().value,
                 isDefault = true
             ).let {
                 it.copy(

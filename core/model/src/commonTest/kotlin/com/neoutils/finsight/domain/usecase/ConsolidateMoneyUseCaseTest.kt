@@ -46,7 +46,7 @@ class ConsolidateMoneyUseCaseTest {
 
         assertEquals(1, figure.terms.size)
         assertEquals("BRL", figure.terms.single().currency)
-        assertEquals(0.0, figure.terms.single().amount.value)
+        assertEquals(0.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
     }
 
@@ -55,7 +55,7 @@ class ConsolidateMoneyUseCaseTest {
         val figure = reducer()(MoneyByCurrency.of("BRL", 100.0), march, DisplayAmount::natural)
 
         assertEquals("BRL", figure.base?.currency)
-        assertEquals(100.0, figure.terms.single().amount.value)
+        assertEquals(100.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
     }
 
@@ -65,7 +65,7 @@ class ConsolidateMoneyUseCaseTest {
 
         assertEquals(1, figure.terms.size)
         assertEquals("USD", figure.terms.single().currency)
-        assertEquals(50.0, figure.terms.single().amount.value)
+        assertEquals(50.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
         assertNull(figure.base, "the base did not take part; there was nothing to reconcile")
     }
@@ -81,7 +81,7 @@ class ConsolidateMoneyUseCaseTest {
         )
 
         assertEquals(listOf("USD"), figure.terms.map { it.currency })
-        assertEquals(50.0, figure.terms.single().amount.value)
+        assertEquals(50.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
     }
 
@@ -95,7 +95,7 @@ class ConsolidateMoneyUseCaseTest {
 
         assertEquals(1, figure.terms.size)
         assertEquals("BRL", figure.terms.single().currency)
-        assertEquals(375.0, figure.terms.single().amount.value, "100 + 50 × 5.50")
+        assertEquals(375.0, figure.terms.single().value, "100 + 50 × 5.50")
         assertTrue(figure.isApproximate, "a conversion happened, so the figure is not exact")
         assertEquals(0, figure.baseIndex)
     }
@@ -110,8 +110,8 @@ class ConsolidateMoneyUseCaseTest {
 
         // Nothing invented and nothing omitted: the missing rate becomes one more term.
         assertEquals(listOf("BRL", "USD"), figure.terms.map { it.currency })
-        assertEquals(100.0, figure.terms[0].amount.value)
-        assertEquals(50.0, figure.terms[1].amount.value)
+        assertEquals(100.0, figure.terms[0].value)
+        assertEquals(50.0, figure.terms[1].value)
         assertTrue(figure.isApproximate)
         assertEquals(0, figure.baseIndex, "the base term is first, so a narrow surface degrades to it")
     }
@@ -138,8 +138,8 @@ class ConsolidateMoneyUseCaseTest {
         )
 
         assertEquals(listOf("BRL", "EUR"), figure.terms.map { it.currency })
-        assertEquals(375.0, figure.terms[0].amount.value)
-        assertEquals(10.0, figure.terms[1].amount.value, "not turned into 1, not dropped, not zeroed")
+        assertEquals(375.0, figure.terms[0].value)
+        assertEquals(10.0, figure.terms[1].value, "not turned into 1, not dropped, not zeroed")
     }
 
     @Test
@@ -164,7 +164,22 @@ class ConsolidateMoneyUseCaseTest {
         )
 
         // 33.33 × 5.4321 = 181.0518... — the reducer is where that becomes money.
-        assertEquals(181.05, figure.terms.single().amount.value)
+        assertEquals(181.05, figure.terms.single().value)
+    }
+
+    @Test
+    fun `exactness travels inside every term, not only on the figure`() = runTest {
+        // The mark cannot be lost on the way to a surface, so it rides in the same type
+        // as the value — and the reducer, not the screen, is what puts it there.
+        val exact = reducer()(MoneyByCurrency.of("USD", 50.0), march, DisplayAmount::natural)
+        val approximate = reducer(rates = arrayOf("USD" to 5.5))(
+            MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertTrue(exact.terms.none { it.isApproximate })
+        assertTrue(approximate.terms.all { it.isApproximate })
     }
 
     @Test
@@ -177,9 +192,9 @@ class ConsolidateMoneyUseCaseTest {
 
         assertEquals(
             listOf(DisplayAmount.SignPolicy.MAGNITUDE, DisplayAmount.SignPolicy.MAGNITUDE),
-            figure.terms.map { it.amount.policy },
+            figure.terms.map { it.policy },
         )
-        assertEquals(100.0, figure.terms[0].amount.value, "magnitude applies after conversion")
+        assertEquals(100.0, figure.terms[0].value, "magnitude applies after conversion")
     }
 }
 

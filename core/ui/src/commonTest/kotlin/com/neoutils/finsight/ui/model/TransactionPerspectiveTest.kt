@@ -45,11 +45,43 @@ class TransactionPerspectiveTest {
         assertEquals(TransactionType.INCOME, incoming?.direction)
         // Under a perspective a transfer is signed at both ends — the two legs share
         // label, icon and color, so the sign is all that tells them apart.
-        assertEquals(DisplayAmount.explicitSign(-100.0), outgoing?.amount)
-        assertEquals(DisplayAmount.explicitSign(100.0), incoming?.amount)
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), outgoing?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), incoming?.amount)
         // The transaction's nature does not depend on who is looking.
         assertEquals(TransactionLabel.TRANSFER, outgoing?.label)
         assertEquals(TransactionLabel.TRANSFER, incoming?.label)
+    }
+
+    @Test
+    fun eachLegIsDenominatedByItsOwnAccountAndNotByTheBase() {
+        // Design D29, and it has to be checked with a currency that differs from the
+        // base: with them equal the violation renders exactly the same text.
+        val foreign = Account(id = 3L, name = "Chase", type = AccountType.ASSET, currency = "USD")
+        val conversionBrl =
+            Account(id = 4L, name = "Conversion", type = AccountType.CONVERSION, currency = "BRL")
+        val conversionUsd =
+            Account(id = 5L, name = "Conversion", type = AccountType.CONVERSION, currency = "USD")
+
+        val crossing = Transaction(
+            id = 2L,
+            title = "Op",
+            date = LocalDate(2026, 1, 1),
+            entries = listOf(
+                Entry(account = source, amount = -55_000),
+                Entry(account = conversionBrl, amount = 55_000),
+                Entry(account = conversionUsd, amount = -10_000),
+                Entry(account = foreign, amount = 10_000),
+            ),
+        )
+
+        assertEquals("BRL", crossing.toTransactionUi(source.id)?.amount?.currency)
+        assertEquals("USD", crossing.toTransactionUi(foreign.id)?.amount?.currency)
+    }
+
+    @Test
+    fun aStatementLineIsNeverApproximate() {
+        // A line is a single entry: nothing was reconciled to produce it.
+        assertEquals(false, uiFrom(source.id)?.amount?.isApproximate)
     }
 
     @Test

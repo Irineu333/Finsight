@@ -1,6 +1,7 @@
 package com.neoutils.finsight.extension
 
 import androidx.compose.runtime.Immutable
+import kotlinx.datetime.LocalDate
 
 /**
  * A figure the user reads as one thing, which in the general case is a **list of
@@ -30,7 +31,7 @@ import androidx.compose.runtime.Immutable
  */
 @Immutable
 data class ConsolidatedAmount(
-    val terms: List<Term>,
+    val terms: List<DisplayAmount>,
     val isApproximate: Boolean,
     /**
      * Which term is denominated in the base currency, if any.
@@ -41,21 +42,60 @@ data class ConsolidatedAmount(
      * positional list can keep.
      */
     val baseIndex: Int? = null,
+    /**
+     * The date whose rates produced this figure, or `null` when none did.
+     *
+     * It is here, and not passed to the footer by each screen, for the same reason the
+     * mark is: whoever produced the figure knows it, and a screen that had to supply it
+     * would be deciding something it does not know. Non-null exactly when
+     * [isApproximate] is true — the reference date of a figure nothing was converted for
+     * is not a fact about the figure.
+     */
+    val asOf: LocalDate? = null,
 ) {
     /** The term in the base currency, when the figure has one. */
-    val base: Term? get() = baseIndex?.let(terms::getOrNull)
+    val base: DisplayAmount? get() = baseIndex?.let(terms::getOrNull)
 
     val isSingleTerm: Boolean get() = terms.size == 1
-
-    /**
-     * One term of a figure: an amount and what it is denominated in.
-     *
-     * Declared scaffolding, and it says so: design D10 has the currency travelling
-     * *inside* `DisplayAmount`, indissociable from the value, and it will — task 7.1
-     * puts it there along with every one of the 133 sites that build one. Until that
-     * lands, the currency rides alongside so that this type can exist at all, and
-     * folding it in is a mechanical substitution that deletes this class.
-     */
-    @Immutable
-    data class Term(val amount: DisplayAmount, val currency: String)
 }
+
+/**
+ * The text of each term of a figure, in the order they are read.
+ *
+ * **One figure carries one mark.** The first term is formatted the ordinary way, so an
+ * approximate figure gets its `≈` from the same place that resolves the sign (design
+ * D21); every term after it suppresses the repetition and instead carries the `+` that
+ * joins it to the one above — an operator of juxtaposition, not of addition, which is why
+ * it sits glued to the term (design D22).
+ *
+ * The rule lives beside the formatter and returns text, not layout: how the terms are
+ * *stacked* is the single layout rule in `:core:designsystem`, and how they *read* is
+ * here, where every other money string in the app is decided.
+ */
+fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
+    figure.terms.mapIndexed { index, term ->
+        if (index == 0) format(term) else "+${format(term, withMark = false)}"
+    }
+
+/**
+ * The single term a surface too narrow for the whole figure shows — design D20's declared
+ * degradation. It is the term in the base currency, because that is the one everything
+ * that could be reduced was reduced *into*; when the figure has no base term at all (two
+ * foreign currencies, no rate) it is the first, which by construction still carries the
+ * figure's mark.
+ *
+ * The caller still has to say that a term was left out. Dropping it silently is exactly
+ * the failure the approximation mark exists to prevent.
+ */
+fun ConsolidatedAmount.degradedTerm(): DisplayAmount = base ?: terms.first()
+
+/**
+ * The date to explain, when a surface holds several figures and at least one of them is
+ * approximate — `null` when every figure on it is exact.
+ *
+ * It is the rule behind the footer of design D21, kept here rather than in the component
+ * so that "the footer does not appear when nothing was converted" is a fact a test can
+ * state, and so that no screen decides it.
+ */
+fun List<ConsolidatedAmount>.approximationDate(): LocalDate? =
+    firstOrNull { it.isApproximate }?.asOf

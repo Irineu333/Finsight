@@ -22,7 +22,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -44,7 +46,7 @@ private val currentDate
 
 class PayInvoiceModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double
+    private val currentBillAmount: DisplayAmount,
 ) : ModalBottomSheet() {
 
     @Composable
@@ -56,11 +58,13 @@ class PayInvoiceModal(
         val uiState by viewModel.uiState.collectAsState()
         val manager = LocalModalManager.current
 
-        val outstandingDebt = if (currentBillAmount < 0.0) {
-            -currentBillAmount
-        } else {
-            currentBillAmount
-        }.coerceAtLeast(0.0)
+        // The sheet reads the debt, whichever sign the caller's figure carried, and in
+        // the card's own currency — which travels with the figure (design D17).
+        val outstandingDebt = DisplayAmount.magnitude(
+            value = currentBillAmount.value,
+            currency = currentBillAmount.currency,
+            isApproximate = currentBillAmount.isApproximate,
+        )
         val amount = LocalCurrencyFormatter.current.format(outstandingDebt)
 
         val maxDate = invoice.dueDate.coerceAtMost(currentDate)
@@ -174,7 +178,7 @@ class PayInvoiceModal(
                     date = date.text.toString(),
                     minDate = invoice.closingDate,
                     maxDate = maxDate,
-                    outstandingDebt = outstandingDebt,
+                    outstandingDebt = outstandingDebt.value,
                 ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)

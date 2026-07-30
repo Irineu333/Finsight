@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.ui.model.displayColor
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.resources.Res
@@ -68,8 +68,6 @@ private fun CategorySpendingItem(
     spending: CategorySpending,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-
     Row(
         modifier = modifier
             .height(IntrinsicSize.Min)
@@ -102,10 +100,12 @@ private fun CategorySpendingItem(
                     fontWeight = FontWeight.Medium,
                 )
 
-                Text(
-                    text = formatter.format(spending.amount),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                MoneyText(
+                    figure = spending.amount,
+                    style = LocalTextStyle.current.copy(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
                 )
             }
 

@@ -14,7 +14,12 @@ import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.CreditCardPeriod
@@ -24,12 +29,17 @@ import com.neoutils.finsight.util.Validation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CreditCardFormViewModel(
+    // Injected rather than read from the composition local: this one formats the
+    // pre-filled limit outside any composition.
     private val formatter: CurrencyFormatter,
     private val creditCard: CreditCard?,
+    private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     private val addCreditCardUseCase: AddCreditCardUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
@@ -39,6 +49,36 @@ class CreditCardFormViewModel(
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
+
+    /**
+     * What the limit is typed and read back in (design D17). An existing card has an
+     * account, and that account states it. A card being *created* does not — its
+     * `LIABILITY` account is only born on insert — so the repository that will
+     * denominate it is asked what it is about to write, rather than the question being
+     * answered a second time here.
+     *
+     * Either answer is a suspending read, so the form starts without a currency and the
+     * limit field simply does not format until it arrives.
+     */
+    private val currency = flow {
+        emit(
+            creditCard
+                ?.let { accountRepository.currencyOf(it) }
+                ?: creditCardRepository.currencyForNewCard()
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null,
+    )
+
+    private fun prefilledLimit(currency: String?): String {
+        if (creditCard == null || currency == null) return ""
+
+        return formatter.format(
+            DisplayAmount.magnitude(creditCard.limit, currency, isApproximate = false)
+        )
+    }
 
     private val isEditMode = creditCard != null
 
@@ -51,9 +91,13 @@ class CreditCardFormViewModel(
         )
     )
 
-    private val limit = MutableStateFlow(
-        creditCard?.limit?.let { formatter.format(it) }.orEmpty()
-    )
+    private val typedLimit = MutableStateFlow<String?>(null)
+
+    // The stored limit of an existing card until the user types over it — pre-filling it
+    // has to wait for the currency it is read back in.
+    private val limit = combine(typedLimit, currency) { typed, currency ->
+        typed ?: prefilledLimit(currency)
+    }
 
     private val closingDay = MutableStateFlow(
         creditCard?.closingDay?.toString().orEmpty()
@@ -88,7 +132,7 @@ class CreditCardFormViewModel(
         initialValue = creditCard?.let {
             CreditCardForm(
                 name = it.name,
-                limit = formatter.format(it.limit),
+                limit = prefilledLimit(currency.value),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
                 iconKey = it.iconKey,
@@ -98,13 +142,19 @@ class CreditCardFormViewModel(
         )
     )
 
-    val uiState = combine(form, selectedIcon, validation) { form, selectedIcon, validation ->
+    val uiState = combine(
+        form,
+        selectedIcon,
+        validation,
+        currency,
+    ) { form, selectedIcon, validation, currency ->
         CreditCardFormUiState(
             form = form,
             selectedIcon = selectedIcon,
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.isValid(),
+            currency = currency,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -125,7 +175,7 @@ class CreditCardFormViewModel(
             }
 
             is CreditCardFormAction.LimitChanged -> {
-                limit.value = action.limit
+                typedLimit.value = action.limit
             }
 
             is CreditCardFormAction.ClosingDayChanged -> {

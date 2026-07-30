@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -36,6 +38,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -44,7 +47,7 @@ private val currentDate
 
 class AdvancePaymentModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double
+    private val currentBillAmount: DisplayAmount,
 ) : ModalBottomSheet() {
 
     @Composable
@@ -95,7 +98,7 @@ class AdvancePaymentModal(
                 label = {
                     Text(text = stringResource(Res.string.advance_payment_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(currentBillAmount.currency),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -164,7 +167,7 @@ class AdvancePaymentModal(
                 onClick = {
                     viewModel.onAction(
                         AdvancePaymentAction.Submit(
-                            amount = parseMoneyToDouble(amount.text.toString()),
+                            amount = amount.text.toString().moneyToDouble(),
                             date = dayMonthYear.parse(date.text.toString()),
                             account = uiState.selectedAccount,
                         )
@@ -175,11 +178,7 @@ class AdvancePaymentModal(
                     date = date.text.toString(),
                     minDate = invoice.openingDate,
                     maxDate = maxDate,
-                    outstandingDebt = if (currentBillAmount < 0.0) {
-                        -currentBillAmount
-                    } else {
-                        currentBillAmount
-                    }.coerceAtLeast(0.0),
+                    outstandingDebt = currentBillAmount.value.absoluteValue,
                 ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -201,19 +200,12 @@ class AdvancePaymentModal(
         outstandingDebt: Double,
     ): Boolean {
         if (amount.isEmpty()) return false
-        val parsedAmount = parseMoneyToDouble(amount)
+        val parsedAmount = amount.moneyToDouble()
         if (parsedAmount <= 0.0) return false
         if (outstandingDebt <= 0.0) return false
         if (parsedAmount > outstandingDebt) return false
         if (date.isEmpty()) return false
         val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
         return parsedDate in minDate..maxDate
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val isNegative = formatted.startsWith("-")
-        val digits = formatted.filter { it.isDigit() }
-        val cents = digits.toLongOrNull() ?: return 0.0
-        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 }

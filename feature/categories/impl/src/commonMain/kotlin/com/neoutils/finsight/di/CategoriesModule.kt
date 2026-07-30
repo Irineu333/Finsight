@@ -35,10 +35,20 @@ val categoriesModule = module {
     factory { CategoryMapper() }
 
     factory<CalculateCategorySpendingUseCase> {
-        CalculateCategorySpendingUseCaseImpl(categoryRepository = get(), entryRepository = get())
+        CalculateCategorySpendingUseCaseImpl(
+            categoryRepository = get(),
+            entryRepository = get(),
+            baseCurrencyRepository = get(),
+            consolidateMoney = get(),
+        )
     }
     factory<CalculateCategoryIncomeUseCase> {
-        CalculateCategoryIncomeUseCaseImpl(categoryRepository = get(), entryRepository = get())
+        CalculateCategoryIncomeUseCaseImpl(
+            categoryRepository = get(),
+            entryRepository = get(),
+            baseCurrencyRepository = get(),
+            consolidateMoney = get(),
+        )
     }
     factory { ValidateCategoryNameUseCase(repository = get()) }
     factory { CreateDefaultCategoriesUseCase(categoryRepository = get()) }
@@ -119,6 +129,8 @@ val categoriesModule = module {
             entryRepository = get(),
             resolveRetirability = get(),
             unarchiveCategory = get(),
+            baseCurrencyRepository = get(),
+            consolidateMoney = get(),
             crashlytics = get(),
         )
     }

@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.TransactionUi
 import kotlinx.datetime.LocalDate
@@ -63,9 +64,11 @@ data class InstallmentUi(
     val isActive: Boolean,
     val currentNumber: Int,
     val totalCount: Int,
-    val totalAmount: Double,
-    val installmentAmount: Double,
-    val remainingAmount: Double,
+    // Denominated by the card the instalments are charged to (design D17), read off
+    // the `LIABILITY` leg of their own transactions — the account states the currency.
+    val totalAmount: DisplayAmount,
+    val installmentAmount: DisplayAmount,
+    val remainingAmount: DisplayAmount,
     val progress: Float,
     val isDeletable: Boolean,
 )

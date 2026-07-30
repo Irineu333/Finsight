@@ -3,12 +3,15 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.LocalDate
 
@@ -17,6 +20,8 @@ class CalculateReportCategorySpendingUseCase(
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
     /** Account-perspective report: category totals in a date range, scoped by the perspective's legs. */
     suspend operator fun invoke(
@@ -41,18 +46,27 @@ class CalculateReportCategorySpendingUseCase(
         return build(
             totals = entryRepository.totalsByDimension(nominalType, startDate, endDate, siblingAccountIds),
             transactionType = transactionType,
+            on = endDate,
         )
     }
 
-    /** Sub-ledger-scoped report: category totals across a set of dimensions. */
+    /**
+     * Sub-ledger-scoped report: category totals across a set of dimensions.
+     *
+     * [on] is the date whose rates consolidate the figures — the period the scope
+     * covers ends there, and a report about March must not move when a rate changes in
+     * April.
+     */
     suspend fun forDimensions(
         dimensionIds: List<Long>,
+        on: LocalDate,
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         if (dimensionIds.isEmpty()) return emptyList()
         return build(
             totals = entryRepository.totalsByDimensionInScope(accountType(transactionType), dimensionIds),
             transactionType = transactionType,
+            on = on,
         )
     }
 
@@ -62,6 +76,7 @@ class CalculateReportCategorySpendingUseCase(
     private suspend fun build(
         totals: Map<Long?, Double>,
         transactionType: TransactionType,
+        on: LocalDate,
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
         // Include closed: the ledger totals above count an archived category's
@@ -80,14 +95,28 @@ class CalculateReportCategorySpendingUseCase(
             if (amount == 0.0) null else category to amount
         }
         val total = amounts.sumOf { it.second }
+        // A category is a dimension and not an account, so it has no currency of its
+        // own and its entries may sit in several: what a breakdown line shows is a
+        // consolidated figure, and the reducer is the only thing that denominates one
+        // (design D9, D13). The ledger still answers a single scalar here — swapping
+        // that source for a per-currency read is group 10 — but the base currency
+        // reaches the screen through the reducer's mouth and nowhere else (D29).
+        val base = baseCurrencyRepository.observe().value
         return amounts
+            .sortedByDescending { it.second }
             .map { (category, amount) ->
                 CategorySpending(
                     category = category,
-                    amount = amount,
+                    // The display sign above already turns both an expense and an
+                    // income category into a positive figure; the line reads its
+                    // direction off its own section's title.
+                    amount = consolidateMoney(
+                        money = MoneyByCurrency.of(base, amount),
+                        on = on,
+                        policy = DisplayAmount::magnitude,
+                    ),
                     percentage = if (total > 0) (amount / total) * 100 else 0.0,
                 )
             }
-            .sortedByDescending { it.amount }
     }
 }

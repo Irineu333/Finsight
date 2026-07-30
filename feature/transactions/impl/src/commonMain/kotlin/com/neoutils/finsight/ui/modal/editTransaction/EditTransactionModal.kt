@@ -48,6 +48,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -85,7 +86,15 @@ class EditTransactionModal(
         }
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount))
+        // The seed reads in the currency the transaction was **recorded** in — its own
+        // money leg's account — which is also the currency the field goes on formatting
+        // in for as long as the target does not change. A transaction with no money leg
+        // states no currency, so its digits stand undressed rather than borrowing one.
+        val amount = rememberTextFieldState(
+            transaction.primaryEntry
+                ?.let { currencyFormatter.format(transaction.amount, it.currency) }
+                ?: (transaction.amount * 100).roundToLong().toString()
+        )
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
@@ -249,7 +258,12 @@ class EditTransactionModal(
                     label = {
                         Text(text = stringResource(Res.string.edit_transaction_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(),
+                    // Keyed by the currency of what the form writes to, so a field
+                    // already filled changes symbol when the target does (design D10).
+                    // Without a target there is nothing to denominate it with.
+                    inputTransformation = uiState.currencyOf(
+                        if (type.isExpense) target else TransactionTarget.ACCOUNT
+                    )?.let { rememberMoneyInputTransformation(it) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

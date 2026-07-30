@@ -47,6 +47,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * The two emptinesses of the card's transaction list — and the third, older one:
@@ -92,6 +93,7 @@ class CreditCardsEmptyStateTest {
 
         return CreditCardsViewModel(
             entryRepository = FlatEntryRepository,
+            accountRepository = FakeCardAccountRepository(),
             recurringRepository = NoRecurring,
             creditCardRepository = FakeCreditCardRepository(cards),
             transactionRepository = FakeTransactionRepository(transactions),
@@ -104,6 +106,7 @@ class CreditCardsEmptyStateTest {
                     invoiceRepository = invoiceRepository,
                     calculateInvoiceUseCase = calculateInvoice,
                 ),
+                accountRepository = FakeCardAccountRepository(),
             ),
         )
     }
@@ -164,6 +167,7 @@ private class FakeCreditCardRepository(private val cards: List<CreditCard>) : IC
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
 private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvoiceRepository {

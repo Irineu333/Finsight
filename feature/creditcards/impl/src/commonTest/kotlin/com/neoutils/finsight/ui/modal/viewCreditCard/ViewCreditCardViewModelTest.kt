@@ -27,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 class ViewCreditCardViewModelTest {
 
@@ -48,6 +49,7 @@ class ViewCreditCardViewModelTest {
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = byId
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = current
         override suspend fun unarchive(accountId: Long) { unarchived += accountId }
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
         override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
         override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
@@ -100,6 +102,7 @@ class ViewCreditCardViewModelTest {
     ) = ViewCreditCardViewModel(
         cardId = 1L,
         creditCardRepository = creditCardRepository,
+        accountRepository = FakeCardAccountRepository(),
         invoiceRepository = invoiceRepository,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(creditCardRepository),
         crashlytics = FakeCrashlytics(),

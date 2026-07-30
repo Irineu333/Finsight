@@ -22,9 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
@@ -65,7 +63,7 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun SummaryCard(
-    balanceOverview: BalanceOverview,
+    balanceOverview: BalanceOverview?,
     selectedScope: TransactionScope,
     selectedYearMonth: YearMonth,
     onScopeSelected: (TransactionScope) -> Unit,
@@ -116,6 +114,11 @@ fun SummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     when (overview) {
+                        // Nothing has been read yet. The chips above stay — they are how
+                        // the user gets out of any state — and the card asserts no figure
+                        // it does not have.
+                        null -> Unit
+
                         is BalanceOverview.Accounts -> AccountsBody(
                             overview = overview,
                             isCurrentMonth = isCurrentMonth,
@@ -377,13 +380,11 @@ private val CHIP_INSET = 6.dp
 @Composable
 private fun SummaryRow(
     label: String,
-    amount: DisplayAmount,
+    amount: ConsolidatedAmount,
     color: Color,
     modifier: Modifier = Modifier,
     config: SummaryRowConfig = SummaryRowConfig.Default,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -394,8 +395,11 @@ private fun SummaryRow(
             style = config.labelStyle
         )
 
-        Text(
-            text = formatter.format(amount),
+        // The card is a column of figures in `SpaceBetween`, so it holds a second line
+        // without fighting the layout: a figure that could not be fully reduced is shown
+        // whole (design D22), never degraded to its base term.
+        MoneyText(
+            figure = amount,
             style = config.amountStyle.copy(color = color)
         )
     }

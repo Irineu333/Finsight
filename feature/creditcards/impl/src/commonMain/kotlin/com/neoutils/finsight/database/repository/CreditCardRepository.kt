@@ -25,6 +25,8 @@ class CreditCardRepository(
     private val defaultCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode()),
 ) : ICreditCardRepository {
 
+    override suspend fun currencyForNewCard(): String = defaultCurrency
+
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
         return dao.observeAllCreditCards().map { entities ->
             entities.map { mapper.toDomain(it) }

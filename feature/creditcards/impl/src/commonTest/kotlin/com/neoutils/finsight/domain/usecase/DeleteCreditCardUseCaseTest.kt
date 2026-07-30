@@ -87,6 +87,7 @@ private class RecordingCreditCardRepository : ICreditCardRepository {
     override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
 private class FakeRecurringRepository(private val hasRecurring: Boolean) : IRecurringRepository {

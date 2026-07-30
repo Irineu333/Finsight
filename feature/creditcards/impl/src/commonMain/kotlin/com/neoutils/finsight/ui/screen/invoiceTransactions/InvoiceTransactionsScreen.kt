@@ -580,7 +580,7 @@ private fun InvoiceActions(
                     modalManager.show(
                         AdvancePaymentModal(
                             invoice = invoice,
-                            currentBillAmount = summary.total.value,
+                            currentBillAmount = summary.total,
                         )
                     )
                 },
@@ -695,7 +695,7 @@ private fun InvoiceActions(
                     modalManager.show(
                         PayInvoiceModal(
                             invoice = invoice,
-                            currentBillAmount = summary.total.value
+                            currentBillAmount = summary.total
                         )
                     )
                 },

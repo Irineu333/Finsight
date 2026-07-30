@@ -127,11 +127,13 @@ class ViewAdjustmentModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(
-                label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                value = formatter.format(uiState.signedAmount),
-                valueColor = Adjustment
-            )
+            uiState.signedAmount?.let { signedAmount ->
+                DetailRow(
+                    label = stringResource(Res.string.view_adjustment_adjusted_value_label),
+                    value = formatter.format(signedAmount),
+                    valueColor = Adjustment
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

@@ -326,7 +326,8 @@ class DashboardViewModel(
         val activeItems = preferences.sortedBy {
             it.position
         }.mapNotNull { pref ->
-            val preview = dashboardPreviewFactory.createPreview(pref.key) ?: return@mapNotNull null
+            val preview = dashboardPreviewFactory.createPreview(pref.key, yearMonth.lastDay)
+                ?: return@mapNotNull null
 
             DashboardEditItem(
                 preview = preview,
@@ -339,7 +340,8 @@ class DashboardViewModel(
         val availableItems = DashboardComponentType.entries
             .filterNot { it.key in presentKeys }
             .mapNotNull { entry ->
-                val preview = dashboardPreviewFactory.createPreview(entry.key) ?: return@mapNotNull null
+                val preview = dashboardPreviewFactory.createPreview(entry.key, yearMonth.lastDay)
+                    ?: return@mapNotNull null
                 DashboardEditItem(
                     preview = preview,
                     config = entry.defaultConfig,

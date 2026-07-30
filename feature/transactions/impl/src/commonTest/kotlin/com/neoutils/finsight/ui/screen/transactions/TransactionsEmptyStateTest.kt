@@ -87,6 +87,8 @@ class TransactionsEmptyStateTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        baseCurrencyRepository = FakeBaseCurrency(),
+        consolidateMoney = consolidator(),
     )
 
     /** The settled state after [actions], skipping the `Loading` initialValue. */

@@ -46,15 +46,17 @@ class ConsolidateMoneyUseCase(
      * @param money what the ledger answered, per currency.
      * @param on the date whose rates apply — a figure about March is consolidated at
      * March's rates, or the past would move on its own whenever a rate changed.
-     * @param policy how each term reads its own sign. It has no default because a
-     * figure carried without its sign policy is exactly the failure `DisplayAmount`
-     * exists to prevent, and the caller is the one who knows whether this is a balance,
-     * a magnitude or a debt.
+     * @param policy how each term reads its own sign — a named constructor of
+     * `DisplayAmount`, passed as a reference. It has no default because a figure carried
+     * without its sign policy is exactly the failure `DisplayAmount` exists to prevent,
+     * and the caller is the one who knows whether this is a balance, a magnitude or a
+     * debt. The currency and the exactness are **not** the caller's to choose: this use
+     * case is what derives them, and it fills them in itself.
      */
     suspend operator fun invoke(
         money: MoneyByCurrency,
         on: LocalDate,
-        policy: (Double) -> DisplayAmount,
+        policy: (value: Double, currency: String, isApproximate: Boolean) -> DisplayAmount,
     ): ConsolidatedAmount {
         val base = baseCurrencyRepository.observe().value
         val terms = money.toList()
@@ -63,7 +65,7 @@ class ConsolidateMoneyUseCase(
             // Nothing at all. Zero is exact, and the base is the only currency there is
             // to say it in — no figure was reduced to get here.
             return ConsolidatedAmount(
-                terms = listOf(ConsolidatedAmount.Term(policy(0.0), base)),
+                terms = listOf(policy(0.0, base, false)),
                 isApproximate = false,
                 baseIndex = 0,
             )
@@ -72,7 +74,7 @@ class ConsolidateMoneyUseCase(
         if (terms.size == 1) {
             val only = terms.single()
             return ConsolidatedAmount(
-                terms = listOf(ConsolidatedAmount.Term(policy(only.value), only.currency)),
+                terms = listOf(policy(only.value, only.currency, false)),
                 isApproximate = false,
                 baseIndex = if (only.currency == base) 0 else null,
             )
@@ -90,13 +92,14 @@ class ConsolidateMoneyUseCase(
 
         val baseTerm = convertible
             .takeIf { it.isNotEmpty() }
-            ?.let { ConsolidatedAmount.Term(policy(converted), base) }
+            ?.let { policy(converted, base, true) }
 
         return ConsolidatedAmount(
             // The base term first: design D22 gives the first term the surface's own
             // typographic weight, and a surface too narrow for the rest degrades to it.
             terms = listOfNotNull(baseTerm) +
-                untouched.map { ConsolidatedAmount.Term(policy(it.value), it.currency) },
+                untouched.map { policy(it.value, it.currency, true) },
+            asOf = on,
             // More than one currency went in, so something was reconciled — whether or
             // not every term could be. Exactness is a property of the figure, and two
             // exact terms placed side by side do not make one.

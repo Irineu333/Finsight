@@ -13,6 +13,7 @@ class UnarchiveCreditCardUseCaseTest {
     private class RecordingCreditCardRepository : ICreditCardRepository {
         val unarchived = mutableListOf<Long>()
         override suspend fun unarchive(accountId: Long) { unarchived += accountId }
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
         override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
         override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()

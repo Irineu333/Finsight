@@ -9,6 +9,8 @@ import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.domain.model.ReportTone
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionItem
+import com.neoutils.finsight.di.commonModule
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -18,6 +20,7 @@ import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
+import org.koin.dsl.koinApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -32,7 +35,10 @@ import kotlin.test.assertTrue
  */
 class ReportExportAdjustmentToneTest {
 
-    private val formatter = CurrencyFormatter()
+
+    // The formatter's constructor is `internal` to `core/common`, so the only way to
+    // reach one from outside is the binding the app itself uses.
+    private val formatter: CurrencyFormatter = koinApplication { modules(commonModule) }.koin.get()
 
     private val card = Account(id = 1L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
     private val reconciliation = Account(id = 2L, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
@@ -63,12 +69,24 @@ class ReportExportAdjustmentToneTest {
             stats = ReportViewerUiState.Stats.Invoice(
                 openingDate = LocalDate(2026, 1, 1),
                 closingDate = LocalDate(2026, 1, 31),
-                expense = DisplayAmount.forcedNegative(0.0),
-                advancePayment = DisplayAmount.forcedPositive(0.0),
-                adjustment = DisplayAmount.explicitSign(100.0),
-                total = DisplayAmount.natural(100.0),
+                expense = DisplayAmount.forcedNegative(0.0, CURRENCY, isApproximate = false),
+                advancePayment = DisplayAmount.forcedPositive(0.0, CURRENCY, isApproximate = false),
+                adjustment = DisplayAmount.explicitSign(100.0, CURRENCY, isApproximate = false),
+                total = DisplayAmount.natural(100.0, CURRENCY, isApproximate = false),
             ),
-            categorySpending = listOf(CategorySpending(category, amount = 100.0, percentage = 100.0)),
+            categorySpending = listOf(
+                CategorySpending(
+                    category = category,
+                    // A category breakdown line is a figure the reducer produced; a
+                    // single term is the ordinary case, not a special one.
+                    amount = ConsolidatedAmount(
+                        terms = listOf(DisplayAmount.magnitude(100.0, CURRENCY, isApproximate = false)),
+                        isApproximate = false,
+                        baseIndex = 0,
+                    ),
+                    percentage = 100.0,
+                ),
+            ),
             categoryIncome = null,
             // The state carries display models, mapped under the card's perspective, as
             // the view model hands them over.
@@ -96,7 +114,7 @@ class ReportExportAdjustmentToneTest {
         val item = exportedItemOf(legAmountCents = -10_000)
 
         assertEquals(ReportTone.NEGATIVE, item.tone)
-        assertEquals("-" + formatter.format(100.0), item.amount)
+        assertEquals("-" + formatter.format(100.0, CURRENCY), item.amount)
     }
 
     @Test
@@ -129,4 +147,9 @@ class ReportExportAdjustmentToneTest {
         columnAmount = "Amount",
         columnPercentage = "%",
     )
+
+    private companion object {
+        /** The currency of the card every figure in this report belongs to (design D17). */
+        const val CURRENCY = "BRL"
+    }
 }

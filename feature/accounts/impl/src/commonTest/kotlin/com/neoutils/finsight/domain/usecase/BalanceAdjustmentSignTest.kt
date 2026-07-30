@@ -57,7 +57,7 @@ class BalanceAdjustmentSignTest {
         val ui = adjustmentOf(target = 150.0, balanceBefore = 200.0)
             .toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(-50.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-50.0, account.currency, isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -65,7 +65,7 @@ class BalanceAdjustmentSignTest {
         val ui = adjustmentOf(target = 250.0, balanceBefore = 200.0)
             .toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(50.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(50.0, account.currency, isApproximate = false), ui?.amount)
     }
 
     private companion object {

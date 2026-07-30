@@ -5,7 +5,15 @@ package com.neoutils.finsight.ui.screen.transactions
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -106,3 +114,36 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
 }
+
+/** The base currency in force. One currency, which is all the app has until group 12. */
+internal class FakeBaseCurrency(private val code: String = "BRL") : IBaseCurrencyRepository {
+    override fun observe(): StateFlow<String> = MutableStateFlow(code)
+    override suspend fun set(currency: String) = throw NotImplementedError()
+}
+
+/** An empty archive: with a single currency in play, no rate is ever consulted. */
+internal object NoExchangeRates : IExchangeRateRepository {
+    override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+    override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+    override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+    override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
+    override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
+}
+
+/**
+ * The real reducer over the fakes, never a stub: what the summary asserts is the figure
+ * a user reads, and a fake reducer would let a wrong policy or a lost term pass.
+ */
+internal fun consolidator(baseCurrency: String = "BRL") = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = FakeBaseCurrency(baseCurrency),
+    exchangeRateRepository = NoExchangeRates,
+)
+
+/**
+ * The single term of a summary figure. Every figure here is mono-currency by
+ * construction — one currency goes into the reducer — so asking for `single()` is also
+ * the assertion that nothing split it.
+ */
+internal val ConsolidatedAmount.term: DisplayAmount get() = terms.single()
+internal val ConsolidatedAmount.value: Double get() = term.value
+internal val ConsolidatedAmount.policy: DisplayAmount.SignPolicy get() = term.policy

@@ -100,6 +100,7 @@ class RecurringFormViewModelTest {
         override suspend fun update(creditCard: CreditCard) = Unit
         override suspend fun delete(creditCard: CreditCard) = Unit
         override suspend fun unarchive(accountId: Long) = Unit
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     private val analytics = object : Analytics {

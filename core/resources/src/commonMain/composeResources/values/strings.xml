@@ -832,4 +832,6 @@
     <string name="currency_name_usd">Dólar americano</string>
     <string name="currency_name_uyu">Peso uruguaio</string>
     <string name="currency_name_zar">Rand sul-africano</string>
+    <string name="money_unconverted_term">+ parcela não convertida</string>
+    <string name="money_approximate_footer">≈ valor aproximado pela taxa de %1$s. Ver taxas</string>
 </resources>

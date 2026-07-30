@@ -20,7 +20,7 @@ class RetireActionTest {
     }
 
     // The figures are irrelevant to the rule under test; only their presence is.
-    private val zero = DisplayAmount.natural(0.0)
+    private val zero = DisplayAmount.natural(0.0, "BRL", isApproximate = false)
 
     @Test
     fun `the ui models expose the same rule so the two screens cannot drift`() {

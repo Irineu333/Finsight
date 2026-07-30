@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -25,6 +26,7 @@ import kotlin.test.assertNotNull
 class DashboardBalanceWidgetsCatalogTest {
 
     private val previewFactory = DashboardPreviewFactory(
+        consolidateMoney = reducer(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -44,7 +46,10 @@ class DashboardBalanceWidgetsCatalogTest {
 
         assertContains(availableKeys(savedBefore), DashboardComponentType.OVERALL_BALANCE_STATS.key)
         // No preview, no entry in the list — the other half of the filter.
-        assertNotNull(previewFactory.createPreview(DashboardComponentType.OVERALL_BALANCE_STATS.key))
+        assertNotNull(previewFactory.createPreview(
+            DashboardComponentType.OVERALL_BALANCE_STATS.key,
+            on = LocalDate(2026, 3, 31),
+        ))
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -22,6 +23,7 @@ import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -77,6 +79,14 @@ class ConfirmRecurringViewModel(
         }
     }
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto
+     * (design D17). Resolved beside the card so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.currencyOf(it) }
+    }
+
     val uiState = combine(
         confirmDate,
         selectedTarget,
@@ -86,7 +96,8 @@ class ConfirmRecurringViewModel(
         invoices,
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
-    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards ->
+        creditCardCurrency,
+    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards, cardCurrency ->
         // No fallback to the default account: substituting where the money moves
         // through is not a detail the app gets to decide in silence. With nothing
         // selected the modal keeps Confirm disabled until the user says where.
@@ -100,6 +111,7 @@ class ConfirmRecurringViewModel(
             selectedCreditCard = creditCard,
             invoices = invoiceList,
             selectedInvoice = invoice,
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,

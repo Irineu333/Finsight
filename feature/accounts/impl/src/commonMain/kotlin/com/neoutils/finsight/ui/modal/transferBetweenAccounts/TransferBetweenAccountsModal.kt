@@ -101,7 +101,11 @@ class TransferBetweenAccountsModal(
                     label = {
                         Text(text = stringResource(Res.string.transfer_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(),
+                    // The amount typed is the one that leaves the source account, so the
+                    // field wears the source's currency and changes symbol with it.
+                    inputTransformation = rememberMoneyInputTransformation(
+                        (uiState.selectedSourceAccount ?: sourceAccount).currency
+                    ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

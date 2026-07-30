@@ -9,8 +9,10 @@ import com.neoutils.finsight.domain.model.TransactionInstallment
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.model.itemDisplayAmount
@@ -63,11 +65,35 @@ sealed interface ViewTransactionUiState {
         val isCardTarget = transaction.hasLiabilityLeg
         // The same item-surface rule the list reads through, not a second copy of it:
         // a detail that disagreed with the card it was opened from would be a defect.
-        val amount = itemDisplayAmount(
-            label = label,
-            legAmountCents = perspectiveEntry?.amount ?: 0L,
-            hasPerspective = perspective != null,
-        )
+        //
+        // Denominated by the leg's **own** account, never the base: the line of a
+        // statement is a single entry and reads in the currency it was recorded in
+        // (design D29). With no leg there is no currency either, so there is no amount
+        // to state — a transaction the ledger cannot produce.
+        val amount: DisplayAmount? = perspectiveEntry?.let { entry ->
+            itemDisplayAmount(
+                label = label,
+                legAmountCents = entry.amount,
+                currency = entry.currency,
+                hasPerspective = perspective != null,
+            )
+        }
+
+        /**
+         * The instalment's total, denominated by the **card** it sits on — read off the
+         * liability leg's account, which is the one account an instalment names (design
+         * D17). Absent when this transaction is no instalment, or carries no card leg to
+         * take the currency from.
+         */
+        val installmentTotal: DisplayAmount? = installment?.let { arrangement ->
+            transaction.entries.liabilityLeg()?.let { leg ->
+                DisplayAmount.magnitude(
+                    value = arrangement.instance.totalAmount,
+                    currency = leg.currency,
+                    isApproximate = false,
+                )
+            }
+        }
 
         private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }
 

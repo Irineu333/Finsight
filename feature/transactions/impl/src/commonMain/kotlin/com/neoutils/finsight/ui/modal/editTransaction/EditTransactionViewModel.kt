@@ -78,6 +78,15 @@ class EditTransactionViewModel(
         }
     }
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto:
+     * the card facade names the account, and the account is the only place a currency is
+     * stated (design D17). Resolved here, beside the card, so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.getAccountById(it.accountId)?.currency }
+    }
+
     private val categories = categoryRepository.observeAllCategories()
 
     private val creditCards = creditCardRepository.observeAllCreditCards()
@@ -93,7 +102,8 @@ class EditTransactionViewModel(
         selectedDueMonth,
         selectedAccount,
         transactionCategory,
-    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category ->
+        creditCardCurrency,
+    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category, cardCurrency ->
         EditTransactionUiState(
             transactionCategory = category,
             incomeCategories = categories.filter { it.type.isIncome },
@@ -108,6 +118,7 @@ class EditTransactionViewModel(
             },
             accounts = accounts,
             selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,

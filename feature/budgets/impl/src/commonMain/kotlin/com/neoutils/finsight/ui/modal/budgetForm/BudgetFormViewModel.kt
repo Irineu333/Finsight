@@ -56,7 +56,11 @@ class BudgetFormViewModel(
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
-    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
+    // Only an existing budget seeds the field, and it is read back in the currency it was
+    // created with — the denomination of a stored limit never changes (design D13).
+    private val amount = MutableStateFlow(
+        budget?.let { formatter.format(it.amount, it.currency) } ?: ""
+    )
     private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
     private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
     private val selectedRecurring = MutableStateFlow<Recurring?>(null)
@@ -157,7 +161,7 @@ class BudgetFormViewModel(
             selectedCategories = budget?.categories ?: emptyList(),
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
-            amount = budget?.amount?.let { formatter.format(it) } ?: "",
+            amount = budget?.let { formatter.format(it.amount, it.currency) } ?: "",
             currency = budget?.currency,
             validation = validation,
             isEditMode = isEditMode,

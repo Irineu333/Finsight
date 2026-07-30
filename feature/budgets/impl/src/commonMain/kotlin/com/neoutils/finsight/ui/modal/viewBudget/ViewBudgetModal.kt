@@ -97,6 +97,10 @@ class ViewBudgetModal(
     ) {
         val formatter = LocalCurrencyFormatter.current
         val budget = budgetProgress.budget
+        // Limit and spending alike are denominated by the budget, never by the base: the
+        // currency is chosen once, at creation, and stays the meaning of both numbers
+        // (design D13).
+        val currency = budget.currency
         val accentColor = budgetProgressColor(budgetProgress.progress)
 
         Column(
@@ -178,14 +182,14 @@ class ViewBudgetModal(
                 }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
-                    value = formatter.format(budget.amount),
+                    value = formatter.format(budget.amount, currency),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spent),
+                    value = formatter.format(budgetProgress.spent, currency),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -193,12 +197,12 @@ class ViewBudgetModal(
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.spent - budget.amount),
+                        value = formatter.format(budgetProgress.spent - budget.amount, currency),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remaining),
+                        value = formatter.format(budgetProgress.remaining, currency),
                     )
                 }
             }

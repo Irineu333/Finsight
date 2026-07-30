@@ -57,7 +57,10 @@ class BudgetFormModal(
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
-        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
+        // An existing limit is read back in the currency it was created with (design D13).
+        val amount = rememberTextFieldState(
+            budget?.let { formatter.format(it.amount, it.currency) } ?: ""
+        )
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -139,7 +142,12 @@ class BudgetFormModal(
                                 onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
                             )
                         },
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        // The limit is typed in the budget's own currency. Until the form
+                        // has one there is nothing to denominate the field with, and
+                        // `canSubmit` already refuses that state.
+                        inputTransformation = uiState.currency?.let {
+                            rememberMoneyInputTransformation(it)
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,

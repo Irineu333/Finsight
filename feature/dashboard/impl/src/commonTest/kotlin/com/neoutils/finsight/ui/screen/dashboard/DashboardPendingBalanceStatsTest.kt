@@ -56,6 +56,9 @@ class DashboardPendingBalanceStatsTest {
                 throw NotImplementedError()
         },
         entryRepository = NoFlowsEntryRepository,
+        accountRepository = FakeAccountRepository(),
+        consolidateMoney = reducer(),
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -96,8 +99,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(listOf(recurring(TransactionType.INCOME, 1200.0)))
 
         assertNotNull(component)
-        assertEquals(1200.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(1200.0, component.pendingIncome.value)
+        assertEquals(0.0, component.pendingExpense.value)
     }
 
     @Test
@@ -105,8 +108,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(listOf(recurring(TransactionType.EXPENSE, 350.0)))
 
         assertNotNull(component)
-        assertEquals(0.0, component.pendingIncome)
-        assertEquals(350.0, component.pendingExpense)
+        assertEquals(0.0, component.pendingIncome.value)
+        assertEquals(350.0, component.pendingExpense.value)
     }
 
     @Test
@@ -114,8 +117,8 @@ class DashboardPendingBalanceStatsTest {
         val component = pending(emptyList())
 
         assertNotNull(component)
-        assertEquals(0.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(0.0, component.pendingIncome.value)
+        assertEquals(0.0, component.pendingExpense.value)
     }
 
     @Test
@@ -136,8 +139,8 @@ class DashboardPendingBalanceStatsTest {
         )
 
         assertNotNull(component)
-        assertEquals(1200.0, component.pendingIncome)
-        assertEquals(0.0, component.pendingExpense)
+        assertEquals(1200.0, component.pendingIncome.value)
+        assertEquals(0.0, component.pendingExpense.value)
     }
 }
 

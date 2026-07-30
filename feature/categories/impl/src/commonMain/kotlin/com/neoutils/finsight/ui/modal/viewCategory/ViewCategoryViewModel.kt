@@ -7,14 +7,19 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.CategoryRetirability
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.retireActionOf
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.displaySign
 import com.neoutils.finsight.extension.interceptAbsence
+import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +39,8 @@ class ViewCategoryViewModel(
     private val entryRepository: IEntryRepository,
     private val resolveRetirability: ResolveCategoryRetirabilityUseCase,
     private val unarchiveCategory: UnarchiveCategoryUseCase,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
+    private val consolidateMoney: ConsolidateMoneyUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -67,7 +74,15 @@ class ViewCategoryViewModel(
             category = category,
             retireAction = retireActionOf(retirability !is CategoryRetirability.Deletable),
             selectedYearMonth = yearMonth,
-            totalAmount = totalAmount,
+            // The category spans whatever currencies its entries sit in, so the total
+            // is a figure the reducer denominates — the base never reaches the screen
+            // any other way (design D9, D13, D29). The per-currency read itself is
+            // group 10; here the scalar the ledger still answers goes in as one term.
+            totalAmount = consolidateMoney(
+                money = MoneyByCurrency.of(baseCurrencyRepository.observe().value, totalAmount),
+                on = yearMonth.safeOnDay(yearMonth.numberOfDays),
+                policy = DisplayAmount::magnitude,
+            ),
             transactionCount = transactionCount,
         )
     }.stateIn(

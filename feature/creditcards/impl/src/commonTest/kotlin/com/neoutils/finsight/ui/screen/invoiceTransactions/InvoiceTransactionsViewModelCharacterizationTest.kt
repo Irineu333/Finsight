@@ -42,6 +42,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import kotlin.test.assertEquals
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * Characterizes the per-invoice sums of [InvoiceTransactionsViewModel] (sites
@@ -92,6 +93,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         val vm = InvoiceTransactionsViewModel(
             creditCardId = 1,
             creditCardRepository = FakeCreditCardRepository(card),
+            accountRepository = FakeCardAccountRepository(),
             invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),

@@ -212,22 +212,33 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // The arrangement sits on the card this expense targets, so it reads in the
+            // card's currency (design D17) — and until the card answers with one, there
+            // is no figure to break the total into.
+            val cardCurrency = uiState.currencyOf(TransactionTarget.CREDIT_CARD)
+
             OutlinedTextField(
                 state = amount,
                 label = {
                     Text(text = stringResource(Res.string.add_transaction_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(),
+                // Keyed by the currency of what the form writes to, so a field already
+                // filled changes symbol when the target does (design D10). Without a
+                // target there is nothing to denominate it with, and it does not format.
+                inputTransformation = uiState.currencyOf(
+                    if (type.isExpense) target else TransactionTarget.ACCOUNT
+                )?.let { rememberMoneyInputTransformation(it) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                trailingIcon = if (type.isExpense && target == TransactionTarget.CREDIT_CARD && uiState.invoiceSelection != null) {
+                trailingIcon = if (type.isExpense && target == TransactionTarget.CREDIT_CARD && uiState.invoiceSelection != null && cardCurrency != null) {
                     {
                         InstallmentCounter(
                             state = InstallmentState(
                                 count = installments,
                                 total = amount.text.toString().moneyToDouble(),
+                                currency = cardCurrency,
                             ),
                             onInstallmentsChange = { installments = it },
                         )

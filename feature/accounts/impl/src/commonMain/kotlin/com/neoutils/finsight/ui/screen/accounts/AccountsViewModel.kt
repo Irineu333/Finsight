@@ -97,17 +97,40 @@ class AccountsViewModel(
                 id = account.id,
                 // The card only renders: the sign of each line is the effect of that
                 // figure on the account's balance, and it is decided here, once.
+                // Every figure on this card belongs to one account, so it is denominated
+                // by that account and never by the base currency (design D29), and it is
+                // exact because nothing was converted to get it.
                 openingBalance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id)
+                    entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                    account.currency,
+                    isApproximate = false,
                 ),
                 balance = DisplayAmount.natural(
-                    entryRepository.balanceUpTo(target = month, accountId = account.id)
+                    entryRepository.balanceUpTo(target = month, accountId = account.id),
+                    account.currency,
+                    isApproximate = false,
                 ),
-                income = DisplayAmount.forcedPositive(flows.income),
-                expense = DisplayAmount.forcedNegative(flows.expense),
+                income = DisplayAmount.forcedPositive(
+                    flows.income,
+                    account.currency,
+                    isApproximate = false,
+                ),
+                expense = DisplayAmount.forcedNegative(
+                    flows.expense,
+                    account.currency,
+                    isApproximate = false,
+                ),
                 // The only line whose direction its label withholds.
-                adjustment = DisplayAmount.explicitSign(flows.adjustment),
-                settlement = DisplayAmount.forcedNegative(flows.settlement),
+                adjustment = DisplayAmount.explicitSign(
+                    flows.adjustment,
+                    account.currency,
+                    isApproximate = false,
+                ),
+                settlement = DisplayAmount.forcedNegative(
+                    flows.settlement,
+                    account.currency,
+                    isApproximate = false,
+                ),
                 hasMovement = entryRepository.hasEntries(account.id),
                 isDefault = account.isDefault,
             )

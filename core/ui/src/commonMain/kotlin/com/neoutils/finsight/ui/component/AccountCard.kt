@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 sealed class AccountCardVariant {
 
     data class Dashboard(
-        val balance: Double,
+        val balance: DisplayAmount,
         val onClick: () -> Unit,
     ) : AccountCardVariant()
 

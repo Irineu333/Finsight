@@ -57,6 +57,9 @@ class DashboardAccountsOverviewTest {
                 throw NotImplementedError()
         },
         entryRepository = ThrowingEntryRepository,
+        accountRepository = FakeAccountRepository(),
+        consolidateMoney = reducer(),
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -88,8 +91,8 @@ class DashboardAccountsOverviewTest {
             accounts = listOf(accountA, accountB),
             config = mapOf(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT to "false"),
         )
-        assertEquals(70.0, accounts.first { it.id == 1L }.balance)
-        assertEquals(30.0, accounts.first { it.id == 2L }.balance)
+        assertEquals(70.0, accounts.first { it.id == 1L }.balance.value)
+        assertEquals(30.0, accounts.first { it.id == 2L }.balance.value)
     }
 
     @Test
@@ -136,8 +139,8 @@ class DashboardAccountsOverviewTest {
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.ConcreteBalanceStats
-        assertEquals(100.0, stats.income)
-        assertEquals(30.0, stats.expense)
+        assertEquals(100.0, stats.income.value)
+        assertEquals(30.0, stats.expense.value)
     }
 
     @Test
@@ -149,8 +152,8 @@ class DashboardAccountsOverviewTest {
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.CreditCardBalanceStats
-        assertEquals(25.0, stats.payment)
-        assertEquals(60.0, stats.expense)
+        assertEquals(25.0, stats.payment.value)
+        assertEquals(60.0, stats.expense.value)
     }
 
     /**

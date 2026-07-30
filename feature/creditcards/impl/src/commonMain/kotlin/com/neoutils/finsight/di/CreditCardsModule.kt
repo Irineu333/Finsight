@@ -77,6 +77,7 @@ val creditCardsModule = module {
     viewModel {
         CreditCardsViewModel(
             entryRepository = get(),
+            accountRepository = get(),
             recurringRepository = get(),
             initialCreditCardId = it.getOrNull(),
             creditCardRepository = get(),
@@ -99,6 +100,7 @@ val creditCardsModule = module {
     viewModel {
         AddInstallmentViewModel(
             categoryRepository = get(),
+            accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             addInstallmentUseCase = get(),
@@ -131,6 +133,8 @@ val creditCardsModule = module {
         CreditCardFormViewModel(
             formatter = get(),
             creditCard = it.getOrNull(),
+            creditCardRepository = get(),
+            accountRepository = get(),
             addCreditCardUseCase = get(),
             updateCreditCardUseCase = get(),
             validateCreditCardName = get(),
@@ -156,6 +160,7 @@ val creditCardsModule = module {
             creditCard = it.get(),
             archiveCreditCardUseCase = get(),
             entryRepository = get(),
+            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
@@ -168,6 +173,7 @@ val creditCardsModule = module {
             calculateInvoiceUseCase = get(),
             invoiceRepository = get(),
             creditCardRepository = get(),
+            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
@@ -218,6 +224,7 @@ val creditCardsModule = module {
         ViewCreditCardViewModel(
             cardId = it.get(),
             creditCardRepository = get(),
+            accountRepository = get(),
             invoiceRepository = get(),
             unarchiveCreditCard = get(),
             crashlytics = get(),
@@ -226,6 +233,7 @@ val creditCardsModule = module {
     viewModel {
         ArchivedCreditCardsViewModel(
             creditCardRepository = get(),
+            accountRepository = get(),
         )
     }
     viewModel {
@@ -233,6 +241,7 @@ val creditCardsModule = module {
             installmentRepository = get(),
             creditCardId = it.get(),
             creditCardRepository = get(),
+            accountRepository = get(),
             invoiceRepository = get(),
             transactionRepository = get(),
             categoryRepository = get(),

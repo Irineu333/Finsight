@@ -157,22 +157,30 @@ class AddInstallmentModal : ModalBottomSheet() {
                     label = {
                         Text(text = stringResource(Res.string.add_installment_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(),
+                    // The amount is typed in the selected card's currency. Until a card
+                    // is chosen there is nothing to denominate the field with, and the
+                    // form already refuses to submit that state.
+                    inputTransformation = uiState.currency?.let {
+                        rememberMoneyInputTransformation(it)
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next,
                     ),
                     trailingIcon = {
-                        InstallmentCounter(
-                            state = InstallmentState(
-                                count = installments,
-                                total = amount.text.toString().moneyToDouble(),
-                            ),
-                            onInstallmentsChange = {
-                                installments = it.coerceAtLeast(2)
-                            },
-                            minCount = 2,
-                        )
+                        uiState.currency?.let { currency ->
+                            InstallmentCounter(
+                                state = InstallmentState(
+                                    count = installments,
+                                    total = amount.text.toString().moneyToDouble(),
+                                    currency = currency,
+                                ),
+                                onInstallmentsChange = {
+                                    installments = it.coerceAtLeast(2)
+                                },
+                                minCount = 2,
+                            )
+                        }
                     },
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,

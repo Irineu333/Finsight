@@ -55,6 +55,9 @@ class DashboardOverallBalanceStatsTest {
                 throw NotImplementedError()
         },
         entryRepository = FlowsEntryRepository(asset, liability),
+        accountRepository = FakeAccountRepository(),
+        consolidateMoney = reducer(),
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -96,7 +99,7 @@ class DashboardOverallBalanceStatsTest {
 
     @Test
     fun `the neutral expense sums both natures, counting a card purchase once`() = runTest {
-        assertEquals(550.0, overall()!!.expense)
+        assertEquals(550.0, overall()!!.expense.value)
     }
 
     @Test
@@ -104,7 +107,7 @@ class DashboardOverallBalanceStatsTest {
         // Both legs of a payment sit inside the perimeter, so it is internal movement:
         // doubling the payment must not move the expense by a cent.
         val doubledPayment = liabilityFlows.copy(payment = liabilityFlows.payment * 2)
-        assertEquals(overall()!!.expense, overall(liability = doubledPayment)!!.expense)
+        assertEquals(overall()!!.expense.value, overall(liability = doubledPayment)!!.expense.value)
     }
 
     @Test
@@ -112,7 +115,7 @@ class DashboardOverallBalanceStatsTest {
         val accounts = build(DashboardComponentType.CONCRETE_BALANCE_STATS.key, assetFlows, liabilityFlows)
             as DashboardComponent.ConcreteBalanceStats
 
-        assertEquals(accounts.income, overall()!!.income)
+        assertEquals(accounts.income.value, overall()!!.income.value)
     }
 
     @Test
@@ -122,7 +125,7 @@ class DashboardOverallBalanceStatsTest {
         val card = build(DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key, assetFlows, liabilityFlows)
             as DashboardComponent.CreditCardBalanceStats
 
-        assertEquals(accounts.expense + card.expense, overall()!!.expense)
+        assertEquals(accounts.expense.value + card.expense.value, overall()!!.expense.value)
     }
 
     @Test
@@ -133,8 +136,8 @@ class DashboardOverallBalanceStatsTest {
         )
 
         assertNotNull(component)
-        assertEquals(0.0, component.income)
-        assertEquals(0.0, component.expense)
+        assertEquals(0.0, component.income.value)
+        assertEquals(0.0, component.expense.value)
     }
 }
 

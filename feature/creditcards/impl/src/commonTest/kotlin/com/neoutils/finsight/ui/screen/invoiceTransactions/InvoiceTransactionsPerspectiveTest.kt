@@ -27,6 +27,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * This screen shows one card, so it reads a transaction through the card's own leg.
@@ -84,6 +85,7 @@ class InvoiceTransactionsPerspectiveTest {
     private fun viewModel() = InvoiceTransactionsViewModel(
         creditCardId = 1,
         creditCardRepository = FakeCreditCardRepository(card),
+        accountRepository = FakeCardAccountRepository(),
         invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
         transactionRepository = FakeTransactionRepository(listOf(purchase, payment)),
         categoryRepository = FakeCategoryRepository(),

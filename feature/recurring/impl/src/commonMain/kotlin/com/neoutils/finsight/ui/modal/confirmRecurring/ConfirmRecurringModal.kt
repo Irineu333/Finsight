@@ -39,6 +39,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -59,7 +60,17 @@ class ConfirmRecurringModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount))
+        // Seeded in the currency of where the confirmation will post, and re-rendered
+        // when the user points it somewhere else (design D10, D17). With nothing
+        // selected yet the digits are seeded undressed, and `ReformatOnCurrencyChange`
+        // dresses them as soon as a destination states a currency.
+        val amount = rememberTextFieldState(
+            uiState.currency
+                ?.let { currencyFormatter.format(recurring.amount, it) }
+                ?: (recurring.amount * 100).roundToLong().toString()
+        )
+
+        ReformatOnCurrencyChange(state = amount, currency = uiState.currency)
         val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
 
         val typeLabel = if (recurring.type.isIncome) {
@@ -180,7 +191,11 @@ class ConfirmRecurringModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_confirm_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(),
+                // Nothing selected denominates nothing: the field does not format, and
+                // Confirm is already refused in that state.
+                inputTransformation = uiState.currency?.let {
+                    rememberMoneyInputTransformation(it)
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,

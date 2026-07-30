@@ -17,7 +17,10 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -29,6 +32,8 @@ import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
@@ -37,6 +42,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -111,8 +117,12 @@ class ReportViewerViewModelCharacterizationTest {
                 categoryRepository = fakes.categoryRepository,
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
+                consolidateMoney = fakes.consolidateMoney,
+                baseCurrencyRepository = fakes.baseCurrencyRepository,
             ),
             entryRepository = fakes.entryRepository(),
+            consolidateMoney = fakes.consolidateMoney,
+            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -123,11 +133,12 @@ class ReportViewerViewModelCharacterizationTest {
             var state = awaitItem()
             while (state !is ReportViewerUiState.Content) state = awaitItem()
             val stats = state.stats as ReportViewerUiState.Stats.Account
-            // Each figure carries the sign it is displayed with.
-            assertEquals(100.0, stats.income.value)
-            assertEquals(-30.0, stats.expense.value)
-            assertEquals(70.0, stats.balance.value)
-            assertEquals(-20.0, stats.openingBalance.value)
+            // Each figure carries the sign it is displayed with; one currency went in,
+            // so the reducer hands that very figure back, exact and unmarked.
+            assertEquals(100.0, stats.income.degradedTerm().value)
+            assertEquals(-30.0, stats.expense.degradedTerm().value)
+            assertEquals(70.0, stats.balance.degradedTerm().value)
+            assertEquals(-20.0, stats.openingBalance.degradedTerm().value)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -172,19 +183,23 @@ class ReportViewerViewModelCharacterizationTest {
                 includeTransactionList = false,
             ),
             transactionRepository = fakes.transactionRepository(transactions),
-            accountRepository = fakes.accountRepository(emptyList()),
+            // The chart, not the facade: the card's LIABILITY row is what denominates
+            // every figure of an invoice report (design D17).
+            accountRepository = fakes.accountRepository(listOf(cardLiability)),
             creditCardRepository = fakes.creditCardRepository(listOf(card)),
             invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(
                 entryRepository = fakes.entryRepository(),
-                accountRepository = fakes.accountRepository(emptyList()),
+                accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
             ),
             calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
                 entryRepository = fakes.entryRepository(),
                 categoryRepository = fakes.categoryRepository,
-                accountRepository = fakes.accountRepository(emptyList()),
+                accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
+                consolidateMoney = fakes.consolidateMoney,
+                baseCurrencyRepository = fakes.baseCurrencyRepository,
             ),
             entryRepository = fakes.entryRepository(
                 owed = mapOf(1L to 70.0),
@@ -192,6 +207,8 @@ class ReportViewerViewModelCharacterizationTest {
                 // (spec `ledger-reporting`): expense 100, advance payment 30, adjustment 10.
                 flows = mapOf(1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
             ),
+            consolidateMoney = fakes.consolidateMoney,
+            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -257,6 +274,7 @@ private class Fakes {
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     fun invoiceRepository(invoices: List<Invoice> = emptyList()) = object : IInvoiceRepository {
@@ -321,6 +339,24 @@ private class Fakes {
         override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = stats
     }
+
+    val baseCurrencyRepository = object : IBaseCurrencyRepository {
+        override fun observe(): StateFlow<String> = MutableStateFlow("BRL")
+        override suspend fun set(currency: String) = throw NotImplementedError()
+    }
+
+    private val exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+        override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
+        override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
+    }
+
+    val consolidateMoney = ConsolidateMoneyUseCase(
+        baseCurrencyRepository = baseCurrencyRepository,
+        exchangeRateRepository = exchangeRateRepository,
+    )
 
     val renderer = object : ReportDocumentRenderer {
         override fun render(layout: ReportLayout): ReportDocument = throw NotImplementedError()

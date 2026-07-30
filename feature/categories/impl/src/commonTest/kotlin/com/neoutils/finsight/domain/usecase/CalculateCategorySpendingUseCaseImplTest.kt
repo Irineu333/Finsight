@@ -1,10 +1,15 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.YearMonth
@@ -13,6 +18,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 private val MONTH = YearMonth(2026, 1)
+
+/**
+ * The reducer, over an archive with no rate: every figure here is mono-currency, so it
+ * comes out as its single exact term — which is what the assertions below read.
+ */
+private fun reducer() = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = FakeBaseCurrencyRepository(),
+    exchangeRateRepository = FakeExchangeRateRepository(),
+)
+
+/** The one value of a mono-currency figure. */
+private val com.neoutils.finsight.domain.model.CategorySpending.value: Double
+    get() = amount.terms.single().value
 
 class CalculateCategorySpendingUseCaseImplTest {
 
@@ -33,13 +51,15 @@ class CalculateCategorySpendingUseCaseImplTest {
             categoryRepository = FakeCategoryRepository(listOf(food, transport)),
             // EXPENSE accounts are debit-natured: balanceInMonth is already +spent.
             entryRepository = FakeEntryRepository(mapOf(10L to 50.0, 11L to 25.0)),
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            consolidateMoney = reducer(),
         )
 
         val result = useCase(MONTH)
 
         assertEquals(listOf(food, transport), result.map { it.category }) // sorted desc by amount
-        assertEquals(50.0, result[0].amount)
-        assertEquals(25.0, result[1].amount)
+        assertEquals(50.0, result[0].value)
+        assertEquals(25.0, result[1].value)
         assertEquals(66.666, result[0].percentage, absoluteTolerance = 0.01) // 50 / 75
         assertEquals(33.333, result[1].percentage, absoluteTolerance = 0.01)
     }
@@ -51,12 +71,14 @@ class CalculateCategorySpendingUseCaseImplTest {
             categoryRepository = FakeCategoryRepository(listOf(salary)),
             // INCOME accounts are credit-natured: natural balance is negative.
             entryRepository = FakeEntryRepository(mapOf(20L to -80.0)),
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            consolidateMoney = reducer(),
         )
 
         val result = useCase(MONTH)
 
         assertEquals(1, result.size)
-        assertEquals(80.0, result[0].amount)
+        assertEquals(80.0, result[0].value)
     }
 
     @Test
@@ -67,6 +89,8 @@ class CalculateCategorySpendingUseCaseImplTest {
         val useCase = CalculateCategorySpendingUseCaseImpl(
             categoryRepository = FakeCategoryRepository(listOf(posted, neverPosted, zero)),
             entryRepository = FakeEntryRepository(mapOf(10L to 40.0, 12L to 0.0)),
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            consolidateMoney = reducer(),
         )
 
         val result = useCase(MONTH)
@@ -81,13 +105,29 @@ class CalculateCategorySpendingUseCaseImplTest {
         val useCase = CalculateCategorySpendingUseCaseImpl(
             categoryRepository = FakeCategoryRepository(listOf(food, salary)),
             entryRepository = FakeEntryRepository(mapOf(10L to 30.0, 20L to -99.0)),
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            consolidateMoney = reducer(),
         )
 
         val result = useCase(MONTH)
 
         assertTrue(result.all { it.category.type == Category.Type.EXPENSE })
-        assertEquals(30.0, result.single().amount)
+        assertEquals(30.0, result.single().value)
     }
+}
+
+private class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
+    private val flow = MutableStateFlow(base)
+    override fun observe(): StateFlow<String> = flow
+    override suspend fun set(currency: String) { flow.value = currency }
+}
+
+private class FakeExchangeRateRepository : IExchangeRateRepository {
+    override suspend fun rateAsOf(currency: String, date: kotlinx.datetime.LocalDate): ExchangeRate? = null
+    override suspend fun ratesAsOf(date: kotlinx.datetime.LocalDate): Map<String, ExchangeRate> = emptyMap()
+    override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+    override suspend fun save(rate: ExchangeRate) = Unit
+    override suspend fun remove(rate: ExchangeRate) = Unit
 }
 
 private class FakeCategoryRepository(private val categories: List<Category>) : ICategoryRepository {

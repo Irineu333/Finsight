@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +80,15 @@ class CreditCardFormModal(
                 .collect { value ->
                     viewModel.onAction(CreditCardFormAction.LimitChanged(value))
                 }
+        }
+
+        // An existing card's limit can only be written out once its currency is read, so
+        // it seeds the field when it arrives instead of at first composition. Anything
+        // already typed wins — the seed is what the field had nothing to show.
+        LaunchedEffect(uiState.form.limit) {
+            if (limit.text.isEmpty() && uiState.form.limit.isNotEmpty()) {
+                limit.setTextAndPlaceCursorAtEnd(uiState.form.limit)
+            }
         }
 
         LaunchedEffect(Unit) {
@@ -157,7 +167,11 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = rememberMoneyInputTransformation(),
+                // The limit is denominated by the card's account. Until that currency is
+                // read there is nothing to denominate the field with.
+                inputTransformation = uiState.currency?.let {
+                    rememberMoneyInputTransformation(it)
+                },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),

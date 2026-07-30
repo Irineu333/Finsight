@@ -4,10 +4,8 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
-import com.neoutils.finsight.extension.format
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,8 +22,6 @@ import kotlin.test.assertEquals
  * without an explicit policy would show up as a wrong sign rather than as a failure.
  */
 class TransactionItemSignTest {
-
-    private val formatter = CurrencyFormatter()
 
     private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET, currency = "BRL")
     private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET, currency = "BRL")
@@ -51,8 +47,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = card.id)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
-        assertEquals("-" + formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -62,8 +57,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = card.id)
 
-        assertEquals(DisplayAmount.explicitSign(100.0), ui?.amount)
-        assertEquals("+" + formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -73,7 +67,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -83,7 +77,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -161,8 +155,8 @@ class TransactionItemSignTest {
         val outgoing = transfer.toTransactionUi(accountId = account.id)
         val incoming = transfer.toTransactionUi(accountId = destination.id)
 
-        assertEquals("-" + formatter.format(100.0), formatter.format(outgoing!!.amount))
-        assertEquals("+" + formatter.format(100.0), formatter.format(incoming!!.amount))
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), outgoing?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), incoming?.amount)
     }
 
     @Test
@@ -170,7 +164,7 @@ class TransactionItemSignTest {
         val ui = transfer.toTransactionUi()
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
-        assertEquals(formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(100.0, ui?.amount?.value)
     }
 
     @Test

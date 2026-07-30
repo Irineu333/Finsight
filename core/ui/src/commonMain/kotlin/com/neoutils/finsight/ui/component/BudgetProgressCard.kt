@@ -97,8 +97,12 @@ private fun BudgetProgressRow(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
+                // Both figures are denominated by the limit, never by the base: a budget
+                // declares its currency once, at creation, and the progress is the
+                // spending reduced *to it* (design D13).
                 Text(
-                    text = "${formatter.format(progress.spent)} / ${formatter.format(progress.budget.amount)}",
+                    text = "${formatter.format(progress.spent, progress.budget.currency)} / " +
+                        formatter.format(progress.budget.amount, progress.budget.currency),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,

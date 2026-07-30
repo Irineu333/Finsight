@@ -56,7 +56,7 @@ class ViewTransactionViewModelTest {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
             val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
-            assertEquals(100.0, content.amount.value)
+            assertEquals(100.0, content.amount?.value)
         }
     }
 
@@ -74,7 +74,7 @@ class ViewTransactionViewModelTest {
             // Same figure, same rule — the detail must not contradict the card it was
             // opened from.
             assertEquals(adjustment.toTransactionUi()?.amount, content.amount)
-            assertEquals(SignPolicy.EXPLICIT_SIGN, content.amount.policy)
+            assertEquals(SignPolicy.EXPLICIT_SIGN, content.amount?.policy)
         }
     }
 
@@ -86,9 +86,9 @@ class ViewTransactionViewModelTest {
         vm.uiState.test {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
-            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount.value)
+            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount?.value)
             repository.emit(transaction(id = 1L, amount = 250.0))
-            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount.value)
+            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount?.value)
         }
     }
 

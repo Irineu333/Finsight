@@ -23,9 +23,15 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.CurrencyFormatter
 
+/**
+ * @param currency the currency of the card the installment is charged to. Mono-currency
+ * by construction (design D17): a card's limit and its installments are denominated by
+ * the card, whose currency never changes.
+ */
 data class InstallmentState(
     val count: Int,
     val total: Double,
+    val currency: String,
 ) {
     val installment = total / count
 
@@ -34,7 +40,7 @@ data class InstallmentState(
             return "${count}x"
         }
 
-        return "${count}x de ${formatter.format(installment)}"
+        return "${count}x de ${formatter.format(installment, currency)}"
     }
 }
 

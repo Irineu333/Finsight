@@ -5,6 +5,8 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -45,6 +47,7 @@ private val currentDate
 class InvoiceTransactionsViewModel(
     private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
@@ -106,6 +109,10 @@ class InvoiceTransactionsViewModel(
             flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
                 ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
         }
+
+        // Every figure of this screen is the card's money, so all of them read in the
+        // card's own currency (design D17) — asked once, not once per invoice.
+        val currency = accountRepository.currencyOf(creditCard)
 
         val invoice = invoices.getOrNull(index)
         // The rows render archived categories too, so the lookup keeps them — only the
@@ -189,10 +196,14 @@ class InvoiceTransactionsViewModel(
                     // The row only renders: spending subtracts from what the card is
                     // worth to the user, an advance payment adds, and an adjustment is
                     // the one line whose direction its label withholds.
-                    expense = DisplayAmount.forcedNegative(expense),
-                    advancePayment = DisplayAmount.forcedPositive(advancePayment),
-                    adjustment = DisplayAmount.explicitSign(adjustment),
-                    total = DisplayAmount.natural(owedByInvoiceId.getValue(invoice.id)),
+                    expense = DisplayAmount.forcedNegative(expense, currency, isApproximate = false),
+                    advancePayment = DisplayAmount.forcedPositive(advancePayment, currency, isApproximate = false),
+                    adjustment = DisplayAmount.explicitSign(adjustment, currency, isApproximate = false),
+                    total = DisplayAmount.natural(
+                        owedByInvoiceId.getValue(invoice.id),
+                        currency,
+                        isApproximate = false,
+                    ),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,

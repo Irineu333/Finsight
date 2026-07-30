@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -25,6 +25,7 @@ import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OutlinedActionButton
 import com.neoutils.finsight.ui.model.RetireAction
@@ -91,8 +92,6 @@ class ViewCategoryModal(
         uiState: ViewCategoryUiState.Content,
         onAction: (ViewCategoryAction) -> Unit,
     ) {
-        val formatter = LocalCurrencyFormatter.current
-
         val isIncome = uiState.category.type.isIncome
         val typeLabel = stringResource(
             if (isIncome) Res.string.view_category_type_income else Res.string.view_category_type_expense
@@ -154,7 +153,7 @@ class ViewCategoryModal(
 
             DetailRow(
                 label = totalLabel,
-                value = formatter.format(uiState.totalAmount),
+                amount = uiState.totalAmount,
                 valueColor = uiState.category.displayColor
             )
 
@@ -214,6 +213,32 @@ class ViewCategoryModal(
                 contentColor = Info,
                 onClick = { manager.show(CategoryFormModal(content.category)) },
                 modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    /**
+     * The money variant of [DetailRow]. A figure may have more than one term, so it
+     * goes through the single renderer rather than being turned into a string here.
+     */
+    @Composable
+    private fun DetailRow(
+        label: String,
+        amount: ConsolidatedAmount,
+        valueColor: Color = colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant
+            )
+            MoneyText(
+                figure = amount,
+                style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
             )
         }
     }

@@ -2,7 +2,9 @@ package com.neoutils.finsight.ui.screen.archived
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.ui.model.toArchivedUi
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class ArchivedCreditCardsViewModel(
     creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
 ) : ViewModel() {
 
     val uiState = creditCardRepository.observeAllCreditCardsIncludingClosed()
@@ -19,7 +22,9 @@ class ArchivedCreditCardsViewModel(
             if (archived.isEmpty()) {
                 ArchivedCreditCardsUiState.Empty
             } else {
-                ArchivedCreditCardsUiState.Content(archived.map(CreditCard::toArchivedUi))
+                ArchivedCreditCardsUiState.Content(
+                    archived.map { it.toArchivedUi(accountRepository.currencyOf(it)) }
+                )
             }
         }
         .stateIn(

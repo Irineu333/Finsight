@@ -1,9 +1,13 @@
 package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 
@@ -13,6 +17,16 @@ import kotlinx.datetime.minusMonth
  * closing figures are the accumulated balance of the perimeter's nature, and the flow
  * lines partition the perimeter's entries in the month. A movement whose legs all fall
  * inside the perimeter contributes zero by `Σ = 0`, so it needs no exception of its own.
+ *
+ * **Every figure here spans accounts**, so every one of them is a *consolidated* figure
+ * and leaves through the reducer — never denominated by hand. The base currency is the
+ * reducer's to say, not this file's: a summary line tagged with the base at the point of
+ * formatting is indistinguishable, for a user whose accounts are all in the base, from
+ * one that was properly reduced (design D29).
+ *
+ * Until the ledger answers per currency (task 10.3) the read is still a scalar, so what
+ * goes in is the single term the app has; what comes out already carries currency,
+ * exactness and — where a rate is missing — more than one term.
  *
  * Each figure leaves here with its sign policy already attached, so the card only
  * renders it. The policies *are* the rule of the summary surface — the sign is the effect
@@ -28,26 +42,55 @@ import kotlinx.datetime.minusMonth
  * - a balance shows only its negative, while a *debt* line answers "how much is owed" and
  *   carries no sign at all. Reading the card's book the other way round — debt positive —
  *   would make spending read `+90`, which is not how anyone reads a statement.
+ *
+ * @param consolidate the one reducer; the figures of a month are consolidated at that
+ * month's rates, and the opening ones at the previous month's, or the past would move on
+ * its own whenever a rate changed.
+ * @param baseCurrency the currency the ledger's scalar answer is denominated in today.
+ * It goes *into* the reducer as a term, and only comes out of it as a figure.
  */
 internal suspend fun IEntryRepository.balanceOverview(
     scope: TransactionScope,
     month: YearMonth,
+    consolidate: ConsolidateMoneyUseCase,
+    baseCurrency: String,
 ): BalanceOverview {
     val previous = month.minusMonth()
+
+    suspend fun figure(
+        value: Double,
+        on: LocalDate,
+        policy: (Double, String, Boolean) -> DisplayAmount,
+    ) = consolidate(MoneyByCurrency.of(baseCurrency, value), on, policy)
 
     return when (scope) {
         TransactionScope.ACCOUNTS -> {
             val flows = assetMonthFlows(month)
             BalanceOverview.Accounts(
-                openingBalance = DisplayAmount.natural(naturalBalanceUpTo(previous, AccountType.ASSET)),
-                income = DisplayAmount.forcedPositive(flows.income),
-                expense = DisplayAmount.forcedNegative(flows.expense),
+                openingBalance = figure(
+                    naturalBalanceUpTo(previous, AccountType.ASSET),
+                    previous.lastDay,
+                    DisplayAmount::natural,
+                ),
+                income = figure(flows.income, month.lastDay, DisplayAmount::forcedPositive),
+                expense = figure(flows.expense, month.lastDay, DisplayAmount::forcedNegative),
                 // An invoice payment has a leg outside this perimeter, so it *is* a
                 // flow here — unlike a transfer, whose two legs are both inside.
-                invoicePayment = DisplayAmount.forcedNegative(liabilityMonthFlows(month).payment)
-                    .orNullIfZero(),
-                adjustment = DisplayAmount.explicitSign(flows.adjustment).orNullIfZero(),
-                finalBalance = DisplayAmount.natural(naturalBalanceUpTo(month, AccountType.ASSET)),
+                invoicePayment = figure(
+                    liabilityMonthFlows(month).payment,
+                    month.lastDay,
+                    DisplayAmount::forcedNegative,
+                ).orNullIfZero(),
+                adjustment = figure(
+                    flows.adjustment,
+                    month.lastDay,
+                    DisplayAmount::explicitSign,
+                ).orNullIfZero(),
+                finalBalance = figure(
+                    naturalBalanceUpTo(month, AccountType.ASSET),
+                    month.lastDay,
+                    DisplayAmount::natural,
+                ),
             )
         }
 
@@ -56,11 +99,27 @@ internal suspend fun IEntryRepository.balanceOverview(
             // The ledger's own sign, so the column reads like a statement and still
             // closes: opening − spending + payments + adjustment.
             BalanceOverview.Cards(
-                openingBalance = DisplayAmount.owed(naturalBalanceUpTo(previous, AccountType.LIABILITY)),
-                expense = DisplayAmount.forcedNegative(flows.expense),
-                payment = DisplayAmount.forcedPositive(flows.payment).orNullIfZero(),
-                adjustment = DisplayAmount.explicitSign(flows.adjustment).orNullIfZero(),
-                finalBalance = DisplayAmount.owed(naturalBalanceUpTo(month, AccountType.LIABILITY)),
+                openingBalance = figure(
+                    naturalBalanceUpTo(previous, AccountType.LIABILITY),
+                    previous.lastDay,
+                    DisplayAmount::owed,
+                ),
+                expense = figure(flows.expense, month.lastDay, DisplayAmount::forcedNegative),
+                payment = figure(
+                    flows.payment,
+                    month.lastDay,
+                    DisplayAmount::forcedPositive,
+                ).orNullIfZero(),
+                adjustment = figure(
+                    flows.adjustment,
+                    month.lastDay,
+                    DisplayAmount::explicitSign,
+                ).orNullIfZero(),
+                finalBalance = figure(
+                    naturalBalanceUpTo(month, AccountType.LIABILITY),
+                    month.lastDay,
+                    DisplayAmount::owed,
+                ),
             )
         }
 
@@ -68,18 +127,33 @@ internal suspend fun IEntryRepository.balanceOverview(
             val asset = assetMonthFlows(month)
             val liability = liabilityMonthFlows(month)
             BalanceOverview.Overall(
-                openingNet = DisplayAmount.natural(netBalanceUpTo(previous)),
-                income = DisplayAmount.forcedPositive(asset.income),
+                openingNet = figure(
+                    netBalanceUpTo(previous),
+                    previous.lastDay,
+                    DisplayAmount::natural,
+                ),
+                income = figure(asset.income, month.lastDay, DisplayAmount::forcedPositive),
                 // Disjoint sets — a card purchase has no ASSET leg — so aggregating
                 // them cannot double-count. Which book the money left is the scope's
                 // question, not the summary's.
-                expense = DisplayAmount.forcedNegative(asset.expense + liability.expense),
+                expense = figure(
+                    asset.expense + liability.expense,
+                    month.lastDay,
+                    DisplayAmount::forcedNegative,
+                ),
                 // Both legs are inside this perimeter: shown because the user asks for
                 // it, outside the sum because it moves nothing.
-                invoicePayment = DisplayAmount.neutral(liability.payment).orNullIfZero(),
-                adjustment = DisplayAmount.explicitSign(asset.adjustment + liability.adjustment)
-                    .orNullIfZero(),
-                finalNet = DisplayAmount.natural(netBalanceUpTo(month)),
+                invoicePayment = figure(
+                    liability.payment,
+                    month.lastDay,
+                    DisplayAmount::neutral,
+                ).orNullIfZero(),
+                adjustment = figure(
+                    asset.adjustment + liability.adjustment,
+                    month.lastDay,
+                    DisplayAmount::explicitSign,
+                ).orNullIfZero(),
+                finalNet = figure(netBalanceUpTo(month), month.lastDay, DisplayAmount::natural),
             )
         }
     }
@@ -92,5 +166,10 @@ internal suspend fun IEntryRepository.balanceOverview(
 private suspend fun IEntryRepository.netBalanceUpTo(month: YearMonth): Double =
     naturalBalanceUpTo(month, AccountType.ASSET) + naturalBalanceUpTo(month, AccountType.LIABILITY)
 
-/** A flow the month does not have is an absent line, not a zero the card must hide. */
-private fun DisplayAmount.orNullIfZero(): DisplayAmount? = takeIf { it.value != 0.0 }
+/**
+ * A flow the month does not have is an absent line, not a zero the card must hide — and
+ * a figure is only absent when *every* term of it is zero: one term at zero beside
+ * another that is not is still a movement.
+ */
+private fun ConsolidatedAmount.orNullIfZero(): ConsolidatedAmount? =
+    takeIf { figure -> figure.terms.any { it.value != 0.0 } }

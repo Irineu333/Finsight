@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,7 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
@@ -72,6 +73,7 @@ import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.creditCardSharedElement
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -222,9 +224,11 @@ private fun DashboardPendingRecurringSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.recurringList.forEach { recurring ->
+        component.recurringList.forEach { item ->
+            val recurring = item.recurring
             PendingRecurringCard(
                 recurring = recurring,
+                amount = item.amount,
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
                         val currentDate = Clock.System.now()
@@ -576,7 +580,7 @@ private fun DashboardCreditCardsSection(
                         name = creditCardUi.name,
                         closingDay = creditCardUi.closingDay,
                         dueDay = creditCardUi.dueDay,
-                        limit = creditCardUi.limit,
+                        limit = component.limits[page],
                         invoiceUi = creditCardUi.invoiceUi,
                         // Only the current page is promoted: a neighbour composed by the pager's
                         // contentPadding would be lifted to the overlay and lose its clip.
@@ -772,10 +776,10 @@ private fun DashboardQuickActionCard(
 @Composable
 private fun PendingRecurringCard(
     recurring: Recurring,
+    amount: DisplayAmount,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     val typeColor = if (recurring.type.isIncome) Income else Expense
 
     Card(
@@ -833,22 +837,29 @@ private fun PendingRecurringCard(
                 }
             }
 
-            Text(
-                text = formatter.format(recurring.amount),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = typeColor,
+            MoneyText(
+                amount = amount,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = typeColor,
+                ),
             )
         }
     }
 }
 
+/**
+ * The dashboard's headline figure. It sums every account, so it is consolidated and may
+ * hold more than one term — which is why it is rendered by [MoneyText] and never
+ * juxtaposed in a line: at `headlineMedium` a second term has nowhere to go sideways
+ * (design D22).
+ */
 @Composable
 private fun TotalBalanceCard(
     variant: DashboardComponentVariant.TotalBalance,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     val component = variant.component
 
     Card(
@@ -875,11 +886,12 @@ private fun TotalBalanceCard(
                 style = MaterialTheme.typography.titleMedium,
                 color = colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = formatter.format(component.amount),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.onSurface,
+            MoneyText(
+                figure = component.amount,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                ),
             )
         }
     }

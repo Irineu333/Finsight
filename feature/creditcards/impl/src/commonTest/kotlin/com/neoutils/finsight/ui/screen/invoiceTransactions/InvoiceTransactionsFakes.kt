@@ -54,6 +54,7 @@ internal class FakeCreditCardRepository(private val card: CreditCard) : ICreditC
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
 internal class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvoiceRepository {

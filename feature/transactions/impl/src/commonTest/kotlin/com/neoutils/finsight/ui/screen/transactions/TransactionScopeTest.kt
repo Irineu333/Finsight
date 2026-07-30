@@ -97,6 +97,8 @@ class TransactionScopeTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        baseCurrencyRepository = FakeBaseCurrency(),
+        consolidateMoney = consolidator(),
     )
 
     /**

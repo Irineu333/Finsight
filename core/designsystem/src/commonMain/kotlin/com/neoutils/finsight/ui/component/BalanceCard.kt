@@ -29,7 +29,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.balance_card_account_expense
 import com.neoutils.finsight.resources.balance_card_account_income
@@ -48,16 +49,47 @@ import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
+/**
+ * A balance denominated by the account or facade it belongs to — a single exact term,
+ * and never the base currency (design D29).
+ */
 @Composable
 fun BalanceCard(
-    balance: Double,
+    balance: DisplayAmount,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
+) = BalanceCard(modifier, config, onEditClick, onPayClick, onClick) { style ->
+    MoneyText(amount = balance, style = style)
+}
+
+/**
+ * A figure that crossed accounts and was therefore consolidated: it may hold more than
+ * one term, and the stacking rule that renders it is [MoneyText]'s alone (design D22).
+ */
+@Composable
+fun BalanceCard(
+    balance: ConsolidatedAmount,
+    modifier: Modifier = Modifier,
+    config: BalanceCardConfig = BalanceCardConfig.Default,
+    onEditClick: (() -> Unit)? = null,
+    onPayClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
+) = BalanceCard(modifier, config, onEditClick, onPayClick, onClick) { style ->
+    MoneyText(figure = balance, style = style)
+}
+
+@Composable
+private fun BalanceCard(
+    modifier: Modifier,
+    config: BalanceCardConfig,
+    onEditClick: (() -> Unit)?,
+    onPayClick: (() -> Unit)?,
+    onClick: (() -> Unit)?,
+    money: @Composable (TextStyle) -> Unit,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     Card(
     modifier = modifier.then(
         if (onClick != null) {
@@ -123,10 +155,7 @@ fun BalanceCard(
                     }
                 )
         ) {
-            Text(
-                text = formatter.format(balance),
-                style = config.style,
-            )
+            money(config.style)
 
             if (onEditClick != null) {
                 Icon(

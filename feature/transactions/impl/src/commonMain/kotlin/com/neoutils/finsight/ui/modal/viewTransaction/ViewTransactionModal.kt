@@ -201,11 +201,13 @@ class ViewTransactionModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(
-                label = stringResource(Res.string.view_transaction_amount_label),
-                value = formatter.format(uiState.amount),
-                valueColor = uiState.transactionColor()
-            )
+            uiState.amount?.let { amount ->
+                DetailRow(
+                    label = stringResource(Res.string.view_transaction_amount_label),
+                    value = formatter.format(amount),
+                    valueColor = uiState.transactionColor()
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -316,7 +318,12 @@ class ViewTransactionModal(
             uiState.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_installment_label),
-                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
+                    // The total is denominated by the card the instalment sits on, and
+                    // the state resolves it; without a card leg there is no currency to
+                    // state it in, so the row says only which instalment this is.
+                    value = uiState.installmentTotal
+                        ?.let { "${installment.label} de ${formatter.format(it)}" }
+                        ?: installment.label,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         detailController.dismiss()

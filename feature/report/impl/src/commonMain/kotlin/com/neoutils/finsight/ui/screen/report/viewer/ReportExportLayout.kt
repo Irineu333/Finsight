@@ -2,8 +2,11 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatTerms
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
@@ -60,22 +63,22 @@ fun ReportViewerUiState.Content.toReportLayout(
         is ReportViewerUiState.Stats.Account -> listOf(
             ReportSummaryItem(
                 label = strings.summaryBalance,
-                value = formatter.format(s.balance),
-                tone = s.balance.value.toTone(),
+                value = formatter.exportText(s.balance),
+                tone = s.balance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryOpeningBalance,
-                value = formatter.format(s.openingBalance),
-                tone = s.openingBalance.value.toTone(),
+                value = formatter.exportText(s.openingBalance),
+                tone = s.openingBalance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,
-                value = formatter.format(s.income),
+                value = formatter.exportText(s.income),
                 tone = ReportTone.POSITIVE,
             ),
             ReportSummaryItem(
                 label = strings.summaryExpense,
-                value = formatter.format(s.expense),
+                value = formatter.exportText(s.expense),
                 tone = ReportTone.NEGATIVE,
             ),
         )
@@ -107,7 +110,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categorySpending.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -122,7 +125,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -199,6 +202,20 @@ private fun Double.toRoundedPercent(): String {
     val rounded = (this * 10).roundToInt() / 10.0
     return "$rounded%"
 }
+
+/**
+ * The exported document stores text and not a figure, so a figure of more than one term
+ * is written out whole, in the order the terms read. Handing the document the figure
+ * itself — and with it D20's declared degradation — is task 10.7.
+ */
+private fun CurrencyFormatter.exportText(figure: ConsolidatedAmount): String =
+    formatTerms(figure).joinToString(" ")
+
+/**
+ * The tone of a figure is the tone of the term it was reduced into — the one a surface
+ * too narrow for the rest would keep.
+ */
+private fun ConsolidatedAmount.toTone(): ReportTone = degradedTerm().value.toTone()
 
 private fun Double.toTone(): ReportTone {
     return when {

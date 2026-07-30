@@ -10,8 +10,18 @@ import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import kotlin.math.abs
 
+/**
+ * Formats a money field as the user types, **in the currency of the account chosen** —
+ * never the device locale's. Typing 100 into a dollar account with `R$` in the field is
+ * the same failure `DisplayAmount` closes on the reading side, from the writing side
+ * (design D10).
+ *
+ * Neither the formatter nor the currency has a default. The formatter's used to, and that
+ * default was a door straight back to the device locale.
+ */
 class MoneyInputTransformation(
-    private val formatter: CurrencyFormatter = CurrencyFormatter()
+    private val formatter: CurrencyFormatter,
+    private val currency: String,
 ) : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
@@ -41,13 +51,17 @@ class MoneyInputTransformation(
 
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
-        val formatted = formatter.format(abs(cents).toDouble() / 100)
+        val formatted = formatter.format(abs(cents).toDouble() / 100, currency)
         return if (isNegative) "-$formatted" else formatted
     }
 }
 
+/**
+ * @param currency the currency of the account the value is being typed for. It is keyed
+ * into [remember] so that a field already filled changes symbol when the account changes.
+ */
 @Composable
-fun rememberMoneyInputTransformation(): MoneyInputTransformation {
+fun rememberMoneyInputTransformation(currency: String): MoneyInputTransformation {
     val formatter = LocalCurrencyFormatter.current
-    return remember(formatter) { MoneyInputTransformation(formatter) }
+    return remember(formatter, currency) { MoneyInputTransformation(formatter, currency) }
 }

@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.RecurringRetirability
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.ui.model.retireActionOf
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.stateIn
 class ViewRecurringViewModel(
     recurringId: Long,
     recurringRepository: IRecurringRepository,
+    private val accountRepository: IAccountRepository,
     private val resolveRetirability: ResolveRecurringRetirabilityUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -37,6 +41,15 @@ class ViewRecurringViewModel(
             val retirability = resolveRetirability(recurring)
             ViewRecurringUiState.Content(
                 recurring = recurring,
+                // No account left to denominate it: the figure is left out rather than
+                // stated in a currency nobody decided for it.
+                amount = accountRepository.currencyOf(recurring)?.let { currency ->
+                    DisplayAmount.magnitude(
+                        value = recurring.amount,
+                        currency = currency,
+                        isApproximate = false,
+                    )
+                },
                 retireAction = retireActionOf(retirability !is RecurringRetirability.Deletable),
             )
         }

@@ -77,12 +77,14 @@ val recurringModule = module {
     viewModel {
         RecurringViewModel(
             recurringRepository = get(),
+            accountRepository = get(),
         )
     }
     viewModel {
         ViewRecurringViewModel(
             recurringId = it.get(),
             recurringRepository = get(),
+            accountRepository = get(),
             resolveRetirability = get(),
             crashlytics = get(),
         )

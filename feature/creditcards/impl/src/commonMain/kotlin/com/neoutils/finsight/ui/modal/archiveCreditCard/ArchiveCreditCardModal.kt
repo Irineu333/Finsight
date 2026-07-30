@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.archive_account_confirm
@@ -38,9 +39,10 @@ class ArchiveCreditCardModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val viewModel = koinViewModel<ArchiveCreditCardViewModel> { parametersOf(creditCard) }
-        val balance by viewModel.balance.collectAsState()
+        val debt by viewModel.debt.collectAsState()
+        val hasBalance by viewModel.hasBalance.collectAsState()
         val formatter = LocalCurrencyFormatter.current
-        val blocked = balance != null && balance != 0.0
+        val blocked = hasBalance == true
 
 
         Column(
@@ -59,8 +61,12 @@ class ArchiveCreditCardModal(
 
             Text(
                 text = if (blocked) {
-                    // A card balance is a debt, so it reads positive to the user.
-                    stringResource(Res.string.archive_credit_card_blocked, formatter.format(-(balance ?: 0.0)))
+                    // A card balance is a debt, so it reads positive to the user —
+                    // which is what the figure's own `OWED` policy already says.
+                    stringResource(
+                        Res.string.archive_credit_card_blocked,
+                        debt?.let { formatter.format(it) }.orEmpty(),
+                    )
                 } else {
                     stringResource(Res.string.archive_credit_card_message)
                 },
@@ -74,7 +80,7 @@ class ArchiveCreditCardModal(
                 onClick = {
                     viewModel.archiveCreditCard()
                 },
-                enabled = balance == 0.0,
+                enabled = hasBalance == false,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(

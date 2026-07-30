@@ -214,6 +214,10 @@ private fun BudgetProgressItem(
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
+    // Every figure on this card is denominated by the limit, never by the base: a budget
+    // declares its currency once, at creation, and what is shown beside the limit is the
+    // spending reduced *to it* (design D13).
+    val currency = progress.budget.currency
 
     Card(
         modifier = modifier.clickable(onClick = onClick),
@@ -273,7 +277,7 @@ private fun BudgetProgressItem(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(progress.budget.amount),
+                    text = formatter.format(progress.budget.amount, currency),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -291,7 +295,7 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(progress.spent),
+                        text = formatter.format(progress.spent, currency),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -308,9 +312,9 @@ private fun BudgetProgressItem(
                     )
                     Text(
                         text = if (progress.isExceeded) {
-                            formatter.format(progress.spent - progress.budget.amount)
+                            formatter.format(progress.spent - progress.budget.amount, currency)
                         } else {
-                            formatter.format(progress.remaining)
+                            formatter.format(progress.remaining, currency)
                         },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,

@@ -9,13 +9,17 @@ import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.RetireAction
@@ -26,6 +30,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -150,8 +156,27 @@ class ViewCategoryViewModelTest {
             recurringRepository = recurringRepository,
         ),
         unarchiveCategory = unarchiveCategory,
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
+        consolidateMoney = ConsolidateMoneyUseCase(
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            exchangeRateRepository = FakeExchangeRateRepository(),
+        ),
         crashlytics = crashlytics,
     )
+
+    private class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(currency: String) { flow.value = currency }
+    }
+
+    private class FakeExchangeRateRepository : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+        override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+    }
 
     private class FakeRecurringRepository(private val has: Boolean = false) : IRecurringRepository {
         override suspend fun hasRecurringForCategory(categoryId: Long) = has
@@ -199,7 +224,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(42.5, content.totalAmount)
+            assertEquals(42.5, content.totalAmount.terms.single().value)
             assertEquals(2, content.transactionCount)
         }
     }
@@ -289,14 +314,14 @@ class ViewCategoryViewModelTest {
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
-            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount)
+            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount.terms.single().value)
 
             entries.balances = mapOf(10L to 60.0)
             entries.counts = mapOf(10L to 3)
             entries.ledger.emit(Unit)
 
             val refreshed = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(60.0, refreshed.totalAmount)
+            assertEquals(60.0, refreshed.totalAmount.terms.single().value)
             assertEquals(3, refreshed.transactionCount)
         }
     }
@@ -310,7 +335,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, accountId = 11))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(0.0, content.totalAmount)
+            assertEquals(0.0, content.totalAmount.terms.single().value)
             assertEquals(0, content.transactionCount)
         }
     }

@@ -251,7 +251,7 @@ private fun ReportConfigContent(
                     contentType = "credit_cards_pager",
                 ) {
                     val initialPage = uiState.creditCards
-                        .indexOfFirst { it.id == uiState.config.selectedCreditCardId }
+                        .indexOfFirst { it.card.id == uiState.config.selectedCreditCardId }
                         .coerceAtLeast(0)
 
                     val pagerState = rememberPagerState(
@@ -261,7 +261,7 @@ private fun ReportConfigContent(
 
                     LaunchedEffect(pagerState) {
                         snapshotFlow { pagerState.currentPage }.collectLatest { page ->
-                            onAction(ReportConfigAction.SelectCreditCard(uiState.creditCards[page].id))
+                            onAction(ReportConfigAction.SelectCreditCard(uiState.creditCards[page].card.id))
                         }
                     }
 
@@ -274,10 +274,10 @@ private fun ReportConfigContent(
                             .animateItem(),
                     ) { page ->
                         CreditCardCard(
-                            iconKey = uiState.creditCards[page].iconKey,
-                            name = uiState.creditCards[page].name,
-                            closingDay = uiState.creditCards[page].closingDay,
-                            dueDay = uiState.creditCards[page].dueDay,
+                            iconKey = uiState.creditCards[page].card.iconKey,
+                            name = uiState.creditCards[page].card.name,
+                            closingDay = uiState.creditCards[page].card.closingDay,
+                            dueDay = uiState.creditCards[page].card.dueDay,
                             limit = uiState.creditCards[page].limit,
                             variant = CreditCardCardVariant.Selection,
                         )

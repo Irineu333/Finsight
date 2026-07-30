@@ -7,7 +7,9 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -33,6 +35,7 @@ class EditInvoiceBalanceViewModel(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -78,7 +81,8 @@ class EditInvoiceBalanceViewModel(
                 selectedCreditCard = selectedCard,
                 editableInvoices = invoices,
                 selectedInvoice = selectedInvoice,
-                currentBalance = balance
+                currentBalance = balance,
+                currency = accountRepository.currencyOf(selectedCard),
             )
         }
     }.stateIn(

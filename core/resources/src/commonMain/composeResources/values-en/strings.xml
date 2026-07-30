@@ -831,4 +831,6 @@
     <string name="currency_name_usd">US dollar</string>
     <string name="currency_name_uyu">Uruguayan peso</string>
     <string name="currency_name_zar">South African rand</string>
+    <string name="money_unconverted_term">+ unconverted part</string>
+    <string name="money_approximate_footer">≈ approximate, by the rate of %1$s. See rates</string>
 </resources>

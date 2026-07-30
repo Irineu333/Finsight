@@ -14,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_summary_advance_payment
 import com.neoutils.finsight.resources.report_viewer_summary_balance
@@ -123,11 +125,14 @@ internal fun ReportContextCard(
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onSurfaceVariant,
                         )
-                        Text(
-                            text = formatter.format(stats.balance),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (stats.balance.value >= 0) Income else Expense,
+                        MoneyText(
+                            figure = stats.balance,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                // The tone reads the term the figure was reduced into,
+                                // which is the one a narrow surface would keep.
+                                color = if (stats.balance.degradedTerm().value >= 0) Income else Expense,
+                            ),
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -142,11 +147,12 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.openingBalance),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (stats.openingBalance.value >= 0) Income else Expense,
+                            MoneyText(
+                                figure = stats.openingBalance,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (stats.openingBalance.degradedTerm().value >= 0) Income else Expense,
+                                ),
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
@@ -162,11 +168,12 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.income),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Income,
+                            MoneyText(
+                                figure = stats.income,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Income,
+                                ),
                             )
                         }
                         Row(
@@ -179,11 +186,12 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.expense),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Expense,
+                            MoneyText(
+                                figure = stats.expense,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Expense,
+                                ),
                             )
                         }
                     }

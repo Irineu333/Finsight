@@ -23,4 +23,14 @@ interface ICreditCardRepository {
      * account, not on the facade, so [accountId] is the card's `accountId`.
      */
     suspend fun unarchive(accountId: Long)
+
+    /**
+     * The currency the `LIABILITY` account of the *next* card will be born in.
+     *
+     * A card's figures are denominated by its account (design D17), and a card being
+     * created has no account yet — so a form about it has no row to ask. This is not a
+     * second answer to that question: it is the very value [insert] will write, exposed
+     * so the form displays what the account is about to be, instead of guessing.
+     */
+    suspend fun currencyForNewCard(): String
 }

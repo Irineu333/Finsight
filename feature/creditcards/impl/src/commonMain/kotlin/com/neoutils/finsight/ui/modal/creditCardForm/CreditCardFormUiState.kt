@@ -10,6 +10,8 @@ data class CreditCardFormUiState(
     val validation: Map<CreditCardField, Validation> = mapOf(),
     val isEditMode: Boolean = false,
     val canSubmit: Boolean = false,
+    // What the limit is typed and read back in. See `CreditCardFormViewModel.currency`.
+    val currency: String? = null,
 )
 
 enum class CreditCardField {

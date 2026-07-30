@@ -34,9 +34,16 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getAccountById(id: Long): AccountEntity?
 
-    // Ledger account lookups (chart of accounts includes non-ASSET rows).
-    @Query("SELECT * FROM accounts WHERE type = :type AND name = :name LIMIT 1")
-    suspend fun getByTypeAndName(type: AccountEntity.Type, name: String): AccountEntity?
+    // Ledger account lookups (chart of accounts includes non-ASSET rows). A system
+    // account is identified by the *triple*: there is one per currency, so that
+    // `currency` means the same thing in every line of the chart, and `EQUITY` holds
+    // two of them — reconciliation and conversion.
+    @Query("SELECT * FROM accounts WHERE type = :type AND name = :name AND currency = :currency LIMIT 1")
+    suspend fun getByTypeNameAndCurrency(
+        type: AccountEntity.Type,
+        name: String,
+        currency: String,
+    ): AccountEntity?
 
     @Query("SELECT * FROM accounts WHERE id = :id")
     fun observeAccountById(id: Long): Flow<AccountEntity?>

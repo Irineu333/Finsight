@@ -215,8 +215,12 @@ class TransactionRepository(
     }
 
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
-        // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
-        ledgerEntryWriter.validate(intent.legs)
+        // No pre-check of the balance here, and that is a rule rather than an omission:
+        // `Σ = 0` is validated *per currency* at the write boundary, "at the same point
+        // and at no other". A flat sum over the raw legs would refuse every
+        // cross-currency intent before the boundary could complete it, and separating
+        // them by currency is impossible before reading the accounts — which is exactly
+        // what stops a pre-check from being one.
         ensureDimensionsAccept(intent.legs)
 
         // The transaction row and its ledger legs are written in a single transaction,
@@ -236,10 +240,7 @@ class TransactionRepository(
     }
 
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> {
-        intents.forEach {
-            ledgerEntryWriter.validate(it.legs)
-            ensureDimensionsAccept(it.legs)
-        }
+        intents.forEach { ensureDimensionsAccept(it.legs) }
 
         val ids = database.useWriterConnection { connection ->
             connection.immediateTransaction {

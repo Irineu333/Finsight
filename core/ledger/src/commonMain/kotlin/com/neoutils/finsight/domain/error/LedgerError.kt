@@ -6,6 +6,23 @@ sealed class LedgerError(val message: String) {
     data object Unbalanced : LedgerError("Transaction entries must sum to zero for every currency.")
 
     /**
+     * A cross-currency intent in which **every** currency gains value.
+     *
+     * Completing a cross-currency operation would balance anything, a typo included:
+     * whatever each currency is left owing, the opposite of it lands on that currency's
+     * conversion account and the sums close. This is the one guard that keeps the
+     * completion from being a rubber stamp. If no currency involved *gave* anything up,
+     * the intent is creating money without an origin — that is not an exchange, and no
+     * exchange has that shape.
+     *
+     * Not reachable from a form whose two fields read "out of" and "into": there the
+     * residues oppose each other by construction, and a zeroed field is stopped by the
+     * button being disabled. Reaching it is a defect.
+     */
+    data object ImpossibleExchange :
+        LedgerError("A cross-currency operation cannot leave every currency gaining value.")
+
+    /**
      * A leg was tagged with a dimension its kind does not accept.
      *
      * Never reachable by a user action — it is a defect in the writer, surfaced

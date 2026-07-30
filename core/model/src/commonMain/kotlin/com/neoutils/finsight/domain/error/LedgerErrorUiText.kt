@@ -5,6 +5,7 @@ import com.neoutils.finsight.resources.ledger_error_closed_account
 import com.neoutils.finsight.resources.ledger_error_closed_credit_card
 import com.neoutils.finsight.resources.ledger_error_closed_removal_account
 import com.neoutils.finsight.resources.ledger_error_closed_removal_credit_card
+import com.neoutils.finsight.resources.ledger_error_impossible_exchange
 import com.neoutils.finsight.resources.ledger_error_unbalanced
 import com.neoutils.finsight.util.UiText
 
@@ -19,6 +20,10 @@ import com.neoutils.finsight.util.UiText
 fun LedgerError.toUiText() = when (this) {
     LedgerError.Unbalanced -> UiText.Res(Res.string.ledger_error_unbalanced)
     LedgerError.MisplacedDimension -> UiText.Res(Res.string.ledger_error_unbalanced)
+    // Like the two above, a defect rather than something the user did: the forms oppose
+    // the two values by construction. It still gets a sentence, because a defect the user
+    // reaches must say something true instead of nothing.
+    LedgerError.ImpossibleExchange -> UiText.Res(Res.string.ledger_error_impossible_exchange)
     is LedgerError.ClosedAccount -> when (facade) {
         ClosedFacade.ACCOUNT -> UiText.Res(Res.string.ledger_error_closed_account)
         ClosedFacade.CREDIT_CARD -> UiText.Res(Res.string.ledger_error_closed_credit_card)

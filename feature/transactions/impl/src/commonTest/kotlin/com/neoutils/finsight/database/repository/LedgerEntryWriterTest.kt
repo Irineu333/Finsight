@@ -38,9 +38,10 @@ class LedgerEntryWriterTest {
 
     private val writer = LedgerEntryWriter(entryDao, accountDao, dimensionDao)
 
-    /** The user's own account, id 1, open. */
-    private fun openAsset(id: Long = 1) = AccountEntity(id = id, name = "Acc $id", type = AccountEntity.Type.ASSET)
-        .also { accountDao.accounts[id] = it }
+    /** The user's own account, id 1, open, in [currency]. */
+    private fun openAsset(id: Long = 1, currency: String = "BRL") =
+        AccountEntity(id = id, name = "Acc $id", type = AccountEntity.Type.ASSET, currency = currency)
+            .also { accountDao.accounts[id] = it }
 
     @Test
     fun `given an expense when written then the nominal leg carries the category dimension`() = runTest {
@@ -58,7 +59,7 @@ class LedgerEntryWriterTest {
         assertEquals(-5000L, entryDao.inserted.first { it.accountId == 1L }.amount)
         // The category is not an account: the contra leg lands on the single EXPENSE
         // nominal, and *which* category it is comes from the dimension.
-        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
+        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES.accountName }
         val nominalEntry = entryDao.inserted.first { it.accountId == nominal.id }
         assertEquals(5000L, nominalEntry.amount)
         assertEquals(7L, nominalEntry.dimensionId)
@@ -74,7 +75,7 @@ class LedgerEntryWriterTest {
             contra = ContraLeg(AccountType.EXPENSE),
         )
 
-        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
+        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES.accountName }
         // No bucket account and no bucket dimension: "uncategorized" is the absence.
         assertNull(entryDao.inserted.first { it.accountId == nominal.id }.dimensionId)
         assertEquals(1, accountDao.accounts.values.count { it.type == AccountEntity.Type.EXPENSE })
@@ -105,9 +106,9 @@ class LedgerEntryWriterTest {
             )
         }
 
-        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.EXPENSES })
-        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.INCOMES })
-        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.RECONCILIATION })
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.EXPENSES.accountName })
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.INCOMES.accountName })
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.RECONCILIATION.accountName })
         // The user's account plus the three system rows, and nothing else.
         assertEquals(4, accountDao.accounts.size)
     }
@@ -119,7 +120,6 @@ class LedgerEntryWriterTest {
         val out = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1)
         val income = TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2)
 
-        writer.validate(listOf(out, income))
         writer.writeEntries(transactionId = 2, legs = listOf(out, income), contra = null)
 
         assertEquals(2, entryDao.inserted.size)
@@ -140,7 +140,7 @@ class LedgerEntryWriterTest {
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val reconciliation = accountDao.accounts.values.first { it.type == AccountEntity.Type.EQUITY }
-        assertEquals(SystemAccount.RECONCILIATION, reconciliation.name)
+        assertEquals(SystemAccount.RECONCILIATION.accountName, reconciliation.name)
         assertEquals(-3000L, entryDao.inserted.first { it.accountId == reconciliation.id }.amount)
     }
 
@@ -245,13 +245,216 @@ class LedgerEntryWriterTest {
         assertTrue(entryDao.inserted.isEmpty())
     }
 
-    @Test
-    fun `given an unbalanced multi-leg transaction when validated then it is rejected`() {
-        val a = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1)
-        val b = TransactionLeg(type = TransactionType.INCOME, amount = 80.0, accountId = 2)
+    // region cross-currency completion (design D1, D6, D15)
 
-        assertFailsWith<UnbalancedTransactionException> { writer.validate(listOf(a, b)) }
+    /** A second account of the user, in another currency. */
+    private fun foreignAsset(id: Long, currency: String) = openAsset(id, currency)
+
+    private fun conversionOf(currency: String) = accountDao.accounts.values
+        .single { it.type == AccountEntity.Type.CONVERSION && it.currency == currency }
+
+    @Test
+    fun `given a transfer across currencies when written then each currency sums to zero`() = runTest {
+        openAsset(1)
+        foreignAsset(2, "USD")
+
+        // What the statement shows: 550 left here, 100 arrived there. No rate is stated
+        // anywhere on the way in — it is the relation between the two.
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        assertEquals(4, entryDao.inserted.size)
+        val byCurrency = entryDao.inserted.groupBy { it.currency }
+        assertEquals(0L, byCurrency.getValue("BRL").sumOf { it.amount })
+        assertEquals(0L, byCurrency.getValue("USD").sumOf { it.amount })
+        assertEquals(55_000L, entryDao.inserted.single { it.accountId == conversionOf("BRL").id }.amount)
+        assertEquals(-10_000L, entryDao.inserted.single { it.accountId == conversionOf("USD").id }.amount)
     }
+
+    @Test
+    fun `given a cross-currency invoice payment when written then the conversion legs carry no dimension`() = runTest {
+        openAsset(1)
+        accountDao.accounts[200L] = AccountEntity(
+            id = 200,
+            name = "Card",
+            type = AccountEntity.Type.LIABILITY,
+            currency = "USD",
+        )
+        dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
+
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 200, dimensionId = 5),
+            ),
+            contra = null,
+        )
+
+        // Without the absence of a dimension this write would not exist at all: the
+        // landing rule only accepts an INVOICE on a LIABILITY leg.
+        val conversions = entryDao.inserted.filter {
+            it.accountId in setOf(conversionOf("BRL").id, conversionOf("USD").id)
+        }
+        assertEquals(2, conversions.size)
+        assertTrue(conversions.all { it.dimensionId == null })
+        // And the invoice owes exactly what its own leg says, untouched by the residue.
+        assertEquals(10_000L, entryDao.inserted.single { it.dimensionId == 5L }.amount)
+    }
+
+    @Test
+    fun `given a rounding residue when written then the conversion leg absorbs it`() = runTest {
+        openAsset(1)
+        foreignAsset(2, "USD")
+
+        // 33.33 out, 10.00 in: the residue is whatever it is, and the conversion leg is
+        // the difference rather than a second computation to be reconciled.
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 33.33, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 10.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        assertEquals(3_333L, entryDao.inserted.single { it.accountId == conversionOf("BRL").id }.amount)
+        assertEquals(0L, entryDao.inserted.filter { it.currency == "BRL" }.sumOf { it.amount })
+        assertEquals(0L, entryDao.inserted.filter { it.currency == "USD" }.sumOf { it.amount })
+    }
+
+    @Test
+    fun `given a single-currency write then no conversion leg is synthesized`() = runTest {
+        openAsset(1)
+        openAsset(2)
+
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        assertEquals(2, entryDao.inserted.size)
+        assertTrue(accountDao.accounts.values.none { it.type == AccountEntity.Type.CONVERSION })
+    }
+
+    @Test
+    fun `given an unbalanced single-currency intent then it is still refused`() = runTest {
+        openAsset(1)
+        openAsset(2)
+
+        // The residue is not zero and there is only one currency: an imbalance, and no
+        // conversion leg is invented to cover it up.
+        val error = assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 80.0, accountId = 2),
+                ),
+                contra = null,
+            )
+        }
+        assertEquals(LedgerError.Unbalanced, error.error)
+        assertTrue(entryDao.inserted.isEmpty())
+        assertTrue(accountDao.accounts.values.none { it.type == AccountEntity.Type.CONVERSION })
+    }
+
+    @Test
+    fun `given residues of the same sign then nothing is written`() = runTest {
+        openAsset(1)
+        foreignAsset(2, "USD")
+
+        // Both currencies gain: money without an origin. Not an exchange.
+        val error = assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.INCOME, amount = 550.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+                ),
+                contra = null,
+            )
+        }
+        assertEquals(LedgerError.ImpossibleExchange, error.error)
+        assertTrue(entryDao.inserted.isEmpty())
+        // Refused before any account is materialized: no conversion row is left behind
+        // for an operation the boundary did not complete.
+        assertTrue(accountDao.accounts.values.none { it.type == AccountEntity.Type.CONVERSION })
+    }
+
+    @Test
+    fun `given two currencies then each gets its own conversion account`() = runTest {
+        openAsset(1)
+        foreignAsset(2, "USD")
+
+        repeat(2) { index ->
+            writer.writeEntries(
+                transactionId = index + 1L,
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+                ),
+                contra = null,
+            )
+        }
+
+        // One per currency, not one per pair, and looked up before being inserted.
+        assertEquals(2, accountDao.accounts.values.count { it.type == AccountEntity.Type.CONVERSION })
+        assertEquals(
+            setOf("BRL", "USD"),
+            accountDao.accounts.values
+                .filter { it.type == AccountEntity.Type.CONVERSION }
+                .map { it.currency }
+                .toSet(),
+        )
+    }
+
+    @Test
+    fun `given an expense from a foreign account then the nominal is that currency's`() = runTest {
+        openAsset(1, currency = "USD")
+
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+            contra = ContraLeg(AccountType.EXPENSE),
+        )
+
+        // A nominal leg posts on the nominal of the currency of the account beside it, so
+        // an expense is single-currency by construction whatever it bought.
+        assertEquals(2, entryDao.inserted.size)
+        assertTrue(entryDao.inserted.all { it.currency == "USD" })
+        val nominal = accountDao.accounts.values.single { it.type == AccountEntity.Type.EXPENSE }
+        assertEquals("USD", nominal.currency)
+        assertTrue(accountDao.accounts.values.none { it.type == AccountEntity.Type.CONVERSION })
+    }
+
+    @Test
+    fun `a contra leg may not name a conversion account`() = runTest {
+        openAsset(1)
+
+        // The conversion rows exist only because this boundary completed a cross-currency
+        // operation. Nothing outside it may ask for one.
+        assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+                contra = ContraLeg(AccountType.CONVERSION),
+            )
+        }
+        assertTrue(entryDao.inserted.isEmpty())
+    }
+
+    // endregion
 }
 
 private class FakeEntryDao : EntryDao {
@@ -332,8 +535,15 @@ private class FakeAccountDao : AccountDao {
         accounts[id] = account.copy(id = id)
         return id
     }
-    override suspend fun getByTypeAndName(type: AccountEntity.Type, name: String): AccountEntity? =
-        accounts.values.firstOrNull { it.type == type && it.name == name }
+    // Currency-aware, because a system account is identified by the triple: one per
+    // currency, and `EQUITY` holds two of them.
+    override suspend fun getByTypeNameAndCurrency(
+        type: AccountEntity.Type,
+        name: String,
+        currency: String,
+    ): AccountEntity? = accounts.values.firstOrNull {
+        it.type == type && it.name == name && it.currency == currency
+    }
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = throw NotImplementedError()
     override suspend fun getAllAccounts(): List<AccountEntity> = accounts.values.toList()
     override suspend fun getAccountById(id: Long): AccountEntity? = accounts[id]

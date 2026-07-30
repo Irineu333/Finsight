@@ -122,6 +122,10 @@ Como no GnuCash, essas contas são **criadas pelo escriturador sob demanda e nã
 
 Isto não é economia de campo, é o que torna a classe inteira de erro inexprimível: não existe forma de dizer "poste 100 USD numa conta BRL", porque o chamador não tem onde dizer a moeda. Nenhuma validação precisa recusá-lo. E preserva intacto o requisito de que *"a intenção de escrita SHALL expressar cada perna por identidade de conta"* — a moeda é atributo da identidade, não um segundo dado ao lado dela.
 
+**E o modelo de domínio passa a dizer o mesmo.** `Entry` (`core/ledger/.../domain/model/Entry.kt`) carrega hoje `val account: Account` **e** `val currency: String = BASE_CURRENCY` lado a lado — dois campos onde esta decisão afirma existir um fato só, e portanto duas fontes que podem divergir. A moeda de `Entry` passa a ser **derivada**: `val currency get() = account.currency`. A perna em moeda divergente deixa de ser inexprimível apenas na escrita e passa a sê-lo também na leitura, e os 76 sítios que constroem `Entry` deixam de ter uma decisão a tomar. É seguro porque os dois únicos sítios de construção em produção — `EntryRepository.kt:33-51` e `TransactionRepository.kt:61-76` — hidratam a `Account` completa a partir da projeção com *join*; não existe caminho que monte um `Entry` sobre uma `Account` sintética cuja moeda mentiria.
+
+A **coluna** `entries.currency` permanece, e não por inércia: `balanced-ledger` exige que a invariante seja verificável *"lendo apenas as entries"*, e `LedgerBalanceCheck.kt:38-40` a verifica com um `GROUP BY (transactionId, currency)` sem tocar em `accounts`. Derivar no domínio e persistir na tabela não é duplicação: é a diferença entre o que o modelo garante e o que a checagem de integridade precisa poder ler sozinha.
+
 ### D6 — A taxa é derivada; a perna de conversão recebe o resíduo **por diferença**
 
 O chamador de uma transação cruzada informa **os dois valores** — 550 saíram daqui, 100 entraram ali —, que é o que o extrato mostra. Nenhum parâmetro de taxa existe em nenhum ponto do caminho de escrita. A taxa aplicada (5,50) é derivável a qualquer momento das duas pernas, e por isso não é gravada — mesma decisão já tomada para o rótulo (`deriveTransactionLabel`) e para o sinal de exibição (`AccountType.displaySign`). É também o modelo do GnuCash, onde a taxa é `value / amount`, e do Firefly III, que deriva das duas linhas.
@@ -189,6 +193,12 @@ Isso exige reconciliar o requisito que hoje diz que o tipo *"MUST NOT ... conhec
 
 `CurrencyFormatter.format` deixa de derivar a moeda do locale e passa a recebê-la; o locale continua governando **formato** — separador e posição do símbolo —, que é o que ele legitimamente sabe. Pelo mesmo argumento, o **campo de entrada** de valor exibe o símbolo da conta escolhida: entrada de 100 USD com "R$" no campo é este mesmo modo de falha, do lado da escrita.
 
+**Onde o tipo da figura mora, e por que não é onde o resto da consolidação mora.** A camada de consolidação vive em `:core:model` (ver Impact), mas o **tipo da figura** vive em `:core:common`, ao lado de `DisplayAmount`. A razão é de compilação e não de gosto: o renderizador multitermo de D22 é regra única de layout e portanto pertence a `:core:designsystem`, cujo `build.gradle.kts` vê **apenas** `core/common` e `core/resources`. Pôr a figura em `:core:model` tornaria a regra única irrealizável, ou exigiria abrir uma aresta `designsystem → model` para que o sistema de design conhecesse modelo de fachada — o que é a inversão errada.
+
+É um **tipo nomeado**, não uma `List<DisplayAmount>` crua, e os três buracos da lista dizem por quê: a exatidão é propriedade da **figura** e não de cada termo (dois termos exatos justapostos formam uma figura aproximada, porque houve conversão); D20 precisa saber **qual** termo é o da base para degradar a ele, o que uma ordem posicional não garante; e uma lista não tem como tornar a exatidão inescapável, que é o que `currency-consolidation` exige. Construí-lo é **exclusivo do redutor** em `:core:model` — o tipo carrega, o redutor calcula, e a proibição de o tipo de exibição combinar valores permanece intacta.
+
+Custo obrigatório que decorre disto e que vale registrar: `DisplayAmount.kt:62-68` tem `equals`, `hashCode` e `toString` escritos à mão. Moeda e exatidão têm de entrar nos três, ou dois valores de moedas diferentes passam a comparar iguais.
+
 ### D11 — A taxa tem data, é colhida do próprio câmbio, e a política é "a última em ou antes"
 
 Uma tabela `(moeda, data, taxa)` contra a moeda base, e não um valor corrente único. A consolidação de uma figura de um período usa **a última taxa em ou antes daquela data**.
@@ -198,6 +208,12 @@ Sem data, o patrimônio de dezembro é recalculado à taxa de hoje e **se move s
 **Toda transação cruzada cadastra a sua própria taxa**, na sua data, derivada das duas pontas. É o `PRICE_SOURCE_XFER_DLG_VAL` do GnuCash, e é de graça: as duas pontas já existem, e o usuário nunca digita a mesma taxa duas vezes. A origem de cada taxa é registrada — colhida de um câmbio, ou digitada pelo usuário —, e a digitada prevalece na mesma data.
 
 A taxa gravada é a **única** autoridade em qualquer conversão. Uma fonte externa pode preencher o campo como sugestão dentro da tela que edita a taxa, e em nenhum outro lugar: nenhuma leitura do app espera rede, tem estado de carregamento ou falha por indisponibilidade.
+
+**A direção e a precisão da taxa, que D14 fixa para a moeda e faltava fixar para a taxa.** A direção é **moeda → base**: a taxa é o número de unidades da base por **uma** unidade da moeda (com base BRL, o dólar a `5,50`). Fixá-la importa porque a inversa não é a mesma decisão de arredondamento, e uma tabela em que metade das linhas está numa direção é uma tabela sem autoridade.
+
+E a taxa gravada é o **quociente pleno** — valor-na-base dividido por valor-na-moeda, derivado das duas pernas em centavos (D6) —, persistido como `REAL`, **nunca a forma exibida**. As 4 casas decimais são decisão de **formatação**, e só existem na tela de taxas. São dois números distintos com dois donos distintos: o quociente é a autoridade, a formatação é apresentação. Confundi-los é o modo de falha aqui, porque gravar o texto arredondado transformaria cada exibição numa perda de precisão acumulável.
+
+A não-coincidência do *round-trip* — reaplicar a taxa gravada ao valor de origem não devolve exatamente o valor de destino — é **não-problema onde importa e já resolvido onde apareceria**. No razão não existe: as duas pernas são o dado, a taxa é derivada delas e nunca reaplicada (D6, e a perna de conversão recebe o resíduo por diferença justamente para concentrar o arredondamento). Na consolidação existe e é exatamente o que a marca de aproximação de D9 declara. O arredondamento do redutor é declarado uma vez, no redutor (`roundToLong`), e em nenhum outro lugar.
 
 Uma taxa por moeda **→ base**; não uma matriz de pares. Trocar a moeda base não invalida o acervo: a taxa da antiga base contra a nova é a inversa da que já existe, e as demais se re-expressam por triangulação sobre as taxas de mesma data. Isso é derivação, não migração — nenhuma linha gravada muda.
 
@@ -303,6 +319,10 @@ D11 exige uma tela que edita a taxa, e a moeda base é preferência do usuário.
 A moeda base é resolvida pelo **locale do dispositivo** na primeira execução (D28), e a v1 não oferece trocá-la. O requisito que descreve a troca existe assim mesmo, para que a implementação não a torne impossível: nada de convertido é persistido, então a troca é derivação — mas oferecê-la é escopo próprio.
 
 A preferência precisa ser **observável**: toda figura consolidada reage à sua mudança. `Settings` é bindado como `single<Settings>` sem fluxo; o precedente de preferência observável no projeto é `DashboardPreferencesRepository`, e é a forma a seguir.
+
+**E "reage" precisa nomear um mecanismo, porque hoje não existe nenhum que a alcance.** Dos 21 membros do `IEntryRepository`, **19 são `suspend`**, e o único gatilho reativo do app é um `SELECT COUNT(*) FROM entries` (`EntryDao.kt:129`). Cadastrar, corrigir ou remover uma taxa **não escreve em `entries`** — logo, sem mecanismo, nenhuma figura recomputa e esta frase seria falsa. O mecanismo é um **gatilho de invalidação composto**, publicado pela camada de consolidação: a preferência de base (`StateFlow` de um `single`) combinada com o `Flow` que o Room já dá sobre a tabela de taxas, fundido com o gatilho de razão existente onde os ViewModels já o fundem (`AccountsViewModel.kt:89`). Não é arquitetura nova: é a mesma costura, com uma fonte a mais.
+
+Metade da promessa, porém, é **não-problema**, e vale dizer para não superdimensionar: a v1 não oferece trocar a moeda base (D28), então na prática o que muda em runtime é o acervo de taxas. Para a base, "observável" é requisito de forma — para que a troca, quando existir, não exija reescrever as leituras.
 
 ### D19 — Uma transação cruzada não é editável, e isso não é regra nova
 
@@ -416,7 +436,15 @@ Todo banco existente tem `currency = 'BRL'` em toda linha — não porque algué
 
 Isso importa para o que a change faz: por D10 a moeda do dado passa a mandar no símbolo, e por D12 ela é imutável. Sem tratamento, todo usuário fora do Brasil veria o app inteiro virar `R$` e **não teria como corrigir** — as contas dele têm lançamentos, então não podem ser apagadas e recriadas.
 
-**A migração reetiqueta:** na primeira execução após a atualização, se a moeda do locale diferir da constante legada e pertencer ao catálogo oferecido, as contas existentes passam a ser denominadas na moeda do locale. É reetiquetagem, **não conversão** — nenhum valor muda, nenhuma entry é tocada, `Σ = 0` por moeda continua valendo porque a moeda de toda linha muda junto.
+**A migração reetiqueta, e "a migração" é literal: é a `MIGRATION_10_11`.** Se a moeda do locale diferir da constante legada e pertencer ao catálogo oferecido, as contas existentes passam a ser denominadas na moeda do locale. É reetiquetagem, **não conversão** — **nenhum valor e nenhum saldo mudam; a denominação de `accounts` e a de `entries` mudam junta, na mesma transação** —, e `Σ = 0` por moeda continua valendo porque a moeda de toda linha muda junto.
+
+A redação anterior dizia "nenhuma entry é tocada", e isso era **incompatível com a própria change**: se as contas passassem a USD e o histórico continuasse dizendo BRL, as agregações por moeda partiriam a história de cada conta em duas moedas — e `LedgerBalanceCheck`, que agrupa por `(transactionId, currency)` sem consultar `accounts`, deixaria de poder ser lido como verdade sobre a conta. Toda linha das duas tabelas está em `'BRL'` hoje, então o `UPDATE` é exato e nenhum número se move.
+
+**Por que a migração, e não um passo de app:** não existe passo de inicialização de app neste projeto. `App.kt` apenas seta o user-id, e `EnsureDefaultAccountUseCase` roda de `DashboardViewModel.init:50` num `launch` *fire-and-forget* concorrente com os fluxos do dashboard — não há nenhum ponto com garantia de acontecer uma vez e antes de qualquer leitura. A migração tem as três propriedades de graça: roda uma vez, **registra-se sozinha** pelo `user_version` (sem flag a inventar nem a manter), e precede toda leitura por construção.
+
+**A moeda-alvo entra injetada, já resolvida.** `core/database` depende de `:core:ledger` e `:core:model`, **não** de `:core:common`, onde vive o resolvedor de locale — e não deve passar a depender: a migração não precisa conhecer locale nem catálogo, precisa de um código de moeda. A migração é **parametrizada** (`fun migration1011(relabelCurrency: String?)`), com o valor resolvido e validado contra o catálogo fora dela e fornecido na construção do banco. É o mesmo movimento que `DimensionWriteGuard` já faz no razão: o módulo de baixo recebe o que não pode nomear. E `null` significa "não reetiquetar", que é o caso comum.
+
+A objeção de que uma migração que lê ambiente deixa de ser determinística **já está vencida no repositório**, e por precedente mais forte: `MIGRATION_3_4` (`Database.kt:130-136`) lê o relógio e o fuso do dispositivo (`strftime('%s','now')`, `'localtime'`). Com o parâmetro, esta é *mais* determinística que aquela — o teste de migração fixa o argumento.
 
 E é a leitura mais honesta do dado: o `'BRL'` gravado nunca foi fato visível ao usuário, e a moeda que ele acreditou ter durante todo o uso do app é a que estava na tela. Reetiquetar faz o dado dizer o que o usuário sempre leu.
 
@@ -426,7 +454,7 @@ Consequência aceita e registrada: para quem cair no falso positivo, o estado é
 
 **Reetiquetar contradiz D12?** Não, e o projeto já tem o precedente escrito: `balanced-ledger` registra que arquivar não gera baixa em runtime *"mas a migração gera, e o dado migrado obedece às mesmas regras que o novo"*. Uma migração pode fazer o que o runtime proíbe, porque ela acontece **antes** de a moeda daquela conta ser fato observável. Depois dela, a imutabilidade vale sem exceção.
 
-A reetiquetagem SHALL rodar **uma vez** e registrar que rodou, para que uma troca posterior de região não a dispare de novo — o que seria exatamente a mudança silenciosa de significado que D28 proíbe para a moeda base.
+A reetiquetagem SHALL rodar **uma vez**, e o registro de que rodou é o próprio `user_version` do banco: uma troca posterior de região não pode dispará-la de novo porque a migração `10 → 11` não roda duas vezes. Nenhuma flag é criada, e nenhuma precisa ser mantida correta — o que seria, de outro modo, exatamente a mudança silenciosa de significado que D28 proíbe para a moeda base.
 
 ## Riscos / Trade-offs
 

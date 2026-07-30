@@ -64,6 +64,14 @@ A responsabilidade desta camada SHALL ser a **conversão entre moedas**, e apena
 
 O sistema SHALL manter um histórico de taxas de conversão por moeda **para a moeda base**, cada taxa com a sua **data** e a sua **origem**. O sistema MUST NOT manter uma matriz de pares: só se converte para a base, e uma conversão cruzada, se necessária, SHALL ser derivada das taxas para a base.
 
+A **direção** SHALL ser fixa e única: a taxa expressa o número de unidades da moeda base por **uma** unidade da moeda denominada. Um histórico em que a direção varie por linha é um histórico sem autoridade, porque a inversa não carrega a mesma decisão de arredondamento.
+
+O valor gravado SHALL ser o **quociente em precisão plena** entre os dois valores da operação que o originou, e MUST NOT ser a forma exibida, arredondada. O número de casas decimais apresentado ao usuário é decisão de formatação e SHALL existir apenas na apresentação: gravar o valor exibido tornaria cada exibição uma perda de precisão acumulável. O arredondamento aplicado ao converter SHALL ter um único dono, na redução que produz a figura consolidada.
+
+#### Scenario: A taxa gravada não é a taxa exibida
+- **WHEN** uma operação entre moedas produz um quociente com mais casas do que a tela apresenta
+- **THEN** o histórico guarda o quociente pleno, a tela apresenta a forma arredondada, e nenhuma conversão posterior usa a forma arredondada
+
 A consolidação de uma figura referente a um instante ou período SHALL usar **a última taxa em ou antes daquela data**. Uma figura de um período passado MUST NOT ser recalculada à taxa corrente: o passado não SHALL se mover sozinho quando a taxa muda.
 
 A taxa gravada localmente SHALL ser a única autoridade usada em qualquer conversão. O usuário SHALL poder cadastrar, corrigir **e remover** taxas a qualquer momento, e uma taxa informada pelo usuário SHALL prevalecer sobre uma derivada de operação na mesma data.

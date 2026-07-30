@@ -76,10 +76,10 @@
 
 ## 4. A tabela de taxas (independente de §2 e §3)
 
-- [ ] 4.1 (D11) `ExchangeRateEntity(currency, date, rate, source)` e `ExchangeRateDao` em `:core:database`, com `source` distinguindo colhida-de-operação de informada-pelo-usuário; a consulta "última taxa em ou antes de `:date`" com precedência da do usuário na mesma data; a listagem observável.
-- [ ] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` registrada em `Database.kt`: `CREATE TABLE` da tabela de taxas **e** `ALTER TABLE budgets ADD COLUMN` da moeda do limite (D13), preenchida com a moeda da **conta padrão** (`COALESCE` na constante de último recurso, se não houver). O preenchimento é **exato, não aproximado**: todo banco existente está inteiramente em BRL, então a moeda que a coluna recebe é exatamente a que já denominava cada limite gravado. Nenhum valor é alterado. Bindar o DAO em `databaseModule`.
-- [ ] 4.3 Exportar `schemas/…/11.json`; escrever `Migration10To11Test` no molde dos existentes e estender `MigrationSchemaEquivalenceTest`, hoje um `@Test` só cobrindo `7 → 10`.
-- [ ] 4.4 Confirmar por teste que `LedgerBalanceCheck` **não muda** — já agrupa por `(transactionId, currency)` — com um banco contendo transação cruzada.
+- [x] 4.1 (D11) `ExchangeRateEntity(currency, date, rate, source)` e `ExchangeRateDao` em `:core:database`, com `source` distinguindo colhida-de-operação de informada-pelo-usuário; a consulta "última taxa em ou antes de `:date`" com precedência da do usuário na mesma data; a listagem observável.
+- [x] 4.2 `AppDatabase` `version = 10` → `11` com `MIGRATION_10_11` registrada em `Database.kt`: `CREATE TABLE` da tabela de taxas **e** reconstrução de `budgets` com a coluna da moeda do limite (D13) — `ADD COLUMN` numa coluna `NOT NULL` exigiria um `DEFAULT` em SQL que nenhuma coluna deste schema tem; a reconstrução preserva `budget_categories` explicitamente, em vez de depender de a checagem de chave estrangeira estar ligada, preenchida com a moeda da **conta padrão** (`COALESCE` na constante de último recurso, se não houver). O preenchimento é **exato, não aproximado**: todo banco existente está inteiramente em BRL, então a moeda que a coluna recebe é exatamente a que já denominava cada limite gravado. Nenhum valor é alterado. Bindar o DAO em `databaseModule`.
+- [x] 4.3 Exportar `schemas/…/11.json`; escrever `Migration10To11Test` no molde dos existentes e estender `MigrationSchemaEquivalenceTest`, hoje um `@Test` só cobrindo `7 → 10` — passa a validar a cadeia inteira `7 → 11`, e o `MigrationLedgerReadParityTest` com ela.
+- [x] 4.4 Confirmar por teste que `LedgerBalanceCheck` **não muda** — já agrupa por `(transactionId, currency)` — com um banco contendo transação cruzada.
 
 ## 5. Consolidação e catálogo (depende de §4; independente de §3)
 

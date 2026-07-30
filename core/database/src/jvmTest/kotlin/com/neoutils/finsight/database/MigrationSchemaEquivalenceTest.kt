@@ -31,14 +31,14 @@ class MigrationSchemaEquivalenceTest {
     }
 
     @Test
-    fun `Room accepts the schema the migration produces`() = runTest {
+    fun `Room accepts the schema the migrations produce`() = runTest {
         BundledSQLiteDriver().open(file.absolutePath).use { connection ->
             buildV7(connection)
             connection.execSQL("PRAGMA user_version = 7")
         }
 
         val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-            .addMigrations(MIGRATION_7_10)
+            .addMigrations(MIGRATION_7_10, MIGRATION_10_11)
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

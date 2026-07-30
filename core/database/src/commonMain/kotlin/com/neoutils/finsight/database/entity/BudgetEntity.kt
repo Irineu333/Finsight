@@ -19,6 +19,11 @@ data class BudgetEntity(
     val iconKey: String,
     val title: String,
     val amount: Double,
+    // The currency the limit is stated in — the budget's own, chosen when it is created
+    // and never the base. A user with everything in dollars would otherwise be asked for a
+    // limit in reais and shown a progress bar comparing reais with dollars — paying the price
+    // of multi-currency through the *entry* rather than through the reading.
+    val currency: String,
     val period: String,
     val limitType: String = "FIXED",
     val percentage: Double? = null,

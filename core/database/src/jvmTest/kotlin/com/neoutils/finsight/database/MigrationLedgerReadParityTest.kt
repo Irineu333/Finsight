@@ -106,7 +106,7 @@ class MigrationLedgerReadParityTest {
     }
 
     private fun openMigrated(): AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-        .addMigrations(MIGRATION_7_10)
+        .addMigrations(MIGRATION_7_10, MIGRATION_10_11)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

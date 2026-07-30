@@ -88,6 +88,39 @@ class LedgerBalanceCheckTest {
         )
     }
 
+    /**
+     * The shape the writer produces for a cross-currency operation, which is the one this
+     * check had to keep accepting unchanged: four legs, two currencies, each balanced by the
+     * conversion leg of its own currency. Nothing about the check moved for it — it always
+     * grouped by `(transactionId, currency)` — and this is what says so.
+     */
+    @Test
+    fun `given a cross-currency operation then the check passes untouched`() {
+        // 550 reais out, 100 dollars in, at 5.50.
+        insert(transactionId = 1, amount = -55_000, currency = "BRL")
+        insert(transactionId = 1, amount = 55_000, currency = "BRL")
+        insert(transactionId = 1, amount = 10_000, currency = "USD")
+        insert(transactionId = 1, amount = -10_000, currency = "USD")
+
+        connection.verifyLedgerBalanced(stage = "test")
+    }
+
+    @Test
+    fun `given a cross-currency operation short by a cent then only that currency is named`() {
+        insert(transactionId = 1, amount = -55_000, currency = "BRL")
+        insert(transactionId = 1, amount = 55_000, currency = "BRL")
+        insert(transactionId = 1, amount = 10_000, currency = "USD")
+        insert(transactionId = 1, amount = -9_999, currency = "USD")
+
+        val failure = assertFailsWith<UnbalancedLedgerException> {
+            connection.verifyLedgerBalanced(stage = "test")
+        }
+
+        // The reais side is balanced and stays out of it: a rounding residue in one currency
+        // is not a reason to report the other.
+        assertEquals(listOf(UnbalancedTransaction(1, "USD", 1)), failure.offenders)
+    }
+
     private fun insert(transactionId: Long, amount: Long, currency: String) {
         connection.execSQL(
             "INSERT INTO `entries` (`transactionId`,`accountId`,`amount`,`currency`) " +

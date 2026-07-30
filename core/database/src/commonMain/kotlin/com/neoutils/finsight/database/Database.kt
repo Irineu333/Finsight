@@ -5,6 +5,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import kotlinx.coroutines.Dispatchers
 
 // 1.2.0
@@ -608,6 +609,66 @@ val MIGRATION_7_10 = object : Migration(7, 10) {
     }
 }
 
+// 1.7.0 — the exchange rate table, and the currency a budget's limit is stated in.
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        // --- 1. Rates: (currency, date) against the base, keyed by origin as well, because
+        //         a rate a person typed and one collected from an operation can legitimately
+        //         disagree on the same day and the typed one prevails. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `exchange_rates` (" +
+                "`currency` TEXT NOT NULL, " +
+                "`date` TEXT NOT NULL, " +
+                "`rate` REAL NOT NULL, " +
+                "`source` TEXT NOT NULL, " +
+                "PRIMARY KEY(`currency`, `date`, `source`)" +
+                ")"
+        )
+
+        // --- 2. A budget's limit gains the currency it is stated in. The value it receives
+        //         is **exact, not a guess**: every database that can reach this point is
+        //         entirely in one currency, so the currency of the default account is
+        //         precisely the one that already denominated every limit written. No amount
+        //         is touched, and nothing about any budget changes but its legend.
+        //
+        //         The table is rebuilt rather than altered, because `ADD COLUMN` on a NOT NULL
+        //         column needs a SQL `DEFAULT` that no column of this schema has and that the
+        //         entity would then have to declare. The rebuild has one hazard, and it is the
+        //         one v10 removed from this very table: dropping `budgets` with foreign keys
+        //         enforced cascades into `budget_categories`, which is where a budget's
+        //         categories actually live. So they are set aside and put back — not left to
+        //         whether enforcement happens to be on. ---
+        connection.execSQL("CREATE TABLE `_bc_v11` AS SELECT * FROM `budget_categories`")
+        connection.execSQL(
+            "CREATE TABLE `budgets_v11` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`iconCategoryId` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, " +
+                "`currency` TEXT NOT NULL, " +
+                "`period` TEXT NOT NULL, " +
+                "`limitType` TEXT NOT NULL DEFAULT 'FIXED', " +
+                "`percentage` REAL, " +
+                "`recurringId` INTEGER, " +
+                "`createdAt` INTEGER NOT NULL)"
+        )
+        connection.execSQL(
+            "INSERT INTO `budgets_v11` " +
+                "(`id`, `iconCategoryId`, `iconKey`, `title`, `amount`, `currency`, `period`, " +
+                "`limitType`, `percentage`, `recurringId`, `createdAt`) " +
+                "SELECT `id`, `iconCategoryId`, `iconKey`, `title`, `amount`, " +
+                "COALESCE((SELECT `currency` FROM `accounts` WHERE `isDefault` = 1 LIMIT 1), '" + BASE_CURRENCY + "'), " +
+                "`period`, `limitType`, `percentage`, `recurringId`, `createdAt` FROM `budgets`"
+        )
+        connection.execSQL("DROP TABLE `budgets`")
+        connection.execSQL("ALTER TABLE `budgets_v11` RENAME TO `budgets`")
+        connection.execSQL("DELETE FROM `budget_categories`")
+        connection.execSQL("INSERT INTO `budget_categories` SELECT * FROM `_bc_v11`")
+        connection.execSQL("DROP TABLE `_bc_v11`")
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
@@ -620,6 +681,7 @@ fun getRoomDatabase(
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_10,
+            MIGRATION_10_11,
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)

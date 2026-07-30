@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.BudgetEntity
+import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
@@ -27,6 +28,10 @@ class BudgetMapper {
             iconKey = domain.iconKey,
             title = domain.title,
             amount = domain.amount,
+            // The column exists from the rate migration on, but the domain model only learns
+            // to carry the limit's currency in task 8.5 — until then a budget is stated in
+            // the single currency the app has.
+            currency = ASSUMED_SINGLE_CURRENCY,
             period = "MONTHLY",
             limitType = domain.limitType.name,
             percentage = domain.percentage,

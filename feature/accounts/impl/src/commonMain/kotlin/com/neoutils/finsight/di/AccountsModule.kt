@@ -167,6 +167,7 @@ val accountsModule = module {
         TransferBetweenAccountsViewModel(
             initialSourceAccount = it.get(),
             transferBetweenAccountsUseCase = get(),
+            suggestCrossCurrencyAmount = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),

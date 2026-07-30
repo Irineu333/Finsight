@@ -23,12 +23,13 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.ui.component.AmountField
+import com.neoutils.finsight.ui.component.CounterpartAmountField
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
-import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -54,7 +55,27 @@ class TransferBetweenAccountsModal(
         val modalManager = LocalModalManager.current
 
         val amount = rememberTextFieldState()
+        val destinationAmount = rememberTextFieldState()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
+
+        val source = uiState.selectedSourceAccount ?: sourceAccount
+        val destination = uiState.selectedDestinationAccount
+
+        // What is stated goes to the view model, which is where the archive is asked
+        // what the other end is worth. The screen never multiplies by a rate.
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }.collect {
+                viewModel.onAction(TransferBetweenAccountsAction.ChangeAmount(it.moneyToDouble()))
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }.collect { text ->
+                runCatching { dayMonthYear.parse(text) }.getOrNull()?.let {
+                    viewModel.onAction(TransferBetweenAccountsAction.ChangeDate(it))
+                }
+            }
+        }
 
 
         Box {
@@ -96,23 +117,27 @@ class TransferBetweenAccountsModal(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
+                // The amount typed is the one that leaves the source account, so the
+                // field wears the source's currency and names the account it leaves.
+                AmountField(
                     state = amount,
-                    label = {
-                        Text(text = stringResource(Res.string.transfer_amount_label))
-                    },
-                    // The amount typed is the one that leaves the source account, so the
-                    // field wears the source's currency and changes symbol with it.
-                    inputTransformation = rememberMoneyInputTransformation(
-                        (uiState.selectedSourceAccount ?: sourceAccount).currency
+                    label = stringResource(Res.string.cross_currency_leaves_label, source.name),
+                    currency = source.currency,
+                )
+
+                CounterpartAmountField(
+                    visible = uiState.isCrossCurrency,
+                    state = destinationAmount,
+                    label = stringResource(
+                        Res.string.cross_currency_enters_label,
+                        destination?.name.orEmpty(),
                     ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    currency = destination?.currency ?: source.currency,
+                    counterpartAmount = amount.text.toString().moneyToDouble(),
+                    counterpartCurrency = source.currency,
+                    suggestion = uiState.suggestion,
+                    date = runCatching { dayMonthYear.parse(date.text.toString()) }
+                        .getOrDefault(currentDate),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -163,12 +188,15 @@ class TransferBetweenAccountsModal(
                         viewModel.onAction(
                             TransferBetweenAccountsAction.Submit(
                                 amount = amount.text.toString().moneyToDouble(),
+                                destinationAmount = destinationAmount.text.toString().moneyToDouble(),
                                 date = dayMonthYear.parse(date.text.toString()),
                             )
                         )
                     },
                     enabled = isValidTransfer(
                         amount = amount.text.toString(),
+                        destinationAmount = destinationAmount.text.toString(),
+                        isCrossCurrency = uiState.isCrossCurrency,
                         date = date.text.toString(),
                         sourceAccount = uiState.selectedSourceAccount,
                         destinationAccount = uiState.selectedDestinationAccount,
@@ -187,22 +215,38 @@ class TransferBetweenAccountsModal(
         }
     }
 
-    private fun isValidTransfer(
-        amount: String,
-        date: String,
-        sourceAccount: Account?,
-        destinationAccount: Account?,
-    ): Boolean {
-        if (amount.isEmpty()) return false
-        if (amount.moneyToDouble() <= 0.0) return false
-        if (date.isEmpty()) return false
-        if (sourceAccount == null || destinationAccount == null) return false
-        if (sourceAccount.id == destinationAccount.id) return false
+}
 
-        val parsedDate = runCatching {
-            dayMonthYear.parse(date)
-        }.getOrElse { return false }
+/**
+ * Whether the form may be submitted — and, when the transfer crosses currencies, that
+ * **both** amounts were stated.
+ *
+ * Covering the second field is the validation change easiest to forget (design D26), and
+ * it is what makes the write boundary's same-sign guard unreachable by any path a user
+ * can walk: in a form where one field is "leaves" and the other "arrives", the residues
+ * oppose each other by construction, so the only way to reach that refusal is a zero —
+ * which this refuses first.
+ *
+ * Top-level and `internal` so the rule can be exercised without a screen.
+ */
+internal fun isValidTransfer(
+    amount: String,
+    destinationAmount: String,
+    isCrossCurrency: Boolean,
+    date: String,
+    sourceAccount: Account?,
+    destinationAccount: Account?,
+): Boolean {
+    if (amount.isEmpty()) return false
+    if (amount.moneyToDouble() <= 0.0) return false
+    if (isCrossCurrency && destinationAmount.moneyToDouble() <= 0.0) return false
+    if (date.isEmpty()) return false
+    if (sourceAccount == null || destinationAccount == null) return false
+    if (sourceAccount.id == destinationAccount.id) return false
 
-        return parsedDate <= currentDate
-    }
+    val parsedDate = runCatching {
+        dayMonthYear.parse(date)
+    }.getOrElse { return false }
+
+    return parsedDate <= currentDate
 }

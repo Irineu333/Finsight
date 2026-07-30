@@ -186,6 +186,7 @@ val creditCardsModule = module {
             payInvoicePaymentUseCase = get(),
             payInvoiceUseCase = get(),
             calculateInvoiceUseCase = get(),
+            suggestCrossCurrencyAmount = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),
@@ -205,6 +206,8 @@ val creditCardsModule = module {
         AdvancePaymentViewModel(
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
+            suggestCrossCurrencyAmount = get(),
+            invoiceRepository = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),

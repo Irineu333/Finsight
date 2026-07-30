@@ -3,6 +3,7 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
+import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
 import org.koin.dsl.module
 
 /**
@@ -17,6 +18,7 @@ import org.koin.dsl.module
 val modelModule = module {
     factory { ConsolidateMoneyUseCase(baseCurrencyRepository = get(), exchangeRateRepository = get()) }
     factory { HarvestExchangeRateUseCase(baseCurrencyRepository = get(), exchangeRateRepository = get()) }
+    factory { SuggestCrossCurrencyAmountUseCase(baseCurrencyRepository = get(), exchangeRateRepository = get()) }
     factory {
         ObserveConsolidationChangesUseCase(
             entryRepository = get(),

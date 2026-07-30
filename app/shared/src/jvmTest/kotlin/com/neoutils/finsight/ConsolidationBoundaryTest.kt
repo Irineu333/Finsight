@@ -52,6 +52,11 @@ class ConsolidationBoundaryTest {
         // the app asks the reducer.
         val allowed = setOf(
             "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateMoneyUseCase.kt",
+            // The other end of a crossing, offered to a form before it is written. It
+            // multiplies by a rate, which is why it lives here beside the reducer and
+            // not in the modal that shows it: the three two-value flows state amounts
+            // and never convert them.
+            "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestCrossCurrencyAmountUseCase.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/mapper/ExchangeRateMapper.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",

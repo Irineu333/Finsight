@@ -452,6 +452,11 @@
     <string name="transfer_date_label">Date</string>
     <string name="transfer_confirm">Transfer</string>
 
+    <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
+    <string name="cross_currency_leaves_label">Leaves %1$s</string>
+    <string name="cross_currency_enters_label">Enters %1$s</string>
+    <string name="cross_currency_implied_by_rate">at the rate of %1$s: %2$s</string>
+
     <!-- Edit Account Balance Modal -->
     <string name="edit_account_balance_current_title">Edit Current Balance</string>
     <string name="edit_account_balance_final_title">Edit Final Balance</string>

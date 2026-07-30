@@ -43,6 +43,11 @@ class BaseCurrencyReachTest {
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateMoneyUseCase.kt",
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/HarvestExchangeRateUseCase.kt",
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ObserveConsolidationChangesUseCase.kt",
+        // What the archive implies the other end of a crossing is worth. It names the
+        // base for the same reason the harvest does — rates are stored *against* it, so
+        // the base side is the one with no rate of its own — and it denominates nothing:
+        // the currencies it converts between are the two accounts', never the base's.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestCrossCurrencyAmountUseCase.kt",
         // The account a brand-new install starts with. The base is a **pre-selection**
         // here, which the spec allows in as many words — it is not denominating a figure,
         // it is answering "what currency should this first account be created in".

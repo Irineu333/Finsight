@@ -94,6 +94,19 @@ class PayInvoiceModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Who takes part, then how much, then when — the grammar the three
+            // two-value flows share, and the one the transfer modal already reads in.
+            AccountSelector(
+                selectedAccount = uiState.selectedAccount,
+                accounts = uiState.accounts,
+                onAccountSelected = {
+                    viewModel.onAction(PayInvoiceAction.SelectAccount(it))
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { },
@@ -105,17 +118,6 @@ class PayInvoiceModal(
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AccountSelector(
-                selectedAccount = uiState.selectedAccount,
-                accounts = uiState.accounts,
-                onAccountSelected = {
-                    viewModel.onAction(PayInvoiceAction.SelectAccount(it))
-                },
-                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))

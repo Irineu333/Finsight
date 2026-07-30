@@ -26,7 +26,7 @@
 - [x] 1.4 `CurrencyFormatter.format(DisplayAmount)`: o `≈` como prefixo **mais externo** que o sinal (`≈ +R$ 1.240,00`), pela mesma porta que já concatena `+`/`-`. Este ponto único conserta a maioria dos sítios de formatação sem tocá-los. Inerte enquanto nada for aproximado. Cobrir em `DisplayAmountTest`.
 - [x] 1.5 `LedgerFixture` (`core/ledger/jvmTest`) ganha parâmetro de moeda em conta e em entry, com default `"BRL"` para que as 6 suítes construídas sobre ela compilem sem alterar asserção. É `internal` ao `core/ledger/jvmTest`, então serve às suítes de query (3.8) e **não** ao `LedgerEntryWriterTest`, que mora em `feature/transactions/impl/commonTest` e precisa dos seus próprios doubles (2.8).
 - [x] 1.6 **Teste de inércia** em `app/shared/jvmTest`, ao lado de `AppModulesTest`: nenhum sítio de produção constrói conta com moeda diferente da única que o app usa. É o que torna a janela de silêncio inalcançável durante os grupos 2–8, e 9.8 o inverte.
-- [ ] 1.7 Reordenar `PayInvoiceModal` e `AdvancePaymentModal` para *quem participa → quanto → quando* (D24). Sem campo novo e sem mudança de comportamento. Isolada aqui de propósito: é a mudança de UX de maior alcance da change, atinge quem nunca verá duas moedas, e precisa ser revisável e reversível sozinha.
+- [x] 1.7 Reordenar `PayInvoiceModal` e `AdvancePaymentModal` para *quem participa → quanto → quando* (D24). Sem campo novo e sem mudança de comportamento. Isolada aqui de propósito: é a mudança de UX de maior alcance da change, atinge quem nunca verá duas moedas, e precisa ser revisável e reversível sozinha.
 
 ## 2. O tipo de conta e a fronteira de escrita
 

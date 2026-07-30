@@ -91,6 +91,19 @@ class AdvancePaymentModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Who takes part, then how much, then when — the grammar the three
+            // two-value flows share, and the one the transfer modal already reads in.
+            AccountSelector(
+                selectedAccount = uiState.selectedAccount,
+                accounts = uiState.accounts,
+                onAccountSelected = {
+                    viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = amount,
                 label = {
@@ -104,17 +117,6 @@ class AdvancePaymentModal(
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AccountSelector(
-                selectedAccount = uiState.selectedAccount,
-                accounts = uiState.accounts,
-                onAccountSelected = {
-                    viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
-                },
-                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))

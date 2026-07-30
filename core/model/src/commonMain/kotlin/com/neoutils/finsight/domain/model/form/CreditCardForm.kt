@@ -20,6 +20,13 @@ data class CreditCardForm(
     val closingDayCalc: Int? = null,
     val dueDayCalc: Int? = null,
     val iconKey: String = "card",
+    /**
+     * The currency of the card's `LIABILITY` row, chosen in the form that creates it.
+     *
+     * No default, for the reason the account model has none: a card denominated by omission is
+     * exactly the silent decision this change removed.
+     */
+    val currency: String,
 ) {
     val closingDay = closingDayUser.toIntOrNull() ?: closingDayCalc
 
@@ -55,7 +62,8 @@ data class CreditCardForm(
             closingDay = closingDay,
             dueDay = dueDay,
             iconKey = iconKey,
-            createdAt = Clock.System.now().toEpochMilliseconds()
+            createdAt = Clock.System.now().toEpochMilliseconds(),
+            currency = currency,
         ).right()
     }
 

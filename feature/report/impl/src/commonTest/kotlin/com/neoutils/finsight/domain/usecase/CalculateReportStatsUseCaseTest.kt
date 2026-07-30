@@ -64,7 +64,7 @@ class CalculateReportStatsUseCaseTest {
     @Test
     fun `a card resolves to its liability account`() = runTest {
         val entry = CapturingEntryRepository()
-        val card = CreditCard(id = 7, name = "Visa", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 200)
+        val card = CreditCard(currency = "BRL", id = 7, name = "Visa", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 200)
         useCase(entry, cards = listOf(card))(ReportPerspective.CreditCardPerspective(creditCardId = 7), start, end)
         assertEquals(listOf(200L), entry.capturedScope)
     }

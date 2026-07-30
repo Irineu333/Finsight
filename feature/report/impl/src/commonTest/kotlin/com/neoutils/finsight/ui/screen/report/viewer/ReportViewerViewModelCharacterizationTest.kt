@@ -148,6 +148,7 @@ class ReportViewerViewModelCharacterizationTest {
         val equityAcc = Account(currency = "BRL", id = 102, name = "reconciliation", type = AccountType.EQUITY)
         val paymentSource = Account(currency = "BRL", id = 103, name = "checking", type = AccountType.ASSET)
         val card = CreditCard(
+            currency = "BRL",
             id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15,
             accountId = cardLiability.id,
         )

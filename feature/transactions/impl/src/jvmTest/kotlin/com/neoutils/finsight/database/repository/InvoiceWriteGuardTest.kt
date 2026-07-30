@@ -74,6 +74,7 @@ class InvoiceWriteGuardTest {
     @AfterTest fun tearDown() = db.close()
 
     private val card = CreditCard(
+        currency = "BRL",
         id = 1,
         name = "Card",
         limit = 1000.0,

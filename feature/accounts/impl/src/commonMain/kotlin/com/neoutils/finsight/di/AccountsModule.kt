@@ -50,7 +50,6 @@ val accountsModule = module {
     factory {
         CreateAccountUseCase(
             repository = get(),
-            baseCurrencyRepository = get(),
             validateAccountName = get(),
             setDefaultAccount = get(),
         )
@@ -110,6 +109,7 @@ val accountsModule = module {
             validateAccountName = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
+            baseCurrencyRepository = get(),
             modalManager = get(),
             debounceManager = get(),
             analytics = get(),

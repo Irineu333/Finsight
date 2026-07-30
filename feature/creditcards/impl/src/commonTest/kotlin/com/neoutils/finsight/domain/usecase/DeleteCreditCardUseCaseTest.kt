@@ -42,6 +42,7 @@ class DeleteCreditCardUseCaseTest {
     )
 
     private val card = CreditCard(
+        currency = "BRL",
         id = 1L, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 42L,
     )
 

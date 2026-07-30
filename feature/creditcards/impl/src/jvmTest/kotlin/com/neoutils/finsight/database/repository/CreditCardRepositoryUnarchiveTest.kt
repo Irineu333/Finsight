@@ -40,7 +40,6 @@ class CreditCardRepositoryUnarchiveTest {
         dao = db.creditCardDao(),
         accountDao = db.accountDao(),
         mapper = CreditCardMapper(),
-        baseCurrencyRepository = baseCurrency,
     )
 
 

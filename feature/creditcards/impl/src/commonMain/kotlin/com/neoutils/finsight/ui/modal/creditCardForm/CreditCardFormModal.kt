@@ -1,6 +1,9 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
+import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.resources.currency_picker_title
+import com.neoutils.finsight.ui.component.CurrencySelectorRow
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -58,6 +61,7 @@ class CreditCardFormModal(
         val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
+        val currencyModalTitle = stringResource(Res.string.currency_picker_title)
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.credit_card_form_icon_modal_title)
 
@@ -151,6 +155,28 @@ class CreditCardFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Always rendered, like the account form's — the card's `LIABILITY` row is a line
+            // of the same chart of accounts, and it is denominated by the same decision
+            // (design D23).
+            CurrencySelectorRow(
+                currency = uiState.form.currency,
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = CurrencyCatalog.offered,
+                            selected = uiState.form.currency,
+                            onCurrencySelected = { currency ->
+                                viewModel.onAction(CreditCardFormAction.CurrencySelected(currency))
+                            },
+                        )
+                    )
+                },
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = limit,
                 label = { Text(text = stringResource(Res.string.credit_card_form_limit_label)) },
@@ -158,7 +184,7 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = rememberMoneyInputTransformation(ASSUMED_SINGLE_CURRENCY, limit),
+                inputTransformation = rememberMoneyInputTransformation(uiState.form.currency, limit),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),

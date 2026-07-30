@@ -24,10 +24,9 @@ data class CreditCard(
     // facade over a LIABILITY row, and that row is where a currency is decided and stored.
     // Carried rather than looked up because every invoice figure is denominated by its card,
     // and a mapper handed the card should not have to reach for the chart of accounts to
-    // learn what the number in front of it means. The write path ignores it — the account
-    // is the source — until the card form offers the choice (task 9.7); the marker default
-    // is what says so, and dies with the marker in 8.10.
-    val currency: String = ASSUMED_SINGLE_CURRENCY,
+    // learn what the number in front of it means. No default, like the account's: the card
+    // form is the door a currency comes in through, and it is the only site that chooses one.
+    val currency: String,
 ) {
     init {
         if (name.isBlank()) {

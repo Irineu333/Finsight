@@ -32,6 +32,8 @@ fun CreditCardSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    val currencySuffix = rememberCurrencySuffix(creditCards.map { it.currency })
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
@@ -42,7 +44,7 @@ fun CreditCardSelector(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = creditCard?.name.orEmpty(),
+            value = creditCard?.let { it.name + currencySuffix(it.currency) }.orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
@@ -97,7 +99,7 @@ fun CreditCardSelector(
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = creditCard.name,
+                                text = creditCard.name + currencySuffix(creditCard.currency),
                                 fontSize = 14.sp
                             )
                         }

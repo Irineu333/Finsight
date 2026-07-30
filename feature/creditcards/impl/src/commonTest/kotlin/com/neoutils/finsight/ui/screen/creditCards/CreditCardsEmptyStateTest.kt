@@ -64,6 +64,7 @@ class CreditCardsEmptyStateTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val card = CreditCard(
+        currency = "BRL",
         id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 10,
     )
 

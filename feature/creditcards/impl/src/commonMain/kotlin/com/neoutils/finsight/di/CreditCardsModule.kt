@@ -44,7 +44,6 @@ val creditCardsModule = module {
             dao = get<AppDatabase>().creditCardDao(),
             accountDao = get(),
             mapper = get(),
-            baseCurrencyRepository = get(),
         )
     }
     single<IInvoiceRepository> {
@@ -135,6 +134,7 @@ val creditCardsModule = module {
             addCreditCardUseCase = get(),
             updateCreditCardUseCase = get(),
             validateCreditCardName = get(),
+            baseCurrencyRepository = get(),
             modalManager = get(),
             debounceManager = get(),
             creditCardPeriod = get(),

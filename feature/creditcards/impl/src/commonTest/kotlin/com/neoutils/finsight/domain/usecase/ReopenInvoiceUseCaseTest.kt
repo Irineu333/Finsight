@@ -27,6 +27,7 @@ import kotlin.test.assertTrue
 class ReopenInvoiceUseCaseTest {
 
     private val card = CreditCard(
+        currency = "BRL",
         id = 1,
         name = "Card",
         limit = 1000.0,

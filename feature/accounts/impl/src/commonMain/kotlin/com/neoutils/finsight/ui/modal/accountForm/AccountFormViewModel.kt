@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -26,6 +27,11 @@ import kotlinx.coroutines.launch
 class AccountFormViewModel(
     private val account: Account?,
     private val validateAccountName: ValidateAccountNameUseCase,
+    /**
+     * Read once, to pre-select the currency of an account being created — a decision, not a
+     * figure, which is why a snapshot is the right shape here.
+     */
+    baseCurrencyRepository: IBaseCurrencyRepository,
     private val createAccountUseCase: CreateAccountUseCase,
     private val updateAccountUseCase: UpdateAccountUseCase,
     private val modalManager: ModalManager,
@@ -51,7 +57,11 @@ class AccountFormViewModel(
 
     private val isDefault = MutableStateFlow(account?.isDefault ?: false)
 
-    val uiState = combine(name, selectedIcon, isDefault, validation) { name, selectedIcon, isDefault, validation ->
+    // Pre-selected with the base on creation; on edit it is the account's own, and no action
+    // moves it (design D12).
+    private val currency = MutableStateFlow(account?.currency ?: baseCurrencyRepository.current())
+
+    val uiState = combine(name, selectedIcon, isDefault, validation, currency) { name, selectedIcon, isDefault, validation, currency ->
         AccountFormUiState(
             name = name,
             selectedIcon = selectedIcon,
@@ -60,6 +70,8 @@ class AccountFormViewModel(
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
+            currency = currency,
+            canChangeCurrency = !isEditMode,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -72,6 +84,8 @@ class AccountFormViewModel(
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
+            currency = currency.value,
+            canChangeCurrency = !isEditMode,
         )
     )
 
@@ -87,6 +101,12 @@ class AccountFormViewModel(
 
             is AccountFormAction.IconSelected -> {
                 selectedIcon.value = action.icon
+            }
+
+            is AccountFormAction.CurrencySelected -> {
+                // Guarded rather than trusted: editing renders no control that emits this,
+                // and the domain refuses the change besides (design D12).
+                if (!isEditMode) currency.value = action.currency
             }
 
             is AccountFormAction.Submit -> submit()
@@ -145,6 +165,7 @@ class AccountFormViewModel(
             name = name,
             isDefault = isDefault.value,
             iconKey = selectedIcon.value.key,
+            currency = currency.value,
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {

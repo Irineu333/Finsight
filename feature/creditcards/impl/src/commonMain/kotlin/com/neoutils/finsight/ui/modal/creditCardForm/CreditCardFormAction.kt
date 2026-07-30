@@ -24,5 +24,10 @@ sealed class CreditCardFormAction {
         val icon: AppIcon
     ) : CreditCardFormAction()
 
+    /** Only ever reachable in creation: editing has no control that emits it (design D12). */
+    data class CurrencySelected(
+        val currency: String,
+    ) : CreditCardFormAction()
+
     data object Submit : CreditCardFormAction()
 }

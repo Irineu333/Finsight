@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.CreditCardError
 import com.neoutils.finsight.domain.exception.CreditCardException
@@ -28,6 +29,13 @@ class UpdateCreditCardUseCase(
             catch {
                 block(oldCreditCard)
             }.onRight { creditCard ->
+                // Unconditional, like an account's (design D12): a card is a facade for a
+                // `LIABILITY` row of the chart of accounts, and that row's currency is fixed
+                // at creation. Nothing is consulted before refusing.
+                ensure(creditCard.currency == oldCreditCard.currency) {
+                    CreditCardException(CreditCardError.CURRENCY_IMMUTABLE)
+                }
+
                 validateCreditCardName(
                     name = creditCard.name,
                     ignoreId = creditCardId,

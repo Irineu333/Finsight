@@ -35,6 +35,7 @@ class AdjustInvoiceUseCaseTest {
 
     private val date = LocalDate(2026, 1, 10)
     private val card = CreditCard(
+        currency = "BRL",
         id = 1,
         name = "Card",
         limit = 1000.0,

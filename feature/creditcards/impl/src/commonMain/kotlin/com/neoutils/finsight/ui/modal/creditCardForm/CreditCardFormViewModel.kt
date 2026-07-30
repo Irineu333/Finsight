@@ -1,12 +1,12 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.CreditCardPeriod
@@ -23,8 +24,8 @@ import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -34,6 +35,11 @@ class CreditCardFormViewModel(
     private val addCreditCardUseCase: AddCreditCardUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
+    /**
+     * Read once, to pre-select the currency of a card being created — a decision, not a
+     * figure. On edit the card's own currency stands and nothing moves it (design D12).
+     */
+    baseCurrencyRepository: IBaseCurrencyRepository,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val creditCardPeriod: CreditCardPeriod,
@@ -52,8 +58,10 @@ class CreditCardFormViewModel(
         )
     )
 
+    private val currency = MutableStateFlow(creditCard?.currency ?: baseCurrencyRepository.current())
+
     private val limit = MutableStateFlow(
-        creditCard?.limit?.let { formatter.format(it, ASSUMED_SINGLE_CURRENCY) }.orEmpty()
+        creditCard?.limit?.let { formatter.format(it, currency.value) }.orEmpty()
     )
 
     private val closingDay = MutableStateFlow(
@@ -70,7 +78,8 @@ class CreditCardFormViewModel(
         closingDay,
         dueDay,
         selectedIcon,
-    ) { name, limit, closingDay, dueDay, selectedIcon ->
+        currency,
+    ) { name, limit, closingDay, dueDay, selectedIcon, currency ->
         val closingDayInt = closingDay.toIntOrNull()
         val dueDayInt = dueDay.toIntOrNull()
 
@@ -82,6 +91,7 @@ class CreditCardFormViewModel(
             closingDayCalc = dueDayInt?.let { creditCardPeriod.calculateClosingDay(it) },
             dueDayCalc = closingDayInt?.let { creditCardPeriod.calculateDueDay(it) },
             iconKey = selectedIcon.key,
+            currency = currency,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -89,13 +99,15 @@ class CreditCardFormViewModel(
         initialValue = creditCard?.let {
             CreditCardForm(
                 name = it.name,
-                limit = formatter.format(it.limit, ASSUMED_SINGLE_CURRENCY),
+                limit = formatter.format(it.limit, it.currency),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
                 iconKey = it.iconKey,
+                currency = it.currency,
             )
         } ?: CreditCardForm(
-            iconKey = AppIcon.CARD.key
+            iconKey = AppIcon.CARD.key,
+            currency = currency.value,
         )
     )
 
@@ -106,6 +118,7 @@ class CreditCardFormViewModel(
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.isValid(),
+            canChangeCurrency = !isEditMode,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -116,6 +129,7 @@ class CreditCardFormViewModel(
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.value.isValid(),
+            canChangeCurrency = !isEditMode,
         )
     )
 
@@ -139,6 +153,12 @@ class CreditCardFormViewModel(
 
             is CreditCardFormAction.IconSelected -> {
                 selectedIcon.value = action.icon
+            }
+
+            is CreditCardFormAction.CurrencySelected -> {
+                // Guarded rather than trusted: editing renders no control that emits this,
+                // and the domain refuses the change besides (design D12).
+                if (!isEditMode) currency.value = action.currency
             }
 
             is CreditCardFormAction.Submit -> submit()

@@ -21,7 +21,7 @@ import kotlin.test.assertFailsWith
  */
 class InvoiceWriteGuardTest {
 
-    private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 10)
+    private val card = CreditCard(currency = "BRL", id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 10)
 
     private fun invoice(status: Invoice.Status) = Invoice(
         id = 1,

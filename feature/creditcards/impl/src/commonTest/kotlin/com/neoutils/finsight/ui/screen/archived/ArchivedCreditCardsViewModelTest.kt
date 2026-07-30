@@ -42,6 +42,7 @@ class ArchivedCreditCardsViewModelTest {
     }
 
     private fun card(id: Long, isArchived: Boolean) = CreditCard(
+        currency = "BRL",
         id = id,
         name = "Card $id",
         limit = 1000.0,

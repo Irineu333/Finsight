@@ -77,6 +77,7 @@ class ViewCreditCardViewModelTest {
     }
 
     private fun card(id: Long = 1L, accountId: Long = 10L, isArchived: Boolean = true) = CreditCard(
+        currency = "BRL",
         id = id,
         name = "Card",
         limit = 1000.0,

@@ -38,7 +38,7 @@ class InvoiceTransactionsEmptyStateTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
+    private val card = CreditCard(currency = "BRL", id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
 
     private fun invoice(id: Long, dimensionId: Long, month: Int) = Invoice(
         id = id, creditCard = card, dimensionId = dimensionId,

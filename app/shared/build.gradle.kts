@@ -41,6 +41,8 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.datetime)
+            // The gates drive real use cases, and a use case answers with an `Either`.
+            implementation(libs.arrow.core)
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutinesTest)
         }

@@ -33,6 +33,7 @@ class TransactionFormArchivedTest {
     )
 
     private fun card(isArchived: Boolean = false) = CreditCard(
+        currency = "BRL",
         id = 1,
         name = "Card",
         limit = 1000.0,

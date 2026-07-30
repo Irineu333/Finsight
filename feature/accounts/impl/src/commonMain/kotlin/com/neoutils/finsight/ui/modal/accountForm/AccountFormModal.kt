@@ -60,7 +60,11 @@ import com.neoutils.finsight.resources.account_form_icon_modal_title
 import com.neoutils.finsight.resources.account_form_name_label
 import com.neoutils.finsight.resources.account_form_new_title
 import com.neoutils.finsight.resources.account_form_save
+import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.resources.currency_picker_title
+import com.neoutils.finsight.ui.component.CurrencySelectorRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.stringUiText
@@ -81,6 +85,7 @@ class AccountFormModal(
         val modalManager = LocalModalManager.current
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.account_form_icon_modal_title)
+        val currencyModalTitle = stringResource(Res.string.currency_picker_title)
 
         val name = rememberTextFieldState(uiState.name)
 
@@ -156,6 +161,29 @@ class AccountFormModal(
                     onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Always rendered, and never revealed by the app happening to hold a second
+            // currency (design D23): the currency is an attribute of the account in the same
+            // degree as its icon, and a form that changes shape with global state hides the
+            // decision from whoever has not made it yet.
+            CurrencySelectorRow(
+                currency = uiState.currency,
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = CurrencyCatalog.offered,
+                            selected = uiState.currency,
+                            onCurrencySelected = { currency ->
+                                viewModel.onAction(AccountFormAction.CurrencySelected(currency))
+                            },
+                        )
+                    )
+                },
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 

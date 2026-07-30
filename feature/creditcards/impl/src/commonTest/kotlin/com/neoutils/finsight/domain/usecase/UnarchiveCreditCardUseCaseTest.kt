@@ -25,6 +25,7 @@ class UnarchiveCreditCardUseCaseTest {
     }
 
     private fun card(accountId: Long) = CreditCard(
+        currency = "BRL",
         id = 1L,
         name = "Card",
         limit = 1000.0,

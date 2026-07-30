@@ -57,7 +57,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
+    private val card = CreditCard(currency = "BRL", id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
     private val invoice = Invoice(
         id = 1, creditCard = card, dimensionId = 1,
         openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),

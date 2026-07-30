@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.extension.currencySymbol
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_selector_label
 import org.jetbrains.compose.resources.stringResource
@@ -24,6 +25,10 @@ fun AccountSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    // Told apart by currency only where more than one is on offer: a list in a single
+    // currency has nothing to disambiguate, and the suffix would be noise on every row.
+    val currencySuffix = rememberCurrencySuffix(accounts.map { it.currency })
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
@@ -34,7 +39,7 @@ fun AccountSelector(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selectedAccount?.name ?: "",
+            value = selectedAccount?.let { it.name + currencySuffix(it.currency) } ?: "",
             onValueChange = {},
             readOnly = true,
             label = {
@@ -59,7 +64,7 @@ fun AccountSelector(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = account.name,
+                            text = account.name + currencySuffix(account.currency),
                             fontSize = 14.sp
                         )
                     },
@@ -70,5 +75,19 @@ fun AccountSelector(
                 )
             }
         }
+    }
+}
+/**
+ * `· US$` after a name, and only when the list it comes from holds more than one currency.
+ *
+ * Derived from the offered list rather than from the app's whole set on purpose: what a
+ * selector has to disambiguate is what it is showing. A list narrowed to one currency — the
+ * recurring confirmation's, for instance — says so in its own words instead.
+ */
+@Composable
+internal fun rememberCurrencySuffix(currencies: List<String>): (String) -> String {
+    val isMixed = remember(currencies) { currencies.distinct().size > 1 }
+    return remember(isMixed) {
+        { currency -> if (isMixed) " · " + currencySymbol(currency) else "" }
     }
 }

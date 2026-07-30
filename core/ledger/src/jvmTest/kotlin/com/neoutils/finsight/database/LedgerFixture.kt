@@ -27,10 +27,18 @@ internal fun ledgerDatabase(): LedgerDatabase =
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 
-/** One leg of a seeded transaction: where it posts, how much, and how it is classified. */
+/**
+ * One leg of a seeded transaction: where it posts, how much, in which currency, and how it
+ * is classified.
+ *
+ * [currency] defaults so that every suite written before there was more than one keeps
+ * asserting exactly what it did. A cross-currency case states it, and states it per leg:
+ * a transaction's legs are what carry more than one currency, never the transaction.
+ */
 internal data class Leg(
     val accountId: Long,
     val cents: Long,
+    val currency: String = "BRL",
     val dimensionId: Long? = null,
 )
 
@@ -38,12 +46,20 @@ internal infix fun Long.posts(cents: Long) = Leg(accountId = this, cents = cents
 
 internal fun Leg.taggedWith(dimensionId: Long) = copy(dimensionId = dimensionId)
 
+internal fun Leg.denominatedIn(currency: String) = copy(currency = currency)
+
 internal class LedgerFixture(val database: LedgerDatabase) {
 
     private var nextTransactionId = 0L
 
-    suspend fun account(id: Long, type: AccountEntity.Type, name: String = "account-$id"): Long =
-        database.accountDao().insert(AccountEntity(id = id, name = name, type = type))
+    suspend fun account(
+        id: Long,
+        type: AccountEntity.Type,
+        name: String = "account-$id",
+        currency: String = "BRL",
+    ): Long = database.accountDao().insert(
+        AccountEntity(id = id, name = name, type = type, currency = currency)
+    )
 
     suspend fun dimension(id: Long, kind: DimensionKind): Long =
         database.dimensionDao().insert(DimensionEntity(id = id, kind = kind))
@@ -60,7 +76,7 @@ internal class LedgerFixture(val database: LedgerDatabase) {
                     transactionId = id,
                     accountId = it.accountId,
                     amount = it.cents,
-                    currency = "BRL",
+                    currency = it.currency,
                     dimensionId = it.dimensionId,
                 )
             }

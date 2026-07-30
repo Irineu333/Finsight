@@ -2,16 +2,20 @@ package com.neoutils.finsight
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.getRoomDatabase
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import org.koin.core.Koin
+import org.koin.core.module.Module
+import org.koin.dsl.bind
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -26,9 +30,27 @@ import kotlin.test.assertTrue
  */
 class AppModulesTest {
 
+    private var koin: Koin? = null
+
+    /**
+     * Every container is closed, and it is not tidiness: Koin caches a `single` **inside the
+     * `Module` object**, and `appModules` is one global list of them. A container left open
+     * leaves its instances in that cache, so the next container in the same JVM — this
+     * suite's or another test class's — may be handed a database it never asked for. That
+     * showed up as a neighbouring suite failing intermittently, never this one.
+     */
+    @AfterTest
+    fun tearDown() {
+        koin?.close()
+        koin = null
+    }
+
+    private fun koin(vararg extra: Module) =
+        koinApplication { modules(appModules + extra) }.koin.also { koin = it }
+
     @Test
     fun appModulesResolveTheCrossFeatureTransactionsEntry() {
-        val koin = koinApplication { modules(appModules) }.koin
+        val koin = koin()
 
         assertNotNull(koin.get<TransactionsEntry>())
     }
@@ -41,7 +63,7 @@ class AppModulesTest {
      */
     @Test
     fun appModulesResolveTheLedgerRepositories() {
-        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+        val koin = koin(inMemoryDatabase)
 
         assertNotNull(koin.get<ITransactionRepository>())
         assertNotNull(koin.get<IEntryRepository>())
@@ -54,14 +76,14 @@ class AppModulesTest {
      */
     @Test
     fun theLedgerAndTheFacadesShareOneDatabase() {
-        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+        val koin = koin(inMemoryDatabase)
 
         assertSame(koin.get<AppDatabase>(), koin.get<RoomDatabase>())
     }
 
     @Test
     fun appModulesResolveTheNavCatalog() {
-        val koin = koinApplication { modules(appModules) }.koin
+        val koin = koin()
 
         val catalog = koin.get<NavCatalog>()
 
@@ -75,7 +97,7 @@ class AppModulesTest {
      */
     @Test
     fun navCatalogProjectionsAreConsistent() {
-        val koin = koinApplication { modules(appModules) }.koin
+        val koin = koin()
         val destinations = koin.get<NavCatalog>().destinations
 
         // Exactly two primary tabs feed the mobile bottom bar.
@@ -99,9 +121,15 @@ class AppModulesTest {
     }
 }
 
-/** Keeps the graph check off the user's real desktop database file. */
+/**
+ * Keeps the graph check off the user's real desktop database file — and it binds the
+ * **database**, not its builder. Binding the builder does not work: `databaseModule`
+ * pulls the platform builder in through `includes(…)`, which Koin applies after the
+ * modules of the list, so the override was itself overridden and every test here opened
+ * `~/.finance/finsight.db`.
+ */
 private val inMemoryDatabase = module {
-    single<RoomDatabase.Builder<AppDatabase>> {
-        Room.inMemoryDatabaseBuilder<AppDatabase>().setDriver(BundledSQLiteDriver())
-    }
+    single<AppDatabase> {
+        getRoomDatabase(Room.inMemoryDatabaseBuilder<AppDatabase>())
+    } bind RoomDatabase::class
 }

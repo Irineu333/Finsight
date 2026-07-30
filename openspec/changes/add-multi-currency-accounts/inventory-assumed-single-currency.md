@@ -38,17 +38,26 @@ passa a ser derivada. Só então a moeda desta figura tem resposta.
 ### B. Valor de fachada de **cartão** → fechada por **7.2/7.3** + **9.7**
 O cartão passa a ter moeda quando `CreditCardFormModal` a escolhe e `CreditCardRepository` a grava.
 
-| arquivo | figura |
-|---|---|
-| `feature/creditcards/.../CreditCardsScreen.kt`, `.../DashboardComponentContent.kt`, `.../ReportConfigScreen.kt` | `CreditCardCard(currency = …)` |
-| `feature/creditcards/.../CreditCardFormViewModel.kt`, `.../CreditCardFormModal.kt` | limite do cartão (exibição e entrada) |
-| `feature/creditcards/.../ViewCreditCardModal.kt`, `.../ArchivedCreditCardCard.kt` | limite do cartão |
-| `feature/creditcards/.../ArchiveCreditCardModal.kt` | saldo que bloqueia o arquivamento |
-| `feature/creditcards/.../InvoiceTransactionsViewModel.kt` | as 4 figuras de cada fatura |
-| `feature/creditcards/.../PayInvoiceModal.kt`, `.../AdvancePaymentModal.kt`, `.../EditInvoiceBalanceModal.kt` | devido, valor pago, ajuste |
-| `feature/creditcards/.../AddInstallmentModal.kt`, `.../InstallmentsScreen.kt` | parcelamento (denominado pelo cartão) |
-| `feature/transactions/.../ViewTransactionModal.kt` | total do parcelamento |
-| `feature/transactions/.../AddTransactionModal.kt` | entrada de valor e contador de parcelas |
+**A metade de *leitura* saiu em 7.8:** `CreditCard` ganhou uma `currency` **espelhada** da sua
+linha `LIABILITY`, pelo mesmo veículo do `isArchived` — o `JOIN` que o `CreditCardDao` já fazia
+passou a projetar `a.currency`. A escolha e a escrita continuam sendo de 9.7; o espelho não
+escolhe nada, e por isso a inversão de 9.8 (exatamente dois sítios escolhem moeda) segue de pé.
+Os sítios abaixo que tinham o cartão à mão fecharam com isso; os que ainda não têm — os de
+**entrada** e o **formulário** — esperam 9.7.
+
+| arquivo | figura | estado |
+|---|---|---|
+| `feature/creditcards/.../InvoiceUiMapperImpl.kt` | as figuras da fatura na modal | **fechado (7.8)** |
+| `feature/creditcards/.../InvoiceTransactionsViewModel.kt` | as 4 figuras de cada fatura | **fechado (7.8)** |
+| `feature/creditcards/.../AddInstallmentModal.kt`, `feature/transactions/.../AddTransactionModal.kt` | contador de parcelas | **fechado (7.8)** |
+| `feature/creditcards/.../CreditCardsScreen.kt`, `.../DashboardComponentContent.kt`, `.../ReportConfigScreen.kt` | `CreditCardCard(currency = …)` | 9.7 |
+| `feature/creditcards/.../CreditCardFormViewModel.kt`, `.../CreditCardFormModal.kt` | limite do cartão (exibição e entrada) | 9.7 |
+| `feature/creditcards/.../ViewCreditCardModal.kt`, `.../ArchivedCreditCardCard.kt` | limite do cartão | 9.7 |
+| `feature/creditcards/.../ArchiveCreditCardModal.kt` | saldo que bloqueia o arquivamento | 9.7 |
+| `feature/creditcards/.../PayInvoiceModal.kt`, `.../AdvancePaymentModal.kt`, `.../EditInvoiceBalanceModal.kt` | devido, valor pago, ajuste | 9.7 |
+| `feature/creditcards/.../InstallmentsScreen.kt` | parcelamento (denominado pelo cartão) | 9.7 |
+| `feature/transactions/.../ViewTransactionModal.kt` | total do parcelamento | 9.7 |
+| `feature/transactions/.../AddTransactionModal.kt` | entrada de valor | 9.7 |
 
 ### C. Valor de fachada de **recorrência** → fechada por **9.4**
 | arquivo | figura |

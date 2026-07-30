@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.mapper
 
-import com.neoutils.finsight.domain.model.ASSUMED_SINGLE_CURRENCY
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.extension.Denomination
@@ -33,9 +32,10 @@ class InvoiceUiMapperImpl(
 
         // The status is decomposed into flat facts here, so no UI model or component
         // re-derives an invoice rule — they consume what the domain already decided.
-        // Every figure of an invoice is denominated by its card. Until the card form offers
-        // the choice (task 9.7) the card's currency is the only one the app has.
-        val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
+        // Every figure of an invoice is denominated by its card, and the card mirrors the
+        // currency of the LIABILITY row it is a facade over — so a foreign card's invoice
+        // reads in the card's own currency, never in the base.
+        val denomination = Denomination.exact(invoice.creditCard.currency)
 
         return InvoiceUi(
             id = invoice.id,

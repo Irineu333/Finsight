@@ -171,7 +171,12 @@ class AddInstallmentModal : ModalBottomSheet() {
                                 count = installments,
                                 total = DisplayAmount.natural(
                                     amount.text.toString().moneyToDouble(),
-                                    Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                                    // An instalment plan is denominated by the card it is
+                                    // charged to (D17), and the card mirrors its account's.
+                                    Denomination.exact(
+                                        uiState.selectedCreditCard?.currency
+                                            ?: ASSUMED_SINGLE_CURRENCY
+                                    ),
                                 ),
                             ),
                             onInstallmentsChange = {

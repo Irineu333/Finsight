@@ -232,7 +232,12 @@ class AddTransactionModal : ModalBottomSheet() {
                                 count = installments,
                                 total = DisplayAmount.natural(
                                     amount.text.toString().moneyToDouble(),
-                                    Denomination.exact(ASSUMED_SINGLE_CURRENCY),
+                                    // The counter only shows for a card expense, and an
+                                    // instalment plan is denominated by that card (D17).
+                                    Denomination.exact(
+                                        uiState.selectedCreditCard?.currency
+                                            ?: ASSUMED_SINGLE_CURRENCY
+                                    ),
                                 ),
                             ),
                             onInstallmentsChange = { installments = it },

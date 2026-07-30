@@ -15,4 +15,7 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 data class CreditCardWithArchival(
     @Embedded val creditCard: CreditCardEntity,
     val isArchived: Boolean,
+    // The account's currency travels with its closure, and for the same reason: it lives on
+    // the account and nowhere else, and every figure a card renders is denominated by it.
+    val currency: String,
 )

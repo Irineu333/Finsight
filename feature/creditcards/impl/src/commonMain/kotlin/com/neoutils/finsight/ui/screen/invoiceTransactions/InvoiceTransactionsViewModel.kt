@@ -157,8 +157,9 @@ class InvoiceTransactionsViewModel(
                     recurringRepository.hasRecurringForCreditCard(creditCard.id)
             ),
             invoices = invoices.map { invoice ->
-                // Every figure of an invoice is denominated by the card it belongs to.
-                val denomination = Denomination.exact(ASSUMED_SINGLE_CURRENCY)
+                // Every figure of an invoice is denominated by the card it belongs to, which
+                // mirrors the currency of its LIABILITY row.
+                val denomination = Denomination.exact(creditCard.currency)
                 val flows = flowsByInvoiceId.getValue(invoice.id)
                 val expense = flows.expense.soleAmount
                 val advancePayment = flows.advancePayment.soleAmount

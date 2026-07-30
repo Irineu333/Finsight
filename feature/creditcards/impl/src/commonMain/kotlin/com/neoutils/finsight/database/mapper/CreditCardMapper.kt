@@ -5,7 +5,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 
 class CreditCardMapper {
     fun toDomain(row: com.neoutils.finsight.database.dao.CreditCardWithArchival): CreditCard =
-        toDomain(row.creditCard).copy(isArchived = row.isArchived)
+        toDomain(row.creditCard).copy(isArchived = row.isArchived, currency = row.currency)
 
     fun toDomain(entity: CreditCardEntity): CreditCard {
         return CreditCard(

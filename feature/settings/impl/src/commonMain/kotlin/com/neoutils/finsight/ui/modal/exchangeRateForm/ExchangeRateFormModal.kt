@@ -1,31 +1,39 @@
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
@@ -44,7 +52,9 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.DateInputTransformation
+import com.neoutils.finsight.util.RateInputTransformation
+import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.formatRate
 import com.neoutils.finsight.util.stringUiText
 import com.neoutils.finsight.util.toRateOrNull
@@ -54,6 +64,14 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Registers a rate, corrects one, or removes it.
+ *
+ * **It is a form, and it is built like every other form of this app** — centred title,
+ * fields that are fields, a full-width primary button. The currency is an
+ * `ExposedDropdownMenuBox` because that is what choosing among a list inside a form
+ * looks like here (`AccountSelector`), not the 52dp `CurrencyRow`, which states a
+ * permanent attribute of an account. And the date is typed and validated like every
+ * other date in the app, with the calendar as a button beside it — not a read-only box
+ * that can only be filled by a picker.
  *
  * **This is the only place an external suggestion may ever appear** (design D11), and
  * in v1 it appears as nothing more than the field's placeholder. No read of this app
@@ -71,16 +89,37 @@ class ExchangeRateFormModal(
         val modalManager = LocalModalManager.current
         val separator = stringResource(Res.string.decimal_separator)
 
-        var rateText by remember {
-            mutableStateOf(uiState.rate?.let { formatRate(it, separator) }.orEmpty())
+        val rate = rememberTextFieldState(
+            uiState.rate?.let { formatRate(it, separator) }.orEmpty()
+        )
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { rate.text.toString() }
+                .collect { viewModel.onAction(ExchangeRateFormAction.ChangeRate(it.toRateOrNull())) }
+        }
+
+        val date = rememberTextFieldState(dayMonthYear.format(uiState.date))
+
+        // The typed date is the source of truth of the field, and the state only hears
+        // about it once it parses. A half-typed `15/0` is not an error to report — it is
+        // a date the user has not finished writing — so it simply does not submit.
+        val typedDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull()
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .collect { text ->
+                    runCatching { dayMonthYear.parse(text) }.getOrNull()?.let {
+                        viewModel.onAction(ExchangeRateFormAction.SelectDate(it))
+                    }
+                }
         }
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(
@@ -93,6 +132,8 @@ class ExchangeRateFormModal(
                 style = typography.titleLarge,
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             // The currency of an existing rate is not editable: changing it would not
             // correct that observation, it would silently reassign it to another
             // currency. Removing and registering again is the honest path.
@@ -101,31 +142,52 @@ class ExchangeRateFormModal(
                 val options = uiState.selectableCurrencies.map {
                     CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
                 }
+                val selected = options.firstOrNull { it.code == uiState.currency }
 
-                SelectorRow(
-                    label = stringResource(Res.string.exchange_rate_form_currency),
-                    value = uiState.currency,
-                    onClick = {
-                        modalManager.show(
-                            CurrencyPickerModal(
-                                title = pickerTitle,
-                                currencies = options,
-                                selectedCode = uiState.currency,
-                                onCurrencySelected = {
-                                    viewModel.onAction(ExchangeRateFormAction.SelectCurrency(it.code))
-                                },
-                            )
+                val openCurrencies = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = pickerTitle,
+                            currencies = options,
+                            selectedCode = uiState.currency,
+                            onCurrencySelected = {
+                                viewModel.onAction(ExchangeRateFormAction.SelectCurrency(it.code))
+                            },
                         )
+                    )
+                }
+
+                // A field of the form that opens the shared sheet — the same shape
+                // `ConfirmRecurringModal` uses for its date. The sheet is where the
+                // currencies are chosen everywhere in the app, and a list of twenty is
+                // not a dropdown's job.
+                OutlinedTextField(
+                    value = selected?.let { "${it.symbol} · ${it.name} (${it.code})" }
+                        ?: uiState.currency,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
+                    trailingIcon = {
+                        IconButton(onClick = { openCurrencies() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                            )
+                        }
                     },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { openCurrencies() },
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             OutlinedTextField(
-                value = rateText,
-                onValueChange = { text ->
-                    rateText = text
-                    viewModel.onAction(ExchangeRateFormAction.ChangeRate(text.toRateOrNull()))
-                },
+                state = rate,
                 label = { Text(stringResource(Res.string.exchange_rate_form_rate)) },
                 placeholder = { Text(stringResource(Res.string.exchange_rate_form_rate_placeholder)) },
                 supportingText = {
@@ -137,41 +199,75 @@ class ExchangeRateFormModal(
                         )
                     )
                 },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                // Formatted as it is typed, in the four places the rates screen shows —
+                // and the keyboard's separator stops mattering, because only digits
+                // survive. `5,32` typed on a comma keyboard was becoming `532`.
+                inputTransformation = RateInputTransformation(separator),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done,
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next,
                 ),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            SelectorRow(
-                label = stringResource(Res.string.exchange_rate_form_date),
-                value = LocalDateFormats.current.monthDayYear.format(uiState.date),
-                icon = true,
-                onClick = {
-                    modalManager.show(
-                        DatePickerModal(
-                            initialDate = uiState.date,
-                            onDateSelected = {
-                                viewModel.onAction(ExchangeRateFormAction.SelectDate(it))
-                            },
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                state = date,
+                label = { Text(stringResource(Res.string.exchange_rate_form_date)) },
+                inputTransformation = DateInputTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done,
+                ),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            modalManager.show(
+                                DatePickerModal(
+                                    initialDate = typedDate,
+                                    onDateSelected = { selected ->
+                                        date.edit {
+                                            replace(0, length, dayMonthYear.format(selected))
+                                        }
+                                    },
+                                )
+                            )
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.CalendarToday,
+                            contentDescription = null,
+                            tint = colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
                         )
-                    )
+                    }
                 },
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
                     viewModel.onAction(ExchangeRateFormAction.Submit)
                     modalManager.dismiss(this@ExchangeRateFormModal)
                 },
-                enabled = uiState.canSubmit,
+                // A rate the field cannot read, or a date it cannot parse, is not an
+                // error to report — it is a form that is not finished.
+                enabled = uiState.canSubmit && typedDate != null,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(Res.string.exchange_rate_form_save))
+                Text(
+                    text = stringResource(Res.string.exchange_rate_form_save),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
 
             // Removal is the obligatory corollary of a rate outliving its transaction
@@ -193,34 +289,4 @@ class ExchangeRateFormModal(
             }
         }
     }
-}
-
-@Composable
-private fun SelectorRow(
-    label: String,
-    value: String,
-    onClick: () -> Unit,
-    icon: Boolean = false,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        label = { Text(label) },
-        readOnly = true,
-        enabled = false,
-        singleLine = true,
-        shape = RoundedCornerShape(12.dp),
-        trailingIcon = if (icon) {
-            {
-                Icon(
-                    imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                )
-            }
-        } else null,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-    )
 }

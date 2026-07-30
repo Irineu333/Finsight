@@ -175,7 +175,8 @@ private fun ExchangeRateRow(
                     baseCurrency,
                 ),
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
+                color = colorScheme.onSurface,
             )
 
             Row(
@@ -219,7 +220,10 @@ private fun SourceLabel(source: ExchangeRate.Source) {
                 ExchangeRate.Source.USER -> Icons.Default.ModeEdit
             },
             contentDescription = null,
-            tint = colorScheme.onSurfaceVariant,
+            // The accent, not a signal: the two provenances differ by icon and by the
+            // word beside them, never by colour. Reading grey here made a screen the
+            // app owns look like one it disabled.
+            tint = colorScheme.primary,
             modifier = Modifier.size(16.dp),
         )
         Text(

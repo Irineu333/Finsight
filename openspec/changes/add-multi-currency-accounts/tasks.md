@@ -331,7 +331,8 @@ exatamente o mesmo texto. 13.3 passaria com a base ligada por engano num saldo d
 diretriz que **não veio do `tasks.md`** — um build que quebrou, uma revisão que comparou
 esta implementação com outra. Registrar depois do fato é o que impede que a mudança
 termine com trabalho feito e não descrito, e o que dá ao próximo leitor a chance de
-perguntar por que estas cinco coisas não estavam previstas.
+perguntar por que estas cinco coisas não estavam previstas. O que a **revisão** pediu
+tem grupo próprio, o 15: aqui está o que a execução não teve como evitar.
 
 **Origem de 14.2 a 14.5:** revisão comparativa contra a implementação paralela
 (`feature/implement-multi-currency-v1`), que resolveu os mesmos requisitos por outro
@@ -343,3 +344,47 @@ intactas —, e cada um deixa uma figura ou um campo dizendo o que não é.
 - [x] 14.3 **Uma moeda parada em zero tornava a figura aproximada.** `{BRL: 1000, USD: 0}` entrava no redutor como dois termos, então um total saía marcado `≈` sem que nada tivesse sido convertido e — sem taxa de dólar no acervo — como `R$ 1.000,00 + US$ 0,00` para sempre. Abrir uma segunda conta e gastá-la de volta a zero não é evento que deva marcar todo total do app. Os zeros são descartados **só onde outra moeda sobrevive**, nas três entradas do redutor, de modo que uma figura que é só zero mantém a sua própria denominação. Realiza `money-display`: "Usuário de uma moeda só não vê marca alguma", que 13.3 provava apenas com saldos não nulos.
 - [x] 14.4 **O mecanismo de reatividade estava construído e não estava ligado.** 6.2b foi marcada pronta com `ObserveConsolidationChangesUseCase` bindado no Koin e **zero consumidores**, enquanto o seu próprio KDoc dizia que sem ele a promessa de reatividade seria falsa — e era: cadastrar uma taxa não escreve em `entries`, então nenhuma figura recomputava. Ele passa a ser o gatilho de dashboard, extrato, categorias, orçamentos e relatório, fundido nos fluxos internos onde o `combine` já estava no teto de aridade. Verificação: `ConsolidatedFiguresReactTest` — quem injeta o redutor tem de injetar o gatilho, e o mecanismo tem de ter consumidor fora do próprio módulo. **Construir não é ligar, e o gate é o que torna as duas coisas a mesma.**
 - [x] 14.5 **A reetiquetagem deixava os limites de orçamento para trás.** A `MIGRATION_10_11` re-denominava `accounts` e `entries` e parava ali, então o usuário legado em região estrangeira saía com contas em USD e limites em BRL — moeda em que ele não tem nada — e uma barra de progresso consolidando e marcada `≈` para sempre. É exatamente o custo que D13 existe para manter longe do usuário monomoeda, chegando pela migração em vez de pelo formulário. O `UPDATE` de `budgets` entra na mesma transação. Verificação: `a relabelled chart takes the budget limits with it` — a moeda muda, o `amount` não.
+
+---
+
+## 15. Ajustes após revisão
+
+**O grupo 14 é o que a execução obrigou; este é o que a revisão pediu.** A diferença
+não é de tamanho, é de origem: lá, um build que quebrou e uma comparação com a
+implementação paralela apontaram defeito; aqui, alguém usou o app e disse o que não
+estava bom. Um grupo próprio porque a revisão acontece **por caso testado**, e cada caso
+abre a sua rodada — o que vier do multimoeda entra abaixo, não misturado com o que veio
+do monomoeda.
+
+### 15.a — Caso monomoeda (BRL e USD, desktop e Android)
+
+**Veredito da rodada:** o comportamento se preserva. Dashboard, extrato, orçamentos,
+categorias, cartões, contas, recorrência, parcelamentos e relatórios saem como antes; o
+que diverge diverge **de propósito** — a tela de configurações, o oferecimento da feature
+nos formulários de conta e cartão, e a formatação que passou a seguir a moeda em vez do
+locale. Para quem tem uma moeda só, a feature está essencialmente desligada.
+
+**Encontrado e deixado de fora, por decisão:** uma transferência entra como *despesa* do
+mês no card da conta. A causa é `EntryDao.accountPeriodTotals`, que classifica por sinal
+— perna negativa sem contraparte `EQUITY` nem `LIABILITY` cai em despesa —, e a query é
+**idêntica à do ancestral comum**, tendo ganhado apenas a coluna `currency`. O rótulo da
+transação (`TRANSFER`), o dashboard e o extrato estão corretos; só o card da conta soma.
+É defeito **pré-existente**, fora do escopo desta change, e fica registrado aqui porque
+foi encontrado no teste dela.
+
+**Observado e não tratado:** o preview do modo de edição do dashboard denomina as contas
+fabricadas com `localeCurrencyCode()` — a região do aparelho —, e é o único ponto do app
+que ainda deriva moeda do locale em tempo de execução. Coincide sempre que a região e a
+base concordam; divergiria para quem tem base BRL num aparelho `en-US`, mostrando `$` num
+preview ao lado de cards em `R$`. Correção é uma linha (ler a base), e não foi feita
+porque a rodada a classificou como não-problema.
+
+- [x] 15.1 **As superfícies de moeda não pareciam deste app** (origem: teste manual do caso monomoeda, desktop e Android, em três rodadas — as duas primeiras correções minhas erraram o alvo, e o registro fica com as três porque a lição está no percurso). Nada aqui muda comportamento: nenhum número, nenhuma regra, nenhum estado — **exceto um defeito real, no fim**.
+
+  **Onde os controles estavam no lugar errado.** A `CurrencyRow` é uma caixa de 52dp que abre um seletor — a mesma forma do `IconPickerSelector` e do `DefaultAccountSelector` — e no formulário de cartão caía entre o nome e o limite, cercada de `OutlinedTextField`. Desceu para junto do seletor de ícone; o formulário de conta já a tinha assim e não muda.
+
+  **Onde a cor dizia a coisa errada.** Configurações e taxas nasceram quase inteiramente em `onSurfaceVariant`, num app cujos cards têm ícone em `primary` sobre 12% de fundo: o glifo da moeda base, o ícone da linha de taxas e o de procedência de cada taxa passam ao acento, e a cotação a `onSurface`. No `CurrencyPickerModal`, o símbolo ganha a caixa de acento e a linha selecionada, o acento como superfície mais a borda de 2dp que o `IconPickerModal` estabeleceu. **A cor continua sem carregar estado**: o acento é o mesmo para toda moeda e toda procedência, e o que distingue procedência segue sendo ícone **e** palavra (D21/D25). Ficam **fora**: a linha de moeda travada, cujo cinza é o significante de "não pode mudar" que o usuário aprendeu no seletor de conta padrão (D23), e o título do seletor de moedas, alinhado à esquerda como o do seletor de ícones — um formulário centraliza o título porque é um diálogo sobre uma coisa; o título de um seletor rotula a lista abaixo dele.
+
+  **Onde eu tinha escolhido o controle errado, e é a parte que interessa.** O formulário de taxa usava `OutlinedTextField` com `enabled = false` como seletor — a paleta de *desabilitado* aplicada a um controle feito para ser tocado. Corrigi para a `CurrencyRow`, e isso também estava errado: aquele controle **declara um atributo permanente de uma conta**, com subtítulo de estado e cadeado. Qual moeda uma taxa *descreve* é campo comum de formulário, e o padrão do app para um campo que abre uma folha é `OutlinedTextField(readOnly)` com `IconButton` no `trailingIcon` — o que `ConfirmRecurringModal` já fazia com a data. A folha compartilhada continua sendo onde se escolhe moeda em todo o app. A data, pela mesma régua, deixou de ser caixa que só o seletor preenchia: é digitada, formatada por `DateInputTransformation` e validada, com o calendário como botão ao lado — data pela metade não é erro a reportar, é formulário não terminado, e o botão apenas não habilita. E o título do formulário passou a ser centralizado, como os treze do app.
+
+  **O defeito real, achado no caminho.** O campo de taxa não formatava e filtrava dígitos e `.`: num teclado pt-BR, `5,32` perdia a vírgula e virava `532` — dólar a quinhentos, com o botão de salvar habilitado. Entra `RateInputTransformation`, irmã de `MoneyInputTransformation`: os dígitos preenchem da direita nas quatro casas de `RATE_DISPLAY_SCALE` e **nenhum separador digitado sobrevive**, então teclado e idioma não podem discordar; a formatação sai dos dígitos e nunca de um `Double`, para que a taxa gravada continue sendo a digitada (D11). Verificação: `RateInputTransformationTest`, com o teclado de vírgula e o de ponto produzindo o mesmo número.

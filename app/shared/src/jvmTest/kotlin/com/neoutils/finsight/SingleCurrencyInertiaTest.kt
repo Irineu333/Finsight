@@ -98,7 +98,7 @@ class SingleCurrencyInertiaTest {
         val choosesACurrency = Regex("""CurrencySelected""")
 
         val expected = setOf(
-            // The shared picker itself: it renders whatever list it is handed and
+            // The shared sheet itself: it renders whatever list it is handed and
             // decides nothing about accounts.
             "core/designsystem/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/currencyPicker/CurrencyPickerModal.kt",
             // The account form: the door a second currency is born through.

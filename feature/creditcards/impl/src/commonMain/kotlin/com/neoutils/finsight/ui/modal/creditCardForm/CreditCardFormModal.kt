@@ -171,37 +171,6 @@ class CreditCardFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // The card is denominated by its `LIABILITY` account, and this is where that
-            // account's currency is chosen — the second and last production site where a
-            // currency is picked at all (design D23).
-            CurrencyRow(
-                currency = uiState.currency.orEmpty(),
-                label = stringResource(
-                    Res.string.credit_card_form_currency_label,
-                    uiState.currency.orEmpty(),
-                ),
-                subtitle = if (uiState.canChangeCurrency) {
-                    stringResource(Res.string.credit_card_form_currency_state_new)
-                } else {
-                    stringResource(Res.string.credit_card_form_currency_state_locked)
-                },
-                canChange = uiState.canChangeCurrency,
-                onClick = {
-                    modalManager.show(
-                        CurrencyPickerModal(
-                            title = currencyModalTitle,
-                            currencies = currencyOptions,
-                            selectedCode = uiState.currency,
-                            onCurrencySelected = { option ->
-                                viewModel.onAction(CreditCardFormAction.CurrencySelected(option.code))
-                            },
-                        )
-                    )
-                },
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             OutlinedTextField(
                 state = limit,
                 label = { Text(text = stringResource(Res.string.credit_card_form_limit_label)) },
@@ -267,6 +236,43 @@ class CreditCardFormModal(
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // The card is denominated by its `LIABILITY` account, and this is where that
+            // account's currency is chosen — the second and last production site where a
+            // currency is picked at all (design D23).
+            //
+            // It sits **with the icon selector and not among the text fields**: the two
+            // share a shape (the 52dp box that opens a picker), and a box of that shape
+            // between two `OutlinedTextField`s reads as something that fell out of the
+            // form. Grouping the pickers is what keeps the modal symmetrical — the
+            // account form already had it this way, next to its default-account row.
+            CurrencyRow(
+                currency = uiState.currency.orEmpty(),
+                label = stringResource(
+                    Res.string.credit_card_form_currency_label,
+                    uiState.currency.orEmpty(),
+                ),
+                subtitle = if (uiState.canChangeCurrency) {
+                    stringResource(Res.string.credit_card_form_currency_state_new)
+                } else {
+                    stringResource(Res.string.credit_card_form_currency_state_locked)
+                },
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = currencyOptions,
+                            selectedCode = uiState.currency,
+                            onCurrencySelected = { option ->
+                                viewModel.onAction(CreditCardFormAction.CurrencySelected(option.code))
+                            },
+                        )
+                    )
+                },
             )
 
             Spacer(modifier = Modifier.height(8.dp))

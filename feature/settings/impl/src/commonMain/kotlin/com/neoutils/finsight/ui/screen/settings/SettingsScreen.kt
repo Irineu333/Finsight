@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -143,12 +144,21 @@ private fun BaseCurrencySection(uiState: SettingsUiState) {
     }
 }
 
-/** The symbol as the glyph, in the 52dp box the account form already uses for one. */
+/**
+ * The symbol as the glyph, in the 52dp box the account form already uses for one — and
+ * in the app's own accent, like every other icon box in it.
+ *
+ * The colour here says nothing: it is the same accent whatever the currency, and every
+ * fact on this screen is carried by a word beside it. That is what separates it from
+ * the `Warning` on an outdated rate, which is a signal and therefore never travels
+ * without its label.
+ */
 @Composable
 private fun CurrencyGlyph(symbol: String) {
+    val accentColor = colorScheme.primary
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = colorScheme.surfaceVariant,
+        color = accentColor.copy(alpha = 0.12f),
         modifier = Modifier.size(48.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -156,7 +166,26 @@ private fun CurrencyGlyph(symbol: String) {
                 text = symbol,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = colorScheme.onSurfaceVariant,
+                color = accentColor,
+            )
+        }
+    }
+}
+
+/** The same box as [CurrencyGlyph], holding an icon instead of a symbol. */
+@Composable
+private fun CurrencyGlyphIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    val accentColor = colorScheme.primary
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = accentColor.copy(alpha = 0.12f),
+        modifier = Modifier.size(48.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accentColor,
             )
         }
     }
@@ -172,6 +201,8 @@ private fun ExchangeRatesRow(onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
     ) {
+        CurrencyGlyphIcon(Icons.Default.CurrencyExchange)
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(Res.string.settings_exchange_rates_title),

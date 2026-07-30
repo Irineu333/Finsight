@@ -1,11 +1,13 @@
 package com.neoutils.finsight.ui.modal.currencyPicker
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -70,6 +72,9 @@ class CurrencyPickerModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
         ) {
+            // Left-aligned, like `IconPickerModal`. A form centres its title because it
+            // is a dialog about one thing; a picker's title labels the list under it,
+            // and labels sit above the left edge of what they label.
             Text(
                 text = title,
                 style = typography.titleLarge,
@@ -96,45 +101,86 @@ class CurrencyPickerModal(
     }
 }
 
+/**
+ * One offered currency.
+ *
+ * The symbol sits in the same accent-tinted box every icon in this app sits in, and the
+ * selected row carries the 2dp accent border `IconPickerModal` established — the two are
+ * siblings, and a picker that renders its choices in `onSurfaceVariant` reads as a list
+ * of things the app has disabled rather than a list of things to pick.
+ *
+ * The colour says nothing here either: it is the same accent on every row, and what
+ * marks the selection is the border **and** the check.
+ */
 @Composable
 private fun CurrencyRow(
     currency: CurrencyOption,
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+    val accentColor = colorScheme.primary
+
     Surface(
         onClick = onClick,
-        color = colorScheme.surfaceContainerHighest,
+        color = if (isSelected) {
+            accentColor.copy(alpha = 0.12f)
+        } else {
+            colorScheme.surfaceContainerHighest
+        },
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = accentColor,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                } else {
+                    Modifier
+                }
+            ),
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            // The symbol as the glyph, the same way the account form shows an icon.
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(28.dp),
+            // The symbol as the glyph, in the same tinted box the account form gives
+            // an icon.
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = if (isSelected) {
+                    accentColor.copy(alpha = 0.20f)
+                } else {
+                    accentColor.copy(alpha = 0.12f)
+                },
+                modifier = Modifier.size(40.dp),
             ) {
-                Text(
-                    text = currency.symbol,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurfaceVariant,
-                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Text(
+                        text = currency.symbol,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = accentColor,
+                    )
+                }
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = currency.name,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface,
                 )
                 Text(
                     text = currency.code,
-                    style = typography.labelSmall,
+                    style = typography.labelMedium,
                     color = colorScheme.onSurfaceVariant,
                 )
             }
@@ -143,7 +189,7 @@ private fun CurrencyRow(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = colorScheme.primary,
+                    tint = accentColor,
                     modifier = Modifier.size(20.dp),
                 )
             }

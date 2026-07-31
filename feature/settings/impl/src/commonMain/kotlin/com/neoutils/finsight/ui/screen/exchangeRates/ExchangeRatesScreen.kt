@@ -40,9 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.decimal_separator
 import com.neoutils.finsight.resources.exchange_rates_add
 import com.neoutils.finsight.resources.exchange_rates_empty
 import com.neoutils.finsight.resources.exchange_rates_outdated
@@ -55,7 +56,6 @@ import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.formatRate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -77,7 +77,6 @@ fun ExchangeRatesScreen(
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
-    val separator = stringResource(Res.string.decimal_separator)
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("exchange_rates")
@@ -142,7 +141,6 @@ fun ExchangeRatesScreen(
                 ExchangeRateRow(
                     item = item,
                     baseCurrency = uiState.baseCurrency,
-                    separator = separator,
                     onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
                 )
             }
@@ -154,9 +152,10 @@ fun ExchangeRatesScreen(
 private fun ExchangeRateRow(
     item: ExchangeRateItem,
     baseCurrency: String,
-    separator: String,
     onClick: () -> Unit,
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Surface(
         onClick = onClick,
         color = colorScheme.surfaceContainerHighest,
@@ -168,11 +167,13 @@ private fun ExchangeRateRow(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Text(
+                // A rate **is** money: so many of the base per one unit of the currency.
+                // So it reads through the app's own money formatter, in the base — the
+                // same text the field that registers it shows.
                 text = stringResource(
                     Res.string.exchange_rates_quote,
-                    item.rate.currency,
-                    formatRate(item.rate.rate, separator),
-                    baseCurrency,
+                    CurrencyCatalog.symbolOf(item.rate.currency),
+                    formatter.format(item.rate.rate, baseCurrency),
                 ),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,

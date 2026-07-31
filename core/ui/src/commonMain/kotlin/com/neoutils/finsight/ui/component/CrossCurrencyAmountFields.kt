@@ -21,14 +21,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.usecase.CrossCurrencyAmountSuggestion
 import com.neoutils.finsight.domain.usecase.impliedRate
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.cross_currency_implied_by_rate
-import com.neoutils.finsight.resources.decimal_separator
 import com.neoutils.finsight.resources.exchange_rates_quote
 import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.formatRate
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -110,7 +109,6 @@ fun CounterpartAmountField(
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val separator = stringResource(Res.string.decimal_separator)
 
     val sameDay = suggestion != null && suggestion.asOf == date
 
@@ -140,9 +138,10 @@ fun CounterpartAmountField(
             // nothing — the amounts *are* the observation (design D6).
             typedRate != null -> stringResource(
                 Res.string.exchange_rates_quote,
-                counterpartCurrency,
-                formatRate(typedRate, separator),
-                currency,
+                CurrencyCatalog.symbolOf(counterpartCurrency),
+                // The rate is money in the currency this field is denominated in — read
+                // through the same formatter as the amounts above it.
+                formatter.format(typedRate, currency),
             )
 
             // A rate from another day is offered, never assumed — and it says which day,

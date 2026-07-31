@@ -868,7 +868,7 @@
     <string name="exchange_rates_screen_title">Taxas de câmbio</string>
     <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
     <string name="exchange_rates_add">Cadastrar taxa</string>
-    <string name="exchange_rates_quote">1 %1$s = %2$s %3$s</string>
+    <string name="exchange_rates_quote">1 %1$s = %2$s</string>
     <string name="exchange_rates_source_derived">De uma operação</string>
     <string name="exchange_rates_source_user">Informada por você</string>
     <string name="exchange_rates_outdated">Desatualizada</string>
@@ -882,6 +882,5 @@
     <string name="exchange_rate_form_date">Data</string>
     <string name="exchange_rate_form_save">Salvar</string>
     <string name="exchange_rate_form_remove">Remover</string>
-    <string name="decimal_separator">,</string>
     <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
 </resources>

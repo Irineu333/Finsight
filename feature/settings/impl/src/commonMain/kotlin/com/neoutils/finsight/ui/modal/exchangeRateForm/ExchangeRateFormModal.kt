@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.decimal_separator
 import com.neoutils.finsight.resources.exchange_rate_form_currency
 import com.neoutils.finsight.resources.exchange_rate_form_date
 import com.neoutils.finsight.resources.exchange_rate_form_rate
@@ -54,12 +53,12 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.RateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
-import com.neoutils.finsight.util.formatRate
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.util.stringUiText
-import com.neoutils.finsight.util.toRateOrNull
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -89,15 +88,21 @@ class ExchangeRateFormModal(
         val viewModel = koinViewModel<ExchangeRateFormViewModel> { parametersOf(existing) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
-        val separator = stringResource(Res.string.decimal_separator)
 
+        // **A rate is money**: so many of the base currency per one unit of the other.
+        // So the field is a money field of this app, in the base — the same transformation,
+        // the same symbol, the same reading as every other amount the user types.
+        val formatter = LocalCurrencyFormatter.current
         val rate = rememberTextFieldState(
-            uiState.rate?.let { formatRate(it, separator) }.orEmpty()
+            uiState.rate?.let { formatter.format(it, uiState.baseCurrency) }.orEmpty()
         )
 
         LaunchedEffect(Unit) {
             snapshotFlow { rate.text.toString() }
-                .collect { viewModel.onAction(ExchangeRateFormAction.ChangeRate(it.toRateOrNull())) }
+                .collect {
+                    val typed = it.moneyToDouble().takeIf { value -> value > 0.0 }
+                    viewModel.onAction(ExchangeRateFormAction.ChangeRate(typed))
+                }
         }
 
         val date = rememberTextFieldState(dayMonthYear.format(uiState.date))
@@ -215,13 +220,9 @@ class ExchangeRateFormModal(
                         )
                     )
                 },
-                // A rate is typed left to right, so the field keeps what was typed and
-                // only refuses what a rate cannot be — one separator, four decimals, no
-                // stray characters. The separator the keyboard emits becomes the
-                // language's, which is what keeps `5,32` from becoming `532`.
-                inputTransformation = RateInputTransformation(separator),
+                inputTransformation = rememberMoneyInputTransformation(uiState.baseCurrency, rate),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,
                 ),
                 shape = RoundedCornerShape(12.dp),

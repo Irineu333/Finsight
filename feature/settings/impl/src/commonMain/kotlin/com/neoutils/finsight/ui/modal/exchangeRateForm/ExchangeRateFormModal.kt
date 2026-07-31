@@ -1,7 +1,7 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -14,9 +14,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -26,8 +30,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +56,6 @@ import com.neoutils.finsight.resources.exchange_rate_form_title_edit
 import com.neoutils.finsight.resources.exchange_rate_form_title_new
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
-import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
@@ -145,64 +149,68 @@ class ExchangeRateFormModal(
             // correct that observation, it would silently reassign it to another
             // currency. Removing and registering again is the honest path.
             if (!uiState.isEditing) {
-                val pickerTitle = stringResource(Res.string.exchange_rate_form_currency)
-                val options = uiState.selectableCurrencies.map {
-                    CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
-                }
-                val selected = options.firstOrNull { it.code == uiState.currency }
-
-                val openCurrencies = {
-                    modalManager.show(
-                        CurrencyPickerModal(
-                            title = pickerTitle,
-                            currencies = options,
-                            selectedCode = uiState.currency,
-                            onCurrencySelected = {
-                                viewModel.onAction(ExchangeRateFormAction.SelectCurrency(it.code))
-                            },
-                        )
-                    )
-                }
-
-                // A field of the form that opens the shared sheet — the same shape
-                // `ConfirmRecurringModal` uses for its date. The sheet is where the
-                // currencies are chosen everywhere in the app, and a list of twenty is
-                // not a dropdown's job.
+                // **The selector of this app, whole** — `menuAnchor` and nothing else.
+                // The field that opened the shared sheet had two defects with one cause:
+                // a text field owns its own gestures, so bolting an opener onto it needs
+                // a second affordance for the arrow, and the two paths then read as two
+                // controls doing one thing. On iOS the field's half did not fire at all,
+                // and the sheet — a modal over a modal — surfaced behind a keyboard that
+                // nothing had dismissed.
                 //
-                // **The whole field opens it, and `Modifier.clickable` is not how.** A
-                // text field consumes the gesture to place its own cursor, so a
-                // `clickable` around it fires unreliably and the field takes focus it has
-                // nothing to do with — a tap that sometimes did nothing. The press comes
-                // from the field's own `interactionSource`, which reports it even while
-                // read-only.
-                val interactions = remember { MutableInteractionSource() }
+                // `ExposedDropdownMenuBox` answers all of it because it is the only
+                // component here that owns the anchor: the whole field is the target, the
+                // trailing icon is decoration rather than a button, and the menu is a
+                // popup over the sheet instead of another sheet under the keyboard.
+                var expanded by remember { mutableStateOf(false) }
 
-                LaunchedEffect(interactions) {
-                    interactions.interactions.collect {
-                        if (it is PressInteraction.Release) openCurrencies()
-                    }
+                val options = uiState.selectableCurrencies.map {
+                    it.code to "${it.symbol} · ${stringUiText(it.name)} (${it.code})"
                 }
 
-                OutlinedTextField(
-                    value = selected?.let { "${it.symbol} · ${it.name} (${it.code})" }
-                        ?: uiState.currency,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
-                    trailingIcon = {
-                        IconButton(onClick = { openCurrencies() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                tint = colorScheme.primary,
-                            )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = {
+                        if (options.isNotEmpty()) {
+                            expanded = it
                         }
                     },
-                    interactionSource = interactions,
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth(),
-                )
+                ) {
+                    OutlinedTextField(
+                        value = options.firstOrNull { it.first == uiState.currency }?.second
+                            ?: uiState.currency,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        enabled = options.isNotEmpty(),
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth(),
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        options.forEach { (code, label) ->
+                            DropdownMenuItem(
+                                text = { Text(text = label, fontSize = 14.sp) },
+                                onClick = {
+                                    viewModel.onAction(
+                                        ExchangeRateFormAction.SelectCurrency(code)
+                                    )
+                                    expanded = false
+                                },
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
             }

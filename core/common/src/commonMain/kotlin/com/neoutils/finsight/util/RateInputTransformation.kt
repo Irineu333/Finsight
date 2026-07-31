@@ -6,17 +6,27 @@ import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 
 /**
- * Formats a rate as it is typed, exactly the way [MoneyInputTransformation] formats
- * money: the digits fill from the right, and the field always reads as a number rather
- * than as whatever the keyboard produced.
+ * Keeps a rate field readable as it is typed, **without typing it for the user**.
  *
- * The scale is [RATE_DISPLAY_SCALE], so `55000` reads `5,5000` — the same four places
- * the rates screen shows, resolved through the same [formatRate] rule, so a rate never
- * reads one way where it is typed and another where it is listed.
+ * It is deliberately *not* [MoneyInputTransformation]. Money fills from the right because
+ * the digits are cents and the last two always are: typing `5`, `0`, `0` means five reais.
+ * A rate is not counted that way — `5,32` is five and thirty-two hundredths, typed left to
+ * right — and filling from the right turned that into `0,0532`, which is the field typing
+ * something the user did not.
  *
- * It also settles the decimal separator for good: a keyboard that emits `.` and a
- * language that writes `,` no longer disagree, because no separator the user types
- * survives — only digits do. That is what keeps `5,32` from silently becoming `532`.
+ * So the rule keeps what was typed and only refuses what a rate cannot be:
+ *
+ * - digits and **one** separator survive; every other character is dropped;
+ * - the separator the keyboard emitted becomes the language's, so a comma keyboard and a
+ *   dot keyboard write the same rate. This is what keeps `5,32` from becoming `532` — the
+ *   defect that had the dollar registered at five hundred;
+ * - at most [RATE_DISPLAY_SCALE] decimals, which is what the rates screen shows anyway;
+ * - a leading separator gets its `0`, because `,5` is a rate the user meant and not one
+ *   the app should refuse.
+ *
+ * What it does **not** do is complete the decimals. `5,5` stays `5,5` while it is being
+ * typed; it becomes `5,5000` when it is shown, through [formatRate], which is the one
+ * place that decides how a rate reads.
  *
  * @param separator the decimal separator, taken by the caller from the string resources
  * so the field follows the language of the text around it.
@@ -26,38 +36,52 @@ class RateInputTransformation(
 ) : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
-        val formatted = format(asCharSequence().toString())
+        val kept = keep(asCharSequence().toString())
 
-        if (formatted.isEmpty()) {
+        if (kept.isEmpty()) {
             delete(0, length)
             return
         }
 
-        replace(0, length, formatted)
-        placeCursorAtEnd()
+        if (kept != asCharSequence().toString()) {
+            replace(0, length, kept)
+            placeCursorAtEnd()
+        }
     }
 
     /**
-     * What the field reads as after [text] was typed into it — public because it *is*
-     * the rule, and a rule that can only be observed by driving a text field is a rule
-     * no test can state. Empty when there is no digit to read.
-     *
-     * Formatted from the digits themselves, never through a `Double`: the field is text
-     * on its way to becoming a number, and rounding it twice on the way in is how a
-     * typed rate stops being what was typed.
+     * What survives of [text] — public because it *is* the rule, and a rule that can only
+     * be observed by driving a text field is a rule no test can state.
      */
-    fun format(text: String): String {
-        val digits = text.filter { it.isDigit() }.take(MAX_DIGITS)
-        if (digits.isEmpty()) return ""
+    fun keep(text: String): String {
+        val builder = StringBuilder()
+        var decimals = -1
 
-        val padded = digits.padStart(RATE_DISPLAY_SCALE + 1, '0')
-        val whole = padded.dropLast(RATE_DISPLAY_SCALE).trimStart('0').ifEmpty { "0" }
-        val fraction = padded.takeLast(RATE_DISPLAY_SCALE)
-        return "$whole$separator$fraction"
-    }
+        for (char in text) {
+            when {
+                char.isDigit() && decimals < 0 -> builder.append(char)
 
-    private companion object {
-        /** Enough for any rate the catalog can hold, and short of anything that overflows. */
-        const val MAX_DIGITS = 12
+                char.isDigit() && decimals < RATE_DISPLAY_SCALE -> {
+                    builder.append(char)
+                    decimals++
+                }
+
+                // Past the scale the screen shows: dropped rather than rounded, because
+                // rounding here would silently change the number being typed.
+                char.isDigit() -> Unit
+
+                // The first separator, whichever the keyboard emitted, becomes the
+                // language's. Any after it is not a separator, it is a slip.
+                (char == ',' || char == '.') && decimals < 0 -> {
+                    if (builder.isEmpty()) builder.append('0')
+                    builder.append(separator)
+                    decimals = 0
+                }
+
+                else -> Unit
+            }
+        }
+
+        return builder.toString()
     }
 }

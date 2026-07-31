@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -161,6 +163,21 @@ class ExchangeRateFormModal(
                 // `ConfirmRecurringModal` uses for its date. The sheet is where the
                 // currencies are chosen everywhere in the app, and a list of twenty is
                 // not a dropdown's job.
+                //
+                // **The whole field opens it, and `Modifier.clickable` is not how.** A
+                // text field consumes the gesture to place its own cursor, so a
+                // `clickable` around it fires unreliably and the field takes focus it has
+                // nothing to do with — a tap that sometimes did nothing. The press comes
+                // from the field's own `interactionSource`, which reports it even while
+                // read-only.
+                val interactions = remember { MutableInteractionSource() }
+
+                LaunchedEffect(interactions) {
+                    interactions.interactions.collect {
+                        if (it is PressInteraction.Release) openCurrencies()
+                    }
+                }
+
                 OutlinedTextField(
                     value = selected?.let { "${it.symbol} · ${it.name} (${it.code})" }
                         ?: uiState.currency,
@@ -176,11 +193,10 @@ class ExchangeRateFormModal(
                             )
                         }
                     },
+                    interactionSource = interactions,
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { openCurrencies() },
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -199,12 +215,13 @@ class ExchangeRateFormModal(
                         )
                     )
                 },
-                // Formatted as it is typed, in the four places the rates screen shows —
-                // and the keyboard's separator stops mattering, because only digits
-                // survive. `5,32` typed on a comma keyboard was becoming `532`.
+                // A rate is typed left to right, so the field keeps what was typed and
+                // only refuses what a rate cannot be — one separator, four decimals, no
+                // stray characters. The separator the keyboard emits becomes the
+                // language's, which is what keeps `5,32` from becoming `532`.
                 inputTransformation = RateInputTransformation(separator),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
                 ),
                 shape = RoundedCornerShape(12.dp),

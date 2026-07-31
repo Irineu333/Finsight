@@ -24,10 +24,15 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * @param onSeeRates where the badge that explains an approximate or unresolved figure
+ * leads. `null` leaves the widget without that way out.
+ */
 @Composable
 fun BudgetProgressCard(
     budgetProgress: List<BudgetProgress>,
     modifier: Modifier = Modifier,
+    onSeeRates: (() -> Unit)? = null,
     onBudgetClick: (BudgetProgress) -> Unit = {},
 ) {
     Card(
@@ -44,12 +49,30 @@ fun BudgetProgressCard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = stringResource(Res.string.budget_progress_card_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.budget_progress_card_title),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                // This widget holds several budgets, so the badge speaks for the card
+                // rather than for a row — the same shape `SummaryCard` already has with
+                // its six lines of money. Which budget is which is answered by opening
+                // one, where the badge sits on that budget alone.
+                if (onSeeRates != null) {
+                    ApproximationBadge(
+                        figures = budgetProgress.take(3).mapNotNull { it.spentFigure },
+                        onSeeRates = onSeeRates,
+                    )
+                }
+            }
 
             budgetProgress.take(3).forEach { progress ->
                 BudgetProgressRow(

@@ -705,10 +705,12 @@ private fun DashboardBudgetsSection(
 ) {
     val detailController = LocalDetailPaneController.current
     val budgetsEntry = koinInject<BudgetsEntry>()
+    val navController = LocalNavController.current
     val component = variant.component
 
     BudgetProgressCard(
         budgetProgress = component.budgetProgress,
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),

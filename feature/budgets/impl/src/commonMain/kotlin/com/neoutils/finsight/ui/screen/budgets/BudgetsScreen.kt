@@ -33,9 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatOrUnresolved
+import com.neoutils.finsight.ui.component.ApproximationBadge
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -69,6 +72,7 @@ fun BudgetsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
+    val navController = LocalNavController.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("budgets")
@@ -148,6 +152,7 @@ fun BudgetsScreen(
                         BudgetProgressItem(
                             progress = progress,
                             onClick = { detailController.show(ViewBudgetModal(progress.budget.id, uiState.selectedMonth)) },
+                            onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),
@@ -215,6 +220,7 @@ private fun MonthSelector(
 private fun BudgetProgressItem(
     progress: BudgetProgress,
     onClick: () -> Unit,
+    onSeeRates: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -244,6 +250,7 @@ private fun BudgetProgressItem(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 CategoryIconBox(
                     icon = progress.budget.icon,
@@ -252,7 +259,7 @@ private fun BudgetProgressItem(
                     modifier = Modifier.size(40.dp),
                 )
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = progress.budget.title,
                         fontSize = 18.sp,
@@ -275,6 +282,13 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                 }
+
+                // This card is one budget, so the badge here is unambiguous — it explains
+                // *this* progress. Top-right corner, like every other badge in the app.
+                ApproximationBadge(
+                    figures = listOfNotNull(progress.spentFigure),
+                    onSeeRates = onSeeRates,
+                )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

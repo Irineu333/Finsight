@@ -872,6 +872,7 @@
     <string name="exchange_rates_screen_title">Taxas de câmbio</string>
     <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
     <string name="exchange_rates_add">Cadastrar taxa</string>
+    <string name="exchange_rates_base_hint">Cotações em %1$s</string>
     <string name="exchange_rates_quote">1 %1$s = %2$s</string>
     <string name="exchange_rates_source_derived">De uma operação</string>
     <string name="exchange_rates_source_user">Informada por você</string>

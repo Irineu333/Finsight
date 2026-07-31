@@ -871,6 +871,7 @@
     <string name="exchange_rates_screen_title">Exchange rates</string>
     <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>
     <string name="exchange_rates_add">Add rate</string>
+    <string name="exchange_rates_base_hint">Quotes in %1$s</string>
     <string name="exchange_rates_quote">1 %1$s = %2$s</string>
     <string name="exchange_rates_source_derived">From an operation</string>
     <string name="exchange_rates_source_user">Entered by you</string>

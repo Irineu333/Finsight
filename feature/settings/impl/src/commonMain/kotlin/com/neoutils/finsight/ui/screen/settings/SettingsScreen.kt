@@ -4,14 +4,11 @@ package com.neoutils.finsight.ui.screen.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -23,7 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -43,6 +39,8 @@ import com.neoutils.finsight.resources.settings_base_currency_title
 import com.neoutils.finsight.resources.settings_exchange_rates_subtitle
 import com.neoutils.finsight.resources.settings_exchange_rates_title
 import com.neoutils.finsight.resources.settings_screen_title
+import com.neoutils.finsight.ui.component.CurrencyGlyph
+import com.neoutils.finsight.ui.component.CurrencyGlyphIcon
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
@@ -141,53 +139,6 @@ private fun BaseCurrencySection(uiState: SettingsUiState) {
             fontSize = 13.sp,
             color = colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-/**
- * The symbol as the glyph, in the 52dp box the account form already uses for one — and
- * in the app's own accent, like every other icon box in it.
- *
- * The colour here says nothing: it is the same accent whatever the currency, and every
- * fact on this screen is carried by a word beside it. That is what separates it from
- * the `Warning` on an outdated rate, which is a signal and therefore never travels
- * without its label.
- */
-@Composable
-private fun CurrencyGlyph(symbol: String) {
-    val accentColor = colorScheme.primary
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = accentColor.copy(alpha = 0.12f),
-        modifier = Modifier.size(48.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = symbol,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = accentColor,
-            )
-        }
-    }
-}
-
-/** The same box as [CurrencyGlyph], holding an icon instead of a symbol. */
-@Composable
-private fun CurrencyGlyphIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    val accentColor = colorScheme.primary
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = accentColor.copy(alpha = 0.12f),
-        modifier = Modifier.size(48.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = accentColor,
-            )
-        }
     }
 }
 

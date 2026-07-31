@@ -92,10 +92,17 @@ class SingleCurrencyInertiaTest {
      * denomination of a *limit* among currencies that already exist, and creates none
      * (design D13). The distinction is the whole reason the account form shows its row
      * even with a single currency while the budget form shows nothing.
+     *
+     * The detector names **both spellings** the app uses for the one idea. It used to
+     * name only the shared sheet's callback, which quietly meant "chooses a currency
+     * *through `CurrencyPickerModal`*" — so the rate form dropped out of this set the
+     * moment its field became the dropdown every other selector of this app is, without
+     * having stopped choosing a currency for one instant. A guard that a change of
+     * widget can switch off is not guarding the rule it is named after.
      */
     @Test
     fun `exactly two forms let the user choose an account's currency`() {
-        val choosesACurrency = Regex("""CurrencySelected""")
+        val choosesACurrency = Regex("""CurrencySelected|SelectCurrency""")
 
         val expected = setOf(
             // The shared sheet itself: it renders whatever list it is handed and
@@ -116,7 +123,9 @@ class SingleCurrencyInertiaTest {
             "feature/budgets/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/budgetForm/BudgetFormViewModel.kt",
             // The rate form picks which currency a rate is *about* — an observation, not
             // an account.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormAction.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",
         )
 
         val found = productionSources

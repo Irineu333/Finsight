@@ -47,9 +47,13 @@ data class ConsolidatedAmount(
      *
      * It is here, and not passed to the footer by each screen, for the same reason the
      * mark is: whoever produced the figure knows it, and a screen that had to supply it
-     * would be deciding something it does not know. Non-null exactly when
-     * [isApproximate] is true — the reference date of a figure nothing was converted for
-     * is not a fact about the figure.
+     * would be deciding something it does not know.
+     *
+     * Non-null exactly when a rate **converted** something — which is narrower than
+     * [isApproximate]. A figure of several currencies that no rate could touch is
+     * approximate (it holds amounts that do not add up) and yet has no reference date,
+     * because no rate took part in it. The two are different facts, and conflating them
+     * is what lets a surface name a rate that was never applied.
      */
     val asOf: LocalDate? = null,
 ) {

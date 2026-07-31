@@ -109,6 +109,33 @@ class ConsolidatedAmountTest {
         assertEquals("$APPROXIMATION_MARK +${formatter.format(50.0, USD)}", formatter.formatTerms(figure)[1])
     }
 
+    /**
+     * The commonest multi-currency reading there is: two currencies with a known rate
+     * reduce to **one** term, and that term is approximate.
+     *
+     * It is worth a test of its own because a single-term figure looks like the trivial
+     * case and is not — the renderer took a shortcut for it and printed the amount without
+     * its mark, so the best case of the whole feature rendered as if it were exact. `text`
+     * is what carries the mark; `amount` is deliberately without it, for the terms of a
+     * multi-term figure that are not the first.
+     */
+    @Test
+    fun aFigureOfOneApproximateTermStillSpellsItsMark() {
+        val figure = ConsolidatedAmount(
+            terms = listOf(DisplayAmount.natural(375.0, BRL, isApproximate = true)),
+            isApproximate = true,
+            baseIndex = 0,
+        )
+
+        val term = formatter.figureTerms(figure).single()
+
+        assertEquals(APPROXIMATION_MARK, term.mark)
+        assertTrue(
+            term.text.startsWith(APPROXIMATION_MARK),
+            "the one term of a reduced figure must read as approximate",
+        )
+    }
+
     @Test
     fun aNarrowSurfaceDegradesToTheBaseTerm() {
         assertEquals(BRL, approximate().degradedTerm().currency)

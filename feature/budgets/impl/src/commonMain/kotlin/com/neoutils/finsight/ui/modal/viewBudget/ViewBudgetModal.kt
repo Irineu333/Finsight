@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -47,6 +49,7 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.money_unconverted_term
 import com.neoutils.finsight.resources.view_budget_delete
 import com.neoutils.finsight.resources.view_budget_edit
 import com.neoutils.finsight.resources.view_budget_exceeded_by_label
@@ -189,7 +192,7 @@ class ViewBudgetModal(
 
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spent, currency),
+                    value = formatter.format(budgetProgress.spentAmount),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -197,12 +200,25 @@ class ViewBudgetModal(
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.spent - budget.amount, currency),
+                        value = formatter.format(budgetProgress.exceededAmount),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remaining, currency),
+                        value = formatter.format(budgetProgress.remainingAmount),
+                    )
+                }
+
+                // Declared degradation (design D20): what no rate reaches is not in the
+                // figures above, so the bar is a floor. The detail view is where the user
+                // comes to understand a number, and it is the last place that may omit it.
+                if (budgetProgress.hasUnpricedSpending) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(Res.string.money_unconverted_term),
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
                     )
                 }
             }

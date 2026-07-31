@@ -256,6 +256,39 @@ class ConsolidateMoneyUseCaseTest {
         assertTrue(figure.isApproximate)
     }
 
+    /**
+     * The reference date is a fact about a **conversion**, so a figure no rate touched has
+     * none — even though it is approximate.
+     *
+     * The two are different questions, and answering this one with `isApproximate` is what
+     * let a surface tell a user with no rates at all that "what could be converted used the
+     * rate of 10 March": naming a rate that was never applied and does not exist.
+     */
+    @Test
+    fun `a figure no rate reached reports no date`() = runTest {
+        val untouched = reducer()(
+            MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertNull(untouched.asOf, "no rate took part, so there is no date to report")
+        assertEquals(0, untouched.baseIndex, "and a base term exists all the same")
+        assertFalse(
+            untouched.base!!.isApproximate,
+            "money already in the base was converted by nothing — this is what a surface must read",
+        )
+
+        val converted = reducer(rates = arrayOf("USD" to 5.5))(
+            MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(march, converted.asOf)
+        assertTrue(converted.base!!.isApproximate)
+    }
+
     @Test
     fun `the caller's sign policy travels into every term`() = runTest {
         val figure = reducer()(

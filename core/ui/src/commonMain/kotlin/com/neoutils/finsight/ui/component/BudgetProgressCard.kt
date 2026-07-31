@@ -14,9 +14,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
+import com.neoutils.finsight.resources.money_unconverted_term
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -101,11 +103,23 @@ private fun BudgetProgressRow(
                 // declares its currency once, at creation, and the progress is the
                 // spending reduced *to it* (design D13).
                 Text(
-                    text = "${formatter.format(progress.spent, progress.budget.currency)} / " +
-                        formatter.format(progress.budget.amount, progress.budget.currency),
+                    text = "${formatter.format(progress.spentAmount)} / " +
+                        formatter.format(progress.limitAmount),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
+                )
+            }
+
+            // Declared degradation (design D20): this label has a grammar of its own and
+            // holds one term, so when part of the spending sits in a currency no rate
+            // reaches, it says so. Leaving it out silently reads as "you spent less than
+            // you have", which is the one direction a budget must never err in.
+            if (progress.hasUnpricedSpending) {
+                Text(
+                    text = stringResource(Res.string.money_unconverted_term),
+                    fontSize = 11.sp,
+                    color = colorScheme.onSurfaceVariant,
                 )
             }
 

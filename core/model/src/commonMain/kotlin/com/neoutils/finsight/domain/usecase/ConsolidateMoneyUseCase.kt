@@ -108,7 +108,11 @@ class ConsolidateMoneyUseCase(
             // typographic weight, and a surface too narrow for the rest degrades to it.
             terms = listOfNotNull(baseTerm) +
                 untouched.map { policy(it.value, it.currency, false) },
-            asOf = on,
+            // The reference date is a fact about a **conversion**, so it exists only when
+            // one happened. A figure of several currencies that no rate could touch has
+            // no date to report, and reporting one would let a surface name a rate that
+            // was never applied.
+            asOf = on.takeIf { convertedSomething },
             // The **figure** is approximate all the same: it holds currencies that do not
             // add up, so it is not one number and no single number answers for it. That
             // is what the badge explains, and it is a different fact from which term a
@@ -297,14 +301,36 @@ class ComparativeMagnitudes<K> internal constructor(
     /** The scale's whole, over the figures that could be placed on it. */
     val total: Double = magnitudes.values.filterNotNull().sum()
 
+    /**
+     * Whether **every** figure of the family could be placed on the scale — which is what
+     * decides whether [total] is a whole at all.
+     *
+     * One figure without a magnitude does not make a smaller whole; it makes the whole
+     * unknown. Summing the rest and calling it the total is the same invention as reading
+     * a missing rate as `1`, only better hidden: the shares of the others still add to
+     * 100%, and 100% of an unknown is not a measurement.
+     */
+    val isWholeKnown: Boolean = magnitudes.values.none { it == null }
+
     /** The sort key of one figure — `null` when nothing about it could be measured. */
     fun magnitudeOf(key: K): Double? = magnitudes[key]
 
     /**
-     * One figure as a fraction of the whole, or `null` when there is no answer: nothing
-     * of it converted, or the whole is zero. A surface shows a dash rather than `0%` —
-     * zero is an assertion, and the absence of a rate is the absence of an answer.
+     * One figure as a fraction of the whole, or `null` when there is no answer: nothing of
+     * it converted, the whole is zero, or **the whole is not known** because some other
+     * figure could not be placed on the scale.
+     *
+     * The last case is why this is not `magnitudeOf(key) / total`. With `Alimentação` at
+     * R$ 60 and `Viagem` at ¥ 5.000 that no rate reaches, dividing by 60 hands `Alimentação`
+     * a full bar reading "this is all you spent" while a whole category sits outside the
+     * denominator — and the figure itself is single-currency, so it is exact and carries no
+     * mark to warn anyone. A surface shows a dash, or no bar: zero is an assertion, and so
+     * is one hundred percent.
+     *
+     * Ordering survives this — [magnitudeOf] still ranks what it can — because putting
+     * figures in order needs no whole.
      */
-    fun shareOf(key: K): Double? =
-        magnitudeOf(key)?.takeIf { total != 0.0 }?.let { it / total }
+    fun shareOf(key: K): Double? = magnitudeOf(key)
+        ?.takeIf { isWholeKnown && total != 0.0 }
+        ?.let { it / total }
 }

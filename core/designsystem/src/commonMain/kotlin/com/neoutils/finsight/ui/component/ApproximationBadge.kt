@@ -63,9 +63,12 @@ fun ApproximationBadge(
             modalManager.show(
                 ApproximationInfoModal(
                     asOf = approximate.asOf,
-                    // Everything a rate reached landed in the base term; anything beside
-                    // it is what no rate could touch.
-                    convertedSomething = approximate.baseIndex != null,
+                    // Whether a rate **passed through** the base term, not whether one
+                    // exists. A base term is there whenever money was already in the base
+                    // and stayed put — `{BRL 100, USD 50}` with no rate at all has one —
+                    // so `baseIndex != null` answers a different question, and answering
+                    // this one with it names a rate that was never applied.
+                    convertedSomething = approximate.base?.isApproximate == true,
                     hasUnconvertedPart = approximate.terms.size > 1,
                     onSeeRates = onSeeRates,
                 )

@@ -98,7 +98,11 @@ fun MoneyText(
     val terms = formatter.figureTerms(figure)
 
     if (terms.size == 1) {
-        Text(text = terms.single().amount, style = style, modifier = modifier)
+        // `text`, never `amount`: a figure that reduced two currencies to one term is a
+        // single term **and** approximate, and that is the commonest multi-currency
+        // reading there is. Printing the amount alone drops its mark, which is the silent
+        // failure the mark exists to prevent.
+        Text(text = terms.single().text, style = style, modifier = modifier)
         return
     }
 

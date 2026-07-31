@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -51,6 +52,7 @@ import com.neoutils.finsight.resources.budgets_limit
 import com.neoutils.finsight.resources.budgets_remaining
 import com.neoutils.finsight.resources.budgets_spent
 import com.neoutils.finsight.resources.budgets_title
+import com.neoutils.finsight.resources.money_unconverted_term
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -295,7 +297,7 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(progress.spent, currency),
+                        text = formatter.format(progress.spentAmount),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -311,16 +313,26 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = if (progress.isExceeded) {
-                            formatter.format(progress.spent - progress.budget.amount, currency)
-                        } else {
-                            formatter.format(progress.remaining, currency)
-                        },
+                        text = formatter.format(
+                            if (progress.isExceeded) progress.exceededAmount else progress.remainingAmount
+                        ),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
                     )
                 }
+            }
+
+            // Declared degradation (design D20): part of the spending sits in a currency
+            // no rate reaches and is therefore *not* in the figures above, which makes the
+            // bar a floor rather than a measurement. Saying so is the difference between
+            // a floor and a number that reads as "you spent less than you have".
+            if (progress.hasUnpricedSpending) {
+                Text(
+                    text = stringResource(Res.string.money_unconverted_term),
+                    fontSize = 12.sp,
+                    color = colorScheme.onSurfaceVariant,
+                )
             }
 
             LinearProgressIndicator(

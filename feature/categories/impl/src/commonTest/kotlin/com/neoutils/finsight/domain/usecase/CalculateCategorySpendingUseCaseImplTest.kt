@@ -149,9 +149,19 @@ class CalculateCategorySpendingUseCaseImplTest {
      * A category whose currency no rate reaches has **no share** — not zero. Zero is an
      * assertion about how much of the total it is; the absence of a rate is the absence
      * of an answer (design D9). It still appears, with its own figure, and last.
+     *
+     * **And neither does anything else in that month**, which is the half this test used
+     * to get wrong. It asserted `100.0` for the category that *could* be measured, over a
+     * total built by summing only the measurable ones — a full bar reading "this is all
+     * you spent" with a whole category outside the denominator. One hundred percent is as
+     * much an assertion as zero, and it is worse here: the surviving figure is
+     * single-currency, so it is exact and carries no mark to warn anyone. One figure
+     * without a magnitude does not make a smaller whole; it makes the whole unknown.
+     *
+     * The ordering survives, because putting figures in order needs no whole.
      */
     @Test
-    fun `a category no rate reaches has no percentage and sorts last`() = runTest {
+    fun `one category no rate reaches leaves the whole month without shares`() = runTest {
         val food = category(1, Category.Type.EXPENSE, accountId = 10)
         val travel = category(2, Category.Type.EXPENSE, accountId = 11)
         val useCase = CalculateCategorySpendingUseCaseImpl(
@@ -164,9 +174,14 @@ class CalculateCategorySpendingUseCaseImplTest {
 
         val result = useCase(MONTH)
 
-        assertEquals(listOf(food, travel), result.map { it.category })
-        assertEquals(100.0, result[0].percentage!!, absoluteTolerance = 0.01)
+        assertEquals(listOf(food, travel), result.map { it.category }, "ordering needs no whole")
+        assertEquals(
+            null,
+            result[0].percentage,
+            "measurable, but against an unknown whole — 100% would be an invention",
+        )
         assertEquals(null, result[1].percentage, "no rate reaches it, so it has no share")
+        assertEquals(60.0, result[0].value, "both figures are untouched")
         assertEquals(5000.0, result[1].value, "and its own figure is untouched")
     }
 

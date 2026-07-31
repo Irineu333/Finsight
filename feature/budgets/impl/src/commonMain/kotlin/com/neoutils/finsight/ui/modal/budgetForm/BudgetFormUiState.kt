@@ -21,14 +21,21 @@ data class BudgetFormUiState(
      *
      * `null` only while it is still being resolved, and [canSubmit] refuses until it is:
      * a limit with an invented denomination is the failure this field exists to prevent.
-     * The control that lets a multi-currency user choose it comes later (task 12.5); a
-     * user with one currency never sees one, because there is nothing to choose.
+     * A user with one currency never sees a control for it, because there is nothing to
+     * choose.
      */
     val currency: String? = null,
     /**
-     * Whether the form offers the choice at all — true only when the user holds more
-     * than one currency and the budget is being created (design D13). With one
-     * currency there is nothing to choose, and the form stays the one it always was.
+     * Whether the form shows the currency row at all — true when the user holds more
+     * than one currency (design D13). With one currency there is nothing to choose, and
+     * the form stays exactly the one it always was, not a control more.
+     */
+    val hasCurrencyChoice: Boolean = false,
+    /**
+     * Whether that row is a picker rather than a locked state — true only while the
+     * budget is being **created**. Editing shows the stored denomination locked, for the
+     * reason of design D12: reinterpreting a saved limit silently rewrites the meaning of
+     * a number the user typed, so changing it means creating another budget.
      */
     val canChangeCurrency: Boolean = false,
     val selectableCurrencies: List<CurrencyInfo> = emptyList(),

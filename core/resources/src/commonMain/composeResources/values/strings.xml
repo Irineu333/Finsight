@@ -364,6 +364,7 @@
     <string name="budget_form_icon_modal_title">Escolha um ícone para o orçamento</string>
     <string name="budget_form_currency_label">Moeda do limite · %1$s</string>
     <string name="budget_form_currency_state_new">Escolhida agora e fixa para este orçamento</string>
+    <string name="budget_form_currency_state_locked">Definida na criação · troque criando outro orçamento</string>
     <string name="budget_form_currency_modal_title">Moeda do limite</string>
     <string name="budget_form_limit_label">Limite</string>
     <string name="budget_form_limit_type_fixed">R$</string>

@@ -38,6 +38,7 @@ class LimitCurrencyChoiceTest {
             picked = null,
         )
 
+        assertFalse(choice.hasChoice, "no row at all — the form is the one it always was")
         assertFalse(choice.canChange, "there is nothing to choose")
         assertEquals("USD", choice.currency)
     }
@@ -55,6 +56,7 @@ class LimitCurrencyChoiceTest {
             picked = null,
         )
 
+        assertFalse(choice.hasChoice)
         assertFalse(choice.canChange)
         assertEquals("USD", choice.currency)
     }
@@ -67,6 +69,7 @@ class LimitCurrencyChoiceTest {
             picked = null,
         )
 
+        assertTrue(choice.hasChoice)
         assertTrue(choice.canChange)
         assertEquals("USD", choice.currency, "where the user spends, not where he reads totals")
         assertEquals(listOf("BRL", "USD"), choice.selectable.map { it.code }.sorted())
@@ -92,6 +95,24 @@ class LimitCurrencyChoiceTest {
         )
 
         assertEquals("USD", choice.currency, "a stored limit is never re-denominated")
+        assertTrue(choice.hasChoice, "shown, so the saved denomination is readable")
+        assertFalse(choice.canChange, "and locked, because changing it means another budget")
+    }
+
+    /**
+     * The half of the previous case that is easy to lose: locking the row is not the same
+     * as hiding it. A single-currency user still sees nothing when editing — there is no
+     * denomination to disambiguate — so the two rules stay independent.
+     */
+    @Test
+    fun `editing with one currency still shows nothing`() {
+        val choice = limitCurrencyChoice(
+            existing = budget,
+            currencies = AccountCurrencies(inUse = listOf("USD"), ofDefaultAccount = "USD"),
+            picked = null,
+        )
+
+        assertFalse(choice.hasChoice)
         assertFalse(choice.canChange)
     }
 }

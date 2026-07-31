@@ -136,34 +136,6 @@ class BudgetFormModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Offered only where there is a choice to make (design D13): the user who
-            // holds one currency meets the form he always met, and the limit takes that
-            // currency because it is the only possible answer, not a silent default.
-            AnimatedVisibility(visible = uiState.canChangeCurrency) {
-                CurrencyRow(
-                    currency = uiState.currency.orEmpty(),
-                    label = stringResource(
-                        Res.string.budget_form_currency_label,
-                        uiState.currency.orEmpty(),
-                    ),
-                    subtitle = stringResource(Res.string.budget_form_currency_state_new),
-                    canChange = true,
-                    onClick = {
-                        modalManager.show(
-                            CurrencyPickerModal(
-                                title = currencyModalTitle,
-                                currencies = currencyOptions,
-                                selectedCode = uiState.currency,
-                                onCurrencySelected = { option ->
-                                    viewModel.onAction(BudgetFormAction.CurrencySelected(option.code))
-                                },
-                            )
-                        )
-                    },
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             when (uiState.limitType) {
@@ -222,6 +194,48 @@ class BudgetFormModal(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Shown whenever there is more than one currency in the app, and only then
+            // (design D13): the user who holds one meets the form he always met, and the
+            // limit takes that currency because it is the only possible answer, not a
+            // silent default. Shown, not *offered*, is the distinction — editing a budget
+            // renders it locked, because a saved limit is never re-denominated and hiding
+            // it would leave "which currency is this number in?" unanswered.
+            //
+            // It sits **with the icon selector and not among the fields**, as in the card
+            // form: the two share the 52dp box that opens a picker, and a box of that
+            // shape between two fields reads as something that fell out of the form.
+            AnimatedVisibility(visible = uiState.hasCurrencyChoice) {
+                Column {
+                    CurrencyRow(
+                        currency = uiState.currency.orEmpty(),
+                        label = stringResource(
+                            Res.string.budget_form_currency_label,
+                            uiState.currency.orEmpty(),
+                        ),
+                        subtitle = if (uiState.canChangeCurrency) {
+                            stringResource(Res.string.budget_form_currency_state_new)
+                        } else {
+                            stringResource(Res.string.budget_form_currency_state_locked)
+                        },
+                        canChange = uiState.canChangeCurrency,
+                        onClick = {
+                            modalManager.show(
+                                CurrencyPickerModal(
+                                    title = currencyModalTitle,
+                                    currencies = currencyOptions,
+                                    selectedCode = uiState.currency,
+                                    onCurrencySelected = { option ->
+                                        viewModel.onAction(BudgetFormAction.CurrencySelected(option.code))
+                                    },
+                                )
+                            )
+                        },
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,

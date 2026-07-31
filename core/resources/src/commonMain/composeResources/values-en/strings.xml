@@ -363,6 +363,7 @@
     <string name="budget_form_icon_modal_title">Choose a budget icon</string>
     <string name="budget_form_currency_label">Limit currency · %1$s</string>
     <string name="budget_form_currency_state_new">Chosen now and fixed for this budget</string>
+    <string name="budget_form_currency_state_locked">Set at creation · change it by creating another budget</string>
     <string name="budget_form_currency_modal_title">Limit currency</string>
     <string name="budget_form_limit_label">Limit</string>
     <string name="budget_form_limit_type_fixed">$</string>

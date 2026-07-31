@@ -173,6 +173,7 @@ class BudgetFormViewModel(
             title = fields.title,
             amount = fields.amount,
             currency = limitCurrency.currency,
+            hasCurrencyChoice = limitCurrency.hasChoice,
             canChangeCurrency = limitCurrency.canChange,
             selectableCurrencies = limitCurrency.selectable,
             validation = validation,
@@ -384,12 +385,21 @@ internal fun limitCurrencyChoice(
     picked: String?,
 ): LimitCurrency = LimitCurrency(
     currency = existing?.currency ?: picked ?: currencies.ofDefaultAccount,
+    hasChoice = currencies.inUse.size > 1,
     canChange = existing == null && currencies.inUse.size > 1,
     selectable = CurrencyCatalog.currencies.filter { it.code in currencies.inUse },
 )
 
 internal data class LimitCurrency(
     val currency: String?,
+    /**
+     * Whether the row is **shown** — decided by the app holding more than one currency,
+     * and by nothing else. Distinct from [canChange], which decides whether it is a
+     * picker or a locked state: editing a budget shows its denomination locked (a
+     * stored limit is never re-denominated), and hiding it there would answer "which
+     * currency is this number in?" with silence.
+     */
+    val hasChoice: Boolean,
     val canChange: Boolean,
     val selectable: List<CurrencyInfo>,
 )

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.model
 
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 
 data class BudgetProgress(
@@ -17,6 +18,17 @@ data class BudgetProgress(
      * which is the one direction a budget must never err in.
      */
     val hasUnpricedSpending: Boolean = false,
+    /**
+     * The same spending as a **figure**: the part expressed in the limit's currency, plus
+     * one term for each currency no rate reaches.
+     *
+     * [spent] and this answer different questions, and both are needed. A bar and a
+     * "spent / limit" label need one number against one limit, and there is none when
+     * part cannot be priced — hence `***`. A detail view has room for the truth: the
+     * money *is* known, and only its expression in the limit's currency is not, so it can
+     * show `R$ 400,00 + US$ 300,00` instead of hiding behind the placeholder.
+     */
+    val spentFigure: ConsolidatedAmount? = null,
     val recurringLabel: String? = null,
     val recurring: Recurring? = null,
 ) {

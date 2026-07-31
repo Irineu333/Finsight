@@ -104,6 +104,7 @@ class CalculateBudgetProgressUseCase(
                 spent = spent.value,
                 isApproximate = spent.isApproximate,
                 hasUnpricedSpending = spent.hasUnconvertedPart,
+                spentFigure = spent.asFigure(budget.currency),
                 recurringLabel = recurring?.label,
                 recurring = recurring,
             )

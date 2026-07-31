@@ -24,13 +24,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatOrUnresolved
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.ApproximationBadge
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
@@ -99,6 +104,7 @@ class ViewBudgetModal(
         recurringEntry: RecurringEntry,
     ) {
         val formatter = LocalCurrencyFormatter.current
+        val navController = LocalNavController.current
         val budget = budgetProgress.budget
         // Limit and spending alike are denominated by the budget, never by the base: the
         // currency is chosen once, at creation, and stays the meaning of both numbers
@@ -117,6 +123,7 @@ class ViewBudgetModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 CategoryIconBox(
                     icon = budget.icon,
@@ -130,6 +137,18 @@ class ViewBudgetModal(
                     text = budget.title,
                     style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+
+                // The explanation lives **here and not on the list**, because the failure
+                // is a property of one budget: only this budget's categories hold a
+                // currency no rate reaches, and a badge on the card that shows three of
+                // them could not say which. Top-right corner, like every other badge.
+                ApproximationBadge(
+                    figures = listOfNotNull(budgetProgress.spentFigure),
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                 )
             }
 
@@ -192,9 +211,29 @@ class ViewBudgetModal(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // The one surface with room for the truth: the spending as the figure it
+                // is, stacked, instead of the `***` a one-line label has to fall back to.
+                // The money is known — only its expression in the limit's currency is not.
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.formatOrUnresolved(budgetProgress.spentAmount),
+                    value = {
+                        val figure = budgetProgress.spentFigure
+                        if (figure != null) {
+                            MoneyText(
+                                figure = figure,
+                                style = LocalTextStyle.current.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                            )
+                        } else {
+                            Text(
+                                text = formatter.formatOrUnresolved(budgetProgress.spentAmount),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    },
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -303,17 +342,24 @@ class ViewBudgetModal(
         }
     }
 
+    /**
+     * The slot form, for a value that is not one line of text — a figure of several terms,
+     * stacked. The string form below delegates to it, so the two can never drift apart in
+     * spacing or alignment.
+     *
+     * Top-aligned rather than centred: with a stacked value the label belongs beside the
+     * *first* term, which is the one that carries the surface's own weight.
+     */
     @Composable
     private fun DetailRow(
         label: String,
-        value: String,
-        valueColor: Color = colorScheme.onSurface,
+        value: @Composable () -> Unit,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             Text(
                 text = label,
@@ -333,13 +379,28 @@ class ViewBudgetModal(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                Text(
-                    text = value,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = valueColor,
-                )
+                value()
             }
         }
     }
+
+    @Composable
+    private fun DetailRow(
+        label: String,
+        value: String,
+        valueColor: Color = colorScheme.onSurface,
+        onClick: (() -> Unit)? = null,
+    ) = DetailRow(
+        label = label,
+        onClick = onClick,
+        value = {
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = valueColor,
+            )
+        },
+    )
+
 }

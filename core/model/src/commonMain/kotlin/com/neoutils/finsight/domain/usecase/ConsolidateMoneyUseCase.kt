@@ -223,7 +223,7 @@ class ConsolidateMoneyUseCase(
 
         val targetRate = rateOf(target)
         var cents = 0L
-        var hasUnconverted = false
+        val unconverted = mutableListOf<CurrencyAmount>()
 
         terms.forEach { term ->
             if (term.currency == target) {
@@ -234,8 +234,9 @@ class ConsolidateMoneyUseCase(
             if (rate == null || targetRate == null) {
                 // No rate reaches this part, so it stays out of the number and says so.
                 // Leaving it in at `1` would be inventing; dropping it silently would be
-                // worse than either.
-                hasUnconverted = true
+                // worse than either. It is kept aside, not thrown away: the amount is
+                // known, only its expression in the target currency is not.
+                unconverted += term
                 return@forEach
             }
             cents += (term.value * rate / targetRate * CENTS_PER_UNIT).roundToLong()
@@ -244,7 +245,8 @@ class ConsolidateMoneyUseCase(
         return ReducedAmount(
             value = cents / CENTS_PER_UNIT,
             isApproximate = true,
-            hasUnconvertedPart = hasUnconverted,
+            hasUnconvertedPart = unconverted.isNotEmpty(),
+            unconverted = unconverted,
         )
     }
 
@@ -285,6 +287,16 @@ data class ReducedAmount(
     val value: Double,
     val isApproximate: Boolean,
     val hasUnconvertedPart: Boolean,
+    /**
+     * The parts no rate could reach, each in its own currency — exactly what [value]
+     * leaves out, and why [hasUnconvertedPart] is true.
+     *
+     * They are carried rather than discarded because a surface with room can show them:
+     * the money is perfectly well known, and only its expression in the target currency
+     * is not. A narrow surface still gets a single number and a flag; a detail view can
+     * show what the number is missing instead of `***`.
+     */
+    val unconverted: List<CurrencyAmount> = emptyList(),
 )
 
 /**
@@ -333,4 +345,28 @@ class ComparativeMagnitudes<K> internal constructor(
     fun shareOf(key: K): Double? = magnitudeOf(key)
         ?.takeIf { isWholeKnown && total != 0.0 }
         ?.let { it / total }
+}
+
+/**
+ * The reduction seen as a **figure** rather than as a number: the part that reached
+ * [target], plus one term for every part no rate could.
+ *
+ * It is here, beside the reduction, so that "what a partial reduction looks like" is one
+ * decision rather than one per screen. Two rules it keeps from the general reducer: the
+ * target term is omitted when nothing landed in it — a `R$ 0,00` beside `US$ 300,00`
+ * asserts a zero nobody measured — and only the term a rate passed through wears the mark,
+ * because a term no rate touched is the ledger's own amount, exact, in its own currency.
+ */
+fun ReducedAmount.asFigure(target: String): ConsolidatedAmount {
+    val convertedSomething = value != 0.0 || unconverted.isEmpty()
+    val targetTerm = DisplayAmount
+        .magnitude(value, target, isApproximate)
+        .takeIf { convertedSomething }
+
+    return ConsolidatedAmount(
+        terms = listOfNotNull(targetTerm) +
+            unconverted.map { DisplayAmount.magnitude(it.value, it.currency, isApproximate = false) },
+        isApproximate = isApproximate,
+        baseIndex = if (targetTerm != null) 0 else null,
+    )
 }

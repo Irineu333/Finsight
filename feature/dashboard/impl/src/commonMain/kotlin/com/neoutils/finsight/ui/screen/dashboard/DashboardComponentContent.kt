@@ -714,7 +714,7 @@ private fun DashboardBudgetsSection(
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id))
+                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id, component.targetMonth))
             }
         },
     )

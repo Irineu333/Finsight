@@ -33,6 +33,7 @@ import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
+import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.ApproximationBadge
 import com.neoutils.finsight.ui.component.MoneyText
@@ -68,6 +69,7 @@ import org.koin.core.parameter.parametersOf
 
 class ViewBudgetModal(
     private val budgetId: Long,
+    private val month: YearMonth,
 ) : AdaptiveModal() {
 
     @Composable
@@ -75,7 +77,7 @@ class ViewBudgetModal(
         val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
 
-        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId, month) }
         val uiState by viewModel.uiState.collectAsState()
 
         LaunchedEffect(viewModel) {
@@ -274,7 +276,7 @@ class ViewBudgetModal(
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId, month) }
         val uiState by viewModel.uiState.collectAsState()
 
         val budgetProgress = (uiState as? ViewBudgetUiState.Content)?.budgetProgress ?: return

@@ -15,13 +15,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
+import kotlinx.datetime.YearMonth
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
+    /**
+     * The month the screen that opened this was showing. Not "today": a budget's progress
+     * is a fact about a month, and reading the current one while the list reads another
+     * shows a number that belongs to a different period.
+     */
+    private val month: YearMonth,
     budgetRepository: IBudgetRepository,
     transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
@@ -37,7 +40,6 @@ class ViewBudgetViewModel(
         transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
     ) { budgets, transactions, recurringList ->
-        val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
         calculateBudgetProgressUseCase(
             budgets = budgets,
             recurringList = recurringList,

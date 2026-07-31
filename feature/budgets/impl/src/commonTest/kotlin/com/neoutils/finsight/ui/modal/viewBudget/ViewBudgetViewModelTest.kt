@@ -162,11 +162,14 @@ class ViewBudgetViewModelTest {
     ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
+    private val MONTH = YearMonth(2026, 3)
+
     private fun viewModel(
         budgetRepository: FakeBudgetRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = ViewBudgetViewModel(
         budgetId = 1L,
+        month = MONTH,
         budgetRepository = budgetRepository,
         transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),

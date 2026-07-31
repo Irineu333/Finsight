@@ -145,7 +145,7 @@ fun BudgetsScreen(
                     ) { progress ->
                         BudgetProgressItem(
                             progress = progress,
-                            onClick = { detailController.show(ViewBudgetModal(progress.budget.id)) },
+                            onClick = { detailController.show(ViewBudgetModal(progress.budget.id, uiState.selectedMonth)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),

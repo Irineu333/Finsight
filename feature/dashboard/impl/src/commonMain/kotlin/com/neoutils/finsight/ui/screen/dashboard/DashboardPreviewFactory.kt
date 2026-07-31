@@ -11,6 +11,7 @@ import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.getString
 
 class DashboardPreviewFactory(
@@ -219,6 +220,7 @@ class DashboardPreviewFactory(
         DashboardComponentType.BUDGETS.key -> {
             DashboardComponentVariant.Budgets.Preview(
                 component = DashboardComponent.Budgets(
+                    targetMonth = on.yearMonth,
                     budgetProgress = listOf(
                         BudgetProgress(
                             budget = Budget(

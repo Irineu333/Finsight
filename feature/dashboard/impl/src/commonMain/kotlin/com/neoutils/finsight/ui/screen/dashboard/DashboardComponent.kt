@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.BudgetProgress
+import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -93,6 +94,12 @@ sealed interface DashboardComponent {
 
     data class Budgets(
         val budgetProgress: List<BudgetProgress>,
+        /**
+         * The month this progress is about — carried so the detail opened from here reads
+         * the same one. Progress is a fact about a month, and the dashboard's month is
+         * chosen by the user.
+         */
+        val targetMonth: YearMonth,
     ) : DashboardComponent {
         override val key = DashboardComponentType.BUDGETS.key
     }

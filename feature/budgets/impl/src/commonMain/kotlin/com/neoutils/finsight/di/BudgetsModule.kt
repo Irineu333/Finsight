@@ -41,6 +41,7 @@ val budgetsModule = module {
     viewModel {
         ViewBudgetViewModel(
             budgetId = it.get(),
+            month = it.get(),
             budgetRepository = get(),
             transactionRepository = get(),
             recurringRepository = get(),

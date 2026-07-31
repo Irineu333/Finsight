@@ -419,6 +419,7 @@ class DashboardComponentsBuilder(
         return if (budgetProgress.isNotEmpty()) {
             DashboardComponent.Budgets(
                 budgetProgress = budgetProgress,
+                targetMonth = input.targetMonth,
             )
         } else {
             null

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -25,18 +26,43 @@ import com.neoutils.finsight.resources.money_unconverted_term
 import org.jetbrains.compose.resources.stringResource
 
 /**
+ * Along which axis the terms of a figure are laid out. A closed set, declared by the
+ * surface and rendered here — the surface says what room it has, never how to draw.
+ */
+enum class MoneyLayout {
+    /**
+     * One term per line, the default and the rule of design D22: juxtaposing survives
+     * neither `TotalBalanceCard` at `headlineMedium` nor `BalanceCard.Default` at 36sp.
+     */
+    STACKED,
+
+    /**
+     * The terms on a single line, for a surface with **no vertical room to give**.
+     *
+     * D22's argument is about large type in a column that owns its height; a row of
+     * small type that already shares its line with a label has the opposite constraint,
+     * and there stacking is what breaks — it grows a row whose height is set by
+     * something else (an icon, a progress bar), pushing the rest out of alignment.
+     *
+     * The step between terms is kept, so the figure still reads as one continuing thing
+     * rather than as two figures side by side, and the joiner stays glued to its own
+     * term, because it juxtaposes rather than adds (design D22).
+     */
+    INLINE,
+}
+
+/**
  * The **one** way a money figure is rendered, however many terms it has.
  *
- * Terms take one line each. The first keeps the surface's own typographic
- * style; the ones below it drop a step and go to `onSurfaceVariant` — the same shape
+ * Stacked, terms take one line each. The first keeps the surface's own typographic
+ * style; the ones after it drop a step and go to `onSurfaceVariant` — the same shape
  * `CreditCardCard` already gives *available* at 20sp beside the limit at 14sp. The step
- * does not mean "worth less": it means "same figure, second line". Juxtaposing in a
- * single line survives neither `TotalBalanceCard` nor `BalanceCard.Default` at 36sp
- * (design D22).
+ * does not mean "worth less": it means "same figure, continued".
  *
- * No surface decides any of this for itself, which is what design D20 requires — and a
- * surface that genuinely cannot hold more than one term says so through [singleTerm]
- * rather than letting the layout truncate.
+ * No surface decides any of this for itself, which is what design D20 requires. What a
+ * surface does declare is what it has room for: [layout], when it has no vertical room
+ * to give, and [singleTerm] when it genuinely cannot hold more than one term — said out
+ * loud, rather than letting the layout truncate.
  */
 @Composable
 fun MoneyText(
@@ -45,6 +71,7 @@ fun MoneyText(
     modifier: Modifier = Modifier,
     singleTerm: Boolean = false,
     align: TextAlign = TextAlign.End,
+    layout: MoneyLayout = MoneyLayout.STACKED,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -79,6 +106,24 @@ fun MoneyText(
         fontSize = style.fontSize * SECONDARY_TERM_SCALE,
         color = colorScheme.onSurfaceVariant,
     )
+
+    if (layout == MoneyLayout.INLINE) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(INLINE_TERM_GAP),
+        ) {
+            terms.forEachIndexed { index, term ->
+                Text(
+                    text = term.text,
+                    style = if (index == 0) style else secondaryStyle,
+                    // Baselines, not centres: the terms are of two sizes and sit on one
+                    // line, and only a shared baseline reads as one sentence.
+                    modifier = Modifier.alignByBaseline(),
+                )
+            }
+        }
+        return
+    }
 
     // Where the amounts of a left-aligned stack begin: past whatever precedes the first
     // one — its mark, if it has one. Measured with the first line's own style rather than
@@ -142,3 +187,9 @@ private const val SECONDARY_TERM_SCALE = 0.7f
  * on purpose: it says "this line belongs to the one above" and nothing more.
  */
 private val INDENT_WITHOUT_MARK = 8.dp
+
+/**
+ * What separates two terms on one line. Only the terms are separated — the joiner stays
+ * glued to the term it introduces, because it juxtaposes rather than adds (design D22).
+ */
+private val INLINE_TERM_GAP = 4.dp

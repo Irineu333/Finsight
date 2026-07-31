@@ -11,11 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.ui.model.displayColor
+import com.neoutils.finsight.ui.component.MoneyLayout
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -98,14 +100,25 @@ private fun CategorySpendingItem(
                     text = spending.category.name,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // The name yields the room, never the figure: a category is
+                    // recognisable from its first words and from the icon beside it,
+                    // while an amount missing a term is a number that lies (design D20).
+                    modifier = Modifier.weight(weight = 1f, fill = false),
                 )
 
+                // This row has **no vertical room to give**: its height is set by the
+                // icon and the bar under it, so a stacked second term would grow the
+                // line and pull the bar out of alignment with every other row of the
+                // card. The terms go on one line instead — declared here, drawn there.
                 MoneyText(
                     figure = spending.amount,
                     style = LocalTextStyle.current.copy(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
+                    layout = MoneyLayout.INLINE,
                 )
             }
 

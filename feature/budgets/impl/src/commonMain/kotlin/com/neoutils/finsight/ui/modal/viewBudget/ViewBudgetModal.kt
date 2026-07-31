@@ -240,17 +240,26 @@ class ViewBudgetModal(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (budgetProgress.isExceeded) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.formatOrUnresolved(budgetProgress.exceededAmount),
-                    )
+                // No parts to show for these: what is left, and by how much it went over,
+                // are answers *against the limit* rather than sums of pieces, so with the
+                // spending unresolved they do not exist. The absence is said quietly — it
+                // is the lack of a number, not a number worth reading.
+                val leftOrOver = if (budgetProgress.isExceeded) {
+                    budgetProgress.exceededAmount
                 } else {
-                    DetailRow(
-                        label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.formatOrUnresolved(budgetProgress.remainingAmount),
-                    )
+                    budgetProgress.remainingAmount
                 }
+                DetailRow(
+                    label = stringResource(
+                        if (budgetProgress.isExceeded) {
+                            Res.string.view_budget_exceeded_by_label
+                        } else {
+                            Res.string.view_budget_remaining_label
+                        }
+                    ),
+                    value = formatter.formatOrUnresolved(leftOrOver),
+                    valueColor = if (leftOrOver != null) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+                )
             }
 
             // No fraction, no bar: an empty track claims "nothing spent yet", which is

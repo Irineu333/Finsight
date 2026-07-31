@@ -9,13 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.extension.formatOrUnresolved
+import com.neoutils.finsight.extension.UNRESOLVED_AMOUNT
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
@@ -107,8 +110,22 @@ private fun BudgetProgressRow(
                 // here: `***` says so in the width of an amount, where a confident
                 // `R$ 0,00` used to say the opposite (design D20).
                 Text(
-                    text = "${formatter.formatOrUnresolved(progress.spentAmount)} / " +
-                        formatter.format(progress.limitAmount),
+                    text = buildAnnotatedString {
+                        val spent = progress.spentAmount
+                        if (spent != null) {
+                            append(formatter.format(spent))
+                        } else {
+                            // The parts do not fit this label — it is one line with a
+                            // grammar of its own — so what is shown is their absence, and
+                            // quietly: the variant colour says "no number here" without
+                            // competing with the limit beside it.
+                            withStyle(SpanStyle(color = colorScheme.onSurfaceVariant)) {
+                                append(UNRESOLVED_AMOUNT)
+                            }
+                        }
+                        append(" / ")
+                        append(formatter.format(progress.limitAmount))
+                    },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,

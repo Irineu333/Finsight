@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
@@ -299,12 +301,29 @@ private fun BudgetProgressItem(
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
-                    Text(
-                        text = formatter.formatOrUnresolved(progress.spentAmount),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface,
-                    )
+                    // Room enough to show the parts, so it shows them: what cannot be
+                    // reduced to one number is still perfectly well known, currency by
+                    // currency. `***` is the answer only where the parts do not fit or do
+                    // not apply, which is the column beside this one.
+                    val spentFigure = progress.spentFigure
+                    if (spentFigure != null) {
+                        MoneyText(
+                            figure = spentFigure,
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colorScheme.onSurface,
+                            ),
+                            align = TextAlign.Start,
+                        )
+                    } else {
+                        Text(
+                            text = formatter.formatOrUnresolved(progress.spentAmount),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface,
+                        )
+                    }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
@@ -315,13 +334,18 @@ private fun BudgetProgressItem(
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
+                    // No parts to show here: what is left, and by how much it was
+                    // exceeded, are answers *against the limit* rather than sums of
+                    // pieces — so with the spending unresolved they do not exist at all.
+                    // The absence is said quietly, in the variant colour: it is the
+                    // lack of a number, not a number worth reading.
+                    val leftOrOver =
+                        if (progress.isExceeded) progress.exceededAmount else progress.remainingAmount
                     Text(
-                        text = formatter.formatOrUnresolved(
-                            if (progress.isExceeded) progress.exceededAmount else progress.remainingAmount
-                        ),
+                        text = formatter.formatOrUnresolved(leftOrOver),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface,
+                        color = if (leftOrOver != null) colorScheme.onSurface else colorScheme.onSurfaceVariant,
                     )
                 }
             }

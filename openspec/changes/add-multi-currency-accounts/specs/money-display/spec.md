@@ -141,3 +141,37 @@ Uma superfície que **possa** exibir mais de um termo SHALL exibi-los todos.
 #### Scenario: Nada é truncado em silêncio
 - **WHEN** as superfícies que exibem dinheiro são inspecionadas
 - **THEN** nenhuma delas descarta um termo por decisão de layout
+
+### Requirement: A marca, as partes e a ausência têm cada uma o seu lugar
+
+Uma superfície que exibe dinheiro vindo de mais de uma moeda SHALL obedecer às três invariantes abaixo, e elas são **ordenadas**: a segunda SHALL valer apenas quando a primeira não resolve, e a terceira apenas quando a segunda não cabe. Nenhuma superfície SHALL escolher entre elas por conta própria.
+
+**1. A marca de aproximação SHALL acompanhar valor convertido, e apenas valor convertido.** Um termo que passou por uma taxa SHALL levá-la; um termo que taxa alguma tocou MUST NOT levá-la, ainda que esteja ao lado de um que passou, e ainda que a figura como um todo seja aproximada. Um valor não convertido é a resposta exata do razão, na moeda dele, e marcá-lo alega dúvida sobre um número que o sistema conhece perfeitamente.
+
+Isso MUST NOT ser confundido com a exatidão da **figura**, que é fato distinto: uma figura que reúne parcelas que não se somam é aproximada — não é um número só, e número nenhum responde por ela — mesmo quando nenhum dos seus termos passou por taxa. Colapsar as duas perguntas numa só é o que faz um número exato aparecer marcado.
+
+**2. Onde um valor único não puder ser resolvido, a superfície SHALL exibir as partes.** O dinheiro é conhecido; o que falta é a sua expressão numa única moeda. Uma superfície com espaço SHALL mostrar cada parcela na sua própria moeda, em vez de recair num marcador de ausência — recair ali descarta informação que o sistema tem.
+
+**3. Onde as partes não couberem, ou não forem pertinentes, a superfície SHALL exibir a ausência de valor, discretamente.** "Não pertinente" é o caso de um número que não é soma de parcelas — o que resta de um limite, o quanto ele foi excedido —, que com a parcela ausente não existe em nenhuma moeda. A ausência SHALL ser visualmente discreta e MUST NOT ocupar mais espaço do que um valor ocuparia: a alternativa a um número errado é um marcador contido, nunca um layout quebrado nem uma linha de texto explicativa em toda superfície.
+
+A ausência MUST NOT ser expressa como zero, e MUST NOT ser omitida deixando a linha vazia: zero é uma afirmação sobre a quantia, e uma linha vazia é indistinguível de um dado que não existe.
+
+#### Scenario: Só o termo convertido leva a marca
+- **WHEN** uma figura reúne R$ 30,00 que sempre estiveram em reais e ¥ 5.000 que nenhuma taxa alcança
+- **THEN** nenhum dos dois termos exibe a marca, e a figura ainda assim é aproximada
+
+#### Scenario: Termo convertido ao lado de termo intocado
+- **WHEN** uma figura reúne uma parcela convertida à base e outra que nenhuma taxa alcança
+- **THEN** apenas a parcela convertida exibe a marca
+
+#### Scenario: Superfície com espaço exibe as partes
+- **WHEN** um gasto que não pôde ser reduzido a uma moeda é exibido numa superfície com espaço
+- **THEN** cada parcela aparece na sua própria moeda, e nenhum marcador de ausência é usado
+
+#### Scenario: Superfície de gramática própria exibe a ausência
+- **WHEN** o mesmo gasto alcança um rótulo de uma linha, de gramática própria
+- **THEN** ele exibe o marcador de ausência, discreto, e a figura não é truncada nem quebrada
+
+#### Scenario: Um valor que não é soma de parcelas não tem partes a exibir
+- **WHEN** o quanto resta de um limite é exibido e o gasto tem parcela não precificada
+- **THEN** ele exibe a ausência, porque não existe em moeda alguma, e MUST NOT exibir zero

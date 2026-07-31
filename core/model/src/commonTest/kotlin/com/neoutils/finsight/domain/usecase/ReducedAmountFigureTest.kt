@@ -73,4 +73,25 @@ class ReducedAmountFigureTest {
         assertEquals(0.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
     }
+
+    /**
+     * The split this figure exists to keep: **the figure** is approximate because it holds
+     * parts that do not add up, and **no term** is, because no rate touched either of them.
+     * Collapsing the two marks an exact number — R$ 400 that were always in reais.
+     */
+    @Test
+    fun `a figure of parts no rate touched is approximate without any term being`() {
+        val figure = ReducedAmount(
+            value = 400.0,
+            isApproximate = false,
+            hasUnconvertedPart = true,
+            unconverted = listOf(CurrencyAmount("JPY", 5000.0)),
+        ).asFigure(target = "BRL")
+
+        assertTrue(figure.isApproximate, "it is not one number, and no single number answers for it")
+        assertTrue(
+            figure.terms.none { it.isApproximate },
+            "neither part went through a rate, so neither wears the mark",
+        )
+    }
 }

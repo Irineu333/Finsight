@@ -177,6 +177,11 @@ class CalculateBudgetProgressUseCaseTest {
      * the flag is what lets the surface say so. Leaving it out silently would read as
      * "less spent than you have", which is the one direction a budget must not err in —
      * and inventing a rate of `1` for it would be worse.
+     *
+     * **And what remains is not approximate.** This test used to assert that it was, which
+     * marked an exact number: the R$ 30 of a BRL budget were always in BRL and no rate
+     * touched them. "Some of it could not be priced" and "this number went through a rate"
+     * are different facts, and `hasUnpricedSpending` is the one that says the first.
      */
     @Test
     fun `spending no rate reaches is left out, and the progress says so`() = runTest {
@@ -185,8 +190,21 @@ class CalculateBudgetProgressUseCaseTest {
         )(budgets = listOf(budget), month = month).single()
 
         assertEquals(30.0, progress.spent, "only what could be priced is in the number")
-        assertEquals(true, progress.isApproximate)
+        assertEquals(false, progress.isApproximate, "no rate touched the 30 — it was always BRL")
         assertEquals(true, progress.hasUnpricedSpending)
+
+        val figure = progress.spentFigure!!
+        assertEquals(listOf("BRL", "JPY"), figure.terms.map { it.currency })
+        assertEquals(
+            emptyList(),
+            figure.terms.filter { it.isApproximate }.map { it.currency },
+            "neither term went through a rate, so neither wears the mark",
+        )
+        assertEquals(
+            true,
+            figure.isApproximate,
+            "the figure still is: it holds parts that do not add up, and no single number answers for it",
+        )
     }
 
 }

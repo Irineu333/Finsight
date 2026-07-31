@@ -223,10 +223,14 @@ class ConsolidateMoneyUseCase(
 
         val targetRate = rateOf(target)
         var cents = 0L
+        var convertedSomething = false
         val unconverted = mutableListOf<CurrencyAmount>()
 
         terms.forEach { term ->
             if (term.currency == target) {
+                // Already in the target: added as it is, by no rate. Money that was
+                // always here was not converted, and saying otherwise marks an exact
+                // number as approximate.
                 cents += (term.value * CENTS_PER_UNIT).roundToLong()
                 return@forEach
             }
@@ -240,11 +244,17 @@ class ConsolidateMoneyUseCase(
                 return@forEach
             }
             cents += (term.value * rate / targetRate * CENTS_PER_UNIT).roundToLong()
+            convertedSomething = true
         }
 
         return ReducedAmount(
             value = cents / CENTS_PER_UNIT,
-            isApproximate = true,
+            // Approximate only when a rate actually multiplied something. Being here — two
+            // currencies present, or one that is not the target — is not enough: with
+            // R$ 30 in a BRL budget beside ¥ 5.000 no rate reaches, the 30 is exactly 30,
+            // and what is missing is said by `hasUnconvertedPart`, not by a mark on a
+            // number the app knows perfectly well.
+            isApproximate = convertedSomething,
             hasUnconvertedPart = unconverted.isNotEmpty(),
             unconverted = unconverted,
         )
@@ -366,7 +376,12 @@ fun ReducedAmount.asFigure(target: String): ConsolidatedAmount {
     return ConsolidatedAmount(
         terms = listOfNotNull(targetTerm) +
             unconverted.map { DisplayAmount.magnitude(it.value, it.currency, isApproximate = false) },
-        isApproximate = isApproximate,
+        // The **figure** is approximate when a rate touched it *or* when it holds parts
+        // that do not add up — it is then not one number, and no single number answers for
+        // it. Which is a different fact from whether any given term went through a rate,
+        // and the two must not be collapsed (design D21, and the same split the general
+        // reducer makes).
+        isApproximate = isApproximate || unconverted.isNotEmpty(),
         baseIndex = if (targetTerm != null) 0 else null,
     )
 }

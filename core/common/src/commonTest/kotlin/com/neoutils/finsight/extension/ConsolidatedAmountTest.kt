@@ -35,7 +35,7 @@ class ConsolidatedAmountTest {
         val income = ConsolidatedAmount(
             terms = listOf(
                 DisplayAmount.forcedPositive(100.0, BRL, isApproximate = true),
-                DisplayAmount.forcedPositive(50.0, USD, isApproximate = true),
+                DisplayAmount.forcedPositive(50.0, USD, isApproximate = false),
             ),
             isApproximate = true,
             baseIndex = 0,
@@ -43,7 +43,7 @@ class ConsolidatedAmountTest {
         val expense = ConsolidatedAmount(
             terms = listOf(
                 DisplayAmount.forcedNegative(100.0, BRL, isApproximate = true),
-                DisplayAmount.forcedNegative(50.0, USD, isApproximate = true),
+                DisplayAmount.forcedNegative(50.0, USD, isApproximate = false),
             ),
             isApproximate = true,
             baseIndex = 0,
@@ -62,18 +62,51 @@ class ConsolidatedAmountTest {
     }
 
     /** A magnitude spells no sign, so the joiner is what marks it as a continuation. */
+    /**
+     * The mark belongs to the term a rate passed through — not to the figure's first
+     * line, and not to every line. A term no rate touched is the ledger's own answer,
+     * exact in its own currency, and marking it would claim uncertainty about a number
+     * the app knows perfectly well.
+     */
     @Test
-    fun twoTermsAreJoinedByAPlusAndMarkedOnce() {
-        val figure = approximate()
-
-        val texts = formatter.formatTerms(figure)
+    fun onlyTheTermARatePassedThroughIsMarked() {
+        val texts = formatter.formatTerms(approximate())
 
         assertEquals("$APPROXIMATION_MARK ${formatter.format(100.0, BRL)}", texts[0])
         assertEquals("+${formatter.format(50.0, USD)}", texts[1])
-        assertTrue(
-            texts.drop(1).none { it.contains(APPROXIMATION_MARK) },
-            "one figure carries one mark",
+    }
+
+    /** And when nothing was converted at all, no line carries a mark. */
+    @Test
+    fun aFigureNoRateReachedCarriesNoMark() {
+        val figure = ConsolidatedAmount(
+            terms = listOf(
+                DisplayAmount.natural(100.0, BRL, isApproximate = false),
+                DisplayAmount.natural(50.0, USD, isApproximate = false),
+            ),
+            isApproximate = true,
+            baseIndex = 0,
         )
+
+        assertTrue(
+            formatter.formatTerms(figure).none { APPROXIMATION_MARK in it },
+            "a figure whose terms all stand on their own marked a number as uncertain",
+        )
+    }
+
+    /** The mark stays outermost — before the joiner, before the sign (design D21). */
+    @Test
+    fun theMarkIsMoreExternalThanTheJoiner() {
+        val figure = ConsolidatedAmount(
+            terms = listOf(
+                DisplayAmount.natural(100.0, BRL, isApproximate = false),
+                DisplayAmount.natural(50.0, USD, isApproximate = true),
+            ),
+            isApproximate = true,
+            baseIndex = 0,
+        )
+
+        assertEquals("$APPROXIMATION_MARK +${formatter.format(50.0, USD)}", formatter.formatTerms(figure)[1])
     }
 
     @Test
@@ -124,8 +157,10 @@ class ConsolidatedAmountTest {
 
     private fun approximate(on: LocalDate? = null) = ConsolidatedAmount(
         terms = listOf(
+            // What a rate passed through …
             DisplayAmount.natural(100.0, BRL, isApproximate = true),
-            DisplayAmount.natural(50.0, USD, isApproximate = true),
+            // … and what none did: the ledger's own answer, exact in its own currency.
+            DisplayAmount.natural(50.0, USD, isApproximate = false),
         ),
         isApproximate = true,
         baseIndex = 0,

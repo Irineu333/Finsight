@@ -81,7 +81,7 @@ data class ConsolidatedAmount(
  * here, where every other money string in the app is decided.
  */
 fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
-    figureTerms(figure).map { it.joiner.orEmpty() + it.amount }
+    figureTerms(figure).map { it.text }
 
 /**
  * The same terms, with the joiner **kept apart from the amount** — for the one renderer
@@ -94,24 +94,37 @@ fun CurrencyFormatter.formatTerms(figure: ConsolidatedAmount): List<String> =
  */
 fun CurrencyFormatter.figureTerms(figure: ConsolidatedAmount): List<MoneyTermText> =
     figure.terms.mapIndexed { index, term ->
-        when {
-            index == 0 -> MoneyTermText(joiner = null, amount = format(term))
-            term.spellsItsOwnSign -> MoneyTermText(joiner = null, amount = format(term, withMark = false))
-            else -> MoneyTermText(joiner = "+", amount = format(term, withMark = false))
-        }
+        MoneyTermText(
+            // The mark belongs to the term a rate passed through, and to no other. A
+            // term no rate touched is the very amount the ledger answered — exact, in
+            // its own currency — and marking it would claim uncertainty about a number
+            // the app knows perfectly well.
+            mark = APPROXIMATION_MARK.takeIf { term.isApproximate },
+            joiner = "+".takeIf { index > 0 && !term.spellsItsOwnSign },
+            amount = format(term, withMark = false),
+        )
     }
 
 /**
- * One term of a figure as text: what joins it to the term above, when anything does, and
- * the amount itself.
+ * One term of a figure as text, in the three parts a surface may place: the mark, when
+ * this term is the one a rate passed through; what joins it to the term above, when
+ * anything does; and the amount itself.
+ *
+ * They are kept apart because their **order is a rule**: the mark is always more external
+ * than the sign and than the joiner (design D21), and a renderer that received them
+ * already concatenated could not honour that and place them at the same time.
  *
  * [joiner] is `null` for the first term — nothing precedes it — and for any term that
  * spells its own sign, which already reads as a continuation.
  */
 data class MoneyTermText(
+    val mark: String?,
     val joiner: String?,
     val amount: String,
-)
+) {
+    /** The three parts as one string, in the order they are read. */
+    val text: String get() = listOfNotNull(mark?.plus(" "), joiner, amount).joinToString("")
+}
 
 /**
  * Whether this term already begins with a sign of its own — the fact [formatTerms] needs

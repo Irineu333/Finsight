@@ -14,7 +14,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.extension.APPROXIMATION_MARK
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -81,16 +80,18 @@ fun MoneyText(
         color = colorScheme.onSurfaceVariant,
     )
 
-    // Where the amounts of a left-aligned stack begin: under the first term's amount,
-    // past whatever precedes it. Measured rather than guessed, because the mark is a
-    // glyph of the surface's own type and no fixed inset follows it across styles.
+    // Where the amounts of a left-aligned stack begin: past whatever precedes the first
+    // one — its mark, if it has one. Measured with the first line's own style rather than
+    // guessed, because the mark is a glyph of the surface's type and no fixed inset
+    // follows it from `headlineMedium` to 36sp.
     val measurer = rememberTextMeasurer()
-    val indent = if (align == TextAlign.Start && figure.isApproximate) {
+    val firstPrefix = terms.first().mark?.plus(" ").orEmpty()
+    val indent = if (align == TextAlign.Start && firstPrefix.isNotEmpty()) {
         with(LocalDensity.current) {
-            measurer.measure(AnnotatedString("$APPROXIMATION_MARK "), style).size.width.toDp()
+            measurer.measure(AnnotatedString(firstPrefix), style).size.width.toDp()
         }
     } else {
-        0.dp
+        INDENT_WITHOUT_MARK
     }
 
     Column(
@@ -100,27 +101,20 @@ fun MoneyText(
         terms.forEachIndexed { index, term ->
             val termStyle = if (index == 0) style else secondaryStyle
 
-            if (index == 0 || term.joiner == null) {
-                Text(text = term.amount, style = termStyle, textAlign = align)
-                return@forEachIndexed
-            }
-
-            when (align) {
-                // Left-aligned: the joiner is a bullet under the mark, and the amounts
-                // line up with the first one — the shape a reader follows down a column.
-                TextAlign.Start -> Row(modifier = Modifier.padding(start = indent)) {
-                    Text(text = "${term.joiner} ", style = termStyle)
-                    Text(text = term.amount, style = termStyle)
-                }
-
-                // Right-aligned: glued, because there the column's edge is what says
-                // "same figure, second line" and a gap would break it (design D22).
-                else -> Text(
-                    text = term.joiner + term.amount,
-                    style = termStyle,
-                    textAlign = TextAlign.End,
-                )
-            }
+            Text(
+                text = term.text,
+                style = termStyle,
+                textAlign = align,
+                // Left-aligned, the terms below the first are indented to where the
+                // first amount begins, so the column reads as one figure continuing
+                // rather than as three figures listed. Right-aligned there is nothing to
+                // indent: the column's edge already says it (design D22).
+                modifier = if (align == TextAlign.Start && index > 0) {
+                    Modifier.padding(start = indent)
+                } else {
+                    Modifier
+                },
+            )
         }
     }
 }
@@ -142,3 +136,9 @@ fun MoneyText(
 
 /** 20sp beside 14sp — the step `CreditCardCard` already draws. */
 private const val SECONDARY_TERM_SCALE = 0.7f
+
+/**
+ * The step a continuation takes when the first term carries no mark to sit under. Small
+ * on purpose: it says "this line belongs to the one above" and nothing more.
+ */
+private val INDENT_WITHOUT_MARK = 8.dp

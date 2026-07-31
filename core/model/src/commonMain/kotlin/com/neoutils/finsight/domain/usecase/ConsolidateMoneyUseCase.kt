@@ -91,19 +91,28 @@ class ConsolidateMoneyUseCase(
             (term.value * rate * CENTS_PER_UNIT).roundToLong()
         } / CENTS_PER_UNIT
 
+        // **Which term is approximate is not the same question as which figure is.** The
+        // base term is approximate only if a rate actually reached it — money that was
+        // already in the base and stayed there was converted by nothing. And a term no
+        // rate touched is *exact*: it is the very amount the ledger answered, standing in
+        // its own currency. Marking it would say the app is unsure of a number it knows
+        // perfectly well.
+        val convertedSomething = convertible.any { it.currency != base }
+
         val baseTerm = convertible
             .takeIf { it.isNotEmpty() }
-            ?.let { policy(converted, base, true) }
+            ?.let { policy(converted, base, convertedSomething) }
 
         return ConsolidatedAmount(
             // The base term first: design D22 gives the first term the surface's own
             // typographic weight, and a surface too narrow for the rest degrades to it.
             terms = listOfNotNull(baseTerm) +
-                untouched.map { policy(it.value, it.currency, true) },
+                untouched.map { policy(it.value, it.currency, false) },
             asOf = on,
-            // More than one currency went in, so something was reconciled — whether or
-            // not every term could be. Exactness is a property of the figure, and two
-            // exact terms placed side by side do not make one.
+            // The **figure** is approximate all the same: it holds currencies that do not
+            // add up, so it is not one number and no single number answers for it. That
+            // is what the badge explains, and it is a different fact from which term a
+            // rate passed through.
             isApproximate = true,
             baseIndex = if (baseTerm != null) 0 else null,
         )

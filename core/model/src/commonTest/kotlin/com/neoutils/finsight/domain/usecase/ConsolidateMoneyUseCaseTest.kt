@@ -218,6 +218,44 @@ class ConsolidateMoneyUseCaseTest {
         assertTrue(approximate.terms.all { it.isApproximate })
     }
 
+    /**
+     * **A term is marked when a rate passed through it, and not because the figure it
+     * belongs to is approximate.** The figure holds currencies that do not add up — that
+     * is what the badge explains — but `US$ 50,00` standing on its own is the ledger's
+     * own answer, exact, and marking it would claim uncertainty about a number the app
+     * knows perfectly well.
+     */
+    @Test
+    fun `only the term a rate passed through is marked`() = runTest {
+        val figure = reducer(rates = arrayOf("USD" to 5.5))(
+            MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0, "EUR" to 10.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(listOf("BRL", "EUR"), figure.terms.map { it.currency })
+        assertTrue(figure.terms[0].isApproximate, "the base term is what the rate reached")
+        assertFalse(figure.terms[1].isApproximate, "no rate reached the euro; it is exact")
+        assertTrue(figure.isApproximate, "the figure still does not add up to one number")
+    }
+
+    /**
+     * And with no rate at all, nothing was converted: every term stands on its own, so no
+     * line carries a mark — even though the figure is still not one number.
+     */
+    @Test
+    fun `a figure no rate reached marks nothing`() = runTest {
+        val figure = reducer()(
+            MoneyByCurrency.of(mapOf("BRL" to 100.0, "USD" to 50.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(listOf("BRL", "USD"), figure.terms.map { it.currency })
+        assertTrue(figure.terms.none { it.isApproximate }, "a number nothing converted was marked")
+        assertTrue(figure.isApproximate)
+    }
+
     @Test
     fun `the caller's sign policy travels into every term`() = runTest {
         val figure = reducer()(

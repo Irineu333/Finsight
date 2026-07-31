@@ -657,9 +657,11 @@ private fun DashboardSpendingByCategorySection(
     val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
+    val navController = LocalNavController.current
 
     CategorySpendingCard(
         categorySpending = component.categorySpending,
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -679,10 +681,12 @@ private fun DashboardIncomeByCategorySection(
     val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
+    val navController = LocalNavController.current
 
     CategorySpendingCard(
         categorySpending = component.categoryIncome,
         title = stringResource(Res.string.component_income_by_category),
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),

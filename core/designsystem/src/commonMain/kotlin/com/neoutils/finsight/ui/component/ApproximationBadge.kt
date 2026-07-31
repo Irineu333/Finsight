@@ -28,6 +28,9 @@ import com.neoutils.finsight.resources.money_approximate_none
 import com.neoutils.finsight.resources.money_approximate_partial
 import com.neoutils.finsight.resources.money_approximate_see_rates
 import com.neoutils.finsight.resources.money_approximate_title
+import com.neoutils.finsight.resources.money_no_share_badge
+import com.neoutils.finsight.resources.money_no_share_body
+import com.neoutils.finsight.resources.money_no_share_title
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -138,6 +141,84 @@ private class ApproximationInfoModal(
             OutlinedButton(
                 onClick = {
                     modalManager.dismiss(this@ApproximationInfoModal)
+                    onSeeRates()
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = stringResource(Res.string.money_approximate_see_rates))
+            }
+        }
+    }
+}
+
+/**
+ * The sibling of [ApproximationBadge], for the absence of a **share** rather than the
+ * approximation of a figure.
+ *
+ * They explain different things and both are needed. `≈` marks a number that went through
+ * a rate; this marks a *missing* bar — a proportion that cannot be taken because the whole
+ * is unknown, which happens the moment one category of the period sits in a currency no
+ * rate reaches. Nothing on the card can carry that mark, because the amounts themselves
+ * are perfectly exact: each is the ledger's own figure in its own currency. The only
+ * visible trace is what is **not** drawn, and a thing that is not drawn cannot explain
+ * itself.
+ *
+ * Same 16dp button, same place beside the title, same way out to the rates screen — the
+ * user learns one affordance, not two.
+ */
+@Composable
+fun MissingShareBadge(
+    onSeeRates: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+
+    IconButton(
+        onClick = { modalManager.show(MissingShareInfoModal(onSeeRates)) },
+        modifier = modifier.size(24.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = stringResource(Res.string.money_no_share_badge),
+            tint = colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+private class MissingShareInfoModal(
+    private val onSeeRates: () -> Unit,
+) : ModalBottomSheet() {
+
+    @Composable
+    override fun ColumnScope.BottomSheetContent() {
+        val modalManager = LocalModalManager.current
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.money_no_share_title),
+                style = typography.titleLarge,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(Res.string.money_no_share_body),
+                style = typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            OutlinedButton(
+                onClick = {
+                    modalManager.dismiss(this@MissingShareInfoModal)
                     onSeeRates()
                 },
                 shape = RoundedCornerShape(12.dp),

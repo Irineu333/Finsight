@@ -25,13 +25,28 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_card_title
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * @param onSeeRates where the badge that explains a missing bar leads. `null` leaves the
+ * card without that way out — accepted only where the screen has nowhere to send the user.
+ */
 @Composable
 fun CategorySpendingCard(
     categorySpending: List<CategorySpending>,
     title: String? = null,
     modifier: Modifier = Modifier,
+    onSeeRates: (() -> Unit)? = null,
     onCategoryClick: (Category) -> Unit = {}
 ) {
+    // A bar is missing when no share could be taken, and a share needs a whole: one
+    // category in a currency no rate reaches leaves the period without one. The card has
+    // to say so, because nothing else can — the amounts are exact and carry no mark, so
+    // the only trace is what is *not* drawn, and absence explains nothing by itself.
+    //
+    // Guarded on a non-zero amount so a period where everything is zero — which also has
+    // no shares — does not accuse a rate of being missing.
+    val hasMissingShare = categorySpending.any { it.percentage == null } &&
+        categorySpending.any { spending -> spending.amount.terms.any { it.value != 0.0 } }
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -46,12 +61,23 @@ fun CategorySpendingCard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = title ?: stringResource(Res.string.category_spending_card_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            ) {
+                Text(
+                    text = title ?: stringResource(Res.string.category_spending_card_title),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                // Beside the title, where `ApproximationBadge` already sits on the cards
+                // that have one: the user learns a single affordance for "why does this
+                // read the way it does", not one per kind of gap.
+                if (hasMissingShare && onSeeRates != null) {
+                    MissingShareBadge(onSeeRates = onSeeRates)
+                }
+            }
 
             categorySpending.forEach { spending ->
                 CategorySpendingItem(

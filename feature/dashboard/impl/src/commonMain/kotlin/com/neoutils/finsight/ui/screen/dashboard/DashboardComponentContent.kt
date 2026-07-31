@@ -889,8 +889,9 @@ private fun TotalBalanceCard(
                 ),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     text = stringResource(Res.string.dashboard_total_balance),
@@ -898,9 +899,10 @@ private fun TotalBalanceCard(
                     color = colorScheme.onSurfaceVariant,
                 )
 
-                // Beside the label rather than under the figure: `≈` at headline size is
-                // not a touch target, and the explanation it needs is one tap for the
+                // The card's top-right corner, not under the figure: `≈` at headline size
+                // is not a touch target, and the explanation it needs is one tap for the
                 // user who wants it instead of a permanent line for everyone (D21/D25).
+                // Every badge in the app sits in this corner, so it is looked for once.
                 ApproximationBadge(
                     figures = listOf(component.amount),
                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },

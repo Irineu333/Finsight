@@ -63,17 +63,24 @@ fun CategorySpendingCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             ) {
                 Text(
                     text = title ?: stringResource(Res.string.category_spending_card_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(weight = 1f, fill = false),
                 )
 
-                // Beside the title, where `ApproximationBadge` already sits on the cards
-                // that have one: the user learns a single affordance for "why does this
-                // read the way it does", not one per kind of gap.
+                // The card's top-right corner, which is where every badge in the app sits:
+                // one place to look for "why does this read the way it does", found without
+                // reading the title first. The user learns one affordance, not one per kind
+                // of gap.
                 if (hasMissingShare && onSeeRates != null) {
                     MissingShareBadge(onSeeRates = onSeeRates)
                 }

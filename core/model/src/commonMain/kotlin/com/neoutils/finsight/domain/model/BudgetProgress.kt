@@ -20,9 +20,29 @@ data class BudgetProgress(
     val recurringLabel: String? = null,
     val recurring: Recurring? = null,
 ) {
-    val progress: Float get() = (spent / budget.amount).coerceIn(0.0, 1.0).toFloat()
+    /**
+     * Whether the spending is a number at all.
+     *
+     * With part of it in a currency no rate reaches, [spent] is a **floor** — what could be
+     * priced — and every figure built on it is a floor too. A floor shown as a total reads
+     * "you spent less than you have", which is the one direction a budget must never err
+     * in, so nothing built on it is offered as a value.
+     */
+    val isResolved: Boolean get() = !hasUnpricedSpending
+
     val remaining: Double get() = (budget.amount - spent).coerceAtLeast(0.0)
-    val isExceeded: Boolean get() = spent > budget.amount
+
+    /** True only when it is **known** to be exceeded; an unresolved floor never is. */
+    val isExceeded: Boolean get() = isResolved && spent > budget.amount
+
+    /**
+     * How full the bar is, or `null` when there is no answer — the same vocabulary a
+     * category share uses when the whole is unknown, and for the same reason. A surface
+     * with no fraction shows no bar rather than an empty one: an empty bar is the claim
+     * "nothing spent yet", which is exactly what is not known here.
+     */
+    val progress: Float?
+        get() = (spent / budget.amount).coerceIn(0.0, 1.0).toFloat().takeIf { isResolved }
 
     /**
      * The three derived figures as amounts that **carry the mark this progress derived**,
@@ -31,16 +51,20 @@ data class BudgetProgress(
      *
      * All three inherit [isApproximate], because all three are computed from [spent]: if
      * reaching the limit's currency took a rate, then what was spent, what is left and by
-     * how much it was exceeded are equally approximate.
+     * how much it was exceeded are equally approximate. And all three are `null` when
+     * [isResolved] is false, which a surface renders through `formatOrUnresolved` — one
+     * decision about what "no number" looks like, taken once.
      */
-    val spentAmount: DisplayAmount
-        get() = DisplayAmount.magnitude(spent, budget.currency, isApproximate)
+    val spentAmount: DisplayAmount?
+        get() = DisplayAmount.magnitude(spent, budget.currency, isApproximate).takeIf { isResolved }
 
-    val remainingAmount: DisplayAmount
+    val remainingAmount: DisplayAmount?
         get() = DisplayAmount.magnitude(remaining, budget.currency, isApproximate)
+            .takeIf { isResolved }
 
-    val exceededAmount: DisplayAmount
+    val exceededAmount: DisplayAmount?
         get() = DisplayAmount.magnitude(spent - budget.amount, budget.currency, isApproximate)
+            .takeIf { isResolved }
 
     /**
      * The limit, which is **never** approximate: the user typed it, in a currency chosen

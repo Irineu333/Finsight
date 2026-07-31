@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
-import com.neoutils.finsight.resources.money_unconverted_term
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -66,7 +66,10 @@ private fun BudgetProgressRow(
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val accentColor = budgetProgressColor(progress.progress)
+    // With no fraction there is no "how full" to colour by, so the accent falls back to
+    // the neutral one rather than to the colour of an empty bar (which reads "on track").
+    val accentColor = progress.progress?.let { budgetProgressColor(it) }
+        ?: colorScheme.onSurfaceVariant
 
     Row(
         modifier = modifier
@@ -99,11 +102,12 @@ private fun BudgetProgressRow(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
-                // Both figures are denominated by the limit, never by the base: a budget
-                // declares its currency once, at creation, and the progress is the
-                // spending reduced *to it* (design D13).
+                // Both figures are denominated by the limit, never by the base (design
+                // D13). And when the spending cannot be priced there is no total to put
+                // here: `***` says so in the width of an amount, where a confident
+                // `R$ 0,00` used to say the opposite (design D20).
                 Text(
-                    text = "${formatter.format(progress.spentAmount)} / " +
+                    text = "${formatter.formatOrUnresolved(progress.spentAmount)} / " +
                         formatter.format(progress.limitAmount),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -111,29 +115,22 @@ private fun BudgetProgressRow(
                 )
             }
 
-            // Declared degradation (design D20): this label has a grammar of its own and
-            // holds one term, so when part of the spending sits in a currency no rate
-            // reaches, it says so. Leaving it out silently reads as "you spent less than
-            // you have", which is the one direction a budget must never err in.
-            if (progress.hasUnpricedSpending) {
-                Text(
-                    text = stringResource(Res.string.money_unconverted_term),
-                    fontSize = 11.sp,
-                    color = colorScheme.onSurfaceVariant,
+            // No fraction, no bar — an empty track is the claim "nothing spent yet", which
+            // is exactly what is not known. The row keeps its height from the icon, so
+            // dropping the bar does not change the shape of the card.
+            progress.progress?.let { fraction ->
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp),
+                    color = accentColor,
+                    trackColor = colorScheme.surfaceContainerHighest,
+                    strokeCap = StrokeCap.Round,
+                    drawStopIndicator = {},
+                    gapSize = (-4).dp,
                 )
             }
-
-            LinearProgressIndicator(
-                progress = { progress.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = accentColor,
-                trackColor = colorScheme.surfaceContainerHighest,
-                strokeCap = StrokeCap.Round,
-                drawStopIndicator = {},
-                gapSize = (-4).dp,
-            )
         }
     }
 }

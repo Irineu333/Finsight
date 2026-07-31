@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -49,7 +50,6 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.money_unconverted_term
 import com.neoutils.finsight.resources.view_budget_delete
 import com.neoutils.finsight.resources.view_budget_edit
 import com.neoutils.finsight.resources.view_budget_exceeded_by_label
@@ -104,7 +104,9 @@ class ViewBudgetModal(
         // currency is chosen once, at creation, and stays the meaning of both numbers
         // (design D13).
         val currency = budget.currency
-        val accentColor = budgetProgressColor(budgetProgress.progress)
+        // No fraction, no "how full" to colour by — the neutral accent instead.
+        val accentColor = budgetProgress.progress?.let { budgetProgressColor(it) }
+            ?: colorScheme.onSurfaceVariant
 
         Column(
             modifier = Modifier
@@ -192,7 +194,7 @@ class ViewBudgetModal(
 
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spentAmount),
+                    value = formatter.formatOrUnresolved(budgetProgress.spentAmount),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -200,42 +202,33 @@ class ViewBudgetModal(
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.exceededAmount),
+                        value = formatter.formatOrUnresolved(budgetProgress.exceededAmount),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remainingAmount),
-                    )
-                }
-
-                // Declared degradation (design D20): what no rate reaches is not in the
-                // figures above, so the bar is a floor. The detail view is where the user
-                // comes to understand a number, and it is the last place that may omit it.
-                if (budgetProgress.hasUnpricedSpending) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = stringResource(Res.string.money_unconverted_term),
-                        style = typography.bodySmall,
-                        color = colorScheme.onSurfaceVariant,
+                        value = formatter.formatOrUnresolved(budgetProgress.remainingAmount),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // No fraction, no bar: an empty track claims "nothing spent yet", which is
+            // precisely what is not known when part of the spending cannot be priced.
+            budgetProgress.progress?.let { fraction ->
+                Spacer(modifier = Modifier.height(8.dp))
 
-            LinearProgressIndicator(
-                progress = { budgetProgress.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = accentColor,
-                trackColor = colorScheme.surfaceContainerHighest,
-                strokeCap = StrokeCap.Round,
-                drawStopIndicator = {},
-                gapSize = (-4).dp,
-            )
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp),
+                    color = accentColor,
+                    trackColor = colorScheme.surfaceContainerHighest,
+                    strokeCap = StrokeCap.Round,
+                    drawStopIndicator = {},
+                    gapSize = (-4).dp,
+                )
+            }
         }
     }
 

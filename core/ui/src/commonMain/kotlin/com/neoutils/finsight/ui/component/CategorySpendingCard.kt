@@ -71,18 +71,21 @@ private fun CategorySpendingItem(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .height(IntrinsicSize.Min)
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
+        // A fixed size, not a square of whatever the row happens to be tall. Sizing the
+        // icon off the row made the row's own content decide it, so a row that drops its
+        // bar — because the share cannot be taken — shrank its icon too, and the card read
+        // as broken rather than as one line short. It is the size `BudgetProgressCard`
+        // already uses for the same shape.
         CategoryIconBox(
             category = spending.category,
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(8.dp),
-            modifier = Modifier.aspectRatio(1f),
+            modifier = Modifier.size(40.dp),
         )
 
         Column(
@@ -122,9 +125,11 @@ private fun CategorySpendingItem(
                 )
             }
 
-            // No share means no bar. A category whose currency no rate reaches cannot
-            // be measured against the period's total, and a bar at zero would assert
-            // that it spent nothing (design D9).
+            // No share, no bar. A share needs a whole, and there is none when some
+            // category of the month sits in a currency no rate reaches — a bar at zero
+            // would assert it spent nothing, and a bar at one hundred would assert the
+            // rest spent nothing (design D9). The amount above is untouched either way:
+            // it is the ledger's own figure, in its own currency, and always readable.
             val share = spending.percentage ?: return@Column
 
             LinearProgressIndicator(

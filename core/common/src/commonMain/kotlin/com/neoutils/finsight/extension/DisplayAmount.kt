@@ -140,6 +140,19 @@ class DisplayAmount private constructor(
 const val APPROXIMATION_MARK = "≈"
 
 /**
+ * What a figure reads as when it cannot be resolved **at all** — see [formatOrUnresolved].
+ *
+ * Distinct from the approximation mark, and the distinction is the whole point. `≈ R$ 375,00`
+ * says "this number is close"; this says "there is no number", which is a different claim and
+ * the honest one when part of the money sits in a currency no rate reaches. What it replaces
+ * is a zero, or a floor dressed as a total — both of which read as facts.
+ *
+ * It occupies the width of an amount and nothing more, so a surface that shows it keeps its
+ * shape. That is deliberate: the alternative to a wrong number is not a broken layout.
+ */
+const val UNRESOLVED_AMOUNT = "***"
+
+/**
  * Renders a [DisplayAmount]: the amount in **its own** currency, the sign by its policy,
  * and the approximation mark when it carries one.
  *
@@ -186,3 +199,16 @@ fun CurrencyFormatter.format(amount: DisplayAmount, withMark: Boolean = true): S
 
     return if (amount.isApproximate && withMark) "$APPROXIMATION_MARK $signed" else signed
 }
+
+/**
+ * The same rendering for a figure that **may not exist**: [UNRESOLVED_AMOUNT] when it does
+ * not, the amount when it does.
+ *
+ * `null` is how a producer says "there is no number here" — the same vocabulary the app
+ * already uses for a share that cannot be taken and a category with no measurable
+ * magnitude. Having one place decide what that looks like is what keeps three screens
+ * showing a budget from each inventing their own answer, which is how one of them ended up
+ * printing a confident `R$ 0,00` over spending it could not price.
+ */
+fun CurrencyFormatter.formatOrUnresolved(amount: DisplayAmount?): String =
+    amount?.let { format(it) } ?: UNRESOLVED_AMOUNT

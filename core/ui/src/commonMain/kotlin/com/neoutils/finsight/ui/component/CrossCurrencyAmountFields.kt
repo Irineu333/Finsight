@@ -19,6 +19,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -121,14 +125,32 @@ fun CounterpartAmountField(
     // not survive as a value in euros when the account changes. The money transformation
     // deliberately keeps the digits and swaps only the symbol, which is right for a
     // number the user typed and wrong for one the app offered.
+    //
+    // **Which is why the offer is remembered rather than inferred.** Keying alone does not
+    // withdraw anything: the effect re-runs on the new currency, finds the field non-empty
+    // and leaves the old digits under the new symbol — US$ 20,00 suggested for a dollar
+    // account reading € 20,00 against a euro one, a number nobody chose, which submitting
+    // would harvest as a rate nobody observed. Comparing against what was offered is what
+    // tells the app's number from the user's, and only the app's is withdrawn.
+    var offered by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(visible, currency, sameDay, suggestion?.amount) {
         if (!visible) {
             state.clearText()
+            offered = null
             return@LaunchedEffect
         }
 
-        if (sameDay && suggestion != null && state.text.isEmpty()) {
-            state.setTextAndPlaceCursorAtEnd(formatter.format(suggestion.amount, currency))
+        val typedOver = state.text.isNotEmpty() && state.text.toString() != offered
+        if (typedOver) return@LaunchedEffect
+
+        if (sameDay && suggestion != null) {
+            val text = formatter.format(suggestion.amount, currency)
+            state.setTextAndPlaceCursorAtEnd(text)
+            offered = text
+        } else {
+            state.clearText()
+            offered = null
         }
     }
 

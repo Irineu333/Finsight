@@ -865,7 +865,6 @@
     <string name="nav_settings">Configurações</string>
     <string name="settings_screen_title">Configurações</string>
     <string name="settings_base_currency_title">Moeda base</string>
-    <string name="settings_base_currency_description">É a moeda em que totais que misturam mais de uma moeda são expressos. Um saldo, uma fatura ou um lançamento que já está numa moeda só continua sendo exibido nela.</string>
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>
     <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
 

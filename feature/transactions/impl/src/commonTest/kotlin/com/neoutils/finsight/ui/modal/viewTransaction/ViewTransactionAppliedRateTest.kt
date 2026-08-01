@@ -7,7 +7,9 @@ import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * The rate the detail shows is derived from the operation's own two ends, and from
@@ -74,6 +76,30 @@ class ViewTransactionAppliedRateTest {
         )
 
         assertNull(content.appliedRate)
+    }
+
+    @Test
+    fun accountsAreToldApartByCurrencyOnlyWhenTwoAreOnScreen() {
+        val crossCurrency = content(
+            listOf(
+                entry(AccountType.ASSET, -55_000, "BRL"),
+                entry(AccountType.LIABILITY, 10_000, "USD"),
+                entry(AccountType.CONVERSION, 55_000, "BRL"),
+                entry(AccountType.CONVERSION, -10_000, "USD"),
+            )
+        )
+        assertTrue(crossCurrency.namesAccountCurrency)
+
+        // The question is about this operation, never about the app: a dollar-only
+        // operation reads the same for someone who also keeps accounts in reais, and
+        // its own amount already says which currency it is in.
+        val singleCurrency = content(
+            listOf(
+                entry(AccountType.ASSET, -5_000, "USD"),
+                entry(AccountType.EXPENSE, 5_000, "USD"),
+            )
+        )
+        assertFalse(singleCurrency.namesAccountCurrency)
     }
 
     @Test

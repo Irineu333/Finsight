@@ -107,6 +107,17 @@ class ViewTransactionModal(
         navController: androidx.navigation.NavController,
         viewModel: ViewTransactionViewModel,
     ) {
+        // `American · USD`, and only where two currencies are on the same screen —
+        // the doctrine `AccountSelector` established, asked of what this screen shows.
+        //
+        // The **code** and not the symbol, unlike the selectors: a selector names an
+        // account the user is about to type money into, and the glyph is what the field
+        // will wear. Here nothing is typed and the currency is being *identified*, which
+        // is the one job a symbol does badly — three of the offered currencies write
+        // `kr`. It is the grammar the rates screen already reads in (`Dólar · USD`).
+        fun accountLabel(name: String, currency: String?): String =
+            if (uiState.namesAccountCurrency && currency != null) "$name · $currency" else name
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -260,7 +271,7 @@ class ViewTransactionModal(
                 sourceAccount?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_source_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -276,7 +287,7 @@ class ViewTransactionModal(
                 destinationAccount?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_destination_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -294,7 +305,7 @@ class ViewTransactionModal(
                 uiState.account?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -313,7 +324,10 @@ class ViewTransactionModal(
             uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_card_label),
-                    value = creditCard.name,
+                    // A card states its currency because its `LIABILITY` account does,
+                    // hydrated on read; one that arrived unhydrated is left unmarked
+                    // rather than denominated by a guess (`CreditCardSelector`).
+                    value = accountLabel(creditCard.name, creditCard.currency),
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = if (creditCard.isArchived) null else {
                         {

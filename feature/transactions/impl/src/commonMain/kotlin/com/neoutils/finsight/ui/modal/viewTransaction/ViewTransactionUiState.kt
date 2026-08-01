@@ -139,6 +139,18 @@ sealed interface ViewTransactionUiState {
             }
         }
 
+        /**
+         * Whether the accounts this detail names have to be told apart by currency.
+         *
+         * The same question the selectors ask (`AccountSelector`), asked of the set this
+         * screen renders: the operation's own monetary accounts. It says "more than one
+         * currency here", never "the user has more than one" — a single-currency
+         * operation reads identically for everyone, and an app-wide answer would mark
+         * every row of every operation of anyone who once opened a second account.
+         */
+        val namesAccountCurrency: Boolean =
+            transaction.monetaryEntries.map { it.account.currency }.distinct().size > 1
+
         private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }
 
         /** A transfer's two sides: money leaves one asset account and enters another. */

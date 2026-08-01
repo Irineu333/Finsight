@@ -19,3 +19,25 @@ A perna primária SHALL ser a perna monetária de **valor negativo** — aquela 
 #### Scenario: Critério não compara moedas
 - **WHEN** a definição de perna primária é inspecionada
 - **THEN** ela não compara valores de pernas em moedas diferentes
+
+## ADDED Requirements
+
+### Requirement: O detalhe de uma operação declara a taxa que ela praticou
+
+O detalhe de uma operação cujas duas pernas monetárias estejam denominadas em moedas diferentes SHALL exibir a taxa que ela praticou, derivada das próprias pernas. A taxa exibida MUST NOT vir do acervo: o acervo responde pela conversão de figuras, enquanto esta é a razão entre o que saiu e o que entrou **nesta** operação, e as duas podem legitimamente divergir na mesma data.
+
+A direção SHALL ser a mesma que o formulário de escrita usa ao revelar a segunda ponta — uma unidade da moeda de origem expressa na moeda de destino —, porque a taxa lida depois é a mesma que foi mostrada enquanto se digitava, e duas gramáticas para o mesmo quociente fazem o usuário suspeitar do número. Ela SHALL ser exibida com casas decimais suficientes para não arredondar a zero, pela mesma razão pela qual o acervo guarda o quociente pleno.
+
+Uma operação em moeda única MUST NOT exibir a linha, e uma com uma só perna monetária tampouco — não há segunda ponta por que dividir, e uma linha ausente é a resposta certa para uma pergunta que não se colocou.
+
+#### Scenario: Transferência entre moedas informa a taxa praticada
+- **WHEN** o detalhe de uma transferência de R$ 550,00 para US$ 100,00 é aberto
+- **THEN** ele exibe a taxa que a operação praticou, derivada das duas pernas e sem consultar o acervo
+
+#### Scenario: Pagamento de fatura em outra moeda informa a taxa praticada
+- **WHEN** o detalhe de um pagamento de fatura cujas pernas monetárias estão em moedas diferentes é aberto
+- **THEN** ele exibe a taxa da mesma forma, pela mesma leitura
+
+#### Scenario: Operação em moeda única não exibe taxa
+- **WHEN** o detalhe de uma operação cujas pernas estão todas na mesma moeda é aberto
+- **THEN** nenhuma taxa é exibida

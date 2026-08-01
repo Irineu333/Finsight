@@ -498,6 +498,7 @@
     <string name="view_transaction_type_expense">Expense</string>
     <string name="view_transaction_type_adjustment">Adjustment</string>
     <string name="view_transaction_amount_label">Amount</string>
+    <string name="view_transaction_applied_rate_label">Applied rate</string>
     <string name="view_transaction_date_label">Date</string>
     <string name="view_transaction_origin_label">Origin</string>
     <string name="view_transaction_origin_account">Account</string>

@@ -339,9 +339,11 @@ Registrado como Non-Goal explícito em vez de omissão: a operação é apagada 
 
 ### D20 — A figura multitermo tem degradação declarada, não decidida pelo layout
 
-Uma figura de dois termos (`R$ 100,00 + US$ 50,00`) não cabe em toda superfície. As de largura fixa ou de gramática própria — medidor de limite, rótulo de barra de progresso de orçamento, `InstallmentCounter` ("3x de …"), e o documento HTML exportado, cujos modelos guardam **string já formatada** — SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que há parcela não convertida.
+Uma figura de dois termos (`R$ 100,00 + US$ 50,00`) não cabe em toda superfície. As de largura fixa ou de gramática própria — medidor de limite, rótulo de barra de progresso de orçamento, `InstallmentCounter` ("3x de …") — SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que há parcela não convertida.
 
 Isso é degradação **declarada**, e a alternativa não é "renderizar tudo": é o layout decidir sozinho, por truncamento ou quebra, o que uma superfície mostra de uma figura incompleta — que é como um número passa a mentir sem que ninguém tenha decidido isso.
+
+**Emenda, decidida na implementação (task 15.31): o documento HTML exportado sai desta lista.** Ele estava aqui pelo argumento de que os seus modelos guardam string já formatada — mas guardar string formatada não é ter gramática própria: uma célula de tabela guarda o que recebe, e a página tem largura para os dois termos. Quem manda nele é, portanto, a outra metade da regra (D22): uma superfície que **possa** exibir mais de um termo SHALL exibi-los todos. O que o exportado ganhou em lugar da degradação foi a nota de rodapé que diz o que a marca significa, derivada das figuras que o documento contém — porque numa página impressa não há badge para abrir. Degradar ali teria trocado uma figura completa por uma incompleta justamente na superfície que o usuário arquiva e relê fora do app.
 
 ### D21 — A marca de aproximação é um prefixo textual, e nunca cor
 
@@ -372,6 +374,8 @@ Justapor em linha não sobrevive ao `TotalBalanceCard` (`headlineMedium`) nem ao
 O degrau não significa "vale menos": significa "mesma figura, segunda linha". E o `+` fica colado ao termo, porque é operador de justaposição, não de soma.
 
 Regra única, em toda superfície que comporte mais de um termo — nenhuma decide por conta própria, que é o que D20 exige.
+
+**Emenda, decidida na implementação: uma disposição em linha existe, e é escolhida pelo chamador.** `MoneyText` expõe `MoneyLayout.INLINE` ao lado do empilhamento, que continua sendo o padrão de toda superfície que não diga o contrário. O uso é `CategorySpendingCard`, onde a figura já vive numa linha de item de lista e empilhar empurraria o layout da lista inteira. Isto **não** reabre "cada superfície decide o que mostrar": o que a superfície escolhe é a disposição de termos que ela exibe **todos** — nenhum termo é omitido, truncado ou substituído, que é o que D20 protege. A escolha estar no chamador e não inferida do estilo tipográfico é o que a mantém legível numa revisão.
 
 ### D23 — A linha de moeda é sempre visível no formulário
 

@@ -19,7 +19,9 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
@@ -177,6 +179,7 @@ class ViewCategoryViewModelTest {
         consolidateMoney = ConsolidateMoneyUseCase(
             baseCurrencyRepository = FakeBaseCurrencyRepository(),
             exchangeRateRepository = FakeExchangeRateRepository(),
+            getAccountCurrencies = FakeAccountCurrencies(),
         ),
         observeConsolidationChanges = ObserveConsolidationChangesUseCase(
             entryRepository = entryRepository,
@@ -411,4 +414,10 @@ class ViewCategoryViewModelTest {
             events.cancel()
         }
     }
+}
+
+internal class FakeAccountCurrencies(
+    private val inUse: List<String> = listOf("BRL"),
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() = AccountCurrencies(inUse = inUse, ofDefaultAccount = inUse.firstOrNull())
 }

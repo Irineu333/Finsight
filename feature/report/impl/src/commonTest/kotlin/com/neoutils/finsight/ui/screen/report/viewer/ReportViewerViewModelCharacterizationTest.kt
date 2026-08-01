@@ -35,7 +35,9 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
@@ -381,6 +383,9 @@ private class Fakes {
     val consolidateMoney = ConsolidateMoneyUseCase(
         baseCurrencyRepository = baseCurrencyRepository,
         exchangeRateRepository = exchangeRateRepository,
+        getAccountCurrencies = object : GetAccountCurrenciesUseCase {
+            override suspend fun invoke() = AccountCurrencies(inUse = listOf("BRL"), ofDefaultAccount = "BRL")
+        },
     )
 
     /** The composed trigger over the same fakes — a rate moves a figure already on screen. */

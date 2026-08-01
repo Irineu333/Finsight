@@ -41,6 +41,7 @@ import kotlin.math.roundToLong
 class ConsolidateMoneyUseCase(
     private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
+    private val getAccountCurrencies: GetAccountCurrenciesUseCase,
 ) {
 
     /**
@@ -63,12 +64,28 @@ class ConsolidateMoneyUseCase(
         val terms = money.significantTerms()
 
         if (terms.isEmpty()) {
-            // Nothing at all. Zero is exact, and the base is the only currency there is
-            // to say it in — no figure was reduced to get here.
+            // Nothing at all — and "nothing" still has to be denominated in something.
+            //
+            // The base is only the answer when the base is what this user reads totals
+            // in. A grouped aggregate returns **no rows** when nothing matched the
+            // period, not `{USD: 0}`, so a user whose accounts are all in dollars hits
+            // this branch on every quiet month — and denominating the zero in the base
+            // would put `R$ 0,00` on their statement beside `US$ 1.234,00`, which is the
+            // one thing `currency-consolidation` says MUST NOT happen: for a
+            // single-currency user the base stays unused (design D29).
+            //
+            // So the zero is denominated the same way every other single-currency figure
+            // is — by the currency the money is in. With one currency in use that is it;
+            // with none yet, or with several, the base is right, because then the base is
+            // where this user's totals actually live.
+            //
+            // Read only on this branch: it costs a `DISTINCT` no figure that has terms
+            // ever pays for.
+            val soleCurrencyInUse = getAccountCurrencies().inUse.singleOrNull()
             return ConsolidatedAmount(
-                terms = listOf(policy(0.0, base, false)),
+                terms = listOf(policy(0.0, soleCurrencyInUse ?: base, false)),
                 isApproximate = false,
-                baseIndex = 0,
+                baseIndex = if (soleCurrencyInUse == null || soleCurrencyInUse == base) 0 else null,
             )
         }
 

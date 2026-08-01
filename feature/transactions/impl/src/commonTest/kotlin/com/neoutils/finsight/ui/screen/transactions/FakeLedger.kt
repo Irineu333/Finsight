@@ -10,7 +10,9 @@ import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
@@ -170,7 +172,15 @@ internal object NoExchangeRates : IExchangeRateRepository {
 internal fun consolidator(baseCurrency: String = "BRL") = ConsolidateMoneyUseCase(
     baseCurrencyRepository = FakeBaseCurrency(baseCurrency),
     exchangeRateRepository = NoExchangeRates,
+    getAccountCurrencies = FakeAccountCurrencies(baseCurrency),
 )
+
+internal class FakeAccountCurrencies(
+    private vararg val inUse: String,
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() =
+        AccountCurrencies(inUse = inUse.toList(), ofDefaultAccount = inUse.firstOrNull())
+}
 
 /**
  * The composed invalidation trigger over the same fakes — what a view model listens to

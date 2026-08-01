@@ -3,7 +3,9 @@ package com.neoutils.finsight.database.repository
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -270,5 +272,8 @@ private fun reducer(
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
+    },
+    getAccountCurrencies = object : GetAccountCurrenciesUseCase {
+        override suspend fun invoke() = AccountCurrencies(inUse = listOf(base), ofDefaultAccount = base)
     },
 )

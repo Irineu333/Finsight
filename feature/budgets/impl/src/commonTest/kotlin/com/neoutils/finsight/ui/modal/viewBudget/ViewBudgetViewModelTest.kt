@@ -5,7 +5,9 @@ package com.neoutils.finsight.ui.modal.viewBudget
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -271,5 +273,8 @@ private fun reducer(
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
+    },
+    getAccountCurrencies = object : GetAccountCurrenciesUseCase {
+        override suspend fun invoke() = AccountCurrencies(inUse = listOf(base), ofDefaultAccount = base)
     },
 )

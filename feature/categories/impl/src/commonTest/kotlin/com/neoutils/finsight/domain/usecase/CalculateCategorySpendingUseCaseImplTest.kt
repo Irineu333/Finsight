@@ -36,6 +36,7 @@ private fun reducer(
 ) = ConsolidateMoneyUseCase(
     baseCurrencyRepository = FakeBaseCurrencyRepository(base),
     exchangeRateRepository = FakeExchangeRateRepository(rates),
+    getAccountCurrencies = FakeAccountCurrencies(),
 )
 
 /** The one value of a mono-currency figure. */
@@ -306,4 +307,10 @@ private class FakeEntryRepository(
         startDate: LocalDate,
         endDate: LocalDate,
     ): ScopeStatsByCurrency = throw NotImplementedError()
+}
+
+internal class FakeAccountCurrencies(
+    private val inUse: List<String> = listOf("BRL"),
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() = AccountCurrencies(inUse = inUse, ofDefaultAccount = inUse.firstOrNull())
 }

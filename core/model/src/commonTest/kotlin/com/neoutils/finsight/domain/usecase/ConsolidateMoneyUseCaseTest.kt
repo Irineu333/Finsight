@@ -32,22 +32,69 @@ class ConsolidateMoneyUseCaseTest {
 
     private fun reducer(
         base: String = "BRL",
+        currenciesInUse: List<String> = listOf("BRL"),
         vararg rates: Pair<String, Double>,
     ) = ConsolidateMoneyUseCase(
         baseCurrencyRepository = FakeBaseCurrency(base),
         exchangeRateRepository = FakeRates(rates.toMap()),
+        getAccountCurrencies = FakeAccountCurrencies(currenciesInUse),
     )
 
     // --- the table ---
 
     @Test
-    fun `an empty figure is zero, exact, in the base`() = runTest {
+    fun `an empty figure is zero, exact, in the currency the user holds`() = runTest {
         val figure = reducer()(MoneyByCurrency.zero, march, DisplayAmount::natural)
 
         assertEquals(1, figure.terms.size)
         assertEquals("BRL", figure.terms.single().currency)
         assertEquals(0.0, figure.terms.single().value)
         assertFalse(figure.isApproximate)
+    }
+
+    /**
+     * **The branch a dollar-only user hits every quiet month.** A grouped aggregate
+     * returns no rows when nothing matched the period — not `{USD: 0}` — so an empty
+     * figure is what a statement asks for whenever a month had no movement. Denominating
+     * that zero in the base would put `R$ 0,00` on his screen beside `US$ 1.234,00`, and
+     * `currency-consolidation` says the base stays unused for him (design D29).
+     */
+    @Test
+    fun `an empty figure of a single-currency user is not denominated in the base`() = runTest {
+        val figure = reducer(base = "BRL", currenciesInUse = listOf("USD"))(
+            MoneyByCurrency.zero,
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals("USD", figure.terms.single().currency)
+        assertEquals(0.0, figure.terms.single().value)
+        assertFalse(figure.isApproximate)
+        assertNull(figure.base, "the base took no part; this user does not read totals in it")
+    }
+
+    /**
+     * With more than one currency held, the base *is* where this user reads totals, so a
+     * zero belongs there — and so does it before any account exists, when there is no
+     * other answer.
+     */
+    @Test
+    fun `an empty figure falls to the base when there is no single currency held`() = runTest {
+        val several = reducer(base = "BRL", currenciesInUse = listOf("USD", "EUR"))(
+            MoneyByCurrency.zero,
+            march,
+            DisplayAmount::natural,
+        )
+        val none = reducer(base = "BRL", currenciesInUse = emptyList())(
+            MoneyByCurrency.zero,
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals("BRL", several.terms.single().currency)
+        assertEquals(0, several.baseIndex)
+        assertEquals("BRL", none.terms.single().currency)
+        assertEquals(0, none.baseIndex)
     }
 
     @Test
@@ -303,6 +350,13 @@ class ConsolidateMoneyUseCaseTest {
         )
         assertEquals(100.0, figure.terms[0].value, "magnitude applies after conversion")
     }
+}
+
+internal class FakeAccountCurrencies(
+    private val inUse: List<String> = listOf("BRL"),
+    private val ofDefaultAccount: String? = inUse.firstOrNull(),
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() = AccountCurrencies(inUse = inUse, ofDefaultAccount = ofDefaultAccount)
 }
 
 internal class FakeBaseCurrency(base: String) : IBaseCurrencyRepository {

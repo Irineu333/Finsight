@@ -5,7 +5,9 @@ import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +23,14 @@ import kotlinx.datetime.LocalDate
 internal fun reducer() = ConsolidateMoneyUseCase(
     baseCurrencyRepository = FakeBaseCurrencyRepository(),
     exchangeRateRepository = FakeExchangeRateRepository(),
+    getAccountCurrencies = FakeAccountCurrencies(),
 )
+
+internal class FakeAccountCurrencies(
+    private val inUse: List<String> = listOf("BRL"),
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() = AccountCurrencies(inUse = inUse, ofDefaultAccount = inUse.firstOrNull())
+}
 
 /** The one value of a mono-currency figure. */
 internal val ConsolidatedAmount.value: Double get() = terms.single().value

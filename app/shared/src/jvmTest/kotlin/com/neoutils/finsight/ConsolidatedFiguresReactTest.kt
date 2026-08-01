@@ -38,6 +38,19 @@ class ConsolidatedFiguresReactTest {
     private fun File.relativePath() = relativeTo(repoRoot).invariantSeparatorsPath
 
     /**
+     * The file's **code**, with comments removed.
+     *
+     * The rule below is about which types a file depends on, and a KDoc that explains why
+     * a contract exists names types the file does not touch: `GetAccountCurrenciesUseCase`
+     * says in prose that the reducer consumes it, which read literally makes every form
+     * that asks which currencies exist a producer of consolidated figures. A guard a
+     * doc comment can turn red is a guard that gets satisfied by writing worse docs.
+     */
+    private fun File.code(): String = readText()
+        .replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), "")
+        .replace(Regex("""//[^\n]*"""), "")
+
+    /**
      * Everything that produces a consolidated figure — the reducer, and whatever is built
      * on top of it, transitively.
      *
@@ -62,7 +75,7 @@ class ConsolidatedFiguresReactTest {
             val grew = candidates.any { file ->
                 val name = file.name.removeSuffix(".kt")
                 if (name in names) return@any false
-                if (names.none { it in file.readText() }) return@any false
+                if (names.none { it in file.code() }) return@any false
 
                 names += name
                 // An interface reached through its implementation: the view model injects
@@ -84,8 +97,8 @@ class ConsolidatedFiguresReactTest {
 
         val deaf = productionSources
             .filter { it.name.endsWith("ViewModel.kt") }
-            .filter { reducesAFigure(it.readText()) }
-            .filterNot { listens.containsMatchIn(it.readText()) }
+            .filter { reducesAFigure(it.code()) }
+            .filterNot { listens.containsMatchIn(it.code()) }
             .map { it.relativePath() }
 
         assertEquals(
@@ -106,7 +119,7 @@ class ConsolidatedFiguresReactTest {
     fun `the mechanism has consumers outside its own module`() {
         val consumers = productionSources
             .filterNot { it.relativePath().startsWith("core/model/") }
-            .filter { "ObserveConsolidationChangesUseCase" in it.readText() }
+            .filter { "ObserveConsolidationChangesUseCase" in it.code() }
             .map { it.relativePath() }
 
         assertEquals(

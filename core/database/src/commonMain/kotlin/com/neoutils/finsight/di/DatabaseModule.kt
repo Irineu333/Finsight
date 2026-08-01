@@ -14,7 +14,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
-import com.neoutils.finsight.domain.model.legacyRelabelCurrency
+import com.neoutils.finsight.domain.model.LegacyRelabel
 import androidx.room.RoomDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -31,11 +31,11 @@ val databaseModule = module {
     // pools would deadlock instead of nesting.
     //
     // The relabel target is resolved *outside* this module and arrives as a plain
-    // code: the migration needs a currency, not a locale and not a catalog. It is
-    // recomputed on every start and that is harmless — the migration it feeds runs
+    // code: the migration needs a currency, not a device region and not a catalog. It
+    // is recomputed on every start and that is harmless — the migration it feeds runs
     // once, and `user_version` is what records that it did.
     single<AppDatabase> {
-        getRoomDatabase(builder = get(), relabelCurrency = legacyRelabelCurrency())
+        getRoomDatabase(builder = get(), relabelCurrency = get<LegacyRelabel>().currency())
     } bind RoomDatabase::class
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }

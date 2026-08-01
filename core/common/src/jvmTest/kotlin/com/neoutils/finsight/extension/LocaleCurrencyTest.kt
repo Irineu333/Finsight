@@ -3,6 +3,7 @@ package com.neoutils.finsight.extension
 import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * Pins the half of the resolution this module owns: what the **device** says.
@@ -30,11 +31,29 @@ class LocaleCurrencyTest {
     }
 
     @Test
-    fun `the language does not decide the currency`() {
-        // An interface in English on a device whose region is Brazil is still BRL.
-        // It is what keeps the legacy relabelling from firing on someone who merely
-        // reads English (design D30).
+    fun `the country of the locale decides, not its language`() {
+        // An interface in English on a locale whose country is Brazil is still BRL.
+        // What this does *not* prove is that the user is in Brazil: on Android the
+        // country of the locale is the country attached to the chosen language, which
+        // is why the legacy relabelling of design D30 asks `DeviceRegion` instead.
         assertEquals("BRL", withLocale(Locale("en", "BR")) { localeCurrencyCode() })
         assertEquals("USD", withLocale(Locale("pt", "US")) { localeCurrencyCode() })
+    }
+
+    /**
+     * The desktop's region, which the JVM takes from the operating system's region
+     * setting. It is the same answer as the locale's here — and it is a separate type
+     * because it is *not* the same answer on Android, where only this one may decide a
+     * relabelling.
+     */
+    @Test
+    fun `the desktop region names its currency`() {
+        assertEquals("USD", withLocale(Locale("en", "US")) { LocaleDeviceRegion().currencyCode() })
+        assertEquals("BRL", withLocale(Locale("en", "BR")) { LocaleDeviceRegion().currencyCode() })
+    }
+
+    @Test
+    fun `a locale with no country states no region`() {
+        assertNull(withLocale(Locale("en")) { LocaleDeviceRegion().currencyCode() })
     }
 }

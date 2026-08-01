@@ -1,5 +1,7 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.domain.model.LegacyRelabel
+import com.neoutils.finsight.domain.model.legacyRelabelCurrency
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
@@ -20,6 +22,10 @@ import org.koin.dsl.module
  * accounts by the accounts feature.
  */
 val modelModule = module {
+    // The one-shot relabelling of design D30, resolved where the device region and the
+    // catalog are both visible and asked for by `core/database`, which may name neither.
+    single<LegacyRelabel> { LegacyRelabel { legacyRelabelCurrency(region = get()) } }
+
     factory {
         ConsolidateMoneyUseCase(
             baseCurrencyRepository = get(),

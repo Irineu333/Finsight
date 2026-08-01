@@ -1,7 +1,7 @@
 package com.neoutils.finsight.extension
 
 /**
- * The ISO 4217 code of the currency the **device's region** uses, or `null` when the
+ * The ISO 4217 code of the currency the **device's locale** names, or `null` when the
  * platform cannot name one.
  *
  * This adds no machinery: the app already derives a currency from the locale, and it
@@ -10,10 +10,13 @@ package com.neoutils.finsight.extension
  * over values denominated in reais. The derivation existed; what was missing was
  * using it to **decide** rather than to format (design D28).
  *
- * **The region decides, not the language.** An interface in English on a device whose
- * region is Brazil answers `BRL`, because the currency of a locale is a property of
- * its country. That narrowing is what keeps the legacy relabelling of design D30 from
- * firing on someone who merely reads English.
+ * **It is the locale's country, and a locale's country is not a location.** The currency
+ * of a locale is a property of its country, so an interface in English on a device set to
+ * `en-BR` answers `BRL` — but on Android that country comes from the system language list,
+ * where choosing *English (United States)* is `en-US` whatever the user's money is in.
+ * The read is right for what it decides here: a **pre-selection**, which the user sees and
+ * can change before anything is written. It is not enough to re-denominate a database that
+ * already exists, and that is [DeviceRegion]'s job, deliberately separate from this one.
  *
  * The code returned is **raw** — whatever the platform says, including a currency
  * this app does not offer. Reducing it to one the app can denominate an account in is

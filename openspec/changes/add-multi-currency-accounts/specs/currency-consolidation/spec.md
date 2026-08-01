@@ -4,9 +4,11 @@
 
 O sistema SHALL manter uma **moeda base** do usuário, usada exclusivamente para reduzir a uma única figura os valores que o razão devolve em **mais de uma** moeda. Um usuário cujas contas estejam todas numa mesma moeda MUST NOT ter figura alguma expressa na base quando esta difere daquela — para ele, a base permanece sem uso. Ela SHALL ser preferência de exibição, e MUST NOT ser propriedade de conta, de entry, de transação ou de qualquer dado do razão.
 
-Trocar a moeda base MUST NOT alterar dado algum já gravado, e MUST NOT exigir migração ou reprocessamento: as figuras consolidadas SHALL ser recalculadas na leitura seguinte, retroativamente e por inteiro. Nenhum valor convertido SHALL ser persistido.
+**A troca da moeda base não é oferecida, e o que segue é requisito sobre o desenho e não sobre um fluxo.** O sistema MUST NOT oferecer caminho para trocá-la: ela é semeada uma vez e permanece. O que estas duas frases exigem é que trocá-la **permaneça derivação** — que nada seja gravado hoje que impeça oferecê-la depois —, e a verificação delas SHALL ser feita sobre o dado e sobre a redução, e não sobre uma tela. Um setter que existisse sem o resto seria pior do que a ausência dele: escreveria o código novo deixando todo o acervo de taxas sendo lido contra uma base em que nenhuma delas foi medida.
 
-Trocar a moeda base MUST NOT invalidar o acervo de taxas. A taxa da base anterior contra a nova SHALL ser a inversa da que já existe, e as demais SHALL ser re-expressas por triangulação sobre as taxas de mesma data. Isso é derivação, não migração: nenhuma linha gravada muda.
+Trocada a moeda base, dado algum já gravado MUST NOT ser alterado, e migração ou reprocessamento MUST NOT ser exigido: as figuras consolidadas SHALL ser recalculadas na leitura seguinte, retroativamente e por inteiro. Nenhum valor convertido SHALL ser persistido — é o que sustenta a frase acima, e é verificável hoje.
+
+Trocada a moeda base, o acervo de taxas MUST NOT ser invalidado. A taxa da base anterior contra a nova SHALL ser a inversa da que já existe, e as demais SHALL ser re-expressas por triangulação sobre as taxas de mesma data. Isso é derivação, não migração: nenhuma linha gravada muda. A derivação SHALL ser verificável sobre o acervo, sem que a troca precise ser exercida.
 
 A moeda base SHALL ser resolvida, na primeira execução, a partir do **locale do dispositivo**. Quando a moeda do locale não pertencer ao conjunto oferecido, o sistema SHALL recair numa moeda declarada — que é último recurso, e MUST NOT ser tratada como padrão do produto.
 
@@ -28,13 +30,17 @@ O razão MUST NOT prover valor padrão para a moeda de uma conta. Não existe, p
 - **WHEN** o usuário troca o locale do dispositivo depois de a moeda base já estar resolvida
 - **THEN** a moeda base permanece a mesma, e nenhuma figura consolidada muda
 
-#### Scenario: Troca de moeda base é imediata e retroativa
-- **WHEN** o usuário troca a moeda base de BRL para USD
-- **THEN** toda figura consolidada passa a ser expressa em dólar, incluindo períodos passados, sem migração e sem alterar nenhuma entry
+#### Scenario: A troca não é oferecida
+- **WHEN** a interface da preferência de moeda base é inspecionada
+- **THEN** ela não expõe forma de escrevê-la, e nenhuma tela oferece a troca
 
-#### Scenario: Troca de moeda base preserva as taxas
-- **WHEN** o usuário troca a moeda base e existiam taxas cadastradas contra a base anterior
-- **THEN** as taxas continuam utilizáveis, derivadas por inversão e triangulação, sem que nenhuma linha gravada seja alterada
+#### Scenario: Trocar a base seria imediato e retroativo
+- **WHEN** a base em vigor é substituída por outra e as figuras consolidadas são recalculadas
+- **THEN** todas passam a ser expressas na nova, incluindo as de períodos passados, sem migração e sem que nenhuma entry mude — porque nenhuma delas foi lida de valor convertido gravado
+
+#### Scenario: O acervo de taxas sobrevive à troca
+- **WHEN** existem taxas cadastradas contra a base em vigor e se pergunta o que elas valeriam contra outra
+- **THEN** a da base atual contra a nova é a inversa da que já existe, as demais saem por triangulação sobre as taxas de mesma data, e nenhuma linha gravada é alterada
 
 #### Scenario: Nenhum valor convertido persistido
 - **WHEN** os dados gravados são inspecionados

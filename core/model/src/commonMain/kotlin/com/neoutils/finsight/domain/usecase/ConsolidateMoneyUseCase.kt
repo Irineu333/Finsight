@@ -383,8 +383,14 @@ class ComparativeMagnitudes<K> internal constructor(
  * target term is omitted when nothing landed in it — a `R$ 0,00` beside `US$ 300,00`
  * asserts a zero nobody measured — and only the term a rate passed through wears the mark,
  * because a term no rate touched is the ledger's own amount, exact, in its own currency.
+ *
+ * @param on the date whose rates produced this reduction, carried so the figure can say
+ * *when*. It is not decoration: a figure that converted something but reports no date
+ * reads, to the surface that explains the mark, as a figure **nothing** was converted for
+ * — and the explanation then denies a rate that was in fact applied. The date exists only
+ * where a conversion happened, which is the same rule the general reducer keeps.
  */
-fun ReducedAmount.asFigure(target: String): ConsolidatedAmount {
+fun ReducedAmount.asFigure(target: String, on: LocalDate): ConsolidatedAmount {
     val convertedSomething = value != 0.0 || unconverted.isEmpty()
     val targetTerm = DisplayAmount
         .magnitude(value, target, isApproximate)
@@ -393,6 +399,9 @@ fun ReducedAmount.asFigure(target: String): ConsolidatedAmount {
     return ConsolidatedAmount(
         terms = listOfNotNull(targetTerm) +
             unconverted.map { DisplayAmount.magnitude(it.value, it.currency, isApproximate = false) },
+        // Reported only when a rate actually multiplied something — a reduction that
+        // reached nothing has no date to name, exactly as in the general reducer.
+        asOf = on.takeIf { isApproximate },
         // The **figure** is approximate when a rate touched it *or* when it holds parts
         // that do not add up — it is then not one number, and no single number answers for
         // it. Which is a different fact from whether any given term went through a rate,

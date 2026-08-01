@@ -881,6 +881,7 @@
     <string name="exchange_rate_form_title_new">Nova taxa</string>
     <string name="exchange_rate_form_title_edit">Editar taxa</string>
     <string name="exchange_rate_form_currency">Moeda</string>
+    <string name="exchange_rate_form_currency_locked">A moeda de uma taxa não muda. Para corrigi-la, remova esta e cadastre outra.</string>
     <string name="exchange_rate_form_rate">Taxa</string>
     <string name="exchange_rate_form_rate_helper">Quantos %1$s vale 1 %2$s</string>
     <string name="exchange_rate_form_rate_placeholder">Informe a taxa</string>

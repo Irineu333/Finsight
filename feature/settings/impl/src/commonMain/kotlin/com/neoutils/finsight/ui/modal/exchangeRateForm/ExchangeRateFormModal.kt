@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +15,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -25,9 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rate_form_currency
+import com.neoutils.finsight.resources.exchange_rate_form_currency_locked
 import com.neoutils.finsight.resources.exchange_rate_form_date
 import com.neoutils.finsight.resources.exchange_rate_form_rate
 import com.neoutils.finsight.resources.exchange_rate_form_rate_helper
@@ -77,6 +81,11 @@ import org.koin.core.parameter.parametersOf
  * permanent attribute of an account. And the date is typed and validated like every
  * other date in the app, with the calendar as a button beside it — not a read-only box
  * that can only be filled by a picker.
+ *
+ * Correcting a rate **locks** the currency rather than hiding it (the rule task 15.8
+ * wrote for the budget form: a locked field still answers what the number is about),
+ * and removing one wears the outlined `error` button with the bin that every
+ * destructive action of this app wears.
  *
  * **This is the only place an external suggestion may ever appear** (design D11), and
  * in v1 it appears as nothing more than the field's placeholder. No read of this app
@@ -145,10 +154,40 @@ class ExchangeRateFormModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val options = uiState.selectableCurrencies.map {
+                it.code to "${it.symbol} · ${stringUiText(it.name)} (${it.code})"
+            }
+
+            val currencyLabel = options
+                .firstOrNull { it.first == uiState.currency }
+                ?.second
+                ?: uiState.currency
+
             // The currency of an existing rate is not editable: changing it would not
             // correct that observation, it would silently reassign it to another
             // currency. Removing and registering again is the honest path.
-            if (!uiState.isEditing) {
+            //
+            // **Locking is not hiding.** The field used to disappear on the way in, and
+            // a modal that answers "which currency is this number about?" with silence
+            // is the exact failure task 15.8 corrected in the budget form: the number is
+            // the whole subject, and the only thing naming it was the row the user
+            // tapped a moment ago. It stays, disabled and with the reason beside it —
+            // the same signifier the account form's locked currency row wears.
+            if (uiState.isEditing) {
+                OutlinedTextField(
+                    value = currencyLabel,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
+                    supportingText = {
+                        Text(stringResource(Res.string.exchange_rate_form_currency_locked))
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
                 // **The selector of this app, whole** — `menuAnchor` and nothing else.
                 // The field that opened the shared sheet had two defects with one cause:
                 // a text field owns its own gestures, so bolting an opener onto it needs
@@ -163,10 +202,6 @@ class ExchangeRateFormModal(
                 // popup over the sheet instead of another sheet under the keyboard.
                 var expanded by remember { mutableStateOf(false) }
 
-                val options = uiState.selectableCurrencies.map {
-                    it.code to "${it.symbol} · ${stringUiText(it.name)} (${it.code})"
-                }
-
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = {
@@ -177,8 +212,7 @@ class ExchangeRateFormModal(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     OutlinedTextField(
-                        value = options.firstOrNull { it.first == uiState.currency }?.second
-                            ?: uiState.currency,
+                        value = currencyLabel,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
@@ -299,17 +333,39 @@ class ExchangeRateFormModal(
             // Removal is the obligatory corollary of a rate outliving its transaction
             // (design D27), not a convenience: a rate observed by mistake from an
             // operation since deleted has no other path that reaches it.
+            //
+            // **It is a destructive action, and this app has one shape for those** —
+            // outlined, in `error`, with the bin and a 16sp label, the button
+            // `ViewBudgetModal`, `ViewTransactionModal`, `ViewCategoryModal` and
+            // `ViewRecurringModal` all wear. It used to be a bare `TextButton` with
+            // coloured text, the one place in the app where deleting looked like a link.
             if (uiState.isEditing) {
-                TextButton(
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
                     onClick = {
                         viewModel.onAction(ExchangeRateFormAction.Remove)
                         modalManager.dismiss(this@ExchangeRateFormModal)
                     },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.error,
+                    ),
+                    border = BorderStroke(width = 1.dp, color = colorScheme.error),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+
+                    Spacer(modifier = Modifier.size(8.dp))
+
                     Text(
                         text = stringResource(Res.string.exchange_rate_form_remove),
-                        color = colorScheme.error,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }

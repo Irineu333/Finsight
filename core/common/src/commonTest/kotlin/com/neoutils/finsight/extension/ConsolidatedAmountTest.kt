@@ -182,6 +182,82 @@ class ConsolidatedAmountTest {
         assertEquals(march, listOf(exact, approximate(on = march)).approximateFigure()?.asOf)
     }
 
+    // --- the three severities of design D21 ---
+
+    /**
+     * Nothing to report is the single-currency user's every surface, and it has to fall out
+     * of the figures rather than out of a screen remembering to ask.
+     */
+    @Test
+    fun noNoticeWhenConsolidationIsNotAffectingTheSurface() {
+        assertNull(listOf(exact(), exact()).consolidationNotice())
+        assertNull(emptyList<ConsolidatedAmount>().consolidationNotice())
+    }
+
+    /** One number, arrived at through a rate: provenance, and therefore the quiet level. */
+    @Test
+    fun aFigureThatConvertedIntoOneNumberIsTheQuietLevel() {
+        val converted = ConsolidatedAmount(
+            terms = listOf(DisplayAmount.natural(375.0, BRL, isApproximate = true)),
+            isApproximate = true,
+            baseIndex = 0,
+            asOf = LocalDate(2026, 3, 10),
+        )
+
+        assertEquals(ConsolidationNotice.CONVERTED, listOf(converted).consolidationNotice())
+    }
+
+    /**
+     * Parts where a total was expected. The amounts are all exact and nothing is hidden,
+     * but the user is reading a layout instead of a number, and one rate would collapse it.
+     */
+    @Test
+    fun aFigureInPartsIsTheAlertLevel() {
+        assertEquals(ConsolidationNotice.STACKED, listOf(approximate()).consolidationNotice())
+    }
+
+    /**
+     * **Severity is the worst thing on the surface, not the first.** A card holding a plain
+     * converted total beside one it could not reduce has lost the second, and reporting the
+     * milder of the two would describe the half that is fine.
+     */
+    @Test
+    fun theWorstOfTheSurfaceIsWhatIsReported() {
+        val converted = ConsolidatedAmount(
+            terms = listOf(DisplayAmount.natural(375.0, BRL, isApproximate = true)),
+            isApproximate = true,
+            baseIndex = 0,
+        )
+
+        assertEquals(
+            ConsolidationNotice.STACKED,
+            listOf(converted, approximate()).consolidationNotice(),
+        )
+        assertEquals(
+            ConsolidationNotice.UNRESOLVED,
+            listOf(converted, approximate()).consolidationNotice(unresolved = true),
+        )
+    }
+
+    /**
+     * And the red level is reachable with every figure on the surface exact, which is why
+     * it is declared and not derived: a bar that was not drawn leaves the amounts beside it
+     * untouched, so there is nothing in them to read it from.
+     */
+    @Test
+    fun theErrorLevelDoesNotNeedAnApproximateFigureToExist() {
+        assertEquals(
+            ConsolidationNotice.UNRESOLVED,
+            listOf(exact()).consolidationNotice(unresolved = true),
+        )
+    }
+
+    private fun exact() = ConsolidatedAmount(
+        terms = listOf(DisplayAmount.natural(100.0, BRL, isApproximate = false)),
+        isApproximate = false,
+        baseIndex = 0,
+    )
+
     private fun approximate(on: LocalDate? = null) = ConsolidatedAmount(
         terms = listOf(
             // What a rate passed through …

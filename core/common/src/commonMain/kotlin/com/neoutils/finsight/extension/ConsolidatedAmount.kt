@@ -175,3 +175,71 @@ fun ConsolidatedAmount.degradedTerm(): DisplayAmount = base ?: terms.first()
  */
 fun List<ConsolidatedAmount>.approximateFigure(): ConsolidatedAmount? =
     firstOrNull { it.isApproximate }
+
+/**
+ * **How badly consolidation is affecting what a surface shows** — three states, because a
+ * user needs to tell them apart at a glance and the app had been saying all three the same
+ * way.
+ *
+ * They are ordered by how much the surface has lost, and the order is the whole point: a
+ * card at one level is not also at the levels below it, so the highest one it reaches is
+ * the one it reports.
+ *
+ * Deriving this here, beside the figure, is what keeps a screen from deciding it — the
+ * same reason [approximateFigure] lives here. A surface that judged its own severity would
+ * be a surface free to under-report it, and under-reporting is the direction that matters.
+ */
+enum class ConsolidationNotice {
+    /**
+     * **A rate was applied and the number is still one number.** Nothing was lost: the
+     * figure reads as a single amount, only an approximate one, and the `≈` on it already
+     * says so. The notice is a courtesy — where the value came from, and as of when — so it
+     * is the quiet one.
+     */
+    CONVERTED,
+
+    /**
+     * **The figure could not be reduced to one number, and its parts are stacked.** Some
+     * currency on this surface has no rate, so `R$ 100,00 + US$ 50,00` is what there is.
+     * Every amount is still exact and nothing is hidden — but the user is now reading a
+     * layout where they expected a total, and one registered rate would collapse it. That
+     * is a state to act on, not merely to know about.
+     */
+    STACKED,
+
+    /**
+     * **The surface needed one number and has none, so part of it is not working.** A
+     * budget bar that cannot be drawn, a proportion that cannot be taken, a total replaced
+     * by a placeholder. The amounts behind it are perfectly known; what is missing is any
+     * common measure to put them against, and until a rate exists the surface cannot do
+     * the job it is on the screen to do.
+     *
+     * It is not derivable from the figures alone — a blanked bar is *what is not drawn* —
+     * so the surface that suppressed something is what declares it.
+     */
+    UNRESOLVED,
+}
+
+/**
+ * The one notice a surface reports, given every figure it shows and whether it had to
+ * suppress something for want of a rate.
+ *
+ * `null` means consolidation is not affecting this surface at all, which for a
+ * single-currency user is every surface in the app — and is why no badge appears for them
+ * without any screen having to check.
+ *
+ * @param unresolved whether this surface left something out because no single number could
+ * be had: a bar not drawn, a share not taken, a total shown as a placeholder. It cannot be
+ * read off the figures, so it is declared.
+ */
+fun List<ConsolidatedAmount>.consolidationNotice(
+    unresolved: Boolean = false,
+): ConsolidationNotice? = when {
+    unresolved -> ConsolidationNotice.UNRESOLVED
+    // Stacked before converted, and never both: a surface holding one plain approximate
+    // total beside one it could not reduce has lost the second, and reporting the milder
+    // of the two would describe the half that is fine.
+    any { it.terms.size > 1 } -> ConsolidationNotice.STACKED
+    any { it.isApproximate } -> ConsolidationNotice.CONVERTED
+    else -> null
+}

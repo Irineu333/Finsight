@@ -25,7 +25,7 @@ data class CategorySpending(
      *
      * `null` rather than `0.0`, and the difference is the whole point — zero is an
      * assertion about the share, and a missing rate is the absence of one. A surface shows
-     * a dash, or no bar, and says why (`MissingShareBadge`).
+     * a dash, or no bar, and says why (`ConsolidationBadge`, at its unresolved level).
      */
     val percentage: Double?,
 )

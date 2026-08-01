@@ -856,9 +856,11 @@
     <string name="money_approximate_converted">This amount brings together different currencies. What could be converted used the rate of %1$s.</string>
     <string name="money_approximate_partial">This amount brings together different currencies. What could be converted used the rate of %1$s; the rest is in a currency with no rate on file and appears on its own, unconverted.</string>
     <string name="money_approximate_none">This amount brings together different currencies and no rate is on file, so nothing was converted: each currency stands on its own.</string>
-    <string name="money_no_share_badge">Why there is no proportion bar</string>
-    <string name="money_no_share_title">No proportion to show</string>
-    <string name="money_no_share_body">Some category in this period is in a currency with no rate on file, so there is no common total to compare against. The amounts are still exact, each in its own currency; what is missing is the proportion between them. Add the rate and the bars come back.</string>
+    <string name="money_stacked_badge">Why this amount appears in parts</string>
+    <string name="money_stacked_title">Amount in parts</string>
+    <string name="money_unresolved_badge">Why something is missing here</string>
+    <string name="money_unresolved_title">No single amount to compare against</string>
+    <string name="money_unresolved_body">Some part of this period is in a currency with no rate on file, so there is no single amount to compare against — which is why the bar and the proportion are not there. The amounts are still exact, each in its own currency; what is missing is the common measure between them. Add the rate and this works again.</string>
     <string name="report_export_footnote">≈ marks an amount that passed through an exchange rate. Where no rate was on file, that currency's share stands on its own, unconverted.</string>
     <string name="money_approximate_see_rates">See rates</string>
 

@@ -109,7 +109,7 @@ fun SummaryCard(
                 // prefix on each and the thing that explains it is one button for the
                 // whole card — here, beside the chips, instead of a permanent line under
                 // the figures (design D21).
-                ApproximationBadge(
+                ConsolidationBadge(
                     figures = balanceOverview?.figures.orEmpty(),
                     onSeeRates = onSeeRates,
                 )

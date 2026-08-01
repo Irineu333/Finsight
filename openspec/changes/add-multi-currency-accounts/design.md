@@ -347,7 +347,17 @@ Isso é degradação **declarada**, e a alternativa não é "renderizar tudo": �
 
 `≈` como prefixo, resolvido **dentro do formatador**, sempre mais externo que o sinal: `≈ +R$ 1.240,00`. É a porta que `DisplayAmount.format` já usa para concatenar `"+"` e `"-"` sobre o valor formatado, com o KDoc registrando que absorvê-lo ali é "um no-op demonstrável no texto". Ser o mais externo é também a única posição que sobrevive a um locale que ponha o símbolo à direita.
 
-Cor está **descartada**, por duas razões independentes. A paleta já está inteiramente tomada por natureza de lançamento, e o âmbar que "aproximado" pediria é literalmente o `Adjustment` (`Color.kt:17`). E o projeto já escreveu a doutrina: *"a cor sozinha não carrega 'arquivado' — falha para quem não lê cor"* (`CategoryCard.kt:56-57`). Onde o app precisa de estado, ele usa ícone **e** rótulo.
+Cor está **descartada sobre o número**, por duas razões independentes. A paleta já está inteiramente tomada por natureza de lançamento, e o âmbar que "aproximado" pediria é literalmente o `Adjustment` (`Color.kt:17`). E o projeto já escreveu a doutrina: *"a cor sozinha não carrega 'arquivado' — falha para quem não lê cor"* (`CategoryCard.kt:56-57`). Onde o app precisa de estado, ele usa ícone **e** rótulo.
+
+**O badge que explica a marca é outro elemento, e nele a cor entra — em três níveis.** As duas razões acima continuam valendo e nenhuma alcança um glifo de 16dp no canto do card: ele não está sobre valor algum, então não há natureza de lançamento com que o âmbar possa ser confundido, e ele nunca viaja só — cada nível carrega o seu próprio ícone, o seu próprio rótulo de acessibilidade e a sua própria frase a um toque, que é exatamente o *ícone **e** rótulo* que a doutrina exige. O que a cor acrescenta é a distinção que faltava: os três casos não são a mesma notícia, e um único ponto cinza dizia todos idênticos.
+
+| estado | leitura | o que aconteceu com a superfície |
+|---|---|---|
+| valor convertido | cinza, `Info` | exibe um número; ele passou por taxa |
+| valor em partes | âmbar, `WarningAmber` | exibe partes onde se esperava um total |
+| sem valor comum | vermelho, `ErrorOutline` | não consegue fazer parte do seu trabalho |
+
+A ordenação é a regra: uma superfície num nível **não** está também nos de baixo, então ela reporta o mais alto que alcança — reportar o mais brando descreveria a metade que está bem. O terceiro nível não é derivável das figuras, porque o que ele descreve é *o que não foi desenhado*: uma barra ausente deixa os valores ao lado intactos e exatos. Quem suprimiu algo é quem declara. E ele absorve o badge que existia só para explicar a barra de proporção ausente — era este nível com outro nome, e dois componentes eram duas afordâncias para uma pergunta, enquanto os dois KDocs afirmavam que o usuário aprende uma.
 
 Ícone e sufixo `(aprox.)` também descartados: o `SummaryCard` tem até seis linhas de dinheiro, e nem seis ícones de 16dp nem oito caracteres extras cabem numa coluna que já está em `SpaceBetween`.
 

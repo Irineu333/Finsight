@@ -35,7 +35,7 @@ import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.ui.component.AdaptiveModal
-import com.neoutils.finsight.ui.component.ApproximationBadge
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
@@ -148,9 +148,10 @@ class ViewBudgetModal(
                 // is a property of one budget: only this budget's categories hold a
                 // currency no rate reaches, and a badge on the card that shows three of
                 // them could not say which. Top-right corner, like every other badge.
-                ApproximationBadge(
+                ConsolidationBadge(
                     figures = listOfNotNull(budgetProgress.spentFigure),
                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                    unresolved = !budgetProgress.isResolved,
                 )
             }
 

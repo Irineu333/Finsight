@@ -857,9 +857,11 @@
     <string name="money_approximate_converted">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s.</string>
     <string name="money_approximate_partial">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s; o restante está em moeda sem taxa cadastrada e aparece à parte, sem conversão.</string>
     <string name="money_approximate_none">Este valor reúne moedas diferentes e nenhuma taxa está cadastrada, então nada foi convertido: cada moeda aparece por si.</string>
-    <string name="money_no_share_badge">Por que não há barra de proporção</string>
-    <string name="money_no_share_title">Sem proporção a exibir</string>
-    <string name="money_no_share_body">Alguma categoria deste período está em uma moeda sem taxa cadastrada, então não há um total comum para comparar. Os valores continuam exatos, cada um na sua moeda; o que falta é a proporção entre eles. Cadastre a taxa e as barras voltam.</string>
+    <string name="money_stacked_badge">Por que este valor aparece em partes</string>
+    <string name="money_stacked_title">Valor em partes</string>
+    <string name="money_unresolved_badge">Por que falta informação aqui</string>
+    <string name="money_unresolved_title">Sem um valor único para comparar</string>
+    <string name="money_unresolved_body">Alguma parte deste período está em uma moeda sem taxa cadastrada, então não existe um valor único para comparar — e é por isso que a barra e a proporção não aparecem. Os valores continuam exatos, cada um na sua moeda; o que falta é a medida comum entre eles. Cadastre a taxa e isto volta a funcionar.</string>
     <string name="report_export_footnote">≈ marca um valor que passou por uma taxa de câmbio. Quando não havia taxa, a parcela daquela moeda aparece por si, sem conversão.</string>
     <string name="money_approximate_see_rates">Ver taxas</string>
 

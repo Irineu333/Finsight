@@ -63,7 +63,7 @@ import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
-import com.neoutils.finsight.ui.component.ApproximationBadge
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
 import com.neoutils.finsight.ui.component.BalanceCardConfig
@@ -905,7 +905,7 @@ private fun TotalBalanceCard(
                 // is not a touch target, and the explanation it needs is one tap for the
                 // user who wants it instead of a permanent line for everyone (D21/D25).
                 // Every badge in the app sits in this corner, so it is looked for once.
-                ApproximationBadge(
+                ConsolidationBadge(
                     figures = listOf(component.amount),
                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                 )

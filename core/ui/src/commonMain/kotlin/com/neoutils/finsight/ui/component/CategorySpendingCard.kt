@@ -80,9 +80,14 @@ fun CategorySpendingCard(
                 // The card's top-right corner, which is where every badge in the app sits:
                 // one place to look for "why does this read the way it does", found without
                 // reading the title first. The user learns one affordance, not one per kind
-                // of gap.
-                if (hasMissingShare && onSeeRates != null) {
-                    MissingShareBadge(onSeeRates = onSeeRates)
+                // of gap — which is now literally true, since a missing bar is this badge's
+                // red level and no longer a component of its own.
+                if (onSeeRates != null) {
+                    ConsolidationBadge(
+                        figures = categorySpending.map { it.amount },
+                        onSeeRates = onSeeRates,
+                        unresolved = hasMissingShare,
+                    )
                 }
             }
 

@@ -38,7 +38,7 @@ import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatOrUnresolved
-import com.neoutils.finsight.ui.component.ApproximationBadge
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -285,9 +285,10 @@ private fun BudgetProgressItem(
 
                 // This card is one budget, so the badge here is unambiguous — it explains
                 // *this* progress. Top-right corner, like every other badge in the app.
-                ApproximationBadge(
+                ConsolidationBadge(
                     figures = listOfNotNull(progress.spentFigure),
                     onSeeRates = onSeeRates,
+                    unresolved = !progress.isResolved,
                 )
             }
 

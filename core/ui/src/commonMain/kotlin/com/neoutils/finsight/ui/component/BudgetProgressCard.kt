@@ -67,9 +67,13 @@ fun BudgetProgressCard(
                 // its six lines of money. Which budget is which is answered by opening
                 // one, where the badge sits on that budget alone.
                 if (onSeeRates != null) {
-                    ApproximationBadge(
+                    ConsolidationBadge(
                         figures = budgetProgress.take(3).mapNotNull { it.spentFigure },
                         onSeeRates = onSeeRates,
+                        // A row of this widget that could not be resolved shows `***`
+                        // instead of a bar, and a thing that is not drawn cannot explain
+                        // itself — so the card says it for whichever row lost one.
+                        unresolved = budgetProgress.take(3).any { !it.isResolved },
                     )
                 }
             }

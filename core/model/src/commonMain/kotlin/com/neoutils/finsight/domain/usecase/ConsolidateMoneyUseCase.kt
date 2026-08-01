@@ -185,7 +185,6 @@ class ConsolidateMoneyUseCase(
                 magnitudes = figures.mapValues { (_, money) ->
                     money.significantTerms().singleOrNull()?.value ?: 0.0
                 },
-                isApproximate = false,
             )
         }
 
@@ -207,7 +206,6 @@ class ConsolidateMoneyUseCase(
                     } / CENTS_PER_UNIT
                 }
             },
-            isApproximate = true,
         )
     }
 
@@ -346,11 +344,20 @@ data class ReducedAmount(
  *
  * Built only by [ConsolidateMoneyUseCase.comparativeMagnitudes]; the constructor is
  * internal so nothing else can fabricate a magnitude out of a currency it picked.
+ *
+ * **It says nothing about exactness, and that is on purpose.** A scale is not money: what
+ * comes off it is a sort key and a fraction, and a fraction is not a figure the `≈` mark
+ * applies to — exactness travels with the *money*, inside the `ConsolidatedAmount` each
+ * figure already carries. Publishing a second exactness here would be a second answer to
+ * a question that already has one, sitting one line away from it in every caller.
+ *
+ * What this class does owe about its own limits it says as [isWholeKnown], which is a
+ * different fact: not "was a rate used" but "could every figure be placed on the scale at
+ * all" — the one that decides whether [total] is a whole and whether [shareOf] has an
+ * answer.
  */
 class ComparativeMagnitudes<K> internal constructor(
     private val magnitudes: Map<K, Double?>,
-    /** Whether a rate took part in building the scale. */
-    val isApproximate: Boolean,
 ) {
     /** The scale's whole, over the figures that could be placed on it. */
     val total: Double = magnitudes.values.filterNotNull().sum()

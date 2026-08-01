@@ -120,7 +120,7 @@ Este requisito precisa ser afirmado separadamente porque a sua violação é **i
 
 ### Requirement: Onde a figura multitermo não cabe, a degradação é declarada
 
-Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso, o contador de parcelas —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.
+Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.
 
 Cada superfície com essa limitação SHALL declará-la; a decisão MUST NOT ser deixada ao layout. Um número que perde uma parcela por o texto não caber é indistinguível de um número completo, e a falha é silenciosa — que é exatamente o modo de falha que a marca de aproximação existe para impedir.
 
@@ -128,9 +128,11 @@ Uma superfície que **possa** exibir mais de um termo SHALL exibi-los todos.
 
 **Guardar string já formatada MUST NOT ser confundido com ter gramática própria.** O documento exportado guarda texto em vez de figura, mas uma célula de tabela guarda o que recebe e a página tem largura para mais de um termo — logo ele cai na regra acima, e não na degradação: ele SHALL exibir **todos** os termos. O que uma superfície sem afordância de toque deve, em lugar da degradação, é dizer **o que a marca significa**: um documento que contenha figura aproximada SHALL declará-lo em texto próprio, derivado das figuras que ele contém, e um documento em que nada é aproximado MUST NOT receber essa declaração.
 
-#### Scenario: Contador de parcelas não recebe dois termos
-- **WHEN** um valor multitermo alcançaria um contador de parcelas
-- **THEN** apenas o termo na moeda base é exibido, com a marca de aproximação, e a existência de parcela não convertida é indicada
+**Uma figura que nunca é multitermo MUST NOT ser resolvida por degradação.** A parcela de um parcelamento é denominada pelo **cartão** em que ela é cobrada, cuja moeda é uma só e não muda: ela é divisão de um valor exato, e não redução de parcelas em moedas distintas. Nenhuma taxa participa dela, e a marca de aproximação não lhe cabe. Onde a monomoeda é propriedade do dado, ela SHALL ser expressa no tipo que carrega a figura — de modo que o multitermo seja inexprimível ali —, e MUST NOT ser obtida escolhendo um termo entre vários no momento de exibir. Degradar seria dizer que houve algo a reconciliar onde nada havia.
+
+#### Scenario: A parcela é denominada pelo cartão, e não degrada
+- **WHEN** o valor de uma parcela é exibido num contador de parcelas
+- **THEN** ele aparece na moeda do cartão, exato e sem marca, e nenhum termo é escolhido entre vários, porque a figura que o alcança tem uma moeda só por construção
 
 #### Scenario: Documento exportado exibe todos os termos e declara a marca
 - **WHEN** um relatório é exportado com figuras que contêm parcela não convertida

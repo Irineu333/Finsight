@@ -120,19 +120,25 @@ Este requisito precisa ser afirmado separadamente porque a sua violação é **i
 
 ### Requirement: Onde a figura multitermo não cabe, a degradação é declarada
 
-Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso, o contador de parcelas, o documento exportado —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.
+Uma superfície de largura fixa, ou cuja gramática própria não admita mais de um termo — o medidor de limite, o rótulo de uma barra de progresso, o contador de parcelas —, SHALL exibir apenas o termo na moeda base, com a marca de aproximação e a indicação de que existe parcela não convertida. Ela MUST NOT truncar, quebrar ou omitir silenciosamente um termo.
 
 Cada superfície com essa limitação SHALL declará-la; a decisão MUST NOT ser deixada ao layout. Um número que perde uma parcela por o texto não caber é indistinguível de um número completo, e a falha é silenciosa — que é exatamente o modo de falha que a marca de aproximação existe para impedir.
 
 Uma superfície que **possa** exibir mais de um termo SHALL exibi-los todos.
 
+**Guardar string já formatada MUST NOT ser confundido com ter gramática própria.** O documento exportado guarda texto em vez de figura, mas uma célula de tabela guarda o que recebe e a página tem largura para mais de um termo — logo ele cai na regra acima, e não na degradação: ele SHALL exibir **todos** os termos. O que uma superfície sem afordância de toque deve, em lugar da degradação, é dizer **o que a marca significa**: um documento que contenha figura aproximada SHALL declará-lo em texto próprio, derivado das figuras que ele contém, e um documento em que nada é aproximado MUST NOT receber essa declaração.
+
 #### Scenario: Contador de parcelas não recebe dois termos
 - **WHEN** um valor multitermo alcançaria um contador de parcelas
 - **THEN** apenas o termo na moeda base é exibido, com a marca de aproximação, e a existência de parcela não convertida é indicada
 
-#### Scenario: Documento exportado declara a limitação
+#### Scenario: Documento exportado exibe todos os termos e declara a marca
 - **WHEN** um relatório é exportado com figuras que contêm parcela não convertida
-- **THEN** cada figura exibe o termo na moeda base com a marca, e o documento indica que há parcela não convertida
+- **THEN** cada figura exibe **todos** os seus termos, o termo convertido leva a marca, e o documento declara em texto próprio o que a marca significa
+
+#### Scenario: Documento sem nada aproximado não declara nada
+- **WHEN** um relatório é exportado e nenhuma das suas figuras é aproximada
+- **THEN** a declaração não aparece, para que um usuário de uma moeda só não leia a explicação de algo que nunca lhe aconteceu
 
 #### Scenario: Superfície sem limitação exibe tudo
 - **WHEN** um valor multitermo é exibido numa superfície sem restrição de largura ou gramática

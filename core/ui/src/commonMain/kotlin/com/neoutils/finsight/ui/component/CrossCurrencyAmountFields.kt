@@ -32,6 +32,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.cross_currency_implied_by_rate
 import com.neoutils.finsight.resources.exchange_rates_quote
 import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -156,8 +157,15 @@ fun CounterpartAmountField(
                 Res.string.exchange_rates_quote,
                 CurrencyCatalog.symbolOf(counterpartCurrency),
                 // The rate is money in the currency this field is denominated in — read
-                // through the same formatter as the amounts above it.
-                formatter.format(typedRate, currency),
+                // through the same formatter as the amounts above it, with as many places
+                // as it needs: at the currency's own two, a quotient like `0,000691` reads
+                // as a rate of zero, which is a different statement from a rounded one.
+                formatter.format(
+                    amount = typedRate,
+                    currency = currency,
+                    minFractionDigits = 2,
+                    maxFractionDigits = RATE_SCALE,
+                ),
             )
 
             // A rate from another day is offered, never assumed — and it says which day,

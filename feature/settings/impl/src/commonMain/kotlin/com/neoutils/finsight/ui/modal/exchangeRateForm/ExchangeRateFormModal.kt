@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rate_form_currency
@@ -53,7 +54,6 @@ import com.neoutils.finsight.resources.exchange_rate_form_currency_locked
 import com.neoutils.finsight.resources.exchange_rate_form_date
 import com.neoutils.finsight.resources.exchange_rate_form_rate
 import com.neoutils.finsight.resources.exchange_rate_form_rate_helper
-import com.neoutils.finsight.resources.exchange_rate_form_rate_placeholder
 import com.neoutils.finsight.resources.exchange_rate_form_remove
 import com.neoutils.finsight.resources.exchange_rate_form_save
 import com.neoutils.finsight.resources.exchange_rate_form_title_edit
@@ -62,10 +62,11 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
-import com.neoutils.finsight.util.rememberMoneyInputTransformation
+import com.neoutils.finsight.util.formatRateForEditing
+import com.neoutils.finsight.util.rateToDoubleOrNull
+import com.neoutils.finsight.util.rememberRateInputTransformation
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -87,10 +88,9 @@ import org.koin.core.parameter.parametersOf
  * and removing one wears the outlined `error` button with the bin that every
  * destructive action of this app wears.
  *
- * **This is the only place an external suggestion may ever appear** (design D11), and
- * in v1 it appears as nothing more than the field's placeholder. No read of this app
- * waits on the network, shows a loading state, or fails because a source is
- * unreachable — so there is nothing here to block on either.
+ * **This is the only place an external suggestion may ever appear** (design D11), and in
+ * v1 none does. No read of this app waits on the network, shows a loading state, or fails
+ * because a source is unreachable — so there is nothing here to block on either.
  */
 class ExchangeRateFormModal(
     private val existing: ExchangeRate? = null,
@@ -102,18 +102,24 @@ class ExchangeRateFormModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
 
-        // **A rate is money**: so many of the base currency per one unit of the other.
-        // So the field is a money field of this app, in the base — the same transformation,
-        // the same symbol, the same reading as every other amount the user types.
+        // **A rate is money** — so many of the base currency per one unit of the other —
+        // and it *reads* through the app's one formatter, with the base's symbol as this
+        // field's prefix. It is not *typed* like money, though: the money rule fills from
+        // the right because the last two digits are cents, and under it `5,32` became
+        // `0,0532` while a rate of `0,000691` was not expressible at all — two places
+        // round it to a rate of zero, which is a different statement, not a rounder truth.
+        // So the field keeps what is typed and the archive keeps the full quotient, as
+        // `currency-consolidation` requires.
         val formatter = LocalCurrencyFormatter.current
         val rate = rememberTextFieldState(
-            uiState.rate?.let { formatter.format(it, uiState.baseCurrency) }.orEmpty()
+            uiState.rate?.let { formatter.formatRateForEditing(it) }.orEmpty()
         )
 
         LaunchedEffect(Unit) {
             snapshotFlow { rate.text.toString() }
                 .collect {
-                    val typed = it.moneyToDouble().takeIf { value -> value > 0.0 }
+                    val typed = it.rateToDoubleOrNull(formatter.decimalSeparator)
+                        ?.takeIf { value -> value > 0.0 }
                     viewModel.onAction(ExchangeRateFormAction.ChangeRate(typed))
                 }
         }
@@ -252,7 +258,6 @@ class ExchangeRateFormModal(
             OutlinedTextField(
                 state = rate,
                 label = { Text(stringResource(Res.string.exchange_rate_form_rate)) },
-                placeholder = { Text(stringResource(Res.string.exchange_rate_form_rate_placeholder)) },
                 supportingText = {
                     Text(
                         stringResource(
@@ -262,9 +267,10 @@ class ExchangeRateFormModal(
                         )
                     )
                 },
-                inputTransformation = rememberMoneyInputTransformation(uiState.baseCurrency, rate),
+                prefix = { Text(CurrencyCatalog.symbolOf(uiState.baseCurrency)) },
+                inputTransformation = rememberRateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
                 ),
                 shape = RoundedCornerShape(12.dp),

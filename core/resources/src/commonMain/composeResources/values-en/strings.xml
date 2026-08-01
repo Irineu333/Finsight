@@ -882,7 +882,6 @@
     <string name="exchange_rate_form_currency_locked">The currency of a rate does not change. To correct it, remove this one and register another.</string>
     <string name="exchange_rate_form_rate">Rate</string>
     <string name="exchange_rate_form_rate_helper">How many %1$s one %2$s is worth</string>
-    <string name="exchange_rate_form_rate_placeholder">Enter the rate</string>
     <string name="exchange_rate_form_date">Date</string>
     <string name="exchange_rate_form_save">Save</string>
     <string name="exchange_rate_form_remove">Remove</string>

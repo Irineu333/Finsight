@@ -27,7 +27,46 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * main thread, and one of them would print the other's symbol.
  */
 expect class CurrencyFormatter internal constructor() {
+    /**
+     * The decimal separator of the device locale.
+     *
+     * It is here because the formatter is the one that always knew the locale. A field
+     * that has to accept a typed separator — the exchange rate's — would otherwise need
+     * a string resource of its own to know which character the language uses, and a
+     * second owner for "what a decimal point looks like" is exactly the divergence that
+     * put two separators on the same card once already.
+     */
+    val decimalSeparator: Char
+
     fun format(amount: Double, currency: String): String
+
+    /**
+     * The same, with the number of decimal places **stated** rather than taken from the
+     * currency's own two.
+     *
+     * It exists for one figure: the exchange rate, which is money in the base currency
+     * (so many of it per one unit of another) but not an amount of money *someone paid*.
+     * At two places a rate of `0,000691` reads `R$ 0,00` — a rate of zero, which is not
+     * a rounding of the truth but a different statement. Asking for a wider maximum lets
+     * the common case still read `R$ 5,50`, because a maximum only allows digits; it is
+     * the minimum that pads them.
+     */
+    fun format(
+        amount: Double,
+        currency: String,
+        minFractionDigits: Int,
+        maxFractionDigits: Int,
+    ): String
+
+    /**
+     * A plain decimal in the device locale — no symbol, and **no grouping**.
+     *
+     * Grouping is off deliberately: this renders the text of an editable field, and a
+     * thousands separator there is indistinguishable from a decimal one when the text is
+     * read back. What the user typed has to survive the round trip unambiguously.
+     */
+    fun formatDecimal(amount: Double, maxFractionDigits: Int): String
+
     fun formatWithSign(amount: Double, currency: String): String
 }
 

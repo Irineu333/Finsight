@@ -63,6 +63,7 @@ import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -247,8 +248,18 @@ private fun ExchangeRateCard(
             // A rate **is** money: so many of the base per one unit of the currency. So
             // it reads through the app's own money formatter, in the base, and it sits
             // where this app puts money — at the end of the row.
+            //
+            // With as many places as it needs, though, and not the currency's own two: a
+            // rate of `0,000691` is a real rate of a currency this app offers, and two
+            // places print it `R$ 0,00` — a rate of zero, which says something else. The
+            // maximum only *allows* digits, so the ordinary rate still reads `R$ 5,50`.
             Text(
-                text = formatter.format(item.rate.rate, baseCurrency),
+                text = formatter.format(
+                    amount = item.rate.rate,
+                    currency = baseCurrency,
+                    minFractionDigits = 2,
+                    maxFractionDigits = RATE_SCALE,
+                ),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,

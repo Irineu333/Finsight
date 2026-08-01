@@ -97,7 +97,7 @@ markers live in `:core:navigation`, making every route findable by its implement
 
 **Error Handling:** Arrow library (Either/flatMap/catch)
 
-> More details in the architecture skill.
+> More details in `feature/README.md`.
 > The iOS project uses **XcodeGen** (`iosApp/project.yml`).
 
 ## Strings & Internationalization

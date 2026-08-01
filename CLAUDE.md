@@ -106,9 +106,12 @@ markers live in `:core:navigation`, making every route findable by its implement
 - `UiText.asString()` — suspend, for non-Composable contexts
 - `stringUiText(error: UiText): String` — `@Composable`, for UI display
 
-**String resources:** `core/resources/src/commonMain/composeResources/values/strings.xml`
+**String resources:** the app ships in **Portuguese and English**, and every key exists in both:
+- `core/resources/src/commonMain/composeResources/values/strings.xml` — **pt**, the default
+- `core/resources/src/commonMain/composeResources/values-en/strings.xml` — **en**
 
 > Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
+> A new key is added to **both** files in the same change — a key present in only one is a bug.
 
 ## Error Types (`core/model` — `domain/error/`; the ledger's own in `core/ledger`)
 `enum class` or `sealed class` with:
@@ -134,6 +137,9 @@ compiler, not by discipline (see below).
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
 
 ## Code Style
+- **English** is the language of the codebase: names, comments, commit messages, KDoc and
+  documentation. Portuguese exists only as a translation of user-facing strings, and only in
+  `values/strings.xml`.
 - Write clear code; comments are the exception, not a crutch.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:
     1. Do not duplicate logic

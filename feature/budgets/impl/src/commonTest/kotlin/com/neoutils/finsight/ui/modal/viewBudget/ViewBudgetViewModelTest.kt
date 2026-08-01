@@ -193,7 +193,6 @@ class ViewBudgetViewModelTest {
         baseCurrencyRepository = object : IBaseCurrencyRepository {
             private val flow = MutableStateFlow("BRL")
             override fun observe(): StateFlow<String> = flow
-            override suspend fun set(currency: String) { flow.value = currency }
         },
         exchangeRateRepository = object : IExchangeRateRepository {
             override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
@@ -263,7 +262,6 @@ private fun reducer(
     baseCurrencyRepository = object : IBaseCurrencyRepository {
         private val flow = MutableStateFlow(base)
         override fun observe(): StateFlow<String> = flow
-        override suspend fun set(currency: String) { flow.value = currency }
     },
     exchangeRateRepository = object : IExchangeRateRepository {
         override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]

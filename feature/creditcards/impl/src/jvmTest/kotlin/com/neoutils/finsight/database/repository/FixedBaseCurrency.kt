@@ -18,7 +18,4 @@ internal class FixedBaseCurrency(base: String) : IBaseCurrencyRepository {
 
     override fun observe(): StateFlow<String> = state
 
-    override suspend fun set(currency: String) {
-        state.value = currency
-    }
 }

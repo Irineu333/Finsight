@@ -38,7 +38,6 @@ internal val ConsolidatedAmount.value: Double get() = terms.single().value
 internal class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
-    override suspend fun set(currency: String) { flow.value = currency }
 }
 
 internal class FakeExchangeRateRepository : IExchangeRateRepository {

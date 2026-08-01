@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
@@ -10,6 +10,7 @@ import com.neoutils.finsight.ui.component.Modal
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -132,9 +133,6 @@ private class RecordingModal : Modal() {
 private class FakeBaseCurrencyRepository : IBaseCurrencyRepository {
     private val flow = MutableStateFlow("BRL")
     override fun observe(): StateFlow<String> = flow
-    override suspend fun set(currency: String) {
-        flow.value = currency
-    }
 }
 
 /** Suspends every write until [release], so the order of the two steps is observable. */

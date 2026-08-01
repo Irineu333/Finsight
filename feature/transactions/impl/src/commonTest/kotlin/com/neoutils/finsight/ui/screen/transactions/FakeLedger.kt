@@ -153,7 +153,6 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
 /** The base currency in force. One currency, which is all the app has until group 12. */
 internal class FakeBaseCurrency(private val code: String = "BRL") : IBaseCurrencyRepository {
     override fun observe(): StateFlow<String> = MutableStateFlow(code)
-    override suspend fun set(currency: String) = throw NotImplementedError()
 }
 
 /** An empty archive: with a single currency in play, no rate is ever consulted. */

@@ -369,7 +369,6 @@ private class Fakes {
 
     val baseCurrencyRepository = object : IBaseCurrencyRepository {
         override fun observe(): StateFlow<String> = MutableStateFlow("BRL")
-        override suspend fun set(currency: String) = throw NotImplementedError()
     }
 
     private val exchangeRateRepository = object : IExchangeRateRepository {

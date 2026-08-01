@@ -17,8 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
  * moving it would silently re-express every consolidated figure in the history
  * (design D28).
  *
- * The write path exists and no screen in v1 calls it (design D18). Its presence is
- * what keeps offering the change later from being a rewrite of every read.
+ * **There is no write path**, and that is deliberate (design D18): v1 does not offer the
+ * switch, and a setter that wrote the new code alone would leave every rate on file being
+ * read against a base it was never measured in. What keeps offering it later cheap is
+ * that nothing converted is persisted and every read already observes this flow — not a
+ * setter sitting here unused.
  */
 class BaseCurrencyRepository(
     private val settings: Settings,
@@ -27,12 +30,6 @@ class BaseCurrencyRepository(
     private val _currency = MutableStateFlow(seed())
 
     override fun observe(): StateFlow<String> = _currency
-
-    override suspend fun set(currency: String) {
-        val resolved = CurrencyCatalog.reduce(currency)
-        settings.putString(KEY, resolved)
-        _currency.value = resolved
-    }
 
     private fun seed(): String {
         settings.getStringOrNull(KEY)?.let { return it }

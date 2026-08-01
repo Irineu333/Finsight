@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 
 package com.neoutils.finsight
 
@@ -8,9 +8,11 @@ import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -33,7 +35,7 @@ class ExchangeRatesViewModelTest {
     private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     @BeforeTest
-    fun setUp() = Dispatchers.setMain(kotlinx.coroutines.test.UnconfinedTestDispatcher())
+    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
@@ -92,9 +94,6 @@ class ExchangeRatesViewModelTest {
 private class FakeBaseCurrencyRepository(base: String) : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
-    override suspend fun set(currency: String) {
-        flow.value = currency
-    }
 }
 
 private class FakeExchangeRateRepository(

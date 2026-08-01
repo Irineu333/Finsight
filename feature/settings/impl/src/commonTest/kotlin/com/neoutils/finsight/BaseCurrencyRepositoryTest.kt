@@ -3,7 +3,6 @@ package com.neoutils.finsight
 import com.neoutils.finsight.database.repository.BaseCurrencyRepository
 import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.russhwolf.settings.MapSettings
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -46,14 +45,24 @@ class BaseCurrencyRepositoryTest {
         assertEquals(first, second)
     }
 
+    /**
+     * **Seeding is the only writer, so the catalog is enforced where the value is
+     * decided.** This used to be asserted through the setter, which reduced whatever it
+     * was handed; the setter is gone (offering the switch means shipping the rate
+     * re-expression with it), and what remains is the one path that writes: a region the
+     * app does not offer resolves to the currency of last resort and *that* is what is
+     * persisted — never the code the device named.
+     */
     @Test
-    fun `setting a base the app does not offer falls back rather than storing it`() = runTest {
-        val settings = MapSettings("base_currency" to "BRL")
-        val repository = BaseCurrencyRepository(settings)
+    fun `a region the app does not offer never reaches the persisted value`() {
+        val settings = MapSettings()
 
-        repository.set("XYZ")
+        val resolved = BaseCurrencyRepository(settings).observe().value
 
-        assertEquals(CurrencyCatalog.FALLBACK_CURRENCY, repository.observe().value)
-        assertEquals(CurrencyCatalog.FALLBACK_CURRENCY, settings.getStringOrNull("base_currency"))
+        assertEquals(resolved, settings.getStringOrNull("base_currency"))
+        assertTrue(
+            CurrencyCatalog.of(resolved) != null,
+            "persisted a currency the app does not offer",
+        )
     }
 }

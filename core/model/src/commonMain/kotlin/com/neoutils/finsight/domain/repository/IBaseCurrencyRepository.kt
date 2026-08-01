@@ -22,15 +22,20 @@ interface IBaseCurrencyRepository {
 
     /** The base currency in force, seeded on first run and stable afterwards. */
     fun observe(): StateFlow<String>
-
-    /**
-     * Sets the base currency.
-     *
-     * No screen calls this in v1. It exists because nothing about the change may make
-     * it *impossible*: no converted value is persisted, so switching bases is pure
-     * derivation — the rate of the old base against the new one is the inverse of one
-     * already stored, and the rest re-express by triangulation over rates of the same
-     * date. Offering it is a change of its own.
-     */
-    suspend fun set(currency: String)
 }
+
+/*
+ * **There is no setter, and its absence is the design.**
+ *
+ * Switching bases is pure derivation — no converted value is persisted, so the rate of
+ * the old base against the new one is the inverse of one already stored and the rest
+ * re-express by triangulation over rates of the same date. What this change owes that
+ * future is that nothing here makes it *impossible*, and nothing does.
+ *
+ * A setter that only wrote the new code would be the opposite of that guarantee. Every
+ * rate on file is denominated against the base it was written under; rewriting the code
+ * without re-expressing them leaves the archive being read against a base it was never
+ * measured in — every consolidated figure in the history silently wrong, with no error,
+ * no mark and no way for the user to tell. Offering the switch means shipping the
+ * re-expression with it, and that is a change of its own.
+ */

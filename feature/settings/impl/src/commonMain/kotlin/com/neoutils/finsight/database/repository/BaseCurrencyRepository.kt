@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * The base currency, seeded **once** from the device's region and stable afterwards.
+ * The base currency, seeded **once** from the device's locale and stable afterwards.
  *
  * Seeding happens on the **absence of the persisted value**, not on the creation of
  * the first account — which also covers the already-installed app, where
@@ -16,6 +16,14 @@ import kotlinx.coroutines.flow.StateFlow
  * read once, in `init`: a later trip abroad changes the locale but not this, because
  * moving it would silently re-express every consolidated figure in the history
  * (design D28).
+ *
+ * **The locale, not `DeviceRegion`** — the two say different things and only one of them
+ * belongs here (design D30). `DeviceRegion` exists for the legacy relabel, which rewrites
+ * stored rows irreversibly and therefore may not be triggered by which language someone
+ * reads; on Android the locale's country rides along with the language list, so it would
+ * be. This is the other case: seeding a display preference from the very source the app
+ * has always formatted money with, which for a single-currency user never reaches a
+ * screen at all.
  *
  * **There is no write path**, and that is deliberate (design D18): v1 does not offer the
  * switch, and a setter that wrote the new code alone would leave every rate on file being

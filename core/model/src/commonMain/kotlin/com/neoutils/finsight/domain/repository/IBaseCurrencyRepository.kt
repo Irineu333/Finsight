@@ -15,8 +15,16 @@ import kotlinx.coroutines.flow.StateFlow
  * moves at runtime is the rate archive. The flow exists so that offering the change
  * later does not mean rewriting every read.
  *
- * It is resolved once, from the device's region, on the first run — and a later trip
+ * It is resolved once, from the device's **locale**, on the first run — and a later trip
  * abroad MUST NOT move it, which would silently re-express the whole history.
+ *
+ * The locale, and deliberately not [com.neoutils.finsight.extension.DeviceRegion]. The
+ * two are not interchangeable and the difference is the whole of design D30: on Android
+ * the locale's country comes from the language list, so *English (United States)* is
+ * `en-US` whatever the user's money is. That is fatal for the legacy relabel, which
+ * rewrites stored rows and cannot be undone, and harmless here — the base only decides
+ * how a **consolidated** figure reads, appears nowhere for a single-currency user, and is
+ * seeded from the same source the app has always formatted money with.
  */
 interface IBaseCurrencyRepository {
 

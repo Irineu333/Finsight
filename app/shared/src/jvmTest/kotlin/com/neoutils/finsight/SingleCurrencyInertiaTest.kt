@@ -55,10 +55,12 @@ class SingleCurrencyInertiaTest {
         // the region read again. The region does resolve it — once, on the first run —
         // and reading it live here was a second answer that parted company with the
         // first the moment the user travelled.
+        // `DashboardPreviewFactory` left for that same reason, last: the fabricated
+        // accounts of a component preview have to look like the app they preview, and
+        // what the app pre-selects is the seeded base — so reading the region live here
+        // was a third answer, and the one most visible, since the preview sits a
+        // dashboard row away from the real cards.
         //
-        // Fabricated accounts of a dashboard component preview, which has to look
-        // like the app it previews.
-        "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
         // The base currency of consolidation — the *other* thing the locale resolves
         // (design D28). It denominates no account, so it does not widen the window
         // this test closes; it is here because it uses the same one resolver, and a

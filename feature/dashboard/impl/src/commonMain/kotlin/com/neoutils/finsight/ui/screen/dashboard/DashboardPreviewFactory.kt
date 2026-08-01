@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.*
-import com.neoutils.finsight.extension.localeCurrencyCode
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
@@ -21,15 +21,24 @@ class DashboardPreviewFactory(
     // place in the app that produces a figure.
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val navCatalog: NavCatalog,
+    baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
     /**
      * The currency the fabricated accounts of a preview are denominated in.
      *
-     * A preview has to look like the app, and the app denominates an account in the
-     * currency of the device's region — so this is the same resolution, not a literal
-     * that would render `R$` on a preview beside real accounts reading `$`.
+     * A preview has to look like the app, so it asks the same question a new account's
+     * form asks: the **seeded base currency**, never a literal that would render `R$`
+     * beside real cards reading `$`.
+     *
+     * And never the locale read live, which is what this used to do. The locale does
+     * resolve the base — once, on the first run (design D28) — and reading it again here
+     * was a second answer to a question that already has one: the two part company the
+     * moment the user travels, or simply reads the interface in another language, and
+     * the preview would then denominate its cards in a currency the user holds nothing
+     * in, one dashboard row away from the real ones. `money-display` puts it plainly:
+     * the displayed currency MUST NOT be derived from the locale.
      */
-    private val previewCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode())
+    private val previewCurrency: String = baseCurrencyRepository.observe().value
 
     private fun amount(value: Double) =
         DisplayAmount.magnitude(value, previewCurrency, isApproximate = false)

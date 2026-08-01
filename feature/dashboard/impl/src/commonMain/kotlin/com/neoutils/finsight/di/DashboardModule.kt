@@ -34,7 +34,13 @@ val dashboardModule = module {
 
     single { GetDashboardPreferencesUseCase(get(), get()) }
     factory { BuildDashboardViewingUseCase(get()) }
-    single { DashboardPreviewFactory(consolidateMoney = get(), navCatalog = get()) }
+    single {
+        DashboardPreviewFactory(
+            consolidateMoney = get(),
+            navCatalog = get(),
+            baseCurrencyRepository = get(),
+        )
+    }
 
     viewModel {
         DashboardViewModel(

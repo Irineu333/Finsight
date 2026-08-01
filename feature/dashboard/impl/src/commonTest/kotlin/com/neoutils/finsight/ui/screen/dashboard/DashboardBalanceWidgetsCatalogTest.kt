@@ -28,6 +28,7 @@ class DashboardBalanceWidgetsCatalogTest {
     private val previewFactory = DashboardPreviewFactory(
         consolidateMoney = reducer(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
     )
 
     // The edit mode offers every type that is not already present and has a preview

@@ -65,6 +65,11 @@ class BaseCurrencyReachTest {
         // the base by mistake, but the base itself resolved a second time, by a route
         // that parts company with the seeded one the moment the user travels.
         "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/CreditCardRepository.kt",
+        // The dashboard's component preview, denominating accounts it fabricates. Same
+        // role and same history as the card form: it read the locale live, which put `$`
+        // on a preview sitting one row from real cards reading `R$`. A preview has to
+        // look like the app, and what the app pre-selects is this.
+        "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
         // The settings feature owns the preference: it implements it, states it, and
         // names it as the direction rates are stored in.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",

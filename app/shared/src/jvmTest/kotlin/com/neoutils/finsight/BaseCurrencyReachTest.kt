@@ -57,6 +57,14 @@ class BaseCurrencyReachTest {
         // with. It denominates nothing — what the account ends up in is whatever the
         // user leaves in the row, and from then on the account states it itself.
         "feature/accounts/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/accountForm/AccountFormViewModel.kt",
+        // The card form's pre-selection, by way of `currencyForNewCard`. Same role as
+        // the two above and denominating nothing: a card being created has no account
+        // to read a currency from, and what is written is whatever `insert` is given.
+        // It used to answer this by reading the device's region **live**, which is the
+        // failure this list is shaped to catch from the other side — not a figure wearing
+        // the base by mistake, but the base itself resolved a second time, by a route
+        // that parts company with the seeded one the moment the user travels.
+        "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/CreditCardRepository.kt",
         // The settings feature owns the preference: it implements it, states it, and
         // names it as the direction rates are stored in.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",

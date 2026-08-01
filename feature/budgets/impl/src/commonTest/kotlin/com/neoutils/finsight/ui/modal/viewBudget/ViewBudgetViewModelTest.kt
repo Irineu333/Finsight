@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -174,7 +175,31 @@ class ViewBudgetViewModelTest {
         transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository(), reducer()),
+        observeConsolidationChanges = consolidationChanges(),
         crashlytics = crashlytics,
+    )
+
+    /**
+     * The trigger, over an archive that never moves.
+     *
+     * These tests are about which month the progress is read for, not about it
+     * recomputing — but the view model listens now, and a `combine` emits nothing until
+     * every source has.
+     */
+    private fun consolidationChanges() = ObserveConsolidationChangesUseCase(
+        entryRepository = FakeEntryRepository(),
+        baseCurrencyRepository = object : IBaseCurrencyRepository {
+            private val flow = MutableStateFlow("BRL")
+            override fun observe(): StateFlow<String> = flow
+            override suspend fun set(currency: String) { flow.value = currency }
+        },
+        exchangeRateRepository = object : IExchangeRateRepository {
+            override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+            override suspend fun ratesAsOf(date: LocalDate) = emptyMap<String, ExchangeRate>()
+            override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+            override suspend fun save(rate: ExchangeRate) = Unit
+            override suspend fun remove(rate: ExchangeRate) = Unit
+        },
     )
 
     @Test

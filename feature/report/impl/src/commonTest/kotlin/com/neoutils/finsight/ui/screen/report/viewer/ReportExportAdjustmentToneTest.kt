@@ -146,10 +146,14 @@ class ReportExportAdjustmentToneTest {
         columnTransaction = "Transaction",
         columnAmount = "Amount",
         columnPercentage = "%",
+        footnote = FOOTNOTE,
     )
 
     private companion object {
         /** The currency of the card every figure in this report belongs to (design D17). */
         const val CURRENCY = "BRL"
+
+        /** What the document says about its own mark, on the reports that carry one. */
+        const val FOOTNOTE = "Approximate figures passed through a rate."
     }
 }

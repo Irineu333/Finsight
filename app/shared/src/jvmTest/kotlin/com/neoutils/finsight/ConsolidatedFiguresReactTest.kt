@@ -37,14 +37,54 @@ class ConsolidatedFiguresReactTest {
 
     private fun File.relativePath() = relativeTo(repoRoot).invariantSeparatorsPath
 
+    /**
+     * Everything that produces a consolidated figure — the reducer, and whatever is built
+     * on top of it, transitively.
+     *
+     * **The name of the reducer alone was not the rule.** A view model reaches the
+     * reduction through a use case as often as directly: `ViewBudgetViewModel` shows a
+     * progress bar whose spending is reduced to the limit's currency and never writes
+     * `ConsolidateMoneyUseCase` anywhere, so it slipped past a detector that looked for
+     * that word — the same shape of blind spot as a guard that named a callback and meant
+     * "chooses a currency through the shared sheet". What makes a screen have to listen is
+     * that a rate can move its number, and that travels up through whoever passes it on.
+     *
+     * DI modules are excluded from *contributing* names: a Koin module mentions everything
+     * it wires, so letting it in would make every name reachable from every other.
+     */
+    private val reducingTypes: Set<String> by lazy {
+        val names = mutableSetOf("ConsolidateMoneyUseCase")
+        val candidates = productionSources.filterNot {
+            it.name.endsWith("ViewModel.kt") || it.name.endsWith("Module.kt")
+        }
+
+        do {
+            val grew = candidates.any { file ->
+                val name = file.name.removeSuffix(".kt")
+                if (name in names) return@any false
+                if (names.none { it in file.readText() }) return@any false
+
+                names += name
+                // An interface reached through its implementation: the view model injects
+                // the contract, and the file that reduces is the `...Impl`.
+                name.removeSuffix("Impl").takeIf { it != name }?.let(names::add)
+                true
+            }
+        } while (grew)
+
+        names
+    }
+
     @Test
     fun `every view model that reduces a figure also listens for what moves one`() {
-        val reducesAFigure = Regex("""ConsolidateMoneyUseCase""")
         val listens = Regex("""ObserveConsolidationChangesUseCase""")
+        val reducesAFigure = { text: String ->
+            reducingTypes.any { Regex("""\b${Regex.escape(it)}\b""").containsMatchIn(text) }
+        }
 
         val deaf = productionSources
             .filter { it.name.endsWith("ViewModel.kt") }
-            .filter { reducesAFigure.containsMatchIn(it.readText()) }
+            .filter { reducesAFigure(it.readText()) }
             .filterNot { listens.containsMatchIn(it.readText()) }
             .map { it.relativePath() }
 

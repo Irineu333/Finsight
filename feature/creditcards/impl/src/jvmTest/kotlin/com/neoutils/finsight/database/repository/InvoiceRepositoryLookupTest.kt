@@ -41,6 +41,7 @@ class InvoiceRepositoryLookupTest {
         dao = db.creditCardDao(),
         accountDao = db.accountDao(),
         mapper = CreditCardMapper(),
+        baseCurrencyRepository = FixedBaseCurrency("BRL"),
     )
 
     private val repository = InvoiceRepository(

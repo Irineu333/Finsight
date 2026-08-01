@@ -859,6 +859,7 @@
     <string name="money_no_share_badge">Why there is no proportion bar</string>
     <string name="money_no_share_title">No proportion to show</string>
     <string name="money_no_share_body">Some category in this period is in a currency with no rate on file, so there is no common total to compare against. The amounts are still exact, each in its own currency; what is missing is the proportion between them. Add the rate and the bars come back.</string>
+    <string name="report_export_footnote">≈ marks an amount that passed through an exchange rate. Where no rate was on file, that currency's share stands on its own, unconverted.</string>
     <string name="money_approximate_see_rates">See rates</string>
 
     <string name="nav_settings">Settings</string>

@@ -44,6 +44,7 @@ val creditCardsModule = module {
             dao = get<AppDatabase>().creditCardDao(),
             accountDao = get(),
             mapper = get(),
+            baseCurrencyRepository = get(),
         )
     }
     single<IInvoiceRepository> {

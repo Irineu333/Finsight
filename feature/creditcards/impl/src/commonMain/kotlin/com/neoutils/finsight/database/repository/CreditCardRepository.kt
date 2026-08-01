@@ -8,9 +8,8 @@ import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.mapper.CreditCardMapper
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.extension.localeCurrencyCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -19,13 +18,20 @@ class CreditCardRepository(
     private val dao: CreditCardDao,
     private val accountDao: AccountDao,
     private val mapper: CreditCardMapper,
-    // The currency the card's `LIABILITY` account is denominated in. Was the ledger's
-    // `BASE_CURRENCY` — the only use of it outside `:core:ledger` — and is now the
-    // app's single currency, resolved from the device's region.
-    private val defaultCurrency: String = CurrencyCatalog.reduce(localeCurrencyCode()),
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ICreditCardRepository {
 
-    override suspend fun currencyForNewCard(): String = defaultCurrency
+    /**
+     * The base currency — the same answer the account form pre-selects with, and for the
+     * same reason.
+     *
+     * It used to be the device's region read **live**, which was the ledger's old
+     * `BASE_CURRENCY` replaced by the nearest thing at hand. The base is resolved from
+     * the region too, but *once*, on the first run, and a later trip abroad must not move
+     * it (design D28) — so reading the region again here was a second answer to a
+     * question that already has one, and the two part company the moment the user travels.
+     */
+    override suspend fun currencyForNewCard(): String = baseCurrencyRepository.observe().value
 
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
         return dao.observeAllCreditCards().map { entities ->

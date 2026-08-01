@@ -147,6 +147,7 @@ private fun ReportViewerContent(
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),
         columnPercentage = stringResource(Res.string.report_output_column_percentage),
+        footnote = stringResource(Res.string.report_export_footnote),
     )
 
     Scaffold(

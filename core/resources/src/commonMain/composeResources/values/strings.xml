@@ -860,6 +860,7 @@
     <string name="money_no_share_badge">Por que não há barra de proporção</string>
     <string name="money_no_share_title">Sem proporção a exibir</string>
     <string name="money_no_share_body">Alguma categoria deste período está em uma moeda sem taxa cadastrada, então não há um total comum para comparar. Os valores continuam exatos, cada um na sua moeda; o que falta é a proporção entre eles. Cadastre a taxa e as barras voltam.</string>
+    <string name="report_export_footnote">≈ marca um valor que passou por uma taxa de câmbio. Quando não havia taxa, a parcela daquela moeda aparece por si, sem conversão.</string>
     <string name="money_approximate_see_rates">Ver taxas</string>
 
     <string name="nav_settings">Configurações</string>

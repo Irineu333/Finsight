@@ -50,10 +50,12 @@ class SingleCurrencyInertiaTest {
         // is the whole point of 9.1 — one resolution, not two that can disagree.
         // `CreateAccountUseCase` no longer appears either: its currency parameter lost
         // its default when the form began stating one, so it decides nothing.
-        // The currency a **new card** is pre-selected with, before the form has an
-        // account to read one from. The user is free to change it, and what is written
-        // is whatever `insert` is given.
-        "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/CreditCardRepository.kt",
+        // `CreditCardRepository` is gone from this set for the same reason as the first
+        // two: the currency a new card is pre-selected with is now the seeded base, not
+        // the region read again. The region does resolve it — once, on the first run —
+        // and reading it live here was a second answer that parted company with the
+        // first the moment the user travelled.
+        //
         // Fabricated accounts of a dashboard component preview, which has to look
         // like the app it previews.
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",

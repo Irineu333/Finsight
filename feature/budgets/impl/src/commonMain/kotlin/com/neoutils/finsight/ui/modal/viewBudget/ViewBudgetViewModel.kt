@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,6 +30,7 @@ class ViewBudgetViewModel(
     transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
+    observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -39,7 +41,13 @@ class ViewBudgetViewModel(
         budgetRepository.observeAllBudgets(),
         transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
-    ) { budgets, transactions, recurringList ->
+        // This screen shows the spending **in parts** when a rate is missing, so it is
+        // the one place a rate arriving is most visible — and a rate writes no entry,
+        // which is the ledger's only trigger. It reached this view model last of the
+        // five because it names the reducer only indirectly, through the progress use
+        // case, and the guard that pairs the two was looking for the reducer by name.
+        observeConsolidationChanges(),
+    ) { budgets, transactions, recurringList, _ ->
         calculateBudgetProgressUseCase(
             budgets = budgets,
             recurringList = recurringList,

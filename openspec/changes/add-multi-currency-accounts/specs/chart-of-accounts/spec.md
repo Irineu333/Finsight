@@ -74,15 +74,17 @@ O sistema MUST NOT prover conta de sistema para representar a ausência de class
 
 ## ADDED Requirements
 
-### Requirement: A migração resolve a moeda das contas legadas pelo locale
+### Requirement: A migração resolve a moeda das contas legadas pela região do dispositivo
 
-Na primeira execução após a atualização, quando a moeda do locale do dispositivo diferir da moeda padrão legada e pertencer ao conjunto oferecido, o sistema SHALL **reetiquetar** as contas existentes para a moeda do locale.
+Na primeira execução após a atualização, quando a moeda da **região do dispositivo** diferir da moeda padrão legada e pertencer ao conjunto oferecido, o sistema SHALL **reetiquetar** as contas existentes para a moeda daquela região.
+
+Quem decide SHALL ser a região, e MUST NOT ser o locale. Os dois não são intercambiáveis: numa plataforma em que a região é ajuste próprio eles coincidem, mas noutra o país do locale vem da lista de idiomas, e ali não existe idioma sem país — escolher *English (United States)* é `en-US` seja qual for a moeda do usuário. Disparar por locale reetiquetaria, irreversivelmente, todo usuário que apenas **lê** a interface em outro idioma. A região SHALL ser uma afirmação sobre **lugar**, e o silêncio SHALL ser resposta: um dispositivo que não sabe dizer onde está MUST NOT ser reetiquetado, e recair no locale nesse caso restauraria exatamente a leitura de que esta regra existe para desconfiar. O locale permanece decidindo o que ele pode decidir sozinho — a **pré-seleção** de um formulário, que o usuário vê e altera antes de qualquer escrita.
 
 As contas existentes antes desta mudança estão denominadas na moeda padrão que o modelo aplicava, e essa denominação **nunca foi fato visível ao usuário**: a formatação sempre usou o locale do dispositivo, de modo que um usuário de região estrangeira sempre leu o símbolo dela sobre um dado que dizia outra coisa. Reetiquetar faz o dado dizer o que aquele usuário sempre leu. Reetiquetar SHALL alterar apenas a denominação: **nenhum valor e nenhum saldo** MUST ser alterado, e a denominação de uma conta e a das suas entries SHALL mudar **junta, na mesma transação**. A invariante de soma zero por moeda SHALL continuar satisfeita, porque a moeda de todas as linhas envolvidas muda junto. Reetiquetar a conta sem reetiquetar as suas entries partiria a história daquela conta em duas moedas, e tornaria a verificação da invariante — que lê apenas as entries — incapaz de ser lida como verdade sobre a conta.
 
 A reetiquetagem SHALL ocorrer **uma única vez** e SHALL registrar que ocorreu. O registro SHALL ser a própria versão do esquema, e não um sinalizador próprio: a reetiquetagem acontece dentro da migração que introduz esta mudança, que por construção não roda duas vezes. Uma alteração posterior da região do dispositivo MUST NOT dispará-la novamente.
 
-A moeda-alvo SHALL ser fornecida à migração já resolvida e já validada contra o conjunto oferecido. A camada de persistência MUST NOT conhecer locale nem o conjunto de moedas oferecidas — ela recebe um código de moeda, ou a ausência dele, que significa "não reetiquetar".
+A moeda-alvo SHALL ser fornecida à migração já resolvida e já validada contra o conjunto oferecido. A camada de persistência MUST NOT conhecer região, locale nem o conjunto de moedas oferecidas — ela recebe um código de moeda, ou a ausência dele, que significa "não reetiquetar".
 
 Isso MUST NOT ser lido como exceção à imutabilidade da moeda de uma conta: a reetiquetagem é migração, e acontece antes de aquela denominação ser observável. Após ela, a imutabilidade vale sem exceção — pelo mesmo princípio que o sistema já aplica a dado migrado, que obedece às mesmas regras que o novo mesmo quando a migração produziu o que o runtime não produz.
 
@@ -99,6 +101,10 @@ Consequência aceita: um usuário cuja moeda real seja a legada mas cujo disposi
 #### Scenario: Idioma não decide
 - **WHEN** o dispositivo tem a interface em outro idioma mas a região da moeda legada
 - **THEN** nenhuma reetiquetagem ocorre, porque quem decide é a região e não o idioma
+
+#### Scenario: Dispositivo que não sabe dizer onde está não dispara
+- **WHEN** o dispositivo não consegue afirmar a sua região
+- **THEN** nenhuma reetiquetagem ocorre, e o locale MUST NOT ser usado como substituto
 
 #### Scenario: Moeda fora do conjunto oferecido não dispara
 - **WHEN** a região do dispositivo indica uma moeda fora do conjunto oferecido

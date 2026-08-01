@@ -319,10 +319,7 @@ class ExchangeRateFormModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = {
-                    viewModel.onAction(ExchangeRateFormAction.Submit)
-                    modalManager.dismiss(this@ExchangeRateFormModal)
-                },
+                onClick = { viewModel.onAction(ExchangeRateFormAction.Submit) },
                 // A rate the field cannot read, or a date it cannot parse, is not an
                 // error to report — it is a form that is not finished.
                 enabled = uiState.canSubmit && typedDate != null,
@@ -349,10 +346,7 @@ class ExchangeRateFormModal(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedButton(
-                    onClick = {
-                        viewModel.onAction(ExchangeRateFormAction.Remove)
-                        modalManager.dismiss(this@ExchangeRateFormModal)
-                    },
+                    onClick = { viewModel.onAction(ExchangeRateFormAction.Remove) },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,

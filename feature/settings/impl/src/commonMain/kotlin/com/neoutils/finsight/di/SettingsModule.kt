@@ -40,6 +40,7 @@ val settingsModule = module {
             existing = it.getOrNull<ExchangeRate>(),
             baseCurrencyRepository = get(),
             exchangeRateRepository = get(),
+            modalManager = get(),
         )
     }
 }

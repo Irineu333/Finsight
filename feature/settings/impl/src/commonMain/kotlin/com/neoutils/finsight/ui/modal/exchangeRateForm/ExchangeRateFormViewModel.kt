@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -30,6 +31,7 @@ class ExchangeRateFormViewModel(
     private val existing: ExchangeRate?,
     baseCurrencyRepository: IBaseCurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
+    private val modalManager: ModalManager,
 ) : ViewModel() {
 
     private val base = baseCurrencyRepository.observe().value
@@ -64,6 +66,12 @@ class ExchangeRateFormViewModel(
         }
     }
 
+    /**
+     * The dismissal belongs **inside** the write, as it does in every other form of this
+     * app: dismissing a [ModalBottomSheet] clears its `ViewModelStore`, which cancels
+     * this very scope — so a button that both submits and dismisses cancels its own
+     * write at the first suspension point.
+     */
     private fun submit() {
         val state = _uiState.value
         val rate = state.rate ?: return
@@ -84,12 +92,16 @@ class ExchangeRateFormViewModel(
                     source = ExchangeRate.Source.USER,
                 )
             )
+            modalManager.dismissAll()
         }
     }
 
     private fun remove() {
         val rate = existing ?: return
-        viewModelScope.launch { exchangeRateRepository.remove(rate) }
+        viewModelScope.launch {
+            exchangeRateRepository.remove(rate)
+            modalManager.dismissAll()
+        }
     }
 
     private fun today(): LocalDate =

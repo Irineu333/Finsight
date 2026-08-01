@@ -170,6 +170,28 @@ class DashboardOverallBalanceStatsTest {
         assertEquals(true, component.expense.isApproximate, "more than one currency went in")
     }
 
+    /**
+     * **A cross-currency invoice payment is internal too, and it stays out of the
+     * figures entirely** — the case the single-currency test above cannot reach.
+     *
+     * Paying a dollar invoice from a real account is still one movement with both
+     * monetary legs inside this perimeter, so the neutral widget must not sum it. What
+     * makes the cross version worth its own test is *how* it would show if it leaked:
+     * not as a wrong total, but as a second term and an `≈` on an expense that is
+     * exactly known — the single-currency user's figures acquiring a currency they never
+     * had, which is the D29 failure this perimeter is most exposed to.
+     */
+    @Test
+    fun `a cross-currency invoice payment is not expense in the neutral perimeter`() = runTest {
+        val paidInDollars = liabilityFlows.copy(payment = MoneyByCurrency.of("USD", 100.0))
+
+        val expense = overall(liability = paidInDollars)!!.expense
+
+        assertEquals(overall()!!.expense.value, expense.value)
+        assertEquals("BRL", expense.terms.single().currency, "the dollar payment brought no term")
+        assertEquals(false, expense.isApproximate, "and nothing was reconciled")
+    }
+
     /** And with a shared currency on both sides, the two do add — into that one currency. */
     @Test
     fun `the same currency on both sides adds into one term`() = runTest {

@@ -91,6 +91,31 @@ class TransactionScopeTest {
         invoicePayment, accountAdjustment, invoiceAdjustment,
     )
 
+    // A dollar card paid from a real account: R$ 550 leave, US$ 100 of debt go, and the
+    // conversion legs — outside every perimeter — are what balance each currency.
+    private val cardUsd = Account(id = 201, name = "Card USD", type = AccountType.LIABILITY, currency = "USD")
+    private val toConversionBrl = Account(id = 300, name = "CONVERSION", type = AccountType.CONVERSION, currency = "BRL")
+    private val toConversionUsd = Account(id = 301, name = "CONVERSION", type = AccountType.CONVERSION, currency = "USD")
+
+    private val crossInvoicePayment = op(
+        21, date(18),
+        listOf(
+            entry(account, -550.0),
+            entry(toConversionBrl, 550.0),
+            entry(toConversionUsd, -100.0),
+            entry(cardUsd, 100.0),
+        ),
+    )
+
+    /** The two flow lines of whichever perimeter is in force; the cards scope has no income. */
+    private val TransactionsUiState.flows
+        get() = when (val overview = balanceOverview) {
+            is BalanceOverview.Accounts -> overview.income to overview.expense
+            is BalanceOverview.Cards -> null to overview.expense
+            is BalanceOverview.Overall -> overview.income to overview.expense
+            else -> null to null
+        }
+
     private fun viewModel(transactions: List<Transaction> = everything) = TransactionsViewModel(
         filterLabel = null, category = null, filterTarget = null,
         transactionRepository = FakeTransactionRepository(transactions),
@@ -379,6 +404,61 @@ class TransactionScopeTest {
         assertEquals(before.income.value, after.income.value)
         assertEquals(before.expense.value, after.expense.value)
         assertEquals(before.adjustment?.value, after.adjustment?.value)
+    }
+
+    /**
+     * **The cross-currency invoice payment, in all three perimeters** — the case that
+     * exercises what the transfer cannot: one monetary leg outside the accounts perimeter
+     * (the card's) *and* conversion legs outside every one of them.
+     *
+     * What each scope must not do is let the conversion legs, which are outside by
+     * definition, read as a flow of the perimeter they are outside of. Paying a dollar
+     * invoice with reais moves money, but it earns nothing and spends nothing — in any
+     * of the three.
+     */
+    @Test
+    fun `a cross-currency invoice payment is a flow in no scope`() = runTest(dispatcher) {
+        val paid = everything + crossInvoicePayment
+
+        for (scope in listOf(TransactionScope.ALL, TransactionScope.ACCOUNTS, TransactionScope.CARDS)) {
+            val before = stateUnder(scope)
+            val after = stateUnder(scope, transactions = paid)
+
+            assertEquals(true, crossInvoicePayment.id in after.listed, "listed under $scope")
+
+            val (beforeIncome, beforeExpense) = before.flows
+            val (afterIncome, afterExpense) = after.flows
+
+            assertEquals(beforeIncome, afterIncome, "income moved under $scope")
+            assertEquals(beforeExpense, afterExpense, "expense moved under $scope")
+        }
+    }
+
+    /**
+     * And what it *does* move is the two monetary legs, each in its own currency and
+     * neither netted against the other: reais down by 550, dollars owed down by 100. The
+     * conversion legs — the +550 and the −100 that balance the transaction — contribute
+     * nothing, which is what "outside every perimeter" means when stated as a number.
+     *
+     * A monomoeda payment nets to zero here (`the invoice payment is informative`); this
+     * one does not, and that is not an exception to the perimeter rule. Σ = 0 holds *per
+     * currency*, and the halves that cancel are one leg inside and one leg outside.
+     */
+    @Test
+    fun `a cross-currency invoice payment moves each currency on its own`() = runTest(dispatcher) {
+        val before = stateUnder(TransactionScope.ALL).balanceOverview as BalanceOverview.Overall
+        val after = stateUnder(TransactionScope.ALL, transactions = everything + crossInvoicePayment)
+            .balanceOverview as BalanceOverview.Overall
+
+        val moved = after.finalNet.terms.associate { it.currency to it.value } -
+            before.finalNet.terms.associate { it.currency to it.value }.keys
+
+        assertEquals(mapOf("USD" to 100.0), moved, "the dollar debt is the only new term")
+
+        val brlBefore = before.finalNet.terms.single { it.currency == "BRL" }.value
+        val brlAfter = after.finalNet.terms.single { it.currency == "BRL" }.value
+
+        assertEquals(-550.0, brlAfter - brlBefore, "the reais that left, and nothing else")
     }
 
     /**

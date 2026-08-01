@@ -158,37 +158,33 @@ class ConfirmRecurringModal(
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    // Why the list is shorter than what the user holds. Without this the
-                    // selector would simply be missing accounts, which reads as a bug
-                    // rather than as a rule.
-                    val recurringCurrency = uiState.recurringCurrency
-                    if (uiState.hiddenByCurrency && recurringCurrency != null) {
-                        Text(
-                            text = stringResource(
-                                Res.string.confirm_recurring_currency_filter,
-                                recurringCurrency,
-                            ),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp, start = 4.dp),
-                        )
-                    }
+                    CurrencyFilterNote(
+                        visible = uiState.hiddenByCurrency,
+                        currency = uiState.recurringCurrency,
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
             AnimatedVisibility(uiState.selectedTarget.isCreditCard && recurring.type.isExpense) {
-                CreditCardSelector(
-                    creditCards = uiState.creditCards,
-                    creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { card ->
-                        viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
+                Column {
+                    CreditCardSelector(
+                        creditCards = uiState.creditCards,
+                        creditCard = uiState.selectedCreditCard,
+                        onCreditCardSelected = { card ->
+                            viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    CurrencyFilterNote(
+                        visible = uiState.hiddenByCurrency,
+                        currency = uiState.recurringCurrency,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             AnimatedVisibility(
@@ -296,4 +292,26 @@ class ConfirmRecurringModal(
             }
         }
     }
+}
+
+/**
+ * Why a selector offers less than what the user holds.
+ *
+ * Both selectors of this modal shrink for the same reason and say so with the same
+ * sentence, so the sentence has one place. Without it the control would simply be missing
+ * accounts or cards, which reads as a bug rather than as a rule (design D26).
+ */
+@Composable
+private fun CurrencyFilterNote(
+    visible: Boolean,
+    currency: String?,
+) {
+    if (!visible || currency == null) return
+
+    Text(
+        text = stringResource(Res.string.confirm_recurring_currency_filter, currency),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp, start = 4.dp),
+    )
 }

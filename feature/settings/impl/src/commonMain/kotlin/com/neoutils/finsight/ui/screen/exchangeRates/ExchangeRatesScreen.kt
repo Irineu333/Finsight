@@ -61,7 +61,6 @@ import com.neoutils.finsight.ui.component.CurrencyGlyph
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
-import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.stringUiText
@@ -114,14 +113,16 @@ fun ExchangeRatesScreen(
                     titleContentColor = colorScheme.onBackground,
                     navigationIconContentColor = colorScheme.onBackground,
                 ),
+                // Always: this is a sub-destination pushed by Settings, not a tab root, so the
+                // rail is not its way back. Hiding it in wide windows stranded the archive
+                // between the two breakpoints — the rail is shown from 600dp, but the pane that
+                // would host it instead only exists from 840dp.
                 navigationIcon = {
-                    if (!isWideWindow()) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                            )
-                        }
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
                     }
                 },
             )

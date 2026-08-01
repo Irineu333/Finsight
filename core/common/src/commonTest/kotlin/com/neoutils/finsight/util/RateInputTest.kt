@@ -39,6 +39,30 @@ class RateInputTest {
     }
 
     @Test
+    fun `a thousands mark is not a decimal point`() {
+        // The defect this closes: pasted from a rate site, or written the way the
+        // language writes thousands, `1.450,50` read as `1,45050` — a thousandfold
+        // error saved as the user's own rate, which then outranks every observation.
+        assertEquals("1450,50", comma.filterTyped("1.450,50"))
+        assertEquals("1450.50", dot.filterTyped("1,450.50"))
+        assertEquals(1450.5, "1.450,50".rateToDoubleOrNull(','))
+        assertEquals(1450.5, "1,450.50".rateToDoubleOrNull('.'))
+    }
+
+    @Test
+    fun `grouping is dropped however many marks there are`() {
+        assertEquals("1234567,89", comma.filterTyped("1.234.567,89"))
+    }
+
+    @Test
+    fun `a lone separator is still the decimal point`() {
+        // Nothing corroborates a thousands mark here, and a rate of one and forty-five
+        // hundredths is the ordinary reading — this is the unchanged case.
+        assertEquals("1,45", comma.filterTyped("1.45"))
+        assertEquals("1,450", comma.filterTyped("1.450"))
+    }
+
+    @Test
     fun `a leading separator means below one`() {
         assertEquals("0,5", comma.filterTyped(",5"))
     }

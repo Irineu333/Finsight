@@ -112,6 +112,10 @@ class TransferBetweenAccountsModal(
                         viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(it))
                     },
                     label = stringResource(Res.string.transfer_destination_account_label),
+                    // The destinations are the accounts minus the source, and dropping
+                    // one account must not decide whether the other selector names its
+                    // currency. The two selectors of a transfer answer to the same set.
+                    currencyScope = uiState.accounts,
                     modifier = Modifier.fillMaxWidth(),
                 )
 

@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,6 +43,9 @@ import com.neoutils.finsight.resources.settings_exchange_rates_title
 import com.neoutils.finsight.resources.settings_screen_title
 import com.neoutils.finsight.ui.component.CurrencyGlyph
 import com.neoutils.finsight.ui.component.CurrencyGlyphIcon
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
+import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesDetail
+import com.neoutils.finsight.ui.util.isExtraWideWindow
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
@@ -70,9 +74,27 @@ fun SettingsScreen(
 ) {
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val detailController = LocalDetailPaneController.current
+    val isExtraWide = isExtraWideWindow()
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("settings")
+    }
+
+    // Presentation is decided at click time from the window width, exactly as Support decides it
+    // for a conversation: in an extra-wide window the archive opens in the detail pane, beside the
+    // settings it belongs to; otherwise it navigates full-screen, preserving the NavHost transition.
+    val openExchangeRates: () -> Unit = {
+        if (isExtraWide) detailController.show(ExchangeRatesDetail())
+        else onOpenExchangeRates()
+    }
+
+    // The pane is app-scoped, so an archive opened here would linger when navigating to another
+    // feature. Dismiss it when leaving Settings (this screen leaves composition).
+    DisposableEffect(Unit) {
+        onDispose {
+            if (detailController.current is ExchangeRatesDetail) detailController.dismiss()
+        }
     }
 
     Scaffold(
@@ -108,7 +130,7 @@ fun SettingsScreen(
 
             HorizontalDivider(color = colorScheme.outlineVariant)
 
-            ExchangeRatesRow(onClick = onOpenExchangeRates)
+            ExchangeRatesRow(onClick = openExchangeRates)
         }
     }
 }

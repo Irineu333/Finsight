@@ -135,52 +135,69 @@ fun ExchangeRatesScreen(
             }
         },
     ) { padding ->
-        val content = Modifier
-            .fillMaxSize()
-            .padding(padding)
+        ExchangeRatesContent(
+            uiState = uiState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        )
+    }
+}
 
-        when {
-            // The archive used to render an empty list while it loaded — a screen with
-            // nothing on it but a button, which reads as "there is nothing", the one
-            // thing it does not yet know.
-            uiState.isLoading -> {
-                Box(modifier = content, contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+/**
+ * The archive itself — the base hint, the list, and the two states it can be in instead —
+ * shared by the full-screen route [ExchangeRatesScreen] and the detail-pane
+ * [ExchangeRatesDetail]. The host owns its own chrome (top bar or pane header) and the
+ * button that adds a rate; what an archive *is* lives here, once.
+ */
+@Composable
+internal fun ExchangeRatesContent(
+    uiState: ExchangeRatesUiState,
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+
+    when {
+        // The archive used to render an empty list while it loaded — a screen with
+        // nothing on it but a button, which reads as "there is nothing", the one
+        // thing it does not yet know.
+        uiState.isLoading -> {
+            Box(modifier = modifier, contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        }
 
-            uiState.isEmpty -> EmptyState(modifier = content)
+        uiState.isEmpty -> EmptyState(modifier = modifier)
 
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp,
-                        bottom = 96.dp,
-                    ),
-                    modifier = content,
-                ) {
-                    item(key = "base") {
-                        Text(
-                            text = stringResource(
-                                Res.string.exchange_rates_base_hint,
-                                uiState.baseCurrency,
-                            ),
-                            style = typography.labelLarge,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
-                        )
-                    }
+        else -> {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = 96.dp,
+                ),
+                modifier = modifier,
+            ) {
+                item(key = "base") {
+                    Text(
+                        text = stringResource(
+                            Res.string.exchange_rates_base_hint,
+                            uiState.baseCurrency,
+                        ),
+                        style = typography.labelLarge,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                    )
+                }
 
-                    items(uiState.rates, key = { it.rate.id }) { item ->
-                        ExchangeRateCard(
-                            item = item,
-                            baseCurrency = uiState.baseCurrency,
-                            onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
-                        )
-                    }
+                items(uiState.rates, key = { it.rate.id }) { item ->
+                    ExchangeRateCard(
+                        item = item,
+                        baseCurrency = uiState.baseCurrency,
+                        onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
+                    )
                 }
             }
         }

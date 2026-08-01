@@ -43,6 +43,7 @@ class DashboardViewModel(
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
     private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val dashboardPreviewFactory: DashboardPreviewFactory,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -118,6 +119,7 @@ class DashboardViewModel(
                 today = today,
                 targetMonth = today.yearMonth,
                 facadeLookup = facadeLookup,
+                baseCurrency = baseCurrencyRepository.observe().value,
             ),
             preferences = preferences,
         )

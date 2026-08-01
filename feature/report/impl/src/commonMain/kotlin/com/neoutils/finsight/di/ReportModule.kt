@@ -60,6 +60,7 @@ val reportModule = module {
             entryRepository = get(),
             consolidateMoney = get(),
             observeConsolidationChanges = get(),
+            baseCurrencyRepository = get(),
             renderer = get(),
             analytics = get(),
         )

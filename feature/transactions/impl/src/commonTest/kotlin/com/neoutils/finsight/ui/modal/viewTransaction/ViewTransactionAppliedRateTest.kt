@@ -26,9 +26,39 @@ class ViewTransactionAppliedRateTest {
         amount = amount,
     )
 
-    private fun content(entries: List<Entry>) = ViewTransactionUiState.Content(
-        transaction = Transaction(id = 1L, title = "Op", date = date, entries = entries),
+    private fun content(entries: List<Entry>, baseCurrency: String? = null) =
+        ViewTransactionUiState.Content(
+            transaction = Transaction(id = 1L, title = "Op", date = date, entries = entries),
+            baseCurrency = baseCurrency,
+        )
+
+    /** A dollar account paying off a real card. */
+    private fun crossCurrencyPayment() = listOf(
+        entry(AccountType.ASSET, -55_000, "USD"),
+        entry(AccountType.LIABILITY, 50_000, "BRL"),
+        entry(AccountType.CONVERSION, 55_000, "USD"),
+        entry(AccountType.CONVERSION, -50_000, "BRL"),
     )
+
+    @Test
+    fun theFigureIsStatedByTheEndAlreadyInTheBase() {
+        // The detail consumes the same owner the list does (`figureLegUnder`), so the
+        // card the user tapped and the detail it opened cannot answer with different
+        // money. Nothing is converted: R$ 500,00 is the ledger's own figure.
+        val content = content(crossCurrencyPayment(), baseCurrency = "BRL")
+
+        assertEquals("BRL", content.amount?.currency)
+        assertEquals(500.0, content.amount?.value)
+        assertEquals(false, content.amount?.isApproximate)
+    }
+
+    @Test
+    fun withNeitherEndInTheBaseTheAccountStatesTheFigure() {
+        val content = content(crossCurrencyPayment(), baseCurrency = "EUR")
+
+        assertEquals("USD", content.amount?.currency)
+        assertEquals(550.0, content.amount?.value)
+    }
 
     @Test
     fun crossCurrencyTransferStatesTheRateItApplied() {

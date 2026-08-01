@@ -70,6 +70,7 @@ class TransactionsNatureFilterTest {
         entryRepository = FakeLedger(transactions),
         consolidateMoney = consolidator(),
         observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+            baseCurrencyRepository = FakeBaseCurrency(),
     )
 
     /** What the screen lists: display models, already mapped (`presentation-mapping`). */

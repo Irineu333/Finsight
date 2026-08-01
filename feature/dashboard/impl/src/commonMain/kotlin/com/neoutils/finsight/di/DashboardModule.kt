@@ -59,6 +59,7 @@ val dashboardModule = module {
             dashboardPreferencesRepository = get(),
             observeConsolidationChanges = get(),
             dashboardPreviewFactory = get(),
+            baseCurrencyRepository = get(),
             analytics = get(),
             crashlytics = get(),
         )

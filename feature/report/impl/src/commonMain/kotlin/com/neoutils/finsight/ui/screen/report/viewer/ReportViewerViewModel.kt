@@ -11,6 +11,7 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -52,6 +53,7 @@ class ReportViewerViewModel(
     private val entryRepository: IEntryRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -276,7 +278,14 @@ class ReportViewerViewModel(
                 .groupBy { it.date }
                 .mapValues { (_, ops) ->
                     ops.mapNotNull {
-                        it.toTransactionUi(accountId = perspectiveAccountId, lookup = facadeLookup)
+                        it.toTransactionUi(
+                            accountId = perspectiveAccountId,
+                            lookup = facadeLookup,
+                            // Only reaches a line whose report has no account
+                            // perspective: with one, that account's currency is the
+                            // line's, whatever the base.
+                            baseCurrency = baseCurrencyRepository.observe().value,
+                        )
                     }
                 }
         } else null

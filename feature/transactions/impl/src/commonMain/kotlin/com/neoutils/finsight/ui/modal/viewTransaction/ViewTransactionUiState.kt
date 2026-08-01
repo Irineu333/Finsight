@@ -16,6 +16,7 @@ import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
+import com.neoutils.finsight.ui.model.figureLegUnder
 import com.neoutils.finsight.ui.model.itemDisplayAmount
 import com.neoutils.finsight.ui.model.legUnder
 import kotlin.math.abs
@@ -57,6 +58,11 @@ sealed interface ViewTransactionUiState {
         val invoice: Invoice? = null,
         val installment: TransactionInstallment? = null,
         val recurring: TransactionRecurring? = null,
+        /**
+         * Only ever a tie-break between the two ends of a cross-currency operation, and
+         * never a currency this screen displays anything in — see [figureLegUnder].
+         */
+        val baseCurrency: String? = null,
     ) : ViewTransactionUiState {
 
         // The entry seen through the current perspective, from the one definition of it,
@@ -83,11 +89,15 @@ sealed interface ViewTransactionUiState {
         // The same item-surface rule the list reads through, not a second copy of it:
         // a detail that disagreed with the card it was opened from would be a defect.
         //
-        // Denominated by the leg's **own** account, never the base: the line of a
-        // statement is a single entry and reads in the currency it was recorded in
-        // (design D29). With no leg there is no currency either, so there is no amount
-        // to state — a transaction the ledger cannot produce.
-        val amount: DisplayAmount? = perspectiveEntry?.let { entry ->
+        // Denominated by the leg's **own** account, never converted and never the base as
+        // a resort: the line of a statement is a single entry and reads in the currency it
+        // was recorded in (design D29). Which of the two ends of a cross-currency operation
+        // states it is the one thing the base decides, and it decides it in `figureLegUnder`
+        // — the same owner the list consumes. With no leg there is no currency either, so
+        // there is no amount to state: a transaction the ledger cannot produce.
+        val amount: DisplayAmount? = (
+            transaction.figureLegUnder(perspective?.accountId, baseCurrency) ?: perspectiveEntry
+            )?.let { entry ->
             itemDisplayAmount(
                 label = label,
                 legAmountCents = entry.amount,

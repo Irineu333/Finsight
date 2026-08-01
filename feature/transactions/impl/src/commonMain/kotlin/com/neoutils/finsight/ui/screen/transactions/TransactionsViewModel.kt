@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -37,7 +38,13 @@ class TransactionsViewModel(
     private val entryRepository: IEntryRepository,
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
+    baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ViewModel() {
+
+    // Not a currency this list displays anything in: it only decides which of the two
+    // ends of a cross-currency operation states its figure (`Transaction.figureLegUnder`),
+    // so the card and the detail it opens cannot answer with different money.
+    private val baseCurrency = baseCurrencyRepository.observe()
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
@@ -127,7 +134,9 @@ class TransactionsViewModel(
                 // list declares no perspective — it spans every account and card.
                 visible.isNotEmpty() -> ListState.Content(
                     visible.mapValues { (_, ops) ->
-                        ops.mapNotNull { it.toTransactionUi(lookup = lookup) }
+                        ops.mapNotNull {
+                            it.toTransactionUi(lookup = lookup, baseCurrency = baseCurrency.value)
+                        }
                     }
                 )
                 transactions.isEmpty() -> ListState.EmptyLedger

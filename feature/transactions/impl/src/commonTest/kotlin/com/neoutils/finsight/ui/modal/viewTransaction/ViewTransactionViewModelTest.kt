@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.ui.model.TransactionFacades
 import com.neoutils.finsight.ui.model.toTransactionUi
+import com.neoutils.finsight.ui.screen.transactions.FakeBaseCurrency
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
 import com.neoutils.finsight.ui.modal.transaction
@@ -45,6 +46,7 @@ class ViewTransactionViewModelTest {
         // The screen's subject here is loading/absence, not the facades.
         facadeResolver = { TransactionFacades() },
         crashlytics = crashlytics,
+        baseCurrencyRepository = FakeBaseCurrency(),
     )
 
     @Test

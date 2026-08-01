@@ -82,6 +82,7 @@ class TransactionsViewModelCharacterizationTest {
             entryRepository = FakeLedger(transactions),
             consolidateMoney = consolidator(),
             observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+            baseCurrencyRepository = FakeBaseCurrency(),
         )
 
         vm.uiState.test {

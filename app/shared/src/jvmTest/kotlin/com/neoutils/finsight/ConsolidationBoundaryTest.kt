@@ -57,6 +57,16 @@ class ConsolidationBoundaryTest {
             // not in the modal that shows it: the three two-value flows state amounts
             // and never convert them.
             "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestCrossCurrencyAmountUseCase.kt",
+            // The rate an operation **applied**, derived from its own two legs and shown
+            // on its detail. It is admitted for the same reason the settings screens are:
+            // no money passes through it. Nothing is multiplied — the number is a
+            // quotient of two figures the ledger already holds, and the sibling test
+            // below is what actually holds that line, by refusing a `*` or a `/` beside
+            // a rate anywhere outside the reducer.
+            //
+            // It is also not an `ExchangeRate`: the archive is never read here, and the
+            // rate of the day may legitimately differ from the one this operation got.
+            "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/viewTransaction/ViewTransactionModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/mapper/ExchangeRateMapper.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",

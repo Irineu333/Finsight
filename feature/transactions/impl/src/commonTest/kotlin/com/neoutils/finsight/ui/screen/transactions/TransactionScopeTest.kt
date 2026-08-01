@@ -124,6 +124,7 @@ class TransactionScopeTest {
         entryRepository = FakeLedger(transactions),
         consolidateMoney = consolidator(),
         observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+            baseCurrencyRepository = FakeBaseCurrency(),
     )
 
     /**

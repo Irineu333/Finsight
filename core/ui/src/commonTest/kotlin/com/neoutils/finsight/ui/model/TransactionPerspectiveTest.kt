@@ -78,6 +78,75 @@ class TransactionPerspectiveTest {
         assertEquals("USD", crossing.toTransactionUi(foreign.id)?.amount?.currency)
     }
 
+    // --- Which end states the figure of a cross-currency operation ---
+
+    private val card = Account(id = 6L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+
+    /** A dollar account paying off a real card: US$ 550,00 left, R$ 500,00 was paid. */
+    private fun crossCurrencyPayment() = Transaction(
+        id = 4L,
+        title = "Op",
+        date = LocalDate(2026, 1, 1),
+        entries = listOf(
+            Entry(
+                account = Account(id = 7L, name = "Chase", type = AccountType.ASSET, currency = "USD"),
+                amount = -55_000,
+            ),
+            Entry(account = card, amount = 50_000),
+            Entry(
+                account = Account(id = 8L, name = "Conv", type = AccountType.CONVERSION, currency = "USD"),
+                amount = 55_000,
+            ),
+            Entry(
+                account = Account(id = 9L, name = "Conv", type = AccountType.CONVERSION, currency = "BRL"),
+                amount = -50_000,
+            ),
+        ),
+    )
+
+    @Test
+    fun theEndAlreadyInTheBaseStatesTheFigure() {
+        val ui = crossCurrencyPayment().toTransactionUi(baseCurrency = "BRL")
+
+        assertEquals("BRL", ui?.amount?.currency)
+        assertEquals(500.0, ui?.amount?.value)
+        // Nothing was converted, so nothing is approximate — it is the ledger's own
+        // figure, read off the end the user keeps his accounts in.
+        assertEquals(false, ui?.amount?.isApproximate)
+        // And the direction stays with the leg the transaction is *read* through, or a
+        // card payment would announce itself as income.
+        assertEquals(TransactionType.EXPENSE, ui?.direction)
+    }
+
+    @Test
+    fun withNeitherEndInTheBaseTheReadingIsWhatItWas() {
+        // A euro base over a dollar-to-real payment: converting would buy a currency
+        // nobody asked for at the price of a rate that may not even exist.
+        val ui = crossCurrencyPayment().toTransactionUi(baseCurrency = "EUR")
+
+        assertEquals("USD", ui?.amount?.currency)
+        assertEquals(550.0, ui?.amount?.value)
+    }
+
+    @Test
+    fun aPerspectiveOutranksTheBase() {
+        // Opened from the dollar account's statement, the line is that account's, and
+        // the base has no say (design D29).
+        val ui = crossCurrencyPayment().toTransactionUi(accountId = 7L, baseCurrency = "BRL")
+
+        assertEquals("USD", ui?.amount?.currency)
+    }
+
+    @Test
+    fun aSingleCurrencyOperationReadsTheSameLegItAlwaysRead() {
+        // Both ends in the base: there is nothing to prefer, and the outgoing leg stays
+        // the one the figure comes from.
+        val ui = transfer.toTransactionUi(baseCurrency = "BRL")
+
+        assertEquals(100.0, ui?.amount?.value)
+        assertEquals("BRL", ui?.amount?.currency)
+    }
+
     @Test
     fun aStatementLineIsNeverApproximate() {
         // A line is a single entry: nothing was reconciled to produce it.

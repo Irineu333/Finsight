@@ -40,6 +40,12 @@ data class DashboardComponentsInput(
     val today: LocalDate,
     val targetMonth: YearMonth,
     val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
+    /**
+     * Only a tie-break between the two ends of a cross-currency operation, never a
+     * currency a widget is denominated in — see `Transaction.figureLegUnder`. Every
+     * figure that *is* in the base leaves through [ConsolidateMoneyUseCase] instead.
+     */
+    val baseCurrency: String? = null,
 )
 
 data class DashboardBuilderContext(
@@ -491,7 +497,10 @@ class DashboardComponentsBuilder(
         return if (recentTransactions.isNotEmpty()) {
             DashboardComponent.Recents(
                 transactions = recentTransactions.mapNotNull {
-                    it.toTransactionUi(lookup = input.facadeLookup)
+                    it.toTransactionUi(
+                        lookup = input.facadeLookup,
+                        baseCurrency = input.baseCurrency,
+                    )
                 },
                 hasMore = presentTransactions.size > count,
             )

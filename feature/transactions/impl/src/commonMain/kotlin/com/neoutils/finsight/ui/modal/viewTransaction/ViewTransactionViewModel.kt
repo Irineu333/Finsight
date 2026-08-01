@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.ui.model.TransactionFacadeResolver
@@ -23,7 +24,12 @@ class ViewTransactionViewModel(
     transactionRepository: ITransactionRepository,
     private val facadeResolver: TransactionFacadeResolver,
     private val crashlytics: Crashlytics,
+    baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ViewModel() {
+
+    // Read at map time, like every other consumer of the preference: it decides which of
+    // two ends states the figure of a cross-currency operation, and nothing else here.
+    private val baseCurrency = baseCurrencyRepository.observe()
 
     private val _events = Channel<ViewTransactionEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
@@ -46,6 +52,7 @@ class ViewTransactionViewModel(
                 invoice = facades.invoice,
                 installment = facades.installment,
                 recurring = facades.recurring,
+                baseCurrency = baseCurrency.value,
             )
         }
         .stateIn(

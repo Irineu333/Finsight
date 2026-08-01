@@ -64,7 +64,11 @@ class ConsolidateMoneyUseCase(
         val terms = money.significantTerms()
 
         if (terms.isEmpty()) {
-            // Nothing at all — and "nothing" still has to be denominated in something.
+            // Nothing to say — the ledger answered no rows, or answered only zeros — and
+            // "nothing" still has to be denominated in something. **This is the one place
+            // that decides what a zero is denominated in**, for both of those cases: a
+            // zero is a zero in every currency, so the currency it happened to arrive in
+            // carries no information worth preserving.
             //
             // The base is only the answer when the base is what this user reads totals
             // in. A grouped aggregate returns **no rows** when nothing matched the
@@ -292,16 +296,27 @@ class ConsolidateMoneyUseCase(
  * `R$ 1.000,00 + US$ 0,00` on the dashboard forever. Opening a second account and
  * spending it back to zero is not an event that should mark every total in the app.
  *
- * The zeros are dropped **only where another currency survives**. A figure that is
- * nothing but zero keeps its own denomination — a dollar account with no movement reads
- * `US$ 0,00` and not the base's zero, which is the same rule as everywhere else: the
- * currency of a figure is the figure's own.
+ * They are dropped **unconditionally**, including when nothing else survives — and that
+ * is the whole rule, because the alternative was for this function to decide how a *zero*
+ * is denominated, which it is in no position to do.
+ *
+ * It decided by which currency happened to have rows, and the two ways it got that wrong
+ * were the same mistake seen from two sides. A user holding an empty real account and a
+ * dollar account whose entries net to zero gets `{USD: 0}` — the real account has no rows
+ * at all — and read `US$ 0,00` on the dashboard, down to the expenses line, because a
+ * lone term was returned untouched. The same user with both currencies netting to zero
+ * got every zero back and read `R$ 0,00 + US$ 0,00`, a figure assembled out of nothing to
+ * say. Neither is a fact about his money: which currency the ledger answered in is an
+ * accident of which one had entries this month.
+ *
+ * A zero is a zero in every currency — converting one is exact, at any rate, and there is
+ * no exactness to protect by keeping it where it landed. So the question "what is a zero
+ * denominated in" has exactly one owner, the empty-figure branch of the reducer, which
+ * answers it from the currencies the user actually holds (design D29). Dropping the zeros
+ * here is what routes both cases to it.
  */
-private fun MoneyByCurrency.significantTerms(): List<CurrencyAmount> {
-    val terms = toList()
-    if (terms.size < 2) return terms
-    return terms.filter { it.value != 0.0 }.ifEmpty { terms }
-}
+private fun MoneyByCurrency.significantTerms(): List<CurrencyAmount> =
+    toList().filter { it.value != 0.0 }
 
 /**
  * Money re-expressed in one nominated currency, and how much of it actually got there.

@@ -207,6 +207,27 @@ class CalculateBudgetProgressUseCaseTest {
         )
     }
 
+    /**
+     * **A zero in an unpriced currency is not unpriced spending.** It went through the same
+     * "keep a lone zero" rule as the dashboard's, and the consequence here was louder than
+     * a wrong symbol: a category whose only foreign entries net to zero came back with the
+     * part-that-could-not-be-priced flag raised, which blanks the whole bar to `***` and
+     * turns an exactly-known R$ 30 into "we cannot tell you".
+     *
+     * There is nothing to price. Zero is zero at any rate, including one that does not
+     * exist.
+     */
+    @Test
+    fun `spending that nets to zero in another currency does not make the bar unknown`() = runTest {
+        val progress = useCase(
+            multi = mapOf(10L to mapOf("BRL" to 30.0), 11L to mapOf("JPY" to 0.0)),
+        )(budgets = listOf(budget), month = month).single()
+
+        assertEquals(30.0, progress.spent)
+        assertEquals(false, progress.hasUnpricedSpending, "a zero needs no rate to be included")
+        assertEquals(false, progress.isApproximate)
+        assertEquals(listOf("BRL"), progress.spentFigure!!.terms.map { it.currency })
+    }
 }
 
 /**

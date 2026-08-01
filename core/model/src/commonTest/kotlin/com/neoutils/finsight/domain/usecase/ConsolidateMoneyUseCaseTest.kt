@@ -238,16 +238,62 @@ class ConsolidateMoneyUseCaseTest {
     }
 
     /**
-     * And a figure that is nothing *but* zero keeps its own denomination: the rule drops
-     * zeros only where another currency survives. A dollar account with no movement
-     * reads `US$ 0,00`, not the base's zero.
+     * A figure that is nothing *but* zero is denominated by what the user holds, not by
+     * whichever currency happened to have rows this month — so for the dollar-only user it
+     * still reads `US$ 0,00`, and it reads that because he holds dollars, not because the
+     * zero arrived wearing them.
      */
     @Test
-    fun `an empty figure in one currency is still denominated by it`() = runTest {
-        val figure = reducer()(MoneyByCurrency.of("USD", 0.0), march, DisplayAmount::natural)
+    fun `a zero in one currency is denominated by what the user holds`() = runTest {
+        val figure = reducer(base = "BRL", currenciesInUse = listOf("USD"))(
+            MoneyByCurrency.of("USD", 0.0),
+            march,
+            DisplayAmount::natural,
+        )
 
         assertEquals("USD", figure.terms.single().currency)
         assertFalse(figure.isApproximate)
+    }
+
+    /**
+     * **The reported case, level 1.** An empty real account and a dollar account whose
+     * entries net to zero: the real account has no rows at all, so the ledger answers
+     * `{USD: 0}` — and the dashboard read `US$ 0,00`, expenses line included, for a user
+     * who holds both currencies and reads totals in the real.
+     *
+     * Which currency the ledger answered in is an accident of which one had entries. A
+     * zero carries no denomination worth keeping, so it takes the one the user reads.
+     */
+    @Test
+    fun `a lone zero does not take the currency that happened to have rows`() = runTest {
+        val figure = reducer(base = "BRL", currenciesInUse = listOf("BRL", "USD"))(
+            MoneyByCurrency.of("USD", 0.0),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(1, figure.terms.size)
+        assertEquals("BRL", figure.terms.single().currency)
+        assertEquals(0.0, figure.terms.single().value)
+        assertFalse(figure.isApproximate, "no rate was needed: a zero converts exactly")
+    }
+
+    /**
+     * **The reported case, level 2.** Both currencies netting to zero produced one term
+     * each — `R$ 0,00 + US$ 0,00` — a figure assembled out of two things with nothing to
+     * say. There is no reason to enumerate the zeros of every currency the user holds.
+     */
+    @Test
+    fun `a figure of nothing but zeros is one zero, in the base`() = runTest {
+        val figure = reducer(base = "USD", currenciesInUse = listOf("BRL", "USD"))(
+            MoneyByCurrency.of(mapOf("BRL" to 0.0, "USD" to 0.0)),
+            march,
+            DisplayAmount::natural,
+        )
+
+        assertEquals(1, figure.terms.size)
+        assertEquals("USD", figure.terms.single().currency)
+        assertFalse(figure.isApproximate, "nothing was reconciled; there was nothing to reconcile")
     }
 
     @Test

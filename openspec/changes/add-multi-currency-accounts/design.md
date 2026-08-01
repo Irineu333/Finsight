@@ -166,8 +166,8 @@ Uma figura consolidada é, no caso geral, uma **lista de termos**; quase sempre 
 
 | entrada (saldo por moeda) | resultado |
 |---|---|
-| vazio, uma moeda em uso | `US$ 0,00` na moeda em uso — exato |
-| vazio, nenhuma ou várias moedas em uso | zero na base — exato |
+| vazio ou só zeros, uma moeda em uso | `US$ 0,00` na moeda em uso — exato |
+| vazio ou só zeros, nenhuma ou várias moedas em uso | zero na base — exato |
 | `{BRL: 100}`, base BRL | `R$ 100,00` — exato |
 | `{USD: 50}`, base BRL, **com ou sem** taxa | `US$ 50,00` — **exato** |
 | `{BRL: 100, USD: 50}`, taxa conhecida | `≈ R$ 375,00` — aproximado |
@@ -180,7 +180,9 @@ A regra, em duas partes:
 
 O caso que essa distinção existe para acertar: **um usuário com todas as contas e cartões em dólar e o dispositivo em locale brasileiro.** A base resolvida pelo locale é o real, mas ele não tem um centavo em reais — e vê tudo em dólar, exato, sem marca, inclusive no dashboard, porque em nenhuma leitura houve mais de uma moeda para reconciliar. A redação anterior desta tabela convertia o patrimônio dele para reais no instante em que uma taxa de dólar existisse, e a tela de taxas listava exatamente essa moeda, convidando-o a acionar o problema.
 
-A primeira linha é a que a redação anterior deixava em aberto, e a lacuna era alcançável: uma agregação agrupada por moeda devolve **zero linhas** quando nada casou no período — não `{USD: 0}` —, então a figura vazia é o que uma tela pede em todo mês parado. Denominá-la na base punha `R$ 0,00` na coluna de quem só tem dólar, ao lado do saldo em dólar, que é exatamente o que D29 proíbe. O zero se denomina como qualquer outra figura de uma moeda só: pela moeda em que o dinheiro está. Com nenhuma ou várias moedas em uso a base é a resposta certa, porque então é nela que este usuário lê totais.
+As duas primeiras linhas são o que a redação anterior deixava em aberto, e a lacuna era alcançável por dois caminhos. Uma agregação agrupada por moeda devolve **zero linhas** quando nada casou no período — não `{USD: 0}` —, então a figura vazia é o que uma tela pede em todo mês parado; denominá-la na base punha `R$ 0,00` na coluna de quem só tem dólar, ao lado do saldo em dólar. E uma figura que chega com zeros de verdade tem o mesmo problema pelo lado oposto: quem decidia a denominação era *qual moeda por acaso teve linhas*, o que fazia `{USD: 0}` render `US$ 0,00` a um usuário que lê em real, e `{BRL: 0, USD: 0}` render `R$ 0,00 + US$ 0,00` — uma figura montada com duas coisas que não têm nada a dizer.
+
+**Um zero é zero em toda moeda**, e convertê-lo é exato a qualquer taxa, então a moeda em que ele chegou não carrega informação a preservar. Logo os zeros são descartados sem condição, e "em que moeda está um zero" tem exatamente um dono: este caso. Ele responde pelas moedas que o usuário de fato tem — uma só, e é ela; nenhuma ou várias, e é a base, porque é nela que ele lê totais.
 
 Nada é inventado e nada é omitido. Uma taxa ausente não vira `1`, não some da soma e não zera a tela — ela produz um termo a mais, que é honesto sobre o que o app sabe. Como consequência, o estado "primeira conta estrangeira criada, taxa ainda não cadastrada" — obrigatório no fluxo real — tem comportamento definido e útil, em vez de indefinido.
 

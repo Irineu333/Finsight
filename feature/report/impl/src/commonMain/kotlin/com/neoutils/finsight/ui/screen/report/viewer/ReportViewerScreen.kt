@@ -234,6 +234,7 @@ private fun ReportViewerContent(
                                 perspectiveBadge = state.perspectiveBadge,
                                 perspectiveIconKey = state.perspectiveIconKey,
                                 stats = state.stats,
+                                onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp),

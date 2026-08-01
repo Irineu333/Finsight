@@ -19,7 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -92,6 +95,8 @@ class ViewCategoryModal(
         uiState: ViewCategoryUiState.Content,
         onAction: (ViewCategoryAction) -> Unit,
     ) {
+        val navController = LocalNavController.current
+
         val isIncome = uiState.category.type.isIncome
         val typeLabel = stringResource(
             if (isIncome) Res.string.view_category_type_income else Res.string.view_category_type_expense
@@ -132,7 +137,7 @@ class ViewCategoryModal(
 
                 Spacer(Modifier.width(16.dp))
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = typeLabel,
                         style = MaterialTheme.typography.labelLarge,
@@ -147,6 +152,14 @@ class ViewCategoryModal(
                         color = colorScheme.onSurface
                     )
                 }
+
+                // A category is a dimension, not an account: its entries may sit in several
+                // currencies, so the month's total is a consolidated figure like any other
+                // (design D13). It read as one without ever being able to say so.
+                ConsolidationBadge(
+                    figures = listOf(uiState.totalAmount),
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_summary_advance_payment
@@ -41,6 +42,7 @@ internal fun ReportContextCard(
     perspectiveIconKey: String,
     stats: ReportViewerUiState.Stats,
     modifier: Modifier = Modifier,
+    onSeeRates: (() -> Unit)? = null,
 ) {
     val dateFormats = LocalDateFormats.current
     val formatter = LocalCurrencyFormatter.current
@@ -112,6 +114,26 @@ internal fun ReportContextCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+
+                // Four consolidated figures live below — balance, opening balance, income,
+                // expense — and the card had no way to say a rate reached any of them. One
+                // badge for the card, beside the perspective pill: the same shape
+                // `SummaryCard` has for its six lines of money, and the same corner.
+                //
+                // Only the account perspective needs it. An invoice report is one card, and
+                // one card is one currency (design D17), so its figures are plain amounts
+                // that never went through a rate.
+                if (onSeeRates != null && stats is ReportViewerUiState.Stats.Account) {
+                    ConsolidationBadge(
+                        figures = listOf(
+                            stats.balance,
+                            stats.openingBalance,
+                            stats.income,
+                            stats.expense,
+                        ),
+                        onSeeRates = onSeeRates,
                     )
                 }
             }

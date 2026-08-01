@@ -14,6 +14,7 @@ import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import androidx.navigation.NavController
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.NavRoute
 import org.koin.compose.koinInject
@@ -397,6 +398,7 @@ private fun DashboardOverallBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_overall_balance),
@@ -407,6 +409,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Income,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -418,6 +421,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Expense,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)
@@ -434,6 +438,7 @@ private fun DashboardConcreteBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_balance),
@@ -444,6 +449,7 @@ private fun DashboardConcreteBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountIncome,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -455,6 +461,7 @@ private fun DashboardConcreteBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountExpense,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)
@@ -470,6 +477,7 @@ private fun DashboardPendingBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -481,12 +489,14 @@ private fun DashboardPendingBalanceSection(
             balance = component.pendingIncome,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingIncome,
+            onSeeRates = seeRates,
         )
 
         BalanceCard(
             balance = component.pendingExpense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingExpense,
+            onSeeRates = seeRates,
         )
     }
 }
@@ -497,6 +507,7 @@ private fun DashboardCreditCardBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_credit_card_balance),
@@ -507,12 +518,14 @@ private fun DashboardCreditCardBalanceSection(
             balance = component.payment,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.InvoicePayment,
+            onSeeRates = seeRates,
         )
 
         BalanceCard(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.CreditCardExpense,
+            onSeeRates = seeRates,
         )
     }
 }
@@ -907,7 +920,7 @@ private fun TotalBalanceCard(
                 // Every badge in the app sits in this corner, so it is looked for once.
                 ConsolidationBadge(
                     figures = listOf(component.amount),
-                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                    onSeeRates = navController.seeRates(),
                 )
             }
 
@@ -1131,3 +1144,12 @@ private fun PageIndicator(
         )
     }
 }
+
+/**
+ * Where a consolidation badge leads, on a screen where every one of them leads to the same
+ * place — the rate archive, which is the only thing that resolves any of it (design D25).
+ *
+ * The dashboard draws nine consolidated figures across five widgets, so this is written
+ * once rather than nine times, and no widget gets to send the user somewhere else.
+ */
+private fun NavController.seeRates(): () -> Unit = { navigate(ExchangeRatesRoute) }

@@ -1,6 +1,10 @@
 package com.neoutils.finsight.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,9 +80,9 @@ fun AmountField(
  * The **second** amount: the other end of an operation that crosses currencies.
  *
  * It is revealed by [AnimatedVisibility] exactly when the two ends are denominated
- * differently — the pattern `ConfirmRecurringModal` already uses to reveal cascading
- * selectors — so the single-currency case stays identical to what it was, field for
- * field.
+ * differently — the pattern `AddTransactionModal` and `EditTransactionModal` already use
+ * to reveal cascading selectors — so the single-currency case stays identical to what it
+ * was, field for field.
  *
  * **The derived rate is shown as this field's `supportingText`** and never as a control.
  * The slot is free because this field has no validation to report, and a value the app
@@ -127,7 +131,19 @@ fun CounterpartAmountField(
         }
     }
 
-    AnimatedVisibility(visible) {
+    // **The transitions are stated, not inherited.** `AnimatedVisibility` has one
+    // overload per scope, and only the `ColumnScope` one defaults to
+    // `expandVertically`/`shrinkVertically`; the free-standing one defaults to
+    // `expandIn`/`shrinkOut`, which grows the content from a corner in *both* axes.
+    // Every other field this app reveals is written inline inside the form's `Column`
+    // and so picks up the vertical default without anyone choosing it — while this one,
+    // being a component of its own, silently picked up the other. Naming them is what
+    // makes a shared component animate the same wherever it is called from.
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         val typedRate = impliedRate(
             sourceAmount = counterpartAmount,
             targetAmount = state.text.toString().moneyToDouble(),

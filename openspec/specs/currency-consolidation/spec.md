@@ -12,9 +12,11 @@ O sistema SHALL manter uma **moeda base** do usuário, usada exclusivamente para
 
 O que torna a troca uma escrita simples é o acervo de taxas dizer, em cada linha, sobre que par de moedas ela é uma observação. Uma linha cuja denominação dependesse da preferência em vigor passaria a ser lida contra uma base em que não foi medida no instante da troca — todo número consolidado do histórico errado, sem erro, sem marca e sem forma de o usuário perceber.
 
-A troca SHALL oferecer o conjunto curado de moedas por inteiro. Ela MUST NOT ser condicionada à existência de taxa que alcance a moeda escolhida, MUST NOT exigir o cadastro de taxa no seu próprio fluxo e MUST NOT ser recusada por o acervo não a alcançar. Quando o acervo não alcançar a base escolhida, as figuras SHALL degradar em termos por moeda — que é o comportamento já exigido para uma taxa ausente — e o usuário SHALL poder cadastrar as taxas depois, a qualquer momento.
+A troca SHALL oferecer, por inteiro, o conjunto de moedas que o app oferece — as linhas não arquivadas do registro definido em `currency-registry`. Ela MUST NOT ser condicionada à existência de taxa que alcance a moeda escolhida, MUST NOT exigir o cadastro de taxa no seu próprio fluxo e MUST NOT ser recusada por o acervo não a alcançar. Quando o acervo não alcançar a base escolhida, as figuras SHALL degradar em termos por moeda — que é o comportamento já exigido para uma taxa ausente — e o usuário SHALL poder cadastrar as taxas depois, a qualquer momento.
 
-A moeda base SHALL ser resolvida, na primeira execução, a partir do **locale do dispositivo**. Quando a moeda do locale não pertencer ao conjunto oferecido, o sistema SHALL recair numa moeda declarada — que é último recurso, e MUST NOT ser tratada como padrão do produto.
+A moeda base MUST NOT ser arquivada. Arquivá-la deixaria toda figura consolidada denominada numa moeda que o app declara não oferecer mais, e o arquivamento é regra de oferta e nunca de invalidação. A tentativa SHALL ser recusada com o motivo, e trocar a base SHALL ser o caminho para arquivar a que era base.
+
+A moeda base SHALL ser resolvida, na primeira execução, a partir do **locale do dispositivo**. A moeda que o locale indica é gravada pela semeadura de `currency-registry`, então ela pertence ao conjunto oferecido por construção. O sistema SHALL recair numa moeda declarada apenas quando o dispositivo não nomear moeda alguma, ou quando a que ele nomeia não tiver duas casas decimais — casos em que não há linha a semear. Essa moeda declarada é último recurso, e MUST NOT ser tratada como padrão do produto.
 
 Ela SHALL ser resolvida **uma única vez** e persistida. Uma alteração posterior do locale do dispositivo MUST NOT alterá-la: mudaria em silêncio toda figura consolidada do histórico por causa de uma viagem. Só uma escolha explícita do usuário SHALL movê-la.
 
@@ -26,17 +28,25 @@ O razão MUST NOT prover valor padrão para a moeda de uma conta. Não existe, p
 - **WHEN** o app é aberto pela primeira vez num dispositivo cujo locale indica euro
 - **THEN** a moeda base passa a ser o euro, e os totais consolidados são expressos em euro
 
-#### Scenario: Locale de moeda não oferecida recai na declarada
-- **WHEN** o locale do dispositivo indica uma moeda fora do conjunto oferecido
+#### Scenario: Locale de moeda fora da semente resolve nela assim mesmo
+- **WHEN** o app é aberto pela primeira vez num dispositivo cujo locale indica uma moeda de duas casas que não pertence à semente
+- **THEN** a semeadura grava essa moeda, e a base resolve nela em vez de recair no último recurso
+
+#### Scenario: Locale sem moeda utilizável recai na declarada
+- **WHEN** o dispositivo não nomeia moeda alguma, ou nomeia uma que não tem duas casas decimais
 - **THEN** a moeda base recai na moeda declarada como último recurso
 
 #### Scenario: Trocar o locale depois não move o histórico
 - **WHEN** o usuário troca o locale do dispositivo depois de a moeda base já estar resolvida
 - **THEN** a moeda base permanece a mesma, e nenhuma figura consolidada muda
 
-#### Scenario: A troca é oferecida sobre o conjunto curado inteiro
+#### Scenario: A troca é oferecida sobre o conjunto oferecido inteiro
 - **WHEN** o usuário abre a preferência de moeda base
-- **THEN** todas as moedas do conjunto curado são oferecidas, inclusive as que nenhuma taxa alcança
+- **THEN** todas as moedas não arquivadas do registro são oferecidas, inclusive as que nenhuma taxa alcança
+
+#### Scenario: A moeda base não pode ser arquivada
+- **WHEN** o usuário tenta arquivar a moeda que está em vigor como base
+- **THEN** a ação é recusada com o motivo, e a moeda permanece oferecida
 
 #### Scenario: Trocar a base é imediato e retroativo
 - **WHEN** a base em vigor é substituída por outra
@@ -193,20 +203,6 @@ Um orçamento não nomeia **uma** conta, então a sua denominação MUST NOT ser
 - **WHEN** a moeda base muda e existem orçamentos gravados
 - **THEN** o limite de cada um permanece na moeda em que foi criado, e o seu valor não é reinterpretado
 
-### Requirement: O conjunto de moedas oferecidas é curado e de duas casas decimais
-
-O sistema SHALL oferecer ao usuário um conjunto curado de moedas, restrito às de **duas** casas decimais. O catálogo dessas moedas SHALL pertencer a esta camada, e MUST NOT ser conhecido pelo razão, que persiste apenas o código da moeda.
-
-Essa restrição SHALL ser uma premissa registrada, e não um esquecimento: a aritmética de menor unidade do sistema assume base 100 na escrita e na leitura, e admitir moeda de zero ou três casas exige refazer essa fronteira.
-
-#### Scenario: Seletor oferece apenas moedas de duas casas
-- **WHEN** o usuário escolhe a moeda de uma conta
-- **THEN** apenas moedas de duas casas decimais são oferecidas
-
-#### Scenario: Razão não conhece o catálogo
-- **WHEN** o razão é inspecionado
-- **THEN** ele persiste o código da moeda sem conhecer quais moedas o app oferece
-
 ### Requirement: A taxa é uma observação local e datada sobre um par de moedas
 
 O sistema SHALL manter um acervo de taxas em que cada linha é uma observação sobre **um par de moedas**, com a sua **data** e a sua **origem**. Cada linha SHALL declarar as suas duas pontas, de modo a se ler sozinha — *uma unidade da moeda precificada vale tanto da moeda contraparte* — sem depender de qual preferência de exibição está em vigor.
@@ -222,6 +218,8 @@ A consolidação de uma figura referente a um instante ou período SHALL usar **
 O acervo local SHALL ser a única autoridade usada em qualquer conversão. O usuário SHALL poder cadastrar, corrigir **e remover** taxas a qualquer momento, escolhendo as duas pontas do par, e uma taxa informada pelo usuário SHALL prevalecer sobre uma derivada de operação para o mesmo par e a mesma data.
 
 A remoção SHALL existir como consequência de a taxa sobreviver à operação que a originou. Removida a última observação que alcançava uma moeda, as figuras que dependiam dela SHALL voltar a exibir o termo próprio daquela moeda, em vez de um valor convertido por uma taxa que ninguém mais sustenta.
+
+Uma observação MUST NOT sobreviver à moeda de que ela fala. Apagar uma moeda, na forma que `currency-registry` define, SHALL remover toda observação que a nomeie em qualquer das duas pontas. O acervo é lido pela resolução da conversão sem consulta ao conjunto de moedas oferecidas, então uma observação órfã continuaria a ser caminho de conversão — e a produzir figuras trianguladas por uma moeda que não existe em lugar nenhum da interface. **Arquivar** uma moeda, ao contrário, MUST NOT remover observação alguma: as observações continuam válidas e continuam a ser lidas, porque arquivar é sobre o que se oferece e não sobre o que se sabe.
 
 Uma fonte externa MAY oferecer um valor **sugerido** dentro da tela que edita a taxa, e MUST NOT ser consultada em nenhum outro ponto. Nenhuma leitura, tela ou figura do app SHALL depender de rede, apresentar estado de carregamento ou falhar por indisponibilidade em razão de conversão de moeda.
 
@@ -246,6 +244,14 @@ O sistema SHALL apresentar, junto de onde as taxas são editadas, o par, a data 
 #### Scenario: Figura de período passado usa a taxa da época
 - **WHEN** o patrimônio de um mês passado é consolidado e existem taxas anteriores e posteriores àquele mês
 - **THEN** a conversão usa a última observação em ou antes daquela data, e o valor não muda quando uma taxa mais recente é cadastrada
+
+#### Scenario: Apagar a moeda apaga as suas observações
+- **WHEN** uma moeda é apagada e o acervo é inspecionado
+- **THEN** nenhuma observação que a nomeasse em qualquer das duas pontas permanece
+
+#### Scenario: Arquivar a moeda preserva as suas observações
+- **WHEN** uma moeda é arquivada e o acervo é inspecionado
+- **THEN** todas as suas observações permanecem, e continuam a ser lidas nas conversões
 
 #### Scenario: Sugestão só na edição
 - **WHEN** o usuário abre a tela de edição de uma taxa
@@ -328,4 +334,30 @@ Os grupos SHALL ser ordenados pela observação mais recente de cada moeda.
 #### Scenario: Editar alcança a observação original
 - **WHEN** o usuário toca numa linha para corrigi-la
 - **THEN** o formulário abre com o par na direção em que a observação foi feita
+
+### Requirement: Toda moeda do sistema tem duas casas decimais
+
+Toda moeda que o sistema admite SHALL ter **duas** casas decimais, seja ela semeada pelo
+app ou cadastrada pelo usuário. A restrição SHALL ser aplicada onde uma moeda passa a
+existir — a semeadura e o cadastro, definidos em `currency-registry` —, e MUST NOT depender
+de curadoria: não há mais uma lista embarcada onde ela pudesse ser exercida por omissão.
+
+Essa restrição SHALL ser uma premissa registrada, e não um esquecimento: a aritmética de
+menor unidade do sistema assume base 100 na escrita e na leitura, e admitir moeda de zero ou
+três casas exige refazer essa fronteira.
+
+O razão MUST NOT conhecer o conjunto de moedas admitidas. Ele persiste o código da moeda, e
+qual conjunto o app oferece é decisão desta camada.
+
+#### Scenario: Moeda de outra base não é admitida
+- **WHEN** o usuário tenta cadastrar uma moeda cujo código a plataforma declara ter zero ou três casas decimais
+- **THEN** o cadastro é recusado com o motivo, e nenhuma linha é gravada
+
+#### Scenario: A semeadura também respeita a premissa
+- **WHEN** o locale do dispositivo indica uma moeda de zero casas decimais
+- **THEN** nenhuma linha é semeada para ela, e a moeda base recai no último recurso
+
+#### Scenario: Razão não conhece o conjunto
+- **WHEN** o razão é inspecionado
+- **THEN** ele persiste o código da moeda sem conhecer quais moedas o app admite
 

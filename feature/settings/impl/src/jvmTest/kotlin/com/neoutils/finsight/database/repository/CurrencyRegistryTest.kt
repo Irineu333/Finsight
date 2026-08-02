@@ -148,6 +148,23 @@ class CurrencyRegistryTest {
         assertEquals("Milhas do cartão", stored?.name)
     }
 
+    /**
+     * There is one set and not two, so a row the seeding wrote is a row like any other:
+     * nothing marks it as the app's, and nothing refuses the edit. It is the whole point
+     * of the single table (design D1) — an overlay would have had to decide which of the
+     * two versions wins.
+     */
+    @Test
+    fun `a seeded row is edited exactly like one the user typed`() = runTest {
+        seed("USD")
+
+        val result = save(code = "USD", symbol = "US$", name = "Dólar", isEditing = true)
+
+        assertNull(result.leftOrNull())
+        assertEquals("US$", repository.get("USD")?.symbol)
+        assertEquals("Dólar", repository.get("USD")?.name)
+    }
+
     @Test
     fun `registering creates no account, no rate and no budget`() = runTest {
         save(code = "CLP", symbol = "$", name = null)

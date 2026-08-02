@@ -193,10 +193,9 @@ class ViewCurrencyModal(
                     modifier = Modifier.weight(1f),
                 )
 
-                // The base is the one row with no retire action at all: archiving it is
-                // refused, and deleting it is refused by the account it denominates. An
-                // action that is always refused is worse than one not offered.
-                content.isBase -> Unit
+                // No retire action is the base, and the state says so — see
+                // `ViewCurrencyUiState.Content.retireAction`.
+                content.retireAction == null -> Unit
 
                 else -> OutlinedActionButton(
                     label = stringResource(content.retireAction.label),

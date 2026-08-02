@@ -15,8 +15,8 @@ sealed interface ViewCurrencyUiState {
         val isArchived: Boolean,
         /**
          * The base is not archivable — archiving it would leave every consolidated figure
-         * denominated in a currency the app declares it no longer offers. The screen
-         * offers no action it will always refuse.
+         * denominated in a currency the app declares it no longer offers. It is also what
+         * makes [retireAction] absent.
          */
         val isBase: Boolean,
         /** What names it: the same answer the refusal reads, never re-derived here. */
@@ -25,7 +25,12 @@ sealed interface ViewCurrencyUiState {
          * Whether this screen offers deleting or archiving — the rule
          * `DeleteCurrencyUseCase` enforces, mapped through the same helper accounts,
          * cards and categories already use, so the four cannot drift.
+         *
+         * `null` is the base, the one row with **no** retirement at all: archiving it is
+         * refused, and deleting it is refused by the account it denominates. An action
+         * that is always refused is worse than one not offered — and stating the absence
+         * here rather than in the composable is what keeps it testable.
          */
-        val retireAction: RetireAction,
+        val retireAction: RetireAction?,
     ) : ViewCurrencyUiState
 }

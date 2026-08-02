@@ -60,8 +60,12 @@ class ViewCurrencyViewModel(
             isBase = currency.code == base,
             usage = usage,
             // The rule has one owner, in the use case. This maps its answer to how the
-            // action is named and drawn, and never decides it again.
-            retireAction = retireActionOf(mustPreserve = !usage.isDeletable),
+            // action is named and drawn, and never decides it again — except for the
+            // base, which is offered no retirement at all.
+            retireAction = when (currency.code) {
+                base -> null
+                else -> retireActionOf(mustPreserve = !usage.isDeletable)
+            },
         )
     }.stateIn(
         scope = viewModelScope,

@@ -31,6 +31,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -152,6 +153,19 @@ class ViewCurrencyViewModelTest {
         )
 
         assertEquals(1, content("PEN").usage.rates)
+    }
+
+    /**
+     * The base offers no retirement: archiving it is refused outright, and deleting it is
+     * refused by the account it denominates. The absence lives in the state and not in
+     * the composable precisely so this test can reach it.
+     */
+    @Test
+    fun `the base offers no retirement at all`() = runTest {
+        seed("BRL", "USD")
+
+        assertNull(content("BRL").retireAction)
+        assertEquals(RetireAction.DELETE, content("USD").retireAction, "only the base loses it")
     }
 
     @Test

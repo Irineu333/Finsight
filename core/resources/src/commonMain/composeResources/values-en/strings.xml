@@ -875,7 +875,6 @@
     <string name="exchange_rates_screen_title">Exchange rates</string>
     <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>
     <string name="exchange_rates_add">Add rate</string>
-    <string name="exchange_rates_base_hint">Quotes in %1$s</string>
     <string name="exchange_rates_quote">1 %1$s = %2$s</string>
     <string name="exchange_rates_group_header">Quoted in %1$s</string>
     <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
@@ -887,10 +886,8 @@
     <string name="exchange_rate_form_title_edit">Edit rate</string>
     <string name="exchange_rate_form_from">Priced currency</string>
     <string name="exchange_rate_form_to">Priced in</string>
-    <string name="exchange_rate_form_to_picker_title">Priced in</string>
     <string name="exchange_rate_form_currency_locked">The currency of a rate does not change. To correct it, remove this one and register another.</string>
     <string name="exchange_rate_form_rate">Rate</string>
-    <string name="exchange_rate_form_rate_helper">How many %1$s one %2$s is worth</string>
     <string name="exchange_rate_form_rate_helper_pair">How many %1$s one %2$s is worth</string>
     <string name="exchange_rate_form_date">Date</string>
     <string name="exchange_rate_form_save">Save</string>

@@ -9,4 +9,6 @@ import com.neoutils.finsight.domain.model.CurrencyInfo
 data class SettingsUiState(
     val baseCurrency: CurrencyInfo?,
     val baseCurrencyCode: String,
+    /** The whole curated catalog, which is what the switch offers (design D6). */
+    val selectableCurrencies: List<CurrencyInfo> = emptyList(),
 )

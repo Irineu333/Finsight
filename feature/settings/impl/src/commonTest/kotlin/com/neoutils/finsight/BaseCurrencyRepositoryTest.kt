@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import com.neoutils.finsight.database.repository.BaseCurrencyRepository
 import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.russhwolf.settings.MapSettings
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -46,12 +47,9 @@ class BaseCurrencyRepositoryTest {
     }
 
     /**
-     * **Seeding is the only writer, so the catalog is enforced where the value is
-     * decided.** This used to be asserted through the setter, which reduced whatever it
-     * was handed; the setter is gone (offering the switch means shipping the rate
-     * re-expression with it), and what remains is the one path that writes: a region the
-     * app does not offer resolves to the currency of last resort and *that* is what is
-     * persisted — never the code the device named.
+     * Seeding resolves through the catalog, so a region the app does not offer lands on
+     * the currency of last resort and *that* is what is persisted — never the code the
+     * device named.
      */
     @Test
     fun `a region the app does not offer never reaches the persisted value`() {
@@ -64,5 +62,29 @@ class BaseCurrencyRepositoryTest {
             CurrencyCatalog.of(resolved) != null,
             "persisted a currency the app does not offer",
         )
+    }
+
+    /** Switching is the write of a preference: it emits, and it persists. */
+    @Test
+    fun `switching emits and persists`() = runTest {
+        val settings = MapSettings("base_currency" to "BRL")
+        val repository = BaseCurrencyRepository(settings)
+
+        repository.set("USD")
+
+        assertEquals("USD", repository.observe().value)
+        assertEquals("USD", settings.getStringOrNull("base_currency"))
+    }
+
+    /**
+     * And what was written is what is read back. Re-seeding from the locale here would
+     * undo the switch on the next launch, silently.
+     */
+    @Test
+    fun `a switched base survives reopening and is not re-seeded`() = runTest {
+        val settings = MapSettings()
+        BaseCurrencyRepository(settings).set("JPY")
+
+        assertEquals("JPY", BaseCurrencyRepository(settings).observe().value)
     }
 }

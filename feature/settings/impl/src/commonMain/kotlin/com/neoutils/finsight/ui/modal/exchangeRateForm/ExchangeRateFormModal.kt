@@ -49,11 +49,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.exchange_rate_form_currency
+import com.neoutils.finsight.resources.exchange_rate_form_from
+import com.neoutils.finsight.resources.exchange_rate_form_to
 import com.neoutils.finsight.resources.exchange_rate_form_currency_locked
 import com.neoutils.finsight.resources.exchange_rate_form_date
 import com.neoutils.finsight.resources.exchange_rate_form_rate
-import com.neoutils.finsight.resources.exchange_rate_form_rate_helper
+import com.neoutils.finsight.resources.exchange_rate_form_rate_helper_pair
 import com.neoutils.finsight.resources.exchange_rate_form_remove
 import com.neoutils.finsight.resources.exchange_rate_form_save
 import com.neoutils.finsight.resources.exchange_rate_form_title_edit
@@ -76,14 +77,20 @@ import org.koin.core.parameter.parametersOf
  * Registers a rate, corrects one, or removes it.
  *
  * **It is a form, and it is built like every other form of this app** — centred title,
- * fields that are fields, a full-width primary button. The currency is an
+ * fields that are fields, a full-width primary button. Each end is an
  * `ExposedDropdownMenuBox` because that is what choosing among a list inside a form
  * looks like here (`AccountSelector`), not the 52dp `CurrencyRow`, which states a
  * permanent attribute of an account. And the date is typed and validated like every
  * other date in the app, with the calendar as a button beside it — not a read-only box
  * that can only be filled by a picker.
  *
- * Correcting a rate **locks** the currency rather than hiding it (the rule task 15.8
+ * **Both ends are chosen.** A rate is an observation about a pair, so the form states
+ * both of them, with the base in force pre-selected as the counterpart and the whole
+ * catalog offered on either side — pricing the base against another currency is a
+ * legitimate observation, and its inverse feeds the reading. The one restriction left is
+ * that the two ends differ.
+ *
+ * Correcting a rate **locks** the pair rather than hiding it (the rule task 15.8
  * wrote for the budget form: a locked field still answers what the number is about),
  * and removing one wears the outlined `error` button with the bin that every
  * destructive action of this app wears.
@@ -102,9 +109,9 @@ class ExchangeRateFormModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
 
-        // **A rate is money** — so many of the base currency per one unit of the other —
-        // and it *reads* through the app's one formatter, with the base's symbol as this
-        // field's prefix. It is not *typed* like money, though: the money rule fills from
+        // **A rate is money** — so many of the counterpart currency per one unit of the
+        // priced one — and it *reads* through the app's one formatter, with the
+        // counterpart's symbol as this field's prefix. It is not *typed* like money, though: the money rule fills from
         // the right because the last two digits are cents, and under it `5,32` became
         // `0,0532` while a rate of `0,000691` was not expressible at all — two places
         // round it to a rate of zero, which is a different statement, not a rounder truth.
@@ -164,10 +171,7 @@ class ExchangeRateFormModal(
                 it.code to "${it.symbol} · ${stringUiText(it.name)} (${it.code})"
             }
 
-            val currencyLabel = options
-                .firstOrNull { it.first == uiState.currency }
-                ?.second
-                ?: uiState.currency
+            fun labelOf(code: String) = options.firstOrNull { it.first == code }?.second ?: code
 
             // The currency of an existing rate is not editable: changing it would not
             // correct that observation, it would silently reassign it to another
@@ -181,11 +185,24 @@ class ExchangeRateFormModal(
             // the same signifier the account form's locked currency row wears.
             if (uiState.isEditing) {
                 OutlinedTextField(
-                    value = currencyLabel,
+                    value = labelOf(uiState.from),
                     onValueChange = {},
                     readOnly = true,
                     enabled = false,
-                    label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
+                    label = { Text(stringResource(Res.string.exchange_rate_form_from)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = labelOf(uiState.to),
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text(stringResource(Res.string.exchange_rate_form_to)) },
                     supportingText = {
                         Text(stringResource(Res.string.exchange_rate_form_currency_locked))
                     },
@@ -193,6 +210,8 @@ class ExchangeRateFormModal(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             } else {
                 // **The selector of this app, whole** — `menuAnchor` and nothing else.
                 // The field that opened the shared sheet had two defects with one cause:
@@ -206,51 +225,21 @@ class ExchangeRateFormModal(
                 // component here that owns the anchor: the whole field is the target, the
                 // trailing icon is decoration rather than a button, and the menu is a
                 // popup over the sheet instead of another sheet under the keyboard.
-                var expanded by remember { mutableStateOf(false) }
+                CurrencyDropdown(
+                    label = stringResource(Res.string.exchange_rate_form_from),
+                    selected = labelOf(uiState.from),
+                    options = options,
+                    onSelected = { viewModel.onAction(ExchangeRateFormAction.SelectFrom(it)) },
+                )
 
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = {
-                        if (options.isNotEmpty()) {
-                            expanded = it
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    OutlinedTextField(
-                        value = currencyLabel,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(Res.string.exchange_rate_form_currency)) },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        enabled = options.isNotEmpty(),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth(),
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        options.forEach { (code, label) ->
-                            DropdownMenuItem(
-                                text = { Text(text = label, fontSize = 14.sp) },
-                                onClick = {
-                                    viewModel.onAction(
-                                        ExchangeRateFormAction.SelectCurrency(code)
-                                    )
-                                    expanded = false
-                                },
-                            )
-                        }
-                    }
-                }
+                CurrencyDropdown(
+                    label = stringResource(Res.string.exchange_rate_form_to),
+                    selected = labelOf(uiState.to),
+                    options = options,
+                    onSelected = { viewModel.onAction(ExchangeRateFormAction.SelectTo(it)) },
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -261,13 +250,13 @@ class ExchangeRateFormModal(
                 supportingText = {
                     Text(
                         stringResource(
-                            Res.string.exchange_rate_form_rate_helper,
-                            uiState.baseCurrency,
-                            uiState.currency,
+                            Res.string.exchange_rate_form_rate_helper_pair,
+                            uiState.to,
+                            uiState.from,
                         )
                     )
                 },
-                prefix = { Text(CurrencyCatalog.symbolOf(uiState.baseCurrency)) },
+                prefix = { Text(CurrencyCatalog.symbolOf(uiState.to)) },
                 inputTransformation = rememberRateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
@@ -368,6 +357,72 @@ class ExchangeRateFormModal(
                         fontWeight = FontWeight.Medium,
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The app's selector, whole — `menuAnchor` and nothing else.
+ *
+ * The field that opened the shared sheet had two defects with one cause: a text field
+ * owns its own gestures, so bolting an opener onto it needs a second affordance for the
+ * arrow, and the two paths then read as two controls doing one thing. On iOS the field's
+ * half did not fire at all, and the sheet — a modal over a modal — surfaced behind a
+ * keyboard that nothing had dismissed.
+ *
+ * `ExposedDropdownMenuBox` answers all of it because it is the only component here that
+ * owns the anchor: the whole field is the target, the trailing icon is decoration rather
+ * than a button, and the menu is a popup over the sheet instead of another sheet under
+ * the keyboard. It is a composable of its own now because the form states **two** ends.
+ */
+@Composable
+private fun CurrencyDropdown(
+    label: String,
+    selected: String,
+    options: List<Pair<String, String>>,
+    onSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            if (options.isNotEmpty()) {
+                expanded = it
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            enabled = options.isNotEmpty(),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth(),
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { (code, optionLabel) ->
+                DropdownMenuItem(
+                    text = { Text(text = optionLabel, fontSize = 14.sp) },
+                    onClick = {
+                        onSelected(code)
+                        expanded = false
+                    },
+                )
             }
         }
     }

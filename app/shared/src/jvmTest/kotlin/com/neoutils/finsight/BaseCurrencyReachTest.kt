@@ -37,17 +37,22 @@ class BaseCurrencyReachTest {
     private val allowed = setOf(
         // The declaration itself.
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IBaseCurrencyRepository.kt",
+        // The rate archive, and the one place that may know at once what is stored and
+        // which preference is in force. `IExchangeRateRepository` has always promised
+        // rates *against the base*; here that stops being true by accident — there used
+        // to be only one base — and becomes true by construction (design D4). The
+        // dependency replaces an assumption that was implicit before, and it denominates
+        // no figure: what it answers is a rate, never an amount.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/ExchangeRateRepository.kt",
         // The consolidation layer: the reducer that expresses a multi-currency figure in
-        // the base, the rate harvest that stores rates *against* the base, and the
-        // trigger a consolidated figure recomputes on.
+        // the base, and the trigger a consolidated figure recomputes on.
+        //
+        // The harvest and the cross-currency suggestion used to be here and are not any
+        // more, which is the shape of this change: with the pair explicit, both speak
+        // about the two currencies of the operation in front of them and neither has any
+        // reason to know which preference is in force.
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateMoneyUseCase.kt",
-        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/HarvestExchangeRateUseCase.kt",
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ObserveConsolidationChangesUseCase.kt",
-        // What the archive implies the other end of a crossing is worth. It names the
-        // base for the same reason the harvest does — rates are stored *against* it, so
-        // the base side is the one with no rate of its own — and it denominates nothing:
-        // the currencies it converts between are the two accounts', never the base's.
-        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestCrossCurrencyAmountUseCase.kt",
         // The account a brand-new install starts with. The base is a **pre-selection**
         // here, which the spec allows in as many words — it is not denominating a figure,
         // it is answering "what currency should this first account be created in".

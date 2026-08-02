@@ -8,6 +8,7 @@ class ExchangeRateMapper {
     fun toDomain(entity: ExchangeRateEntity) = ExchangeRate(
         id = entity.id,
         currency = entity.currency,
+        counterCurrency = entity.counterCurrency,
         date = entity.date,
         rate = entity.rate,
         source = when (entity.source) {
@@ -19,6 +20,7 @@ class ExchangeRateMapper {
     fun toEntity(domain: ExchangeRate) = ExchangeRateEntity(
         id = domain.id,
         currency = domain.currency,
+        counterCurrency = domain.counterCurrency,
         date = domain.date,
         rate = domain.rate,
         source = when (domain.source) {

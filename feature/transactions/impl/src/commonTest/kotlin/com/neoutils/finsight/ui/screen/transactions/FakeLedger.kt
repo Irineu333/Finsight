@@ -151,14 +151,17 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
 }
 
 /** The base currency in force. One currency, which is all the app has until group 12. */
-internal class FakeBaseCurrency(private val code: String = "BRL") : IBaseCurrencyRepository {
-    override fun observe(): StateFlow<String> = MutableStateFlow(code)
+internal class FakeBaseCurrency(code: String = "BRL") : IBaseCurrencyRepository {
+    private val state = MutableStateFlow(code)
+    override fun observe(): StateFlow<String> = state
+    override suspend fun set(code: String) { state.value = code }
 }
 
 /** An empty archive: with a single currency in play, no rate is ever consulted. */
 internal object NoExchangeRates : IExchangeRateRepository {
     override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
     override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+    override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
     override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
     override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
     override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()

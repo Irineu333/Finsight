@@ -47,7 +47,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         DimensionEntity::class,
         ExchangeRateEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(Converters::class, LedgerConverters::class)

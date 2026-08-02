@@ -17,10 +17,24 @@ data class ExchangeRateItem(
     val isOutdated: Boolean,
 )
 
+/**
+ * The observations of one **priced** currency — the one the rows answer *how much of*.
+ *
+ * A rate has two ends, so grouping by currency has to pick one or duplicate. The priced
+ * end is the one picked, and the consequence is accepted: after a base switch the same
+ * pair appears under two headings, one per direction, because they are two distinct
+ * observations and this screen shows observations.
+ */
+data class ExchangeRateGroup(
+    val currency: String,
+    val info: CurrencyInfo?,
+    val rates: List<ExchangeRateItem>,
+)
+
 data class ExchangeRatesUiState(
     val baseCurrency: String,
-    val rates: List<ExchangeRateItem> = emptyList(),
+    val groups: List<ExchangeRateGroup> = emptyList(),
     val isLoading: Boolean = true,
 ) {
-    val isEmpty get() = !isLoading && rates.isEmpty()
+    val isEmpty get() = !isLoading && groups.isEmpty()
 }

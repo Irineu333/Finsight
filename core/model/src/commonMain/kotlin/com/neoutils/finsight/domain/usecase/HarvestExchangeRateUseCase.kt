@@ -1,7 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.ExchangeRate
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import kotlinx.datetime.LocalDate
 import kotlin.math.absoluteValue
@@ -16,20 +15,20 @@ import kotlin.math.absoluteValue
  * the operation that revealed it (design D27).
  */
 class HarvestExchangeRateUseCase(
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
 ) {
 
     /**
-     * Registers the rate the two ends of an operation imply, when one of them is the
-     * base currency.
+     * Registers the rate the two ends of an operation imply, on the pair they crossed
+     * and in the direction it happened.
      *
      * @return the rate registered, or `null` when there was none to learn.
      *
-     * **A leg in neither currency teaches nothing.** A USD → EUR transfer under a BRL
-     * base implies no rate against the base, and inventing one by triangulating today's
-     * others would be a guess wearing an observation's clothes. It is an explicit
-     * Non-Goal, not an omission.
+     * **Every crossing teaches.** A USD → EUR transfer under a BRL base used to be
+     * discarded — not because that was a rule of the domain, but because a row could not
+     * say which pair it spoke about, so an observation off the base's axis had nowhere to
+     * live. It has one now, and refusing it would be code written to throw away
+     * information the user already gave.
      *
      * The user's rate of the same date is not consulted and not overwritten: the two
      * are different rows of the archive — the unique key includes the origin — and
@@ -45,24 +44,19 @@ class HarvestExchangeRateUseCase(
     ): ExchangeRate? {
         if (sourceCurrency == targetCurrency) return null
 
-        val base = baseCurrencyRepository.observe().value
-        val (baseSide, other, otherCurrency) = when (base) {
-            sourceCurrency -> Triple(sourceAmount, targetAmount, targetCurrency)
-            targetCurrency -> Triple(targetAmount, sourceAmount, sourceCurrency)
-            else -> return null
-        }
-
-        val denominator = other.absoluteValue
+        val denominator = sourceAmount.absoluteValue
         if (denominator == 0.0) return null
 
-        // The full quotient, in the fixed direction currency → base: units of the base
-        // per one unit of the other currency. Never the rounded form the rates screen
-        // shows — that is formatting, with an owner of its own, and storing it would
-        // make every later reading a compounding loss.
+        // The full quotient, in the direction the operation happened: units of the
+        // target currency per one unit of the source's. Never the rounded form the rates
+        // screen shows — that is formatting, with an owner of its own, and storing it
+        // would make every later reading a compounding loss. And never canonicalised
+        // either: inverting to store would keep a number nobody measured.
         val rate = ExchangeRate(
-            currency = otherCurrency,
+            currency = sourceCurrency,
+            counterCurrency = targetCurrency,
             date = date,
-            rate = baseSide.absoluteValue / denominator,
+            rate = targetAmount.absoluteValue / denominator,
             source = ExchangeRate.Source.DERIVED,
         )
         exchangeRateRepository.save(rate)

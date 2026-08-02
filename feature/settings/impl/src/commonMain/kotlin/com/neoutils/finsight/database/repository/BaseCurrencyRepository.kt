@@ -25,11 +25,10 @@ import kotlinx.coroutines.flow.StateFlow
  * has always formatted money with, which for a single-currency user never reaches a
  * screen at all.
  *
- * **There is no write path**, and that is deliberate (design D18): v1 does not offer the
- * switch, and a setter that wrote the new code alone would leave every rate on file being
- * read against a base it was never measured in. What keeps offering it later cheap is
- * that nothing converted is persisted and every read already observes this flow — not a
- * setter sitting here unused.
+ * **The write path is two lines, and that is the whole switch** (design D5). Every rate
+ * on file names both of its ends, so none of them changes meaning when this does; no
+ * stored row is touched, no migration runs and nothing is re-expressed here. The whole
+ * re-expression is a read, owned by `ExchangeRateRepository`.
  */
 class BaseCurrencyRepository(
     private val settings: Settings,
@@ -38,6 +37,11 @@ class BaseCurrencyRepository(
     private val _currency = MutableStateFlow(seed())
 
     override fun observe(): StateFlow<String> = _currency
+
+    override suspend fun set(code: String) {
+        settings.putString(KEY, code)
+        _currency.value = code
+    }
 
     private fun seed(): String {
         settings.getStringOrNull(KEY)?.let { return it }

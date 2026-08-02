@@ -30,6 +30,22 @@ interface IExchangeRateRepository {
      */
     suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate>
 
+    /**
+     * The general form: how much of [to] one unit of [from] was worth as of [date],
+     * whatever the base currency happens to be.
+     *
+     * The archive stores observations on pairs, in the direction each was made, so more
+     * than one path may reach the same answer. **Which one wins is the implementation's
+     * responsibility, and it is declared**: the direct observation, then the inverse,
+     * then a single triangulation over a pivot — never two chained. Inside each level
+     * the archive's own policy holds, and when nothing resolves the answer is `null`,
+     * which MUST NOT be read as `1`.
+     *
+     * [rateAsOf] and [ratesAsOf] are the particular case *"against the base in force"*,
+     * which is why the reducer never learns that the base can change.
+     */
+    suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate?
+
     /** The whole archive, newest first — what the rates screen lists. */
     fun observeAll(): Flow<List<ExchangeRate>>
 
@@ -38,7 +54,7 @@ interface IExchangeRateRepository {
      *
      * They are the same write and not two: what tells them apart is
      * [ExchangeRate.source], a field of the rate itself, and the unique
-     * `(currency, date, source)` is what lets a correction coexist with the
+     * `(currency, counterCurrency, date, source)` is what lets a correction coexist with the
      * observation it corrects instead of destroying it.
      */
     suspend fun save(rate: ExchangeRate)

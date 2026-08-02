@@ -23,9 +23,19 @@ import kotlin.time.ExperimentalTime
  * Registering a rate and correcting one are the **same write**, and this is where that
  * shows: an [existing] rate seeds the fields, its absence starts them empty, and both
  * paths end in `save`. What tells the two apart downstream is
- * [ExchangeRate.Source.USER] on the row, and the unique `(currency, date, source)` is
- * what lets a correction coexist with the observation it outranks rather than destroy
- * it.
+ * [ExchangeRate.Source.USER] on the row, and the unique
+ * `(currency, counterCurrency, date, source)` is what lets a correction coexist with the
+ * observation it outranks rather than destroy it.
+ *
+ * **The pair is written as chosen.** The two ends are never ordered and the quotient is
+ * never inverted to fit a canonical form (design D2): inverting to store would keep a
+ * number nobody observed. Editing an existing observation therefore opens in the
+ * direction it was made in.
+ *
+ * **A pair that leads nowhere can be registered, and that is accepted.** EUR/JPY under a
+ * base of BRL with no bridge is inert, not wrong. Barring it would require this form to
+ * know how to resolve paths — knowledge that belongs to the archive — in order to
+ * prevent a harmless row.
  */
 class ExchangeRateFormViewModel(
     private val existing: ExchangeRate?,
@@ -38,13 +48,13 @@ class ExchangeRateFormViewModel(
 
     private val _uiState = MutableStateFlow(
         ExchangeRateFormUiState(
-            baseCurrency = base,
-            currency = existing?.currency
+            from = existing?.currency
                 ?: CurrencyCatalog.currencies.first { it.code != base }.code,
+            to = existing?.counterCurrency ?: base,
             date = existing?.date ?: today(),
             rate = existing?.rate,
             isEditing = existing != null,
-            selectableCurrencies = CurrencyCatalog.currencies.filter { it.code != base },
+            selectableCurrencies = CurrencyCatalog.currencies,
         )
     )
 
@@ -52,8 +62,11 @@ class ExchangeRateFormViewModel(
 
     fun onAction(action: ExchangeRateFormAction) {
         when (action) {
-            is ExchangeRateFormAction.SelectCurrency ->
-                _uiState.update { it.copy(currency = action.currency) }
+            is ExchangeRateFormAction.SelectFrom ->
+                _uiState.update { it.copy(from = action.currency) }
+
+            is ExchangeRateFormAction.SelectTo ->
+                _uiState.update { it.copy(to = action.currency) }
 
             is ExchangeRateFormAction.SelectDate ->
                 _uiState.update { it.copy(date = action.date) }
@@ -84,7 +97,9 @@ class ExchangeRateFormViewModel(
                     // derived one writes a new `USER` row instead, leaving the
                     // operation's own observation standing.
                     id = existing?.id?.takeIf { existing.source == ExchangeRate.Source.USER } ?: 0,
-                    currency = state.currency,
+                    // As chosen, in the direction chosen. Never ordered, never inverted.
+                    currency = state.from,
+                    counterCurrency = state.to,
                     date = state.date,
                     rate = rate,
                     // Anything typed here is the user's, by definition, and it

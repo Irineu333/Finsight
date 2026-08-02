@@ -193,10 +193,12 @@ class ViewBudgetViewModelTest {
         baseCurrencyRepository = object : IBaseCurrencyRepository {
             private val flow = MutableStateFlow("BRL")
             override fun observe(): StateFlow<String> = flow
+            override suspend fun set(code: String) { flow.value = code }
         },
         exchangeRateRepository = object : IExchangeRateRepository {
             override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
             override suspend fun ratesAsOf(date: LocalDate) = emptyMap<String, ExchangeRate>()
+            override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
             override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
             override suspend fun save(rate: ExchangeRate) = Unit
             override suspend fun remove(rate: ExchangeRate) = Unit
@@ -262,12 +264,23 @@ private fun reducer(
     baseCurrencyRepository = object : IBaseCurrencyRepository {
         private val flow = MutableStateFlow(base)
         override fun observe(): StateFlow<String> = flow
+        override suspend fun set(code: String) { flow.value = code }
     },
     exchangeRateRepository = object : IExchangeRateRepository {
         override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
         override suspend fun ratesAsOf(date: LocalDate) = rates.mapValues { (code, rate) ->
-            ExchangeRate(currency = code, date = date, rate = rate, source = ExchangeRate.Source.USER)
+            ExchangeRate(
+                currency = code,
+                counterCurrency = base,
+                date = date,
+                rate = rate,
+                source = ExchangeRate.Source.USER,
+            )
         }
+
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate) =
+            ratesAsOf(date)[from]?.takeIf { it.counterCurrency == to }
+
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit

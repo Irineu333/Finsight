@@ -11,10 +11,10 @@ data object SettingsGraph : NavGraphRoute
  * The settings screen: the base currency in force, what it is (and is not) used for,
  * and the way to the rate archive.
  *
- * There is no separate base-currency screen. v1 does not offer changing the base
- * (design D18/D28), so that screen would be one value and one paragraph — a whole
- * destination to hold a sentence. When changing it is offered, the section becomes
- * interactive where it already is, and no route moves.
+ * There is **still** no separate base-currency screen, and now that changing it is
+ * offered, that is the interesting half of the sentence: the switch is a modal over this
+ * screen, so the section became interactive where it already was and no route moved. A
+ * destination of its own would hold one value and one picker.
  */
 @Serializable
 data object SettingsRoute : NavRoute

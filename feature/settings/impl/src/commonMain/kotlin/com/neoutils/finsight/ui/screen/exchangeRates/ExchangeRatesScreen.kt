@@ -51,7 +51,8 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rates_add
-import com.neoutils.finsight.resources.exchange_rates_base_hint
+import com.neoutils.finsight.resources.exchange_rates_group_header
+import com.neoutils.finsight.resources.exchange_rates_quote_pair
 import com.neoutils.finsight.resources.exchange_rates_empty
 import com.neoutils.finsight.resources.exchange_rates_outdated
 import com.neoutils.finsight.resources.exchange_rates_screen_title
@@ -181,24 +182,26 @@ internal fun ExchangeRatesContent(
                 ),
                 modifier = modifier,
             ) {
-                item(key = "base") {
-                    Text(
-                        text = stringResource(
-                            Res.string.exchange_rates_base_hint,
-                            uiState.baseCurrency,
-                        ),
-                        style = typography.labelLarge,
-                        color = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
-                    )
-                }
+                uiState.groups.forEach { group ->
+                    item(key = "group-${group.currency}") {
+                        Text(
+                            text = stringResource(
+                                Res.string.exchange_rates_group_header,
+                                group.info?.let { "${stringUiText(it.name)} (${group.currency})" }
+                                    ?: group.currency,
+                            ),
+                            style = typography.labelLarge,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
+                        )
+                    }
 
-                items(uiState.rates, key = { it.rate.id }) { item ->
-                    ExchangeRateCard(
-                        item = item,
-                        baseCurrency = uiState.baseCurrency,
-                        onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
-                    )
+                    items(group.rates, key = { it.rate.id }) { item ->
+                        ExchangeRateCard(
+                            item = item,
+                            onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
+                        )
+                    }
                 }
             }
         }
@@ -208,7 +211,6 @@ internal fun ExchangeRatesContent(
 @Composable
 private fun ExchangeRateCard(
     item: ExchangeRateItem,
-    baseCurrency: String,
     onClick: () -> Unit,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -236,8 +238,23 @@ private fun ExchangeRateCard(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
                 modifier = Modifier.weight(1f),
             ) {
+                // **The row describes itself whole** — `1 USD = 5,50 BRL` — so that its
+                // meaning does not depend on the heading above it. And it is never shown
+                // inverted with respect to the observation that produced it: this screen
+                // is also the point of edit, and editing an inverted row would open the
+                // correction of a number nobody observed.
                 Text(
-                    text = item.currency?.let { "${stringUiText(it.name)} · $code" } ?: code,
+                    text = stringResource(
+                        Res.string.exchange_rates_quote_pair,
+                        code,
+                        // As many places as the rate needs, and not the currency's own two:
+                        // `0,000691` is a real rate of a currency this app offers, and two
+                        // places print it `0,00` — a rate of zero, which says something
+                        // else. The maximum only *allows* digits, so an ordinary rate still
+                        // reads `5,5`.
+                        formatter.formatDecimal(item.rate.rate, RATE_SCALE),
+                        item.rate.counterCurrency,
+                    ),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -263,25 +280,6 @@ private fun ExchangeRateCard(
                 }
             }
 
-            // A rate **is** money: so many of the base per one unit of the currency. So
-            // it reads through the app's own money formatter, in the base, and it sits
-            // where this app puts money — at the end of the row.
-            //
-            // With as many places as it needs, though, and not the currency's own two: a
-            // rate of `0,000691` is a real rate of a currency this app offers, and two
-            // places print it `R$ 0,00` — a rate of zero, which says something else. The
-            // maximum only *allows* digits, so the ordinary rate still reads `R$ 5,50`.
-            Text(
-                text = formatter.format(
-                    amount = item.rate.rate,
-                    currency = baseCurrency,
-                    minFractionDigits = 2,
-                    maxFractionDigits = RATE_SCALE,
-                ),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-            )
         }
     }
 }

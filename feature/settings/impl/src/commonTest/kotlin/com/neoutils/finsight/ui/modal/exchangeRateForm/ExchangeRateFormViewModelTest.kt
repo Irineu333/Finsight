@@ -74,6 +74,7 @@ class ExchangeRateFormViewModelTest {
         val existing = ExchangeRate(
             id = 1,
             currency = "USD",
+            counterCurrency = "BRL",
             date = date,
             rate = 5.4,
             source = ExchangeRate.Source.USER,
@@ -105,6 +106,79 @@ class ExchangeRateFormViewModelTest {
         assertFalse(modal.isDismissed)
     }
 
+    /**
+     * Both ends are stated, in the direction the user chose, and neither is ordered nor
+     * inverted on the way to the archive (design D2).
+     */
+    @Test
+    fun `the pair is written as chosen, and never canonicalised`() = runTest {
+        val repository = FakeExchangeRateRepository()
+        val manager = ModalManager().apply { show(RecordingModal()) }
+
+        val viewModel = viewModel(repository, manager)
+        viewModel.onAction(ExchangeRateFormAction.SelectFrom("BRL"))
+        viewModel.onAction(ExchangeRateFormAction.SelectTo("USD"))
+        viewModel.onAction(ExchangeRateFormAction.ChangeRate(0.18))
+        viewModel.onAction(ExchangeRateFormAction.Submit)
+        repository.release()
+
+        val saved = repository.saved.single()
+        assertEquals("BRL", saved.currency)
+        assertEquals("USD", saved.counterCurrency)
+        assertEquals(0.18, saved.rate)
+    }
+
+    /** The base in force is the counterpart a new observation starts with. */
+    @Test
+    fun `a new rate starts with the base as its counterpart`() = runTest {
+        val state = viewModel(FakeExchangeRateRepository(), ModalManager()).uiState.value
+
+        assertEquals("BRL", state.to)
+        assertTrue(state.from != "BRL")
+    }
+
+    /**
+     * The whole catalog, on both ends: pricing the base against another currency is a
+     * legitimate observation whose inverse feeds the reading.
+     */
+    @Test
+    fun `the base is offered on both ends`() = runTest {
+        val state = viewModel(FakeExchangeRateRepository(), ModalManager()).uiState.value
+
+        assertTrue(state.selectableCurrencies.any { it.code == "BRL" })
+    }
+
+    @Test
+    fun `a currency against itself cannot be submitted`() = runTest {
+        val viewModel = viewModel(FakeExchangeRateRepository(), ModalManager())
+        viewModel.onAction(ExchangeRateFormAction.ChangeRate(1.0))
+        viewModel.onAction(ExchangeRateFormAction.SelectFrom("BRL"))
+
+        assertFalse(viewModel.uiState.value.canSubmit, "from == to is the one restriction left")
+
+        viewModel.onAction(ExchangeRateFormAction.SelectFrom("USD"))
+
+        assertTrue(viewModel.uiState.value.canSubmit)
+    }
+
+    /** Editing opens in the direction the observation was made in. */
+    @Test
+    fun `editing opens the pair in the direction it was observed`() = runTest {
+        val existing = ExchangeRate(
+            id = 1,
+            currency = "BRL",
+            counterCurrency = "USD",
+            date = date,
+            rate = 0.18,
+            source = ExchangeRate.Source.USER,
+        )
+
+        val state = viewModel(FakeExchangeRateRepository(), ModalManager(), existing).uiState.value
+
+        assertEquals("BRL", state.from)
+        assertEquals("USD", state.to)
+    }
+
     private fun viewModel(
         repository: IExchangeRateRepository,
         manager: ModalManager,
@@ -133,6 +207,7 @@ private class RecordingModal : Modal() {
 private class FakeBaseCurrencyRepository : IBaseCurrencyRepository {
     private val flow = MutableStateFlow("BRL")
     override fun observe(): StateFlow<String> = flow
+    override suspend fun set(code: String) { flow.value = code }
 }
 
 /** Suspends every write until [release], so the order of the two steps is observable. */
@@ -148,6 +223,8 @@ private class FakeExchangeRateRepository : IExchangeRateRepository {
     override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
 
     override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+
+    override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
 
     override fun observeAll(): Flow<List<ExchangeRate>> = MutableStateFlow(emptyList())
 

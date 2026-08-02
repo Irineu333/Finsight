@@ -37,7 +37,13 @@ class ForeignAccountGateTest {
     fun `every figure of a foreign account is its own currency, and the base never appears`() =
         runApp(baseCurrency = "BRL") {
             get<IExchangeRateRepository>().save(
-                ExchangeRate(currency = "USD", date = day, rate = 5.5, source = ExchangeRate.Source.USER),
+                ExchangeRate(
+                    currency = "USD",
+                    counterCurrency = "BRL",
+                    date = day,
+                    rate = 5.5,
+                    source = ExchangeRate.Source.USER,
+                ),
             )
 
             val chase = account("Chase", currency = "USD")

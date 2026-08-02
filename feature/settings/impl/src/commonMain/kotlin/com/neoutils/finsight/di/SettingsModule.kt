@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.mapper.ExchangeRateMapper
 import com.neoutils.finsight.database.repository.BaseCurrencyRepository
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.model.SeededBaseCurrency
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
@@ -23,8 +24,16 @@ val settingsModule = module {
 
     single<IBaseCurrencyRepository> { BaseCurrencyRepository(settings = get()) }
 
+    // The migration's backfill, resolved where the preference is visible and asked for
+    // by `core/database`, which may name neither `Settings` nor the repository. There is
+    // no DI cycle: `BaseCurrencyRepository` depends only on `Settings`, never on
+    // `AppDatabase`, and that is what lets the migration read it while it is opening.
+    single<SeededBaseCurrency> { SeededBaseCurrency { get<IBaseCurrencyRepository>().observe().value } }
+
     factory { ExchangeRateMapper() }
-    single<IExchangeRateRepository> { ExchangeRateRepository(dao = get(), mapper = get()) }
+    single<IExchangeRateRepository> {
+        ExchangeRateRepository(dao = get(), mapper = get(), baseCurrencyRepository = get())
+    }
 
     viewModel { SettingsViewModel(baseCurrencyRepository = get()) }
 

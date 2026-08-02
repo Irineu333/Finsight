@@ -12,11 +12,11 @@ class HarvestExchangeRateUseCaseTest {
 
     private val march = LocalDate(2026, 3, 10)
 
-    private fun harvester(base: String = "BRL", rates: FakeRates = FakeRates()) =
-        HarvestExchangeRateUseCase(FakeBaseCurrency(base), rates) to rates
+    private fun harvester(rates: FakeRates = FakeRates()) =
+        HarvestExchangeRateUseCase(rates) to rates
 
     @Test
-    fun `a crossing against the base registers the quotient of its two ends`() = runTest {
+    fun `a crossing registers the quotient of its two ends`() = runTest {
         val (harvest, rates) = harvester()
 
         val harvested = harvest(
@@ -27,15 +27,20 @@ class HarvestExchangeRateUseCaseTest {
             date = march,
         )
 
-        assertEquals("USD", harvested?.currency)
-        assertEquals(5.5, harvested?.rate, "units of the base per one unit of the currency")
+        assertEquals("BRL", harvested?.currency)
+        assertEquals("USD", harvested?.counterCurrency)
+        assertEquals(100.0 / 550.0, harvested?.rate, "units of the target per one unit of the source")
         assertEquals(march, harvested?.date)
         assertEquals(ExchangeRate.Source.DERIVED, harvested?.source)
         assertEquals(listOf(harvested), rates.saved)
     }
 
+    /**
+     * The direction is the operation's, and it is never canonicalised (design D2):
+     * inverting to store would keep a number nobody measured.
+     */
     @Test
-    fun `the direction does not depend on which end the base is`() = runTest {
+    fun `the direction is the one the operation happened in`() = runTest {
         val (harvest, _) = harvester()
 
         val harvested = harvest(
@@ -47,6 +52,7 @@ class HarvestExchangeRateUseCaseTest {
         )
 
         assertEquals("USD", harvested?.currency)
+        assertEquals("BRL", harvested?.counterCurrency)
         assertEquals(5.5, harvested?.rate)
     }
 
@@ -54,20 +60,26 @@ class HarvestExchangeRateUseCaseTest {
     fun `the full quotient is stored, not the form a screen would show`() = runTest {
         val (harvest, _) = harvester()
 
-        val harvested = harvest(-1000.0, "BRL", 183.0, "USD", march)
+        val harvested = harvest(-183.0, "USD", 1000.0, "BRL", march)
 
         assertEquals(1000.0 / 183.0, harvested?.rate)
     }
 
+    /**
+     * The guard that used to sit here is gone, and its removal is the point: it was
+     * never a rule of the domain, only the consequence of a row that could not say which
+     * pair it spoke about.
+     */
     @Test
-    fun `a crossing between two non-base currencies teaches nothing`() = runTest {
+    fun `a crossing between two non-base currencies also teaches`() = runTest {
         val (harvest, rates) = harvester()
 
-        // A USD → EUR transfer under a BRL base implies no rate against the base, and
-        // triangulating today's others would be a guess wearing an observation's
-        // clothes. Explicit Non-Goal, not an omission.
-        assertNull(harvest(-100.0, "USD", 92.0, "EUR", march))
-        assertTrue(rates.saved.isEmpty())
+        val harvested = harvest(-100.0, "USD", 92.0, "EUR", march)
+
+        assertEquals("USD", harvested?.currency)
+        assertEquals("EUR", harvested?.counterCurrency)
+        assertEquals(0.92, harvested?.rate)
+        assertEquals(listOf(harvested), rates.saved)
     }
 
     @Test
@@ -82,7 +94,7 @@ class HarvestExchangeRateUseCaseTest {
     fun `a zero end teaches nothing rather than dividing by it`() = runTest {
         val (harvest, rates) = harvester()
 
-        assertNull(harvest(-550.0, "BRL", 0.0, "USD", march))
+        assertNull(harvest(0.0, "BRL", 100.0, "USD", march))
         assertTrue(rates.saved.isEmpty())
     }
 
@@ -90,13 +102,13 @@ class HarvestExchangeRateUseCaseTest {
     fun `what is harvested is a line of the archive, never a field of the operation`() = runTest {
         val (harvest, rates) = harvester()
 
-        val harvested = harvest(-550.0, "BRL", 100.0, "USD", march)
+        val harvested = harvest(-100.0, "USD", 550.0, "BRL", march)
 
         // The whole record of the crossing is this row. Deleting the transaction that
         // revealed it removes no rate — nothing here points back at one (design D27).
         assertEquals(1, rates.saved.size)
         assertEquals(
-            ExchangeRate(currency = "USD", date = march, rate = 5.5, source = ExchangeRate.Source.DERIVED),
+            ExchangeRate(currency = "USD", counterCurrency = "BRL", date = march, rate = 5.5, source = ExchangeRate.Source.DERIVED),
             harvested,
         )
     }

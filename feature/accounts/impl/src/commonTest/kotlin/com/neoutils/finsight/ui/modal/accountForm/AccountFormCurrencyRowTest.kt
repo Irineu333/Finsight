@@ -121,6 +121,7 @@ class AccountFormCurrencyRowTest {
 private class StubBaseCurrency(base: String) : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
+    override suspend fun set(code: String) { flow.value = code }
 }
 
 private class StubAnalytics : Analytics {

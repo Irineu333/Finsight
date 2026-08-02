@@ -28,23 +28,37 @@ class SuggestCrossCurrencyAmountUseCaseTest {
             rate?.takeIf { it.currency == currency && it.date <= date }
 
         override suspend fun ratesAsOf(date: LocalDate) = emptyMap<String, ExchangeRate>()
+
+        // The repository promises the pair, resolved: direct, or the same observation
+        // read backwards. A fake that only answered the direct one would let this suite
+        // pass while the real archive said something else.
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? {
+            val stored = rate?.takeIf { it.date <= date } ?: return null
+            return when {
+                stored.currency == from && stored.counterCurrency == to -> stored
+                stored.currency == to && stored.counterCurrency == from ->
+                    stored.copy(currency = from, counterCurrency = to, rate = 1 / stored.rate)
+
+                else -> null
+            }
+        }
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
     }
 
     private fun suggester(
-        base: String = "BRL",
         rate: ExchangeRate? = ExchangeRate(
             currency = "USD",
+            counterCurrency = "BRL",
             date = today,
             rate = 5.5,
             source = ExchangeRate.Source.DERIVED,
         ),
-    ) = SuggestCrossCurrencyAmountUseCase(FakeBaseCurrency(base), Archive(rate))
+    ) = SuggestCrossCurrencyAmountUseCase(Archive(rate))
 
     @Test
-    fun `from the base, the rate divides`() = runTest {
+    fun `read backwards, the rate divides`() = runTest {
         val suggestion = suggester()(amount = 550.0, from = "BRL", to = "USD", on = today)
 
         assertEquals(100.0, suggestion?.amount)
@@ -52,7 +66,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
     }
 
     @Test
-    fun `to the base, the rate multiplies`() = runTest {
+    fun `read as observed, the rate multiplies`() = runTest {
         val suggestion = suggester()(amount = 100.0, from = "USD", to = "BRL", on = today)
 
         assertEquals(550.0, suggestion?.amount)
@@ -64,6 +78,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
         val suggestion = suggester(
             rate = ExchangeRate(
                 currency = "USD",
+                counterCurrency = "BRL",
                 date = twoWeeksAgo,
                 rate = 5.0,
                 source = ExchangeRate.Source.USER,
@@ -74,13 +89,24 @@ class SuggestCrossCurrencyAmountUseCaseTest {
         assertEquals(twoWeeksAgo, suggestion?.asOf)
     }
 
+    /**
+     * Two non-base currencies are no longer a blind spot, and it cost no code of its
+     * own: the archive is asked for the pair the operation is actually about, and which
+     * path answers is the archive's declared precedence.
+     */
     @Test
-    fun `between two non-base currencies it says nothing at all`() = runTest {
-        // Triangulating two rates would be a guess wearing an observation's clothes —
-        // the same reason harvesting refuses to learn from such an operation — and the
-        // sentence the form would have to say ("by the rate of 05/07") cannot be said
-        // when two rates carry two dates.
-        assertNull(suggester()(amount = 100.0, from = "USD", to = "EUR", on = today))
+    fun `between two non-base currencies it answers from the pair`() = runTest {
+        val suggestion = suggester(
+            rate = ExchangeRate(
+                currency = "USD",
+                counterCurrency = "EUR",
+                date = today,
+                rate = 0.92,
+                source = ExchangeRate.Source.DERIVED,
+            ),
+        )(amount = 100.0, from = "USD", to = "EUR", on = today)
+
+        assertEquals(92.0, suggestion?.amount)
     }
 
     @Test

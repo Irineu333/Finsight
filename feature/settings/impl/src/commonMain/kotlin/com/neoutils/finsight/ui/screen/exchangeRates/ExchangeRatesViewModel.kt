@@ -18,6 +18,15 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+/**
+ * The archive, grouped by the currency each observation **prices**.
+ *
+ * Grouping and its order are the only things this adds, and the order is the natural
+ * extension of the `ORDER BY date DESC` the DAO already does: the currency with the most
+ * recent observation first. What each row *means* does not depend on the heading above
+ * it — the row states its own pair (design D9) — so a pair observed in both directions
+ * legitimately appears under two headings.
+ */
 class ExchangeRatesViewModel(
     baseCurrencyRepository: IBaseCurrencyRepository,
     exchangeRateRepository: IExchangeRateRepository,
@@ -33,13 +42,23 @@ class ExchangeRatesViewModel(
 
         ExchangeRatesUiState(
             baseCurrency = base,
-            rates = rates.map { rate ->
-                ExchangeRateItem(
-                    rate = rate,
-                    currency = CurrencyCatalog.of(rate.currency),
-                    isOutdated = rate.date < staleBefore,
-                )
-            },
+            groups = rates
+                .map { rate ->
+                    ExchangeRateItem(
+                        rate = rate,
+                        currency = CurrencyCatalog.of(rate.currency),
+                        isOutdated = rate.date < staleBefore,
+                    )
+                }
+                .groupBy { it.rate.currency }
+                .map { (currency, items) ->
+                    ExchangeRateGroup(
+                        currency = currency,
+                        info = CurrencyCatalog.of(currency),
+                        rates = items.sortedByDescending { it.rate.date },
+                    )
+                }
+                .sortedByDescending { group -> group.rates.first().rate.date },
             isLoading = false,
         )
     }.stateIn(

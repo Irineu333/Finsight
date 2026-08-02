@@ -1,6 +1,5 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import kotlinx.datetime.LocalDate
 import kotlin.math.roundToLong
@@ -30,15 +29,13 @@ data class CrossCurrencyAmountSuggestion(
  * form that multiplied by a rate itself would put a second answer to "how much is this
  * worth" one line away from the first.
  *
- * **Between two non-base currencies it answers nothing**, and that is deliberate. The
- * implied amount would exist only by triangulating two rates against the base, which is
- * a guess wearing an observation's clothes — the same reason
- * [HarvestExchangeRateUseCase] refuses to *learn* from such an operation. And the
- * sentence the form would have to say ("by the rate of 05/07") is literally unutterable
- * there: two rates carry two dates, and picking either lies about the other.
+ * It asks the archive for the pair, and the base currency does not enter into it. Which
+ * of several paths answers — direct, inverse, or one pivot — is the archive's declared
+ * precedence, with an owner of its own; asking here for the pair the user is actually
+ * operating on is what makes two non-base currencies work **without a line of code of
+ * its own**.
  */
 class SuggestCrossCurrencyAmountUseCase(
-    private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
 ) {
 
@@ -46,8 +43,8 @@ class SuggestCrossCurrencyAmountUseCase(
      * @param amount what the user stated on the [from] side.
      * @param on the operation's date — the archive is read *as of* it, never at today's
      * rate, for the same reason a past month's net worth is not recomputed.
-     * @return `null` whenever the app has nothing to say: same currency, no rate on or
-     * before that date, or neither end being the base.
+     * @return `null` whenever the app has nothing to say: same currency, or no path
+     * between the two on or before that date.
      */
     suspend operator fun invoke(
         amount: Double,
@@ -58,30 +55,12 @@ class SuggestCrossCurrencyAmountUseCase(
         if (from == to) return null
         if (amount <= 0.0) return null
 
-        val base = baseCurrencyRepository.observe().value
-
-        // A rate is units of the base per one unit of the currency it prices, always in
-        // that direction — so the base side of the operation is the one with no rate of
-        // its own, and the other side's rate is the whole of the arithmetic.
-        val converted = when (base) {
-            to -> {
-                val rate = exchangeRateRepository.rateAsOf(from, on) ?: return null
-                rate to amount * rate.rate
-            }
-
-            from -> {
-                val rate = exchangeRateRepository.rateAsOf(to, on) ?: return null
-                if (rate.rate == 0.0) return null
-                rate to amount / rate.rate
-            }
-
-            else -> return null
-        }
-
-        val (rate, value) = converted
+        // Units of [to] per one unit of [from], which is the pair the operation is
+        // about — no base, and therefore no side privileged over the other.
+        val rate = exchangeRateRepository.rateBetween(from, to, on) ?: return null
 
         return CrossCurrencyAmountSuggestion(
-            amount = (value * 100).roundToLong() / 100.0,
+            amount = (amount * rate.rate * 100).roundToLong() / 100.0,
             asOf = rate.date,
         )
     }

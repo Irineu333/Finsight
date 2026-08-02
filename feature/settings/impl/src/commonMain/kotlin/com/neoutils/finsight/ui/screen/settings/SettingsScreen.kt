@@ -37,11 +37,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.settings_base_currency_picker_title
 import com.neoutils.finsight.resources.settings_base_currency_title
 import com.neoutils.finsight.resources.settings_exchange_rates_subtitle
 import com.neoutils.finsight.resources.settings_exchange_rates_title
 import com.neoutils.finsight.resources.settings_screen_title
 import com.neoutils.finsight.ui.component.CurrencyGlyph
+import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.component.CurrencyGlyphIcon
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesDetail
@@ -55,9 +59,16 @@ import org.koin.compose.viewmodel.koinViewModel
 /**
  * Settings: the base currency, said once, and the way to the rate archive.
  *
- * The base currency is **read-only here on purpose** (design D18/D28). It is resolved
- * from the device's region on the first run and never moves on its own, and v1 offers
- * no way to change it — so this section states what it is, and nothing else.
+ * The base currency is seeded from the device's locale on the first run, never moves on
+ * its own, and **is switched here** — the row is the door, and it opens the shared
+ * `CurrencyPickerModal` over the whole curated catalog.
+ *
+ * **The switch costs nothing up front** (design D6): no confirmation, no coverage
+ * calculation, no blocking a currency the archive cannot reach and no rate demanded in
+ * the flow. Switching to a currency the archive never priced makes consolidated figures
+ * degrade into per-currency terms — behaviour that is already defined and already
+ * tested, reached here through another door — and it is reversible at any moment,
+ * because no stored row changes.
  *
  * It used to carry a paragraph explaining what the base is *not* used for. The
  * explanation was true and it was the wrong shape: two lines of prose under a 48dp row
@@ -126,7 +137,10 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            BaseCurrencySection(uiState)
+            BaseCurrencySection(
+                uiState = uiState,
+                onSwitch = { viewModel.onAction(SettingsAction.SwitchBaseCurrency(it)) },
+            )
 
             HorizontalDivider(color = colorScheme.outlineVariant)
 
@@ -136,11 +150,35 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun BaseCurrencySection(uiState: SettingsUiState) {
+private fun BaseCurrencySection(
+    uiState: SettingsUiState,
+    onSwitch: (String) -> Unit,
+) {
+    val modalManager = LocalModalManager.current
+    val pickerTitle = stringResource(Res.string.settings_base_currency_picker_title)
+    val options = uiState.selectableCurrencies.map {
+        CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+    }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth(),
+        // Clipped before it is made clickable, so the ripple takes the row's corners —
+        // the same shape `ExchangeRatesRow` below already wears.
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable {
+                modalManager.show(
+                    CurrencyPickerModal(
+                        title = pickerTitle,
+                        currencies = options,
+                        selectedCode = uiState.baseCurrencyCode,
+                        onCurrencySelected = { onSwitch(it.code) },
+                    )
+                )
+            }
+            .padding(vertical = 8.dp),
     ) {
         CurrencyGlyph(symbol = uiState.baseCurrency?.symbol ?: uiState.baseCurrencyCode)
 

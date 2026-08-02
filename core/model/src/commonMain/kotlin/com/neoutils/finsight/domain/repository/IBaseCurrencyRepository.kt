@@ -11,9 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
  * shown in *that* currency, whatever the base is (design D8, D9, D29).
  *
  * **Observable, and that is a requirement of shape.** Every consolidated figure reacts
- * to it changing; v1 offers no screen that changes it (design D28), so what actually
- * moves at runtime is the rate archive. The flow exists so that offering the change
- * later does not mean rewriting every read.
+ * to it changing, and the change is offered: settings switches it, and every figure on
+ * screen re-expresses on the next read.
+ *
+ * **Switching writes the preference and nothing else.** No stored row moves, no
+ * migration runs, nothing is re-expressed on write — every rate on file names both of
+ * its ends, so none of them changes meaning when the preference does. The whole
+ * re-expression is a read, and it has an owner of its own in the rate repository.
  *
  * It is resolved once, from the device's **locale**, on the first run — and a later trip
  * abroad MUST NOT move it, which would silently re-express the whole history.
@@ -28,22 +32,13 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface IBaseCurrencyRepository {
 
-    /** The base currency in force, seeded on first run and stable afterwards. */
+    /** The base currency in force, seeded on first run and moved only by [set]. */
     fun observe(): StateFlow<String>
-}
 
-/*
- * **There is no setter, and its absence is the design.**
- *
- * Switching bases is pure derivation — no converted value is persisted, so the rate of
- * the old base against the new one is the inverse of one already stored and the rest
- * re-express by triangulation over rates of the same date. What this change owes that
- * future is that nothing here makes it *impossible*, and nothing does.
- *
- * A setter that only wrote the new code would be the opposite of that guarantee. Every
- * rate on file is denominated against the base it was written under; rewriting the code
- * without re-expressing them leaves the archive being read against a base it was never
- * measured in — every consolidated figure in the history silently wrong, with no error,
- * no mark and no way for the user to tell. Offering the switch means shipping the
- * re-expression with it, and that is a change of its own.
- */
+    /**
+     * Switches the base currency: persists [code] and emits it. That is the whole
+     * operation — there is no use case, because there is no case, only a preference
+     * being written (design D5).
+     */
+    suspend fun set(code: String)
+}

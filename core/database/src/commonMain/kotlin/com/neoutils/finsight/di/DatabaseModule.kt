@@ -15,6 +15,7 @@ import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
 import com.neoutils.finsight.domain.model.LegacyRelabel
+import com.neoutils.finsight.domain.model.SeededBaseCurrency
 import androidx.room.RoomDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -35,7 +36,11 @@ val databaseModule = module {
     // is recomputed on every start and that is harmless — the migration it feeds runs
     // once, and `user_version` is what records that it did.
     single<AppDatabase> {
-        getRoomDatabase(builder = get(), relabelCurrency = get<LegacyRelabel>().currency())
+        getRoomDatabase(
+            builder = get(),
+            relabelCurrency = get<LegacyRelabel>().currency(),
+            baseCurrency = get<SeededBaseCurrency>().code(),
+        )
     } bind RoomDatabase::class
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }

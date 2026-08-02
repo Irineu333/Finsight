@@ -106,7 +106,9 @@ class SingleCurrencyInertiaTest {
      */
     @Test
     fun `exactly two forms let the user choose an account's currency`() {
-        val choosesACurrency = Regex("""CurrencySelected|SelectCurrency""")
+        // `SelectFrom`/`SelectTo` are the rate form's two ends, which are currencies
+        // chosen and therefore in scope for this guard exactly as `SelectCurrency` was.
+        val choosesACurrency = Regex("""CurrencySelected|SelectCurrency|SelectFrom|SelectTo""")
 
         val expected = setOf(
             // The shared sheet itself: it renders whatever list it is handed and
@@ -120,6 +122,11 @@ class SingleCurrencyInertiaTest {
             "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/creditCardForm/CreditCardFormAction.kt",
             "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/creditCardForm/CreditCardFormModal.kt",
             "feature/creditcards/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/creditCardForm/CreditCardFormViewModel.kt",
+            // Not a third door either: the base currency is a **display preference**,
+            // chosen over the whole catalog and creating no account. What it changes is
+            // which currency a consolidated figure reads in — reversibly, since nothing
+            // converted is persisted — and never what an account is denominated in.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/settings/SettingsScreen.kt",
             // Not a third door: the denomination of a budget limit, chosen among the
             // currencies the user already holds, creating none.
             "feature/budgets/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/budgetForm/BudgetFormAction.kt",

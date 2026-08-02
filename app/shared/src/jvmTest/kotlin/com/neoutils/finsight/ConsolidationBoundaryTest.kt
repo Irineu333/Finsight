@@ -68,9 +68,18 @@ class ConsolidationBoundaryTest {
             // rate of the day may legitimately differ from the one this operation got.
             "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/viewTransaction/ViewTransactionModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/mapper/ExchangeRateMapper.kt",
+            // The declared precedence — direct ▸ inverse ▸ one pivot (design D3). It is
+            // the one place that composes a rate *out of other rates*, and it is a
+            // legitimate entry for a reason worth stating: **no money passes through
+            // it**. Its input is observations and its output is a rate; what turns a
+            // rate into a figure is still the reducer, and still only the reducer.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/RateResolver.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesScreen.kt",
+            // The listing's grouping and its order, which read a rate's *date* — the
+            // number itself is never touched here, and no money is.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
         )
 
         val found = productionSources
@@ -100,8 +109,15 @@ class ConsolidationBoundaryTest {
     fun `no surface outside the reducer applies a rate to anything`() {
         val appliesARate = Regex("""[*/]\s*[\w.]*\.rate\b|\.rate\s*[*/]""")
 
+        // The resolver is the documented exception, and it does not blunt this edge:
+        // it multiplies a rate by a rate to answer *what is the rate*, and never an
+        // amount by anything. The reducer stays the only place money meets a rate.
+        val resolver = "feature/settings/impl/src/commonMain/kotlin/" +
+            "com/neoutils/finsight/database/repository/RateResolver.kt"
+
         val found = productionSources
             .filterNot { "core/model/src/commonMain" in it.relativePath() }
+            .filterNot { it.relativePath() == resolver }
             .filter { appliesARate.containsMatchIn(it.readText()) }
             .map { it.relativePath() }
             .toSet()

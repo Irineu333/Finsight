@@ -63,7 +63,13 @@ class SingleCurrencyGateTest {
     @Test
     fun `a single currency other than the base is neither converted nor marked`() = runApp(baseCurrency = "BRL") {
         get<IExchangeRateRepository>().save(
-            ExchangeRate(currency = "USD", date = day, rate = 5.5, source = ExchangeRate.Source.USER),
+            ExchangeRate(
+                    currency = "USD",
+                    counterCurrency = "BRL",
+                    date = day,
+                    rate = 5.5,
+                    source = ExchangeRate.Source.USER,
+                ),
         )
 
         val wallet = account("Chase", currency = "USD", isDefault = true)

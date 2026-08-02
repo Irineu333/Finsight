@@ -370,12 +370,15 @@ private class Fakes {
     }
 
     val baseCurrencyRepository = object : IBaseCurrencyRepository {
-        override fun observe(): StateFlow<String> = MutableStateFlow("BRL")
+        private val state = MutableStateFlow("BRL")
+        override fun observe(): StateFlow<String> = state
+        override suspend fun set(code: String) { state.value = code }
     }
 
     private val exchangeRateRepository = object : IExchangeRateRepository {
         override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
         override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
         override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()

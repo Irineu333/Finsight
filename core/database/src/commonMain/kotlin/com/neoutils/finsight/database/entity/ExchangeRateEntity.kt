@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 import kotlinx.datetime.LocalDate
 
 /**
- * One observation about the world: what [currency] was worth against the user's base
- * currency on [date].
+ * One observation about the world, on a **pair** of currencies: one unit of [currency]
+ * was worth [rate] of [counterCurrency] on [date].
  *
  * **It is dated, and that is the whole point.** Without a date, December's net worth
  * is recomputed at today's rate and *moves on its own* when the rate changes — the
@@ -15,41 +15,48 @@ import kotlinx.datetime.LocalDate
  * **on or before** that period's date, which is the deterministic policy every
  * double-entry system that keeps prices converged on.
  *
- * **It does not name the base currency.** A rate is stored one-way, currency → base,
- * and the base is a display preference rather than a fact of the row. Changing it does
- * not invalidate the archive: the rate of the old base against the new one is the
- * inverse of one already here, and the rest re-express by triangulation over rates of
- * the same date. That is derivation, not migration — no stored row changes.
+ * **The row names both of its ends, so it reads on its own.** The base currency is a
+ * display preference and leaves no trace here. A row whose meaning depended on the
+ * preference in force would start saying something else the instant it changed —
+ * silently rewriting the meaning of stored data, which is the class of defect the
+ * ledger was built to make impossible.
+ *
+ * **The direction is the observation's, and it is never canonicalised on write.**
+ * Ordering the ends and inverting the quotient to fit a canonical form would store a
+ * number nobody observed — the same defect as storing the displayed form, applied to
+ * the entrance, where there is no way to notice it. As a consequence the same pair may
+ * exist in both directions, as two distinct observations; which one answers a given
+ * question is the reader's decision, and it is declared.
  */
 @Entity(
     tableName = "exchange_rates",
     indices = [
-        // A surrogate key with a unique triple, not a composite primary key. The
+        // A surrogate key with a unique tuple, not a composite primary key. The
         // reason is [Source.USER] winning over [Source.DERIVED] on the same date: for
         // that precedence to mean anything, both origins have to be able to coexist on
-        // the same `(currency, date)` — otherwise correcting a rate would silently
-        // destroy the one the operation itself observed.
-        Index(value = ["currency", "date", "source"], unique = true),
-        Index(value = ["currency", "date"]),
+        // the same `(currency, counterCurrency, date)` — otherwise correcting a rate
+        // would silently destroy the one the operation itself observed.
+        Index(value = ["currency", "counterCurrency", "date", "source"], unique = true),
+        Index(value = ["currency", "counterCurrency", "date"]),
     ],
 )
 data class ExchangeRateEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    /** ISO 4217 code of the currency being priced. */
+    /** ISO 4217 code of the currency being priced — the one the row answers *how much*. */
     val currency: String,
+    /** ISO 4217 code of the currency [currency] is priced **in**. */
+    val counterCurrency: String,
     /** The day this rate is an observation about. */
     val date: LocalDate,
     /**
-     * Units of the **base** currency per **one** unit of [currency] — with a base of
-     * BRL, the dollar at `5.50`.
+     * Units of [counterCurrency] per **one** unit of [currency] — `USD`/`BRL` at
+     * `5.50` reads *one dollar is worth 5.50 reais*.
      *
      * Stored as the **full quotient**, derived in cents from the two legs of the
      * operation that observed it, and **never** the rounded form a screen shows. The
      * four decimal places of the rates screen are a formatting decision with an owner
      * of its own; confusing the two would make every display a compounding loss of
-     * precision. Fixing the direction matters for the same reason: the inverse is not
-     * the same rounding decision, and half a table in each direction is a table with
-     * no authority.
+     * precision.
      */
     val rate: Double,
     val source: Source,

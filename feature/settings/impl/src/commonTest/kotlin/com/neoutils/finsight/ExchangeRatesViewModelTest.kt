@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesUiState
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,8 +51,8 @@ class ExchangeRatesViewModelTest {
         viewModel(rates).uiState.test {
             val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
 
-            assertTrue(state.rates.single { it.rate.currency == "USD" }.isOutdated)
-            assertFalse(state.rates.single { it.rate.currency == "EUR" }.isOutdated)
+            assertTrue(state.items.single { it.rate.currency == "USD" }.isOutdated)
+            assertFalse(state.items.single { it.rate.currency == "EUR" }.isOutdated)
         }
     }
 
@@ -63,7 +64,7 @@ class ExchangeRatesViewModelTest {
         viewModel(rates).uiState.test {
             val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
 
-            assertFalse(state.rates.single().isOutdated)
+            assertFalse(state.items.single().isOutdated)
         }
     }
 
@@ -82,11 +83,63 @@ class ExchangeRatesViewModelTest {
         exchangeRateRepository = FakeExchangeRateRepository(rates),
     )
 
-    private fun rate(currency: String, date: LocalDate) = ExchangeRate(
-        id = currency.hashCode().toLong(),
+    /** The observations of every group, flattened — what the per-row assertions ask. */
+    private val ExchangeRatesUiState.items get() = groups.flatMap { it.rates }
+
+    /**
+     * The grouping key is the **priced** currency, and the order of the groups is the
+     * natural extension of the archive's `ORDER BY date DESC`.
+     */
+    @Test
+    fun `the archive is grouped by the priced currency, newest group first`() = runTest {
+        val rates = listOf(
+            rate("USD", today.minus(5, DateTimeUnit.DAY)),
+            rate("EUR", today),
+            rate("USD", today.minus(10, DateTimeUnit.DAY)),
+        )
+
+        viewModel(rates).uiState.test {
+            val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
+
+            assertEquals(listOf("EUR", "USD"), state.groups.map { it.currency })
+            assertEquals(2, state.groups.single { it.currency == "USD" }.rates.size)
+        }
+    }
+
+    /**
+     * Two directions of the same pair are two distinct observations, and each appears
+     * under the currency it prices — never inverted to join the other.
+     */
+    @Test
+    fun `the same pair in both directions appears in two groups`() = runTest {
+        val rates = listOf(
+            rate("USD", today, counterCurrency = "BRL"),
+            rate("BRL", today, counterCurrency = "USD", rate = 0.18),
+        )
+
+        viewModel(rates).uiState.test {
+            val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
+
+            assertEquals(setOf("USD", "BRL"), state.groups.map { it.currency }.toSet())
+            assertEquals(
+                0.18,
+                state.groups.single { it.currency == "BRL" }.rates.single().rate.rate,
+                "shown as observed, never inverted to fit the other group",
+            )
+        }
+    }
+
+    private fun rate(
+        currency: String,
+        date: LocalDate,
+        counterCurrency: String = "BRL",
+        rate: Double = 5.5,
+    ) = ExchangeRate(
+        id = (currency + counterCurrency + date).hashCode().toLong(),
         currency = currency,
+        counterCurrency = counterCurrency,
         date = date,
-        rate = 5.5,
+        rate = rate,
         source = ExchangeRate.Source.DERIVED,
     )
 }
@@ -94,6 +147,7 @@ class ExchangeRatesViewModelTest {
 private class FakeBaseCurrencyRepository(base: String) : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
+    override suspend fun set(code: String) { flow.value = code }
 }
 
 private class FakeExchangeRateRepository(
@@ -107,6 +161,10 @@ private class FakeExchangeRateRepository(
 
     override suspend fun ratesAsOf(date: LocalDate) =
         all.value.filter { it.date <= date }.associateBy { it.currency }
+
+    override suspend fun rateBetween(from: String, to: String, date: LocalDate) =
+        all.value.filter { it.currency == from && it.counterCurrency == to && it.date <= date }
+            .maxByOrNull { it.date }
 
     override fun observeAll(): Flow<List<ExchangeRate>> = all
 

@@ -33,8 +33,8 @@ val modelModule = module {
             getAccountCurrencies = get(),
         )
     }
-    factory { HarvestExchangeRateUseCase(baseCurrencyRepository = get(), exchangeRateRepository = get()) }
-    factory { SuggestCrossCurrencyAmountUseCase(baseCurrencyRepository = get(), exchangeRateRepository = get()) }
+    factory { HarvestExchangeRateUseCase(exchangeRateRepository = get()) }
+    factory { SuggestCrossCurrencyAmountUseCase(exchangeRateRepository = get()) }
     factory {
         ObserveConsolidationChangesUseCase(
             entryRepository = get(),

@@ -215,10 +215,12 @@ class CalculateCategorySpendingUseCaseImplTest {
 private class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
+    override suspend fun set(code: String) { flow.value = code }
 }
 
 private class FakeExchangeRateRepository(
     private val rates: Map<String, Double> = emptyMap(),
+    private val base: String = "BRL",
 ) : IExchangeRateRepository {
     override suspend fun rateAsOf(currency: String, date: kotlinx.datetime.LocalDate): ExchangeRate? =
         ratesAsOf(date)[currency]
@@ -227,11 +229,16 @@ private class FakeExchangeRateRepository(
         rates.mapValues { (currency, rate) ->
             ExchangeRate(
                 currency = currency,
+                counterCurrency = base,
                 date = date,
                 rate = rate,
                 source = ExchangeRate.Source.USER,
             )
         }
+
+    override suspend fun rateBetween(from: String, to: String, date: kotlinx.datetime.LocalDate) =
+        ratesAsOf(date)[from]?.takeIf { it.counterCurrency == to }
+
     override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
     override suspend fun save(rate: ExchangeRate) = Unit
     override suspend fun remove(rate: ExchangeRate) = Unit

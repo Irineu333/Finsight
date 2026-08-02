@@ -192,11 +192,13 @@ class ViewCategoryViewModelTest {
     private class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
         private val flow = MutableStateFlow(base)
         override fun observe(): StateFlow<String> = flow
+        override suspend fun set(code: String) { flow.value = code }
     }
 
     private class FakeExchangeRateRepository : IExchangeRateRepository {
         override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
         override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit

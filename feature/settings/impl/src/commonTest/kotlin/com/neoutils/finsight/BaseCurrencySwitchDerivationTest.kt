@@ -1,5 +1,6 @@
 package com.neoutils.finsight
 
+import com.neoutils.finsight.database.repository.resolveRate
 import com.neoutils.finsight.domain.model.ExchangeRate
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -10,17 +11,16 @@ import kotlin.test.assertTrue
 /**
  * **Switching the base currency preserves the archive.**
  *
- * v1 offers no screen that switches it (design D18/D28). This test exists for the other
- * half of that decision: the requirement is written so that the implementation cannot
- * make switching *impossible*, and what makes it possible is that nothing converted is
- * ever persisted. A rate is stored one way, currency → base, and re-expressing the
- * archive against a different base is arithmetic on what is already there — the old
- * base against the new one is the **inverse** of a rate that exists, and every other
- * currency re-expresses by **triangulation** over rates of the same date.
+ * The arithmetic used to be written out here, because shipping it would have been
+ * shipping a feature that was not offered. It is shipped now, so this exercises the
+ * **real resolver**: the inverse and the triangulation are the ones that run on a
+ * device, with the same numbers.
  *
- * The derivation is written out here rather than shipped as production code, because
- * shipping it would be shipping a feature v1 does not offer. What has to be true today
- * is that the archive **suffices** — and that is exactly what these assertions check.
+ * What the suite claims has not changed, and it is the property the whole design rests
+ * on: re-expressing the archive against a different base is *reading*. The old base
+ * against the new one is the **inverse** of a rate that exists; every other currency
+ * re-expresses by **triangulation** over rates of the same date; and nothing is written
+ * along the way.
  */
 class BaseCurrencySwitchDerivationTest {
 
@@ -34,37 +34,36 @@ class BaseCurrencySwitchDerivationTest {
 
     @Test
     fun `the old base against the new one is the inverse of a rate already stored`() {
-        val usdPerBrl = 1.0 / archive.rateOf("USD")
-
         // 1 BRL ≈ 0.1818 USD — nothing was fetched, nothing was written.
-        assertClose(0.181818, usdPerBrl)
+        assertClose(0.181818, archive.resolveRate(from = "BRL", to = "USD"))
     }
 
     @Test
     fun `every other currency re-expresses by triangulation over rates of the same date`() {
-        // EUR against the new base USD: (BRL per EUR) / (BRL per USD).
-        val usdPerEur = archive.rateOf("EUR") / archive.rateOf("USD")
-
-        assertClose(1.090909, usdPerEur)
+        // EUR against the new base USD, over the real: (BRL per EUR) / (BRL per USD).
+        assertClose(1.090909, archive.resolveRate(from = "EUR", to = "USD"))
     }
 
     @Test
     fun `the derivation is a round trip - re-expressing twice returns the original`() {
-        val usdPerEur = archive.rateOf("EUR") / archive.rateOf("USD")
-        val brlPerUsd = archive.rateOf("USD")
+        val usdPerEur = archive.resolveRate(from = "EUR", to = "USD")!!
+        val brlPerUsd = archive.resolveRate(from = "USD", to = "BRL")!!
 
         // Back to a BRL base: (USD per EUR) × (BRL per USD).
-        assertClose(archive.rateOf("EUR"), usdPerEur * brlPerUsd)
+        assertClose(6.00, usdPerEur * brlPerUsd)
     }
 
+    /**
+     * The assertion that gained weight rather than losing it: it is now made against a
+     * **real** switch of base, which is exactly the implementation it exists to bar —
+     * the one that would rewrite the archive, and would be a migration.
+     */
     @Test
     fun `no stored row changes`() {
         val before = archive.map { it.copy() }
 
-        // Deriving reads; it never writes. Stated as an assertion because the failure
-        // mode it guards against is a "switch base" implementation that rewrites the
-        // archive — which would be migration, and would destroy the observations.
-        archive.rateOf("EUR") / archive.rateOf("USD")
+        archive.resolveRate(from = "EUR", to = "USD")
+        archive.resolveRate(from = "BRL", to = "USD")
 
         assertEquals(before, archive)
         assertTrue(archive.all { it.source == ExchangeRate.Source.USER })
@@ -73,14 +72,16 @@ class BaseCurrencySwitchDerivationTest {
     private fun rate(currency: String, value: Double) = ExchangeRate(
         id = 0,
         currency = currency,
+        counterCurrency = "BRL",
         date = date,
         rate = value,
         source = ExchangeRate.Source.USER,
     )
 
-    private fun List<ExchangeRate>.rateOf(currency: String) = single { it.currency == currency }.rate
-
-    private fun assertClose(expected: Double, actual: Double) {
-        assertTrue(abs(expected - actual) < 1e-6, "expected ~$expected but was $actual")
+    private fun assertClose(expected: Double, actual: Double?) {
+        assertTrue(
+            actual != null && abs(expected - actual) < 1e-6,
+            "expected ~$expected but was $actual",
+        )
     }
 }

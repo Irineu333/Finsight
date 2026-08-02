@@ -408,22 +408,33 @@ internal class FakeAccountCurrencies(
 internal class FakeBaseCurrency(base: String) : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
+    override suspend fun set(code: String) { flow.value = code }
 }
 
 internal class FakeRates(
     private val rates: Map<String, Double> = emptyMap(),
+    private val base: String = "BRL",
 ) : IExchangeRateRepository {
 
     val saved = mutableListOf<ExchangeRate>()
 
     private fun rateOf(currency: String, date: LocalDate) = rates[currency]?.let {
-        ExchangeRate(currency = currency, date = date, rate = it, source = ExchangeRate.Source.DERIVED)
+        ExchangeRate(
+            currency = currency,
+            counterCurrency = base,
+            date = date,
+            rate = it,
+            source = ExchangeRate.Source.DERIVED,
+        )
     }
 
     override suspend fun rateAsOf(currency: String, date: LocalDate) = rateOf(currency, date)
 
     override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> =
         rates.keys.associateWith { rateOf(it, date)!! }
+
+    override suspend fun rateBetween(from: String, to: String, date: LocalDate) =
+        rateOf(from, date)?.takeIf { it.counterCurrency == to }
 
     override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
 

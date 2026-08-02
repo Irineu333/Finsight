@@ -79,17 +79,21 @@ tarefas escrevem módulos e arquivos distintos; nenhuma lê o resultado de outra
   demais erros já têm (`val message: String` em inglês para log + `toUiText()` sobre as
   chaves de 1.1): código já existente, moeda de casas decimais diferentes de duas, conta
   denomina a moeda, orçamento denomina a moeda, a moeda base não pode ser arquivada.
-- [x] 3.3 Escrever a **migração de semeadura** (D4) em
-  `core/database/.../database/Database.kt`, registrar `CurrencyEntity` e `currencyDao()` em
-  `AppDatabase` subindo a versão para 13, e passá-la em `getRoomDatabase` e em
-  `DatabaseModule`. A gravação é **uma operação só**: a semente (BRL, USD, EUR, GBP, CHF,
-  CNY, com o critério de D3 registrado em comentário junto delas), `UNION SELECT DISTINCT
-  currency FROM accounts` e a moeda do locale do dispositivo. O símbolo das linhas vindas dos
-  dois `UNION` é sugerido pela plataforma e recai no próprio código; a moeda do locale que não
-  tenha duas casas decimais **não** é semeada. `core/database` não pode nomear locale nem
-  plataforma: declarar em `:core:model` um `fun interface` de semeadura, no mesmo desenho de
-  `LegacyRelabel` e `SeededBaseCurrency`, e recebê-lo como parâmetro já resolvido. Fechar a
-  migração com as três verificações que toda migração deste arquivo fecha.
+- [x] 3.3 Escrever a **semeadura** (D4) em `core/database/.../database/Database.kt`,
+  registrar `CurrencyEntity` e `currencyDao()` em `AppDatabase` subindo a versão para 13, e
+  passá-la em `getRoomDatabase` e em `DatabaseModule`. A gravação é **uma operação só**: a
+  semente (BRL, USD, EUR, GBP, CHF, CNY, com o critério de D3 registrado em comentário junto
+  delas), `SELECT DISTINCT currency FROM accounts` e a moeda do locale do dispositivo. Ela
+  pertence ao momento em que a tabela passa a existir, então tem **dois gatilhos sobre a
+  mesma escrita** — uma função só, chamada da migração `12 → 13` num banco que já existe e
+  do callback de criação do Room numa instalação nova, que não roda migração alguma e sem o
+  qual o único usuário sem moeda nenhuma seria o que acabou de instalar. `INSERT OR IGNORE`
+  a torna idempotente. O símbolo das linhas vindas das contas em uso é sugerido pela
+  plataforma e recai no próprio código; a moeda do locale que não tenha duas casas decimais
+  **não** é semeada. `core/database` não pode nomear locale nem plataforma: declarar em
+  `:core:model` a porta de semeadura, no mesmo desenho de `LegacyRelabel` e
+  `SeededBaseCurrency`, e recebê-la como parâmetro já resolvido. Fechar a migração com as
+  três verificações que toda migração deste arquivo fecha.
 - [x] 3.4 Dar ao acervo de taxas o que a exclusão de uma moeda precisa: contar e remover toda
   observação que nomeie um código **em qualquer das duas pontas** (`currency` ou
   `counterCurrency`). Acrescentar as consultas a `ExchangeRateDao`, os métodos a
@@ -155,7 +159,7 @@ repositório. As duas tarefas escrevem arquivos distintos (`SettingsModule.kt` e
 
 - [x] 6.1 Implementar `CurrencySymbols` sobre `ICurrencyRepository` em
   `feature/settings/impl`, e registrar em `SettingsModule.kt`: `single` do repositório,
-  `factory` dos três casos de uso, `single` do `fun interface` de semeadura declarado em 3.3
+  `factory` dos três casos de uso, `single` da porta de semeadura declarada em 3.3
   e `single` de `CurrencySymbols`. `AppModulesTest` continua passando.
 - [x] 6.2 Fazer `FormattingLocalsHost` (`core/designsystem/.../ui/component/`) coletar
   `koinInject<CurrencySymbols>()` e prover `LocalCurrencySymbols` ao lado de

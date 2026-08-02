@@ -4,7 +4,6 @@ package com.neoutils.finsight.ui.screen.exchangeRates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +18,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * The archive, grouped by the currency each observation **prices**.
+ * The archive, grouped by the currency each observation is priced **in**.
  *
  * Grouping and its order are the only things this adds, and the order is the natural
  * extension of the `ORDER BY date DESC` the DAO already does: the currency with the most
@@ -46,15 +45,13 @@ class ExchangeRatesViewModel(
                 .map { rate ->
                     ExchangeRateItem(
                         rate = rate,
-                        currency = CurrencyCatalog.of(rate.currency),
                         isOutdated = rate.date < staleBefore,
                     )
                 }
-                .groupBy { it.rate.currency }
-                .map { (currency, items) ->
+                .groupBy { it.rate.counterCurrency }
+                .map { (counterCurrency, items) ->
                     ExchangeRateGroup(
-                        currency = currency,
-                        info = CurrencyCatalog.of(currency),
+                        counterCurrency = counterCurrency,
                         rates = items.sortedByDescending { it.rate.date },
                     )
                 }

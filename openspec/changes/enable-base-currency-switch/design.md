@@ -173,23 +173,30 @@ O filtro atual deixa de fazer sentido em ambas as pontas: precificar a própria 
 
 **Consequência aceita:** é possível cadastrar um par que não serve para nada — EUR/JPY num usuário de base BRL sem nenhuma ponte. A linha fica inerte, não errada. Barrá-la exigiria que o formulário soubesse resolver caminhos, que é conhecimento de D4, e para prevenir um dado inofensivo.
 
-### D9 — A listagem agrupa pela **moeda precificada**, e a linha se descreve inteira
+### D9 — A listagem agrupa pela **moeda contraparte**, e a linha se descreve inteira
 
-Uma taxa tem duas pontas, então "agrupar por moeda" precisa escolher uma ou duplicar. Escolhe-se a precificada — a que a linha responde *quanto vale*.
+Uma taxa tem duas pontas, então "agrupar por moeda" precisa escolher uma ou duplicar. **A escolha é decidida pelo caso comum**, e não pela simetria das duas pontas.
+
+No acervo ordinário — um usuário, uma base, tudo precificado nela — as duas escolhas não são simétricas de forma alguma:
 
 ```
-USD
-  1 USD = 5,50 BRL · 14/03 · você
-  1 USD = 5,47 BRL · 02/03 · operação
-BRL
-  1 BRL = 0,18 USD · 20/07 · você
+agrupar pela precificada          agrupar pela contraparte
+  USD                               Cotados em BRL
+    1 USD = 5,50 BRL                  1 USD = 5,50 BRL · 14/03 · você
+  EUR                                 1 EUR = 6,00 BRL · 14/03 · operação
+    1 EUR = 6,00 BRL                  1 JPY = 0,037 BRL · 02/03 · você
+  JPY                               Cotados em USD
+    1 JPY = 0,037 BRL                 1 JPY = 0,0068 USD · 20/07 · você
 ```
+
+À esquerda, cada grupo tem exatamente uma linha: o agrupamento não agrupa. À direita ele reúne, e o cabeçalho diz a frase que o usuário veio ler — *cotados em BRL*. É o código sozinho, e não o nome do catálogo ao lado dele: toda linha do grupo termina nesse mesmo código, então soletrar a moeda no cabeçalho diria uma terceira vez o que as linhas já dizem. O segundo grupo só existe quando existe observação fora do eixo da base, que é justamente quando separar tem informação.
 
 **Consequência aceita:** depois de uma troca, o mesmo par aparece em dois grupos, um por sentido. Não é defeito — são duas observações distintas, em direções distintas, e esta tela mostra observações. O que evita a confusão é a linha se descrever por inteiro em vez de exibir só o número sob um cabeçalho.
 
 **Ordem dos grupos:** moeda com observação mais recente primeiro, que é a extensão natural do `ORDER BY date DESC` que o DAO já faz.
 
-- *Alternativa considerada:* **agrupar pelo par** (`EUR / BRL` como cabeçalho). É a resposta mais limpa à ambiguidade e foi a recomendação inicial. Preterida por decisão de produto: o usuário procura por moeda, não por par.
+- *Alternativa considerada:* **agrupar pela moeda precificada** — *"quanto vale 1 dólar"*. Foi a primeira escolha, e caiu no diagrama acima: ela responde uma pergunta que o acervo comum não tem, porque ali a moeda precificada é sempre distinta e a contraparte é sempre a mesma.
+- *Alternativa considerada:* **agrupar pelo par** (`EUR / BRL` como cabeçalho). É a resposta mais limpa à ambiguidade e foi a recomendação inicial. Preterida por decisão de produto: o usuário procura por moeda, não por par — e, no caso comum, agrupar por par tem o mesmo defeito de não agrupar nada.
 - *Alternativa considerada:* **exibir cada linha sob as duas pontas**, invertida numa delas. Rejeitada por uma razão dura: esta tela também é o **editor**, e tocar numa linha invertida abriria a edição de um número que ninguém observou — ou abriria a observação original noutra direção da que o usuário tocou. As duas saídas são piores que a duplicação por sentido.
 
 ### D10 — A migração recebe a base como código puro, pelo caminho que já existe

@@ -87,22 +87,43 @@ class ExchangeRatesViewModelTest {
     private val ExchangeRatesUiState.items get() = groups.flatMap { it.rates }
 
     /**
-     * The grouping key is the **priced** currency, and the order of the groups is the
-     * natural extension of the archive's `ORDER BY date DESC`.
+     * The grouping key is the currency the rows are priced **in**, and the order of the
+     * groups is the natural extension of the archive's `ORDER BY date DESC`.
      */
     @Test
-    fun `the archive is grouped by the priced currency, newest group first`() = runTest {
+    fun `the archive is grouped by the counterpart currency, newest group first`() = runTest {
         val rates = listOf(
             rate("USD", today.minus(5, DateTimeUnit.DAY)),
-            rate("EUR", today),
-            rate("USD", today.minus(10, DateTimeUnit.DAY)),
+            rate("EUR", today.minus(10, DateTimeUnit.DAY)),
+            rate("JPY", today, counterCurrency = "USD"),
         )
 
         viewModel(rates).uiState.test {
             val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
 
-            assertEquals(listOf("EUR", "USD"), state.groups.map { it.currency })
-            assertEquals(2, state.groups.single { it.currency == "USD" }.rates.size)
+            assertEquals(listOf("USD", "BRL"), state.groups.map { it.counterCurrency })
+            assertEquals(2, state.groups.single { it.counterCurrency == "BRL" }.rates.size)
+        }
+    }
+
+    /**
+     * The ordinary archive, and the reason the key is this one: everything is priced in
+     * the base, so keying on the priced currency would put every row in a group of its
+     * own and group nothing.
+     */
+    @Test
+    fun `an archive priced entirely in the base is one group`() = runTest {
+        val rates = listOf(
+            rate("USD", today),
+            rate("EUR", today.minus(1, DateTimeUnit.DAY)),
+            rate("JPY", today.minus(2, DateTimeUnit.DAY)),
+        )
+
+        viewModel(rates).uiState.test {
+            val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
+
+            assertEquals(listOf("BRL"), state.groups.map { it.counterCurrency })
+            assertEquals(3, state.groups.single().rates.size)
         }
     }
 
@@ -120,10 +141,10 @@ class ExchangeRatesViewModelTest {
         viewModel(rates).uiState.test {
             val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
 
-            assertEquals(setOf("USD", "BRL"), state.groups.map { it.currency }.toSet())
+            assertEquals(setOf("BRL", "USD"), state.groups.map { it.counterCurrency }.toSet())
             assertEquals(
                 0.18,
-                state.groups.single { it.currency == "BRL" }.rates.single().rate.rate,
+                state.groups.single { it.counterCurrency == "USD" }.rates.single().rate.rate,
                 "shown as observed, never inverted to fit the other group",
             )
         }

@@ -877,7 +877,7 @@
     <string name="exchange_rates_add">Add rate</string>
     <string name="exchange_rates_base_hint">Quotes in %1$s</string>
     <string name="exchange_rates_quote">1 %1$s = %2$s</string>
-    <string name="exchange_rates_group_header">What one %1$s is worth</string>
+    <string name="exchange_rates_group_header">Quoted in %1$s</string>
     <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
     <string name="exchange_rates_source_derived">From an operation</string>
     <string name="exchange_rates_source_user">Entered by you</string>

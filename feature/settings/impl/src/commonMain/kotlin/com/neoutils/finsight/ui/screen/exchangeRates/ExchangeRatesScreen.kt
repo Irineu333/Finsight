@@ -64,7 +64,6 @@ import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.RATE_SCALE
-import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -183,12 +182,11 @@ internal fun ExchangeRatesContent(
                 modifier = modifier,
             ) {
                 uiState.groups.forEach { group ->
-                    item(key = "group-${group.currency}") {
+                    item(key = "group-${group.counterCurrency}") {
                         Text(
                             text = stringResource(
                                 Res.string.exchange_rates_group_header,
-                                group.info?.let { "${stringUiText(it.name)} (${group.currency})" }
-                                    ?: group.currency,
+                                group.counterCurrency,
                             ),
                             style = typography.labelLarge,
                             color = colorScheme.onSurfaceVariant,

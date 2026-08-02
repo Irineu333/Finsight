@@ -878,7 +878,7 @@
     <string name="exchange_rates_add">Cadastrar taxa</string>
     <string name="exchange_rates_base_hint">Cotações em %1$s</string>
     <string name="exchange_rates_quote">1 %1$s = %2$s</string>
-    <string name="exchange_rates_group_header">Quanto vale 1 %1$s</string>
+    <string name="exchange_rates_group_header">Cotados em %1$s</string>
     <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
     <string name="exchange_rates_source_derived">De uma operação</string>
     <string name="exchange_rates_source_user">Informada por você</string>

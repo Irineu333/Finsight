@@ -188,9 +188,11 @@ Não havendo caminho algum, o sistema MUST NOT tratar a taxa como `1`, MUST NOT 
 - **WHEN** dois pivôs distintos poderiam resolver a mesma conversão
 - **THEN** o escolhido é sempre o mesmo, qualquer que seja a ordem em que o acervo foi lido
 
-### Requirement: A tela de taxas agrupa as observações pela moeda precificada
+### Requirement: A tela de taxas agrupa as observações pela moeda contraparte
 
-A tela que lista as taxas SHALL agrupar as observações pela **moeda precificada** — aquela cujo valor a linha responde. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+A tela que lista as taxas SHALL agrupar as observações pela **moeda contraparte** — aquela em que as linhas do grupo estão precificadas. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+
+A escolha da ponta é decidida pelo caso comum, e não pela simetria: no acervo ordinário toda observação é precificada na base em vigor, então agrupar pela moeda **precificada** poria cada linha num grupo de uma só e não agruparia nada. A contraparte é a ponta que de fato reúne, e o cabeçalho passa a ser a frase que o usuário veio ler.
 
 Uma linha MUST NOT ser exibida invertida em relação à observação que a originou. Esta tela é também o ponto de edição, e editar uma linha invertida abriria a correção de um número que ninguém observou.
 
@@ -198,13 +200,17 @@ Como consequência, um mesmo par PODE aparecer em dois grupos, um por sentido, q
 
 Os grupos SHALL ser ordenados pela observação mais recente de cada moeda.
 
-#### Scenario: Agrupamento pela moeda precificada
-- **WHEN** o usuário abre a tela de taxas com observações do dólar e do euro contra o real
-- **THEN** existem um grupo do dólar e um grupo do euro, cada um com as suas observações datadas
+#### Scenario: O acervo ordinário é um grupo só
+- **WHEN** o usuário abre a tela de taxas com observações do dólar, do euro e do iene, todas contra o real
+- **THEN** existe um único grupo, o do real, com as três observações datadas
+
+#### Scenario: Uma contraparte fora da base abre o seu próprio grupo
+- **WHEN** existe também uma observação do iene contra o dólar
+- **THEN** ela aparece num grupo do dólar, separada das que são precificadas em real
 
 #### Scenario: O mesmo par nos dois sentidos aparece em dois grupos
 - **WHEN** existem uma observação do dólar contra o real e outra do real contra o dólar
-- **THEN** cada uma aparece no grupo da sua moeda precificada, na direção em que foi observada
+- **THEN** cada uma aparece no grupo da sua moeda contraparte, na direção em que foi observada
 
 #### Scenario: Editar alcança a observação original
 - **WHEN** o usuário toca numa linha para corrigi-la

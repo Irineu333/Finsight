@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.screen.exchangeRates
 
-import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.model.ExchangeRate
 
 /**
@@ -13,21 +12,32 @@ import com.neoutils.finsight.domain.model.ExchangeRate
  */
 data class ExchangeRateItem(
     val rate: ExchangeRate,
-    val currency: CurrencyInfo?,
     val isOutdated: Boolean,
 )
 
 /**
- * The observations of one **priced** currency — the one the rows answer *how much of*.
+ * The observations priced **in** one currency — *what a euro, a dollar and a yen are
+ * worth in reais*.
  *
- * A rate has two ends, so grouping by currency has to pick one or duplicate. The priced
- * end is the one picked, and the consequence is accepted: after a base switch the same
- * pair appears under two headings, one per direction, because they are two distinct
- * observations and this screen shows observations.
+ * A rate has two ends, so grouping has to pick one. The counterpart end is the one that
+ * actually gathers: in the ordinary archive every rate is priced in the base, so keying
+ * on the priced currency would put every row in a group of its own and group nothing.
+ * Keying here collects them under the one heading that is true of all of them, and the
+ * heading is the sentence the user came to read.
+ *
+ * **Consequence accepted:** after a base switch the same pair may appear under two
+ * headings, one per direction. They are two distinct observations, and this screen shows
+ * observations — never one of them inverted to join the other.
  */
 data class ExchangeRateGroup(
-    val currency: String,
-    val info: CurrencyInfo?,
+    /**
+     * The currency every rate of the group is priced **in**, as its ISO code.
+     *
+     * The code alone, and not the catalog's name beside it: every row underneath ends in
+     * that same code, so spelling the currency out in the heading would say a third time
+     * what the rows already say — and a heading is a label, not a sentence.
+     */
+    val counterCurrency: String,
     val rates: List<ExchangeRateItem>,
 )
 

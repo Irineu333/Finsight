@@ -110,4 +110,26 @@ interface ExchangeRateDao {
 
     @Query("DELETE FROM exchange_rates WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /**
+     * How many observations name this currency **on either end** — what a deletion
+     * declares to the user before it happens, rather than hiding it.
+     */
+    @Query(
+        "SELECT COUNT(*) FROM exchange_rates " +
+            "WHERE currency = :currency OR counterCurrency = :currency"
+    )
+    suspend fun countByCurrencyOnEitherEnd(currency: String): Int
+
+    /**
+     * Removes every observation that names this currency on either end.
+     *
+     * It is the second half of "a rate does not block a deletion", and without it the
+     * first half would be unsafe: the resolver reads the archive without consulting the
+     * set of offered currencies, so an orphan row would go on being a **conversion
+     * path**, triangulating figures through a currency that exists nowhere in the
+     * interface.
+     */
+    @Query("DELETE FROM exchange_rates WHERE currency = :currency OR counterCurrency = :currency")
+    suspend fun deleteByCurrencyOnEitherEnd(currency: String)
 }

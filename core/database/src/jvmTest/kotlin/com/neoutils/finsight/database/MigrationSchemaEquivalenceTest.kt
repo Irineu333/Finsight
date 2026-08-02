@@ -40,7 +40,12 @@ class MigrationSchemaEquivalenceTest {
         // The chain has to reach the *current* version, not the one it used to end at:
         // the moment `AppDatabase` became 11, a v7 device stopped being migratable by
         // `MIGRATION_7_10` alone, and this test is what says so before a user does.
-        val database = openWith(MIGRATION_7_10, migration1011(), migration1112(baseCurrency = "BRL"))
+        val database = openWith(
+            MIGRATION_7_10,
+            migration1011(),
+            migration1112(baseCurrency = "BRL"),
+            migration1213(testSeeding()),
+        )
 
         // Room runs the migrations and validates the result against the entities on
         // first access; a divergence throws here instead of on a user's phone.
@@ -58,7 +63,11 @@ class MigrationSchemaEquivalenceTest {
             connection.execSQL("PRAGMA user_version = 10")
         }
 
-        val database = openWith(migration1011(), migration1112(baseCurrency = "BRL"))
+        val database = openWith(
+            migration1011(),
+            migration1112(baseCurrency = "BRL"),
+            migration1213(testSeeding()),
+        )
 
         // The identity-hash check that would otherwise fail on the device: the rate
         // table the migration writes by hand and the one the entity declares have to be
@@ -76,7 +85,10 @@ class MigrationSchemaEquivalenceTest {
             connection.execSQL("PRAGMA user_version = 11")
         }
 
-        val database = openWith(migration1112(baseCurrency = "BRL"))
+        val database = openWith(
+            migration1112(baseCurrency = "BRL"),
+            migration1213(testSeeding()),
+        )
 
         // The identity-hash check for the pair: `counterCurrency`, appended by ALTER,
         // has to satisfy a column the entity declares in the middle of its list, and the

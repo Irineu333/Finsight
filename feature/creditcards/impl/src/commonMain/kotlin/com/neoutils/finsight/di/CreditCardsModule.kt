@@ -136,6 +136,7 @@ val creditCardsModule = module {
             creditCard = it.getOrNull(),
             creditCardRepository = get(),
             accountRepository = get(),
+            currencyRepository = get(),
             addCreditCardUseCase = get(),
             updateCreditCardUseCase = get(),
             validateCreditCardName = get(),

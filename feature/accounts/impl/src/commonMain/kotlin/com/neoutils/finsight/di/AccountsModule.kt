@@ -113,6 +113,7 @@ val accountsModule = module {
             account = it.getOrNull(),
             validateAccountName = get(),
             baseCurrencyRepository = get(),
+            currencyRepository = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
             modalManager = get(),

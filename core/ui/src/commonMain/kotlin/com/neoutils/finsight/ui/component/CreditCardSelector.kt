@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_selector_label
 import com.neoutils.finsight.util.AppIcon
@@ -46,9 +46,11 @@ fun CreditCardSelector(
         creditCards.mapNotNull { it.currency }.distinct().size > 1
     }
 
+    val symbolOf = LocalCurrencySymbols.current
+
     fun CreditCard.label() = currency
         ?.takeIf { showsCurrency }
-        ?.let { "$name · ${CurrencyCatalog.symbolOf(it)}" }
+        ?.let { "$name · ${symbolOf(it)}" }
         ?: name
 
     ExposedDropdownMenuBox(

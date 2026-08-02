@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_selector_label
 import org.jetbrains.compose.resources.stringResource
@@ -47,8 +47,10 @@ fun AccountSelector(
         currencyScope.map { it.currency }.distinct().size > 1
     }
 
+    val symbolOf = LocalCurrencySymbols.current
+
     fun Account.label() = if (showsCurrency) {
-        "$name · ${CurrencyCatalog.symbolOf(currency)}"
+        "$name · ${symbolOf(currency)}"
     } else {
         name
     }

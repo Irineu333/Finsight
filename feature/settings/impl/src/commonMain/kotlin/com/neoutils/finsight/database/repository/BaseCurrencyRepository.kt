@@ -1,7 +1,8 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.domain.model.FALLBACK_CURRENCY
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.extension.isTwoDecimalCurrency
 import com.neoutils.finsight.extension.localeCurrencyCode
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,10 +47,16 @@ class BaseCurrencyRepository(
     private fun seed(): String {
         settings.getStringOrNull(KEY)?.let { return it }
 
-        // The device says what it says; the catalog decides what the app accepts.
-        // Anything it does not accept lands on the currency of last resort, which is
-        // last resort and not a product default.
-        val resolved = CurrencyCatalog.reduce(localeCurrencyCode())
+        // The seeding already wrote the locale's currency as a row, so there is no
+        // curated set left to reduce to: what remains is the premise itself. A locale
+        // currency of two decimal places *is* the base; anything else — no currency at
+        // all, or one of zero or three places, the two cases the seeding skips — lands
+        // on the currency of last resort, which is last resort and not a product
+        // default.
+        val resolved = localeCurrencyCode()
+            ?.uppercase()
+            ?.takeIf { it.isNotBlank() && isTwoDecimalCurrency(it) }
+            ?: FALLBACK_CURRENCY
         settings.putString(KEY, resolved)
         return resolved
     }

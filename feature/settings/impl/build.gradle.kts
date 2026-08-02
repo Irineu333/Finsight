@@ -16,6 +16,7 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
+            implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)
         }

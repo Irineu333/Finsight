@@ -526,6 +526,7 @@ private class FakeAccountDao : AccountDao {
         accounts[id]?.let { accounts[id] = it.copy(isArchived = false) }
     }
     override suspend fun entryCount(accountId: Long): Int = 0
+    override suspend fun countByCurrency(currency: String): Int = 0
     override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> =
         accounts.values.filter { it.type == AccountEntity.Type.ASSET }
 

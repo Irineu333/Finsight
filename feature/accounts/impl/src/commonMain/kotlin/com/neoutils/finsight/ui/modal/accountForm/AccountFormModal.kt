@@ -90,7 +90,7 @@ class AccountFormModal(
         val iconModalTitle = stringResource(Res.string.account_form_icon_modal_title)
         val currencyModalTitle = stringResource(Res.string.account_form_currency_modal_title)
         val currencyOptions = uiState.selectableCurrencies.map {
-            CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+            CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
         }
 
         val name = rememberTextFieldState(uiState.name)

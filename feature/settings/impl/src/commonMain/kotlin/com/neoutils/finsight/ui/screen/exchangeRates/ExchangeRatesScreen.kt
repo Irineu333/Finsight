@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
@@ -230,7 +230,7 @@ private fun ExchangeRateCard(
                 .fillMaxWidth()
                 .padding(12.dp),
         ) {
-            CurrencyGlyph(symbol = CurrencyCatalog.symbolOf(code))
+            CurrencyGlyph(symbol = LocalCurrencySymbols.current(code))
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(3.dp),

@@ -1,6 +1,22 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
+import com.neoutils.finsight.domain.model.CURRENCY_SEED
+import com.neoutils.finsight.domain.model.CurrencySeeding
+import com.neoutils.finsight.domain.model.SeedCurrency
+
+/**
+ * The seeding with the device taken out of it: the seed, and the code as its own glyph.
+ *
+ * A test that needs the locale's row states it, rather than inheriting whichever machine
+ * runs the suite — the migration receives resolved rows precisely so this is possible.
+ */
+internal fun testSeeding(
+    locale: SeedCurrency? = null,
+) = object : CurrencySeeding {
+    override fun rows(): List<SeedCurrency> = CURRENCY_SEED + listOfNotNull(locale)
+    override fun symbolOf(code: String): String = code
+}
 
 internal fun SQLiteConnection.tableExists(tableName: String): Boolean {
     val stmt = prepare(

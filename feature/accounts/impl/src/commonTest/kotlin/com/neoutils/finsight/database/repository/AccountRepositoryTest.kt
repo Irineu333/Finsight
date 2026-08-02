@@ -16,6 +16,7 @@ class AccountRepositoryTest {
         override suspend fun reopen(id: Long) { reopened += id }
         override suspend fun close(id: Long) = throw NotImplementedError()
         override suspend fun entryCount(accountId: Long): Int = throw NotImplementedError()
+        override suspend fun countByCurrency(currency: String): Int = throw NotImplementedError()
         override fun observeAllAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
         override suspend fun getAllAccounts(): List<AccountEntity> = emptyList()
         override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> = emptyList()

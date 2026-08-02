@@ -4,9 +4,9 @@ package com.neoutils.finsight.ui.modal.exchangeRateForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +41,7 @@ class ExchangeRateFormViewModel(
     private val existing: ExchangeRate?,
     baseCurrencyRepository: IBaseCurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
+    private val currencyRepository: ICurrencyRepository,
     private val modalManager: ModalManager,
 ) : ViewModel() {
 
@@ -48,17 +49,39 @@ class ExchangeRateFormViewModel(
 
     private val _uiState = MutableStateFlow(
         ExchangeRateFormUiState(
-            from = existing?.currency
-                ?: CurrencyCatalog.currencies.first { it.code != base }.code,
+            from = existing?.currency.orEmpty(),
             to = existing?.counterCurrency ?: base,
             date = existing?.date ?: today(),
             rate = existing?.rate,
             isEditing = existing != null,
-            selectableCurrencies = CurrencyCatalog.currencies,
+            selectableCurrencies = emptyList(),
         )
     )
 
     val uiState = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            currencyRepository.observeOffered().collect { offered ->
+                // A rate being **corrected** may name an archived currency, and the
+                // correction has to stay possible: the row it already names is added
+                // back to what this form presents. A *new* rate is never offered one
+                // (design D7).
+                val edited = listOfNotNull(existing?.currency, existing?.counterCurrency)
+                    .filter { code -> offered.none { it.code == code } }
+                    .mapNotNull { currencyRepository.get(it) }
+
+                _uiState.update { state ->
+                    state.copy(
+                        selectableCurrencies = offered + edited,
+                        from = state.from.ifBlank {
+                            offered.firstOrNull { it.code != base }?.code.orEmpty()
+                        },
+                    )
+                }
+            }
+        }
+    }
 
     fun onAction(action: ExchangeRateFormAction) {
         when (action) {

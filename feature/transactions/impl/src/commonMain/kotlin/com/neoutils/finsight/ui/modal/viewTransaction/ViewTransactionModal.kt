@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -232,7 +232,7 @@ class ViewTransactionModal(
                     label = stringResource(Res.string.view_transaction_applied_rate_label),
                     value = stringResource(
                         Res.string.exchange_rates_quote,
-                        CurrencyCatalog.symbolOf(applied.sourceCurrency),
+                        LocalCurrencySymbols.current(applied.sourceCurrency),
                         // As many places as the rate needs, not the currency's own two:
                         // a quotient like `0,000691` reads `R$ 0,00` at two places, which
                         // is a rate of zero — a different statement from a rounded one.

@@ -38,11 +38,19 @@ class SingleCurrencyInertiaTest {
     private fun File.relativePath() = relativeTo(repoRoot).invariantSeparatorsPath
 
     /**
-     * The one expression that *decides* a currency: the device's region, reduced to
-     * something the catalog offers. Naming it here is what makes a second way of
-     * deciding fail this test instead of passing quietly.
+     * The one expression that *decides* a currency: what the device's locale names,
+     * kept only when the app's base-100 arithmetic can hold it.
+     *
+     * It changed shape when the curated catalog did, and it had to: naming an expression
+     * that no longer exists would leave this test passing while guarding nothing. What it
+     * used to say — `CurrencyCatalog.reduce(localeCurrencyCode())` — reduced the device's
+     * answer to a curated list; there is no list any more, so the filter *is* the premise,
+     * and the premise is what the two deciders share, textually.
      */
-    private val theOneResolver = "CurrencyCatalog.reduce(localeCurrencyCode())"
+    private val theOneResolver = Regex(
+        """localeCurrencyCode\(\)\s*\?\.uppercase\(\)\s*""" +
+            """\?\.takeIf \{ it\.isNotBlank\(\) && isTwoDecimalCurrency\(it\) }"""
+    )
 
     private val expectedDeciders = setOf(
         // The account a brand-new install starts with no longer appears here: it
@@ -66,12 +74,19 @@ class SingleCurrencyInertiaTest {
         // this test closes; it is here because it uses the same one resolver, and a
         // second way of deciding must fail whichever of the two it decides.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",
+        // The seeding of the currency registry — the *third* thing the locale answers,
+        // and the newest. It creates no account either: it writes the row that makes the
+        // device's currency exist at all, which is what lets the base above resolve to
+        // it instead of falling back. It uses the same one expression deliberately, so
+        // that the row seeded and the base resolved can never disagree about which
+        // currency the device named.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/CurrencySeed.kt",
     )
 
     @Test
     fun `every production site that decides a currency decides it the one way`() {
         val found = productionSources
-            .filter { theOneResolver in it.readText() }
+            .filter { theOneResolver.containsMatchIn(it.readText()) }
             .map { it.relativePath() }
             .toSet()
 

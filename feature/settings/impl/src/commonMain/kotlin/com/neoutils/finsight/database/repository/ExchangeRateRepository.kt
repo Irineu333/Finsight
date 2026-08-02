@@ -96,4 +96,11 @@ class ExchangeRateRepository(
     override suspend fun remove(rate: ExchangeRate) {
         dao.deleteById(rate.id)
     }
+
+    override suspend fun countNaming(currency: String): Int =
+        dao.countByCurrencyOnEitherEnd(currency)
+
+    override suspend fun removeAllNaming(currency: String) {
+        dao.deleteByCurrencyOnEitherEnd(currency)
+    }
 }

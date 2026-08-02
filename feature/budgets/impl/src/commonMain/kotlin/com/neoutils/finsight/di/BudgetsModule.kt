@@ -56,6 +56,7 @@ val budgetsModule = module {
             budget = it.getOrNull(),
             budgetRepository = get(),
             getAccountCurrencies = get(),
+            currencyRepository = get(),
             categoryRepository = get(),
             recurringRepository = get(),
             validateBudgetTitle = get(),

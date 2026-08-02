@@ -2,10 +2,11 @@ package com.neoutils.finsight.ui.screen.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,10 @@ import kotlinx.coroutines.launch
  */
 class SettingsViewModel(
     private val baseCurrencyRepository: IBaseCurrencyRepository,
+    // The switch offers the registry **whole**, minus the archived ones: it is a
+    // preference over what the app offers, and it is never conditioned on a rate
+    // reaching the currency chosen.
+    currencyRepository: ICurrencyRepository,
 ) : ViewModel() {
 
     // Observed rather than read once, and it is the mechanism in use now rather than
@@ -27,12 +32,11 @@ class SettingsViewModel(
     // re-expresses on the next read.
     private val baseCurrency = baseCurrencyRepository.observe()
 
-    val uiState = baseCurrency
-        .map(::stateOf)
+    val uiState = combine(baseCurrency, currencyRepository.observeOffered(), ::stateOf)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = stateOf(baseCurrency.value),
+            initialValue = stateOf(baseCurrency.value, offered = emptyList()),
         )
 
     fun onAction(action: SettingsAction) {
@@ -43,9 +47,9 @@ class SettingsViewModel(
         }
     }
 
-    private fun stateOf(code: String) = SettingsUiState(
-        baseCurrency = CurrencyCatalog.of(code),
+    private fun stateOf(code: String, offered: List<CurrencyInfo>) = SettingsUiState(
+        baseCurrency = offered.firstOrNull { it.code == code },
         baseCurrencyCode = code,
-        selectableCurrencies = CurrencyCatalog.currencies,
+        selectableCurrencies = offered,
     )
 }

@@ -1,7 +1,9 @@
 package com.neoutils.finsight
 
 import com.neoutils.finsight.database.repository.BaseCurrencyRepository
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.domain.model.FALLBACK_CURRENCY
+import com.neoutils.finsight.extension.isTwoDecimalCurrency
+import com.neoutils.finsight.extension.localeCurrencyCode
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -29,7 +31,7 @@ class BaseCurrencyRepositoryTest {
         val resolved = BaseCurrencyRepository(settings).observe().value
 
         assertEquals(resolved, settings.getStringOrNull("base_currency"))
-        assertTrue(CurrencyCatalog.of(resolved) != null, "seeded a currency the app does not offer")
+        assertTrue(isTwoDecimalCurrency(resolved), "seeded a currency the app's arithmetic cannot hold")
     }
 
     /**
@@ -47,21 +49,23 @@ class BaseCurrencyRepositoryTest {
     }
 
     /**
-     * Seeding resolves through the catalog, so a region the app does not offer lands on
-     * the currency of last resort and *that* is what is persisted — never the code the
-     * device named.
+     * The seeding of `currency-registry` writes the locale's currency as a row, so there
+     * is no curated set left to reduce to — what remains is the premise. A locale of two
+     * decimal places *is* the base; anything else lands on the currency of last resort,
+     * which is what is persisted, never the code the device named.
      */
     @Test
-    fun `a region the app does not offer never reaches the persisted value`() {
+    fun `a locale the arithmetic cannot hold never reaches the persisted value`() {
         val settings = MapSettings()
 
         val resolved = BaseCurrencyRepository(settings).observe().value
 
         assertEquals(resolved, settings.getStringOrNull("base_currency"))
-        assertTrue(
-            CurrencyCatalog.of(resolved) != null,
-            "persisted a currency the app does not offer",
-        )
+        assertTrue(isTwoDecimalCurrency(resolved), "persisted a currency the app cannot hold")
+
+        val fromLocale = localeCurrencyCode()?.uppercase()
+        val expected = fromLocale?.takeIf { isTwoDecimalCurrency(it) } ?: FALLBACK_CURRENCY
+        assertEquals(expected, resolved)
     }
 
     /** Switching is the write of a preference: it emits, and it persists. */

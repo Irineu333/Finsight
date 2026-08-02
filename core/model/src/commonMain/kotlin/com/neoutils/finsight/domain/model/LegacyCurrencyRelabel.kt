@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.model
 
 import com.neoutils.finsight.extension.DeviceRegion
+import com.neoutils.finsight.extension.isTwoDecimalCurrency
 
 /**
  * The currency every row of every existing database is denominated in — not because
@@ -27,16 +28,32 @@ const val LEGACY_DENOMINATION: String = "BRL"
  * own, irreversibly, because they read English. A device that cannot state where it is
  * answers `null`, and `null` here means what it has always meant — leave it alone.
  *
- * The curated catalog bars a currency the app does not offer, which falls into the same
- * silent case rather than being coerced into the currency of last resort.
+ * **What bars a currency here is the two-decimal premise, and not a list.** It used to be
+ * the curated catalog, and that was a curation doing a rule's job; now that the offered
+ * set is a table, "what the app admits" is the base-100 premise, which the platform
+ * answers for a code — with no table, no database and no ordering.
  *
- * It is resolved here, where both the device and the catalog are visible, and handed to
- * `core/database` as a plain code: the migration needs a currency, not a locale and not
- * a catalog. That is the same move `DimensionWriteGuard` already makes in the ledger —
- * the module below receives what it may not name.
+ * That the table is not consulted is what makes this work at all. The relabel is
+ * migration `10 → 11` and the currency seeding can only be `12 → 13`, so on an upgrade
+ * from v10 the relabel runs *before* the table exists, and no ordering fixes that without
+ * rewriting a published migration. The two fit together from the other direction instead:
+ * this writes `accounts.currency`, and the seeding reads `SELECT DISTINCT currency FROM
+ * accounts` — so whatever this denominates is seeded as a consequence, without either
+ * migration knowing the other.
+ *
+ * A currency the platform declares to have zero or three decimal places falls into the
+ * same silent case as no region at all, rather than being coerced into the currency of
+ * last resort.
+ *
+ * It is resolved here, where both the device and the premise are visible, and handed to
+ * `core/database` as a plain code: the migration needs a currency, not a locale. That is
+ * the same move `DimensionWriteGuard` already makes in the ledger — the module below
+ * receives what it may not name.
  */
 fun legacyRelabelCurrency(region: DeviceRegion): String? =
-    CurrencyCatalog.of(region.currencyCode())?.code?.takeIf { it != LEGACY_DENOMINATION }
+    region.currencyCode()
+        ?.uppercase()
+        ?.takeIf { it != LEGACY_DENOMINATION && isTwoDecimalCurrency(it) }
 
 /**
  * [legacyRelabelCurrency] as something `core/database` can ask for.
@@ -44,7 +61,7 @@ fun legacyRelabelCurrency(region: DeviceRegion): String? =
  * The migration's module may not name [DeviceRegion] — `core/database` does not depend on
  * `:core:common`, and giving it that dependency to read a country would be a wide door
  * opened for a narrow reason. It already names this module, so the resolution is bound
- * here, where the device and the catalog both are, and arrives there as a plain code.
+ * here, where the device is visible, and arrives there as a plain code.
  */
 fun interface LegacyRelabel {
 

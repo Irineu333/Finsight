@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -33,6 +33,10 @@ class AccountFormViewModel(
     // account a fresh install starts with. What the account is actually denominated in
     // is whatever the user leaves in the row, and after that it never changes (D12).
     baseCurrencyRepository: IBaseCurrencyRepository,
+    // The currencies a form may offer are stored data now, read from the single source
+    // that holds them — the archived ones excluded, because archiving answers exactly
+    // "stop offering me this".
+    currencyRepository: ICurrencyRepository,
     private val createAccountUseCase: CreateAccountUseCase,
     private val updateAccountUseCase: UpdateAccountUseCase,
     private val modalManager: ModalManager,
@@ -62,13 +66,15 @@ class AccountFormViewModel(
         account?.currency ?: baseCurrencyRepository.observe().value
     )
 
+    private val offeredCurrencies = currencyRepository.observeOffered()
+
     val uiState = combine(
         name,
         selectedIcon,
         isDefault,
         validation,
-        currency,
-    ) { name, selectedIcon, isDefault, validation, currency ->
+        combine(currency, offeredCurrencies, ::Pair),
+    ) { name, selectedIcon, isDefault, validation, (currency, selectableCurrencies) ->
         AccountFormUiState(
             name = name,
             selectedIcon = selectedIcon,
@@ -79,7 +85,7 @@ class AccountFormViewModel(
             canChangeDefault = !(isEditMode && account?.isDefault == true),
             currency = currency,
             canChangeCurrency = !isEditMode,
-            selectableCurrencies = CurrencyCatalog.currencies,
+            selectableCurrencies = selectableCurrencies,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -94,7 +100,7 @@ class AccountFormViewModel(
             canChangeDefault = !(isEditMode && account?.isDefault == true),
             currency = currency.value,
             canChangeCurrency = !isEditMode,
-            selectableCurrencies = CurrencyCatalog.currencies,
+            selectableCurrencies = emptyList(),
         )
     )
 

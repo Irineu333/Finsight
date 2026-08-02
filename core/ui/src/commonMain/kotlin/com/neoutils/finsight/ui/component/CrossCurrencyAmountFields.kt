@@ -29,7 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.usecase.CrossCurrencyAmountSuggestion
 import com.neoutils.finsight.domain.usecase.impliedRate
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.Res
@@ -177,7 +177,7 @@ fun CounterpartAmountField(
             // nothing — the amounts *are* the observation (design D6).
             typedRate != null -> stringResource(
                 Res.string.exchange_rates_quote,
-                CurrencyCatalog.symbolOf(counterpartCurrency),
+                LocalCurrencySymbols.current(counterpartCurrency),
                 // The rate is money in the currency this field is denominated in — read
                 // through the same formatter as the amounts above it, with as many places
                 // as it needs: at the currency's own two, a quotient like `0,000691` reads

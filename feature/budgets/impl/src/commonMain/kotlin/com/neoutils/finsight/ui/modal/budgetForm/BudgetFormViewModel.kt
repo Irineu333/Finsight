@@ -14,10 +14,10 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
@@ -49,6 +49,9 @@ class BudgetFormViewModel(
     // spending is all on a card is exactly the case D13 exists for, and the account
     // listing does not report that currency at all.
     private val getAccountCurrencies: GetAccountCurrenciesUseCase,
+    // The currencies the app offers, read from the single source that holds them; which
+    // of them this form actually presents is still narrowed to the ones in use.
+    currencyRepository: ICurrencyRepository,
     private val categoryRepository: ICategoryRepository,
     private val recurringRepository: IRecurringRepository,
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
@@ -103,8 +106,14 @@ class BudgetFormViewModel(
     private val currencyState: Flow<LimitCurrency> = combine(
         accountCurrencies,
         pickedCurrency,
-    ) { currencies, picked ->
-        limitCurrencyChoice(existing = budget, currencies = currencies, picked = picked)
+        currencyRepository.observeOffered(),
+    ) { currencies, picked, offered ->
+        limitCurrencyChoice(
+            existing = budget,
+            currencies = currencies,
+            picked = picked,
+            offered = offered,
+        )
     }
 
     private val validation = ObservableMutableMap(
@@ -383,11 +392,12 @@ internal fun limitCurrencyChoice(
     existing: Budget?,
     currencies: AccountCurrencies,
     picked: String?,
+    offered: List<CurrencyInfo>,
 ): LimitCurrency = LimitCurrency(
     currency = existing?.currency ?: picked ?: currencies.ofDefaultAccount,
     hasChoice = currencies.inUse.size > 1,
     canChange = existing == null && currencies.inUse.size > 1,
-    selectable = CurrencyCatalog.currencies.filter { it.code in currencies.inUse },
+    selectable = offered.filter { it.code in currencies.inUse },
 )
 
 internal data class LimitCurrency(

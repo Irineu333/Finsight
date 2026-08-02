@@ -196,4 +196,6 @@ private class FakeExchangeRateRepository(
     override suspend fun remove(rate: ExchangeRate) {
         all.value = all.value.filterNot { it.id == rate.id }
     }
+    override suspend fun countNaming(currency: String) = 0
+    override suspend fun removeAllNaming(currency: String) = Unit
 }

@@ -828,29 +828,6 @@
     <string name="view_budget_title">Budget</string>
     <string name="view_recurring_title">Recurring</string>
 
-    <!-- Names of the offered currencies (curated catalog: two-decimal ones only) -->
-    <string name="currency_name_aed">United Arab Emirates dirham</string>
-    <string name="currency_name_ars">Argentine peso</string>
-    <string name="currency_name_aud">Australian dollar</string>
-    <string name="currency_name_brl">Brazilian real</string>
-    <string name="currency_name_cad">Canadian dollar</string>
-    <string name="currency_name_chf">Swiss franc</string>
-    <string name="currency_name_cny">Chinese yuan</string>
-    <string name="currency_name_dkk">Danish krone</string>
-    <string name="currency_name_eur">Euro</string>
-    <string name="currency_name_gbp">Pound sterling</string>
-    <string name="currency_name_ils">Israeli new shekel</string>
-    <string name="currency_name_inr">Indian rupee</string>
-    <string name="currency_name_mxn">Mexican peso</string>
-    <string name="currency_name_nok">Norwegian krone</string>
-    <string name="currency_name_nzd">New Zealand dollar</string>
-    <string name="currency_name_pen">Peruvian sol</string>
-    <string name="currency_name_pln">Polish zloty</string>
-    <string name="currency_name_sek">Swedish krona</string>
-    <string name="currency_name_try">Turkish lira</string>
-    <string name="currency_name_usd">US dollar</string>
-    <string name="currency_name_uyu">Uruguayan peso</string>
-    <string name="currency_name_zar">South African rand</string>
     <string name="money_unconverted_term">+ unconverted part</string>
     <string name="money_approximate_badge">Why this amount is approximate</string>
     <string name="money_approximate_title">Approximate amount</string>
@@ -892,5 +869,40 @@
     <string name="exchange_rate_form_date">Date</string>
     <string name="exchange_rate_form_save">Save</string>
     <string name="exchange_rate_form_remove">Remove</string>
+
+    <string name="settings_currencies_title">Currencies</string>
+    <string name="settings_currencies_subtitle">Add, edit, archive or delete the currencies the app offers</string>
+
+    <string name="currencies_screen_title">Currencies</string>
+    <string name="currencies_add">Add currency</string>
+    <string name="currencies_archived_label">Archived</string>
+    <string name="currencies_archive_confirm_title">Archive %1$s?</string>
+    <string name="currencies_archive_confirm_message">It stops being offered in the forms. What already uses it stays valid, and you can unarchive it whenever you want.</string>
+    <string name="currencies_archive_confirm_action">Archive</string>
+    <string name="currencies_unarchive_confirm_title">Unarchive %1$s?</string>
+    <string name="currencies_unarchive_confirm_message">It goes back to being offered in every form.</string>
+    <string name="currencies_unarchive_confirm_action">Unarchive</string>
+    <string name="currencies_delete_confirm_title">Delete %1$s?</string>
+    <string name="currencies_delete_confirm_message">The currency stops existing, and this cannot be undone.</string>
+    <string name="currencies_delete_confirm_message_rates">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it. This cannot be undone.</string>
+    <string name="currencies_delete_confirm_action">Delete</string>
+
+    <string name="currency_form_title_new">New currency</string>
+    <string name="currency_form_title_edit">Edit currency</string>
+    <string name="currency_form_code">Code</string>
+    <string name="currency_form_code_helper">The currency\'s ISO code, such as BRL or CLP — or one you make up.</string>
+    <string name="currency_form_symbol">Symbol</string>
+    <string name="currency_form_name">Name</string>
+    <string name="currency_form_name_helper">Optional. With no name, the app uses whatever the system calls this currency, in the current language.</string>
+    <string name="currency_form_save">Save</string>
+
+    <string name="currency_error_code_required">Enter the currency code.</string>
+    <string name="currency_error_symbol_required">Enter the currency symbol.</string>
+    <string name="currency_error_code_exists">A currency with this code already exists.</string>
+    <string name="currency_error_unsupported_decimals">This currency does not have two decimal places, and the app only works with the ones that do.</string>
+    <string name="currency_error_denominated_by_account">There is an account in this currency. Delete or change the accounts first, or archive the currency.</string>
+    <string name="currency_error_denominated_by_budget">There is a budget with a limit in this currency. Delete or change the budgets first, or archive the currency.</string>
+    <string name="currency_error_base_currency_not_archivable">This is the base currency. Change the base currency before archiving it.</string>
+    <string name="currency_error_not_found">This currency no longer exists.</string>
     <string name="recurring_error_currency_mismatch">This recurring is in another currency. Pick an account or card in the same one.</string>
 </resources>

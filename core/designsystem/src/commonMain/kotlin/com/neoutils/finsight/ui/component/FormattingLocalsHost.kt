@@ -2,8 +2,12 @@ package com.neoutils.finsight.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.CurrencySymbols
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.day_of_week_friday
 import com.neoutils.finsight.resources.day_of_week_monday
@@ -36,6 +40,11 @@ fun FormattingLocalsHost(
     content: @Composable () -> Unit,
 ) {
     val formatter = koinInject<CurrencyFormatter>()
+
+    // The glyph of a currency, collected once here rather than read synchronously by
+    // each composable: the offered set is a table now, and the port is what lets this
+    // module reach it without ever seeing `:core:model` (design D5).
+    val symbols by koinInject<CurrencySymbols>().symbols.collectAsState(initial = emptyMap())
     val dateFormats = DateFormats(
         monthNames = MonthNames(
             stringResource(Res.string.month_january),
@@ -64,6 +73,8 @@ fun FormattingLocalsHost(
 
     CompositionLocalProvider(
         LocalCurrencyFormatter provides formatter,
+        // The code itself is the worst case, exactly as it was before the table.
+        LocalCurrencySymbols provides { code -> symbols[code] ?: code },
         LocalDateFormats provides dateFormats,
         content = content,
     )

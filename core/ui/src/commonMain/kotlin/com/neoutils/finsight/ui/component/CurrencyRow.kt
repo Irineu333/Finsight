@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 
 /**
  * The currency of an account or of a card, in a form — **always rendered**, design D23.
@@ -83,7 +83,7 @@ fun CurrencyRow(
                     // The symbol *is* the icon: no glyph this app could draw says
                     // "dollars" as plainly as `US$` already does.
                     Text(
-                        text = CurrencyCatalog.symbolOf(currency),
+                        text = LocalCurrencySymbols.current(currency),
                         fontWeight = FontWeight.Medium,
                         color = if (canChange) {
                             accentColor

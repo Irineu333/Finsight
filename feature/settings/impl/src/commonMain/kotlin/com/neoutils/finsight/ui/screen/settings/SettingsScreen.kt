@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,6 +40,8 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.settings_base_currency_picker_title
 import com.neoutils.finsight.resources.settings_base_currency_title
+import com.neoutils.finsight.resources.settings_currencies_subtitle
+import com.neoutils.finsight.resources.settings_currencies_title
 import com.neoutils.finsight.resources.settings_exchange_rates_subtitle
 import com.neoutils.finsight.resources.settings_exchange_rates_title
 import com.neoutils.finsight.resources.settings_screen_title
@@ -51,7 +54,6 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesDetail
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import com.neoutils.finsight.ui.util.isWideWindow
-import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -81,6 +83,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onOpenExchangeRates: () -> Unit = {},
+    onOpenCurrencies: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val analytics = koinInject<Analytics>()
@@ -145,6 +148,10 @@ fun SettingsScreen(
             HorizontalDivider(color = colorScheme.outlineVariant)
 
             ExchangeRatesRow(onClick = openExchangeRates)
+
+            HorizontalDivider(color = colorScheme.outlineVariant)
+
+            CurrenciesRow(onClick = onOpenCurrencies)
         }
     }
 }
@@ -157,7 +164,7 @@ private fun BaseCurrencySection(
     val modalManager = LocalModalManager.current
     val pickerTitle = stringResource(Res.string.settings_base_currency_picker_title)
     val options = uiState.selectableCurrencies.map {
-        CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+        CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
     }
 
     Row(
@@ -190,12 +197,54 @@ private fun BaseCurrencySection(
             )
             Text(
                 text = uiState.baseCurrency
-                    ?.let { "${it.code} · ${stringUiText(it.name)}" }
+                    ?.let { "${it.code} · ${it.name ?: it.code}" }
                     ?: uiState.baseCurrencyCode,
                 style = MaterialTheme.typography.labelLarge,
                 color = colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * The way to the registry of currencies — the set the app offers, which is data the user
+ * owns rather than a list the app ships.
+ *
+ * It sits below the archive deliberately: the archive is what a user comes to settings
+ * for, and registering a currency is what they do once, when the one they need is not
+ * offered yet.
+ */
+@Composable
+private fun CurrenciesRow(onClick: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+    ) {
+        CurrencyGlyphIcon(Icons.Default.Payments)
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.settings_currencies_title),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = stringResource(Res.string.settings_currencies_subtitle),
+                fontSize = 13.sp,
+                color = colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colorScheme.onSurfaceVariant,
+        )
     }
 }
 

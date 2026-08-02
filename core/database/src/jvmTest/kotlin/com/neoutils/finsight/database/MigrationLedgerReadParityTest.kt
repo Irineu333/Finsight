@@ -108,7 +108,12 @@ class MigrationLedgerReadParityTest {
     private fun openMigrated(): AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
         // The whole chain, not just the step this test is about: a v7 device has to
         // reach the current version, and parity is about the figures at the end of it.
-        .addMigrations(MIGRATION_7_10, migration1011(), migration1112(baseCurrency = "BRL"))
+        .addMigrations(
+            MIGRATION_7_10,
+            migration1011(),
+            migration1112(baseCurrency = "BRL"),
+            migration1213(testSeeding()),
+        )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

@@ -82,6 +82,7 @@ class BudgetClosedCategoryTest {
             linksFlow.value = linksFlow.value.filterNot { it.budgetId == budgetId }
         }
         override suspend fun countByCategory(categoryId: Long): Int = linksFlow.value.count { it.categoryId == categoryId }
+        override suspend fun countByCurrency(currency: String): Int = 0
         override suspend fun existsByRecurring(recurringId: Long): Boolean = false
         override suspend fun update(budget: BudgetEntity) {
             budgetsFlow.value = budgetsFlow.value.map { if (it.id == budget.id) budget else it }
@@ -282,6 +283,8 @@ private fun reducer(
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
+        override suspend fun countNaming(currency: String) = 0
+        override suspend fun removeAllNaming(currency: String) = Unit
     },
     getAccountCurrencies = object : GetAccountCurrenciesUseCase {
         override suspend fun invoke() = AccountCurrencies(inUse = listOf(base), ofDefaultAccount = base)

@@ -6,7 +6,6 @@ import arrow.core.flatMap
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.CurrencyCatalog
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
@@ -17,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.DisplayAmount
@@ -41,6 +41,9 @@ class CreditCardFormViewModel(
     private val creditCard: CreditCard?,
     private val creditCardRepository: ICreditCardRepository,
     private val accountRepository: IAccountRepository,
+    // The currencies a form may offer are stored data now, read from the single source
+    // that holds them — the archived ones excluded.
+    currencyRepository: ICurrencyRepository,
     private val addCreditCardUseCase: AddCreditCardUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
@@ -144,12 +147,14 @@ class CreditCardFormViewModel(
         )
     )
 
+    private val offeredCurrencies = currencyRepository.observeOffered()
+
     val uiState = combine(
         form,
         selectedIcon,
         validation,
-        currency,
-    ) { form, selectedIcon, validation, currency ->
+        combine(currency, offeredCurrencies, ::Pair),
+    ) { form, selectedIcon, validation, (currency, selectableCurrencies) ->
         CreditCardFormUiState(
             form = form,
             selectedIcon = selectedIcon,
@@ -158,7 +163,7 @@ class CreditCardFormViewModel(
             canSubmit = form.isValid() && currency != null,
             currency = currency,
             canChangeCurrency = !isEditMode,
-            selectableCurrencies = CurrencyCatalog.currencies,
+            selectableCurrencies = selectableCurrencies,
         )
     }.stateIn(
         scope = viewModelScope,

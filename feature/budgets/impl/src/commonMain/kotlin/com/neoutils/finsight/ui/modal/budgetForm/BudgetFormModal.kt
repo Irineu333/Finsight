@@ -57,7 +57,7 @@ class BudgetFormModal(
         val modalManager = LocalModalManager.current
         val currencyModalTitle = stringResource(Res.string.budget_form_currency_modal_title)
         val currencyOptions = uiState.selectableCurrencies.map {
-            CurrencyOption(code = it.code, symbol = it.symbol, name = stringUiText(it.name))
+            CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
         }
         val categoriesEntry = koinInject<CategoriesEntry>()
         val recurringEntry = koinInject<RecurringEntry>()

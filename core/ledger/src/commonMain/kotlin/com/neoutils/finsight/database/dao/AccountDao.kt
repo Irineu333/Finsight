@@ -116,6 +116,17 @@ interface AccountDao {
     @Query("SELECT COUNT(*) FROM entries WHERE accountId = :accountId")
     suspend fun entryCount(accountId: Long): Int
 
+    /**
+     * How many accounts are denominated in a currency.
+     *
+     * It is a question about **accounts**, not about which currencies the app offers:
+     * the ledger goes on knowing nothing of that set, and names no table of it. What
+     * reads this is a refusal above — a currency an account is denominated in cannot be
+     * deleted, because deleting it would leave a figure nobody can name.
+     */
+    @Query("SELECT COUNT(*) FROM accounts WHERE currency = :currency")
+    suspend fun countByCurrency(currency: String): Int
+
     @Insert
     suspend fun insert(account: AccountEntity): Long
 

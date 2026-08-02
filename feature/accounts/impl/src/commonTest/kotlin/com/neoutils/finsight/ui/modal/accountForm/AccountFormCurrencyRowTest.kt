@@ -6,8 +6,10 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
@@ -19,6 +21,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -55,6 +58,7 @@ class AccountFormCurrencyRowTest {
             account = account,
             validateAccountName = ValidateAccountNameUseCase(repository),
             baseCurrencyRepository = StubBaseCurrency(base),
+            currencyRepository = StubCurrencies(),
             createAccountUseCase = CreateAccountUseCase(
                 repository = repository,
                 validateAccountName = ValidateAccountNameUseCase(repository),
@@ -74,11 +78,14 @@ class AccountFormCurrencyRowTest {
 
     @Test
     fun `creating offers the choice, pre-selected with the base currency`() = runTest {
-        val uiState = viewModel(account = null, base = "USD").uiState.value
+        // Awaited rather than read from the initial value: the offered set is stored
+        // data now, so it arrives one emission after the form opens.
+        val uiState = viewModel(account = null, base = "USD")
+            .uiState
+            .first { it.selectableCurrencies.isNotEmpty() }
 
         assertEquals("USD", uiState.currency)
         assertTrue(uiState.canChangeCurrency)
-        assertTrue(uiState.selectableCurrencies.isNotEmpty(), "there is always something to pick")
     }
 
     @Test
@@ -151,4 +158,27 @@ private class StubAccounts : IAccountRepository {
     override fun observeDefaultAccount(): Flow<Account?> = flowOf(null)
     override suspend fun getAccountCount(): Int = 0
     override suspend fun insert(account: Account): Long = 1L
+}
+
+/**
+ * The registry, as this form reads it: a list of offered rows. Which rows they are does
+ * not matter here — what the form does with the currency is the subject, and the set is
+ * stored data with an owner of its own.
+ */
+private class StubCurrencies : ICurrencyRepository {
+    private val rows = listOf(
+        CurrencyInfo("BRL", "R$", "Real brasileiro"),
+        CurrencyInfo("USD", "US$", "Dólar americano"),
+    )
+
+    override fun observeOffered(): Flow<List<CurrencyInfo>> = flowOf(rows)
+    override fun observeAll(): Flow<List<CurrencyInfo>> = flowOf(rows)
+    override suspend fun getOffered(): List<CurrencyInfo> = rows
+    override suspend fun getAll(): List<CurrencyInfo> = rows
+    override suspend fun get(code: String): CurrencyInfo? = rows.firstOrNull { it.code == code }
+    override suspend fun exists(code: String): Boolean = get(code) != null
+    override suspend fun save(code: String, symbol: String, name: String?) = Unit
+    override suspend fun archive(code: String) = Unit
+    override suspend fun unarchive(code: String) = Unit
+    override suspend fun delete(code: String) = Unit
 }

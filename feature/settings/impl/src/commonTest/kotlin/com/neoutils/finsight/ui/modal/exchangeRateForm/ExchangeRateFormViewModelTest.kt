@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
 import androidx.compose.runtime.Composable
+import com.neoutils.finsight.FakeCurrencyRepository
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
@@ -187,6 +188,7 @@ class ExchangeRateFormViewModelTest {
         existing = existing,
         baseCurrencyRepository = FakeBaseCurrencyRepository(),
         exchangeRateRepository = repository,
+        currencyRepository = FakeCurrencyRepository(),
         modalManager = manager,
     )
 }
@@ -237,4 +239,6 @@ private class FakeExchangeRateRepository : IExchangeRateRepository {
         gate.await()
         removed += rate
     }
+    override suspend fun countNaming(currency: String) = 0
+    override suspend fun removeAllNaming(currency: String) = Unit
 }

@@ -5,6 +5,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.domain.model.CurrencySeeding
+import com.neoutils.finsight.domain.model.SeedCurrency
 import kotlinx.coroutines.Dispatchers
 
 // 1.2.0
@@ -634,8 +636,8 @@ val MIGRATION_7_10 = object : Migration(7, 10) {
  * one but whose device is set to a foreign region is relabelled **without being asked**,
  * and design D12 means the app offers no way back. Two things narrow it: the **region**
  * decides rather than the language, so an English interface on a Brazilian device fires
- * nothing; and the curated catalog bars anything not offered, which falls into the
- * silent case of leaving the denomination alone. The alternative considered — asking
+ * nothing; and a currency of other than two decimal places is barred, which falls into
+ * the silent case of leaving the denomination alone. The alternative considered — asking
  * once, on the first run after updating, which would get both cases right — was
  * rejected in favour of zero friction: it would put a migration screen in front of
  * every user to serve the rare one, and the common case is a user who has been reading
@@ -700,7 +702,7 @@ fun migration1011(
         if (relabelCurrency != null) {
             // `execSQL` binds nothing, so the code is interpolated — and a code that
             // is not a code stops here rather than reaching the statement. The caller
-            // already validated it against the catalog; this is the module refusing to
+            // already validated it; this is the module refusing to
             // depend on that being true.
             require(relabelCurrency.matches(Regex("[A-Z]{3}"))) {
                 "relabelCurrency must be an ISO 4217 code, was '$relabelCurrency'"
@@ -749,7 +751,7 @@ fun migration1112(
     override fun migrate(connection: SQLiteConnection) {
         // `execSQL` binds nothing, so the code is interpolated — and a code that is not
         // a code stops here rather than reaching the statement. The caller resolved it
-        // from the catalog; this is the module refusing to depend on that being true.
+        // above this module; this is it refusing to depend on that being true.
         require(baseCurrency.matches(Regex("[A-Z]{3}"))) {
             "baseCurrency must be an ISO 4217 code, was '$baseCurrency'"
         }
@@ -782,10 +784,117 @@ fun migration1112(
     }
 }
 
+/**
+ * Schema 13: the set of offered currencies stops being an opinion embedded in the code
+ * and becomes a **table**.
+ *
+ * **One write, not two.** The seed, every currency an existing account is already
+ * denominated in, and the currency the device's locale names all land in the same
+ * `INSERT`. Under an overlay design these would be two migrations with distinct purposes
+ * — seed, and materialise what is in use — but with a single table the destination is the
+ * same, so they are the same operation.
+ *
+ * The consequence that matters most: **the locale's auto-registration stops being a
+ * mechanism.** There is no "automatic registration" to design, test or explain — there is
+ * a seeding, and the device's currency is among what it seeds. A second path to that same
+ * write would be a second place the user's currency could fail to exist.
+ *
+ * **Nobody loses the currency they already use.** `SELECT DISTINCT currency FROM accounts`
+ * is what shrinks the shipped set from twenty-two to six without taking ARS from the
+ * Argentinian who already has an account in it. It is also what makes this migration and
+ * the legacy relabel of [migration1011] fit together **without either knowing the other**:
+ * the relabel writes `accounts.currency`, and this reads it. No ordering is required, and
+ * none could be arranged — the relabel is `10 → 11` and this can only be `12 → 13`.
+ *
+ * @param seeding resolved outside this module: `core/database` may name neither a locale
+ * nor the platform, and receives rows and a glyph rather than the means to derive them.
+ */
+fun migration1213(
+    seeding: CurrencySeeding,
+) = object : Migration(12, 13) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `currencies` (" +
+                "`code` TEXT NOT NULL, " +
+                "`symbol` TEXT NOT NULL, " +
+                "`name` TEXT, " +
+                "`isArchived` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`code`))"
+        )
+
+        connection.seedCurrencies(seeding)
+
+        // --- Verification, the same three guards every migration of this file closes
+        //     with. Nothing here touches the ledger, and that is exactly what they
+        //     assert. ---
+        connection.verifyLedgerBalanced(stage = "v12 → v13")
+        connection.verifyNoOrphanDimensions(stage = "v12 → v13")
+        connection.verifyForeignKeys(stage = "v12 → v13")
+    }
+}
+
+/**
+ * The seeding itself, as one statement.
+ *
+ * It is shared by the migration and by the fresh-install callback because a new database
+ * never runs a migration: Room creates the schema from the entities, so without this the
+ * only user with no currencies at all would be the one who just installed the app.
+ *
+ * `INSERT OR IGNORE` makes it idempotent and makes the precedence trivial: the seed's own
+ * glyph wins over the platform's suggestion for the same code, and running it twice
+ * writes nothing the second time.
+ *
+ * **`name` is left null on purpose.** Storing a name here would freeze it in the language
+ * of the first run — switching the app's language would silently stop translating it. A
+ * row keeps a name only when the user writes one; otherwise the platform names it at
+ * every read.
+ */
+private fun SQLiteConnection.seedCurrencies(seeding: CurrencySeeding) {
+    val inUse = mutableListOf<String>()
+    val statement = prepare("SELECT DISTINCT `currency` FROM `accounts`")
+    try {
+        while (statement.step()) {
+            inUse += statement.getText(0)
+        }
+    } finally {
+        statement.close()
+    }
+
+    val rows = (seeding.rows() + inUse.map { SeedCurrency(it, seeding.symbolOf(it)) })
+        .filter { it.code.isNotBlank() }
+        .distinctBy { it.code }
+
+    if (rows.isEmpty()) return
+
+    // `execSQL` binds nothing, so the values are interpolated — and a code or a glyph
+    // that could break out of the statement stops here rather than reaching it.
+    val values = rows.joinToString(", ") { row ->
+        require(!row.code.contains('\'') && !row.symbol.contains('\'')) {
+            "a currency code and its symbol may not contain a quote, was '${row.code}'"
+        }
+        "('${row.code}', '${row.symbol}', NULL, 0)"
+    }
+    execSQL("INSERT OR IGNORE INTO `currencies` (`code`, `symbol`, `name`, `isArchived`) VALUES $values")
+}
+
+/**
+ * The fresh install's half of the seeding.
+ *
+ * A database created from the entities skips every migration, so the seeding needs this
+ * second entry point — and it is the *same* write, called from here, rather than a second
+ * one that could drift from it.
+ */
+private fun seedingCallback(seeding: CurrencySeeding) = object : RoomDatabase.Callback() {
+    override fun onCreate(connection: SQLiteConnection) {
+        connection.seedCurrencies(seeding)
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>,
     relabelCurrency: String? = null,
     baseCurrency: String,
+    currencySeeding: CurrencySeeding,
 ): AppDatabase {
     return builder
         .addMigrations(
@@ -798,7 +907,9 @@ fun getRoomDatabase(
             MIGRATION_7_10,
             migration1011(relabelCurrency),
             migration1112(baseCurrency),
+            migration1213(currencySeeding),
         )
+        .addCallback(seedingCallback(currencySeeding))
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.CurrencyCatalog
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rate_form_from
@@ -68,7 +68,6 @@ import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.formatRateForEditing
 import com.neoutils.finsight.util.rateToDoubleOrNull
 import com.neoutils.finsight.util.rememberRateInputTransformation
-import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -168,7 +167,7 @@ class ExchangeRateFormModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             val options = uiState.selectableCurrencies.map {
-                it.code to "${it.symbol} · ${stringUiText(it.name)} (${it.code})"
+                it.code to "${it.symbol} · ${it.name ?: it.code} (${it.code})"
             }
 
             fun labelOf(code: String) = options.firstOrNull { it.first == code }?.second ?: code
@@ -256,7 +255,7 @@ class ExchangeRateFormModal(
                         )
                     )
                 },
-                prefix = { Text(CurrencyCatalog.symbolOf(uiState.to)) },
+                prefix = { Text(LocalCurrencySymbols.current(uiState.to)) },
                 inputTransformation = rememberRateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,

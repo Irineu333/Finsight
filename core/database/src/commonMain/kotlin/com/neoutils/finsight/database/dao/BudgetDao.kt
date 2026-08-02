@@ -30,6 +30,15 @@ interface BudgetDao {
     suspend fun countByCategory(categoryId: Long): Int
 
     /**
+     * How many budget limits are denominated in a currency — a question about
+     * **budgets**, and what refuses deleting a currency one of them is stated in. A
+     * limit's denomination is immutable, so deleting the currency would leave a limit
+     * nobody can name.
+     */
+    @Query("SELECT COUNT(*) FROM budgets WHERE currency = :currency")
+    suspend fun countByCurrency(currency: String): Int
+
+    /**
      * Whether any budget still names this recurring as its base income. `budgets`
      * declares no foreign key, so this is the only thing that stands between a
      * deleted recurring and a percentage limit silently reading as zero.

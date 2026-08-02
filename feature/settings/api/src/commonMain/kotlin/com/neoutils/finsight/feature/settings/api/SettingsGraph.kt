@@ -29,3 +29,13 @@ data object SettingsRoute : NavRoute
  */
 @Serializable
 data object ExchangeRatesRoute : NavRoute
+
+/**
+ * The registry of currencies — list, register, edit, archive and delete.
+ *
+ * Externally navigable for the same reason the archive is: what the app offers is data
+ * now, and a form that cannot find the currency it needs has to be able to reach the
+ * place where one is created, from wherever it is standing.
+ */
+@Serializable
+data object CurrenciesRoute : NavRoute

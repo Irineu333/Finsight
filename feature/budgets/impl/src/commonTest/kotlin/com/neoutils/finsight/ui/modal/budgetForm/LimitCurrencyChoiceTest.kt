@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.budgetForm
 
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import kotlin.test.Test
@@ -19,6 +20,17 @@ import kotlin.test.assertTrue
  */
 class LimitCurrencyChoiceTest {
 
+    /**
+     * What the registry offers. The choice narrows it to the currencies actually in
+     * use — that narrowing is the rule under test, and it is the same whatever the
+     * registry happens to hold.
+     */
+    private val OFFERED = listOf(
+        CurrencyInfo("BRL", "R$", "Real brasileiro"),
+        CurrencyInfo("USD", "US$", "Dólar americano"),
+        CurrencyInfo("EUR", "€", "Euro"),
+    )
+
     private val budget = Budget(
         id = 1,
         title = "Alimentação",
@@ -36,6 +48,7 @@ class LimitCurrencyChoiceTest {
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("USD"), ofDefaultAccount = "USD"),
             picked = null,
+            offered = OFFERED,
         )
 
         assertFalse(choice.hasChoice, "no row at all — the form is the one it always was")
@@ -54,6 +67,7 @@ class LimitCurrencyChoiceTest {
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("USD"), ofDefaultAccount = "USD"),
             picked = null,
+            offered = OFFERED,
         )
 
         assertFalse(choice.hasChoice)
@@ -67,6 +81,7 @@ class LimitCurrencyChoiceTest {
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("BRL", "USD"), ofDefaultAccount = "USD"),
             picked = null,
+            offered = OFFERED,
         )
 
         assertTrue(choice.hasChoice)
@@ -81,6 +96,7 @@ class LimitCurrencyChoiceTest {
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("BRL", "USD"), ofDefaultAccount = "USD"),
             picked = "BRL",
+            offered = OFFERED,
         )
 
         assertEquals("BRL", choice.currency)
@@ -92,6 +108,7 @@ class LimitCurrencyChoiceTest {
             existing = budget,
             currencies = AccountCurrencies(inUse = listOf("BRL", "USD"), ofDefaultAccount = "BRL"),
             picked = "BRL",
+            offered = OFFERED,
         )
 
         assertEquals("USD", choice.currency, "a stored limit is never re-denominated")
@@ -110,6 +127,7 @@ class LimitCurrencyChoiceTest {
             existing = budget,
             currencies = AccountCurrencies(inUse = listOf("USD"), ofDefaultAccount = "USD"),
             picked = null,
+            offered = OFFERED,
         )
 
         assertFalse(choice.hasChoice)

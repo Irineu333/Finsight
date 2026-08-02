@@ -5,6 +5,7 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.dao.CurrencyDao
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.ExchangeRateDao
@@ -14,6 +15,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
+import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.LegacyRelabel
 import com.neoutils.finsight.domain.model.SeededBaseCurrency
 import androidx.room.RoomDatabase
@@ -40,6 +42,7 @@ val databaseModule = module {
             builder = get(),
             relabelCurrency = get<LegacyRelabel>().currency(),
             baseCurrency = get<SeededBaseCurrency>().code(),
+            currencySeeding = get<CurrencySeeding>(),
         )
     } bind RoomDatabase::class
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
@@ -54,6 +57,7 @@ val databaseModule = module {
     single<EntryDao> { get<AppDatabase>().entryDao() }
     single<DimensionDao> { get<AppDatabase>().dimensionDao() }
     single<ExchangeRateDao> { get<AppDatabase>().exchangeRateDao() }
+    single<CurrencyDao> { get<AppDatabase>().currencyDao() }
 }
 
 expect val databasePlatformModule: Module

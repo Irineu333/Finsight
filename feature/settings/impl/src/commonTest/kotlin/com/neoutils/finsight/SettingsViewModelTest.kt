@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -18,7 +19,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Switching the base currency writes the preference — **and nothing else**.
@@ -52,7 +52,7 @@ class SettingsViewModelTest {
     fun `switching writes the preference, once`() = runTest {
         val repository = RecordingBase()
 
-        SettingsViewModel(repository).onAction(SettingsAction.SwitchBaseCurrency("USD"))
+        SettingsViewModel(repository, FakeCurrencyRepository()).onAction(SettingsAction.SwitchBaseCurrency("USD"))
 
         assertEquals(listOf("USD"), repository.written)
         assertEquals("USD", repository.observe().value)
@@ -61,7 +61,7 @@ class SettingsViewModelTest {
     @Test
     fun `the switch reaches the state that every figure observes`() = runTest {
         val repository = RecordingBase()
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeCurrencyRepository())
 
         viewModel.uiState.test {
             assertEquals("BRL", awaitItem().baseCurrencyCode)
@@ -72,12 +72,33 @@ class SettingsViewModelTest {
         }
     }
 
-    /** The whole curated catalog, including currencies no rate reaches (design D6). */
+    /**
+     * The registry whole, minus the archived rows — including currencies no rate reaches
+     * (design D6). The switch is a preference over what the app offers, never a question
+     * about what the archive can reach.
+     */
     @Test
-    fun `the whole catalog is offered`() = runTest {
-        val state = SettingsViewModel(RecordingBase()).uiState.value
+    fun `the registry is offered whole`() = runTest {
+        val viewModel = SettingsViewModel(RecordingBase(), FakeCurrencyRepository())
 
-        assertTrue(state.selectableCurrencies.size > 1)
-        assertTrue(state.selectableCurrencies.any { it.code == "BRL" })
+        val state = viewModel.uiState.first { it.selectableCurrencies.isNotEmpty() }
+
+        assertEquals(
+            FakeCurrencyRepository.DEFAULT.map { it.code },
+            state.selectableCurrencies.map { it.code },
+        )
+    }
+
+    /** An archived currency is not offered as a base: archiving is a rule about offering. */
+    @Test
+    fun `an archived currency is not offered`() = runTest {
+        val viewModel = SettingsViewModel(
+            RecordingBase(),
+            FakeCurrencyRepository(archived = setOf("EUR")),
+        )
+
+        val state = viewModel.uiState.first { it.selectableCurrencies.isNotEmpty() }
+
+        assertEquals(listOf("BRL", "USD"), state.selectableCurrencies.map { it.code })
     }
 }

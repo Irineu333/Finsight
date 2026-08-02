@@ -66,4 +66,21 @@ interface IExchangeRateRepository {
      * has to be able to stop existing rather than be replaced by a guess.
      */
     suspend fun remove(rate: ExchangeRate)
+
+    /**
+     * How many observations name this currency **on either end** — what lets a deletion
+     * say the number before it happens instead of hiding it.
+     */
+    suspend fun countNaming(currency: String): Int
+
+    /**
+     * Removes every observation that names this currency on either end.
+     *
+     * An observation MUST NOT outlive the currency it speaks about. The resolver reads
+     * this archive without consulting the set of offered currencies, so a row left behind
+     * would go on being a conversion path through a currency that exists nowhere in the
+     * interface. **Archiving** a currency removes nothing: archiving is about what is
+     * offered, not about what is known.
+     */
+    suspend fun removeAllNaming(currency: String)
 }

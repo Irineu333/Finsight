@@ -45,6 +45,8 @@ class SuggestCrossCurrencyAmountUseCaseTest {
         override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
+        override suspend fun countNaming(currency: String) = 0
+        override suspend fun removeAllNaming(currency: String) = Unit
     }
 
     private fun suggester(

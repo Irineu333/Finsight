@@ -173,6 +173,12 @@ O filtro atual deixa de fazer sentido em ambas as pontas: precificar a própria 
 
 **Consequência aceita:** é possível cadastrar um par que não serve para nada — EUR/JPY num usuário de base BRL sem nenhuma ponte. A linha fica inerte, não errada. Barrá-la exigiria que o formulário soubesse resolver caminhos, que é conhecimento de D4, e para prevenir um dado inofensivo.
 
+**O seletor das duas pontas é um `ExposedDropdownMenuBox`, e não o `CurrencyPickerModal`.** As duas pontas vivem *dentro* de um `ModalBottomSheet`, e é essa posição — e não o gosto — que decide o controle: o `CurrencyPickerModal` é ele próprio uma sheet, então abri-lo daqui é modal sobre modal. Custou dois defeitos com uma causa só. Um campo de texto é dono dos seus próprios gestos, então pendurar um abridor nele exige uma segunda afordância para a seta, e os dois caminhos passam a se ler como dois controles fazendo uma coisa — no iOS a metade do campo não disparava, e a sheet subia atrás de um teclado que ninguém havia dispensado. `ExposedDropdownMenuBox` é o único componente aqui que **é dono da âncora**: o campo inteiro é o alvo, o ícone é decoração em vez de botão, e o menu é um popup sobre a sheet em vez de outra sheet sob o teclado.
+
+Isto **não** vale para a linha da moeda base em Configurações (D6): ali o gatilho está numa tela, não numa sheet, e o `CurrencyPickerModal` é consumido como está. `core/designsystem` continua sem mudança alguma nos dois casos.
+
+- *Alternativa considerada:* **o `CurrencyPickerModal` nas duas pontas do formulário**, pela simetria com Configurações e com as quatro features que já o usam. Foi a primeira escolha e caiu na prática, pelo parágrafo acima: a simetria era com um chamador que não está dentro de uma sheet.
+
 ### D9 — A listagem agrupa pela **moeda contraparte**, e a linha se descreve inteira
 
 Uma taxa tem duas pontas, então "agrupar por moeda" precisa escolher uma ou duplicar. **A escolha é decidida pelo caso comum**, e não pela simetria das duas pontas.

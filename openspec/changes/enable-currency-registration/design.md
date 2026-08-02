@@ -109,27 +109,48 @@ auto-registro que tornou o encolhimento barato — encolher sem ele seria uma re
 apontaria para uma linha que pode não existir, que é a única forma de a resolução da moeda
 base não ter resposta.
 
-### D4 — A semeadura é uma migração, e é uma operação só
+### D4 — A semeadura é a criação da tabela, e é uma operação só
 
 ```sql
-INSERT INTO currencies (code, symbol, name, isArchived)
-  SELECT ... FROM (semente: BRL, USD, EUR, GBP, CHF, CNY)
-  UNION SELECT DISTINCT currency FROM accounts   -- ninguém perde o que já usa
-  UNION SELECT <moeda do locale>                 -- a moeda do dispositivo
+INSERT OR IGNORE INTO currencies (code, symbol, name, isArchived)
+  VALUES ... -- semente: BRL, USD, EUR, GBP, CHF, CNY
+             -- + SELECT DISTINCT currency FROM accounts  (ninguém perde o que já usa)
+             -- + a moeda do locale                       (a moeda do dispositivo)
 ```
 
 Sob o overlay de D1 seriam **duas** migrações com propósitos distintos — semear e
 materializar o que está em uso. Sob a tabela única são a mesma, porque o destino é o mesmo.
 
-A consequência de projeto mais importante: **o auto-registro do locale deixa de ser um
-mecanismo.** Não há "registro automático" a desenhar, testar ou explicar — há uma migração
-que semeia, e a moeda do dispositivo está entre o que ela semeia. Um segundo caminho para
-essa mesma escrita seria um segundo lugar onde a moeda do usuário pode deixar de existir.
+**A semeadura pertence ao momento em que a tabela passa a existir, e não à migração.** A
+primeira versão deste desenho dizia "é uma migração", e isso deixava de fora exatamente o
+usuário que o requisito nomeia: num install novo o Room cria o schema a partir das
+entidades e **não roda migração alguma**, então o único usuário sem moeda nenhuma seria o
+que acabou de instalar — o mesmo que o cenário "a moeda do dispositivo chega pela
+semeadura" descreve. A tabela nasce por dois caminhos, e a semeadura é o que acontece
+quando ela nasce:
 
-O símbolo das linhas vindas dos dois `UNION` é sugerido pela plataforma no momento da
-migração, e recai no próprio código quando ela não souber — o mesmo que a exibição já faz.
-A moeda do locale que não tenha duas casas decimais **não** é semeada, e nesse caso a base
-recai no último recurso, como hoje.
+| a tabela nasce | quem semeia |
+|---|---|
+| banco que já existe (v12 → v13) | a migração |
+| install novo (schema criado das entidades) | o callback de criação do Room |
+
+Isso **não** é o segundo caminho que o parágrafo seguinte proíbe, e a distinção é o que
+mantém a regra de pé: são dois *gatilhos* para a **mesma** escrita — uma função só,
+chamada dos dois lugares —, não duas escritas que possam divergir. Um segundo caminho
+seria um segundo `INSERT`, com a sua própria noção do que semear.
+
+A consequência de projeto mais importante: **o auto-registro do locale deixa de ser um
+mecanismo.** Não há "registro automático" a desenhar, testar ou explicar — há uma
+semeadura, e a moeda do dispositivo está entre o que ela semeia.
+
+O símbolo das linhas vindas das contas em uso é sugerido pela plataforma no momento da
+semeadura, e recai no próprio código quando ela não souber — o mesmo que a exibição já
+faz. A moeda do locale que não tenha duas casas decimais **não** é semeada, e nesse caso a
+base recai no último recurso, como hoje.
+
+`INSERT OR IGNORE` é o que torna a escrita idempotente e a precedência trivial: o símbolo
+da própria semente vence a sugestão da plataforma para o mesmo código, e rodar a semeadura
+sobre uma linha que já existe não a sobrescreve.
 
 ### D5 — O símbolo chega às composables por um port em `:core:common`, não por `:core:model`
 

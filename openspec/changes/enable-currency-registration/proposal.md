@@ -19,10 +19,12 @@ encolher deixa de pé um catálogo que ninguém precisa manter.
 - A semente encolhe de 22 para **6** moedas — BRL, USD, EUR, GBP, CHF, CNY — por um critério
   declarado: o mercado de origem do app, mais as moedas em que uma figura é legível por
   alguém de fora dele.
-- Uma **migração de semeadura** insere, numa operação só: a semente, toda moeda já em uso
-  por uma conta existente, e a moeda do locale do dispositivo. Nenhum usuário atual perde
-  a moeda que já usa, e o auto-registro da moeda do dispositivo deixa de ser um mecanismo
-  para ser mais uma linha do mesmo `INSERT`.
+- Uma **semeadura** insere, numa operação só: a semente, toda moeda já em uso por uma
+  conta existente, e a moeda do locale do dispositivo. Ela acontece quando a tabela passa
+  a existir — pela migração num banco que já existe, pela criação do esquema numa
+  instalação nova, que não roda migração alguma. Nenhum usuário atual perde a moeda que já
+  usa, e o auto-registro da moeda do dispositivo deixa de ser um mecanismo para ser mais
+  uma linha do mesmo `INSERT`.
 - O usuário passa a **cadastrar, editar, arquivar e apagar** moedas. A plataforma sugere
   símbolo e nome para qualquer código ISO que ele digite.
 - O **nome de uma moeda deixa de ser chave de string**. A linha guarda nome apenas quando
@@ -55,8 +57,9 @@ encolher deixa de pé um catálogo que ninguém precisa manter.
 - **`:core:model`** — `CurrencyCatalog` removido; `CurrencyInfo` passa a vir de repositório;
   contrato `ICurrencyRepository` ao lado de `IBaseCurrencyRepository`;
   `legacyRelabelCurrency` deixa de consultar uma lista embarcada.
-- **`:core:database`** — entidade `currencies`, DAO, migração de semeadura. Ordem em
-  relação à migração de relabel precisa ser verificada, não presumida.
+- **`:core:database`** — entidade `currencies`, DAO, a semeadura e os seus dois gatilhos
+  (migração e criação do esquema). Ordem em relação à migração de relabel precisa ser
+  verificada, não presumida.
 - **`:core:designsystem`** — `LocalCurrencyCatalog`, irmão de `LocalCurrencyFormatter` e
   provido pelo mesmo `FormattingLocalsHost`; `CurrencyPickerModal` inalterado, continua
   renderizando o que recebe.

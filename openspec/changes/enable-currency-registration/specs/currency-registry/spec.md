@@ -63,14 +63,26 @@ ter resposta.
 A semeadura SHALL gravar, numa única operação: as moedas da semente, **toda moeda já
 denominada por uma conta existente**, e a **moeda indicada pelo locale do dispositivo**.
 
+Ela SHALL acontecer **quando o conjunto de moedas passa a existir**, e MUST NOT ser
+condicionada a uma migração. Um banco que já existe chega lá pela migração; uma instalação
+nova cria o seu esquema sem migração alguma, e teria de ser semeada assim mesmo — do
+contrário o único usuário sem moeda nenhuma seria justamente o que acabou de instalar o
+app, que é o caso que esta capability existe para atender.
+
+Os dois gatilhos SHALL executar a **mesma** escrita, e MUST NOT ser duas escritas
+equivalentes: o que a regra abaixo proíbe é um segundo caminho que possa divergir, não um
+segundo momento em que o mesmo caminho é percorrido. A escrita SHALL ser idempotente, e
+executá-la sobre uma linha que já existe MUST NOT alterá-la.
+
 Encolher o conjunto embarcado MUST NOT remover de um usuário a moeda em que ele já tem
 conta, orçamento ou taxa. Uma moeda que sai da semente e está em uso SHALL ser gravada como
 linha, e a redução do conjunto embarcado SHALL ser, para quem já a usava, indistinguível de
 nada ter acontecido.
 
 A moeda do locale SHALL ser gravada por esta mesma operação, e MUST NOT ter mecanismo
-próprio de registro automático. Um segundo caminho para a mesma escrita é um segundo lugar
-onde a moeda do usuário pode deixar de existir.
+próprio de registro automático. Uma segunda **escrita** para o mesmo fim é um segundo lugar
+onde a moeda do usuário pode deixar de existir — o que não se confunde com os dois gatilhos
+exigidos acima, que percorrem a escrita única.
 
 A moeda do locale SHALL ser gravada **uma única vez**, na semeadura. Uma alteração
 posterior do locale MUST NOT gravar linha alguma — o que preserva a regra de
@@ -88,9 +100,13 @@ posterior do locale MUST NOT gravar linha alguma — o que preserva a regra de
 - **WHEN** o usuário troca o locale do dispositivo depois da semeadura
 - **THEN** nenhuma linha é criada, alterada ou removida
 
+#### Scenario: Uma instalação nova é semeada sem migração alguma
+- **WHEN** o app é instalado do zero, e o esquema é criado a partir das entidades sem que nenhuma migração rode
+- **THEN** o conjunto de moedas nasce semeado, e não vazio
+
 #### Scenario: Uma operação, não duas
 - **WHEN** o código da semeadura é inspecionado
-- **THEN** a semente, as moedas em uso e a moeda do locale são gravadas pela mesma operação
+- **THEN** a semente, as moedas em uso e a moeda do locale são gravadas pela mesma operação, e o banco que atualiza e a instalação nova percorrem a mesma escrita
 
 ### Requirement: O nome de uma moeda é da plataforma, salvo quando o usuário o escreveu
 

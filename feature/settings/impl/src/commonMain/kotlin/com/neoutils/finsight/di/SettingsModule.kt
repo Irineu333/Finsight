@@ -17,7 +17,10 @@ import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.SaveCurrencyUseCase
 import com.neoutils.finsight.extension.CurrencySymbols
 import com.neoutils.finsight.domain.model.CurrencyInfo
+import com.neoutils.finsight.ui.modal.archiveCurrency.ArchiveCurrencyViewModel
 import com.neoutils.finsight.ui.modal.currencyForm.CurrencyFormViewModel
+import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
+import com.neoutils.finsight.ui.modal.viewCurrency.ViewCurrencyViewModel
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
 import com.neoutils.finsight.ui.screen.currencies.CurrenciesViewModel
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesViewModel
@@ -96,9 +99,34 @@ val settingsModule = module {
     viewModel {
         CurrenciesViewModel(
             currencyRepository = get(),
-            archiveCurrency = get(),
-            deleteCurrency = get(),
             baseCurrencyRepository = get(),
+        )
+    }
+
+    viewModel {
+        ViewCurrencyViewModel(
+            code = it.get(),
+            currencyRepository = get(),
+            baseCurrencyRepository = get(),
+            deleteCurrency = get(),
+            archiveCurrency = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        DeleteCurrencyViewModel(
+            code = it.get(),
+            deleteCurrency = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        ArchiveCurrencyViewModel(
+            code = it.get(),
+            archiveCurrency = get(),
+            modalManager = get(),
         )
     }
 

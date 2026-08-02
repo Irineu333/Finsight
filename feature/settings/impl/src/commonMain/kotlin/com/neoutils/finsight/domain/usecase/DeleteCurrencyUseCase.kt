@@ -10,6 +10,21 @@ import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 
 /**
+ * What names a currency: what refuses its deletion, and what a deletion would take.
+ *
+ * A **rate** is here without blocking anything, on purpose: it is what the confirmation
+ * has to be able to say a number about.
+ */
+data class CurrencyUsage(
+    val accounts: Int,
+    val budgets: Int,
+    val rates: Int,
+) {
+    /** Nothing denominates it, so it may be deleted rather than archived. */
+    val isDeletable: Boolean get() = accounts == 0 && budgets == 0
+}
+
+/**
  * Deletes a currency — refused by whoever **denominates** it, and taking the rate archive
  * with it.
  *
@@ -35,22 +50,30 @@ class DeleteCurrencyUseCase(
     private val budgetDao: BudgetDao,
 ) {
     /**
-     * How many rate observations the deletion would take with it — what the confirmation
-     * states before the user commits to it.
+     * What names this currency today — the single answer both the refusal and the screen
+     * read.
+     *
+     * The screen needs it to say, *before* the user reaches for the action, that deleting
+     * is refused and how many observations a deletion would take. Deriving that a second
+     * time in the UI is how a screen ends up offering a delete the use case refuses.
      */
-    suspend fun ratesToRemove(code: String): Int =
-        exchangeRateRepository.countNaming(code.uppercase())
+    suspend fun usageOf(code: String): CurrencyUsage {
+        val normalized = code.uppercase()
+
+        return CurrencyUsage(
+            accounts = accountDao.countByCurrency(normalized),
+            budgets = budgetDao.countByCurrency(normalized),
+            rates = exchangeRateRepository.countNaming(normalized),
+        )
+    }
 
     suspend operator fun invoke(code: String): Either<CurrencyError, Unit> {
         val normalized = code.uppercase()
+        val usage = usageOf(normalized)
 
-        if (accountDao.countByCurrency(normalized) > 0) {
-            return CurrencyError.DENOMINATED_BY_ACCOUNT.left()
-        }
+        if (usage.accounts > 0) return CurrencyError.DENOMINATED_BY_ACCOUNT.left()
 
-        if (budgetDao.countByCurrency(normalized) > 0) {
-            return CurrencyError.DENOMINATED_BY_BUDGET.left()
-        }
+        if (usage.budgets > 0) return CurrencyError.DENOMINATED_BY_BUDGET.left()
 
         // The same write: an observation must not outlive the currency it speaks about.
         exchangeRateRepository.removeAllNaming(normalized)

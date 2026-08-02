@@ -10,6 +10,7 @@ kotlin {
             implementation(projects.core.model)
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
+            implementation(projects.core.ui)
             implementation(projects.core.resources)
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)

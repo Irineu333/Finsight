@@ -879,13 +879,17 @@
     <string name="currencies_archive_confirm_title">Archive %1$s?</string>
     <string name="currencies_archive_confirm_message">It stops being offered in the forms. What already uses it stays valid, and you can unarchive it whenever you want.</string>
     <string name="currencies_archive_confirm_action">Archive</string>
-    <string name="currencies_unarchive_confirm_title">Unarchive %1$s?</string>
-    <string name="currencies_unarchive_confirm_message">It goes back to being offered in every form.</string>
-    <string name="currencies_unarchive_confirm_action">Unarchive</string>
     <string name="currencies_delete_confirm_title">Delete %1$s?</string>
     <string name="currencies_delete_confirm_message">The currency stops existing, and this cannot be undone.</string>
     <string name="currencies_delete_confirm_message_rates">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it. This cannot be undone.</string>
     <string name="currencies_delete_confirm_action">Delete</string>
+
+    <string name="view_currency_base_label">Base currency</string>
+    <string name="view_currency_accounts">Accounts in this currency</string>
+    <string name="view_currency_budgets">Budgets in this currency</string>
+    <string name="view_currency_rates">Rates naming it</string>
+    <string name="view_currency_edit">Edit</string>
+    <string name="view_currency_unarchive">Unarchive</string>
 
     <string name="currency_form_title_new">New currency</string>
     <string name="currency_form_title_edit">Edit currency</string>

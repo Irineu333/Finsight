@@ -1,13 +1,12 @@
 package com.neoutils.finsight.ui.screen.currencies
 
 import com.neoutils.finsight.domain.model.CurrencyInfo
-import com.neoutils.finsight.util.UiText
 
 /**
  * One row of the registry: the currency, and whether it is still offered.
  *
- * [isBase] is here because the base cannot be archived, and a row that offers an action
- * it will always refuse is worse than one that does not offer it.
+ * [isBase] travels with the row so the screen it opens does not have to ask again which
+ * currency is the base — and the base is the one row with no retire action at all.
  */
 data class CurrencyItem(
     val currency: CurrencyInfo,
@@ -21,11 +20,6 @@ data class CurrencyItem(
 data class CurrenciesUiState(
     val currencies: List<CurrencyItem> = emptyList(),
     val isLoading: Boolean = true,
-    /**
-     * Why the last action was refused, if it was — a currency an account or a budget
-     * denominates cannot be deleted, and the base cannot be archived.
-     */
-    val error: UiText? = null,
 ) {
     val isEmpty get() = !isLoading && currencies.isEmpty()
 }

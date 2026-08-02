@@ -221,6 +221,12 @@ class CurrencyRegistryTest {
             assertEquals(CurrencyError.DENOMINATED_BY_ACCOUNT, result.leftOrNull())
             assertTrue(repository.exists("USD"))
             assertEquals(1, rates.observeAll().first().size)
+
+            // The same answer the view screen reads to offer archiving instead of
+            // deleting — one owner, so the screen cannot offer what this refuses.
+            val usage = delete.usageOf("USD")
+            assertEquals(1, usage.accounts)
+            assertTrue(!usage.isDeletable)
         }
 
     @Test
@@ -249,7 +255,9 @@ class CurrencyRegistryTest {
         rate("USD", "PEN", 3.7)
         rate("USD", "BRL", 5.5)
 
-        assertEquals(2, delete.ratesToRemove("PEN"), "the number is stated before it happens")
+        val usage = delete.usageOf("PEN")
+        assertEquals(2, usage.rates, "the number is stated before the deletion happens")
+        assertTrue(usage.isDeletable, "nothing denominates it, so it is deletable")
 
         delete("PEN")
 

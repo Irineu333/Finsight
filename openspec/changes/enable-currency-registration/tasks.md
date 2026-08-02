@@ -214,12 +214,21 @@ conjuntos de arquivos disjuntos dentro de `feature/settings/impl` (mais a rota, 
 - [x] 8.1 Declarar `CurrenciesRoute` em `feature/settings/api` (ao lado de `SettingsRoute` e
   `ExchangeRatesRoute`), registrá-la no `settingsGraph()` do `impl` e acrescentar a entrada
   para ela em `SettingsScreen.kt`, ao lado da moeda base e do acervo de taxas.
-- [x] 8.2 Escrever `CurrenciesScreen`, `CurrenciesUiState`, `CurrenciesAction` e
-  `CurrenciesViewModel` em `feature/settings/impl/.../ui/screen/currencies/`: a lista do
-  registro com as arquivadas identificadas, as ações de arquivar/desarquivar, de abrir o
-  formulário e de apagar — e a confirmação de exclusão **declarando quantas observações do
-  acervo serão removidas junto** antes de a exclusão acontecer, além de apresentar a recusa
-  quando uma conta ou um orçamento nomeia a moeda.
+- [x] 8.2 Escrever `CurrenciesScreen`, `CurrenciesUiState` e `CurrenciesViewModel` em
+  `feature/settings/impl/.../ui/screen/currencies/`: a lista do registro com as arquivadas
+  identificadas, e **nada mais** — a linha não carrega ação, ela abre. Botão dentro de linha
+  de lista vertical transforma cada linha numa barra de ferramentas e põe uma ação destrutiva
+  a um toque errado de um scroll, e não é o que o app faz em lugar nenhum.
+- [x] 8.2.1 Escrever a **visualização intermediária** em
+  `feature/settings/impl/.../ui/modal/viewCurrency/`, no formato de `viewCategory` e
+  `viewAccount` (`AdaptiveModal` com `DetailContent`/`DetailActions`, estado
+  `Loading`/`Error`/`Content`, evento `Dismiss`): ela apresenta o que **denomina** a moeda —
+  contas, orçamentos e taxas —, marca a base e a arquivada, e oferece editar mais uma ação de
+  retirada só. Qual retirada é `retireActionOf` sobre a resposta de `DeleteCurrencyUseCase`,
+  nunca uma segunda derivação; a base não oferece retirada alguma. As confirmações são
+  `DeleteCurrencyModal` — **declarando quantas observações do acervo vão junto** — e
+  `ArchiveCurrencyModal`, cada uma com o seu ViewModel, no formato de `deleteCategory` e
+  `archiveCategory`. Desarquivar não pede confirmação, como em `viewCategory`.
 - [x] 8.3 Escrever `CurrencyFormModal`, `CurrencyFormUiState`, `CurrencyFormAction` e
   `CurrencyFormViewModel` em `feature/settings/impl/.../ui/modal/currencyForm/`, estendendo
   `ModalBottomSheet` como os demais modais: campos de código, símbolo e nome; ao digitar um

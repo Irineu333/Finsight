@@ -226,6 +226,41 @@ removidas junto.
 - **WHEN** uma moeda que servia de pivô a uma triangulação é apagada
 - **THEN** aquela triangulação deixa de existir, e a parcela correspondente volta a ser termo próprio
 
+### Requirement: Uma moeda é aberta antes de ser alterada
+
+A listagem do registro SHALL apresentar cada moeda como uma linha que **abre**, e MUST NOT
+oferecer ação sobre ela na própria linha. Editar, arquivar, desarquivar e apagar SHALL
+viver na tela que a linha abre — a mesma etapa intermediária que uma conta, um cartão e uma
+categoria já têm.
+
+Botão dentro de linha de lista vertical transforma cada linha numa barra de ferramentas e
+põe uma ação destrutiva a um toque errado de um scroll. O padrão do app é o outro, e um
+segundo padrão para o mesmo gesto é uma divergência a manter.
+
+A tela aberta SHALL apresentar **o que denomina a moeda** — quantas contas, quantos
+orçamentos e quantas observações do acervo a nomeiam — antes de oferecer qualquer ação. É
+o que decide se apagar é possível, então o usuário SHALL poder lê-lo em vez de descobri-lo
+sendo recusado.
+
+Ela SHALL oferecer **uma** ação de retirada, e qual delas é a resposta da regra de
+exclusão, e não uma segunda derivação: quando uma conta ou um orçamento denomina a moeda, o
+que se oferece é arquivar. Uma tela MUST NOT oferecer uma ação que o domínio recusa.
+
+A moeda base MUST NOT oferecer retirada alguma — arquivá-la é recusado, e apagá-la é
+recusado pela conta que ela denomina.
+
+#### Scenario: A linha abre, e não age
+- **WHEN** o usuário vê a lista de moedas
+- **THEN** nenhuma linha oferece editar, arquivar ou apagar, e tocá-la abre a moeda
+
+#### Scenario: O que impede a exclusão é dito antes
+- **WHEN** o usuário abre uma moeda em que existe conta
+- **THEN** a quantidade de contas que a denominam é apresentada, e a ação oferecida é arquivar
+
+#### Scenario: A base não oferece retirada
+- **WHEN** o usuário abre a moeda que está em vigor como base
+- **THEN** nenhuma ação de arquivar ou apagar é oferecida, e editar continua sendo
+
 ### Requirement: Arquivar uma moeda é regra de oferta, e só isso
 
 O sistema SHALL permitir **arquivar** uma moeda, e o arquivamento SHALL ter o mesmo formato

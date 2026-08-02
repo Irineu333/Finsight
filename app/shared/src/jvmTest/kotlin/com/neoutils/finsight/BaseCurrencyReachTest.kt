@@ -102,10 +102,13 @@ class BaseCurrencyReachTest {
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/settings/SettingsViewModel.kt",
-        // The registry screen: a row states whether it is the base, because the base is
-        // the one row that offers no archive action — an action always refused is worse
-        // than one not offered. It denominates nothing.
+        // The registry, and the screen a row of it opens: both state whether a currency
+        // is the base, because the base is the one row that offers no retire action — an
+        // action always refused is worse than one not offered. Neither denominates a
+        // figure; the base is read to be compared against, and the answer is a badge and
+        // an absent button.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/currencies/CurrenciesViewModel.kt",
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/viewCurrency/ViewCurrencyViewModel.kt",
         // Archiving a currency: the base is refused, because archiving it would leave
         // every consolidated figure denominated in a currency the app declares it no
         // longer offers. It denominates nothing here — it is read to be compared

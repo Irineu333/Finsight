@@ -880,13 +880,17 @@
     <string name="currencies_archive_confirm_title">Arquivar %1$s?</string>
     <string name="currencies_archive_confirm_message">Ela deixa de ser oferecida nos formulários. O que já está nela continua valendo, e você pode desarquivá-la quando quiser.</string>
     <string name="currencies_archive_confirm_action">Arquivar</string>
-    <string name="currencies_unarchive_confirm_title">Desarquivar %1$s?</string>
-    <string name="currencies_unarchive_confirm_message">Ela volta a ser oferecida em todos os formulários.</string>
-    <string name="currencies_unarchive_confirm_action">Desarquivar</string>
     <string name="currencies_delete_confirm_title">Apagar %1$s?</string>
     <string name="currencies_delete_confirm_message">A moeda deixa de existir e não é possível desfazer.</string>
     <string name="currencies_delete_confirm_message_rates">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto. Não é possível desfazer.</string>
     <string name="currencies_delete_confirm_action">Apagar</string>
+
+    <string name="view_currency_base_label">Moeda base</string>
+    <string name="view_currency_accounts">Contas nesta moeda</string>
+    <string name="view_currency_budgets">Orçamentos nesta moeda</string>
+    <string name="view_currency_rates">Taxas que a citam</string>
+    <string name="view_currency_edit">Editar</string>
+    <string name="view_currency_unarchive">Desarquivar</string>
 
     <string name="currency_form_title_new">Nova moeda</string>
     <string name="currency_form_title_edit">Editar moeda</string>

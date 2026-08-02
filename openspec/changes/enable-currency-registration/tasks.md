@@ -263,28 +263,28 @@ deixar de valer. Todas as tarefas escrevem arquivos de teste distintos e são in
   e o de taxa já ocupam ali —, e reapontar `theOneResolver` para a expressão que de fato
   decide uma moeda depois desta mudança. Um `theOneResolver` que nomeie expressão inexistente
   passa sem guardar nada, e é isso que esta tarefa impede.
-- [ ] 10.2 Teste de migração partindo de um banco que tem conta numa moeda **fora da semente**
+- [x] 10.2 Teste de migração partindo de um banco que tem conta numa moeda **fora da semente**
   (ARS, MXN, PEN, UYU ou ILS): a moeda existe como linha depois do upgrade, é oferecida nos
   formulários, e as figuras da conta continuam exatamente as de antes. É a cobertura da
   regressão silenciosa de quem já usa o que a semente deixou de trazer.
-- [ ] 10.3 Testar `DeleteCurrencyUseCase`: recusa com motivo quando uma conta nomeia a moeda,
+- [x] 10.3 Testar `DeleteCurrencyUseCase`: recusa com motivo quando uma conta nomeia a moeda,
   recusa quando um orçamento a nomeia (nada removido nos dois casos), remoção da moeda e das
   suas observações do acervo na mesma escrita, e o número de observações declarado antes. Um
   caso a mais: apagada a moeda que servia de pivô, a triangulação deixa de existir e a
   parcela volta a ser termo próprio.
-- [ ] 10.4 Testar `ArchiveCurrencyUseCase`: a moeda base é recusada com motivo e permanece
+- [x] 10.4 Testar `ArchiveCurrencyUseCase`: a moeda base é recusada com motivo e permanece
   oferecida; arquivar é reversível e desarquivar a devolve a todos os formulários.
-- [ ] 10.5 Testar o que arquivar **não** faz: a moeda arquivada some da oferta, mas a conta
+- [x] 10.5 Testar o que arquivar **não** faz: a moeda arquivada some da oferta, mas a conta
   nela continua ativa, aceita lançamento e é consolidada; as suas observações permanecem no
   acervo; e uma conversão que triangula por ela continua dando o mesmo resultado de antes do
   arquivamento.
-- [ ] 10.6 Testar o nome (D2): a moeda que o usuário não nomeou muda de idioma quando o
+- [x] 10.6 Testar o nome (D2): a moeda que o usuário não nomeou muda de idioma quando o
   idioma muda; a que ele nomeou permanece como ele escreveu; e uma linha sem nome cujo código
   a plataforma não reconhece exibe o próprio código, sem erro.
-- [ ] 10.7 Testar `SaveCurrencyUseCase`: código repetido recusado com motivo e nenhuma linha
+- [x] 10.7 Testar `SaveCurrencyUseCase`: código repetido recusado com motivo e nenhuma linha
   alterada; código que a plataforma declara de zero ou três casas decimais recusado com
   motivo; código inventado (`MILHAS`) aceito com o símbolo e o nome que o usuário escreveu; e
   cadastrar não cria conta, taxa nem orçamento.
-- [ ] 10.8 Guarda de **fonte única**, no formato dos testes que leem as fontes do repositório:
+- [x] 10.8 Guarda de **fonte única**, no formato dos testes que leem as fontes do repositório:
   nenhum arquivo de produção declara uma lista de moedas, todo consumidor lê do repositório, e
   nenhuma query, escrita ou validação de `:core:ledger` nomeia a tabela `currencies`.

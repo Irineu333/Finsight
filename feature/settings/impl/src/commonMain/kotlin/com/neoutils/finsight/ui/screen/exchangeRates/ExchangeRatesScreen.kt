@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,6 +48,7 @@ import com.neoutils.finsight.resources.exchange_rates_currency_not_covered
 import com.neoutils.finsight.resources.exchange_rates_sync_never
 import com.neoutils.finsight.resources.exchange_rates_sync_updated_at
 import com.neoutils.finsight.resources.exchange_rates_empty
+import com.neoutils.finsight.resources.exchange_rates_group_header
 import com.neoutils.finsight.resources.exchange_rates_open_history
 import com.neoutils.finsight.resources.exchange_rates_screen_title
 import com.neoutils.finsight.ui.component.ExchangeRateRow
@@ -170,7 +174,25 @@ internal fun ExchangeRatesContent(
             }
         }
 
-        else -> {
+        else -> Column(modifier = modifier) {
+            // **Above the list and outside it**, because it speaks about the whole archive
+            // and not about whatever follows it. Inside the list it sat in the slot a group
+            // heading occupies, dressed like one — and since it states a date, the screen
+            // read as though the rates were grouped by day.
+            SyncStatusLine(status = uiState.sync)
+
+            uiState.sync.notCoveredCurrencies.forEach { currency ->
+                NotCoveredNotice(
+                    currency = currency,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+
+            if (uiState.isEmpty) {
+                EmptyState(modifier = Modifier.fillMaxSize())
+                return@Column
+            }
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(
@@ -179,28 +201,32 @@ internal fun ExchangeRatesContent(
                     top = 8.dp,
                     bottom = 96.dp,
                 ),
-                modifier = modifier,
+                modifier = Modifier.fillMaxSize(),
             ) {
-                item(key = "sync-status") { SyncStatusLine(status = uiState.sync) }
+                uiState.groups.forEach { group ->
+                    item(key = "group-${group.counterCurrency}") {
+                        Text(
+                            text = stringResource(
+                                Res.string.exchange_rates_group_header,
+                                group.counterCurrency,
+                            ),
+                            style = typography.labelLarge,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
+                        )
+                    }
 
-                uiState.sync.notCoveredCurrencies.forEach { currency ->
-                    item(key = "not-covered-$currency") { NotCoveredNotice(currency = currency) }
-                }
-
-                if (uiState.isEmpty) {
-                    item(key = "empty") { EmptyState(modifier = Modifier.fillMaxWidth()) }
-                }
-
-                // One row per pair, in the direction it was observed in, each declaring
-                // the pair, the value, the date and the origin of the observation that
-                // answers for it. Tapping reaches that pair's history — where correcting
-                // and removing live, over the observation itself.
-                items(uiState.inForce, key = { it.rate.id }) { item ->
-                    ExchangeRateRow(
-                        rate = item.rate,
-                        isOutdated = item.isOutdated,
-                        onClick = { onOpenHistory(item.rate.currency) },
-                    )
+                    // One row per pair, in the direction it was observed in, each declaring
+                    // the pair, the value, the date and the origin of the observation that
+                    // answers for it. Tapping reaches that pair's history — where
+                    // correcting and removing live, over the observation itself.
+                    items(group.rates, key = { it.rate.id }) { item ->
+                        ExchangeRateRow(
+                            rate = item.rate,
+                            isOutdated = item.isOutdated,
+                            onClick = { onOpenHistory(item.rate.currency) },
+                        )
+                    }
                 }
             }
         }
@@ -220,14 +246,36 @@ internal fun ExchangeRatesContent(
 private fun SyncStatusLine(status: RateSyncStatus) {
     val dateFormats = LocalDateFormats.current
 
-    Text(
-        text = status.lastSyncedOn
-            ?.let { stringResource(Res.string.exchange_rates_sync_updated_at, dateFormats.monthDayYear.format(it)) }
-            ?: stringResource(Res.string.exchange_rates_sync_never),
-        style = typography.labelMedium,
-        color = colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp),
-    )
+    // **An icon beside the words, on purpose.** A bare line of `onSurfaceVariant` text is
+    // precisely what a group heading looks like in this app, and this one carries a date —
+    // so as a bare line it was read as *the rates are grouped by day*. The icon is what
+    // makes it structurally a status and not a heading, before a single word is read.
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Icon(
+            imageVector = if (status.lastSyncedOn != null) Icons.Default.CloudDone else Icons.Default.CloudOff,
+            contentDescription = null,
+            tint = colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = status.lastSyncedOn
+                ?.let {
+                    stringResource(
+                        Res.string.exchange_rates_sync_updated_at,
+                        dateFormats.monthDayYear.format(it),
+                    )
+                }
+                ?: stringResource(Res.string.exchange_rates_sync_never),
+            style = typography.labelSmall,
+            color = colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 /**
@@ -238,12 +286,12 @@ private fun SyncStatusLine(status: RateSyncStatus) {
  * with nothing explaining why.
  */
 @Composable
-private fun NotCoveredNotice(currency: String) {
+private fun NotCoveredNotice(currency: String, modifier: Modifier = Modifier) {
     Surface(
         color = Warning.copy(alpha = 0.14f),
         contentColor = Warning,
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Text(
             text = stringResource(Res.string.exchange_rates_currency_not_covered, currency),

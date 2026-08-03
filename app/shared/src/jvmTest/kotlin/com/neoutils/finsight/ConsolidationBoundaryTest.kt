@@ -94,6 +94,10 @@ class ConsolidationBoundaryTest {
             // to show — and no money passes through any of it.
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRateHistory/ExchangeRateHistoryScreen.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRateHistory/ExchangeRateHistoryViewModel.kt",
+            // The entry view's grouping and its order, which read a rate's *date* and its
+            // counterpart currency — the number itself is never touched here, and no money
+            // is.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
         )
 
         val found = productionSources

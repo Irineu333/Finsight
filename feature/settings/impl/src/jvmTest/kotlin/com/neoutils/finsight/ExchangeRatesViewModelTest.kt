@@ -112,6 +112,9 @@ class ExchangeRatesViewModelTest {
         getAccountCurrencies = Currencies(inUse),
     )
 
+    /** Every group's rows, flattened — what the per-row assertions ask about. */
+    private val ExchangeRatesUiState.inForce get() = groups.flatMap { it.rates }
+
     private suspend fun ExchangeRatesViewModel.loaded(): ExchangeRatesUiState {
         var state = uiState.value
         uiState.test {
@@ -151,6 +154,37 @@ class ExchangeRatesViewModelTest {
             line.rate.source,
             "the policy elects the quote over the harvest on the same date",
         )
+    }
+
+    /**
+     * The entry view groups too, and by the same key the history uses. Reducing to one row
+     * per pair is about *how many* rows there are; it says nothing about how they are
+     * headed, and a flat list leaves the column of quotes with nothing stating what they
+     * are priced in.
+     */
+    @Test
+    fun `the rates in force are grouped by the currency they are priced in`() = runTest {
+        seed("USD", counterCurrency = "BRL", date = today.minus(5, DateTimeUnit.DAY))
+        seed("EUR", counterCurrency = "BRL", date = today.minus(10, DateTimeUnit.DAY))
+        seed("JPY", counterCurrency = "USD", date = today)
+
+        val state = viewModel().loaded()
+
+        assertEquals(listOf("USD", "BRL"), state.groups.map { it.counterCurrency })
+        assertEquals(2, state.groups.single { it.counterCurrency == "BRL" }.rates.size)
+    }
+
+    /** The ordinary archive is one group, which is the case the key is chosen for. */
+    @Test
+    fun `an archive priced entirely in the base is one group`() = runTest {
+        seed("USD")
+        seed("EUR")
+        seed("JPY")
+
+        val state = viewModel().loaded()
+
+        assertEquals(listOf("BRL"), state.groups.map { it.counterCurrency })
+        assertEquals(3, state.groups.single().rates.size)
     }
 
     @Test

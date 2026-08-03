@@ -55,9 +55,19 @@ class ExchangeRatesViewModel(
 
         ExchangeRatesUiState(
             baseCurrency = base,
-            inForce = rates.map {
-                ExchangeRateInForce(rate = it, isOutdated = it.date < staleBefore)
-            },
+            // Grouped by the currency each row is priced **in**, the group with the most
+            // recent observation first — the same key and the same order the history uses,
+            // because it is the same question about the same rows.
+            groups = rates
+                .map { ExchangeRateInForce(rate = it, isOutdated = it.date < staleBefore) }
+                .groupBy { it.rate.counterCurrency }
+                .map { (counterCurrency, items) ->
+                    ExchangeRateInForceGroup(
+                        counterCurrency = counterCurrency,
+                        rates = items.sortedByDescending { it.rate.date },
+                    )
+                }
+                .sortedByDescending { group -> group.rates.first().rate.date },
             sync = RateSyncStatus(
                 lastSyncedOn = syncState.lastSyncedAt
                     ?.toLocalDateTime(TimeZone.currentSystemDefault())?.date,

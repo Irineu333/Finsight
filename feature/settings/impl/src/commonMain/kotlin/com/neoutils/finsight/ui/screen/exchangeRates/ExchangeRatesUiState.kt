@@ -22,6 +22,32 @@ data class ExchangeRateInForce(
 )
 
 /**
+ * The rates in force priced **in** one currency — *what a euro, a dollar and a yen are
+ * worth in reais*.
+ *
+ * A rate has two ends, so grouping has to pick one, and the counterpart end is the one
+ * that actually gathers: in the ordinary archive everything is priced in the base — and
+ * the automatic upkeep makes that more ordinary still — so keying on the priced currency
+ * would put every row in a group of its own and group nothing.
+ *
+ * **The entry view groups too, and not only the history.** Reducing to one row per pair is
+ * about *how many* rows there are; it says nothing about how they are headed. A flat list
+ * leaves the column of quotes with nothing stating what they are priced in, and the first
+ * thing above it — whatever that is — gets read as the heading they lost.
+ */
+data class ExchangeRateInForceGroup(
+    /**
+     * The currency every rate of the group is priced **in**, as its ISO code.
+     *
+     * The code alone, and not the catalog's name beside it: every row underneath ends in
+     * that same code, so spelling the currency out would say a third time what the rows
+     * already say — and a heading is a label, not a sentence.
+     */
+    val counterCurrency: String,
+    val rates: List<ExchangeRateInForce>,
+)
+
+/**
  * The state of the automatic upkeep, as this screen states it — **and this screen is the
  * only place in the app that states it**.
  *
@@ -46,9 +72,9 @@ data class RateSyncStatus(
 
 data class ExchangeRatesUiState(
     val baseCurrency: String,
-    val inForce: List<ExchangeRateInForce> = emptyList(),
+    val groups: List<ExchangeRateInForceGroup> = emptyList(),
     val sync: RateSyncStatus = RateSyncStatus(),
     val isLoading: Boolean = true,
 ) {
-    val isEmpty get() = !isLoading && inForce.isEmpty()
+    val isEmpty get() = !isLoading && groups.isEmpty()
 }

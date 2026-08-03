@@ -93,7 +93,7 @@ quatro altera comportamento**: as chaves de 1.1 não têm consumidor, as depend�
 não são importadas por nenhum `.kt`, e os dois ports de 1.3 e 1.4 não têm implementação nem
 binding. É por isso que este grupo corre antes da quebra do grupo 2 em vez de depois dela.
 
-- [ ] 1.1 (paralelo) **A faixa inteira de chaves de string**, em
+- [x] 1.1 (paralelo) **A faixa inteira de chaves de string**, em
   `core/resources/src/commonMain/composeResources/values/strings.xml` **e**
   `core/resources/src/commonMain/composeResources/values-en/strings.xml`, na mesma tarefa e
   no mesmo passo: o rótulo da terceira origem (`exchange_rates_source_remote` — *"Cotação
@@ -107,7 +107,7 @@ binding. É por isso que este grupo corre antes da quebra do grupo 2 em vez de d
   nas secções que o arquivo já organiza assim. Uma chave que faltar depois entra pelos dois
   arquivos na tarefa que a descobrir: a regra do projeto é que uma chave presente num só é
   bug, e ela não tem exceção.
-- [ ] 1.2 (paralelo) **Ktor entra no projeto**, em `gradle/libs.versions.toml` e em
+- [x] 1.2 (paralelo) **Ktor entra no projeto**, em `gradle/libs.versions.toml` e em
   `feature/settings/impl/build.gradle.kts`, e em nenhum outro módulo. No catálogo: a versão
   (a estável mais recente compatível com Kotlin 2.3.10 e `kotlinx-serialization-json`
   1.8.0 — **confirmar na documentação corrente, não pela memória**) e os artefatos
@@ -121,7 +121,7 @@ binding. É por isso que este grupo corre antes da quebra do grupo 2 em vez de d
   de 4.2 precisarão. Verificação: `./gradlew :app:android:assembleDebug` e
   `./gradlew :app:desktop:run` compilam, e **nenhum outro `build.gradle.kts` menciona
   Ktor** — a restrição de D11 é estrutura de módulo, e é aqui que ela se paga.
-- [ ] 1.3 (paralelo) **O port da fonte remota**, arquivo novo em
+- [x] 1.3 (paralelo) **O port da fonte remota**, arquivo novo em
   `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRemoteRateSource.kt`,
   sem cliente HTTP algum e sem nomear provedor: `suspend fun quote(currency: String,
   against: String): RemoteQuote`, com `RemoteQuote` sendo o resultado de três formas —
@@ -133,7 +133,7 @@ binding. É por isso que este grupo corre antes da quebra do grupo 2 em vez de d
   O KDoc registra que este port é um **escritor** do acervo e nunca um caminho de leitura
   (D1), e que a direção pedida — `currency` cotada em `against` — é parte da forma de
   perguntar e não algo a corrigir na gravação (D4). Sem implementação e sem binding.
-- [ ] 1.4 (paralelo) **O port do estado da sincronização**, arquivo novo em
+- [x] 1.4 (paralelo) **O port do estado da sincronização**, arquivo novo em
   `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRateSyncStateRepository.kt`:
   um `observe(): StateFlow<RateSyncState>` e um `suspend fun record(state: RateSyncState)`,
   com `RateSyncState` carregando **o instante da última sincronização bem-sucedida** (nulo
@@ -155,7 +155,7 @@ Barreira de saída: o projeto compila e `./gradlew allTests` verde. **Nenhuma li
 existe** — nada a grava ainda —, então o valor novo é inerte e a precedência continua
 respondendo exatamente o que respondia.
 
-- [ ] 2.1 (paralelo) **`REMOTE` nos dois enums, e os quatro `when` que ele quebra.** É um
+- [x] 2.1 (paralelo) **`REMOTE` nos dois enums, e os quatro `when` que ele quebra.** É um
   corte só porque a quebra é de compilação: acrescentar o valor torna não-exaustivos os
   `when` que já existem, e fechá-los noutra tarefa deixaria a árvore sem compilar entre as
   duas.
@@ -185,7 +185,7 @@ respondendo exatamente o que respondia.
   Verificação: compila nas três plataformas; `./gradlew allTests` verde sem que nenhum teste
   mude de asserção — se um passar a afirmar coisa diferente, o corte está errado, porque
   todo o resto do código usa o enum por valor e não exaustivamente.
-- [ ] 2.2 (paralelo) **A política que `IExchangeRateRepository` promete deixa de ser
+- [x] 2.2 (paralelo) **A política que `IExchangeRateRepository` promete deixa de ser
   binária**, em `core/model/.../domain/repository/IExchangeRateRepository.kt`, e **só a
   prosa muda**: nenhuma assinatura entra, sai ou se altera — é isso que mantém os treze
   fakes de teste e os sete consumidores de produção intactos. O KDoc da interface troca
@@ -219,7 +219,7 @@ Barreira de saída: compila e `allTests` verde. **Ambas são aditivas**: a consu
 até 4.1 —, e a mudança de ranking, embora seja mudança de comportamento, é observavelmente
 inerte porque nenhuma linha `REMOTE` existe.
 
-- [ ] 3.1 (paralelo) **`core/database/.../dao/ExchangeRateDao.kt`: o ranking de três, nos
+- [x] 3.1 (paralelo) **`core/database/.../dao/ExchangeRateDao.kt`: o ranking de três, nos
   dois lugares, e a consulta da taxa em vigor.**
   - `rateOfPairAsOf` — o `CASE source WHEN 'USER' THEN 0 ELSE 1 END` vira um ranking
     explícito de três níveis (`USER` 0, `REMOTE` 1, `DERIVED` 2), **depois** do
@@ -246,7 +246,7 @@ inerte porque nenhuma linha `REMOTE` existe.
   vence a origem** (uma `REMOTE` de hoje vence uma `USER` de ontem, e a figura de ontem
   continua respondendo pela `USER`); os dois métodos concordam sobre o mesmo acervo, par a
   par; e a consulta em vigor devolve uma linha por par e não uma por moeda.
-- [ ] 3.2 (paralelo) **`feature/settings/impl/.../database/repository/RateResolver.kt`: a
+- [x] 3.2 (paralelo) **`feature/settings/impl/.../database/repository/RateResolver.kt`: a
   resposta implícita passa a saber que origem ela tem** (D10). Hoje o resolvedor devolve
   `Double?` e o repositório rotula tudo `DERIVED`, o que era legítimo enquanto o campo
   significava *"não é do usuário"* e deixa de ser com três origens. Acrescentar — **sem
@@ -276,7 +276,7 @@ sincronização não é resolvido por ninguém, e o use case não tem `factory`.
 liga a chave, e é essa separação que faz cada uma destas quatro poder ser escrita ao mesmo
 tempo.
 
-- [ ] 4.1 (paralelo) **`feature/settings/impl/.../database/repository/ExchangeRateRepository.kt`
+- [x] 4.1 (paralelo) **`feature/settings/impl/.../database/repository/ExchangeRateRepository.kt`
   passa a dizer a verdade sobre a origem, e a expor a taxa em vigor.** Trocar `answer` — que
   rotula toda resposta implícita como `ExchangeRate.Source.DERIVED` — pela origem que 3.2
   agora devolve, e passar `rateAsOf`, `ratesAsOf` e `rateBetween` a usar a resolução nova,
@@ -294,7 +294,7 @@ tempo.
   banco real: a resposta pela inversa de uma linha `REMOTE` declara `REMOTE`; a triangulação
   entre uma perna `USER` e uma `REMOTE` declara `REMOTE`, e entre `REMOTE` e `DERIVED`
   declara `DERIVED`; e a resposta implícita continua sem `id`.
-- [ ] 4.2 (paralelo) **A fonte remota sobre Ktor**, arquivos novos em
+- [x] 4.2 (paralelo) **A fonte remota sobre Ktor**, arquivos novos em
   `feature/settings/impl/.../network/` (o cliente e os DTOs da resposta), implementando
   `IRemoteRateSource` sobre **Frankfurter** — gratuito, sem chave, sem SLA. Uma requisição
   **por moeda em uso**, com `base=<moeda>&symbols=<base>`, e a razão está no KDoc porque ela
@@ -311,7 +311,7 @@ tempo.
   `MockEngine`: uma resposta de sexta lida num domingo produz a data de sexta; um código
   recusado produz *não coberta*, e um 5xx ou um corpo ilegível produzem *indisponível*; e a
   URL montada pede a direção certa.
-- [ ] 4.3 (paralelo) **O estado da sincronização, persistido**, arquivo novo em
+- [x] 4.3 (paralelo) **O estado da sincronização, persistido**, arquivo novo em
   `feature/settings/impl/.../database/repository/RateSyncStateRepository.kt`, implementando
   `IRateSyncStateRepository` sobre `multiplatform-settings`, que este módulo já usa (é o
   mesmo mecanismo de `BaseCurrencyRepository`, e as chaves são disjuntas das dele). Guarda o
@@ -321,7 +321,7 @@ tempo.
   Teste em `commonTest` com o `Settings` de teste que o módulo já usa: gravar e reabrir
   devolve o que foi gravado, e um repositório recém-criado antes da primeira sincronização
   responde *nunca sincronizou* em vez de uma data qualquer.
-- [ ] 4.4 (paralelo) **`SyncExchangeRatesUseCase`**, arquivo novo em
+- [x] 4.4 (paralelo) **`SyncExchangeRatesUseCase`**, arquivo novo em
   `core/model/.../domain/usecase/`, concreto e ao lado do `HarvestExchangeRateUseCase` que
   já mora ali (D11). Ele compõe, e não decide nada que já tenha dono: pede a
   `GetAccountCurrenciesUseCase.inUse` o conjunto de moedas em uso — contas **e** cartões —,
@@ -370,7 +370,7 @@ sem que nada na composição aguarde. A partir daqui existem linhas `REMOTE` no 
 por isso que este grupo vem **depois** do ranking do grupo 3 e da costura do grupo 4, e não
 antes: um produtor não pode preceder o leitor.
 
-- [ ] 5.1 (barreira; depende do grupo 4 inteiro) **O binding e o gatilho, num passo:**
+- [x] 5.1 (barreira; depende do grupo 4 inteiro) **O binding e o gatilho, num passo:**
   - **`core/model/.../di/ModelModule.kt`** — `factory { SyncExchangeRatesUseCase(...) }`, ao
     lado do `HarvestExchangeRateUseCase`, que é onde a camada de consolidação já declara os
     seus.
@@ -411,7 +411,7 @@ a ordem faria 7.1 nomear a saída de uma irmã.
 Barreira de saída: `allTests` verde; o histórico existe, é filtrável por data, moeda e
 origem, e os dois gates provam por inspeção e por banco real o que a spec exige.
 
-- [ ] 6.1 (paralelo) **A visão de histórico**, arquivos novos em
+- [x] 6.1 (paralelo) **A visão de histórico**, arquivos novos em
   `feature/settings/impl/.../ui/screen/exchangeRateHistory/` (UiState, ViewModel, Screen),
   mais a rota e o registro no grafo em
   `feature/settings/impl/.../ui/navigation/SettingsGraph.kt`. A rota é **interna ao
@@ -431,7 +431,7 @@ origem, e os dois gates provam por inspeção e por banco real o que a spec exig
   edição e a remoção continuam pelo `ExchangeRateFormModal`, que **não muda**. Testes de
   ViewModel: cada filtro isoladamente, os três compostos, o agrupamento e a ordem dos
   grupos, e o mesmo par nos dois sentidos aparecendo em dois grupos.
-- [ ] 6.2 (paralelo) **O gate estrutural: a fonte remota é escritor e não leitor**, arquivo
+- [x] 6.2 (paralelo) **O gate estrutural: a fonte remota é escritor e não leitor**, arquivo
   novo em `app/shared/src/jvmTest/`, no molde de inspeção de `BaseCurrencyReachTest` e de
   `RateIsNeverWrittenTest`. Ele fixa por nome os únicos arquivos de produção autorizados a
   nomear `IRemoteRateSource` — a declaração, a implementação Ktor, o
@@ -443,7 +443,7 @@ origem, e os dois gates provam por inspeção e por banco real o que a spec exig
   `feature/settings/impl` declara dependência de Ktor**, que é a metade estrutural de D11 —
   um `:core:network` foi descartado precisamente para que a restrição fosse módulo em vez de
   disciplina.
-- [ ] 6.3 (paralelo) **O gate de ponta a ponta da sincronização**, arquivo novo em
+- [x] 6.3 (paralelo) **O gate de ponta a ponta da sincronização**, arquivo novo em
   `app/shared/src/jvmTest/`, no molde de `CrossCurrencyEndToEndTest`: banco real, contas em
   três moedas, uma `IRemoteRateSource` de teste, e os cenários da spec que só um teste de
   ponta a ponta alcança — o usuário multimoeda passa a ter taxa **sem cadastrar nada**, e a
@@ -476,7 +476,7 @@ a taxa em vigor de cada par; o estado da sincronização aparece **ali e em nenh
 lugar**; e nenhuma figura consolidada exibe carregamento, erro ou qualquer sinal de
 sincronização.
 
-- [ ] 7.1 (barreira; depende de 6.1) **A tela de taxas passa a apresentar a taxa em vigor**,
+- [x] 7.1 (barreira; depende de 6.1) **A tela de taxas passa a apresentar a taxa em vigor**,
   em `ExchangeRatesUiState.kt`, `ExchangeRatesViewModel.kt`, `ExchangeRatesScreen.kt` e
   `ExchangeRatesDetail.kt`:
   - O UiState deixa de carregar grupos de observações e passa a carregar **uma linha por
@@ -516,7 +516,7 @@ sincronização.
 Barreira de entrada: 7.1. Barreira de saída: `./gradlew allTests` verde e nada abaixo
 encontra arquivo — se encontrar, a correção é na tarefa que deixou passar, não aqui.
 
-- [ ] 8.1 Passada de conferência, **verificação e não edição**: nenhuma chave de string
+- [x] 8.1 Passada de conferência, **verificação e não edição**: nenhuma chave de string
   existe em apenas um dos dois `strings.xml`; nenhuma das seis prosas que afirmavam origem
   binária ou rede confinada ao formulário sobrevive (`ExchangeRate.Source`,
   `ExchangeRateEntity.Source`, `ExchangeRateDao` nos dois métodos, `IExchangeRateRepository`,

@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.History
@@ -46,7 +45,6 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rates_add
 import com.neoutils.finsight.resources.exchange_rates_currency_not_covered
 import com.neoutils.finsight.resources.exchange_rates_sync_never
-import com.neoutils.finsight.resources.exchange_rates_sync_updated_at
 import com.neoutils.finsight.resources.exchange_rates_empty
 import com.neoutils.finsight.resources.exchange_rates_group_header
 import com.neoutils.finsight.resources.exchange_rates_open_history
@@ -55,7 +53,6 @@ import com.neoutils.finsight.ui.component.ExchangeRateRow
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
-import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -234,22 +231,26 @@ internal fun ExchangeRatesContent(
 }
 
 /**
- * When the archive was last brought up to date — **and never a loading state**. There is
- * nothing to spin on here: what is shown is a fact already persisted, and a failed
- * synchronisation is simply an instant that did not move.
+ * That the archive has **never** been brought up to date — and nothing at all once it has.
  *
- * It coexists with the *out of date* badge on each row rather than replacing it: without
- * this line, that badge is an accusation with no defendant, because the user cannot tell a
- * rate they never entered from one the app could not fetch.
+ * **It speaks only in the state the user can act on.** Stating the date of every successful
+ * round put a line of chrome above the archive that says nothing on the day it is read: the
+ * upkeep working is the ordinary case, and announcing the ordinary case every time is how a
+ * screen stops being read. *Never updated* is the other thing entirely — it is the one
+ * state where the rates on screen are only the ones the user put there, and it is worth a
+ * word.
+ *
+ * **Never a loading state**, either way: what is shown is a fact already persisted, and a
+ * failed synchronisation is simply an instant that did not move.
  */
 @Composable
 private fun SyncStatusLine(status: RateSyncStatus) {
-    val dateFormats = LocalDateFormats.current
+    if (status.lastSyncedOn != null) return
 
     // **An icon beside the words, on purpose.** A bare line of `onSurfaceVariant` text is
-    // precisely what a group heading looks like in this app, and this one carries a date —
-    // so as a bare line it was read as *the rates are grouped by day*. The icon is what
-    // makes it structurally a status and not a heading, before a single word is read.
+    // precisely what a group heading looks like in this app, so as a bare line this was
+    // read as one. The icon is what makes it structurally a status and not a heading,
+    // before a single word is read.
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -258,20 +259,13 @@ private fun SyncStatusLine(status: RateSyncStatus) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Icon(
-            imageVector = if (status.lastSyncedOn != null) Icons.Default.CloudDone else Icons.Default.CloudOff,
+            imageVector = Icons.Default.CloudOff,
             contentDescription = null,
             tint = colorScheme.onSurfaceVariant,
             modifier = Modifier.size(14.dp),
         )
         Text(
-            text = status.lastSyncedOn
-                ?.let {
-                    stringResource(
-                        Res.string.exchange_rates_sync_updated_at,
-                        dateFormats.monthDayYear.format(it),
-                    )
-                }
-                ?: stringResource(Res.string.exchange_rates_sync_never),
+            text = stringResource(Res.string.exchange_rates_sync_never),
             style = typography.labelSmall,
             color = colorScheme.onSurfaceVariant,
         )

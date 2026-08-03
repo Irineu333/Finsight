@@ -860,7 +860,6 @@
     <string name="exchange_rates_source_remote">Cotação automática</string>
     <string name="exchange_rates_source_user">Informada por você</string>
     <string name="exchange_rates_outdated">Desatualizada</string>
-    <string name="exchange_rates_sync_updated_at">Atualizado em %1$s</string>
     <string name="exchange_rates_sync_never">Ainda não atualizado</string>
     <string name="exchange_rates_currency_not_covered">%1$s não é coberta pela atualização automática — cadastre a taxa à mão</string>
     <string name="exchange_rates_open_history">Ver histórico</string>

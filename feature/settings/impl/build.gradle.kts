@@ -21,10 +21,11 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)
 
-            // Ktor vive aqui e em nenhum outro módulo. Um `:core:network` convidaria
-            // qualquer feature a usar rede, que é o oposto do que a consolidação de
-            // moedas quer: a fonte remota é escritora do acervo e nunca caminho de
-            // leitura, e é a estrutura de módulos que sustenta a restrição (design D11).
+            // Ktor lives here and in no other module. A `:core:network` would invite any
+            // feature to reach the network, which is the opposite of what currency
+            // consolidation wants: the remote source writes the archive and is never a
+            // path of reading it, and the module graph is what holds that restriction
+            // (design D11).
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.kotlinxJson)

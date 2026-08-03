@@ -54,11 +54,13 @@ data class RateSyncState(
  *
  * Persisting *when it last worked* is enough for the screen to say what it has to say,
  * and it survives a restart, which an in-memory error state would not. Failed? Nothing is
- * written for that currency, and the screen infers it from the old instant. There is no
+ * written for that pair, and the screen infers it from the old instant. There is no
  * event, no transient state to coordinate, and nothing to clear.
  *
- * It doubles as the **daily bound**, per currency: what was already answered today is not
- * asked again, and what was never asked is never blocked.
+ * It doubles as the **daily bound**, per pair: what was already answered today is not
+ * asked again, and what was never asked is never blocked. Per pair and not per currency,
+ * because the moment the base changes every currency would look answered while the row
+ * that just became the one that matters was never asked for (design D8d).
  *
  * **It has exactly one surface**, the rates screen: that screen is not a figure, it is the
  * archive explaining itself, and it is where the *out of date for more than 30 days*

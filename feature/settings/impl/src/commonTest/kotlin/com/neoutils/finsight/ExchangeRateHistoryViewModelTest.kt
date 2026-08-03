@@ -240,6 +240,38 @@ class ExchangeRateHistoryViewModelTest {
         assertEquals(2, viewModel.loaded().rates.size)
     }
 
+    /**
+     * The order within a day is **total and stable**, so two readings of the same archive
+     * list the day the same way. It is a property of what the rows are — counterpart, then
+     * currency, then id — and not of the order the archive happened to arrive in, which is
+     * why the assertion is that a shuffled archive reads identically.
+     */
+    @Test
+    fun `the order within a day does not depend on the order the archive was read in`() = runTest {
+        val rates = listOf(
+            rate("USD", counterCurrency = "BRL"),
+            rate("EUR", counterCurrency = "BRL"),
+            rate("JPY", counterCurrency = "USD"),
+            rate("BRL", counterCurrency = "USD"),
+        )
+        val expected = listOf(
+            "EUR" to "BRL",
+            "USD" to "BRL",
+            "BRL" to "USD",
+            "JPY" to "USD",
+        )
+
+        for (archive in listOf(rates, rates.reversed(), rates.shuffled(kotlin.random.Random(7)))) {
+            val day = viewModel(archive).loaded().groups.single()
+
+            assertEquals(
+                expected,
+                day.rates.map { it.rate.currency to it.rate.counterCurrency },
+                "the same day, listed the same way, whatever order the rows came in",
+            )
+        }
+    }
+
     @Test
     fun `an outdated observation is flagged and a recent one is not`() = runTest {
         val state = viewModel(

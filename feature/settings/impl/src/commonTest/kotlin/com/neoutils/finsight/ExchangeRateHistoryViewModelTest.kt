@@ -86,7 +86,7 @@ class ExchangeRateHistoryViewModelTest {
     private val ExchangeRateHistoryUiState.rates get() = groups.flatMap { it.rates }.map { it.rate }
 
     @Test
-    fun `groups are keyed by the counterpart currency and ordered by their newest`() = runTest {
+    fun `the history is partitioned by day, the most recent first`() = runTest {
         val viewModel = viewModel(
             listOf(
                 rate("EUR", counterCurrency = "BRL", date = february),
@@ -97,13 +97,31 @@ class ExchangeRateHistoryViewModelTest {
 
         val state = viewModel.loaded()
 
-        assertEquals(listOf("USD", "BRL"), state.groups.map { it.counterCurrency })
-        assertEquals(2, state.groups.single { it.counterCurrency == "BRL" }.rates.size)
+        assertEquals(listOf(march, february, january), state.groups.map { it.date })
+        assertEquals(1, state.groups.single { it.date == march }.rates.size)
     }
 
-    /** Two observations, not one shown backwards: each sits under its own heading. */
+    /**
+     * The reason the axis is the date: with a row per pair per day, the ordinary archive —
+     * everything priced in the base — would be a single group of hundreds of rows if it
+     * were keyed by the counterpart currency.
+     */
     @Test
-    fun `the same pair in both directions appears in two groups`() = runTest {
+    fun `the ordinary archive does not collapse into one group`() = runTest {
+        val days = (1..30).map { LocalDate(2026, 3, it) }
+        val state = viewModel(
+            days.flatMap { day ->
+                listOf(rate("USD", date = day), rate("EUR", date = day), rate("JPY", date = day))
+            }
+        ).loaded()
+
+        assertEquals(30, state.groups.size)
+        assertEquals(3, state.groups.first().rates.size)
+    }
+
+    /** Two observations, not one shown backwards — and on one day they share a heading. */
+    @Test
+    fun `the same pair in both directions appears in the same day, as two rows`() = runTest {
         val state = viewModel(
             listOf(
                 rate("USD", counterCurrency = "BRL"),
@@ -111,7 +129,15 @@ class ExchangeRateHistoryViewModelTest {
             )
         ).loaded()
 
-        assertEquals(setOf("BRL", "USD"), state.groups.map { it.counterCurrency }.toSet())
+        val day = state.groups.single()
+        assertEquals(march, day.date)
+        assertEquals(
+            // Ordered by the counterpart end first, so the day reads as a block of what is
+            // priced in reais and then a block of what is priced in dollars.
+            listOf("USD" to "BRL", "BRL" to "USD"),
+            day.rates.map { it.rate.currency to it.rate.counterCurrency },
+            "each in the direction it was observed in, in a total and stable order",
+        )
     }
 
     @Test

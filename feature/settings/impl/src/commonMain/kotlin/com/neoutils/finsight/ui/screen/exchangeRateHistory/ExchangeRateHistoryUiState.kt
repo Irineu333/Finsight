@@ -17,21 +17,24 @@ data class ExchangeRateHistoryItem(
 )
 
 /**
- * The observations priced **in** one currency — *what a euro, a dollar and a yen were
- * worth in reais*.
+ * Everything the archive observed on **one day**.
  *
- * A rate has two ends, so grouping has to pick one. The counterpart end is the one that
- * actually gathers: in the ordinary archive every rate is priced in the base — and the
- * automatic upkeep makes that more ordinary still, because it writes in exactly that
- * direction — so keying on the priced currency would put every row in a group of its own
- * and group nothing.
+ * **The axis is the date, and it is the only one that ages well.** The counterpart
+ * currency is what the in-force view groups by, and rightly — a handful of rows, headed by
+ * what they are priced in. Here it would do the opposite of grouping: the automatic upkeep
+ * writes a row per pair per day, and in the ordinary archive everything is priced in the
+ * base, so a counterpart heading collapses months of history into a single group of
+ * hundreds of rows. That is precisely the *groups nothing* failure the counterpart was
+ * chosen to avoid over there, reached from the other end. The date partitions the archive
+ * along the very axis it grows on.
  *
- * **Consequence accepted:** the same pair may appear under two headings, one per
- * direction. They are two distinct observations, and this screen shows observations —
- * never one of them inverted to join the other.
+ * The heading has to say nothing about currency because every row already does: each one
+ * states its pair on both ends, its value and its origin. **Consequence accepted:** the
+ * same pair observed in both directions on one day sits in one group, as two rows — which
+ * is what they are — each in the direction it was observed in.
  */
 data class ExchangeRateHistoryGroup(
-    val counterCurrency: String,
+    val date: LocalDate,
     val rates: List<ExchangeRateHistoryItem>,
 )
 

@@ -57,7 +57,6 @@ import com.neoutils.finsight.resources.exchange_rate_history_filter_date_range
 import com.neoutils.finsight.resources.exchange_rate_history_filter_source
 import com.neoutils.finsight.resources.exchange_rate_history_filter_source_any
 import com.neoutils.finsight.resources.exchange_rate_history_title
-import com.neoutils.finsight.resources.exchange_rates_group_header
 import com.neoutils.finsight.resources.exchange_rates_source_derived
 import com.neoutils.finsight.resources.exchange_rates_source_remote
 import com.neoutils.finsight.resources.exchange_rates_source_user
@@ -93,6 +92,7 @@ fun ExchangeRateHistoryScreen(
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+    val dateFormats = LocalDateFormats.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("exchange_rate_history")
@@ -147,12 +147,12 @@ fun ExchangeRateHistoryScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     uiState.groups.forEach { group ->
-                        item(key = "group-${group.counterCurrency}") {
+                        item(key = "group-${group.date}") {
+                            // The date alone, and nothing about currency: every row below
+                            // states its own pair on both ends, so a heading naming a
+                            // currency would say a third time what the rows already say.
                             Text(
-                                text = stringResource(
-                                    Res.string.exchange_rates_group_header,
-                                    group.counterCurrency,
-                                ),
+                                text = dateFormats.monthDayYear.format(group.date),
                                 style = typography.labelLarge,
                                 color = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),

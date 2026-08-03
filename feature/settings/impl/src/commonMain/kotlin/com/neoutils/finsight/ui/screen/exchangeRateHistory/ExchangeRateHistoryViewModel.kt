@@ -20,14 +20,13 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Every observation the archive holds, grouped by the currency each is priced **in**, and
- * narrowed by date, currency and origin.
+ * Every observation the archive holds, grouped by the **day** it speaks about, and narrowed
+ * by date, currency and origin.
  *
  * Grouping and its order are the only things this adds to the list, and the order is the
- * natural extension of the `ORDER BY date DESC` the DAO already does: the currency with
- * the most recent observation first. What each row *means* does not depend on the heading
- * above it — the row states its own pair — so a pair observed in both directions
- * legitimately appears under two headings.
+ * natural extension of the `ORDER BY date DESC` the DAO already does: the most recent day
+ * first. What each row *means* does not depend on the heading above it — the row states its
+ * own pair — which is what lets the heading be a date and say nothing about currency at all.
  *
  * The filters are applied here and not in a query for one reason: they are a question
  * about presentation, not about which observation answers for a pair. That second
@@ -54,14 +53,18 @@ class ExchangeRateHistoryViewModel(
             groups = rates
                 .filter { filters.accepts(it) }
                 .map { ExchangeRateHistoryItem(rate = it, isOutdated = it.date < staleBefore) }
-                .groupBy { it.rate.counterCurrency }
-                .map { (counterCurrency, items) ->
+                .groupBy { it.rate.date }
+                .map { (date, items) ->
                     ExchangeRateHistoryGroup(
-                        counterCurrency = counterCurrency,
-                        rates = items.sortedByDescending { it.rate.date },
+                        date = date,
+                        // Total and stable, so two reads of the same archive list a day in
+                        // the same order — SQL row order is not a promise.
+                        rates = items.sortedWith(
+                            compareBy({ it.rate.counterCurrency }, { it.rate.currency }, { it.rate.id }),
+                        ),
                     )
                 }
-                .sortedByDescending { group -> group.rates.first().rate.date },
+                .sortedByDescending { group -> group.date },
             filters = filters,
             // Offered out of the **whole** archive and not out of what is on screen: a
             // filter that only offers what survives the current one cannot be widened.

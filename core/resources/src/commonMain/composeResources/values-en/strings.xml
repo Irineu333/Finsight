@@ -866,10 +866,7 @@
     <string name="exchange_rate_history_title">Rate history</string>
     <string name="exchange_rate_history_empty">No observation matches the filters.</string>
     <string name="exchange_rate_history_filter_date">Date</string>
-    <string name="exchange_rate_history_filter_date_any">Any date</string>
     <string name="exchange_rate_history_filter_date_range">From %1$s to %2$s</string>
-    <string name="exchange_rate_history_filter_date_start">Start date</string>
-    <string name="exchange_rate_history_filter_date_end">End date</string>
     <string name="exchange_rate_history_filter_currency">Currency</string>
     <string name="exchange_rate_history_filter_currency_any">Any currency</string>
     <string name="exchange_rate_history_filter_source">Source</string>

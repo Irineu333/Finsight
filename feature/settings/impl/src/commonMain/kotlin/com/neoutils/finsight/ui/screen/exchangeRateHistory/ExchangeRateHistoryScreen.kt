@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -52,7 +51,6 @@ import com.neoutils.finsight.resources.exchange_rate_history_filter_clear
 import com.neoutils.finsight.resources.exchange_rate_history_filter_currency
 import com.neoutils.finsight.resources.exchange_rate_history_filter_currency_any
 import com.neoutils.finsight.resources.exchange_rate_history_filter_date
-import com.neoutils.finsight.resources.exchange_rate_history_filter_date_any
 import com.neoutils.finsight.resources.exchange_rate_history_filter_date_range
 import com.neoutils.finsight.resources.exchange_rate_history_filter_source
 import com.neoutils.finsight.resources.exchange_rate_history_filter_source_any
@@ -128,7 +126,6 @@ fun ExchangeRateHistoryScreen(
                 onFilterByDate = viewModel::onFilterByDate,
                 onFilterByCurrency = viewModel::onFilterByCurrency,
                 onFilterBySource = viewModel::onFilterBySource,
-                onClearFilters = viewModel::onClearFilters,
             )
 
             when {
@@ -139,7 +136,11 @@ fun ExchangeRateHistoryScreen(
                     CircularProgressIndicator()
                 }
 
-                uiState.isEmpty -> EmptyState(modifier = Modifier.fillMaxSize())
+                uiState.isEmpty -> EmptyState(
+                    canClearFilters = uiState.filters.isActive,
+                    onClearFilters = viewModel::onClearFilters,
+                    modifier = Modifier.fillMaxSize(),
+                )
 
                 else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -174,9 +175,15 @@ fun ExchangeRateHistoryScreen(
 }
 
 /**
- * The three filters, as chips that state what they are narrowing by rather than what they
- * could narrow by: an unset chip reads *any date*, *any currency*, *any source*, so the
- * bar always says what the list below it is.
+ * The three filters, as chips that carry **one** word each.
+ *
+ * A chip states the dimension while it narrows nothing — *Data*, *Moeda*, *Origem* — and
+ * the value once it does. It used to state both at once, which doubled the width of a bar
+ * that is chrome above the thing the user came to read, and said *Data: qualquer data*,
+ * where the first half was the only informative part.
+ *
+ * **There is no clear-all here.** Clearing belongs to the state where it is the way out —
+ * the empty result — which is where this app puts it.
  */
 @Composable
 private fun FilterBar(
@@ -184,96 +191,70 @@ private fun FilterBar(
     onFilterByDate: (LocalDate?, LocalDate?) -> Unit,
     onFilterByCurrency: (String?) -> Unit,
     onFilterBySource: (ExchangeRate.Source?) -> Unit,
-    onClearFilters: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
     val filters = uiState.filters
+    val start = filters.start
+    val end = filters.end
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         FilterChip(
-            selected = filters.start != null || filters.end != null,
+            selected = start != null && end != null,
             onClick = {
                 modalManager.show(
                     DateRangePickerModal(
-                        initialStartDate = filters.start,
-                        initialEndDate = filters.end,
-                        onRangeSelected = { start, end -> onFilterByDate(start, end) },
+                        initialStartDate = start,
+                        initialEndDate = end,
+                        onRangeSelected = { from, to -> onFilterByDate(from, to) },
                     )
                 )
             },
             label = {
                 Text(
-                    text = when {
-                        filters.start != null && filters.end != null -> stringResource(
+                    text = if (start != null && end != null) {
+                        stringResource(
                             Res.string.exchange_rate_history_filter_date_range,
-                            dateFormats.monthDayYear.format(filters.start),
-                            dateFormats.monthDayYear.format(filters.end),
+                            dateFormats.monthDayYear.format(start),
+                            dateFormats.monthDayYear.format(end),
                         )
-
-                        else -> stringResource(Res.string.exchange_rate_history_filter_date_any)
-                    }
+                    } else {
+                        stringResource(Res.string.exchange_rate_history_filter_date)
+                    },
+                    maxLines = 1,
                 )
             },
-            leadingIcon = { FilterLabel(Res.string.exchange_rate_history_filter_date) },
         )
 
         DropdownFilterChip(
-            label = Res.string.exchange_rate_history_filter_currency,
-            selectedText = filters.currency
-                ?: stringResource(Res.string.exchange_rate_history_filter_currency_any),
-            isSelected = filters.currency != null,
+            unsetLabel = Res.string.exchange_rate_history_filter_currency,
+            selectedText = filters.currency,
             options = uiState.currencies.map { it to it },
             anyOption = stringResource(Res.string.exchange_rate_history_filter_currency_any),
             onSelect = onFilterByCurrency,
         )
 
         DropdownFilterChip(
-            label = Res.string.exchange_rate_history_filter_source,
-            selectedText = filters.source?.let { stringResource(it.labelRes()) }
-                ?: stringResource(Res.string.exchange_rate_history_filter_source_any),
-            isSelected = filters.source != null,
+            unsetLabel = Res.string.exchange_rate_history_filter_source,
+            selectedText = filters.source?.let { stringResource(it.labelRes()) },
             options = ExchangeRate.Source.entries.map { it.name to stringResource(it.labelRes()) },
             anyOption = stringResource(Res.string.exchange_rate_history_filter_source_any),
             onSelect = { name -> onFilterBySource(name?.let(ExchangeRate.Source::valueOf)) },
         )
-
-        if (filters.isActive) {
-            TextButton(onClick = onClearFilters) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = stringResource(Res.string.exchange_rate_history_filter_clear),
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
     }
 }
 
 @Composable
-private fun FilterLabel(resource: StringResource) {
-    Text(
-        text = stringResource(resource),
-        style = typography.labelSmall,
-        color = colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
 private fun DropdownFilterChip(
-    label: StringResource,
-    selectedText: String,
-    isSelected: Boolean,
+    unsetLabel: StringResource,
+    /** The value it narrows by, or `null` while it narrows nothing. */
+    selectedText: String?,
     options: List<Pair<String, String>>,
     anyOption: String,
     onSelect: (String?) -> Unit,
@@ -282,10 +263,9 @@ private fun DropdownFilterChip(
 
     Box {
         FilterChip(
-            selected = isSelected,
+            selected = selectedText != null,
             onClick = { expanded = true },
-            label = { Text(text = selectedText) },
-            leadingIcon = { FilterLabel(label) },
+            label = { Text(text = selectedText ?: stringResource(unsetLabel), maxLines = 1) },
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
@@ -323,9 +303,21 @@ private fun ExchangeRate.Source.labelRes() = when (this) {
     ExchangeRate.Source.USER -> Res.string.exchange_rates_source_user
 }
 
-/** The shape every empty list of this app takes: the subject's own icon, then the word. */
+/**
+ * The shape every empty list of this app takes: the subject's own icon, then the word —
+ * and, when filters are what emptied it, the way out.
+ *
+ * **This is the only place clearing is offered**, which is this app's convention: an action
+ * standing permanently beside the filters is chrome the user pays for every time the screen
+ * opens, to undo something they have not done yet. Here it is the answer to the question
+ * the screen is asking.
+ */
 @Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
+private fun EmptyState(
+    canClearFilters: Boolean,
+    onClearFilters: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -345,5 +337,14 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             color = colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+
+        if (canClearFilters) {
+            TextButton(
+                onClick = onClearFilters,
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text(text = stringResource(Res.string.exchange_rate_history_filter_clear))
+            }
+        }
     }
 }

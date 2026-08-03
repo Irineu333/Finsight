@@ -29,9 +29,6 @@ fun NavGraphBuilder.settingsGraph() {
                 SettingsScreen(
                     onNavigateBack = { navController.navigateUp() },
                     onOpenExchangeRates = { navController.navigate(ExchangeRatesRoute) },
-                    onOpenExchangeRateHistory = { currency ->
-                        navController.navigate(ExchangeRateHistoryRoute(currency))
-                    },
                     onOpenCurrencies = { navController.navigate(CurrenciesRoute) },
                 )
             }

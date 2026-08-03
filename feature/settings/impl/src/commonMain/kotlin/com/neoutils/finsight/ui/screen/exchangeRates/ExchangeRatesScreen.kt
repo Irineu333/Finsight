@@ -146,9 +146,14 @@ fun ExchangeRatesScreen(
 
 /**
  * The archive itself — the upkeep's state, the rate in force for each pair, and the two
- * states it can be in instead — shared by the full-screen route [ExchangeRatesScreen] and
- * the detail-pane [ExchangeRatesDetail]. The host owns its own chrome (top bar or pane
- * header) and the button that adds a rate; what an archive *is* lives here, once.
+ * states it can be in instead. [ExchangeRatesScreen] owns the chrome around it: the top
+ * bar, the way to the history and the button that adds a rate.
+ *
+ * **The archive has one presentation, and it is a route.** It used to open in the detail
+ * pane in extra-wide windows, beside the settings screen that led to it, and that is gone:
+ * the archive is a place the user goes to and works in — filtering, correcting, removing —
+ * not a thing glanced at beside something else, and a second presentation of it was a
+ * second set of states to keep true for no question it answered better.
  *
  * **Nothing here leaks into a figure.** The ban on loading states is about a consolidated
  * figure — a balance may carry no spinner and may not fail — and this screen is not a
@@ -156,7 +161,7 @@ fun ExchangeRatesScreen(
  * of the synchronisation.
  */
 @Composable
-internal fun ExchangeRatesContent(
+private fun ExchangeRatesContent(
     uiState: ExchangeRatesUiState,
     onOpenHistory: (currency: String?) -> Unit,
     modifier: Modifier = Modifier,

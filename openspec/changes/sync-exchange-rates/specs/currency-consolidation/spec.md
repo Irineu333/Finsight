@@ -92,7 +92,9 @@ O sistema SHALL apresentar o acervo em duas visões distintas: a **taxa em vigor
 
 A visão de entrada SHALL ser a da taxa em vigor: uma linha por par, com a observação que hoje responde por ele segundo a política do acervo. Ela SHALL ser a visão de entrada porque é a pergunta que o usuário leva até esta tela — *qual taxa está sendo usada* —, e porque com a manutenção automática o acervo passa a crescer todos os dias, tornando a listagem integral ilegível como apresentação primária.
 
-Cada linha da visão em vigor SHALL declarar o par nas duas pontas, o valor, a data e a origem da observação que responde, e SHALL permitir alcançar o histórico daquele par.
+Cada linha da visão em vigor SHALL declarar o par nas duas pontas, o valor, a data e a origem da observação que responde, e SHALL permitir alcançar o histórico da **moeda** daquela linha.
+
+O que se alcança é a moeda e não o par porque o histórico filtra por moeda nomeada em **qualquer das duas pontas**: tocar numa linha do dólar precificado em real apresenta também o real precificado em dólar, que são observações distintas e são lidas como tais. Estreitar isso ao par exigiria uma dimensão de filtro que o histórico não oferece, e ela responderia pior à pergunta que leva o usuário até lá — *o que já se observou sobre esta moeda*.
 
 A visão em vigor SHALL apresentar o estado da manutenção automática nos casos em que ele é **acionável**: que o acervo **nunca** foi atualizado, e, por moeda em uso, que ela não é coberta pela fonte remota. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
 
@@ -110,9 +112,9 @@ O sinal de taxa desatualizada SHALL conviver com o estado da sincronização, e 
 - **WHEN** uma linha da visão em vigor é inspecionada
 - **THEN** ela declara o par nas duas pontas, o valor, a data e a origem da observação que responde
 
-#### Scenario: O histórico do par é alcançável
+#### Scenario: O histórico da moeda é alcançável
 - **WHEN** o usuário toca numa linha da visão em vigor
-- **THEN** o histórico daquele par é apresentado
+- **THEN** o histórico chega pré-filtrado pela moeda daquela linha, com as observações que a nomeiam em qualquer das duas pontas
 
 #### Scenario: Nunca ter atualizado é dito na tela de taxas
 - **WHEN** o usuário abre a visão em vigor e o acervo nunca foi atualizado com sucesso

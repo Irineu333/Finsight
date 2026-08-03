@@ -492,7 +492,7 @@ sincronização.
     O sinal de desatualizada **convive** com o de sincronização e não o substitui: sem saber
     se o app conseguiu atualizar, o usuário não tem como distinguir uma taxa velha que ele
     não cadastrou de uma que o app não conseguiu buscar (D9).
-  - A tela passa a alcançar o **histórico** — o inteiro, e o daquele par ao tocar numa linha,
+  - A tela passa a alcançar o **histórico** — o inteiro, e o daquela moeda ao tocar numa linha,
     pela rota que 6.1 declarou. O `+` que cadastra uma taxa continua onde está, e o
     `ExchangeRateFormModal` continua o mesmo.
   - `ExchangeRatesDetail` acompanha pelo `ExchangeRatesContent` compartilhado, que continua

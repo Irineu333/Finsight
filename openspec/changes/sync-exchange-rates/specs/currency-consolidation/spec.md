@@ -96,6 +96,8 @@ Cada linha da visão em vigor SHALL declarar o par nas duas pontas, o valor, a d
 
 A visão em vigor SHALL apresentar o estado da manutenção automática: **quando o acervo foi atualizado pela última vez com sucesso**, e, por moeda em uso, se ela não é coberta pela fonte remota. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
 
+O estado da manutenção MUST NOT ocupar o lugar de um cabeçalho de grupo nem se parecer com um. Ele fala sobre **o acervo inteiro** e não sobre as linhas que o seguem, e apresentado como uma linha de texto solta acima da lista ele é lido como o cabeçalho daquelas linhas — o que, carregando ele uma data, faz a tela afirmar que as taxas estão agrupadas por dia.
+
 O sinal de taxa desatualizada SHALL conviver com o estado da sincronização, e não substituí-lo: sem saber se o app conseguiu atualizar, o usuário não tem como distinguir uma taxa velha que ele não cadastrou de uma que o app não conseguiu buscar.
 
 #### Scenario: A entrada mostra uma linha por par
@@ -113,6 +115,14 @@ O sinal de taxa desatualizada SHALL conviver com o estado da sincronização, e 
 #### Scenario: O estado da sincronização é dito na tela de taxas
 - **WHEN** o usuário abre a visão em vigor
 - **THEN** ela informa quando o acervo foi atualizado com sucesso pela última vez
+
+#### Scenario: A entrada agrupa pela moeda contraparte
+- **WHEN** o usuário abre a visão em vigor com o dólar, o euro e o iene cotados em real
+- **THEN** existe um cabeçalho único, o do real, com as três linhas sob ele
+
+#### Scenario: O estado da manutenção não é lido como cabeçalho
+- **WHEN** a visão em vigor apresenta quando o acervo foi atualizado
+- **THEN** aquilo se distingue de um cabeçalho de grupo, e nenhuma linha da lista aparece como se estivesse agrupada por data
 
 #### Scenario: O estado da sincronização não vaza para as figuras
 - **WHEN** qualquer tela com figura consolidada é aberta
@@ -322,7 +332,9 @@ Não havendo caminho algum, o sistema MUST NOT tratar a taxa como `1`, MUST NOT 
 
 ### Requirement: A tela de taxas agrupa as observações pela moeda contraparte
 
-A visão de **histórico** do acervo SHALL agrupar as observações pela **moeda contraparte** — aquela em que as linhas do grupo estão precificadas. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+**As duas visões** do acervo — a taxa em vigor e o histórico — SHALL agrupar as suas linhas pela **moeda contraparte**, aquela em que as linhas do grupo estão precificadas. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+
+Reduzir o acervo a uma linha por par MUST NOT ser confundido com dispensar o agrupamento: a redução é sobre **quantas** linhas existem, e não diz nada sobre como elas são encabeçadas. Uma lista plana deixa a coluna de cotações sem nada declarando em que elas estão precificadas, e o que quer que esteja acima dela passa a ser lido como o cabeçalho que faltou.
 
 A escolha da ponta é decidida pelo caso comum, e não pela simetria: no acervo ordinário toda observação é precificada na base em vigor — e a manutenção automática a torna ainda mais ordinária, porque grava exatamente nessa direção —, então agrupar pela moeda **precificada** poria cada linha num grupo de uma só e não agruparia nada. A contraparte é a ponta que de fato reúne, e o cabeçalho passa a ser a frase que o usuário veio ler.
 

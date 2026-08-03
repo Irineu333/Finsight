@@ -598,3 +598,32 @@ compila, e trocar a base busca os pares novos no mesmo dia.
 - [x] 10.3 **Terceira passada de conferência**: `BaseCurrencyReachTest` continua com a mesma
   lista; `RemoteSourceIsNeverReadTest` continua fixando quatro arquivos; nenhuma tela ganhou
   estado de carregamento ou comando de sincronizar.
+
+---
+
+## 11. A entrada volta a agrupar, e o estado da manutenção sai do lugar de cabeçalho
+
+Descoberto em teste manual depois do grupo 10, e são **dois** erros somados que produzem um
+sintoma só. A tarefa 7.1 substituiu a listagem agrupada por uma lista plana de uma linha por
+par — confundindo *quantas linhas existem* com *como elas são encabeçadas* — e pôs o estado
+da manutenção exatamente no lugar visual que o cabeçalho de grupo ocupava, com a mesma cor,
+o mesmo recuo e tipografia quase igual. Como esse estado carrega uma data, a tela passou a
+afirmar que as taxas estavam agrupadas por dia. Nenhum teste pegou porque nenhum afirmava
+nada sobre agrupamento na visão em vigor — a 7.1 removeu essa asserção junto com o
+comportamento.
+
+Barreira de saída: `./gradlew jvmTest` verde e a entrada do acervo lê como lia antes —
+agrupada pela moeda contraparte —, com o estado da manutenção distinguível de um cabeçalho.
+
+- [x] 11.1 **O agrupamento volta à visão em vigor**, em `ExchangeRatesUiState.kt`,
+  `ExchangeRatesViewModel.kt` e `ExchangeRatesScreen.kt`: entra
+  `ExchangeRateInForceGroup`, com a mesma chave e a mesma ordem que o histórico usa — é a
+  mesma pergunta sobre as mesmas linhas. Testes de ViewModel que **fixam** o agrupamento, que
+  é o que faltava para a regressão ter sido pega.
+- [x] 11.2 **O estado da manutenção sai da lista e ganha um ícone**, para deixar de ocupar
+  e de parecer o lugar de um cabeçalho: ele fala sobre o acervo inteiro, não sobre as linhas
+  que o seguem. O ícone é o que o torna estruturalmente um estado antes de qualquer palavra
+  ser lida.
+- [x] 11.3 **Conferência**: nenhuma chave de string nova (`exchange_rates_group_header` já
+  existia); `ConsolidationBoundaryTest` volta a listar o `ExchangeRatesViewModel`, que torna
+  a ler a data e a contraparte para agrupar.

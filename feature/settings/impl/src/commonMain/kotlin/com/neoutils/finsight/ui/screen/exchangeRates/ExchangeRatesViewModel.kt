@@ -43,6 +43,12 @@ class ExchangeRatesViewModel(
 
     private val baseCurrency = baseCurrencyRepository.observe()
 
+    // A **cold** flow, and a one-shot read on purpose: it re-runs on every subscription,
+    // which `WhileSubscribed` renews each time the screen is returned to. The set only
+    // changes when an account or a card is created, and neither is reachable from here —
+    // so there is no window in which this is stale while anyone is looking at it, and
+    // widening [GetAccountCurrenciesUseCase] to a Flow would buy nothing for two other
+    // consumers that do not want it.
     private val currenciesInUse = flow { emit(getAccountCurrencies().inUse) }
 
     val uiState = combine(

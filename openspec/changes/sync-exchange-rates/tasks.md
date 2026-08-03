@@ -647,3 +647,27 @@ confiável de a tela deixar de ser lida, inclusive no dia em que ela tiver algo 
 - [x] 12.2 **A spec passa a exigir só o acionável**: *nunca atualizado* e *moeda não
   coberta*, com a proibição de anunciar a manutenção que funcionou, e os dois cenários
   correspondentes.
+
+---
+
+## 13. O acervo passa a ter uma apresentação só
+
+Pedido depois do grupo 12. O acervo abria no painel de detalhe em janelas extra-largas, ao
+lado da tela de configurações que levava a ele, e passa a existir **só como rota**.
+
+A razão é o que a change fez do acervo: ele deixou de ser uma lista para olhar e virou um
+lugar onde se **trabalha** — filtrar, alcançar o histórico de um par, corrigir, remover. Uma
+segunda apresentação disso era um segundo conjunto de estados a manter verdadeiro sem
+responder melhor a nenhuma pergunta.
+
+Nenhuma spec exige o painel para o acervo: `adaptive-detail-pane` enumera as superfícies
+adaptativas — os detalhes `view*` e as configurações do widget do dashboard — e o acervo não
+está entre elas; a noção de detalhe *pane-only* que ele usava continua de pé e continua com
+dono, no chat do suporte.
+
+- [x] 13.1 **`ExchangeRatesDetail` é removido**, e com ele o ramo por largura de janela em
+  `SettingsScreen` (o `DisposableEffect` que dispensava o painel ao sair de Configurações, o
+  `detailController` e o `isExtraWideWindow` locais). `ExchangeRatesContent` deixa de ser
+  compartilhado e passa a `private`, com o KDoc dizendo por que a apresentação é uma só.
+  `isExtraWideWindow` e o mecanismo de painel **não** ficam órfãos: seguem em uso pela shell
+  e pelo suporte.

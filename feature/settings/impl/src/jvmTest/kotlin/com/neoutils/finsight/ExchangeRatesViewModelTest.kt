@@ -214,8 +214,13 @@ class ExchangeRatesViewModelTest {
         assertEquals("BRL", state.baseCurrency)
     }
 
+    /**
+     * The instant is what distinguishes *never* from *already*, and nothing more: the
+     * screen never announces the upkeep that worked, so what is asserted here is that the
+     * state carries the date — not that anything renders it.
+     */
     @Test
-    fun `the instant of the last successful synchronisation is presented`() = runTest {
+    fun `a synchronisation that happened leaves the never state behind`() = runTest {
         val yesterday = today.minus(1, DateTimeUnit.DAY)
         val state = viewModel(
             syncState = RateSyncState(

@@ -35,7 +35,14 @@ import org.koin.compose.viewmodel.koinViewModel
  * The content is [ExchangeRatesContent], unchanged; only the button that adds a rate is
  * restated here, since it belongs to the host and not to the archive.
  */
-class ExchangeRatesDetail : AdaptivePane() {
+class ExchangeRatesDetail(
+    /**
+     * The way to the history, which is a **route** and therefore the host's to give: a
+     * pane has no navigation of its own, and the archive still has to be able to reach
+     * the observations behind the rate in force.
+     */
+    private val onOpenHistory: (currency: String?) -> Unit = {},
+) : AdaptivePane() {
 
     @Composable
     override fun PaneContent() {
@@ -51,6 +58,7 @@ class ExchangeRatesDetail : AdaptivePane() {
         Box(modifier = Modifier.fillMaxSize()) {
             ExchangeRatesContent(
                 uiState = uiState,
+                onOpenHistory = onOpenHistory,
                 modifier = Modifier.fillMaxSize(),
             )
 

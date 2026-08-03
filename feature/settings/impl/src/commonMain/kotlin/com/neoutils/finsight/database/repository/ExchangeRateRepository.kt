@@ -15,10 +15,9 @@ import kotlinx.datetime.LocalDate
  *
  * Two policies meet here and they are deliberately not the same one:
  *
- * - *the last observation on or before the date, per pair, the user's over the derived
- *   one* is the DAO's query, stated once, in SQL;
- * - *direct ▸ inverse ▸ one pivot* is [resolveRate], pure and over what that query
- *   returned.
+ * - *the last observation on or before the date, per pair, ties on that date broken by
+ *   origin — `USER` ▸ `REMOTE` ▸ `DERIVED`* is the DAO's query, stated once, in SQL;
+ * - *direct ▸ inverse ▸ one pivot* is [resolve], pure and over what that query returned.
  *
  * [IExchangeRateRepository] has always promised rates **against the base**. That used to
  * be true by accident — there was only ever one base, and every row was on its axis.
@@ -50,7 +49,7 @@ class ExchangeRateRepository(
             .distinct()
             .filter { it != base }
             .mapNotNull { currency ->
-                observations.resolveRate(currency, base)?.let { currency to answer(currency, base, date, it) }
+                observations.resolve(currency, base)?.let { currency to answer(currency, base, date, it) }
             }
             .toMap()
     }
@@ -61,7 +60,7 @@ class ExchangeRateRepository(
         // included, instead of the derived answer below.
         dao.rateOfPairAsOf(from, to, date)?.let { return mapper.toDomain(it) }
 
-        val resolved = dao.ratesAsOf(date).map(mapper::toDomain).resolveRate(from, to) ?: return null
+        val resolved = dao.ratesAsOf(date).map(mapper::toDomain).resolve(from, to) ?: return null
         return answer(from, to, date, resolved)
     }
 
@@ -69,16 +68,37 @@ class ExchangeRateRepository(
      * A rate the archive **implies** rather than holds.
      *
      * `id = 0` because it is no row: it was read out of the observations, not stored
-     * beside them, and offering it an id would invite something to write it back. The
-     * origin is [ExchangeRate.Source.DERIVED] for the same reason — nobody typed it.
+     * beside them, and offering it an id would invite something to write it back — that
+     * is still what keeps the implied answer from returning to the archive.
+     *
+     * The origin is **the one the observations it was read from actually have**: the
+     * origin of the single observation when there is one — the inverse being that same
+     * observation read backwards — and the weakest of the two in a triangulation.
+     * Labelling everything `DERIVED` was legitimate while the field meant *"not the
+     * user's"*; with three origins it would be a claim about where a number came from
+     * that is simply untrue.
      */
-    private fun answer(from: String, to: String, date: LocalDate, rate: Double) = ExchangeRate(
+    private fun answer(from: String, to: String, date: LocalDate, resolved: ResolvedRate) = ExchangeRate(
         currency = from,
         counterCurrency = to,
         date = date,
-        rate = rate,
-        source = ExchangeRate.Source.DERIVED,
+        rate = resolved.rate,
+        source = resolved.source,
     )
+
+    /**
+     * The rate **in force** for every pair, as of [date] — one row per pair, elected by
+     * the archive's own policy in the DAO's query.
+     *
+     * **A member of this type and not of [IExchangeRateRepository]**, deliberately. It is
+     * a read only the rates screen makes, and putting it on the interface would oblige
+     * the thirteen fakes that implement it to answer a question their modules never ask.
+     * The interface's signatures are what `ConsolidateMoneyUseCase`, the view models and
+     * every screen showing a figure depend on, and none of them moved.
+     */
+    fun observeInForce(date: LocalDate): Flow<List<ExchangeRate>> {
+        return dao.observeInForce(date).map { rates -> rates.map(mapper::toDomain) }
+    }
 
     override fun observeAll(): Flow<List<ExchangeRate>> {
         return dao.observeAll().map { rates -> rates.map(mapper::toDomain) }

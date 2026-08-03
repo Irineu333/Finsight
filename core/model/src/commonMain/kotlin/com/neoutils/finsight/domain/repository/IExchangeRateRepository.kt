@@ -5,13 +5,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
 /**
- * The archive of exchange rates, and the one place the reading policy lives:
- * **the last rate on or before the date, the user's winning over a derived one of the
- * same date.**
+ * The archive of exchange rates, and the one place the reading policy lives: **the last
+ * rate on or before the date, ties on the same date broken by origin, `USER` ▸ `REMOTE`
+ * ▸ `DERIVED`.**
  *
- * The stored rate is the only authority in any conversion. An external source may fill
- * the field in as a suggestion, inside the screen that edits a rate and nowhere else:
- * no read of this app waits on the network, shows a loading state, or fails when one is
+ * The ranking breaks ties **inside** a date and never over one — a more recent
+ * observation wins whatever either origin is — and the quote outranks the harvest because
+ * a harvested rate carries what the operation charged and answers *how much it cost*,
+ * while a quote answers *how much it was worth*. Consolidating is valuing.
+ *
+ * The stored rate is the only authority in any conversion. **A remote source writes into
+ * this archive**, like every other writer, and is consulted by no read: the guarantee is
+ * that **no read waits on the network**, and it is now held by the *direction of the
+ * flow* — the network writes rows, every figure reads the same local table — rather than
+ * by forbidding the source to exist. An external source may also fill the field in as a
+ * suggestion inside the screen that edits a rate, and it only counts if the user confirms
+ * it. Either way no read of this app shows a loading state or fails when a source is
  * unreachable.
  */
 interface IExchangeRateRepository {

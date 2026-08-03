@@ -4,9 +4,29 @@ import com.neoutils.finsight.domain.model.ExchangeRate
 import kotlinx.datetime.LocalDate
 
 /**
+ * A rate the archive **implies** rather than holds, and the origin it may honestly claim.
+ *
+ * The origin is not decoration. While the field meant *"not the user's"* labelling every
+ * implied answer `DERIVED` was legitimate; with three origins it is a lie, and the one
+ * place it would be read — the precedence — is exactly where a lie costs something.
+ *
+ * It is the origin of the observation read when there is only one (the **inverse** is the
+ * *same* observation read backwards, so it keeps that observation's origin), and the
+ * **weakest** of the two in a triangulation — which is well defined precisely because the
+ * precedence is a total order.
+ *
+ * **None of this is writable.** The implied answer has no `id`, and it goes on being
+ * unable to return to the archive.
+ */
+internal data class ResolvedRate(
+    val rate: Double,
+    val source: ExchangeRate.Source,
+)
+
+/**
  * How much of `to` one unit of `from` is worth, out of a set of observations that have
  * **already been resolved by the archive's own policy** — one per pair, the latest on or
- * before the date, the user's over the derived one.
+ * before the date, ties on that date broken by origin.
  *
  * That split is the design: the date-and-origin policy has one owner, in the DAO's
  * query; what lives here is the other question, which of several *paths* answers when
@@ -35,33 +55,53 @@ import kotlinx.datetime.LocalDate
  * **The pivot is chosen deterministically**: the one whose two legs have the most recent
  * dates, ties broken by the ISO code ascending. The second criterion is arbitrary on
  * purpose — what matters about it is being total, not being fair.
+ *
+ * **The answer carries an origin, and it is the honest one** — see [ResolvedRate]. A
+ * currency against itself is `1` by definition and no observation produced it, so it
+ * claims the weakest origin there is: the answer never asserts more authority than the
+ * archive actually holds.
  */
-internal fun List<ExchangeRate>.resolveRate(from: String, to: String): Double? {
-    if (from == to) return 1.0
+internal fun List<ExchangeRate>.resolve(from: String, to: String): ResolvedRate? {
+    if (from == to) return ResolvedRate(1.0, ExchangeRate.Source.DERIVED)
 
-    direct(from, to)?.let { return it.rate }
-    direct(to, from)?.let { return 1.0 / it.rate }
+    direct(from, to)?.let { return ResolvedRate(it.rate, it.source) }
+    direct(to, from)?.let { return ResolvedRate(1.0 / it.rate, it.source) }
 
     return bestPivot(from, to)
 }
 
+/** The total order the archive's precedence is: `USER` ▸ `REMOTE` ▸ `DERIVED`. */
+private val ExchangeRate.Source.rank: Int
+    get() = when (this) {
+        ExchangeRate.Source.USER -> 0
+        ExchangeRate.Source.REMOTE -> 1
+        ExchangeRate.Source.DERIVED -> 2
+    }
+
+private fun weakest(a: ExchangeRate.Source, b: ExchangeRate.Source) = if (a.rank >= b.rank) a else b
+
 private fun List<ExchangeRate>.direct(from: String, to: String): ExchangeRate? =
     firstOrNull { it.currency == from && it.counterCurrency == to }
 
-/** One leg, resolved by levels 1 and 2 only — a pivot's leg may not itself pivot. */
-private fun List<ExchangeRate>.leg(from: String, to: String): Pair<Double, LocalDate>? {
-    direct(from, to)?.let { return it.rate to it.date }
-    direct(to, from)?.let { return 1.0 / it.rate to it.date }
+/**
+ * One leg, resolved by levels 1 and 2 only — a pivot's leg may not itself pivot — and
+ * carrying the origin it was read from.
+ */
+private fun List<ExchangeRate>.leg(from: String, to: String): Triple<Double, LocalDate, ExchangeRate.Source>? {
+    direct(from, to)?.let { return Triple(it.rate, it.date, it.source) }
+    direct(to, from)?.let { return Triple(1.0 / it.rate, it.date, it.source) }
     return null
 }
 
-private fun List<ExchangeRate>.bestPivot(from: String, to: String): Double? {
+/** The deterministic pivot, whose answer declares the **weakest** of its two legs. */
+private fun List<ExchangeRate>.bestPivot(from: String, to: String): ResolvedRate? {
     val candidates = (map { it.currency } + map { it.counterCurrency })
         .distinct()
         .filter { it != from && it != to }
         .sorted()
 
-    var best: Triple<LocalDate, LocalDate, Double>? = null
+    var bestDates: Pair<LocalDate, LocalDate>? = null
+    var best: ResolvedRate? = null
 
     for (pivot in candidates) {
         val first = leg(from, pivot) ?: continue
@@ -72,11 +112,15 @@ private fun List<ExchangeRate>.bestPivot(from: String, to: String): Double? {
         // total.
         val older = minOf(first.second, second.second)
         val newer = maxOf(first.second, second.second)
-        val current = best
+        val current = bestDates
         if (current == null || newer > current.second || (newer == current.second && older > current.first)) {
-            best = Triple(older, newer, first.first * second.first)
+            bestDates = older to newer
+            best = ResolvedRate(
+                rate = first.first * second.first,
+                source = weakest(first.third, second.third),
+            )
         }
     }
 
-    return best?.third
+    return best
 }

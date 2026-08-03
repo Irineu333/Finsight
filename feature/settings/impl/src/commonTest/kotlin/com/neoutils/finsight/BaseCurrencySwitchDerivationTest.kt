@@ -1,6 +1,6 @@
 package com.neoutils.finsight
 
-import com.neoutils.finsight.database.repository.resolveRate
+import com.neoutils.finsight.database.repository.resolve
 import com.neoutils.finsight.domain.model.ExchangeRate
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -35,19 +35,19 @@ class BaseCurrencySwitchDerivationTest {
     @Test
     fun `the old base against the new one is the inverse of a rate already stored`() {
         // 1 BRL ≈ 0.1818 USD — nothing was fetched, nothing was written.
-        assertClose(0.181818, archive.resolveRate(from = "BRL", to = "USD"))
+        assertClose(0.181818, archive.resolve(from = "BRL", to = "USD")?.rate)
     }
 
     @Test
     fun `every other currency re-expresses by triangulation over rates of the same date`() {
         // EUR against the new base USD, over the real: (BRL per EUR) / (BRL per USD).
-        assertClose(1.090909, archive.resolveRate(from = "EUR", to = "USD"))
+        assertClose(1.090909, archive.resolve(from = "EUR", to = "USD")?.rate)
     }
 
     @Test
     fun `the derivation is a round trip - re-expressing twice returns the original`() {
-        val usdPerEur = archive.resolveRate(from = "EUR", to = "USD")!!
-        val brlPerUsd = archive.resolveRate(from = "USD", to = "BRL")!!
+        val usdPerEur = archive.resolve(from = "EUR", to = "USD")!!.rate
+        val brlPerUsd = archive.resolve(from = "USD", to = "BRL")!!.rate
 
         // Back to a BRL base: (USD per EUR) × (BRL per USD).
         assertClose(6.00, usdPerEur * brlPerUsd)
@@ -62,8 +62,8 @@ class BaseCurrencySwitchDerivationTest {
     fun `no stored row changes`() {
         val before = archive.map { it.copy() }
 
-        archive.resolveRate(from = "EUR", to = "USD")
-        archive.resolveRate(from = "BRL", to = "USD")
+        archive.resolve(from = "EUR", to = "USD")
+        archive.resolve(from = "BRL", to = "USD")
 
         assertEquals(before, archive)
         assertTrue(archive.all { it.source == ExchangeRate.Source.USER })

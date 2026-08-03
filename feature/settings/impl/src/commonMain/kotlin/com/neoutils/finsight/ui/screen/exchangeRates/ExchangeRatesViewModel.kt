@@ -4,10 +4,13 @@ package com.neoutils.finsight.ui.screen.exchangeRates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
-import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -18,44 +21,51 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * The archive, grouped by the currency each observation is priced **in**.
+ * The archive's **entry view**: the rate in force for each pair, and the state of the
+ * upkeep that keeps them there.
  *
- * Grouping and its order are the only things this adds, and the order is the natural
- * extension of the `ORDER BY date DESC` the DAO already does: the currency with the most
- * recent observation first. What each row *means* does not depend on the heading above
- * it — the row states its own pair (design D9) — so a pair observed in both directions
- * legitimately appears under two headings.
+ * It answers the question the user actually brings to this screen — *which rate is being
+ * used* — and it is the entry precisely because the automatic upkeep makes the archive
+ * grow every day, which turns the full listing into something unreadable as a primary
+ * presentation. The full listing did not disappear: it moved to the history, with filters.
+ *
+ * **This view model reduces nothing.** The row that answers for a pair comes from
+ * [ExchangeRateRepository.observeInForce], elected by the archive's policy in SQL. What is
+ * added here is the staleness opinion and the two upkeep states — and none of it is a
+ * figure, which is why this is the one surface of the app where any of it appears.
  */
 class ExchangeRatesViewModel(
     baseCurrencyRepository: IBaseCurrencyRepository,
-    exchangeRateRepository: IExchangeRateRepository,
+    exchangeRateRepository: ExchangeRateRepository,
+    rateSyncStateRepository: IRateSyncStateRepository,
+    getAccountCurrencies: GetAccountCurrenciesUseCase,
 ) : ViewModel() {
 
     private val baseCurrency = baseCurrencyRepository.observe()
 
+    private val currenciesInUse = flow { emit(getAccountCurrencies().inUse) }
+
     val uiState = combine(
         baseCurrency,
-        exchangeRateRepository.observeAll(),
-    ) { base, rates ->
+        exchangeRateRepository.observeInForce(today()),
+        rateSyncStateRepository.observe(),
+        currenciesInUse,
+    ) { base, rates, syncState, inUse ->
         val staleBefore = today().minus(OUTDATED_AFTER_DAYS, DateTimeUnit.DAY)
 
         ExchangeRatesUiState(
             baseCurrency = base,
-            groups = rates
-                .map { rate ->
-                    ExchangeRateItem(
-                        rate = rate,
-                        isOutdated = rate.date < staleBefore,
-                    )
-                }
-                .groupBy { it.rate.counterCurrency }
-                .map { (counterCurrency, items) ->
-                    ExchangeRateGroup(
-                        counterCurrency = counterCurrency,
-                        rates = items.sortedByDescending { it.rate.date },
-                    )
-                }
-                .sortedByDescending { group -> group.rates.first().rate.date },
+            inForce = rates.map {
+                ExchangeRateInForce(rate = it, isOutdated = it.date < staleBefore)
+            },
+            sync = RateSyncStatus(
+                lastSyncedOn = syncState.lastSyncedAt
+                    ?.toLocalDateTime(TimeZone.currentSystemDefault())?.date,
+                // Only the currencies the user actually holds: naming one they do not use
+                // would be noise, and the sentence this state exists to make — *enter
+                // this one by hand* — would have no addressee.
+                notCoveredCurrencies = inUse.filter { it in syncState.notCoveredCurrencies }.sorted(),
+            ),
             isLoading = false,
         )
     }.stateIn(
@@ -70,9 +80,9 @@ class ExchangeRatesViewModel(
     companion object {
         /**
          * Not derivable from the domain — an opinion about volatility. Flagging rather
-         * than merely showing the date exists because the consequence of a stale rate
-         * (a past period's figure displayed wrong) is not visible from where the user
-         * is standing.
+         * than merely showing the date exists because the consequence of a stale rate (a
+         * past period's figure displayed wrong) is not visible from where the user is
+         * standing.
          */
         const val OUTDATED_AFTER_DAYS = 30
     }

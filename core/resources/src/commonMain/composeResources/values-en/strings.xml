@@ -856,8 +856,26 @@
     <string name="exchange_rates_group_header">Quoted in %1$s</string>
     <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
     <string name="exchange_rates_source_derived">From an operation</string>
+    <string name="exchange_rates_source_remote">Automatic quote</string>
     <string name="exchange_rates_source_user">Entered by you</string>
     <string name="exchange_rates_outdated">Out of date</string>
+    <string name="exchange_rates_sync_updated_at">Updated on %1$s</string>
+    <string name="exchange_rates_sync_never">Not updated yet</string>
+    <string name="exchange_rates_currency_not_covered">%1$s is not covered by the automatic update — enter the rate by hand</string>
+    <string name="exchange_rates_open_history">See history</string>
+
+    <string name="exchange_rate_history_title">Rate history</string>
+    <string name="exchange_rate_history_empty">No observation matches the filters.</string>
+    <string name="exchange_rate_history_filter_date">Date</string>
+    <string name="exchange_rate_history_filter_date_any">Any date</string>
+    <string name="exchange_rate_history_filter_date_range">From %1$s to %2$s</string>
+    <string name="exchange_rate_history_filter_date_start">Start date</string>
+    <string name="exchange_rate_history_filter_date_end">End date</string>
+    <string name="exchange_rate_history_filter_currency">Currency</string>
+    <string name="exchange_rate_history_filter_currency_any">Any currency</string>
+    <string name="exchange_rate_history_filter_source">Source</string>
+    <string name="exchange_rate_history_filter_source_any">Any source</string>
+    <string name="exchange_rate_history_filter_clear">Clear filters</string>
 
     <string name="exchange_rate_form_title_new">New rate</string>
     <string name="exchange_rate_form_title_edit">Edit rate</string>

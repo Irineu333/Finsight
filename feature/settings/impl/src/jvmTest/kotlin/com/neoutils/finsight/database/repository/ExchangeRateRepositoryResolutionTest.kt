@@ -119,6 +119,55 @@ class ExchangeRateRepositoryResolutionTest {
         assertEquals(ExchangeRate.Source.USER, direct?.source)
         assertTrue((direct?.id ?: 0) > 0, "a stored observation keeps its identity")
     }
+
+    /** The inverse is the same observation read backwards, so it keeps its origin. */
+    @Test
+    fun `the answer by inverse of a remote row declares REMOTE`() = runTest {
+        repository.save(rate("BRL", "USD", 0.18).copy(source = ExchangeRate.Source.REMOTE))
+
+        val answer = repository.rateBetween("USD", "BRL", march)
+
+        assertClose(1.0 / 0.18, answer?.rate)
+        assertEquals(ExchangeRate.Source.REMOTE, answer?.source)
+        assertEquals(0, answer?.id, "an implied answer is no row, and may not return to the archive")
+    }
+
+    @Test
+    fun `a triangulation over a USER and a REMOTE leg declares REMOTE`() = runTest {
+        repository.save(rate("EUR", "BRL", 6.0).copy(source = ExchangeRate.Source.USER))
+        repository.save(rate("USD", "BRL", 5.5).copy(source = ExchangeRate.Source.REMOTE))
+
+        assertEquals(
+            ExchangeRate.Source.REMOTE,
+            repository.rateBetween("EUR", "USD", march)?.source,
+        )
+    }
+
+    @Test
+    fun `a triangulation over a REMOTE and a DERIVED leg declares DERIVED`() = runTest {
+        repository.save(rate("EUR", "BRL", 6.0).copy(source = ExchangeRate.Source.REMOTE))
+        repository.save(rate("USD", "BRL", 5.5).copy(source = ExchangeRate.Source.DERIVED))
+
+        assertEquals(
+            ExchangeRate.Source.DERIVED,
+            repository.rateBetween("EUR", "USD", march)?.source,
+            "the weakest leg is what the answer may honestly claim",
+        )
+    }
+
+    /** One row per pair, elected by the archive's own policy — not a reduction up here. */
+    @Test
+    fun `the in-force view answers one row per pair`() = runTest {
+        repository.save(rate("USD", "BRL", 5.5).copy(source = ExchangeRate.Source.DERIVED))
+        repository.save(rate("USD", "BRL", 5.4).copy(source = ExchangeRate.Source.REMOTE))
+        repository.save(rate("EUR", "BRL", 6.0).copy(source = ExchangeRate.Source.REMOTE))
+
+        val inForce = repository.observeInForce(march).first()
+
+        assertEquals(2, inForce.size)
+        assertClose(5.4, inForce.single { it.currency == "USD" }.rate)
+        assertEquals(ExchangeRate.Source.REMOTE, inForce.single { it.currency == "USD" }.source)
+    }
 }
 
 private suspend fun com.neoutils.finsight.database.dao.ExchangeRateDao.observeAllOnce() =

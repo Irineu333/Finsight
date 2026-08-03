@@ -857,8 +857,26 @@
     <string name="exchange_rates_group_header">Cotados em %1$s</string>
     <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
     <string name="exchange_rates_source_derived">De uma operação</string>
+    <string name="exchange_rates_source_remote">Cotação automática</string>
     <string name="exchange_rates_source_user">Informada por você</string>
     <string name="exchange_rates_outdated">Desatualizada</string>
+    <string name="exchange_rates_sync_updated_at">Atualizado em %1$s</string>
+    <string name="exchange_rates_sync_never">Ainda não atualizado</string>
+    <string name="exchange_rates_currency_not_covered">%1$s não é coberta pela atualização automática — cadastre a taxa à mão</string>
+    <string name="exchange_rates_open_history">Ver histórico</string>
+
+    <string name="exchange_rate_history_title">Histórico de taxas</string>
+    <string name="exchange_rate_history_empty">Nenhuma observação corresponde aos filtros.</string>
+    <string name="exchange_rate_history_filter_date">Data</string>
+    <string name="exchange_rate_history_filter_date_any">Qualquer data</string>
+    <string name="exchange_rate_history_filter_date_range">De %1$s a %2$s</string>
+    <string name="exchange_rate_history_filter_date_start">Data inicial</string>
+    <string name="exchange_rate_history_filter_date_end">Data final</string>
+    <string name="exchange_rate_history_filter_currency">Moeda</string>
+    <string name="exchange_rate_history_filter_currency_any">Qualquer moeda</string>
+    <string name="exchange_rate_history_filter_source">Origem</string>
+    <string name="exchange_rate_history_filter_source_any">Qualquer origem</string>
+    <string name="exchange_rate_history_filter_clear">Limpar filtros</string>
 
     <string name="exchange_rate_form_title_new">Nova taxa</string>
     <string name="exchange_rate_form_title_edit">Editar taxa</string>

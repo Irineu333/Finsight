@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.mapper.ExchangeRateMapper
 import com.neoutils.finsight.database.repository.BaseCurrencyRepository
 import com.neoutils.finsight.database.repository.CurrencyRepository
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.database.repository.RateSyncStateRepository
 import com.neoutils.finsight.database.repository.RepositoryCurrencySymbols
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.ExchangeRate
@@ -12,6 +13,8 @@ import com.neoutils.finsight.domain.model.SeededBaseCurrency
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.SaveCurrencyUseCase
@@ -23,8 +26,14 @@ import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
 import com.neoutils.finsight.ui.modal.viewCurrency.ViewCurrencyViewModel
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
 import com.neoutils.finsight.ui.screen.currencies.CurrenciesViewModel
+import com.neoutils.finsight.ui.screen.exchangeRateHistory.ExchangeRateHistoryViewModel
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesViewModel
+import com.neoutils.finsight.network.FrankfurterRateSource
 import com.neoutils.finsight.ui.screen.settings.SettingsViewModel
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -73,15 +82,44 @@ val settingsModule = module {
     }
 
     factory { ExchangeRateMapper() }
-    single<IExchangeRateRepository> {
-        ExchangeRateRepository(dao = get(), mapper = get(), baseCurrencyRepository = get())
+
+    // The concrete type is bound as well, and the interface resolves **from it**, so
+    // there is one instance and not two. The rates screens reach `observeInForce()`
+    // through this binding: it is a read only they make, and putting it on
+    // `IExchangeRateRepository` would oblige the thirteen fakes that implement the
+    // interface to answer a question their modules never ask.
+    single { ExchangeRateRepository(dao = get(), mapper = get(), baseCurrencyRepository = get()) }
+    single<IExchangeRateRepository> { get<ExchangeRateRepository>() }
+
+    single<IRateSyncStateRepository> { RateSyncStateRepository(settings = get()) }
+
+    // The one HTTP client of the app, built here because this is the one module that may
+    // hold one (design D11). A `:core:network` was rejected precisely so the restriction
+    // would be the module graph rather than discipline. The engine comes from each
+    // platform's classpath, so this stays in `commonMain`.
+    single {
+        HttpClient {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
+        }
     }
+    single<IRemoteRateSource> { FrankfurterRateSource(client = get()) }
 
     viewModel { SettingsViewModel(baseCurrencyRepository = get(), currencyRepository = get()) }
 
     viewModel {
         ExchangeRatesViewModel(
             baseCurrencyRepository = get(),
+            exchangeRateRepository = get<ExchangeRateRepository>(),
+            rateSyncStateRepository = get(),
+            getAccountCurrencies = get(),
+        )
+    }
+
+    viewModel {
+        ExchangeRateHistoryViewModel(
+            initialCurrency = it.getOrNull<String>(),
             exchangeRateRepository = get(),
         )
     }

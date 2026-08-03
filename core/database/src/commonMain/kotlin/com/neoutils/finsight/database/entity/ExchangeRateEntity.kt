@@ -31,11 +31,14 @@ import kotlinx.datetime.LocalDate
 @Entity(
     tableName = "exchange_rates",
     indices = [
-        // A surrogate key with a unique tuple, not a composite primary key. The
-        // reason is [Source.USER] winning over [Source.DERIVED] on the same date: for
-        // that precedence to mean anything, both origins have to be able to coexist on
-        // the same `(currency, counterCurrency, date)` — otherwise correcting a rate
-        // would silently destroy the one the operation itself observed.
+        // A surrogate key with a unique tuple, not a composite primary key. The reason
+        // is the precedence between origins: for `USER` ▸ `REMOTE` ▸ `DERIVED` to mean
+        // anything, **all three** have to be able to coexist on the same
+        // `(currency, counterCurrency, date)` — otherwise correcting a rate would
+        // silently destroy the one the operation itself observed, and a synchronisation
+        // would destroy both. `source` has been part of this key since before the remote
+        // source existed, which is why the third origin arrives with no migration, no new
+        // `AppDatabase` version and no exported schema touched.
         Index(value = ["currency", "counterCurrency", "date", "source"], unique = true),
         Index(value = ["currency", "counterCurrency", "date"]),
     ],
@@ -61,7 +64,18 @@ data class ExchangeRateEntity(
     val rate: Double,
     val source: Source,
 ) {
-    /** Where a rate came from — which is what decides who wins on the same date. */
+    /**
+     * Where a rate came from — which is what breaks a tie **on the same date**.
+     *
+     * The precedence is `USER` ▸ `REMOTE` ▸ `DERIVED`, and the declaration order below is
+     * not it: the ranking is written once, in the DAO's queries.
+     *
+     * A [DERIVED] rate contains what the operation charged — spread, tax, fee — and
+     * answers *how much it cost me*; a [REMOTE] one answers *how much it was worth*.
+     * Consolidating is valuing, not reconstructing a cost, so the quote outranks the
+     * harvest. And the ranking breaks ties **inside** a date and never over one: a more
+     * recent observation wins whatever either origin is.
+     */
     enum class Source {
         /**
          * Derived from a transaction that crossed currencies: its two legs are the
@@ -71,7 +85,13 @@ data class ExchangeRateEntity(
          */
         DERIVED,
 
-        /** Typed by the user, and it prevails over a [DERIVED] one of the same date. */
+        /**
+         * Obtained from the remote source that keeps the archive up to date, written by
+         * a synchronisation no read waits on.
+         */
+        REMOTE,
+
+        /** Typed by the user, and it prevails over both on the same date. */
         USER,
     }
 }

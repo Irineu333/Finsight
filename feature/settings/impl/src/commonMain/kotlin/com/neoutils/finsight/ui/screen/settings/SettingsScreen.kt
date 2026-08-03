@@ -83,6 +83,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onOpenExchangeRates: () -> Unit = {},
+    onOpenExchangeRateHistory: (currency: String?) -> Unit = {},
     onOpenCurrencies: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -99,7 +100,7 @@ fun SettingsScreen(
     // for a conversation: in an extra-wide window the archive opens in the detail pane, beside the
     // settings it belongs to; otherwise it navigates full-screen, preserving the NavHost transition.
     val openExchangeRates: () -> Unit = {
-        if (isExtraWide) detailController.show(ExchangeRatesDetail())
+        if (isExtraWide) detailController.show(ExchangeRatesDetail(onOpenExchangeRateHistory))
         else onOpenExchangeRates()
     }
 

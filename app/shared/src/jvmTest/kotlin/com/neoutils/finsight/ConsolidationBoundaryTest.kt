@@ -57,6 +57,11 @@ class ConsolidationBoundaryTest {
             // not in the modal that shows it: the three two-value flows state amounts
             // and never convert them.
             "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SuggestCrossCurrencyAmountUseCase.kt",
+            // The upkeep of the archive. It carries the quotient a remote source
+            // published into a row of the archive, and **no money passes through it**:
+            // its input is a quotation and its output is a stored observation. What turns
+            // a rate into a figure is still the reducer, and still only the reducer.
+            "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SyncExchangeRatesUseCase.kt",
             // The rate an operation **applied**, derived from its own two legs and shown
             // on its detail. It is admitted for the same reason the settings screens are:
             // no money passes through it. Nothing is multiplied — the number is a
@@ -74,12 +79,21 @@ class ConsolidationBoundaryTest {
             // it**. Its input is observations and its output is a rate; what turns a
             // rate into a figure is still the reducer, and still only the reducer.
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/RateResolver.kt",
+            // The archive itself, assembling the answer the resolver implied into an
+            // `ExchangeRate` — the number and the origin it may honestly claim. No money
+            // passes through it either: what it hands back is a rate.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/ExchangeRateRepository.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/exchangeRateForm/ExchangeRateFormViewModel.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesScreen.kt",
-            // The listing's grouping and its order, which read a rate's *date* — the
-            // number itself is never touched here, and no money is.
-            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
+            // What one observation of the archive *looks like*, shared by the two surfaces
+            // that show one. It prints the number; it never applies it to anything.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/component/ExchangeRateRow.kt",
+            // The history: the same list with a new owner, its three filters, and the
+            // grouping. All of it reads a rate's date, currency and origin to decide what
+            // to show — and no money passes through any of it.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRateHistory/ExchangeRateHistoryScreen.kt",
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRateHistory/ExchangeRateHistoryViewModel.kt",
         )
 
         val found = productionSources

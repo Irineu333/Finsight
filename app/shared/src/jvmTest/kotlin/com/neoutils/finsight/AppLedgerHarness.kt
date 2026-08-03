@@ -31,6 +31,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minus
 import org.koin.core.Koin
+import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
@@ -47,7 +48,15 @@ import org.koin.dsl.module
  * reads the developer's own preferences, and the gates are about what the app shows for
  * a *given* base.
  */
-internal class AppLedgerHarness(baseCurrency: String) {
+internal class AppLedgerHarness(
+    baseCurrency: String,
+    /**
+     * Extra bindings, layered over the real graph — how a gate substitutes a port whose
+     * real implementation would reach outside the process, such as the remote rate
+     * source. Everything else stays the real thing, which is the point of this harness.
+     */
+    overrides: Module = module { },
+) {
 
     private val databaseFile: File = File.createTempFile("finsight-gate", ".db")
         .also { it.delete(); it.deleteOnExit() }
@@ -64,7 +73,7 @@ internal class AppLedgerHarness(baseCurrency: String) {
                         .setDriver(BundledSQLiteDriver())
                 }
                 single<Settings> { MapSettings("base_currency" to baseCurrency) }
-            },
+            } + overrides,
         )
     }.koin
 
@@ -211,9 +220,10 @@ internal class AppLedgerHarness(baseCurrency: String) {
  */
 internal fun runApp(
     baseCurrency: String,
+    overrides: Module = module { },
     body: suspend AppLedgerHarness.() -> Unit,
 ) = runTest {
-    val app = AppLedgerHarness(baseCurrency)
+    val app = AppLedgerHarness(baseCurrency, overrides)
     try {
         app.body()
     } finally {

@@ -13,6 +13,7 @@ class ExchangeRateMapper {
         rate = entity.rate,
         source = when (entity.source) {
             ExchangeRateEntity.Source.DERIVED -> ExchangeRate.Source.DERIVED
+            ExchangeRateEntity.Source.REMOTE -> ExchangeRate.Source.REMOTE
             ExchangeRateEntity.Source.USER -> ExchangeRate.Source.USER
         },
     )
@@ -25,6 +26,7 @@ class ExchangeRateMapper {
         rate = domain.rate,
         source = when (domain.source) {
             ExchangeRate.Source.DERIVED -> ExchangeRateEntity.Source.DERIVED
+            ExchangeRate.Source.REMOTE -> ExchangeRateEntity.Source.REMOTE
             ExchangeRate.Source.USER -> ExchangeRateEntity.Source.USER
         },
     )

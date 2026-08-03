@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,10 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.ModeEdit
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -39,31 +35,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.extension.LocalCurrencySymbols
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rates_add
-import com.neoutils.finsight.resources.exchange_rates_group_header
-import com.neoutils.finsight.resources.exchange_rates_quote_pair
+import com.neoutils.finsight.resources.exchange_rates_currency_not_covered
+import com.neoutils.finsight.resources.exchange_rates_sync_never
+import com.neoutils.finsight.resources.exchange_rates_sync_updated_at
 import com.neoutils.finsight.resources.exchange_rates_empty
-import com.neoutils.finsight.resources.exchange_rates_outdated
+import com.neoutils.finsight.resources.exchange_rates_open_history
 import com.neoutils.finsight.resources.exchange_rates_screen_title
-import com.neoutils.finsight.resources.exchange_rates_source_derived
-import com.neoutils.finsight.resources.exchange_rates_source_user
-import com.neoutils.finsight.ui.component.CurrencyGlyph
+import com.neoutils.finsight.ui.component.ExchangeRateRow
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.RATE_SCALE
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -94,6 +82,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ExchangeRatesScreen(
     onNavigateBack: () -> Unit = {},
+    onOpenHistory: (currency: String?) -> Unit = {},
     viewModel: ExchangeRatesViewModel = koinViewModel(),
 ) {
     val analytics = koinInject<Analytics>()
@@ -125,6 +114,14 @@ fun ExchangeRatesScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { onOpenHistory(null) }) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = stringResource(Res.string.exchange_rates_open_history),
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {
@@ -138,6 +135,7 @@ fun ExchangeRatesScreen(
     ) { padding ->
         ExchangeRatesContent(
             uiState = uiState,
+            onOpenHistory = onOpenHistory,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
@@ -146,18 +144,22 @@ fun ExchangeRatesScreen(
 }
 
 /**
- * The archive itself — the base hint, the list, and the two states it can be in instead —
- * shared by the full-screen route [ExchangeRatesScreen] and the detail-pane
- * [ExchangeRatesDetail]. The host owns its own chrome (top bar or pane header) and the
- * button that adds a rate; what an archive *is* lives here, once.
+ * The archive itself — the upkeep's state, the rate in force for each pair, and the two
+ * states it can be in instead — shared by the full-screen route [ExchangeRatesScreen] and
+ * the detail-pane [ExchangeRatesDetail]. The host owns its own chrome (top bar or pane
+ * header) and the button that adds a rate; what an archive *is* lives here, once.
+ *
+ * **Nothing here leaks into a figure.** The ban on loading states is about a consolidated
+ * figure — a balance may carry no spinner and may not fail — and this screen is not a
+ * figure: it is the archive explaining itself. No other surface of the app shows the state
+ * of the synchronisation.
  */
 @Composable
 internal fun ExchangeRatesContent(
     uiState: ExchangeRatesUiState,
+    onOpenHistory: (currency: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val modalManager = LocalModalManager.current
-
     when {
         // The archive used to render an empty list while it loaded — a screen with
         // nothing on it but a button, which reads as "there is nothing", the one
@@ -167,8 +169,6 @@ internal fun ExchangeRatesContent(
                 CircularProgressIndicator()
             }
         }
-
-        uiState.isEmpty -> EmptyState(modifier = modifier)
 
         else -> {
             LazyColumn(
@@ -181,163 +181,74 @@ internal fun ExchangeRatesContent(
                 ),
                 modifier = modifier,
             ) {
-                uiState.groups.forEach { group ->
-                    item(key = "group-${group.counterCurrency}") {
-                        Text(
-                            text = stringResource(
-                                Res.string.exchange_rates_group_header,
-                                group.counterCurrency,
-                            ),
-                            style = typography.labelLarge,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
-                        )
-                    }
+                item(key = "sync-status") { SyncStatusLine(status = uiState.sync) }
 
-                    items(group.rates, key = { it.rate.id }) { item ->
-                        ExchangeRateCard(
-                            item = item,
-                            onClick = { modalManager.show(ExchangeRateFormModal(item.rate)) },
-                        )
-                    }
+                uiState.sync.notCoveredCurrencies.forEach { currency ->
+                    item(key = "not-covered-$currency") { NotCoveredNotice(currency = currency) }
+                }
+
+                if (uiState.isEmpty) {
+                    item(key = "empty") { EmptyState(modifier = Modifier.fillMaxWidth()) }
+                }
+
+                // One row per pair, in the direction it was observed in, each declaring
+                // the pair, the value, the date and the origin of the observation that
+                // answers for it. Tapping reaches that pair's history — where correcting
+                // and removing live, over the observation itself.
+                items(uiState.inForce, key = { it.rate.id }) { item ->
+                    ExchangeRateRow(
+                        rate = item.rate,
+                        isOutdated = item.isOutdated,
+                        onClick = { onOpenHistory(item.rate.currency) },
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ExchangeRateCard(
-    item: ExchangeRateItem,
-    onClick: () -> Unit,
-) {
-    val formatter = LocalCurrencyFormatter.current
-    val code = item.rate.currency
-
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer,
-            contentColor = colorScheme.onSurface,
-        ),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-        ) {
-            CurrencyGlyph(symbol = LocalCurrencySymbols.current(code))
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp),
-                modifier = Modifier.weight(1f),
-            ) {
-                // **The row describes itself whole** — `1 USD = 5,50 BRL` — so that its
-                // meaning does not depend on the heading above it. And it is never shown
-                // inverted with respect to the observation that produced it: this screen
-                // is also the point of edit, and editing an inverted row would open the
-                // correction of a number nobody observed.
-                Text(
-                    text = stringResource(
-                        Res.string.exchange_rates_quote_pair,
-                        code,
-                        // As many places as the rate needs, and not the currency's own two:
-                        // `0,000691` is a real rate of a currency this app offers, and two
-                        // places print it `0,00` — a rate of zero, which says something
-                        // else. The maximum only *allows* digits, so an ordinary rate still
-                        // reads `5,5`.
-                        formatter.formatDecimal(item.rate.rate, RATE_SCALE),
-                        item.rate.counterCurrency,
-                    ),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = LocalDateFormats.current.monthDayYear.format(item.rate.date),
-                        style = typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-
-                    SourceLabel(
-                        source = item.rate.source,
-                        modifier = Modifier.weight(weight = 1f, fill = false),
-                    )
-
-                    if (item.isOutdated) OutdatedBadge()
-                }
-            }
-
-        }
-    }
-}
-
-/** Provenance in the shape `CategoryCard` established: a 16dp icon plus `labelSmall`. */
-@Composable
-private fun SourceLabel(
-    source: ExchangeRate.Source,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier,
-    ) {
-        Icon(
-            imageVector = when (source) {
-                ExchangeRate.Source.DERIVED -> Icons.Default.SwapHoriz
-                ExchangeRate.Source.USER -> Icons.Default.ModeEdit
-            },
-            contentDescription = null,
-            // The accent, not a signal: the two provenances differ by icon and by the
-            // word beside them, never by colour. Reading grey here made a screen the
-            // app owns look like one it disabled.
-            tint = colorScheme.primary,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = stringResource(
-                when (source) {
-                    ExchangeRate.Source.DERIVED -> Res.string.exchange_rates_source_derived
-                    ExchangeRate.Source.USER -> Res.string.exchange_rates_source_user
-                }
-            ),
-            style = typography.labelSmall,
-            color = colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 
 /**
- * The colour is the signal and the word is the signal; neither stands alone, which is
- * the same doctrine the category card applies to "archived". The pill is the one the
- * account card wears for "default" — a badge of this app looks like this.
+ * When the archive was last brought up to date — **and never a loading state**. There is
+ * nothing to spin on here: what is shown is a fact already persisted, and a failed
+ * synchronisation is simply an instant that did not move.
+ *
+ * It coexists with the *out of date* badge on each row rather than replacing it: without
+ * this line, that badge is an accusation with no defendant, because the user cannot tell a
+ * rate they never entered from one the app could not fetch.
  */
 @Composable
-private fun OutdatedBadge() {
+private fun SyncStatusLine(status: RateSyncStatus) {
+    val dateFormats = LocalDateFormats.current
+
+    Text(
+        text = status.lastSyncedOn
+            ?.let { stringResource(Res.string.exchange_rates_sync_updated_at, dateFormats.monthDayYear.format(it)) }
+            ?: stringResource(Res.string.exchange_rates_sync_never),
+        style = typography.labelMedium,
+        color = colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp),
+    )
+}
+
+/**
+ * A currency the source does not quote, said out loud with what to do about it.
+ *
+ * It is a **second** state and not the same one as *not updated yet*: waiting fixes the
+ * first and never the second, so collapsing them would leave the user in the worst case
+ * with nothing explaining why.
+ */
+@Composable
+private fun NotCoveredNotice(currency: String) {
     Surface(
         color = Warning.copy(alpha = 0.14f),
         contentColor = Warning,
-        shape = RoundedCornerShape(999.dp),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
-            text = stringResource(Res.string.exchange_rates_outdated),
-            style = typography.labelSmall,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            text = stringResource(Res.string.exchange_rates_currency_not_covered, currency),
+            style = typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         )
     }
 }

@@ -14,9 +14,21 @@ import kotlinx.datetime.LocalDate
  * The archive of exchange rates: the observations that touch a currency on a day.
  *
  * The reading policy is one sentence and it is implemented once, here: **the last
- * observation on or before the date, per pair, with the user's own winning over a
- * derived one of the same date.** Every consolidated figure asks this question and no
+ * observation on or before the date, per pair, ties on that date broken by origin —
+ * `USER` ▸ `REMOTE` ▸ `DERIVED`.** Every consolidated figure asks this question and no
  * consumer re-answers it.
+ *
+ * The quote outranks the harvest because a `DERIVED` rate carries what the operation
+ * charged — spread, tax, fee — and answers *how much it cost*, while a `REMOTE` one
+ * answers *how much it was worth*; consolidating is valuing, not reconstructing a cost.
+ * And **the ranking never prevails over the date**: `ORDER BY date DESC` comes first, so
+ * origin only separates observations of the same day. Otherwise a correction typed in
+ * March would silently answer for August, which is the defect dating the archive exists
+ * to prevent.
+ *
+ * The ranking is written twice below — once as an `ORDER BY`, once as a `NOT EXISTS`
+ * predicate — and the two are obligatorily the same ranking. With two origins they held
+ * by being the same sentence written twice; with three that stopped being enough.
  *
  * *Per pair* is what the policy is partitioned by, and not per currency: the dollar
  * against the real and the dollar against the euro are two observations, and collapsing
@@ -30,8 +42,11 @@ interface ExchangeRateDao {
 
     /**
      * The observation in force for the exact pair `([currency], [counterCurrency])` as
-     * of [date] — the latest one not after it, preferring the user's over the derived
-     * one when both share that date.
+     * of [date] — the latest one not after it, the origin ranking separating the ones
+     * that share that date.
+     *
+     * The `ORDER BY date DESC` comes **first**, and that is the whole of the rule that
+     * the ranking does not pin a pair: origin only speaks where the date already tied.
      *
      * This is the **direct** level of the resolution and nothing more: no inverse and no
      * pivot, which are decisions above this one. `null` here does not mean there is no
@@ -40,7 +55,8 @@ interface ExchangeRateDao {
     @Query(
         "SELECT * FROM exchange_rates " +
             "WHERE currency = :currency AND counterCurrency = :counterCurrency AND date <= :date " +
-            "ORDER BY date DESC, CASE source WHEN 'USER' THEN 0 ELSE 1 END ASC " +
+            "ORDER BY date DESC, " +
+            "CASE source WHEN 'USER' THEN 0 WHEN 'REMOTE' THEN 1 ELSE 2 END ASC " +
             "LIMIT 1"
     )
     suspend fun rateOfPairAsOf(
@@ -50,13 +66,16 @@ interface ExchangeRateDao {
     ): ExchangeRateEntity?
 
     /**
-     * The same question for every currency at once — one row per currency that has any
+     * The same question for every currency at once — one row per **pair** that has any
      * rate on or before [date], each already resolved by the policy above.
      *
      * A consolidated figure spans several currencies, so asking per currency would cost
      * one query per term. The `NOT EXISTS` is the policy stated as a predicate: a row
-     * survives when no other row of the **same pair** beats it, either by being later
-     * or by being the user's on the same day.
+     * survives when no other row of the **same pair** beats it, either by being later or
+     * by being of the same date with a strictly smaller origin rank. That `CASE` is the
+     * very same ranking [rateOfPairAsOf] orders by, written as a comparison — which is
+     * what makes the two agree by construction instead of by both quoting the same
+     * sentence.
      */
     @Query(
         """
@@ -68,12 +87,48 @@ interface ExchangeRateDao {
               AND x.date <= :date
               AND (
                 x.date > e.date
-                OR (x.date = e.date AND x.source = 'USER' AND e.source <> 'USER')
+                OR (
+                  x.date = e.date
+                  AND (CASE x.source WHEN 'USER' THEN 0 WHEN 'REMOTE' THEN 1 ELSE 2 END)
+                    < (CASE e.source WHEN 'USER' THEN 0 WHEN 'REMOTE' THEN 1 ELSE 2 END)
+                )
               )
           )
         """
     )
     suspend fun ratesAsOf(date: LocalDate): List<ExchangeRateEntity>
+
+    /**
+     * The rate **in force** for every pair, as a `Flow` — one row per pair, already
+     * resolved by the same predicate [ratesAsOf] states, and the raw material of the
+     * rates screen's entry view.
+     *
+     * It is a query and not a reduction over [observeAll] on purpose: the date-and-origin
+     * policy has exactly one owner, and re-deriving it in a view model would give a
+     * derived rule a second one. What the screen adds is presentation; which observation
+     * answers is decided here.
+     */
+    @Query(
+        """
+        SELECT * FROM exchange_rates e
+        WHERE e.date <= :date
+          AND NOT EXISTS (
+            SELECT 1 FROM exchange_rates x
+            WHERE x.currency = e.currency AND x.counterCurrency = e.counterCurrency
+              AND x.date <= :date
+              AND (
+                x.date > e.date
+                OR (
+                  x.date = e.date
+                  AND (CASE x.source WHEN 'USER' THEN 0 WHEN 'REMOTE' THEN 1 ELSE 2 END)
+                    < (CASE e.source WHEN 'USER' THEN 0 WHEN 'REMOTE' THEN 1 ELSE 2 END)
+                )
+              )
+          )
+        ORDER BY e.counterCurrency ASC, e.currency ASC
+        """
+    )
+    fun observeInForce(date: LocalDate): Flow<List<ExchangeRateEntity>>
 
     /**
      * The whole archive, newest first — what the rates screen lists, and the signal a

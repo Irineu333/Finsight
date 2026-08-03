@@ -53,6 +53,11 @@ class BaseCurrencyReachTest {
         // reason to know which preference is in force.
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ConsolidateMoneyUseCase.kt",
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ObserveConsolidationChangesUseCase.kt",
+        // The upkeep of the archive. What it does with the base is ask **what to quote
+        // against** — the axis every row of the ordinary archive is priced on — which is
+        // the same nature as the pre-selection the account and card forms already do here.
+        // It denominates no figure: what it writes is a rate, never an amount.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SyncExchangeRatesUseCase.kt",
         // The account a brand-new install starts with. The base is a **pre-selection**
         // here, which the spec allows in as many words — it is not denominating a figure,
         // it is answering "what currency should this first account be created in".

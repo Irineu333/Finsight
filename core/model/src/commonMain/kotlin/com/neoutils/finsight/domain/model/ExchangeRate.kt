@@ -34,7 +34,28 @@ data class ExchangeRate(
     val rate: Double,
     val source: Source,
 ) {
-    /** Where a rate came from — which is what decides who wins on the same date. */
+    /**
+     * Where a rate came from — which is what breaks a tie **on the same date**.
+     *
+     * The precedence is `USER` ▸ `REMOTE` ▸ `DERIVED`, and the declaration order below is
+     * not it: the ranking is stated here, in prose, and implemented once, in the archive's
+     * query.
+     *
+     * **Why the quote outranks the harvest.** A [DERIVED] rate is the quotient of a real
+     * operation, so it *contains what the operation charged* — spread, tax, card fee. It
+     * answers *how much it cost me*. A [REMOTE] one is the day's quotation of the pair,
+     * and answers *how much it was worth*. Consolidating is **valuing** a net worth, not
+     * reconstructing a cost, so when both exist for the same pair and day the second
+     * question is the one being asked. [DERIVED] loses no reason to exist: it is the only
+     * origin that works offline, the only one that reaches pairs outside the source's
+     * coverage, and still what spares the user typing a number they already gave.
+     *
+     * **It breaks ties inside a date, and never over one.** A more recent observation wins
+     * whatever either origin is. In particular a [USER] rate does not pin its pair against
+     * later observations: it corrected the day it was an assertion about, and a correction
+     * that silently governed the whole future is the defect dating the archive exists to
+     * prevent.
+     */
     enum class Source {
         /**
          * Derived from a transaction that crossed currencies: its two legs *are* the
@@ -42,7 +63,13 @@ data class ExchangeRate(
          */
         DERIVED,
 
-        /** Typed by the user, and it prevails over a [DERIVED] one of the same date. */
+        /**
+         * Obtained from the remote source that keeps the archive up to date — the day's
+         * quotation of the pair, written by a synchronisation nothing waits on.
+         */
+        REMOTE,
+
+        /** Typed by the user, and it prevails over both on the same date. */
         USER,
     }
 }

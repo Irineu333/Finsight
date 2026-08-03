@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.ProvideNavController
@@ -26,11 +27,20 @@ fun App() {
     val analytics = koinInject<Analytics>()
     val crashlytics = koinInject<Crashlytics>()
     val authService = koinInject<AuthService>()
+    val syncExchangeRates = koinInject<SyncExchangeRatesUseCase>()
 
+    // The app's cross-cutting, fired and forgotten. The rate synchronisation joins it as
+    // **the app's first real initialisation step**, and it is born harmless by
+    // construction: nothing in the composition awaits it, no screen observes it, and
+    // failing means writing nothing. It is here and not in `DashboardViewModel` because
+    // a rate is not the dashboard's business — tying it to a tab would make the upkeep
+    // depend on which screen the user happened to open (design D8).
     LaunchedEffect(Unit) {
         val userId = authService.getUserId()
         analytics.setUserId(userId)
         crashlytics.setUserId(userId)
+
+        syncExchangeRates()
     }
 
     FinsightTheme {

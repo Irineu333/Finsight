@@ -83,21 +83,87 @@ class RateSyncEndToEndTest {
             val archive = get<IExchangeRateRepository>()
             val stored = archive.observeAll().first()
 
-            // Written in the direction it will be read — the currency in use priced in
-            // the base — and no quotient was inverted to store it.
-            assertEquals(
-                listOf("USD" to "BRL"),
-                stored.map { it.currency to it.counterCurrency },
-            )
-            assertEquals(listOf("USD" to "BRL"), source.asked)
-            assertEquals(ExchangeRate.Source.REMOTE, stored.single().source)
+            // Written in the direction it will be read — the currency priced in the base
+            // — and no quotient was inverted to store it.
+            val usd = stored.single { it.currency == "USD" }
+            assertEquals("BRL", usd.counterCurrency)
+            assertEquals(ExchangeRate.Source.REMOTE, usd.source)
             // The date the source declared, never the day the synchronisation ran.
-            assertEquals(friday, stored.single().date)
+            assertEquals(friday, usd.date)
+
+            assertTrue("USD" to "BRL" in source.asked, "the dollar was quoted against the base")
+            assertTrue(source.asked.none { it.first == "BRL" }, "the base is never quoted against itself")
 
             val after = netWorth(on = day)
             assertEquals(1, after.terms.size, "with a rate the figure sums instead of stacking terms")
             assertTrue(after.isApproximate, "and it says so: a conversion happened")
             assertEquals(350.0, after.terms.single().value, "100 BRL + 50 USD at 5.0")
+        }
+    }
+
+    /**
+     * The bug this was found by, in the shape it was found: the day's synchronisation has
+     * already run, and only *then* does the user create their first account in a foreign
+     * currency. Covering what the app **offers** rather than only what is in use is what
+     * makes the rate be there already, instead of the figure stacking terms until the next
+     * launch of the following day.
+     */
+    @Test
+    fun `an account created after the day's run finds its rate already there`() {
+        val source = FakeRemoteSource(mapOf("USD" to RemoteQuote.Observed(friday, 5.0)))
+
+        runApp(baseCurrency = "BRL", overrides = sourceOf(source)) {
+            val nubank = account("Nubank", currency = "BRL", isDefault = true)
+            income(nubank, amount = 100.0, date = day)
+
+            // The launch of a single-currency user: the dollar is quoted anyway, because
+            // the app offers it.
+            get<SyncExchangeRatesUseCase>()()
+
+            val chase = account("Chase", currency = "USD")
+            income(chase, amount = 50.0, date = day)
+
+            val figure = netWorth(on = day)
+            assertEquals(1, figure.terms.size, "the rate preceded the account")
+            assertEquals(350.0, figure.terms.single().value)
+        }
+    }
+
+    /**
+     * And the half that a per-currency bound buys: a currency registered after the day's
+     * run is quoted straight away, while the ones already answered are not asked twice.
+     */
+    @Test
+    fun `a currency registered after the day's run is quoted without waiting a day`() {
+        // Every currency the app offers answers, so that the only thing left to explain in
+        // the second round is the one that was registered — an unavailable one would
+        // legitimately be retried, which is a different rule.
+        val source = FakeRemoteSource(
+            listOf("USD", "EUR", "GBP", "CHF", "CNY", "JPY")
+                .associateWith { RemoteQuote.Observed(friday, 5.0) }
+        )
+
+        runApp(baseCurrency = "BRL", overrides = sourceOf(source)) {
+            account("Nubank", currency = "BRL", isDefault = true)
+
+            val sync = get<SyncExchangeRatesUseCase>()
+            sync()
+            val askedOnLaunch = source.asked.toList()
+            assertTrue(askedOnLaunch.none { it.first == "JPY" }, "the yen is not registered yet")
+
+            get<com.neoutils.finsight.domain.repository.ICurrencyRepository>()
+                .save(code = "JPY", symbol = "¥", name = null)
+            sync()
+
+            assertEquals(
+                askedOnLaunch + ("JPY" to "BRL"),
+                source.asked,
+                "only the currency that is new goes out to the network",
+            )
+            assertTrue(
+                get<IExchangeRateRepository>().observeAll().first().any { it.currency == "JPY" },
+                "and its rate is in the archive the same day",
+            )
         }
     }
 
@@ -114,7 +180,7 @@ class RateSyncEndToEndTest {
             // The daily bound is the first guard; the unique key is the second, and it is
             // the one that makes the operation idempotent whatever the cadence.
             get<IRateSyncStateRepository>().record(
-                get<IRateSyncStateRepository>().observe().value.copy(lastSyncedAt = null)
+                get<IRateSyncStateRepository>().observe().value.copy(syncedAt = emptyMap())
             )
             sync()
 
@@ -139,10 +205,13 @@ class RateSyncEndToEndTest {
 
             get<SyncExchangeRatesUseCase>()()
 
-            assertEquals(
-                setOf("USD" to "BRL", "EUR" to "BRL"),
-                source.asked.toSet(),
-                "the EUR/USD pair is never asked for",
+            assertTrue(
+                source.asked.containsAll(listOf("USD" to "BRL", "EUR" to "BRL")),
+                "both non-base currencies were quoted against the base",
+            )
+            assertTrue(
+                source.asked.none { it.second != "BRL" },
+                "no pair between two non-base currencies is ever asked for",
             )
 
             val cross = get<IExchangeRateRepository>().rateBetween("EUR", "USD", friday)
@@ -193,10 +262,13 @@ class RateSyncEndToEndTest {
 
             val stored = get<IExchangeRateRepository>().observeAll().first()
 
-            assertEquals(
-                setOf(ExchangeRate.Source.REMOTE, ExchangeRate.Source.DERIVED),
-                stored.map { it.source }.toSet(),
-                "both writers left their observation on the same pair",
+            assertTrue(
+                stored.any { it.currency == "USD" && it.source == ExchangeRate.Source.REMOTE },
+                "the quote left its observation",
+            )
+            assertTrue(
+                stored.any { it.source == ExchangeRate.Source.DERIVED },
+                "and the harvest left its own, on the same pair",
             )
             // Each in the direction it was observed in, and neither inverted to join the
             // other: the quote asked for the dollar priced in reais, the operation

@@ -184,7 +184,7 @@ class ExchangeRatesViewModelTest {
         val yesterday = today.minus(1, DateTimeUnit.DAY)
         val state = viewModel(
             syncState = RateSyncState(
-                lastSyncedAt = yesterday.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                syncedAt = mapOf("USD" to yesterday.atStartOfDayIn(TimeZone.currentSystemDefault())),
             )
         ).loaded()
 

@@ -24,7 +24,10 @@ class RateSyncStateRepositoryTest {
     @Test
     fun `what was recorded is what a reopened repository reads`() = runTest {
         val recorded = RateSyncState(
-            lastSyncedAt = Instant.fromEpochMilliseconds(1_784_000_000_000),
+            syncedAt = mapOf(
+                "USD" to Instant.fromEpochMilliseconds(1_784_000_000_000),
+                "EUR" to Instant.fromEpochMilliseconds(1_784_000_060_000),
+            ),
             notCoveredCurrencies = setOf("ARS", "VES"),
         )
 
@@ -37,12 +40,34 @@ class RateSyncStateRepositoryTest {
     fun `recording emits on the flow the screen observes`() = runTest {
         val repository = RateSyncStateRepository(settings)
         val recorded = RateSyncState(
-            lastSyncedAt = Instant.fromEpochMilliseconds(1_784_000_000_000),
+            syncedAt = mapOf("USD" to Instant.fromEpochMilliseconds(1_784_000_000_000)),
             notCoveredCurrencies = setOf("ARS"),
         )
 
         repository.record(recorded)
 
         assertEquals(recorded, repository.observe().value)
+    }
+
+    /**
+     * What the screen states is the most recent of the per-currency instants, derived and
+     * never a second stored field — two copies would part company on the first partial
+     * round, one currency answering while another failed.
+     */
+    @Test
+    fun `the instant the screen states is the most recent one`() = runTest {
+        val newest = Instant.fromEpochMilliseconds(1_784_000_060_000)
+
+        RateSyncStateRepository(settings).record(
+            RateSyncState(
+                syncedAt = mapOf(
+                    "USD" to Instant.fromEpochMilliseconds(1_784_000_000_000),
+                    "EUR" to newest,
+                    "GBP" to Instant.fromEpochMilliseconds(1_783_000_000_000),
+                ),
+            )
+        )
+
+        assertEquals(newest, RateSyncStateRepository(settings).observe().value.lastSyncedAt)
     }
 }

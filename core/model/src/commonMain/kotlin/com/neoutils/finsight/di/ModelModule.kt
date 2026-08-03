@@ -37,6 +37,7 @@ val modelModule = module {
     factory { HarvestExchangeRateUseCase(exchangeRateRepository = get()) }
     factory {
         SyncExchangeRatesUseCase(
+            currencyRepository = get(),
             getAccountCurrencies = get(),
             baseCurrencyRepository = get(),
             remoteRateSource = get(),

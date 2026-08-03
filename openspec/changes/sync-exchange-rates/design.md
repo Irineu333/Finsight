@@ -117,6 +117,26 @@ As alternativas foram descartadas por custo desproporcional: trabalho agendado e
 
 Vale registrar que isto **cria** o primeiro passo de inicialização real do app, coisa que o design de `add-multi-currency-accounts` registrou não existir. Ele nasce com uma propriedade que o mantém inofensivo: nada na composição o aguarda, e falhar é não fazer nada.
 
+### D8b — O conjunto é o **oferecido**, e o limite diário é **por moeda**
+
+Descoberto em teste manual, e é o mesmo defeito visto de dois ângulos.
+
+Sincronizar apenas as moedas **em uso** parece mais eficiente e inverte a ordem que interessa: a taxa passa a **seguir** a conta em vez de precedê-la. Toda primeira conta numa moeda nasce no pior caso, e — porque o limite diário já se cumpriu naquele dia — permanece nele até a abertura seguinte. O usuário que acabou de cadastrar a conta em dólar vê a figura empilhar termos por até 24 horas, que é literalmente o estado que esta change existe para remover.
+
+Cobrir o que o app **oferece** conserta a ordem: o registro de moedas é pequeno e curado — seis linhas semeadas mais a do *locale* mais o que o usuário cadastrar —, então são um punhado de requisições por dia, e a taxa está no acervo antes de existir conta que precise dela. Some-se a isso qualquer moeda ainda em uso mesmo estando arquivada: arquivar é sobre o que se oferece e não sobre o que se sabe, e a conta que sobreviveu ao arquivamento continua precisando da sua taxa para a figura fechar.
+
+Isso sozinho não basta, e é a segunda metade que fecha o buraco. Com o limite **global**, cadastrar uma moeda nova cai no mesmo caso: a sincronização de hoje já rodou, aquela moeda nunca foi consultada, e ainda assim está bloqueada até amanhã. O limite passa a ser **por moeda** — o instante persistido deixa de ser um e passa a ser um por moeda —, o que torna a frase honesta: *esta* moeda já foi buscada hoje. Uma moeda que nunca foi buscada não tem instante nenhum, logo nada a bloqueia.
+
+Com o limite por moeda, redisparar a sincronização é de graça: tudo que já respondeu hoje é pulado, e só o que falta sai para a rede. É isso que permite o gatilho de D8c ser trivialmente seguro.
+
+O instante que a tela mostra passa a ser **derivado**, o mais recente dos por-moeda, em vez de um campo próprio. Um segundo campo seria um segundo dono da mesma frase, e eles divergiriam na primeira sincronização parcial.
+
+### D8c — Cadastrar uma moeda dispara a sincronização, e isso não é um comando
+
+O gatilho fica onde o de abertura já está: `App` passa a **observar o registro** e a redisparar quando ele ganha uma moeda. Um ponto de gatilho e não dois — pôr a chamada na ViewModel do formulário espalharia a obrigação, e um segundo caminho de cadastro no futuro esqueceria de cumpri-la.
+
+Isto **não** é o botão de sincronizar que os Non-Goals recusam. O que aquele Non-Goal barra é o usuário ter de lembrar de executar uma tarefa, e uma superfície que espera rede com ele olhando. Aqui o gatilho é uma mudança de estado do app, ninguém o aguarda, nada na composição depende dele, e falhar continua sendo não fazer nada.
+
 ### D9 — O instante da última sincronização é o que a tela mostra, e não um canal de erro
 
 Persistir *"quando sincronizou com sucesso pela última vez"* é suficiente para a tela dizer o que precisa dizer, e sobrevive a reinício do app — o que um estado de erro em memória não faria. Falhou? Nada é escrito, e a tela deduz do instante antigo. Não há canal de erro, não há evento, não há estado transitório a coordenar.
@@ -155,7 +175,7 @@ Um `:core:network` foi descartado. Ele convidaria qualquer feature a usar rede, 
 - **Correção do usuário superada no dia seguinte** (D3). É o comportamento certo e vai surpreender alguém. Mitigação possível numa change futura: desligar a sincronização por par.
 - **Dependência de um provedor externo, sem contrato.** Frankfurter é gratuito, sem chave e sem SLA. Falhar é não fazer nada, então a falha é barata — mas uma descontinuação silenciosa deixaria os usuários novos no pior caso sem sinal, e é por isso que D9 existe.
 - **Primeira dependência de rede do projeto.** Ktor entra com motor por plataforma, e o app passa a fazer requisição na abertura. O payload é uma lista de códigos ISO e nada mais, mas é um fato novo sobre o app.
-- **O conjunto sincronizado sai de `GetAccountCurrenciesUseCase.inUse`**, que cobre contas e cartões. Um orçamento denominado numa moeda cuja conta foi apagada fica fora — caso estreito, que cai no comportamento já definido para taxa ausente.
+- **O conjunto sincronizado é o registro de moedas oferecidas mais o que está em uso** (D8b). Ele cresce com o que o usuário cadastrar, então um usuário que cadastre trinta moedas paga trinta requisições por dia. É aceitável porque o registro é curado por ele e porque falhar é barato, mas deixa de ser se o registro algum dia voltar a ser um catálogo largo — caso em que o conjunto teria de voltar a se estreitar pelo uso.
 - **A `DERIVED` perde precedência** e, com isso, alguma visibilidade: o número que o usuário efetivamente pagou deixa de ser o que consolida quando há cotação do mesmo dia. Ele continua no acervo, continua visível no histórico, e continua sendo o que responde offline.
 
 ## Open Questions

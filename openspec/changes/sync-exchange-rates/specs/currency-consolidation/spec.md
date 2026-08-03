@@ -6,13 +6,19 @@ O sistema SHALL manter o acervo de taxas alimentado automaticamente a partir de 
 
 Nenhuma leitura, tela ou figura do app SHALL depender de rede, apresentar estado de carregamento ou falhar por indisponibilidade em razão de conversão de moeda. Toda conversão SHALL continuar a ler exclusivamente o acervo local, que permanece a única autoridade. A garantia é sustentada pela **direção do fluxo** — a rede escreve no acervo, e o acervo é lido offline —, e MUST NOT ser sustentada por proibir que a fonte exista.
 
-A sincronização SHALL cobrir as moedas **em uso** nas contas e nos cartões do usuário, cada uma contra a moeda base em vigor. Os cruzamentos entre duas moedas não-base MUST NOT exigir sincronização própria: eles SHALL ser alcançados pela resolução já declarada, por uma triangulação sobre a base.
+A sincronização SHALL cobrir as moedas que o app **oferece** — o registro de moedas, as arquivadas excluídas — mais qualquer moeda ainda **em uso** numa conta ou num cartão, cada uma contra a moeda base em vigor. Os cruzamentos entre duas moedas não-base MUST NOT exigir sincronização própria: eles SHALL ser alcançados pela resolução já declarada, por uma triangulação sobre a base.
+
+Cobrir o que é **oferecido**, e não apenas o que já está em uso, é o que faz a taxa **preceder** a conta. Uma conta criada numa moeda que o app já oferece SHALL encontrar a taxa pronta; cobrir apenas o que está em uso faria toda primeira conta numa moeda nascer no pior caso e esperar a sincronização do dia seguinte, que é o estado que esta capability existe para remover. Uma moeda **arquivada** que ainda tenha conta ou cartão SHALL permanecer coberta: arquivar é sobre o que se oferece e não sobre o que se sabe, e a figura daquela conta continua precisando da taxa.
 
 Cada observação obtida SHALL ser gravada na **direção em que será lida** — a moeda em uso precificada na base — e MUST NOT ser invertida na gravação. A direção pedida à fonte é, portanto, parte da forma de perguntar, e não algo a corrigir depois.
 
 Cada observação SHALL ser datada com a **data que a fonte declara**, e MUST NOT ser datada com o dia em que a sincronização ocorreu. Uma fonte que não publica todos os dias responde com a data da sua última publicação, e gravar outra data inventaria uma observação sobre um dia em que ninguém observou nada. Como consequência, sincronizar mais de uma vez sobre a mesma publicação SHALL ser inócuo.
 
-A sincronização SHALL ser disparada na abertura do app, sem que nada aguarde a sua conclusão, e SHALL ser limitada a uma vez por dia. Ela MUST NOT bloquear qualquer tela, MUST NOT exibir estado de carregamento fora da tela que apresenta o acervo, e falhar SHALL significar não escrever nada.
+A sincronização SHALL ser disparada na abertura do app, sem que nada aguarde a sua conclusão, e SHALL ser limitada a uma vez por dia **por moeda**. Ela MUST NOT bloquear qualquer tela, MUST NOT exibir estado de carregamento fora da tela que apresenta o acervo, e falhar SHALL significar não escrever nada.
+
+O limite SHALL ser por moeda e MUST NOT ser global. Um limite global tornaria uma moeda recém-cadastrada refém de uma sincronização que já ocorreu naquele dia: ela não foi consultada, nada se sabe sobre ela, e ainda assim ficaria bloqueada até o dia seguinte — que é exatamente o pior caso, apenas adiado.
+
+A sincronização SHALL também ser disparada quando o conjunto de moedas oferecidas **ganhar** uma moeda, de modo que cadastrar uma moeda e usá-la em seguida não dependa de esperar um dia. Isso MUST NOT ser confundido com um comando de sincronizar: o gatilho é uma mudança de estado do app, não uma ação que o usuário precisa lembrar de executar, e nada na tela o aguarda.
 
 A sincronização MUST NOT depender de ação do usuário, e o sistema MUST NOT oferecer comando algum para dispará-la. Manter o acervo é obrigação do app; um comando manual a tornaria tarefa que o usuário precisa lembrar de executar, e criaria uma superfície que espera rede com ele olhando — a mesma forma de estado de carregamento que a disparada na abertura torna desnecessária.
 
@@ -23,6 +29,18 @@ Quando a fonte remota não cobrir uma moeda em uso, o sistema SHALL dizê-lo ao 
 #### Scenario: Usuário multimoeda tem taxa sem cadastrar nada
 - **WHEN** o usuário cria uma conta em dólar tendo o real como base, com rede disponível, e abre o app
 - **THEN** a taxa do par dólar/real passa a existir no acervo, e as figuras consolidadas somam em vez de empilhar termos, sem que ele tenha cadastrado ou transacionado
+
+#### Scenario: A taxa precede a conta
+- **WHEN** o app já sincronizou hoje e o usuário cria a sua primeira conta em dólar, o dólar sendo uma moeda que o app oferece
+- **THEN** a taxa do par dólar/real já está no acervo, e a figura consolidada soma desde a criação — sem esperar a sincronização do dia seguinte
+
+#### Scenario: Cadastrar uma moeda nova não espera um dia
+- **WHEN** o app já sincronizou hoje e o usuário cadastra uma moeda que o registro não tinha
+- **THEN** a cotação daquela moeda é buscada em seguida, e as demais não são consultadas de novo
+
+#### Scenario: Uma moeda arquivada com conta viva continua coberta
+- **WHEN** uma moeda é arquivada e ainda existe uma conta denominada nela
+- **THEN** a sincronização continua a cobri-la, e a figura daquela conta continua somando
 
 #### Scenario: A sincronização escreve, e nenhuma leitura a espera
 - **WHEN** qualquer tela com figura consolidada é aberta

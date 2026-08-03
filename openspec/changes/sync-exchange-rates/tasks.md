@@ -516,7 +516,7 @@ sincronização.
 Barreira de entrada: 7.1. Barreira de saída: `./gradlew allTests` verde e nada abaixo
 encontra arquivo — se encontrar, a correção é na tarefa que deixou passar, não aqui.
 
-- [x] 8.1 Passada de conferência, **verificação e não edição**: nenhuma chave de string
+- [x] 8.1 Passada de conferência (primeira volta; a segunda é 9.4), **verificação e não edição**: nenhuma chave de string
   existe em apenas um dos dois `strings.xml`; nenhuma das seis prosas que afirmavam origem
   binária ou rede confinada ao formulário sobrevive (`ExchangeRate.Source`,
   `ExchangeRateEntity.Source`, `ExchangeRateDao` nos dois métodos, `IExchangeRateRepository`,
@@ -524,3 +524,47 @@ encontra arquivo — se encontrar, a correção é na tarefa que deixou passar, 
   byte** como antes da change e `AppDatabase` continua na mesma versão; nenhum
   `build.gradle.kts` fora de `feature/settings/impl` menciona Ktor; e nenhuma tela com
   figura consolidada ganhou estado de carregamento, erro ou menção a sincronização.
+
+---
+
+## 9. A taxa passa a preceder a conta
+
+Descoberto em teste manual depois do grupo 8: sincronizar apenas as moedas **em uso** faz
+a taxa seguir a conta em vez de precedê-la, e o limite diário **global** prende a moeda
+recém-cadastrada até o dia seguinte. São as duas metades do mesmo defeito, e o conserto de
+uma sem a outra não conserta nada — cobrir o oferecido sem o limite por moeda deixa a moeda
+nova bloqueada; o limite por moeda sem cobrir o oferecido deixa a conta nova esperando o
+gatilho seguinte. Ver D8b e D8c.
+
+Barreira de entrada: 8.1. Barreira de saída: `./gradlew jvmTest` verde, `assembleDebug`
+compila, e uma conta criada numa moeda oferecida encontra a taxa pronta.
+
+- [x] 9.1 **O estado da sincronização passa a ser por moeda**, em
+  `core/model/.../domain/repository/IRateSyncStateRepository.kt` e em
+  `feature/settings/impl/.../database/repository/RateSyncStateRepository.kt`. `RateSyncState`
+  troca o instante único por um instante **por moeda**, e o que a tela mostra passa a ser
+  **derivado** dele — o mais recente — em vez de um campo próprio, porque dois campos seriam
+  dois donos da mesma frase e divergiriam na primeira sincronização parcial. O KDoc registra
+  por que o limite não pode ser global (D8b). Teste em `commonTest`: gravar e reabrir devolve
+  o mapa; o instante apresentado é o mais recente; e um repositório novo continua respondendo
+  *nunca sincronizou*.
+- [x] 9.2 **O conjunto passa a ser o oferecido ∪ o em uso, e o limite a ser por moeda**, em
+  `core/model/.../domain/usecase/SyncExchangeRatesUseCase.kt`. Ele passa a consultar também
+  `ICurrencyRepository` — declarada no mesmo módulo, sem dependência nova — e a pular por
+  moeda, não por rodada. Uma moeda recusada **carimba o instante assim mesmo**: a resposta
+  foi definitiva, e não carimbar a faria ser perguntada em toda abertura para sempre. Uma
+  indisponível não carimba, para tentar de novo. Testes em `core/model/src/commonTest/`: uma
+  moeda oferecida e sem conta é coberta; uma arquivada com conta viva é coberta; uma arquivada
+  sem conta não é; a que já respondeu hoje não é perguntada de novo; e a nunca perguntada é,
+  mesmo com as outras já sincronizadas hoje.
+- [x] 9.3 **O gatilho passa a incluir o registro ganhando uma moeda**, em
+  `app/shared/src/commonMain/.../ui/App.kt`: o trabalho transversal disparado-e-esquecido
+  passa a **observar** as moedas oferecidas e a redisparar a sincronização quando o conjunto
+  muda. Com o limite por moeda de 9.2 o redisparo é inócuo — tudo que já respondeu hoje é
+  pulado —, e é isso que o torna seguro. Registrar no comentário que isto **não** é o comando
+  de sincronizar que os Non-Goals recusam (D8c): é mudança de estado do app, ninguém a
+  aguarda, e nada na composição depende dela.
+- [x] 9.4 **Segunda passada de conferência**, verificação e não edição: nenhuma tela ganhou
+  estado de carregamento ou botão de sincronizar; `RemoteSourceIsNeverReadTest` continua
+  fixando quatro arquivos; o gate de ponta a ponta cobre o caso relatado — sincronizou hoje,
+  cria conta agora, a taxa já está lá.

@@ -697,3 +697,24 @@ precificadas é a frase que o usuário veio ler.
   para `REMOVED` e é substituído por dois — um por visão. As duas garantias que ele realmente
   protegia (cada linha se descrever por inteiro; nenhuma linha exibida invertida) são
   reafirmadas literalmente nos dois.
+
+---
+
+## 15. Os filtros do histórico encolhem, e limpar sai da barra
+
+Pedido depois do grupo 14, e são duas coisas pequenas com a mesma raiz: a barra de filtros é
+**chrome acima daquilo que o usuário veio ler**, e estava cobrando espaço por informação que
+não dava.
+
+- [x] 15.1 **Cada chip passa a carregar uma palavra só**: a dimensão enquanto não filtra
+  nada (*Data*, *Moeda*, *Origem*), o valor quando filtra. Antes carregava as duas ao mesmo
+  tempo — *Data | Qualquer data* —, o que dobrava a largura para dizer duas vezes a mesma
+  coisa, sendo a segunda a menos informativa.
+- [x] 15.2 **O botão de limpar sai da barra e passa a viver no vazio**, que é a convenção do
+  app: uma ação permanente ao lado dos filtros é chrome que o usuário paga toda vez que abre
+  a tela, para desfazer algo que ainda não fez. No resultado vazio ela é a resposta à
+  pergunta que a tela está fazendo, e só aparece quando há filtro ativo.
+- [x] 15.3 **Três chaves órfãs saem dos dois `strings.xml`**
+  (`exchange_rate_history_filter_date_any`, `_date_start`, `_date_end`): declaradas em 1.1
+  por antecipação e nunca consumidas — o seletor de intervalo traz os próprios rótulos, e a
+  dimensão passou a ser o rótulo do chip sem filtro.

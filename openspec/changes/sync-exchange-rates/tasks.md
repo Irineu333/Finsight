@@ -671,3 +671,29 @@ dono, no chat do suporte.
   compartilhado e passa a `private`, com o KDoc dizendo por que a apresentação é uma só.
   `isExtraWideWindow` e o mecanismo de painel **não** ficam órfãos: seguem em uso pela shell
   e pelo suporte.
+
+---
+
+## 14. O histórico passa a agrupar por data
+
+Pedido depois do grupo 13, e o argumento é derivado desta própria change: com a manutenção
+automática gravando uma linha por par **por dia**, agrupar o histórico pela contraparte
+degenera. No acervo ordinário tudo é precificado na base, então meses de histórico colapsam
+num grupo único de centenas de linhas — exatamente o *não agrupa nada* que a contraparte foi
+escolhida para evitar na outra visão, alcançado pela outra ponta. A data particiona o acervo
+na razão em que ele cresce, e é o eixo que o histórico existe para percorrer.
+
+A visão **em vigor** não muda: lá são poucas linhas, e o cabeçalho dizendo em que elas estão
+precificadas é a frase que o usuário veio ler.
+
+- [x] 14.1 **O agrupamento do histórico vira por data**, em `ExchangeRateHistoryUiState.kt`,
+  `ExchangeRateHistoryViewModel.kt` e `ExchangeRateHistoryScreen.kt`: o grupo passa a ser
+  chaveado pela data, os dias mais recentes primeiro, e o cabeçalho passa a ser a data
+  formatada — sem chave de string nova, porque a data não precisa de moldura. Dentro do dia,
+  ordem **total e estável** (contraparte, moeda, id), para que duas leituras do mesmo acervo
+  listem o dia igual. `exchange_rates_group_header` **continua com dono**, na visão em vigor.
+- [x] 14.2 **A spec é reestruturada**: o requisito "A tela de taxas agrupa as observações
+  pela moeda contraparte" nomeava um critério único para uma tela que virou duas, então vai
+  para `REMOVED` e é substituído por dois — um por visão. As duas garantias que ele realmente
+  protegia (cada linha se descrever por inteiro; nenhuma linha exibida invertida) são
+  reafirmadas literalmente nos dois.

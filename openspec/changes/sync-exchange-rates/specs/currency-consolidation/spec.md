@@ -158,6 +158,54 @@ O filtro por origem SHALL distinguir as três: a colhida de operação, a obtida
 - **WHEN** o acervo tem centenas de observações e o usuário quer remover uma colhida por engano
 - **THEN** ele a alcança pelos filtros, e a remove
 
+### Requirement: A visão em vigor agrupa as suas linhas pela moeda contraparte
+
+A visão da **taxa em vigor** SHALL agrupar as suas linhas pela **moeda contraparte**, aquela em que as linhas do grupo estão precificadas. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+
+Reduzir o acervo a uma linha por par MUST NOT ser confundido com dispensar o agrupamento: a redução é sobre **quantas** linhas existem, e não diz nada sobre como elas são encabeçadas. Uma lista plana deixa a coluna de cotações sem nada declarando em que elas estão precificadas, e o que quer que esteja acima dela passa a ser lido como o cabeçalho que faltou.
+
+A escolha da ponta é decidida pelo caso comum, e não pela simetria: no acervo ordinário toda observação é precificada na base em vigor, então agrupar pela moeda **precificada** poria cada linha num grupo de uma só e não agruparia nada. A contraparte é a ponta que de fato reúne, e o cabeçalho passa a ser a frase que o usuário veio ler.
+
+Uma linha MUST NOT ser exibida invertida em relação à observação que a originou. Como consequência, um mesmo par PODE aparecer em dois grupos, um por sentido, quando foi observado nos dois. São observações distintas e SHALL ser exibidas como tais.
+
+Os grupos SHALL ser ordenados pela observação mais recente de cada moeda.
+
+#### Scenario: O acervo ordinário é um grupo só
+- **WHEN** o usuário abre a visão em vigor com o dólar, o euro e o iene cotados em real
+- **THEN** existe um único grupo, o do real, com as três linhas
+
+#### Scenario: Uma contraparte fora da base abre o seu próprio grupo
+- **WHEN** existe também uma taxa em vigor do iene contra o dólar
+- **THEN** ela aparece num grupo do dólar, separada das que são precificadas em real
+
+### Requirement: O histórico agrupa as observações por data
+
+A visão de **histórico** SHALL agrupar as observações pela sua **data**, os dias mais recentes primeiro, e MUST NOT agrupá-las pela moeda contraparte.
+
+O eixo é a data porque é ele que o histórico existe para percorrer, e porque é o único que **envelhece bem**. Com a manutenção automática gravando uma linha por par por dia, o acervo ordinário — em que tudo é precificado na base — colapsa num grupo único de centenas de linhas se for agrupado pela contraparte: exatamente o *não agrupa nada* que a contraparte foi escolhida para evitar na outra visão, alcançado pela outra ponta. A data, ao contrário, particiona o acervo na razão em que ele cresce.
+
+Cada linha SHALL continuar se descrevendo por inteiro — o par nas duas pontas, o valor e a origem —, de modo que o cabeçalho de data não precise dizer nada sobre moeda alguma. Uma linha MUST NOT ser exibida invertida em relação à observação que a originou: esta visão é também o ponto de edição, e editar uma linha invertida abriria a correção de um número que ninguém observou.
+
+Como consequência, o mesmo par observado nos dois sentidos no mesmo dia SHALL aparecer no mesmo grupo, como duas linhas distintas — o que elas são —, e cada uma SHALL declarar a direção em que foi observada.
+
+A ordem dentro de um dia SHALL ser total e estável, para que duas leituras do mesmo acervo listem o mesmo dia na mesma ordem.
+
+#### Scenario: O histórico é particionado por dia
+- **WHEN** o usuário abre o histórico com observações de três dias distintos
+- **THEN** existem três grupos, um por dia, o mais recente primeiro
+
+#### Scenario: O acervo ordinário não colapsa num grupo só
+- **WHEN** o histórico contém trinta dias de cotações do dólar, do euro e do iene, todas contra o real
+- **THEN** existem trinta grupos, e não um
+
+#### Scenario: O mesmo par nos dois sentidos aparece no mesmo dia
+- **WHEN** existem, no mesmo dia, uma observação do dólar contra o real e outra do real contra o dólar
+- **THEN** as duas aparecem no grupo daquele dia, cada uma na direção em que foi observada
+
+#### Scenario: Editar alcança a observação original
+- **WHEN** o usuário toca numa linha para corrigi-la
+- **THEN** o formulário abre com o par na direção em que a observação foi feita
+
 ## MODIFIED Requirements
 
 ### Requirement: A taxa é uma observação local e datada sobre um par de moedas
@@ -336,32 +384,18 @@ Não havendo caminho algum, o sistema MUST NOT tratar a taxa como `1`, MUST NOT 
 - **WHEN** a conversão é resolvida por um pivô cujas pernas têm origens diferentes
 - **THEN** a resposta declara a mais fraca das duas
 
+## REMOVED Requirements
+
 ### Requirement: A tela de taxas agrupa as observações pela moeda contraparte
 
-**As duas visões** do acervo — a taxa em vigor e o histórico — SHALL agrupar as suas linhas pela **moeda contraparte**, aquela em que as linhas do grupo estão precificadas. Cada linha SHALL se descrever por inteiro: o par nas duas pontas, o valor, a data e a origem, de modo que o seu significado não dependa do cabeçalho sob o qual ela está.
+**Reason**: O requisito nomeava um critério único de agrupamento para uma tela que passou a
+ser **duas**, e o critério deixou de servir às duas. Ele foi partido nos dois requisitos que
+o substituem: a visão em vigor continua agrupando pela moeda contraparte, pela razão
+original e intacta; o histórico passa a agrupar por data, porque com a manutenção automática
+gravando uma linha por par por dia a contraparte colapsa o acervo ordinário num grupo único
+de centenas de linhas.
 
-Reduzir o acervo a uma linha por par MUST NOT ser confundido com dispensar o agrupamento: a redução é sobre **quantas** linhas existem, e não diz nada sobre como elas são encabeçadas. Uma lista plana deixa a coluna de cotações sem nada declarando em que elas estão precificadas, e o que quer que esteja acima dela passa a ser lido como o cabeçalho que faltou.
-
-A escolha da ponta é decidida pelo caso comum, e não pela simetria: no acervo ordinário toda observação é precificada na base em vigor — e a manutenção automática a torna ainda mais ordinária, porque grava exatamente nessa direção —, então agrupar pela moeda **precificada** poria cada linha num grupo de uma só e não agruparia nada. A contraparte é a ponta que de fato reúne, e o cabeçalho passa a ser a frase que o usuário veio ler.
-
-Uma linha MUST NOT ser exibida invertida em relação à observação que a originou. Esta visão é também o ponto de edição, e editar uma linha invertida abriria a correção de um número que ninguém observou.
-
-Como consequência, um mesmo par PODE aparecer em dois grupos, um por sentido, quando foi observado nos dois. São observações distintas e SHALL ser exibidas como tais.
-
-Os grupos SHALL ser ordenados pela observação mais recente de cada moeda.
-
-#### Scenario: O acervo ordinário é um grupo só
-- **WHEN** o usuário abre o histórico com observações do dólar, do euro e do iene, todas contra o real
-- **THEN** existe um único grupo, o do real, com as observações datadas
-
-#### Scenario: Uma contraparte fora da base abre o seu próprio grupo
-- **WHEN** existe também uma observação do iene contra o dólar
-- **THEN** ela aparece num grupo do dólar, separada das que são precificadas em real
-
-#### Scenario: O mesmo par nos dois sentidos aparece em dois grupos
-- **WHEN** existem uma observação do dólar contra o real e outra do real contra o dólar
-- **THEN** cada uma aparece no grupo da sua moeda contraparte, na direção em que foi observada
-
-#### Scenario: Editar alcança a observação original
-- **WHEN** o usuário toca numa linha para corrigi-la
-- **THEN** o formulário abre com o par na direção em que a observação foi feita
+**Migration**: Nada se afrouxa. As duas garantias que o requisito realmente protegia — cada
+linha se descrever por inteiro, e nenhuma linha ser exibida invertida em relação à
+observação que a originou — são reafirmadas literalmente nos dois requisitos que o
+substituem.

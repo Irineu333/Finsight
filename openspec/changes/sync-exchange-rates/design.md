@@ -137,6 +137,21 @@ O gatilho fica onde o de abertura já está: `App` passa a **observar o registro
 
 Isto **não** é o botão de sincronizar que os Non-Goals recusam. O que aquele Non-Goal barra é o usuário ter de lembrar de executar uma tarefa, e uma superfície que espera rede com ele olhando. Aqui o gatilho é uma mudança de estado do app, ninguém o aguarda, nada na composição depende dele, e falhar continua sendo não fazer nada.
 
+### D8d — O limite é por **par**, e trocar a base é um gatilho
+
+Descoberto em teste manual, e é o mesmo defeito de D8b uma volta acima: **o limite guardava menos informação do que a pergunta que ele governa.**
+
+`syncedAt` era por moeda — *o dólar foi cotado hoje* — sem dizer contra o quê. Mas o que se busca é um **par**. Trocada a base, o acervo passa a precisar das linhas contra a base nova, e nenhuma delas jamais foi buscada; ainda assim toda moeda parecia respondida, e a chave não tinha como exprimir a diferença. O acervo ficava um dia atrás da preferência, em silêncio — as figuras continuavam certas, porque a resolução tria­ngula sobre a base antiga, o que é justamente o que fazia o defeito não aparecer.
+
+A chave passa a ser `RatePair(currency, against)`. A frase fica honesta — *este par foi cotado hoje* — e o comportamento de trocar a base e voltar atrás no mesmo dia sai de graça e correto: aqueles pares já foram respondidos, então não se busca nada.
+
+E, como em D8c, o limite certo não basta sem o gatilho: `App` observava o registro e não a base. Em vez de acrescentar mais uma coisa para a shell observar, **a regra de quando a manutenção vence passa a morar no use case**, em `whenDue()` — abertura, registro ganhando moeda, base mudando. Duas razões:
+
+- **Ela é do domínio da manutenção**, não da shell. O que faz o acervo dever outra rodada é fato sobre o acervo.
+- **Ela mantém `BaseCurrencyReachTest` intacto.** Para observar a troca de base, `App` teria de nomear `IBaseCurrencyRepository` e seria a primeira tela do app a fazê-lo — exatamente o que aquele *gate* existe para barrar, e por um bom motivo. Com a regra dentro do use case, que já nomeia a base legitimamente, a shell só coleta.
+
+Coletar isso é seguro a ponto de ser entediante, e é o limite por par que o torna assim: tudo que já respondeu hoje é pulado, então uma rodada disparada por uma mudança que não importa a nada custa zero requisição.
+
 ### D9 — O instante da última sincronização é o que a tela mostra, e não um canal de erro
 
 Persistir *"quando sincronizou com sucesso pela última vez"* é suficiente para a tela dizer o que precisa dizer, e sobrevive a reinício do app — o que um estado de erro em memória não faria. Falhou? Nada é escrito, e a tela deduz do instante antigo. Não há canal de erro, não há evento, não há estado transitório a coordenar.

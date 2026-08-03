@@ -568,3 +568,33 @@ compila, e uma conta criada numa moeda oferecida encontra a taxa pronta.
   estado de carregamento ou botão de sincronizar; `RemoteSourceIsNeverReadTest` continua
   fixando quatro arquivos; o gate de ponta a ponta cobre o caso relatado — sincronizou hoje,
   cria conta agora, a taxa já está lá.
+
+---
+
+## 10. Trocar a base deixa de deixar o acervo um dia atrás
+
+Descoberto em teste manual depois do grupo 9, e é D8b uma volta acima: **o limite guardava
+menos informação do que a pergunta que ele governa.** Ele era por moeda; o que se busca é
+um par. Trocada a base, toda moeda parecia respondida enquanto a linha que passou a
+responder — a que é contra a base nova — nunca fora buscada. E, como no grupo 9, o limite
+certo não basta sem o gatilho: nada observava a base. Ver D8d.
+
+Barreira de entrada: 9.4. Barreira de saída: `./gradlew jvmTest` verde, `assembleDebug`
+compila, e trocar a base busca os pares novos no mesmo dia.
+
+- [x] 10.1 **O limite passa a ser por par**, em
+  `core/model/.../domain/repository/IRateSyncStateRepository.kt`,
+  `feature/settings/impl/.../database/repository/RateSyncStateRepository.kt` e
+  `core/model/.../domain/usecase/SyncExchangeRatesUseCase.kt`. Entra `RatePair(currency,
+  against)` e `syncedAt` passa a ser chaveado por ele; a persistência vira `FROM>TO=millis`.
+  O KDoc diz por que a chave é o par e não a moeda. Testes: gravar e reabrir devolve o mapa;
+  trocar a base busca na direção nova no mesmo dia; trocar a base e voltar não busca nada.
+- [x] 10.2 **A regra de quando a manutenção vence passa a morar no use case**, em
+  `SyncExchangeRatesUseCase.whenDue()` — abertura, registro ganhando moeda, base mudando —,
+  e `App` passa a apenas coletá-la. É isso que impede a shell de nomear
+  `IBaseCurrencyRepository` e de virar a primeira tela do app a fazê-lo, que é o que
+  `BaseCurrencyReachTest` existe para barrar. Renomear uma moeda não deve a nada. Testes de
+  `whenDue` sobre os três gatilhos e sobre o não-gatilho.
+- [x] 10.3 **Terceira passada de conferência**: `BaseCurrencyReachTest` continua com a mesma
+  lista; `RemoteSourceIsNeverReadTest` continua fixando quatro arquivos; nenhuma tela ganhou
+  estado de carregamento ou comando de sincronizar.

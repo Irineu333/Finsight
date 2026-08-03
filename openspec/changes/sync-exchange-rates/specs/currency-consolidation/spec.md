@@ -16,9 +16,9 @@ Cada observação SHALL ser datada com a **data que a fonte declara**, e MUST NO
 
 A sincronização SHALL ser disparada na abertura do app, sem que nada aguarde a sua conclusão, e SHALL ser limitada a uma vez por dia **por moeda**. Ela MUST NOT bloquear qualquer tela, MUST NOT exibir estado de carregamento fora da tela que apresenta o acervo, e falhar SHALL significar não escrever nada.
 
-O limite SHALL ser por moeda e MUST NOT ser global. Um limite global tornaria uma moeda recém-cadastrada refém de uma sincronização que já ocorreu naquele dia: ela não foi consultada, nada se sabe sobre ela, e ainda assim ficaria bloqueada até o dia seguinte — que é exatamente o pior caso, apenas adiado.
+O limite SHALL ser por **par** — a moeda e aquilo contra o que ela foi cotada — e MUST NOT ser global nem por moeda. Um limite global tornaria uma moeda recém-cadastrada refém de uma sincronização que já ocorreu naquele dia. Um limite por moeda faria o mesmo com **todos** os pares no instante em que a moeda base mudasse: cada moeda pareceria já respondida, enquanto a linha que acabou de passar a responder — aquela contra a base nova — nunca foi buscada. Nos dois casos o resultado é o pior caso, apenas adiado.
 
-A sincronização SHALL também ser disparada quando o conjunto de moedas oferecidas **ganhar** uma moeda, de modo que cadastrar uma moeda e usá-la em seguida não dependa de esperar um dia. Isso MUST NOT ser confundido com um comando de sincronizar: o gatilho é uma mudança de estado do app, não uma ação que o usuário precisa lembrar de executar, e nada na tela o aguarda.
+A sincronização SHALL também ser disparada quando o conjunto de moedas oferecidas **ganhar** uma moeda e quando a **moeda base mudar**, de modo que nem cadastrar uma moeda nem trocar a base dependa de esperar um dia. Trocar a base é o caso mais forte dos dois: o acervo é *tudo precificado na base*, então a troca faz um conjunto inteiro de pares passar a ser o que responde, e nenhum deles jamais foi buscado. Isso MUST NOT ser confundido com um comando de sincronizar: o gatilho é uma mudança de estado do app, não uma ação que o usuário precisa lembrar de executar, e nada na tela o aguarda.
 
 A sincronização MUST NOT depender de ação do usuário, e o sistema MUST NOT oferecer comando algum para dispará-la. Manter o acervo é obrigação do app; um comando manual a tornaria tarefa que o usuário precisa lembrar de executar, e criaria uma superfície que espera rede com ele olhando — a mesma forma de estado de carregamento que a disparada na abertura torna desnecessária.
 
@@ -37,6 +37,14 @@ Quando a fonte remota não cobrir uma moeda em uso, o sistema SHALL dizê-lo ao 
 #### Scenario: Cadastrar uma moeda nova não espera um dia
 - **WHEN** o app já sincronizou hoje e o usuário cadastra uma moeda que o registro não tinha
 - **THEN** a cotação daquela moeda é buscada em seguida, e as demais não são consultadas de novo
+
+#### Scenario: Trocar a moeda base não espera um dia
+- **WHEN** o app já sincronizou hoje e o usuário troca a moeda base
+- **THEN** os pares contra a base nova são buscados em seguida, na direção em que serão lidos, e o acervo não fica um dia atrás da preferência
+
+#### Scenario: Voltar à base anterior não custa requisição
+- **WHEN** o usuário troca a base e volta atrás no mesmo dia
+- **THEN** nenhum par é buscado de novo, porque todos já foram respondidos naquele dia
 
 #### Scenario: Uma moeda arquivada com conta viva continua coberta
 - **WHEN** uma moeda é arquivada e ainda existe uma conta denominada nela

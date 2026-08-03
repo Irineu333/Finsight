@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -56,6 +58,26 @@ class SyncExchangeRatesUseCaseTest {
         override suspend fun archive(code: String) = Unit
         override suspend fun unarchive(code: String) = Unit
         override suspend fun delete(code: String) = Unit
+    }
+
+    /** A registry that can gain and lose rows while `whenDue()` is being collected. */
+    private class FlowingRegistry(private val rows: MutableStateFlow<List<CurrencyInfo>>) : ICurrencyRepository {
+        override fun observeOffered(): Flow<List<CurrencyInfo>> = rows
+        override fun observeAll(): Flow<List<CurrencyInfo>> = rows
+        override suspend fun getOffered() = rows.value
+        override suspend fun getAll() = rows.value
+        override suspend fun get(code: String) = rows.value.firstOrNull { it.code == code }
+        override suspend fun exists(code: String) = rows.value.any { it.code == code }
+        override suspend fun save(code: String, symbol: String, name: String?) = Unit
+        override suspend fun archive(code: String) = Unit
+        override suspend fun unarchive(code: String) = Unit
+        override suspend fun delete(code: String) = Unit
+    }
+
+    /** A base that can be switched while `whenDue()` is being collected. */
+    private class MovableBase(private val state: MutableStateFlow<String>) : IBaseCurrencyRepository {
+        override fun observe(): StateFlow<String> = state
+        override suspend fun set(code: String) { state.value = code }
     }
 
     private class FixedBase(base: String) : IBaseCurrencyRepository {
@@ -283,6 +305,100 @@ class SyncExchangeRatesUseCaseTest {
         useCase(source, inUse = listOf("BRL"), offered = currencies).invoke()
 
         assertEquals(2, source.asked.size)
+    }
+
+    /**
+     * The bug this was found by: the archive is *everything priced in the base*, so
+     * switching the base makes a whole set of pairs become the ones that answer — and none
+     * of them was ever fetched. A bound keyed by the currency alone would call them all
+     * answered and leave the archive a day behind the preference.
+     */
+    @Test
+    fun `switching the base re-quotes in the new direction the same day`() = runTest {
+        val source = RecordingSource(
+            mapOf(
+                "USD" to RemoteQuote.Observed(friday, 5.0),
+                "BRL" to RemoteQuote.Observed(friday, 0.2),
+            )
+        )
+        val offered = listOf("BRL", "USD")
+
+        useCase(source, inUse = offered, offered = offered, base = "BRL").invoke()
+        assertEquals(listOf("USD" to "BRL"), source.asked)
+
+        // The user switches the base to the dollar, the same day.
+        useCase(source, inUse = offered, offered = offered, base = "USD").invoke()
+
+        assertEquals(
+            listOf("USD" to "BRL", "BRL" to "USD"),
+            source.asked,
+            "the pair against the new base is fetched, in the direction it will be read",
+        )
+        assertEquals(
+            listOf("USD" to "BRL", "BRL" to "USD"),
+            archive.saved.map { it.currency to it.counterCurrency },
+        )
+    }
+
+    /** And switching back costs nothing: that pair was already answered today. */
+    @Test
+    fun `switching the base back does not re-quote what was already answered`() = runTest {
+        val source = RecordingSource(
+            mapOf(
+                "USD" to RemoteQuote.Observed(friday, 5.0),
+                "BRL" to RemoteQuote.Observed(friday, 0.2),
+            )
+        )
+        val offered = listOf("BRL", "USD")
+
+        useCase(source, inUse = offered, offered = offered, base = "BRL").invoke()
+        useCase(source, inUse = offered, offered = offered, base = "USD").invoke()
+        source.asked.clear()
+
+        useCase(source, inUse = offered, offered = offered, base = "BRL").invoke()
+
+        assertEquals(emptyList(), source.asked)
+    }
+
+    /**
+     * The trigger's own rule: the upkeep is owed on the first collection, when the registry
+     * gains a currency, and when the base changes — and owed nothing when a currency is
+     * merely renamed.
+     */
+    @Test
+    fun `whenDue fires on the registry gaining a currency and on the base changing`() = runTest {
+        val registry = MutableStateFlow(listOf(CurrencyInfo("BRL", "R$", null)))
+        val base = MutableStateFlow("BRL")
+
+        val useCase = SyncExchangeRatesUseCase(
+            currencyRepository = FlowingRegistry(registry),
+            getAccountCurrencies = Currencies(listOf("BRL")),
+            baseCurrencyRepository = MovableBase(base),
+            remoteRateSource = RecordingSource(emptyMap()),
+            exchangeRateRepository = archive,
+            rateSyncStateRepository = syncState,
+            clock = FixedClock(sunday),
+            timeZone = TimeZone.UTC,
+        )
+
+        val fired = mutableListOf<Unit>()
+        val job = launch { useCase.whenDue().collect { fired += it } }
+        runCurrent()
+        assertEquals(1, fired.size, "owed on the first collection — the app opening")
+
+        registry.value = registry.value + CurrencyInfo("USD", "US$", null)
+        runCurrent()
+        assertEquals(2, fired.size, "owed when the registry gains a currency")
+
+        base.value = "USD"
+        runCurrent()
+        assertEquals(3, fired.size, "owed when the base changes")
+
+        registry.value = listOf(CurrencyInfo("BRL", "R$", "Real"), CurrencyInfo("USD", "US$", null))
+        runCurrent()
+        assertEquals(3, fired.size, "renaming a currency owes nothing")
+
+        job.cancel()
     }
 
     /** One currency failing does not stop, or un-stamp, the ones that answered. */

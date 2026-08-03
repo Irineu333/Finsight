@@ -6,8 +6,13 @@ import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
+import com.neoutils.finsight.domain.repository.RatePair
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.repository.RemoteQuote
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -29,12 +34,15 @@ import kotlin.time.Clock
  * stays covered too — archiving is about what is offered, not about what is known, and that
  * account's figure still needs its rate.
  *
- * **Once a day, per currency, on opening.** The cadence is the app's launch, fired and
- * forgotten. The bound is **per currency and never global**: a global one would hold a
- * newly registered currency hostage to a run that already happened that day, though it was
- * never asked about. No background work, no `WorkManager`, no new permission and nothing
- * iOS will not do — because a figure only needs the rate while somebody is looking at it
- * (design D8).
+ * **Once a day, per pair, on opening.** The cadence is the app's launch, fired and
+ * forgotten. The bound is **per pair, never global and never per currency**: a global one
+ * would hold a newly registered currency hostage to a run that already happened that day,
+ * and a per-currency one would do the same to every pair the moment the base changed. No
+ * background work, no `WorkManager`, no new permission and nothing iOS will not do —
+ * because a figure only needs the rate while somebody is looking at it (design D8).
+ *
+ * **When it becomes due is [whenDue], and it is this use case's rule** rather than the
+ * shell's: what makes the upkeep owe another round is a fact about the upkeep.
  *
  * **Failing means writing nothing.** An unavailable quotation writes no row, does not
  * stamp the instant and **does not throw**: whoever fires this does not await it, and an
@@ -61,6 +69,35 @@ class SyncExchangeRatesUseCase(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
 
+    /**
+     * Every moment the upkeep owes a round: the app opening, the registry **gaining** a
+     * currency, and the base currency **changing**.
+     *
+     * The last one is not decoration. The archive is *everything priced in the base*, so
+     * switching the base makes a whole set of pairs — the ones against the new base —
+     * become the rows that answer, and none of them has ever been fetched. Without this,
+     * they would arrive only on the next day's launch, which is the same worst case the
+     * per-pair bound exists to remove (design D8d).
+     *
+     * Collecting this is **safe to the point of being boring** precisely because the bound
+     * is per pair: everything already answered today is skipped, so a round fired by a
+     * change that turns out to matter to nothing costs no request at all. That is what lets
+     * the shell collect it without deciding anything.
+     *
+     * The rule lives here and not in the shell so that `App` never has to name the base
+     * currency — which the reach guard pins by name, and rightly: a screen naming it is
+     * almost always a figure about to wear the wrong denomination.
+     */
+    fun whenDue(): Flow<Unit> = combine(
+        currencyRepository.observeOffered().map { rows -> rows.map { it.code }.toSet() },
+        baseCurrencyRepository.observe(),
+    ) { offered, base -> offered to base }
+        // Editing a currency's symbol or name changes the registry and changes nothing
+        // here: what is owed depends on *which* currencies exist and on the base, and on
+        // nothing else about them.
+        .distinctUntilChanged()
+        .map { }
+
     suspend operator fun invoke() {
         val now = clock.now()
         val today = now.toLocalDateTime(timeZone).date
@@ -74,9 +111,13 @@ class SyncExchangeRatesUseCase(
         val currencies = (currencyRepository.getOffered().map { it.code } + getAccountCurrencies().inUse)
             .distinct()
             .filter { it != base }
-            // Per currency, never per round: what already answered today is skipped, and
-            // what was never asked has nothing blocking it (design D8b).
-            .filter { previous.syncedAt[it]?.toLocalDateTime(timeZone)?.date != today }
+            // Per **pair**, never per round and never per currency: what already answered
+            // today is skipped, and what was never asked has nothing blocking it. The pair
+            // is what is fetched, so it is what the bound has to be about — keyed by the
+            // currency alone, switching the base would leave every currency looking
+            // answered while the row that just became the one that matters was never asked
+            // for (design D8b, D8d).
+            .filter { previous.syncedAt[RatePair(it, base)]?.toLocalDateTime(timeZone)?.date != today }
 
         if (currencies.isEmpty()) return
 
@@ -98,7 +139,7 @@ class SyncExchangeRatesUseCase(
                             source = ExchangeRate.Source.REMOTE,
                         )
                     )
-                    syncedAt[currency] = now
+                    syncedAt[RatePair(currency, base)] = now
                     notCovered -= currency
                 }
 
@@ -106,7 +147,7 @@ class SyncExchangeRatesUseCase(
                 // instant like any other: not stamping it would have this currency asked
                 // again on every single launch, for ever, to be told the same thing.
                 RemoteQuote.NotCovered -> {
-                    syncedAt[currency] = now
+                    syncedAt[RatePair(currency, base)] = now
                     notCovered += currency
                 }
 

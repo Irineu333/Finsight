@@ -1,5 +1,6 @@
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.domain.repository.RatePair
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.test.runTest
@@ -25,8 +26,8 @@ class RateSyncStateRepositoryTest {
     fun `what was recorded is what a reopened repository reads`() = runTest {
         val recorded = RateSyncState(
             syncedAt = mapOf(
-                "USD" to Instant.fromEpochMilliseconds(1_784_000_000_000),
-                "EUR" to Instant.fromEpochMilliseconds(1_784_000_060_000),
+                RatePair("USD", "BRL") to Instant.fromEpochMilliseconds(1_784_000_000_000),
+                RatePair("EUR", "BRL") to Instant.fromEpochMilliseconds(1_784_000_060_000),
             ),
             notCoveredCurrencies = setOf("ARS", "VES"),
         )
@@ -40,7 +41,7 @@ class RateSyncStateRepositoryTest {
     fun `recording emits on the flow the screen observes`() = runTest {
         val repository = RateSyncStateRepository(settings)
         val recorded = RateSyncState(
-            syncedAt = mapOf("USD" to Instant.fromEpochMilliseconds(1_784_000_000_000)),
+            syncedAt = mapOf(RatePair("USD", "BRL") to Instant.fromEpochMilliseconds(1_784_000_000_000)),
             notCoveredCurrencies = setOf("ARS"),
         )
 
@@ -61,9 +62,9 @@ class RateSyncStateRepositoryTest {
         RateSyncStateRepository(settings).record(
             RateSyncState(
                 syncedAt = mapOf(
-                    "USD" to Instant.fromEpochMilliseconds(1_784_000_000_000),
-                    "EUR" to newest,
-                    "GBP" to Instant.fromEpochMilliseconds(1_783_000_000_000),
+                    RatePair("USD", "BRL") to Instant.fromEpochMilliseconds(1_784_000_000_000),
+                    RatePair("EUR", "BRL") to newest,
+                    RatePair("GBP", "BRL") to Instant.fromEpochMilliseconds(1_783_000_000_000),
                 ),
             )
         )

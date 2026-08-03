@@ -4,25 +4,36 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlin.time.Instant
 
 /**
+ * The pair a quotation was asked about: [currency] priced in [against].
+ *
+ * **The pair and not the currency**, because that is what is actually fetched. Keyed by
+ * the currency alone, the bound would say *the dollar was quoted today* without saying
+ * against what — and the moment the base currency changes that sentence stops being an
+ * answer to the question being asked, silently blocking the row that just became the one
+ * that matters (design D8d).
+ */
+data class RatePair(val currency: String, val against: String)
+
+/**
  * What the app knows about its own upkeep of the rate archive.
  *
- * @param syncedAt when each currency was last asked about, **successfully** — an answer
+ * @param syncedAt when each **pair** was last asked about, **successfully** — an answer
  * being either a quotation or an explicit refusal, since both are definitive. Success is
  * what is persisted, and failure is the absence of a newer instant: there is no error
  * channel here, and that is the decision, not an omission (see [IRateSyncStateRepository]).
  *
- * **It is per currency and deliberately not one instant for the whole round** (design
- * D8b). A single instant would make a newly registered currency hostage to a
+ * **It is per pair and deliberately not one instant for the whole round** (design D8b,
+ * D8d). A single instant would make a newly registered currency hostage to a
  * synchronisation that already ran that day: it was never asked about, nothing is known
  * about it, and it would still be blocked until tomorrow — which is the worst case merely
- * postponed. A currency with no instant here has nothing blocking it.
+ * postponed. A pair with no instant here has nothing blocking it.
  *
  * @param notCoveredCurrencies the currencies the source refused to quote. Not a failure:
  * it is permanent, the user can act on it, and saying it is the only thing that keeps the
  * missing rate from looking like a synchronisation that has not happened yet (design D7).
  */
 data class RateSyncState(
-    val syncedAt: Map<String, Instant> = emptyMap(),
+    val syncedAt: Map<RatePair, Instant> = emptyMap(),
     val notCoveredCurrencies: Set<String> = emptySet(),
 ) {
 

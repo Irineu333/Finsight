@@ -1,6 +1,7 @@
 package com.neoutils.finsight
 
 import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
@@ -163,6 +164,46 @@ class RateSyncEndToEndTest {
             assertTrue(
                 get<IExchangeRateRepository>().observeAll().first().any { it.currency == "JPY" },
                 "and its rate is in the archive the same day",
+            )
+        }
+    }
+
+    /**
+     * The archive is *everything priced in the base*, so switching the base makes a whole
+     * set of pairs become the ones that answer — and none of them has ever been fetched.
+     * The upkeep owes a round on the switch, and the per-pair bound is what lets it deliver
+     * one the same day.
+     */
+    @Test
+    fun `switching the base fetches the rates in the new direction, the same day`() {
+        val source = FakeRemoteSource(
+            listOf("USD", "EUR", "GBP", "CHF", "CNY", "BRL")
+                .associateWith { RemoteQuote.Observed(friday, 5.0) }
+        )
+
+        runApp(baseCurrency = "BRL", overrides = sourceOf(source)) {
+            account("Nubank", currency = "BRL", isDefault = true)
+            account("Chase", currency = "USD")
+
+            val sync = get<SyncExchangeRatesUseCase>()
+            sync()
+
+            assertTrue(
+                source.asked.none { it.first == "BRL" },
+                "with a real base nothing is quoted against itself",
+            )
+
+            get<IBaseCurrencyRepository>().set("USD")
+            sync()
+
+            assertTrue(
+                "BRL" to "USD" in source.asked,
+                "the real priced in dollars is the row that just became the one that answers",
+            )
+            assertTrue(
+                get<IExchangeRateRepository>().observeAll().first()
+                    .any { it.currency == "BRL" && it.counterCurrency == "USD" },
+                "and it is in the archive the same day, in the direction it will be read",
             )
         }
     }

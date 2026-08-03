@@ -10,7 +10,6 @@ import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
 import com.neoutils.finsight.navigation.LocalNavController
@@ -29,7 +28,6 @@ fun App() {
     val crashlytics = koinInject<Crashlytics>()
     val authService = koinInject<AuthService>()
     val syncExchangeRates = koinInject<SyncExchangeRatesUseCase>()
-    val currencyRepository = koinInject<ICurrencyRepository>()
 
     // The app's cross-cutting, fired and forgotten.
     LaunchedEffect(Unit) {
@@ -44,16 +42,16 @@ fun App() {
     // rate is not the dashboard's business — tying it to a tab would make the upkeep
     // depend on which screen the user happened to open (design D8).
     //
-    // It runs on launch **and** whenever the registry gains a currency, so that
-    // registering one and using it does not wait a day. That is safe precisely because the
-    // daily bound is per currency: everything already answered today is skipped, so a
-    // re-run costs the currency that is actually new and nothing else (design D8b).
+    // **When** it is owed is not decided here: `whenDue()` is the upkeep's own rule, and
+    // the shell only collects it. That is deliberate — the trigger has to fire when the
+    // base currency changes, and a shell that named the base to find that out would be the
+    // first screen in the app to name it, which the reach guard exists to stop.
     //
     // This is **not** the sync command the design refuses (design D8c). What that refuses
     // is a chore the user has to remember and a surface that waits on the network while
     // they watch; this is a state change of the app, and nobody awaits it.
     LaunchedEffect(Unit) {
-        currencyRepository.observeOffered().collect { syncExchangeRates() }
+        syncExchangeRates.whenDue().collect { syncExchangeRates() }
     }
 
     FinsightTheme {

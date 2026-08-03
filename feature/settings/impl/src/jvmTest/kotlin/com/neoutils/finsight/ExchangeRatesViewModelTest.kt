@@ -11,6 +11,7 @@ import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.RatePair
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
@@ -184,7 +185,7 @@ class ExchangeRatesViewModelTest {
         val yesterday = today.minus(1, DateTimeUnit.DAY)
         val state = viewModel(
             syncState = RateSyncState(
-                syncedAt = mapOf("USD" to yesterday.atStartOfDayIn(TimeZone.currentSystemDefault())),
+                syncedAt = mapOf(RatePair("USD", "BRL") to yesterday.atStartOfDayIn(TimeZone.currentSystemDefault())),
             )
         ).loaded()
 

@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.RatePair
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,10 +22,10 @@ import kotlin.time.Instant
  * Both are exposed as a `StateFlow` so the rates screen observes them without needing an
  * event, and no other surface of the app reads them at all.
  *
- * The instants are stored as one `CODE=millis` pair per currency, joined — a shape rather
+ * The instants are stored as one `FROM>TO=millis` entry per pair, joined — a shape rather
  * than a schema, because `multiplatform-settings` holds scalars and this is a preference,
- * not a table. A pair that cannot be read is dropped: the worst it costs is asking that
- * currency once more.
+ * not a table. An entry that cannot be read is dropped: the worst it costs is asking that
+ * pair once more.
  */
 class RateSyncStateRepository(
     private val settings: Settings,
@@ -38,8 +39,10 @@ class RateSyncStateRepository(
         settings.putString(
             KEY_SYNCED_AT,
             state.syncedAt.entries
-                .sortedBy { it.key }
-                .joinToString(SEPARATOR) { "${it.key}$ASSIGN${it.value.toEpochMilliseconds()}" },
+                .sortedBy { "${it.key.currency}$PAIR${it.key.against}" }
+                .joinToString(SEPARATOR) {
+                    "${it.key.currency}$PAIR${it.key.against}$ASSIGN${it.value.toEpochMilliseconds()}"
+                },
         )
         settings.putString(KEY_NOT_COVERED, state.notCoveredCurrencies.sorted().joinToString(SEPARATOR))
 
@@ -53,11 +56,13 @@ class RateSyncStateRepository(
     private fun read() = RateSyncState(
         syncedAt = settings.getStringOrNull(KEY_SYNCED_AT)
             ?.split(SEPARATOR)
-            ?.mapNotNull { pair ->
-                val code = pair.substringBefore(ASSIGN, missingDelimiterValue = "")
-                val millis = pair.substringAfter(ASSIGN, missingDelimiterValue = "").toLongOrNull()
-                if (code.isBlank() || millis == null) null
-                else code to Instant.fromEpochMilliseconds(millis)
+            ?.mapNotNull { entry ->
+                val key = entry.substringBefore(ASSIGN, missingDelimiterValue = "")
+                val millis = entry.substringAfter(ASSIGN, missingDelimiterValue = "").toLongOrNull()
+                val currency = key.substringBefore(PAIR, missingDelimiterValue = "")
+                val against = key.substringAfter(PAIR, missingDelimiterValue = "")
+                if (currency.isBlank() || against.isBlank() || millis == null) null
+                else RatePair(currency, against) to Instant.fromEpochMilliseconds(millis)
             }
             ?.toMap()
             .orEmpty(),
@@ -73,5 +78,6 @@ class RateSyncStateRepository(
         private const val KEY_NOT_COVERED = "rate_sync_not_covered"
         private const val SEPARATOR = ","
         private const val ASSIGN = "="
+        private const val PAIR = ">"
     }
 }

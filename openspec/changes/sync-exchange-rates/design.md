@@ -152,11 +152,15 @@ E, como em D8c, o limite certo não basta sem o gatilho: `App` observava o regis
 
 Coletar isso é seguro a ponto de ser entediante, e é o limite por par que o torna assim: tudo que já respondeu hoje é pulado, então uma rodada disparada por uma mudança que não importa a nada custa zero requisição.
 
-### D9 — O instante da última sincronização é o que a tela mostra, e não um canal de erro
+### D9 — O instante da última sincronização é estado persistido, e não um canal de erro
 
-Persistir *"quando sincronizou com sucesso pela última vez"* é suficiente para a tela dizer o que precisa dizer, e sobrevive a reinício do app — o que um estado de erro em memória não faria. Falhou? Nada é escrito, e a tela deduz do instante antigo. Não há canal de erro, não há evento, não há estado transitório a coordenar.
+Persistir *"quando sincronizou com sucesso pela última vez"* sobrevive a reinício do app, o que um estado de erro em memória não faria. Falhou? Nada é escrito, e o instante antigo continua respondendo. Não há canal de erro, não há evento, não há estado transitório a coordenar.
 
-O sinal fica **na tela de taxas e em nenhum outro lugar**. A proibição da spec é sobre figura consolidada, e a tela de taxas não é figura: é o acervo se explicando, e é onde o sinal de *"desatualizada há mais de 30 dias"* já vive. Sem contexto de sincronização, esse sinal é uma acusação sem réu.
+**O que a tela mostra é só o acionável, e isso corrige uma premissa desta decisão.** Ela dizia que o instante devia aparecer, porque sem ele o selo *"desatualizada há mais de 30 dias"* seria acusação sem réu. O argumento se sustenta para o caso em que a manutenção **nunca** rodou — ali as taxas na tela são apenas as que o usuário mesmo pôs, e é isso que o selo precisa de contexto para não acusar — e não se sustenta para o caso em que ela rodou: anunciar todo dia que está tudo bem é a forma mais confiável de a tela deixar de ser lida, inclusive no dia em que ela tiver algo a dizer. A manutenção que funcionou não é anunciada.
+
+O instante **permanece no estado** assim mesmo: ele é o que decide se há algo a dizer, e o estado continua honesto sobre o que sabe ainda quando a tela cala.
+
+O sinal fica **na tela de taxas e em nenhum outro lugar**. A proibição da spec é sobre figura consolidada, e a tela de taxas não é figura: é o acervo se explicando, e é onde o selo de desatualizada já vive.
 
 ### D10 — A resposta implícita deixa de mentir a origem
 

@@ -23,9 +23,9 @@ kotlin {
 
             // Ktor lives here and in no other module. A `:core:network` would invite any
             // feature to reach the network, which is the opposite of what currency
-            // consolidation wants: the remote source writes the archive and is never a
-            // path of reading it, and the module graph is what holds that restriction
-            // (design D11).
+            // consolidation wants: the remote source is a writer of the archive and never
+            // a path of reading it, and the module graph is what holds that restriction
+            // up (design D11).
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.kotlinxJson)

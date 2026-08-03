@@ -627,3 +627,23 @@ agrupada pela moeda contraparte —, com o estado da manutenção distinguível 
 - [x] 11.3 **Conferência**: nenhuma chave de string nova (`exchange_rates_group_header` já
   existia); `ConsolidationBoundaryTest` volta a listar o `ExchangeRatesViewModel`, que torna
   a ler a data e a contraparte para agrupar.
+
+---
+
+## 12. A manutenção que funcionou deixa de ser anunciada
+
+Pedido depois do grupo 11, e ele corrige uma premissa de D9 e não só uma label. D9 dizia que
+o instante da última sincronização bem-sucedida devia aparecer, porque sem ele o selo
+*"Desatualizada"* seria acusação sem réu. O argumento continua válido para o caso em que a
+manutenção **nunca** rodou — ali as taxas na tela são só as que o usuário pôs — e não se
+sustenta para o caso em que ela rodou: anunciar todo dia que está tudo bem é a forma mais
+confiável de a tela deixar de ser lida, inclusive no dia em que ela tiver algo a dizer.
+
+- [x] 12.1 **A label "Atualizado em" sai**, em `ExchangeRatesScreen.kt` e nos dois
+  `strings.xml` (a chave `exchange_rates_sync_updated_at` some dos dois no mesmo passo). O
+  *"Ainda não atualizado"* fica, e com ele o ícone que impede a linha de ser lida como
+  cabeçalho. `RateSyncStatus.lastSyncedOn` **permanece** no UiState: ele é o que decide se há
+  algo a dizer, e o estado continua honesto sobre o que sabe.
+- [x] 12.2 **A spec passa a exigir só o acionável**: *nunca atualizado* e *moeda não
+  coberta*, com a proibição de anunciar a manutenção que funcionou, e os dois cenários
+  correspondentes.

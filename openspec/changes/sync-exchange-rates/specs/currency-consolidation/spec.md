@@ -14,7 +14,7 @@ Cada observação obtida SHALL ser gravada na **direção em que será lida** �
 
 Cada observação SHALL ser datada com a **data que a fonte declara**, e MUST NOT ser datada com o dia em que a sincronização ocorreu. Uma fonte que não publica todos os dias responde com a data da sua última publicação, e gravar outra data inventaria uma observação sobre um dia em que ninguém observou nada. Como consequência, sincronizar mais de uma vez sobre a mesma publicação SHALL ser inócuo.
 
-A sincronização SHALL ser disparada na abertura do app, sem que nada aguarde a sua conclusão, e SHALL ser limitada a uma vez por dia **por moeda**. Ela MUST NOT bloquear qualquer tela, MUST NOT exibir estado de carregamento fora da tela que apresenta o acervo, e falhar SHALL significar não escrever nada.
+A sincronização SHALL ser disparada na abertura do app, sem que nada aguarde a sua conclusão, e SHALL ser limitada a uma vez por dia **por par**. Ela MUST NOT bloquear qualquer tela, MUST NOT exibir estado de carregamento fora da tela que apresenta o acervo, e falhar SHALL significar não escrever nada.
 
 O limite SHALL ser por **par** — a moeda e aquilo contra o que ela foi cotada — e MUST NOT ser global nem por moeda. Um limite global tornaria uma moeda recém-cadastrada refém de uma sincronização que já ocorreu naquele dia. Um limite por moeda faria o mesmo com **todos** os pares no instante em que a moeda base mudasse: cada moeda pareceria já respondida, enquanto a linha que acabou de passar a responder — aquela contra a base nova — nunca foi buscada. Nos dois casos o resultado é o pior caso, apenas adiado.
 
@@ -94,9 +94,11 @@ A visão de entrada SHALL ser a da taxa em vigor: uma linha por par, com a obser
 
 Cada linha da visão em vigor SHALL declarar o par nas duas pontas, o valor, a data e a origem da observação que responde, e SHALL permitir alcançar o histórico daquele par.
 
-A visão em vigor SHALL apresentar o estado da manutenção automática: **quando o acervo foi atualizado pela última vez com sucesso**, e, por moeda em uso, se ela não é coberta pela fonte remota. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
+A visão em vigor SHALL apresentar o estado da manutenção automática nos casos em que ele é **acionável**: que o acervo **nunca** foi atualizado, e, por moeda em uso, que ela não é coberta pela fonte remota. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
 
-O estado da manutenção MUST NOT ocupar o lugar de um cabeçalho de grupo nem se parecer com um. Ele fala sobre **o acervo inteiro** e não sobre as linhas que o seguem, e apresentado como uma linha de texto solta acima da lista ele é lido como o cabeçalho daquelas linhas — o que, carregando ele uma data, faz a tela afirmar que as taxas estão agrupadas por dia.
+O sistema MUST NOT anunciar a manutenção que funcionou. A data de cada atualização bem-sucedida é o caso ordinário, e um aviso que aparece todo dia dizendo que está tudo bem é a forma mais confiável de a tela deixar de ser lida — inclusive nos dias em que ela tivesse algo a dizer. *Nunca atualizado* é outra coisa: é o estado em que as taxas na tela são apenas as que o usuário mesmo pôs ali.
+
+O estado da manutenção MUST NOT ocupar o lugar de um cabeçalho de grupo nem se parecer com um. Ele fala sobre **o acervo inteiro** e não sobre as linhas que o seguem, e apresentado como uma linha de texto solta acima da lista ele é lido como o cabeçalho daquelas linhas.
 
 O sinal de taxa desatualizada SHALL conviver com o estado da sincronização, e não substituí-lo: sem saber se o app conseguiu atualizar, o usuário não tem como distinguir uma taxa velha que ele não cadastrou de uma que o app não conseguiu buscar.
 
@@ -112,9 +114,13 @@ O sinal de taxa desatualizada SHALL conviver com o estado da sincronização, e 
 - **WHEN** o usuário toca numa linha da visão em vigor
 - **THEN** o histórico daquele par é apresentado
 
-#### Scenario: O estado da sincronização é dito na tela de taxas
-- **WHEN** o usuário abre a visão em vigor
-- **THEN** ela informa quando o acervo foi atualizado com sucesso pela última vez
+#### Scenario: Nunca ter atualizado é dito na tela de taxas
+- **WHEN** o usuário abre a visão em vigor e o acervo nunca foi atualizado com sucesso
+- **THEN** ela diz isso
+
+#### Scenario: A manutenção que funcionou não é anunciada
+- **WHEN** o usuário abre a visão em vigor e o acervo foi atualizado com sucesso
+- **THEN** nada é dito sobre a atualização, e a tela é só o acervo
 
 #### Scenario: A entrada agrupa pela moeda contraparte
 - **WHEN** o usuário abre a visão em vigor com o dólar, o euro e o iene cotados em real

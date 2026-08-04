@@ -718,3 +718,44 @@ não dava.
   (`exchange_rate_history_filter_date_any`, `_date_start`, `_date_end`): declaradas em 1.1
   por antecipação e nunca consumidas — o seletor de intervalo traz os próprios rótulos, e a
   dimensão passou a ser o rótulo do chip sem filtro.
+
+---
+
+## 16. Qual das duas pontas não é coberta passa a ser perguntado, e não adivinhado
+
+Descoberto na verificação do grupo 15. `quote(currency, against)` devolve `NotCovered`
+quando o provedor recusa, e a implementação atribuía a recusa à `currency` — a primeira
+ponta. A recusa, porém, nomeia **um par**, e não diz sobre qual das duas pontas ela é.
+
+No caso ordinário adivinhar a primeira acerta. No caso que importa, erra sobre todas as
+moedas de uma vez: se a moeda **base** é a não coberta, todo par é recusado, e a tela
+passaria a afirmar *"o dólar não é coberto"*, *"o euro não é coberto"* — uma frase falsa por
+moeda que o usuário tem — quando a verdadeira é uma só, sobre a base. É alcançável porque o
+registro de moedas é editável e qualquer moeda dele pode virar a base.
+
+D7 exige que a distinção seja **acionável**, e uma lista de acusações à ponta errada não é:
+o conselho *"cadastre à mão"* sai certo por acidente, com o diagnóstico errado.
+
+Barreira de saída: `./gradlew jvmTest` verde, e uma base fora da cobertura produz uma frase
+sobre a base e nenhuma sobre as moedas.
+
+- [x] 16.1 **A cobertura passa a ser perguntada**, em `IRemoteRateSource` (`coverage()`) e
+  em `FrankfurterRateSource` (`/v1/currencies`). `null` é *cobertura desconhecida* e não
+  *cobre nada*: com o endpoint inalcançável, o uso cai no caminho antigo, de perguntar par a
+  par. Ela **economiza** requisições — moeda fora da cobertura é resolvida sem cotação.
+- [x] 16.2 **A atribuição passa a ser correta**, em `SyncExchangeRatesUseCase`: base fora da
+  cobertura registra a **base** como não coberta, carimba os pares (uma recusa é resposta
+  definitiva, e não carimbar faria a rodada se repetir a cada abertura) e não gasta cotação
+  alguma. Base coberta limpa a frase, e só quando a cobertura é conhecida — limpá-la com a
+  fonte inalcançável derrubaria uma afirmação verdadeira no primeiro soluço de rede.
+- [x] 16.3 **A tela diz a frase certa**, em `ExchangeRatesUiState.kt`,
+  `ExchangeRatesViewModel.kt` e `ExchangeRatesScreen.kt`: `isBaseNotCovered` é estado
+  próprio e **substitui** a lista, em vez de ser mais um item dela. Chave nova
+  `exchange_rates_base_not_covered` nos dois `strings.xml`.
+- [x] 16.4 **O gate do estado da manutenção**, em `RemoteSourceIsNeverReadTest`: a spec diz
+  que a tela de taxas é a **única** superfície onde o estado da sincronização aparece, e
+  nada no compilador dizia isso. Passa a ser fixado por nome, como o do port remoto.
+- [x] 16.5 **O gatilho do registro é dito como é**: `whenDue()` reage ao conjunto de moedas
+  oferecidas **mudar**, não só a *ganhar* uma. Ganhar é o caso que tem de disparar; estreitar
+  o sinal exigiria guardar o conjunto anterior para diferenciar, e economizaria requisições
+  que o limite por par já não cobra. O KDoc passa a dizer o que o código faz.

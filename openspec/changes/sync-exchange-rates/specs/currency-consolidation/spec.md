@@ -26,6 +26,12 @@ O sistema MUST NOT embarcar taxas semeadas na instalação. Uma primeira execuç
 
 Quando a fonte remota não cobrir uma moeda em uso, o sistema SHALL dizê-lo ao usuário, e MUST NOT deixar a ausência de taxa indistinguível de uma sincronização que ainda não ocorreu. Os dois estados levam a ações diferentes — esperar, ou cadastrar à mão — e só a distinção entre eles é acionável.
 
+**Qual das duas pontas a fonte não cobre SHALL ser determinado pela cobertura que ela declara, e MUST NOT ser inferido de uma cotação recusada.** Uma cotação nomeia um par, e a recusa dela não diz sobre qual das suas pontas ela é. Atribuí-la à moeda cotada acerta no caso ordinário e erra sobre todas de uma vez no caso que importa: sendo a **moeda base** a não coberta, todo par é recusado, e o sistema afirmaria de cada moeda em uso que ela não é coberta — uma frase falsa por moeda, quando a verdadeira é uma só.
+
+Uma **moeda base** fora da cobertura SHALL ser dita como tal, uma vez, e MUST NOT ser apresentada como uma lista de moedas não cobertas. Nada é cotado contra uma base não coberta, então a lista diria a mesma coisa várias vezes e nomearia a ponta errada em cada uma. As ações também diferem: cadastrar todas as taxas à mão, ou eleger outra moeda base.
+
+Cobertura **desconhecida** — a fonte inalcançável — MUST NOT ser tratada como cobertura vazia. O sistema SHALL voltar a perguntar par a par, e MUST NOT descartar o que já sabia sobre a cobertura por indisponibilidade.
+
 #### Scenario: Usuário multimoeda tem taxa sem cadastrar nada
 - **WHEN** o usuário cria uma conta em dólar tendo o real como base, com rede disponível, e abre o app
 - **THEN** a taxa do par dólar/real passa a existir no acervo, e as figuras consolidadas somam em vez de empilhar termos, sem que ele tenha cadastrado ou transacionado
@@ -86,6 +92,18 @@ Quando a fonte remota não cobrir uma moeda em uso, o sistema SHALL dizê-lo ao 
 - **WHEN** uma moeda em uso está fora da cobertura da fonte remota
 - **THEN** o usuário é informado de que aquela moeda não é coberta e de que o cadastro manual é o caminho, em vez de a ausência de taxa ficar sem explicação
 
+#### Scenario: A moeda base não coberta é dita uma vez, e sobre ela
+- **WHEN** a moeda base está fora da cobertura da fonte remota e o usuário tem contas em outras três moedas
+- **THEN** o sistema diz que a **base** não é coberta, uma vez, e não afirma de nenhuma das outras três que ela não é coberta
+
+#### Scenario: Uma moeda fora da cobertura não custa cotação
+- **WHEN** uma moeda em uso está fora da cobertura declarada pela fonte
+- **THEN** nenhuma cotação daquele par é pedida, e a moeda é registrada como não coberta assim mesmo
+
+#### Scenario: Cobertura desconhecida não é cobertura vazia
+- **WHEN** a fonte não responde o que cobre
+- **THEN** os pares são perguntados um a um como antes, e o que já se sabia sobre cobertura permanece
+
 ### Requirement: O acervo se apresenta primeiro pela taxa em vigor de cada par
 
 O sistema SHALL apresentar o acervo em duas visões distintas: a **taxa em vigor** de cada par, e o **histórico** completo das observações.
@@ -96,7 +114,7 @@ Cada linha da visão em vigor SHALL declarar o par nas duas pontas, o valor, a d
 
 O que se alcança é a moeda e não o par porque o histórico filtra por moeda nomeada em **qualquer das duas pontas**: tocar numa linha do dólar precificado em real apresenta também o real precificado em dólar, que são observações distintas e são lidas como tais. Estreitar isso ao par exigiria uma dimensão de filtro que o histórico não oferece, e ela responderia pior à pergunta que leva o usuário até lá — *o que já se observou sobre esta moeda*.
 
-A visão em vigor SHALL apresentar o estado da manutenção automática nos casos em que ele é **acionável**: que o acervo **nunca** foi atualizado, e, por moeda em uso, que ela não é coberta pela fonte remota. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
+A visão em vigor SHALL apresentar o estado da manutenção automática nos casos em que ele é **acionável**: que o acervo **nunca** foi atualizado; que a **moeda base** não é coberta pela fonte remota, dito uma vez e sobre ela; e, por moeda em uso, que ela não é coberta. Esta é a única superfície do app onde o estado da sincronização SHALL aparecer; nenhuma figura consolidada SHALL exibi-lo.
 
 O sistema MUST NOT anunciar a manutenção que funcionou. A data de cada atualização bem-sucedida é o caso ordinário, e um aviso que aparece todo dia dizendo que está tudo bem é a forma mais confiável de a tela deixar de ser lida — inclusive nos dias em que ela tivesse algo a dizer. *Nunca atualizado* é outra coisa: é o estado em que as taxas na tela são apenas as que o usuário mesmo pôs ali.
 

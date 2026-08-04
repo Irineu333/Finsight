@@ -109,6 +109,18 @@ São **dois estados diferentes**, e só a distinção entre eles é acionável:
 
 A resposta do provedor distingue os dois: um código desconhecido é recusado explicitamente, e indisponibilidade é falha de transporte. A tela de taxas em vigor SHALL dizer qual dos dois é o caso, por moeda.
 
+### D7b — Qual das duas pontas não é coberta é **perguntado**, e não inferido da recusa
+
+Descoberto na verificação, e é um erro de atribuição que a forma da resposta esconde: uma cotação nomeia **um par**, e a recusa dele não diz sobre qual das duas pontas ela é. Culpar a primeira ponta acerta no caso ordinário e erra sobre tudo ao mesmo tempo no caso que importa — se a moeda **base** é a não coberta, todo par é recusado, e a tela afirmaria *"o dólar não é coberto"*, *"o euro não é coberto"*, uma frase falsa por moeda que o usuário tem, quando a verdadeira é uma só. É alcançável: o registro de moedas é editável e qualquer moeda dele pode virar a base.
+
+A cobertura passa a ser **perguntada** ao provedor — o conjunto de códigos que ele cota —, e a atribuição deixa de ser adivinhação. Três consequências, todas na direção certa:
+
+- **A base fora da cobertura vira uma frase só, sobre a base**, e ela leva a duas ações que a lista não levava: cadastrar tudo à mão, ou trocar a base por uma moeda cotada.
+- **Moeda fora da cobertura não gasta cotação.** A pergunta se paga: uma requisição por rodada substitui uma por moeda não coberta.
+- **Desconhecido não é vazio.** Com o endpoint inalcançável, a cobertura é `null` e a rodada volta a perguntar par a par — e uma afirmação verdadeira já registrada sobre a base não é derrubada por um soluço de rede.
+
+A alternativa — inferir a base pela rodada em que *todas* as moedas foram recusadas — foi descartada: com uma moeda só em uso as duas hipóteses são indistinguíveis, e uma inferência que falha justamente no acervo mais pobre é a que menos serve.
+
 ### D8 — A cadência é a abertura, com limite diário, e o gancho já existe
 
 `App` já tem um `LaunchedEffect(Unit)` fazendo trabalho transversal e disparado-e-esquecido — o *user-id* em analytics e crashlytics. A sincronização entra ali, pelo mesmo padrão, com um limite por instante da última sincronização bem-sucedida.
@@ -133,7 +145,9 @@ O instante que a tela mostra passa a ser **derivado**, o mais recente dos por-mo
 
 ### D8c — Cadastrar uma moeda dispara a sincronização, e isso não é um comando
 
-O gatilho fica onde o de abertura já está: `App` passa a **observar o registro** e a redisparar quando ele ganha uma moeda. Um ponto de gatilho e não dois — pôr a chamada na ViewModel do formulário espalharia a obrigação, e um segundo caminho de cadastro no futuro esqueceria de cumpri-la.
+O gatilho fica onde o de abertura já está: `App` passa a **observar o registro** e a redisparar quando ele muda. Um ponto de gatilho e não dois — pôr a chamada na ViewModel do formulário espalharia a obrigação, e um segundo caminho de cadastro no futuro esqueceria de cumpri-la.
+
+O sinal é *mudar* e não *ganhar*, e a diferença é deliberada: ganhar é o caso que tem de disparar, e estreitar o sinal a ele exigiria guardar o conjunto anterior para diferenciar — trabalho de estado para economizar requisições que o limite por par já não cobra. Perder ou arquivar uma moeda dispara uma rodada em que todo par restante é pulado, que é rodada nenhuma.
 
 Isto **não** é o botão de sincronizar que os Non-Goals recusam. O que aquele Non-Goal barra é o usuário ter de lembrar de executar uma tarefa, e uma superfície que espera rede com ele olhando. Aqui o gatilho é uma mudança de estado do app, ninguém o aguarda, nada na composição depende dele, e falhar continua sendo não fazer nada.
 

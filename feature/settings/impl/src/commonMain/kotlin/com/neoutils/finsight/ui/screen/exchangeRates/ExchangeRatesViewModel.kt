@@ -79,8 +79,14 @@ class ExchangeRatesViewModel(
                     ?.toLocalDateTime(TimeZone.currentSystemDefault())?.date,
                 // Only the currencies the user actually holds: naming one they do not use
                 // would be noise, and the sentence this state exists to make — *enter
-                // this one by hand* — would have no addressee.
-                notCoveredCurrencies = inUse.filter { it in syncState.notCoveredCurrencies }.sorted(),
+                // this one by hand* — would have no addressee. The base is excluded here
+                // and stated on its own: nothing is quoted against an uncovered base, so
+                // as one entry among many it would be one sentence per currency held,
+                // each naming the wrong end.
+                notCoveredCurrencies = inUse
+                    .filter { it != base && it in syncState.notCoveredCurrencies }
+                    .sorted(),
+                isBaseNotCovered = base in syncState.notCoveredCurrencies,
             ),
             isLoading = false,
         )

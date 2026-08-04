@@ -86,8 +86,17 @@ class SyncExchangeRatesUseCaseTest {
         override suspend fun set(code: String) { state.value = code }
     }
 
-    private class RecordingSource(private val answers: Map<String, RemoteQuote>) : IRemoteRateSource {
+    /**
+     * @param coverage what the source says it quotes. `null` is *unknown coverage* — the
+     * endpoint could not be reached — which is not the same as quoting nothing, and the
+     * default here so that the tests about quoting keep asking pair by pair.
+     */
+    private class RecordingSource(
+        private val answers: Map<String, RemoteQuote>,
+        private val coverage: Set<String>? = null,
+    ) : IRemoteRateSource {
         val asked = mutableListOf<Pair<String, String>>()
+        override suspend fun coverage(): Set<String>? = coverage
         override suspend fun quote(currency: String, against: String): RemoteQuote {
             asked += currency to against
             return answers[currency] ?: RemoteQuote.Unavailable
@@ -200,6 +209,90 @@ class SyncExchangeRatesUseCaseTest {
         assertEquals(listOf("USD"), archive.saved.map { it.currency })
         assertEquals(setOf("ARS"), syncState.observe().value.notCoveredCurrencies)
         assertNotNull(syncState.observe().value.lastSyncedAt, "a currency not covered is not a failure")
+    }
+
+    /**
+     * The coverage is **asked for**, so a currency outside it costs no request at all.
+     */
+    @Test
+    fun `a currency outside the coverage is settled without a request`() = runTest {
+        val source = RecordingSource(
+            answers = mapOf("USD" to RemoteQuote.Observed(friday, 5.0583)),
+            coverage = setOf("BRL", "USD"),
+        )
+
+        useCase(source, inUse = listOf("BRL", "USD", "ARS")).invoke()
+
+        assertEquals(listOf("USD" to "BRL"), source.asked, "ARS is known not to be quoted")
+        assertEquals(setOf("ARS"), syncState.observe().value.notCoveredCurrencies)
+    }
+
+    /**
+     * **The case attribution by refusal gets wrong about every currency at once.** Nothing
+     * is quoted against an uncovered base, so blaming the first end of each refused pair
+     * would name every currency the user holds as unquoted — a list of false sentences,
+     * when the true one is a single sentence about the base.
+     */
+    @Test
+    fun `an uncovered base is what is recorded, and not the currencies held`() = runTest {
+        val source = RecordingSource(
+            answers = emptyMap(),
+            coverage = setOf("USD", "EUR"),
+        )
+
+        useCase(source, inUse = listOf("XCD", "USD", "EUR"), base = "XCD").invoke()
+
+        assertEquals(emptyList(), source.asked, "nothing can be quoted against it")
+        assertEquals(setOf("XCD"), syncState.observe().value.notCoveredCurrencies)
+        assertEquals(emptyList(), archive.saved)
+    }
+
+    /** A definitive answer, so it is not asked again the same day. */
+    @Test
+    fun `an uncovered base is not asked about again the same day`() = runTest {
+        val source = RecordingSource(answers = emptyMap(), coverage = setOf("USD"))
+
+        useCase(source, inUse = listOf("XCD", "USD"), base = "XCD").invoke()
+        useCase(source, inUse = listOf("XCD", "USD"), base = "XCD").invoke()
+
+        assertEquals(setOf("XCD"), syncState.observe().value.notCoveredCurrencies)
+    }
+
+    /** A base that starts being quoted stops being recorded, because it stopped being true. */
+    @Test
+    fun `a base that becomes covered stops being recorded as uncovered`() = runTest {
+        val refusing = RecordingSource(answers = emptyMap(), coverage = setOf("USD"))
+        useCase(refusing, inUse = listOf("XCD", "USD"), base = "XCD", now = sunday).invoke()
+        assertEquals(setOf("XCD"), syncState.observe().value.notCoveredCurrencies)
+
+        val quoting = RecordingSource(
+            answers = mapOf("USD" to RemoteQuote.Observed(friday, 2.7)),
+            coverage = setOf("XCD", "USD"),
+        )
+        useCase(quoting, inUse = listOf("XCD", "USD"), base = "XCD", now = monday).invoke()
+
+        assertEquals(emptySet(), syncState.observe().value.notCoveredCurrencies)
+        assertEquals(listOf("USD"), archive.saved.map { it.currency })
+    }
+
+    /**
+     * An unreachable coverage endpoint is **unknown** coverage, not empty coverage: the
+     * round falls back to asking pair by pair, and a true sentence about the base already
+     * on record is not dropped by a network blip.
+     */
+    @Test
+    fun `unknown coverage falls back to asking, and keeps what was already known`() = runTest {
+        val refusing = RecordingSource(answers = emptyMap(), coverage = setOf("USD"))
+        useCase(refusing, inUse = listOf("XCD", "USD"), base = "XCD", now = sunday).invoke()
+
+        val blind = RecordingSource(
+            answers = mapOf("USD" to RemoteQuote.Unavailable),
+            coverage = null,
+        )
+        useCase(blind, inUse = listOf("XCD", "USD"), base = "XCD", now = monday).invoke()
+
+        assertEquals(listOf("USD" to "XCD"), blind.asked, "unknown coverage asks anyway")
+        assertEquals(setOf("XCD"), syncState.observe().value.notCoveredCurrencies)
     }
 
     @Test

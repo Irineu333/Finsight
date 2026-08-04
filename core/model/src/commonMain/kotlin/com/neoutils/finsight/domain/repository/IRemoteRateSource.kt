@@ -57,6 +57,22 @@ sealed interface RemoteQuote {
 interface IRemoteRateSource {
 
     /**
+     * Every code the source quotes at all, or `null` when it could not be reached.
+     *
+     * **Coverage is asked about directly because a refused quotation cannot say which end
+     * it is about.** A quotation names two currencies, and a refusal of `(XYZ, BRL)` is
+     * equally consistent with *XYZ is not quoted* and with *BRL is not quoted*. Blaming
+     * the first end is right in the ordinary case and wrong in the one that matters: when
+     * the **base** is the uncovered code, every pair is refused, and the screen would name
+     * every currency the user holds as unquoted — a list of false sentences, when the true
+     * one is a single sentence about the base (design D7).
+     *
+     * It does not throw, and `null` is not an empty set: unknown coverage falls back to
+     * asking pair by pair, while an empty set would mean the source quotes nothing.
+     */
+    suspend fun coverage(): Set<String>?
+
+    /**
      * How much of [against] one unit of [currency] was worth, as the source last
      * published it.
      *

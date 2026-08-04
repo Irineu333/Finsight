@@ -18,6 +18,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /** The three shapes an answer can have, and the direction the request asks in. */
 class FrankfurterRateSourceTest {
@@ -93,6 +94,38 @@ class FrankfurterRateSourceTest {
         }
 
         assertEquals(RemoteQuote.NotCovered, source.quote(currency = "USD", against = "BRL"))
+    }
+
+    /** The coverage is read off `/v1/currencies`, keyed by code. */
+    @Test
+    fun `the coverage is the set of codes the source quotes`() = runTest {
+        val source = source {
+            respond(
+                content = """{"BRL":"Brazilian Real","USD":"United States Dollar"}""",
+                headers = jsonHeaders(),
+            )
+        }
+
+        assertEquals(setOf("BRL", "USD"), source.coverage())
+        assertEquals("/v1/currencies", lastRequest!!.url.encodedPath)
+    }
+
+    /**
+     * Unreachable is **unknown** coverage and not empty coverage — the caller falls back
+     * to asking pair by pair, instead of treating every currency as unquoted.
+     */
+    @Test
+    fun `an unreachable coverage is unknown, and not an empty one`() = runTest {
+        val source = source { respondError(HttpStatusCode.InternalServerError) }
+
+        assertNull(source.coverage())
+    }
+
+    @Test
+    fun `an unreadable coverage body is unknown`() = runTest {
+        val source = source { respond(content = """not json at all""", headers = jsonHeaders()) }
+
+        assertNull(source.coverage())
     }
 
     @Test

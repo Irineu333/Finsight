@@ -861,6 +861,7 @@
     <string name="exchange_rates_outdated">Out of date</string>
     <string name="exchange_rates_sync_never">Not updated yet</string>
     <string name="exchange_rates_currency_not_covered">%1$s is not covered by the automatic update — enter the rate by hand</string>
+    <string name="exchange_rates_base_not_covered">%1$s, your base currency, is not covered by the automatic update — enter the rates by hand or pick another base currency</string>
     <string name="exchange_rates_open_history">See history</string>
 
     <string name="exchange_rate_history_title">Rate history</string>

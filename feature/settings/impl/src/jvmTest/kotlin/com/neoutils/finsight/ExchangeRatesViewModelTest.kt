@@ -261,4 +261,35 @@ class ExchangeRatesViewModelTest {
             "and the dollar, which simply has a rate, is not one of them",
         )
     }
+
+    /**
+     * The base is **one** sentence and not one per currency held: nothing is quoted
+     * against an uncovered base, so listing the currencies would say the same thing
+     * several times and blame the wrong end each time.
+     */
+    @Test
+    fun `an uncovered base is its own state, and does not list the currencies held`() = runTest {
+        seed("USD")
+
+        val state = viewModel(
+            syncState = RateSyncState(notCoveredCurrencies = setOf("BRL")),
+            inUse = listOf("BRL", "USD"),
+        ).loaded()
+
+        assertTrue(state.sync.isBaseNotCovered)
+        assertEquals(emptyList(), state.sync.notCoveredCurrencies)
+    }
+
+    @Test
+    fun `a covered base leaves the state alone`() = runTest {
+        seed("USD")
+
+        val state = viewModel(
+            syncState = RateSyncState(notCoveredCurrencies = setOf("ARS")),
+            inUse = listOf("BRL", "USD", "ARS"),
+        ).loaded()
+
+        assertFalse(state.sync.isBaseNotCovered)
+        assertEquals(listOf("ARS"), state.sync.notCoveredCurrencies)
+    }
 }

@@ -40,8 +40,12 @@ class RateSyncEndToEndTest {
     /** The source's own publication date — a Friday, read on the following Sunday. */
     private val friday = LocalDate(2026, 3, 13)
 
-    private class FakeRemoteSource(private val answers: Map<String, RemoteQuote>) : IRemoteRateSource {
+    private class FakeRemoteSource(
+        private val answers: Map<String, RemoteQuote>,
+        private val coverage: Set<String>? = null,
+    ) : IRemoteRateSource {
         val asked = mutableListOf<Pair<String, String>>()
+        override suspend fun coverage(): Set<String>? = coverage
         override suspend fun quote(currency: String, against: String): RemoteQuote {
             asked += currency to against
             return answers[currency] ?: RemoteQuote.Unavailable

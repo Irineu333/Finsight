@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rates_add
+import com.neoutils.finsight.resources.exchange_rates_base_not_covered
 import com.neoutils.finsight.resources.exchange_rates_currency_not_covered
 import com.neoutils.finsight.resources.exchange_rates_sync_never
 import com.neoutils.finsight.resources.exchange_rates_empty
@@ -183,11 +184,27 @@ private fun ExchangeRatesContent(
             // read as though the rates were grouped by day.
             SyncStatusLine(status = uiState.sync)
 
-            uiState.sync.notCoveredCurrencies.forEach { currency ->
+            // The base first, and **instead** of the others: nothing is quoted against an
+            // uncovered base, so every currency held would otherwise be listed as
+            // unquoted — one false sentence each, when the true one is this single one.
+            if (uiState.sync.isBaseNotCovered) {
                 NotCoveredNotice(
-                    currency = currency,
+                    text = stringResource(
+                        Res.string.exchange_rates_base_not_covered,
+                        uiState.baseCurrency,
+                    ),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
+            } else {
+                uiState.sync.notCoveredCurrencies.forEach { currency ->
+                    NotCoveredNotice(
+                        text = stringResource(
+                            Res.string.exchange_rates_currency_not_covered,
+                            currency,
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
             }
 
             if (uiState.isEmpty) {
@@ -278,14 +295,18 @@ private fun SyncStatusLine(status: RateSyncStatus) {
 }
 
 /**
- * A currency the source does not quote, said out loud with what to do about it.
+ * A code the source does not quote, said out loud with what to do about it.
  *
  * It is a **second** state and not the same one as *not updated yet*: waiting fixes the
  * first and never the second, so collapsing them would leave the user in the worst case
  * with nothing explaining why.
+ *
+ * The code is a currency held, or the **base** — which end is uncovered is asked of the
+ * source rather than guessed from a refused quotation, because a refusal names a pair and
+ * says nothing about which of its two ends it was about.
  */
 @Composable
-private fun NotCoveredNotice(currency: String, modifier: Modifier = Modifier) {
+private fun NotCoveredNotice(text: String, modifier: Modifier = Modifier) {
     Surface(
         color = Warning.copy(alpha = 0.14f),
         contentColor = Warning,
@@ -293,7 +314,7 @@ private fun NotCoveredNotice(currency: String, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(
-            text = stringResource(Res.string.exchange_rates_currency_not_covered, currency),
+            text = text,
             style = typography.bodySmall,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         )

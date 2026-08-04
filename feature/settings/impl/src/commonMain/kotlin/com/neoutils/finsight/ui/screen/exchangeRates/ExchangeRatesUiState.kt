@@ -64,10 +64,17 @@ data class ExchangeRateInForceGroup(
  * @param notCoveredCurrencies the currencies **in use** the source refused to quote. A
  * second state and not the same one, because the actions differ — wait, or enter the rate
  * by hand, which is permanent — and only the distinction is actionable.
+ * @param isBaseNotCovered the **base** is the code the source does not quote. Its own
+ * state and not one more entry in [notCoveredCurrencies], because it is one sentence and
+ * not many: nothing can be quoted against an uncovered base, so listing every currency
+ * held would say the same thing several times and blame the wrong end each time. What the
+ * user does about it is also different — every rate has to be entered by hand, or the base
+ * changed to a quoted currency.
  */
 data class RateSyncStatus(
     val lastSyncedOn: LocalDate? = null,
     val notCoveredCurrencies: List<String> = emptyList(),
+    val isBaseNotCovered: Boolean = false,
 )
 
 data class ExchangeRatesUiState(

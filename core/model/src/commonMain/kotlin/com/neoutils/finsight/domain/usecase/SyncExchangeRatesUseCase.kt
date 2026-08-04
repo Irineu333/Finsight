@@ -57,6 +57,10 @@ import kotlin.time.Clock
  * **A currency the source does not cover is not a failure** and does not stop the others.
  * It is recorded as such, because that is what makes the distinction actionable: *wait* and
  * *enter it by hand* are different actions, and only telling them apart helps (design D7).
+ * **Which** currency is uncovered is asked of the source rather than inferred from a
+ * refusal: a refusal names a pair and cannot say which end it is about, and when the
+ * uncovered code is the **base** every pair is refused at once — attributing that to the
+ * first end would fill the screen with one false sentence per currency the user holds.
  */
 class SyncExchangeRatesUseCase(
     private val currencyRepository: ICurrencyRepository,
@@ -70,8 +74,14 @@ class SyncExchangeRatesUseCase(
 ) {
 
     /**
-     * Every moment the upkeep owes a round: the app opening, the registry **gaining** a
-     * currency, and the base currency **changing**.
+     * Every moment the upkeep owes a round: the app opening, the set of offered
+     * currencies **changing**, and the base currency **changing**.
+     *
+     * The registry trigger is *changing* and not *gaining* on purpose. Gaining is the case
+     * that has to fire — a currency nothing has ever been asked about — and narrowing the
+     * signal to it would mean keeping the previous set to diff against, to save requests
+     * that the per-pair bound already costs nothing. Losing or archiving one fires a round
+     * in which every remaining pair is skipped, which is no round at all.
      *
      * The last one is not decoration. The archive is *everything priced in the base*, so
      * switching the base makes a whole set of pairs — the ones against the new base —
@@ -124,7 +134,39 @@ class SyncExchangeRatesUseCase(
         val syncedAt = previous.syncedAt.toMutableMap()
         val notCovered = previous.notCoveredCurrencies.toMutableSet()
 
+        // **Which end is uncovered is asked, never inferred.** A refused quotation names
+        // two currencies and says nothing about which of them it refused, and the base is
+        // the case where guessing the first end is wrong about every currency at once: an
+        // uncovered base refuses every pair, and blaming the currencies would put one
+        // false sentence on the screen per currency the user holds, when the true one is
+        // a single sentence about the base (design D7).
+        val coverage = remoteRateSource.coverage()
+
+        if (coverage != null && base !in coverage) {
+            // Nothing can be quoted against it, so nothing is asked. The pairs are stamped
+            // like any other definitive answer — not stamping them would have every
+            // currency asked again on every launch to be refused again — and the base is
+            // what is recorded as uncovered, because it is what is.
+            currencies.forEach { syncedAt[RatePair(it, base)] = now }
+            rateSyncStateRepository.record(
+                RateSyncState(syncedAt = syncedAt, notCoveredCurrencies = notCovered + base),
+            )
+            return
+        }
+
+        // Only on a known coverage. Clearing it on an unreachable source would drop a true
+        // statement about the base on the first network blip.
+        if (coverage != null) notCovered -= base
+
         for (currency in currencies) {
+            // Known to be outside the coverage: settled without spending a request, and
+            // attributed to the currency because the base has just been vouched for.
+            if (coverage != null && currency !in coverage) {
+                syncedAt[RatePair(currency, base)] = now
+                notCovered += currency
+                continue
+            }
+
             // The direction asked is the direction the row will be read in — the currency
             // priced in the base — because inverting a quotient to store it would keep a
             // number nobody observed (design D4).

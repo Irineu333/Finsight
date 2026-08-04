@@ -34,6 +34,30 @@ internal class FrankfurterRateSource(
     private val baseUrl: String = DEFAULT_BASE_URL,
 ) : IRemoteRateSource {
 
+    /**
+     * `/v1/currencies`, which answers the codes the provider quotes, keyed by code.
+     *
+     * It is asked once per round and it **saves** requests rather than costing them: a
+     * currency outside the coverage is settled without a quotation. Its real reason,
+     * though, is attribution — a refused quotation names two currencies and cannot say
+     * which of them it is about, and the base being the uncovered one is exactly the case
+     * where guessing the first end is wrong about every currency at once.
+     */
+    override suspend fun coverage(): Set<String>? {
+        return try {
+            val response = client.get("$baseUrl/v1/currencies")
+
+            if (!response.status.isSuccess()) return null
+
+            response.body<Map<String, String>>().keys.takeIf { it.isNotEmpty() }
+        } catch (throwable: Throwable) {
+            if (throwable is kotlin.coroutines.cancellation.CancellationException) throw throwable
+            // Unknown coverage, which is not the same as covering nothing: the caller
+            // falls back to asking pair by pair.
+            null
+        }
+    }
+
     override suspend fun quote(currency: String, against: String): RemoteQuote {
         return try {
             val response = client.get("$baseUrl/v1/latest") {

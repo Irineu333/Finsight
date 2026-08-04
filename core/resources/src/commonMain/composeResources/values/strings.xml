@@ -862,6 +862,7 @@
     <string name="exchange_rates_outdated">Desatualizada</string>
     <string name="exchange_rates_sync_never">Ainda não atualizado</string>
     <string name="exchange_rates_currency_not_covered">%1$s não é coberta pela atualização automática — cadastre a taxa à mão</string>
+    <string name="exchange_rates_base_not_covered">%1$s, a sua moeda base, não é coberta pela atualização automática — cadastre as taxas à mão ou escolha outra moeda base</string>
     <string name="exchange_rates_open_history">Ver histórico</string>
 
     <string name="exchange_rate_history_title">Histórico de taxas</string>

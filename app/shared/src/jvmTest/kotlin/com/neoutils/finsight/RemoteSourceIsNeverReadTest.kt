@@ -44,6 +44,48 @@ class RemoteSourceIsNeverReadTest {
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/di/SettingsModule.kt",
     )
 
+    /**
+     * The state of the upkeep has **exactly one surface**, and it is the rates screen.
+     *
+     * That screen is not a figure — it is the archive explaining itself, and it is where
+     * the *out of date for more than 30 days* signal already lives, which without the
+     * synchronisation context is an accusation with no defendant. Any *other* screen
+     * showing it would be a consolidated figure explaining why it is late, which is the
+     * loading state the whole change exists to keep off a balance. Nothing in the compiler
+     * says so, so it is said here.
+     */
+    private val syncStateAllowed = setOf(
+        // The declaration, and the pair it is keyed by.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRateSyncStateRepository.kt",
+        // The one writer: the upkeep, which persists what it managed to answer.
+        "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SyncExchangeRatesUseCase.kt",
+        // The one implementation, over the settings the app already keeps.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/RateSyncStateRepository.kt",
+        // The one reader: the rates screen's view model.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/exchangeRates/ExchangeRatesViewModel.kt",
+        // And the bindings that join them.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/di/SettingsModule.kt",
+    )
+
+    @Test
+    fun `only the rates screen reads the state of the upkeep`() {
+        val found = productionSources
+            .filter { "IRateSyncStateRepository" in it.readText() }
+            .map { it.relativeTo(repoRoot).invariantSeparatorsPath }
+            .toSet()
+
+        assertEquals(
+            syncStateAllowed,
+            found,
+            "A production site outside the rates screen reads the state of the " +
+                "synchronisation. It has one surface on purpose: anywhere else it is a " +
+                "consolidated figure explaining why it is late, which is the loading " +
+                "state a balance may never carry.\n" +
+                (found - syncStateAllowed).joinToString("\n") { "  NEW: $it" } +
+                (syncStateAllowed - found).joinToString("\n") { "  GONE: $it — the list is out of date" },
+        )
+    }
+
     @Test
     fun `only the writer path names the remote source`() {
         val found = productionSources

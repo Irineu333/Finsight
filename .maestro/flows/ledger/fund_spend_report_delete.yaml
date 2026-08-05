@@ -57,12 +57,15 @@ env:
 - assertVisible:
     id: "dashboard_income_amount"
     text: "[$]500[.,]00"
+# Recents is configured on the default dashboard but withheld while empty — the dashboard story
+# asserts its absence by this same id, and this is the other half of that claim.
 - scrollUntilVisible:
     element:
-      text: ${INCOME_TITLE}
+      id: "dashboard_component_recents"
     direction: DOWN
     centerElement: true
     timeout: 25000
+- assertVisible: ${INCOME_TITLE}
 - assertVisible:
     id: "transaction_card_amount"
     text: "[$]500[.,]00"

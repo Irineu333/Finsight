@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.interceptLongPress
@@ -62,7 +63,13 @@ internal fun DashboardViewingContent(
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
 
             item(key = variant.key) {
-                Column(modifier = Modifier.animateItem()) {
+                // Named from the component's own key, so a dashboard flow can name what it expects
+                // to find without depending on the item key Compose happens to expose.
+                Column(
+                    modifier = Modifier
+                        .animateItem()
+                        .testTag("dashboard_component_${variant.key}")
+                ) {
                     if (topSpacing) {
                         Spacer(modifier = Modifier.height(16.dp))
                     }

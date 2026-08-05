@@ -17,13 +17,22 @@ name: record_transaction
 
 - tapOn:
     id: "add_transaction_type_${TYPE}"
+# Switching the type animates rows in and out of the sheet; typing into a field while that settles
+# loses the text silently, and the form then refuses to submit for a reason nothing on screen names.
+- waitForAnimationToEnd
 
 # The keyboard is dismissed between fields, not just at the end. Whatever the device puts up while
 # typing — the soft IME, or the hardware-keyboard toolbar newer Android versions show instead —
 # overlays the sheet, and the next field can end up underneath it.
 - tapOn:
     id: "add_transaction_title"
+- waitForAnimationToEnd
 - inputText: ${TITLE}
+# Read the field back: a dropped keystroke has to fail here, not three screens later as a disabled
+# button with no explanation.
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${TITLE}
 - hideKeyboard
 
 - scrollUntilVisible:
@@ -33,6 +42,7 @@ name: record_transaction
     timeout: 15000
 - tapOn:
     id: "add_transaction_amount"
+- waitForAnimationToEnd
 - inputText: ${AMOUNT}
 - hideKeyboard
 

@@ -7,15 +7,19 @@
 ## Skills locais do projeto (Claude Code)
 Use as skills abaixo diretamente dos caminhos locais, sem cópia e sem symlink:
 
-- `commit`: `./.claude/skills/commit/SKILL.md`
-- `bump-version`: `./.claude/skills/bump-version/SKILL.md`
-- `jetpack-compose-expert`: `./.claude/skills/jetpack-compose-expert/SKILL.md`
-- `kmp-architecture`: `./.claude/skills/kmp-architecture/SKILL.md`
-- `kmp-unit-testing`: `./.claude/skills/kmp-unit-testing/SKILL.md`
-- `room-database`: `./.claude/skills/room-database/SKILL.md`
-- `sdd-specify`: `./.claude/skills/sdd-specify/SKILL.md`
-- `sdd-plan`: `./.claude/skills/sdd-plan/SKILL.md`
-- `sdd-execute`: `./.claude/skills/sdd-execute/SKILL.md`
+- `commit`: `./.claude/skills/commit/SKILL.md` — versiona seguindo a convenção do projeto
+- `bump-version`: `./.claude/skills/bump-version/SKILL.md` — sobe a versão no Android, iOS e Desktop
+- `openspec-explore`: `./.claude/skills/openspec-explore/SKILL.md` — pensa uma ideia antes ou durante uma mudança
+- `openspec-propose`: `./.claude/skills/openspec-propose/SKILL.md` — propõe uma mudança com os artefatos dela
+- `openspec-apply-change`: `./.claude/skills/openspec-apply-change/SKILL.md` — implementa as tarefas de uma mudança
+- `openspec-verify-change`: `./.claude/skills/openspec-verify-change/SKILL.md` — verifica a implementação contra os artefatos
+- `openspec-sync-specs`: `./.claude/skills/openspec-sync-specs/SKILL.md` — leva as delta specs para o acervo
+- `openspec-archive-change`: `./.claude/skills/openspec-archive-change/SKILL.md` — arquiva uma mudança concluída
+
+Esta lista descreve o que existe em `.claude/skills/`, e nada além disso. Uma instrução
+obrigatória apontando para arquivo inexistente é pior do que a ausência dela: manda ler o
+que não há, e não dá sinal algum de que está errada. `AgentInstructionsTest` compara os
+dois lados, porque este desvio já passou despercebido duas vezes.
 
 ## Regra de acionamento das skills
 - Se o usuário citar uma skill pelo nome, carregue o respectivo `SKILL.md` e siga as instruções.

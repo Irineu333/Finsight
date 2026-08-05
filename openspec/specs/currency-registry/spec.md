@@ -122,9 +122,34 @@ congelaria no idioma da primeira execução: trocar o idioma do app deixaria de 
 em silêncio, sem marca e sem forma de o usuário perceber — que é o mesmo defeito que
 `currency-consolidation` já proíbe ao falar de dado gravado cujo significado muda sozinho.
 
-O símbolo SHALL ser gravado sempre, porque é curto, estável entre idiomas e é o que aparece
-sobre um valor. A plataforma SHALL ser consultada para **sugeri-lo** no formulário de
-cadastro, e o usuário SHALL poder substituí-lo.
+O símbolo SHALL ser gravado sempre, porque é curto e é o que aparece sobre um valor. A
+plataforma SHALL ser consultada para **sugeri-lo** no formulário de cadastro, e o usuário
+SHALL poder substituí-lo.
+
+O símbolo gravado SHALL ser a **única** fonte do glifo que aparece sobre um valor, e a
+plataforma MUST NOT ser consultada para obtê-lo na formatação. Ela responde pelo *locale
+do dispositivo*, não pela moeda: `USD` rende `US$` num aparelho em português e `$` num em
+inglês, e nenhum dos dois é necessariamente o que o usuário gravou. Consultá-la ali
+produziria duas consequências que este requisito proíbe — um símbolo editado não
+alcançaria saldo, transação nem relatório, e o glifo de uma mesma moeda mudaria ao trocar
+o idioma do app, sem ninguém ter editado nada. O locale SEGUE decidindo o **formato**:
+separadores, agrupamento e a posição do símbolo, que são propriedades do idioma em que se
+lê e não da moeda.
+
+Uma moeda fora do ISO 4217 SHALL ser formatada como qualquer outra, com o seu símbolo
+gravado no lugar do glifo. Imprimir o código sobre o valor daria à moeda cadastrada pelo
+usuário uma forma que nenhuma outra tem, e faria o formulário e o valor discordarem sobre
+a mesma moeda.
+
+Quando a tabela nada disser sobre um código, o glifo SHALL ser o próprio código — o mesmo
+pior caso, em qualquer superfície, para que um seletor e o valor ao lado dele não possam
+divergir. Isso inclui o intervalo entre a abertura do app e a primeira leitura da tabela.
+
+Que o símbolo seja gravado e o nome não é deliberado e a assimetria é a regra: o nome é
+uma tradução, que o idioma corrente deve refazer; o símbolo é uma escolha, que o usuário
+faz uma vez e pode refazer quando quiser. A semeadura grava a sugestão da plataforma no
+idioma em que o app foi aberto pela primeira vez — o que fica gravado é o que aquele
+usuário lia, e é editável.
 
 Consultar a plataforma para nomear um código MUST NOT ser confundido com deixá-la decidir
 **quais** moedas existem: o conjunto oferecido é a tabela, e o que a plataforma responde é
@@ -146,6 +171,22 @@ por sistema operacional e por versão, o que este requisito proíbe.
 #### Scenario: A plataforma sugere, não decide
 - **WHEN** o código é inspecionado
 - **THEN** nenhum consumidor obtém a lista de moedas oferecidas a partir da plataforma
+
+#### Scenario: O símbolo editado aparece sobre os valores
+- **WHEN** o usuário substitui o símbolo de uma moeda que a plataforma conhece
+- **THEN** saldos, transações e relatórios daquela moeda passam a exibir o símbolo gravado
+
+#### Scenario: Trocar o idioma não troca o glifo
+- **WHEN** o usuário troca o idioma do app
+- **THEN** o glifo sobre cada valor continua o gravado, e apenas separadores, agrupamento e a posição do símbolo acompanham o idioma novo
+
+#### Scenario: Uma moeda cadastrada pelo usuário se parece com as outras
+- **WHEN** uma moeda fora do ISO 4217 com símbolo "MI" denomina um valor
+- **THEN** o valor é formatado com "MI" no lugar do glifo, no mesmo formato de qualquer outra moeda, e o código não aparece sobre ele
+
+#### Scenario: Valor e seletor não divergem
+- **WHEN** a tabela nada diz sobre um código
+- **THEN** o próprio código aparece tanto sobre o valor quanto ao lado do nome da conta
 
 ### Requirement: O usuário cadastra uma moeda com código único e duas casas decimais
 

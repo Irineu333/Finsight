@@ -68,7 +68,9 @@ Uma política SHALL poder transformar o seu próprio valor para leitura — mód
 
 O tipo SHALL expor o valor numérico com o seu sinal, para que decisões que dependem do sinal — cor, tom, ordenação — o leiam da mesma fonte que o texto exibido.
 
-A formatação SHALL usar a moeda carregada pelo valor para escolher símbolo e denominação, e o locale do dispositivo apenas para o **formato** — separadores e posição do símbolo. A moeda exibida MUST NOT ser derivada do locale. O mesmo SHALL valer para a **entrada** de um valor monetário: o campo SHALL exibir o símbolo da moeda da conta escolhida, pelo mesmo argumento, do lado da escrita.
+A formatação SHALL usar a moeda carregada pelo valor para escolher símbolo e denominação, e o locale do dispositivo apenas para o **formato** — separadores, agrupamento e posição do símbolo. A moeda exibida MUST NOT ser derivada do locale. O mesmo SHALL valer para a **entrada** de um valor monetário: o campo SHALL exibir o símbolo da moeda da conta escolhida, pelo mesmo argumento, do lado da escrita.
+
+O **glifo** dessa moeda SHALL vir do símbolo gravado no cadastro (`currency-registry`), e MUST NOT ser obtido da plataforma na formatação: a plataforma responde pelo locale, e derivar dela o símbolo é a mesma falha uma camada abaixo — a figura sai correta e a legenda vem do dispositivo. Nenhuma superfície SHALL simbolizar uma moeda por outra fonte, para que um valor e o nome ao lado dele não possam discordar sobre a mesma moeda.
 
 #### Scenario: O tipo de exibição não oferece cálculo
 - **WHEN** o tipo de exibição é inspecionado

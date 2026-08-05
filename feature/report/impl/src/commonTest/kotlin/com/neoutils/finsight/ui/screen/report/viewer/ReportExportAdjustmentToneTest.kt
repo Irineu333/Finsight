@@ -37,8 +37,9 @@ class ReportExportAdjustmentToneTest {
 
 
     // The formatter's constructor is `internal` to `core/common`, so the only way to
-    // reach one from outside is the binding the app itself uses.
-    private val formatter: CurrencyFormatter = koinApplication { modules(commonModule) }.koin.get()
+    // reach one from outside is the binding the app itself uses — which resolves its
+    // glyphs against the currency table, so the test has to provide one.
+    private val formatter: CurrencyFormatter = koinApplication { modules(commonModule, testSymbolsModule) }.koin.get()
 
     private val card = Account(id = 1L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
     private val reconciliation = Account(id = 2L, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")

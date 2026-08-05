@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  */
 class ConsolidatedAmountTest {
 
-    private val formatter = CurrencyFormatter()
+    private val formatter = currencyFormatterOf(TEST_SYMBOLS)
 
     @Test
     fun oneTermIsTheCommonCaseAndIsNotSpecial() {

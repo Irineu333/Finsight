@@ -1,6 +1,7 @@
 package com.neoutils.finsight.util
 
-import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.TEST_SYMBOLS
+import com.neoutils.finsight.extension.currencyFormatterOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,7 +21,7 @@ import kotlin.test.assertEquals
 class MoneyInputReformatTest {
 
     private fun transformation(currency: String) =
-        MoneyInputTransformation(CurrencyFormatter(), currency)
+        MoneyInputTransformation(currencyFormatterOf(TEST_SYMBOLS), currency)
 
     @Test
     fun `the amount survives a change of denomination`() {

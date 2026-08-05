@@ -3,30 +3,39 @@ package com.neoutils.finsight.extension
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Renders money. **The currency comes in through the method; the locale governs only the
- * *format*** — separators and where the symbol sits — which is what a locale legitimately
- * knows (design D10). Deriving the currency from the device is what made a phone in
- * `en-US` render `$` over an amount in reais, and it is the failure this signature
- * closes: there is no overload that formats without saying in what.
+ * Renders money. **The currency comes in through the method, the glyph comes from the
+ * table, and the locale governs only the *format*** — separators, grouping and where the
+ * symbol sits, which is what a locale legitimately knows (design D10).
  *
- * **Why the currency is a parameter and not a constructor argument.** The unit that gets
- * injected — Koin's `single`, the composition local, the two view models that format
- * outside composition — has to be currency-agnostic anyway, because a multi-term figure
- * (design D22) juxtaposes terms in *different* currencies inside a single rendering. A
- * per-currency formatter would therefore always be reached through a factory, which is
- * this class with one more object in front of it.
+ * Deriving the *currency* from the device is what made a phone in `en-US` render `$` over
+ * an amount in reais, and there is no overload that formats without saying in what.
+ * Deriving the *glyph* from the device was the same failure one step in: the platform
+ * answers a symbol for the **device's locale**, so `USD` renders `US$` on a phone in
+ * `pt-BR` and `$` on one in `en-US`, and neither is the symbol the user stored. The
+ * currency registry says the stored symbol is what appears over a value; this is where
+ * that becomes true, because this is the only thing that puts a symbol over a value.
  *
- * **The constructor is `internal`**, so the only site in the whole app that may build one
- * is this module's composition root. Every default expression that used to fabricate one
- * — the composition local's default, `MoneyInputTransformation`'s constructor default —
- * was a door back to the device locale, and none of them can be reopened from outside.
+ * **So [symbolOf] is a constructor argument while the currency is a parameter.** The
+ * glyph of a code is a property of the *table*, which is one table for the whole app and
+ * changes only when the user edits it; the currency of a figure changes term by term
+ * inside a single rendering (design D22). What is per-instance and what is per-call
+ * follows from that, and not from taste.
  *
- * Platform instances are **immutable per currency and cached**. Setting `.currency` on a
- * single shared formatter before each call would reintroduce the same failure underneath,
- * under interleaving: `CreditCardFormViewModel` and `BudgetFormViewModel` format off the
- * main thread, and one of them would print the other's symbol.
+ * **The constructor is `internal`**, so the only sites in the whole app that may build
+ * one are this module's Koin module and [currencyFormatterOf]. Every default expression
+ * that used to fabricate one — the composition local's default,
+ * `MoneyInputTransformation`'s constructor default — was a door back to the device
+ * locale, and none of them can be reopened from outside.
+ *
+ * Platform instances are **immutable per currency and glyph, and cached**. The glyph is
+ * part of the cache key rather than something set on a live formatter: an edited symbol
+ * builds a new one and the old entry simply ages out, so no formatter is ever mutated
+ * while another thread is formatting through it. Setting `.currency` on a single shared
+ * formatter before each call is the interleaving failure D10 exists to remove —
+ * `CreditCardFormViewModel` and `BudgetFormViewModel` format off the main thread, and one
+ * of them would print the other's symbol.
  */
-expect class CurrencyFormatter internal constructor() {
+expect class CurrencyFormatter internal constructor(symbolOf: (String) -> String) {
     /**
      * The decimal separator of the device locale.
      *
@@ -69,6 +78,29 @@ expect class CurrencyFormatter internal constructor() {
 
     fun formatWithSign(amount: Double, currency: String): String
 }
+
+/**
+ * The decimal places a money figure takes when nobody states otherwise.
+ *
+ * It is the app's base-100 premise, and not the platform's answer for a code: the offered
+ * set admits only two-decimal currencies — `isTwoDecimalCurrency` is what bars the others
+ * at registration — so asking the platform again here would only let a code the app never
+ * offered decide how its own figures round.
+ */
+internal const val CENTS = 2
+
+/**
+ * A formatter over a **snapshot** of the symbol table, for the composition root.
+ *
+ * `FormattingLocalsHost` collects the table into composition state and derives one of
+ * these from it. That is what makes an edited symbol reach a value already on screen: the
+ * instance changes identity when the table does, so everything reading
+ * [LocalCurrencyFormatter] recomposes. The `single` in `commonModule` reads the same
+ * table live instead, which is what the two form view models need — they format on
+ * demand, outside composition, where there is nothing to recompose.
+ */
+fun currencyFormatterOf(symbols: Map<String, String>) =
+    CurrencyFormatter(symbolOf = symbols::symbolOf)
 
 /**
  * No default, on purpose: a default would have to build a formatter, and there is no

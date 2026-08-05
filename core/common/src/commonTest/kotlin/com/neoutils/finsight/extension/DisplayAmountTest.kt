@@ -13,7 +13,7 @@ import kotlin.test.assertNotEquals
  */
 class DisplayAmountTest {
 
-    private val formatter = CurrencyFormatter()
+    private val formatter = currencyFormatterOf(TEST_SYMBOLS)
 
     private fun format(amount: DisplayAmount) = formatter.format(amount)
 

@@ -10,8 +10,10 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.CurrencySymbols
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.format
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import java.util.Locale
@@ -153,6 +155,13 @@ class SingleCurrencyGoldenTest {
             // whole test so that what is asserted is the app's formatting and not the
             // machine's.
             run {
+                // The glyph comes from the currency table, so the table has to have been
+                // read before a value can wear it. In the app that is the composition
+                // root collecting the port; here it is awaiting the first row, and until
+                // it arrives the worst case stands — the code itself, exactly as a
+                // selector would show it.
+                get<CurrencySymbols>().symbols.first { it.isNotEmpty() }
+
                 val formatter = get<CurrencyFormatter>()
                 val consolidate = get<ConsolidateMoneyUseCase>()
 

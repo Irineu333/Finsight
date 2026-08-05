@@ -1,0 +1,13 @@
+appId: com.neoutils.finsight
+name: smoke_launch
+tags:
+  - smoke
+---
+- runFlow: ../../subflows/launch_fresh.yaml
+
+- assertVisible:
+    id: "nav_item_dashboard"
+- assertVisible:
+    id: "nav_item_transactions"
+- assertVisible:
+    id: "add_transaction_fab"

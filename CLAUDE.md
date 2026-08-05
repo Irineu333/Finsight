@@ -10,6 +10,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
+scripts/e2e.sh                                             # Maestro E2E suite (Android device)
 ```
 
 ## Features
@@ -129,6 +130,15 @@ compiler, not by discipline (see below).
 
 > Normative reference: **`core/ledger/README.md`** — the full vocabulary, the read and
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
+
+## E2E (Maestro)
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. Elements
+are selected by **`id:`**, never by text — the app is localised, so a label is not an identity. An
+`id` is a Compose `Modifier.testTag`, reachable only because a composition root published it with
+`Modifier.exposeTestTags()` (`core/designsystem` — `ui/util/ExposeTestTags`); a modal sheet, dialog
+or popup is its own root and needs its own call.
+
+> Normative reference: **`.maestro/README.md`** — layout, how to run, tag naming, writing a flow.
 
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.

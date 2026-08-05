@@ -19,6 +19,7 @@ import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.ui.screen.home.ChromeHost
 import com.neoutils.finsight.ui.theme.FinsightTheme
+import com.neoutils.finsight.ui.util.exposeTestTags
 import org.koin.compose.koinInject
 
 @Composable
@@ -34,7 +35,9 @@ fun App() {
     }
 
     FinsightTheme {
-        Surface {
+        // The E2E driver reads test tags off the accessibility tree, and only a composition root
+        // can publish them. This is the app window's root; a modal sheet opens its own.
+        Surface(modifier = Modifier.exposeTestTags()) {
             ProvidePlatformContext {
                 FormattingLocalsHost {
                     ProvideNavController {

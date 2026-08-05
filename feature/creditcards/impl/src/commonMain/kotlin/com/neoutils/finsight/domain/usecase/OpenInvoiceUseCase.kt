@@ -85,7 +85,7 @@ class OpenInvoiceUseCase(
             openedAt = currentDate
         )
 
-        invoice.copy(id = invoiceRepository.insert(invoice))
+        invoiceRepository.insert(invoice)
     }
 }
 

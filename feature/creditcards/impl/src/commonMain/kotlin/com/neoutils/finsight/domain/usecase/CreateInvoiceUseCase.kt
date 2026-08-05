@@ -58,9 +58,7 @@ class CreateInvoiceUseCase(
             status = Invoice.Status.OPEN,
         )
 
-        newInvoice.copy(
-            id = invoiceRepository.insert(newInvoice)
-        )
+        invoiceRepository.insert(newInvoice)
     }
 }
 

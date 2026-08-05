@@ -11,6 +11,9 @@ import com.neoutils.finsight.database.mapper.ExchangeRateMapper
 import com.neoutils.finsight.domain.error.CurrencyError
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.RatePair
+import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.SaveCurrencyUseCase
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import java.util.Locale
+import kotlin.time.Instant
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,6 +45,12 @@ class CurrencyRegistryTest {
 
     @AfterTest
     fun tearDown() = db.close()
+
+    private class FakeSyncState : IRateSyncStateRepository {
+        private val flow = MutableStateFlow(RateSyncState())
+        override fun observe(): StateFlow<RateSyncState> = flow
+        override suspend fun record(state: RateSyncState) { flow.value = state }
+    }
 
     private class MovableBase(base: String) : IBaseCurrencyRepository {
         private val state = MutableStateFlow(base)
@@ -66,9 +76,12 @@ class CurrencyRegistryTest {
 
     private val save = SaveCurrencyUseCase(repository = repository)
 
+    private val syncState = FakeSyncState()
+
     private val delete = DeleteCurrencyUseCase(
         repository = repository,
         exchangeRateRepository = rates,
+        rateSyncStateRepository = syncState,
         accountDao = db.accountDao(),
         budgetDao = db.budgetDao(),
     )
@@ -79,6 +92,8 @@ class CurrencyRegistryTest {
     )
 
     private val march = LocalDate(2026, 3, 14)
+
+    private val noon = Instant.fromEpochMilliseconds(1_773_000_000_000)
 
     private suspend fun seed(vararg codes: String) {
         codes.forEach { db.currencyDao().upsert(CurrencyEntity(code = it, symbol = it)) }
@@ -319,6 +334,38 @@ class CurrencyRegistryTest {
 
         assertEquals(2, rates.observeAll().first().size, "the observations were rolled back")
         assertTrue(repository.exists("PEN"), "and so was nothing, since the currency never left")
+    }
+
+    /**
+     * **What the upkeep remembers goes too**, and the case that makes it matter is
+     * deleting and re-registering the same code on the same day.
+     *
+     * The daily bound is per pair precisely so that a newly registered currency is never
+     * hostage to a synchronisation that already ran (design D8b). A stamp left behind
+     * reintroduces that: the code comes back, `whenDue` fires, and the pair is skipped as
+     * already answered — so a currency the user has just registered waits until tomorrow
+     * for a rate the app could have fetched at once. The refusal to quote it goes with it
+     * for the same reason: it is a sentence about a currency, and this one is gone.
+     */
+    @Test
+    fun `deleting forgets what the upkeep knew about the currency`() = runTest {
+        seed("PEN")
+        syncState.record(
+            RateSyncState(
+                syncedAt = mapOf(
+                    RatePair("PEN", "BRL") to noon,
+                    RatePair("USD", "PEN") to noon,
+                    RatePair("USD", "BRL") to noon,
+                ),
+                notCoveredCurrencies = setOf("PEN"),
+            )
+        )
+
+        delete("PEN")
+
+        val remembered = syncState.observe().value
+        assertEquals(setOf(RatePair("USD", "BRL")), remembered.syncedAt.keys, "no pair naming it survives")
+        assertTrue("PEN" !in remembered.notCoveredCurrencies, "nor does the refusal to quote it")
     }
 
     /**

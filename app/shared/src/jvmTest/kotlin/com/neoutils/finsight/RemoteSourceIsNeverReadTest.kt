@@ -59,6 +59,12 @@ class RemoteSourceIsNeverReadTest {
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRateSyncStateRepository.kt",
         // The one writer: the upkeep, which persists what it managed to answer.
         "core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SyncExchangeRatesUseCase.kt",
+        // Deleting a currency, which **forgets** rather than shows: what the upkeep holds
+        // about a currency stops being true when the currency stops existing, and codes
+        // are reusable, so a stamp left behind would block the next currency to wear that
+        // code on its first day. It reads the state only to write the state without it —
+        // no surface of the app learns anything about the synchronisation from here.
+        "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/DeleteCurrencyUseCase.kt",
         // The one implementation, over the settings the app already keeps.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/RateSyncStateRepository.kt",
         // The one reader: the rates screen's view model.

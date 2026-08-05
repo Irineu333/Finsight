@@ -72,6 +72,7 @@ val settingsModule = module {
         DeleteCurrencyUseCase(
             repository = get(),
             exchangeRateRepository = get(),
+            rateSyncStateRepository = get(),
             accountDao = get(),
             budgetDao = get(),
         )

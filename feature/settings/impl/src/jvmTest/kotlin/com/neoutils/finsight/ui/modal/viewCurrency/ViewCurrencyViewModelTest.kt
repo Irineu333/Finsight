@@ -13,6 +13,8 @@ import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
 import com.neoutils.finsight.ui.model.RetireAction
@@ -82,6 +84,11 @@ class ViewCurrencyViewModelTest {
 
     private val delete = DeleteCurrencyUseCase(
         repository = repository,
+        rateSyncStateRepository = object : IRateSyncStateRepository {
+            private val flow = MutableStateFlow(RateSyncState())
+            override fun observe(): StateFlow<RateSyncState> = flow
+            override suspend fun record(state: RateSyncState) { flow.value = state }
+        },
         exchangeRateRepository = rates,
         accountDao = db.accountDao(),
         budgetDao = db.budgetDao(),

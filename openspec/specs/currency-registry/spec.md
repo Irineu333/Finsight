@@ -238,6 +238,15 @@ Uma linha do acervo de taxas MUST NOT bloquear a exclusão. Ela SHALL, em vez di
 **removida junto**: apagar uma moeda SHALL remover toda observação do acervo que a nomeie
 em qualquer das duas pontas, na mesma escrita.
 
+O que a sincronização automática registra sobre a moeda SHALL ser esquecido junto. Isso não
+é observação, é afirmação *sobre* uma — *o dólar foi respondido hoje* — e deixa de ser
+verdade quando a moeda deixa de existir. Como os códigos são reutilizáveis, uma marca que
+sobrevive à sua moeda passa a valer para a próxima que assumir aquele código: ela nasceria
+respondida sem nunca ter sido perguntada, e ficaria sem cotação automática até o dia
+seguinte — que é exatamente o caso que o limite diário por **par**, e não por rodada, existe
+para impedir. Esquecer custa, no pior caso, uma requisição; lembrar custa uma moeda recém
+cadastrada sem taxa e sem como pedir uma.
+
 Isso é o que torna "a taxa não bloqueia" seguro, e é diferente de deixá-la para trás. Uma
 observação órfã continuaria a ser **caminho de conversão** — o resolvedor lê o acervo, não o
 conjunto de moedas oferecidas —, produzindo figuras trianguladas por uma moeda que não
@@ -261,6 +270,10 @@ removidas junto.
 #### Scenario: As taxas vão junto
 - **WHEN** o usuário apaga uma moeda que nenhuma conta e nenhum orçamento nomeia, e que aparece em três observações do acervo
 - **THEN** a moeda e as três observações deixam de existir, na mesma escrita
+
+#### Scenario: Recadastrar no mesmo dia não espera até amanhã
+- **WHEN** o usuário apaga uma moeda que já fora sincronizada hoje e cadastra o mesmo código em seguida
+- **THEN** a sincronização a trata como nunca perguntada, e busca a cotação dela no mesmo dia
 
 #### Scenario: Uma falha no meio não deixa metade feita
 - **WHEN** a remoção da moeda falha depois de as observações já terem sido apagadas

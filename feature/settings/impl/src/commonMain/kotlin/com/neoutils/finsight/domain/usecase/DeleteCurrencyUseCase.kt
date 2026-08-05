@@ -8,6 +8,7 @@ import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.domain.error.CurrencyError
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 
 /**
  * What names a currency: what refuses its deletion, and what a deletion would take.
@@ -48,6 +49,7 @@ data class CurrencyUsage(
 class DeleteCurrencyUseCase(
     private val repository: ICurrencyRepository,
     private val exchangeRateRepository: IExchangeRateRepository,
+    private val rateSyncStateRepository: IRateSyncStateRepository,
     private val accountDao: AccountDao,
     private val budgetDao: BudgetDao,
 ) {
@@ -82,6 +84,15 @@ class DeleteCurrencyUseCase(
         // currency it speaks about, and this is the decision that it may go, not the
         // orchestration of how.
         repository.delete(normalized)
+
+        // And what the upkeep remembers about it, which is not an observation but a
+        // sentence *about* one: `the dollar was answered today`. It cannot join the write
+        // above — it lives in the settings, not the database — and it does not need to.
+        // Failing here costs one request; the currency is gone either way, and a stamp
+        // about a currency that no longer exists blocks nothing that exists.
+        rateSyncStateRepository.record(
+            rateSyncStateRepository.observe().value.forgetting(normalized)
+        )
 
         return Unit.right()
     }

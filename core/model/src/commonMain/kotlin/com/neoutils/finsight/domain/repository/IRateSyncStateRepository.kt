@@ -46,6 +46,29 @@ data class RateSyncState(
      * synchronisation — one currency answering while another failed.
      */
     val lastSyncedAt: Instant? get() = syncedAt.values.maxOrNull()
+
+    /**
+     * The same state with **nothing left in it about [currency]** — every pair naming it
+     * on either end, and its place among the currencies the source refused to quote.
+     *
+     * It exists because a currency can be **deleted**, and what this holds about it stops
+     * being true the moment it is: *the dollar was answered today* is a statement about a
+     * currency the app offers, and codes are reusable. Left behind, the stamp survives
+     * the thing it describes, and the next currency to wear that code inherits an answer
+     * nobody ever gave about it — blocked until tomorrow, on its first day, which is
+     * exactly the case design D8b keeps the per-pair bound *from* producing.
+     *
+     * Forgetting costs at most one request. Remembering costs a currency with no rate and
+     * no way to ask for one, which is the asymmetry that decides this.
+     */
+    fun forgetting(currency: String): RateSyncState {
+        val code = currency.uppercase()
+
+        return RateSyncState(
+            syncedAt = syncedAt.filterKeys { it.currency != code && it.against != code },
+            notCoveredCurrencies = notCoveredCurrencies - code,
+        )
+    }
 }
 
 /**

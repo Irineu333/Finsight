@@ -150,7 +150,7 @@ class LaunchYieldModal(
                             ) {
                                 Icon(
                                     imageVector = Icons.TwoTone.CalendarToday,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(Res.string.launch_yield_date_label),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp),
                                 )

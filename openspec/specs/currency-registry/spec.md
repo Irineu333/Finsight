@@ -262,6 +262,10 @@ removidas junto.
 - **WHEN** o usuário apaga uma moeda que nenhuma conta e nenhum orçamento nomeia, e que aparece em três observações do acervo
 - **THEN** a moeda e as três observações deixam de existir, na mesma escrita
 
+#### Scenario: Uma falha no meio não deixa metade feita
+- **WHEN** a remoção da moeda falha depois de as observações já terem sido apagadas
+- **THEN** as observações continuam existindo, e a moeda também, porque as duas remoções são uma única unidade de trabalho
+
 #### Scenario: A exclusão diz o que leva
 - **WHEN** o usuário confirma a exclusão de uma moeda que aparece no acervo
 - **THEN** o número de observações que serão removidas é apresentado antes de a exclusão acontecer

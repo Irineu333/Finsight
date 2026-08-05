@@ -69,7 +69,11 @@ class ViewCurrencyViewModelTest {
     }
 
     private val base = MovableBase("BRL")
-    private val repository = CurrencyRepository(dao = db.currencyDao())
+    private val repository = CurrencyRepository(
+        database = db,
+        dao = db.currencyDao(),
+        exchangeRateDao = db.exchangeRateDao(),
+    )
     private val rates = ExchangeRateRepository(
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),

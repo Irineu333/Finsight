@@ -59,8 +59,17 @@ interface ICurrencyRepository {
     suspend fun unarchive(code: String)
 
     /**
-     * Removes the currency. Whether it may be removed at all is decided above this, and
-     * so is removing the rate observations that name it.
+     * Removes the currency **and every rate observation that names it, in one write**.
+     *
+     * Whether it may be removed at all is decided above this — that is a rule, and rules
+     * live in the use case. That the two removals are one unit of work is not a rule but
+     * a property of the write, and it belongs here, where a transaction can be opened.
+     *
+     * The pair is indivisible in both directions. An observation left behind goes on
+     * being a **conversion path**, since the resolver reads the archive without consulting
+     * the offered set; and a currency left behind after its rates are gone is a row the
+     * user already asked to delete, now quoting nothing. Either half alone is a state the
+     * app has no name for.
      */
     suspend fun delete(code: String)
 }

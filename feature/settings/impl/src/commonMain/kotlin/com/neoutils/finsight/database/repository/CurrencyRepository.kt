@@ -1,6 +1,10 @@
 package com.neoutils.finsight.database.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.CurrencyDao
+import com.neoutils.finsight.database.dao.ExchangeRateDao
 import com.neoutils.finsight.database.entity.CurrencyEntity
 import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
@@ -17,10 +21,15 @@ import kotlinx.coroutines.flow.map
  * storing it is what keeps a name from freezing in the language of the run that wrote it.
  *
  * No rule of refusal lives here. Which currency may be deleted, and which may not be
- * archived, are decisions with owners of their own in the use cases above.
+ * archived, are decisions with owners of their own in the use cases above. What does live
+ * here is the **unit of work** a decision taken above is carried out in: [delete] takes
+ * the rate archive with the currency, in one transaction, because half of that pair is a
+ * state nothing in the app can read.
  */
 class CurrencyRepository(
+    private val database: AppDatabase,
     private val dao: CurrencyDao,
+    private val exchangeRateDao: ExchangeRateDao,
 ) : ICurrencyRepository {
 
     override fun observeOffered(): Flow<List<CurrencyInfo>> =
@@ -55,7 +64,19 @@ class CurrencyRepository(
 
     override suspend fun unarchive(code: String) = dao.unarchive(code.uppercase())
 
-    override suspend fun delete(code: String) = dao.deleteByCode(code.uppercase())
+    override suspend fun delete(code: String) {
+        val normalized = code.uppercase()
+
+        // Both removals or neither. Sequentially — which is how this read before —
+        // a cancellation between them destroys every observation the user made about
+        // the currency and leaves the currency itself registered, quoting nothing.
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                exchangeRateDao.deleteByCurrencyOnEitherEnd(normalized)
+                dao.deleteByCode(normalized)
+            }
+        }
+    }
 
     private fun toDomain(entity: CurrencyEntity) = CurrencyInfo(
         code = entity.code,

@@ -3,6 +3,7 @@ package com.neoutils.finsight.database.repository
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.dao.CurrencyDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CurrencyEntity
@@ -23,6 +24,7 @@ import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -50,7 +52,11 @@ class CurrencyRegistryTest {
 
     private val base = MovableBase("BRL")
 
-    private val repository = CurrencyRepository(dao = db.currencyDao())
+    private val repository = CurrencyRepository(
+        database = db,
+        dao = db.currencyDao(),
+        exchangeRateDao = db.exchangeRateDao(),
+    )
 
     private val rates = ExchangeRateRepository(
         dao = db.exchangeRateDao(),
@@ -280,6 +286,39 @@ class CurrencyRegistryTest {
 
         assertEquals(listOf("USD" to "BRL"), rates.observeAll().first().map { it.currency to it.counterCurrency })
         assertTrue(!repository.exists("PEN"))
+    }
+
+    /**
+     * **In the same write, and the write is what is proved here.**
+     *
+     * The two removals used to be two sequential calls under a comment claiming they were
+     * one. Sequentially, anything that stops the second — a cancellation, a database
+     * error — destroys every observation the user made about a currency and leaves the
+     * currency itself registered, quoting nothing: a state the app has no name for and no
+     * screen to fix.
+     *
+     * So the currency's own removal is made to fail, and what is asserted is that the
+     * observations are still there. Failing the *second* half is the only order in which
+     * a missing transaction is visible; with one, either both go or neither does.
+     */
+    @Test
+    fun `a failure halfway leaves neither half done`() = runTest {
+        seed("PEN")
+        rate("PEN", "BRL", 1.4)
+        rate("USD", "PEN", 3.7)
+
+        val breaking = CurrencyRepository(
+            database = db,
+            dao = object : CurrencyDao by db.currencyDao() {
+                override suspend fun deleteByCode(code: String) = error("the write failed here")
+            },
+            exchangeRateDao = db.exchangeRateDao(),
+        )
+
+        assertFailsWith<IllegalStateException> { breaking.delete("PEN") }
+
+        assertEquals(2, rates.observeAll().first().size, "the observations were rolled back")
+        assertTrue(repository.exists("PEN"), "and so was nothing, since the currency never left")
     }
 
     /**

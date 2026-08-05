@@ -59,7 +59,9 @@ val settingsModule = module {
     // above already makes, and for the same reason.
     single<CurrencySeeding> { PlatformCurrencySeeding() }
 
-    single<ICurrencyRepository> { CurrencyRepository(dao = get()) }
+    single<ICurrencyRepository> {
+        CurrencyRepository(database = get(), dao = get(), exchangeRateDao = get())
+    }
 
     // The port of `:core:common`: the only binding where the table and the composition
     // local meet, so that `:core:designsystem` never has to see `:core:model`.

@@ -32,13 +32,15 @@ data class CurrencyUsage(
  * denominations are immutable, so deleting the currency would leave a number nobody can
  * name any more. Archiving is the way out, and the message says so.
  *
- * A **rate** does not block it: it is removed in the same write. That second half is what
- * makes the first safe. An observation left behind would go on being a **conversion
- * path** — the resolver reads the archive without consulting the offered set — producing
- * figures triangulated through a currency that exists nowhere in the interface; it could
- * still be opened for correction in a form whose selector does not contain it; and, codes
- * being reusable, deleting and re-registering an invented one would silently re-attach
- * the old observations to a different concept.
+ * A **rate** does not block it: it is removed in the same write, which
+ * [ICurrencyRepository.delete] owns — one transaction, because half of that pair is a
+ * state nothing in the app can read. That second half is what makes the first safe. An
+ * observation left behind would go on being a **conversion path** — the resolver reads
+ * the archive without consulting the offered set — producing figures triangulated through
+ * a currency that exists nowhere in the interface; it could still be opened for
+ * correction in a form whose selector does not contain it; and, codes being reusable,
+ * deleting and re-registering an invented one would silently re-attach the old
+ * observations to a different concept.
  *
  * The cost is destroying observations the user made, and the mitigation is [ratesToRemove]
  * saying **how many** before it happens instead of hiding it.
@@ -75,8 +77,10 @@ class DeleteCurrencyUseCase(
 
         if (usage.budgets > 0) return CurrencyError.DENOMINATED_BY_BUDGET.left()
 
-        // The same write: an observation must not outlive the currency it speaks about.
-        exchangeRateRepository.removeAllNaming(normalized)
+        // The rate archive goes with it, in the same write — which is the repository's
+        // promise and not two calls from here. An observation must not outlive the
+        // currency it speaks about, and this is the decision that it may go, not the
+        // orchestration of how.
         repository.delete(normalized)
 
         return Unit.right()

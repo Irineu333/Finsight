@@ -10,6 +10,7 @@ import com.neoutils.finsight.resources.category_yield
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -47,6 +48,10 @@ class EnsureYieldCategoryUseCase(
                     systemKey = SystemCategoryKey.YIELD,
                 )
             )
+        } catch (cancellation: CancellationException) {
+            // Cancellation is not a lost race: nobody is waiting for the category any
+            // more, so it must travel up rather than be answered.
+            throw cancellation
         } catch (throwable: Throwable) {
             // A refused insert is the expected outcome of losing the race, and the
             // caller asked for the category to *exist* — which it now does. Only when

@@ -115,7 +115,7 @@ class FrankfurterRateSourceTest {
      * to asking pair by pair, instead of treating every currency as unquoted.
      */
     @Test
-    fun `an unreachable coverage is unknown, and not an empty one`() = runTest {
+    fun `an unreachable coverage is unknown and not an empty one`() = runTest {
         val source = source { respondError(HttpStatusCode.InternalServerError) }
 
         assertNull(source.coverage())

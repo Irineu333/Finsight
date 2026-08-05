@@ -60,7 +60,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
     ) = SuggestCrossCurrencyAmountUseCase(Archive(rate))
 
     @Test
-    fun `read backwards, the rate divides`() = runTest {
+    fun `read backwards the rate divides`() = runTest {
         val suggestion = suggester()(amount = 550.0, from = "BRL", to = "USD", on = today)
 
         assertEquals(100.0, suggestion?.amount)
@@ -68,7 +68,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
     }
 
     @Test
-    fun `read as observed, the rate multiplies`() = runTest {
+    fun `read as observed the rate multiplies`() = runTest {
         val suggestion = suggester()(amount = 100.0, from = "USD", to = "BRL", on = today)
 
         assertEquals(550.0, suggestion?.amount)
@@ -76,7 +76,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
 
     /** The whole point of carrying a date: this one must not be pre-filled. */
     @Test
-    fun `an older rate still answers, saying which day it is from`() = runTest {
+    fun `an older rate still answers saying which day it is from`() = runTest {
         val suggestion = suggester(
             rate = ExchangeRate(
                 currency = "USD",
@@ -112,7 +112,7 @@ class SuggestCrossCurrencyAmountUseCaseTest {
     }
 
     @Test
-    fun `with no rate, and with nothing stated, there is nothing to offer`() = runTest {
+    fun `with no rate and nothing stated there is nothing to offer`() = runTest {
         assertNull(suggester(rate = null)(amount = 100.0, from = "USD", to = "BRL", on = today))
         assertNull(suggester()(amount = 0.0, from = "USD", to = "BRL", on = today))
         assertNull(suggester()(amount = 100.0, from = "USD", to = "USD", on = today))

@@ -374,4 +374,3 @@ cadastro de uma taxa nova.
 #### Scenario: Arquivar é reversível
 - **WHEN** o usuário desarquiva uma moeda
 - **THEN** ela volta a ser oferecida em todos os formulários, exatamente como antes
-

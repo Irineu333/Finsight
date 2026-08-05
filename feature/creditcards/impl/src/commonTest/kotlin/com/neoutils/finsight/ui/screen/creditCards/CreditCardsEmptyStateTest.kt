@@ -129,7 +129,7 @@ class CreditCardsEmptyStateTest {
     }
 
     @Test
-    fun `a filter that cuts everything offers to clear, and clearing brings the list back`() = runTest(dispatcher) {
+    fun `a filter that cuts everything offers to clear and clearing brings the list back`() = runTest(dispatcher) {
         val vm = viewModel(cards = listOf(card), transactions = listOf(purchase(id = 1)))
 
         vm.uiState.test {

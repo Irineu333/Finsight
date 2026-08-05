@@ -142,7 +142,7 @@ class SyncExchangeRatesUseCaseTest {
     )
 
     @Test
-    fun `the row is written in the direction it will be read, with the source's date`() = runTest {
+    fun `the row is written in the direction it will be read with the source's date`() = runTest {
         val source = RecordingSource(mapOf("USD" to RemoteQuote.Observed(friday, 5.0583)))
 
         useCase(source, inUse = listOf("BRL", "USD")).invoke()
@@ -234,7 +234,7 @@ class SyncExchangeRatesUseCaseTest {
      * when the true one is a single sentence about the base.
      */
     @Test
-    fun `an uncovered base is what is recorded, and not the currencies held`() = runTest {
+    fun `an uncovered base is what is recorded and not the currencies held`() = runTest {
         val source = RecordingSource(
             answers = emptyMap(),
             coverage = setOf("USD", "EUR"),
@@ -281,7 +281,7 @@ class SyncExchangeRatesUseCaseTest {
      * on record is not dropped by a network blip.
      */
     @Test
-    fun `unknown coverage falls back to asking, and keeps what was already known`() = runTest {
+    fun `unknown coverage falls back to asking and keeps what was already known`() = runTest {
         val refusing = RecordingSource(answers = emptyMap(), coverage = setOf("USD"))
         useCase(refusing, inUse = listOf("XCD", "USD"), base = "XCD", now = sunday).invoke()
 
@@ -350,7 +350,7 @@ class SyncExchangeRatesUseCaseTest {
      * so the new one is asked and the old ones are not asked twice.
      */
     @Test
-    fun `a currency registered after the day's run is asked, and the others are not asked again`() = runTest {
+    fun `a currency registered after the day's run is asked while the others are not asked again`() = runTest {
         val source = RecordingSource(
             mapOf(
                 "USD" to RemoteQuote.Observed(friday, 5.0583),

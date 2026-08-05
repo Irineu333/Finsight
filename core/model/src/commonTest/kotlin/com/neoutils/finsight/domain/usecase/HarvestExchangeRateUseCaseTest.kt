@@ -57,7 +57,7 @@ class HarvestExchangeRateUseCaseTest {
     }
 
     @Test
-    fun `the full quotient is stored, not the form a screen would show`() = runTest {
+    fun `the full quotient is stored rather than the form a screen would show`() = runTest {
         val (harvest, _) = harvester()
 
         val harvested = harvest(-183.0, "USD", 1000.0, "BRL", march)
@@ -99,7 +99,7 @@ class HarvestExchangeRateUseCaseTest {
     }
 
     @Test
-    fun `what is harvested is a line of the archive, never a field of the operation`() = runTest {
+    fun `what is harvested is a line of the archive and never a field of the operation`() = runTest {
         val (harvest, rates) = harvester()
 
         val harvested = harvest(-100.0, "USD", 550.0, "BRL", march)

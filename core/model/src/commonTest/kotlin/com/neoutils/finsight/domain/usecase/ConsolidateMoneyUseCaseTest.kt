@@ -43,7 +43,7 @@ class ConsolidateMoneyUseCaseTest {
     // --- the table ---
 
     @Test
-    fun `an empty figure is zero, exact, in the currency the user holds`() = runTest {
+    fun `an empty figure is zero and exact in the currency the user holds`() = runTest {
         val figure = reducer()(MoneyByCurrency.zero, march, DisplayAmount::natural)
 
         assertEquals(1, figure.terms.size)
@@ -98,7 +98,7 @@ class ConsolidateMoneyUseCaseTest {
     }
 
     @Test
-    fun `one currency that is the base is itself, exact`() = runTest {
+    fun `one currency that is the base is itself and exact`() = runTest {
         val figure = reducer()(MoneyByCurrency.of("BRL", 100.0), march, DisplayAmount::natural)
 
         assertEquals("BRL", figure.base?.currency)
@@ -107,7 +107,7 @@ class ConsolidateMoneyUseCaseTest {
     }
 
     @Test
-    fun `one currency that is not the base is itself, exact, with no rate`() = runTest {
+    fun `one currency that is not the base is itself and exact with no rate`() = runTest {
         val figure = reducer()(MoneyByCurrency.of("USD", 50.0), march, DisplayAmount::natural)
 
         assertEquals(1, figure.terms.size)
@@ -204,7 +204,7 @@ class ConsolidateMoneyUseCaseTest {
     }
 
     @Test
-    fun `conversion is rounded to cents, once, here`() = runTest {
+    fun `conversion is rounded to cents once and here`() = runTest {
         val figure = reducer(rates = arrayOf("USD" to 5.4321))(
             MoneyByCurrency.of(mapOf("BRL" to 10.0, "USD" to 33.33)),
             march,
@@ -284,7 +284,7 @@ class ConsolidateMoneyUseCaseTest {
      * say. There is no reason to enumerate the zeros of every currency the user holds.
      */
     @Test
-    fun `a figure of nothing but zeros is one zero, in the base`() = runTest {
+    fun `a figure of nothing but zeros is one zero in the base`() = runTest {
         val figure = reducer(base = "USD", currenciesInUse = listOf("BRL", "USD"))(
             MoneyByCurrency.of(mapOf("BRL" to 0.0, "USD" to 0.0)),
             march,
@@ -297,7 +297,7 @@ class ConsolidateMoneyUseCaseTest {
     }
 
     @Test
-    fun `exactness travels inside every term, not only on the figure`() = runTest {
+    fun `exactness travels inside every term and not only on the figure`() = runTest {
         // The mark cannot be lost on the way to a surface, so it rides in the same type
         // as the value — and the reducer, not the screen, is what puts it there.
         val exact = reducer()(MoneyByCurrency.of("USD", 50.0), march, DisplayAmount::natural)

@@ -112,7 +112,7 @@ class ExchangeRateFormViewModelTest {
      * inverted on the way to the archive (design D2).
      */
     @Test
-    fun `the pair is written as chosen, and never canonicalised`() = runTest {
+    fun `the pair is written as chosen and never canonicalised`() = runTest {
         val repository = FakeExchangeRateRepository()
         val manager = ModalManager().apply { show(RecordingModal()) }
 

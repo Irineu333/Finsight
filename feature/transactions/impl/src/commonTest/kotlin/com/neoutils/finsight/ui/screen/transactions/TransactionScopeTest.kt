@@ -191,7 +191,7 @@ class TransactionScopeTest {
     }
 
     @Test
-    fun `the cards scope closes, in the ledger's sign, with the invoice adjustment in it`() = runTest(dispatcher) {
+    fun `the cards scope closes in the ledger's sign with the invoice adjustment in it`() = runTest(dispatcher) {
         val overview = stateUnder(TransactionScope.CARDS).balanceOverview as BalanceOverview.Cards
 
         // Owing 120 at the start. Flows: 90 spent takes it down, 120 paid brings it up,
@@ -296,7 +296,7 @@ class TransactionScopeTest {
     }
 
     @Test
-    fun `the cards scope cuts by the transaction's date, not by the invoice cycle`() = runTest(dispatcher) {
+    fun `the cards scope cuts by the transaction's date and not by the invoice cycle`() = runTest(dispatcher) {
         // Bought last month, on an invoice that only falls due later: it belongs to the
         // month it was posted, exactly like the list beneath it.
         val overview = stateUnder(TransactionScope.CARDS).balanceOverview as BalanceOverview.Cards

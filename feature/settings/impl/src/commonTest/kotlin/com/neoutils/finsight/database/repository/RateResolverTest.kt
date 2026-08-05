@@ -112,7 +112,7 @@ class RateResolverTest {
 
     /** An absent path is an absent rate, and an absent rate MUST NOT become `1`. */
     @Test
-    fun `nothing resolves to null, and null is not one`() {
+    fun `nothing resolves to null and null is not one`() {
         val archive = listOf(rate("USD", "BRL", 5.5))
 
         assertNull(archive.resolve("JPY", "CHF"))

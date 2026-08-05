@@ -117,7 +117,7 @@ class ViewCategoryViewModelTest {
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    
+
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
@@ -293,7 +293,7 @@ class ViewCategoryViewModelTest {
     }
 
     @Test
-    fun `an archived category is shown archived, so the view offers unarchive`() = runTest(dispatcher) {
+    fun `an archived category is shown archived so the view offers unarchive`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
         val vm = viewModel(categoryRepository = repository)
         vm.uiState.test {
@@ -304,7 +304,7 @@ class ViewCategoryViewModelTest {
     }
 
     @Test
-    fun `a non-archived category is shown active, so the view offers retire`() = runTest(dispatcher) {
+    fun `a non-archived category is shown active so the view offers retire`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
         val vm = viewModel(categoryRepository = repository)
         vm.uiState.test {

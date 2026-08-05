@@ -145,7 +145,7 @@ class InvoiceTransactionsPerspectiveTest {
     }
 
     @Test
-    fun `a purchase is unaffected, having a single monetary leg`() = runTest(dispatcher) {
+    fun `a purchase is unaffected having a single monetary leg`() = runTest(dispatcher) {
         val listed = listedUnder(TransactionType.EXPENSE)
 
         assertEquals(listOf(purchase.id), listed.map { it.id })

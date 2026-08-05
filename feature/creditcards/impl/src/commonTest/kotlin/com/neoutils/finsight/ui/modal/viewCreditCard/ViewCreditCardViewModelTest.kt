@@ -109,7 +109,7 @@ class ViewCreditCardViewModelTest {
     )
 
     @Test
-    fun `an archived card is shown archived, with its invoice count`() = runTest(dispatcher) {
+    fun `an archived card is shown archived with its invoice count`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
         val shown = card(accountId = 10L, isArchived = true)
         val vm = viewModel(repository, FakeInvoiceRepository(listOf(invoice(shown), invoice(shown))))

@@ -101,7 +101,7 @@ class DashboardPendingBalanceStatsTest {
     ) as? DashboardComponent.PendingBalanceStats
 
     @Test
-    fun `a month with only income keeps the expense class, at zero`() = runTest {
+    fun `a month with only income keeps the expense class at zero`() = runTest {
         val component = pending(listOf(recurring(TransactionType.INCOME, 1200.0)))
 
         assertNotNull(component)
@@ -110,7 +110,7 @@ class DashboardPendingBalanceStatsTest {
     }
 
     @Test
-    fun `a month with only expense keeps the income class, at zero`() = runTest {
+    fun `a month with only expense keeps the income class at zero`() = runTest {
         val component = pending(listOf(recurring(TransactionType.EXPENSE, 350.0)))
 
         assertNotNull(component)
@@ -128,7 +128,7 @@ class DashboardPendingBalanceStatsTest {
     }
 
     @Test
-    fun `hiding when empty removes the whole widget, never a single class`() = runTest {
+    fun `hiding when empty removes the whole widget and never a single class`() = runTest {
         assertNull(
             pending(
                 pendingRecurring = emptyList(),

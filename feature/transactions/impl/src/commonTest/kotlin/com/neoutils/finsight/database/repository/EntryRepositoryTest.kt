@@ -21,7 +21,7 @@ class EntryRepositoryTest {
     }
 
     @Test
-    fun `given no account when balanceUpTo then it reads the ASSET nature, one path only`() = runTest {
+    fun `given no account when balanceUpTo then it reads the ASSET nature by one path only`() = runTest {
         val repository = EntryRepository(FakeReadEntryDao(byType = mapOf("ASSET" to 8_200)))
         assertEquals(MoneyByCurrency.of("BRL", 82.0), repository.balanceUpToByCurrency(YearMonth(2026, 2)))
     }

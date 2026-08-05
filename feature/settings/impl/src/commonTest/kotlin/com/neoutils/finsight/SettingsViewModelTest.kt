@@ -49,7 +49,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `switching writes the preference, once`() = runTest {
+    fun `switching writes the preference once`() = runTest {
         val repository = RecordingBase()
 
         SettingsViewModel(repository, FakeCurrencyRepository()).onAction(SettingsAction.SwitchBaseCurrency("USD"))

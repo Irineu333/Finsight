@@ -596,4 +596,3 @@ A ordem dentro de um dia SHALL ser total e estável, para que duas leituras do m
 #### Scenario: Editar alcança a observação original
 - **WHEN** o usuário toca numa linha para corrigi-la
 - **THEN** o formulário abre com o par na direção em que a observação foi feita
-

@@ -43,7 +43,7 @@ class LimitCurrencyChoiceTest {
     )
 
     @Test
-    fun `one currency offers no control, and the limit takes it`() {
+    fun `one currency offers no control and the limit takes it`() {
         val choice = limitCurrencyChoice(
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("USD"), ofDefaultAccount = "USD"),
@@ -76,7 +76,7 @@ class LimitCurrencyChoiceTest {
     }
 
     @Test
-    fun `two currencies offer the choice, pre-selected with the default account's`() {
+    fun `two currencies offer the choice pre-selected with the default account's`() {
         val choice = limitCurrencyChoice(
             existing = null,
             currencies = AccountCurrencies(inUse = listOf("BRL", "USD"), ofDefaultAccount = "USD"),
@@ -103,7 +103,7 @@ class LimitCurrencyChoiceTest {
     }
 
     @Test
-    fun `editing shows the stored denomination, locked, whatever else exists`() {
+    fun `editing shows the stored denomination locked whatever else exists`() {
         val choice = limitCurrencyChoice(
             existing = budget,
             currencies = AccountCurrencies(inUse = listOf("BRL", "USD"), ofDefaultAccount = "BRL"),

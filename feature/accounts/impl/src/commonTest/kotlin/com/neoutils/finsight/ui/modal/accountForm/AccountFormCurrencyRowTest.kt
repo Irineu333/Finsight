@@ -77,7 +77,7 @@ class AccountFormCurrencyRowTest {
     }
 
     @Test
-    fun `creating offers the choice, pre-selected with the base currency`() = runTest {
+    fun `creating offers the choice pre-selected with the base currency`() = runTest {
         // Awaited rather than read from the initial value: the offered set is stored
         // data now, so it arrives one emission after the form opens.
         val uiState = viewModel(account = null, base = "USD")
@@ -89,7 +89,7 @@ class AccountFormCurrencyRowTest {
     }
 
     @Test
-    fun `editing shows the account's own currency, locked`() = runTest {
+    fun `editing shows the account's own currency and locks it`() = runTest {
         val account = Account(id = 1, name = "Chase", currency = "USD")
 
         val uiState = viewModel(account = account, base = "BRL").uiState.value

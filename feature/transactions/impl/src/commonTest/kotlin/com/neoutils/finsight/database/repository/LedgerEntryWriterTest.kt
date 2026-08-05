@@ -94,7 +94,7 @@ class LedgerEntryWriterTest {
     }
 
     @Test
-    fun `however many writes, the chart holds one nominal of each nature`() = runTest {
+    fun `however many writes the chart holds one nominal of each nature`() = runTest {
         // `ensureSystemAccount` looks up before inserting, so the chart keeps exactly
         // the three system rows however much is posted through them. A second
         // 'Despesas' would not fail anything — it would just split every expense

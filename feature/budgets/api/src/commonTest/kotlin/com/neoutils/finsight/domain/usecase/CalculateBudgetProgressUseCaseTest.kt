@@ -184,7 +184,7 @@ class CalculateBudgetProgressUseCaseTest {
      * are different facts, and `hasUnpricedSpending` is the one that says the first.
      */
     @Test
-    fun `spending no rate reaches is left out, and the progress says so`() = runTest {
+    fun `spending no rate reaches is left out and the progress says so`() = runTest {
         val progress = useCase(
             multi = mapOf(10L to mapOf("BRL" to 30.0), 11L to mapOf("JPY" to 5000.0)),
         )(budgets = listOf(budget), month = month).single()

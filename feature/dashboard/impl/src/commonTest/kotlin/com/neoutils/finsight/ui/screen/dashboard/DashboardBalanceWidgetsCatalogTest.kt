@@ -54,14 +54,14 @@ class DashboardBalanceWidgetsCatalogTest {
     }
 
     @Test
-    fun `once present, the neutral widget is no longer offered`() = runTest {
+    fun `once present the neutral widget is no longer offered`() = runTest {
         val present = setOf(DashboardComponentType.OVERALL_BALANCE_STATS.key)
 
         assertFalse(DashboardComponentType.OVERALL_BALANCE_STATS.key in availableKeys(present))
     }
 
     @Test
-    fun `a fresh dashboard opens with the neutral perimeter, not the accounts one`() = runTest {
+    fun `a fresh dashboard opens with the neutral perimeter and not the accounts one`() = runTest {
         val defaults = GetDashboardPreferencesUseCase(
             repository = EmptyPreferencesRepository,
             navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },

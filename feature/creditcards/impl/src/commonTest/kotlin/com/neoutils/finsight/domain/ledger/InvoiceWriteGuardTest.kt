@@ -60,7 +60,7 @@ class InvoiceWriteGuardTest {
     }
 
     @Test
-    fun `a paid invoice refuses everything, settlement included`() = runTest {
+    fun `a paid invoice refuses everything including settlement`() = runTest {
         assertFailsWith<InvoiceException> {
             guard(Invoice.Status.PAID).ensureAccepts(write())
         }

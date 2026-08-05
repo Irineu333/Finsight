@@ -86,7 +86,7 @@ class ExchangeRateHistoryViewModelTest {
     private val ExchangeRateHistoryUiState.rates get() = groups.flatMap { it.rates }.map { it.rate }
 
     @Test
-    fun `the history is partitioned by day, the most recent first`() = runTest {
+    fun `the history is partitioned by day with the most recent first`() = runTest {
         val viewModel = viewModel(
             listOf(
                 rate("EUR", counterCurrency = "BRL", date = february),
@@ -121,7 +121,7 @@ class ExchangeRateHistoryViewModelTest {
 
     /** Two observations, not one shown backwards — and on one day they share a heading. */
     @Test
-    fun `the same pair in both directions appears in the same day, as two rows`() = runTest {
+    fun `the same pair in both directions appears in the same day as two rows`() = runTest {
         val state = viewModel(
             listOf(
                 rate("USD", counterCurrency = "BRL"),
@@ -223,7 +223,7 @@ class ExchangeRateHistoryViewModelTest {
 
     /** A filter that only offered what survives the current one could not be widened. */
     @Test
-    fun `the currency filter offers every currency of the archive, not of the view`() = runTest {
+    fun `the currency filter offers every currency of the archive and not of the view`() = runTest {
         val viewModel = viewModel(listOf(rate("USD"), rate("EUR")))
 
         viewModel.onFilterByCurrency("USD")

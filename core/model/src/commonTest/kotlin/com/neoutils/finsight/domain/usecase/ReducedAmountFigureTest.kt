@@ -21,7 +21,7 @@ class ReducedAmountFigureTest {
     private val march = LocalDate(2026, 3, 10)
 
     @Test
-    fun `a full reduction is one term, in the target currency`() {
+    fun `a full reduction is one term in the target currency`() {
         val figure = ReducedAmount(value = 375.0, isApproximate = true, hasUnconvertedPart = false)
             .asFigure(target = "BRL", on = march)
 

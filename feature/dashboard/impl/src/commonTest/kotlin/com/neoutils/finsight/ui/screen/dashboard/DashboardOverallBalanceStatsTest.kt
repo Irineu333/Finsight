@@ -109,7 +109,7 @@ class DashboardOverallBalanceStatsTest {
         as? DashboardComponent.OverallBalanceStats
 
     @Test
-    fun `the neutral expense sums both natures, counting a card purchase once`() = runTest {
+    fun `the neutral expense sums both natures counting a card purchase once`() = runTest {
         assertEquals(550.0, overall()!!.expense.value)
     }
 

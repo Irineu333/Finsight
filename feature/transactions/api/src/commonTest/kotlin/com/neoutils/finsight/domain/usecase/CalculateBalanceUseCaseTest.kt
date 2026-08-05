@@ -43,7 +43,7 @@ class CalculateBalanceUseCaseTest {
         override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    
+
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
@@ -77,7 +77,7 @@ class CalculateBalanceUseCaseTest {
     }
 
     @Test
-    fun `every account answers per currency, and one currency is still per currency`() = runTest {
+    fun `every account answers per currency and one currency is still per currency`() = runTest {
         val useCase = CalculateBalanceUseCase(FakeEntryRepository(spanning = mapOf("BRL" to 130.0)))
 
         val balance = useCase(target = YearMonth(2026, 3))

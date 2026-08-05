@@ -84,9 +84,11 @@ data class TransactionsUiState(
          * transfer between accounts does not appear at all.
          *
          * [yield] is a **repartition** of [income], not an addition to it: what it
-         * shows, [income] no longer does, so the column still closes. It is `null` when
-         * no account of the perimeter declares that it yields, and zero — shown — when
-         * one does but the month had none.
+         * shows, [income] no longer does, so the column still closes. It is `null`
+         * whenever the period holds no yield, and no account's declaration brings the
+         * line back: a summary has nothing to launch from, so a line at zero here would
+         * say nothing. The account card decides otherwise, and for its own reason — it
+         * is where the launching happens.
          *
          * `finalBalance = openingBalance + income + yield − expense − invoicePayment + adjustment`
          */

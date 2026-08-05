@@ -89,7 +89,7 @@ class YieldSeparationQueryTest {
     }
 
     @Test
-    fun `separating by another dimension leaves the yield inside income`() = runTest {
+    fun `separating by another dimension sets that one apart and leaves the yield inside income`() = runTest {
         seed()
 
         val totals = entryDao.accountPeriodTotals(1, "2026-01", yieldDimensionId = SALARY_DIMENSION)

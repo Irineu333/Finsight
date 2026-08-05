@@ -132,8 +132,10 @@ compiler, not by discipline (see below).
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
 
 ## E2E (Maestro)
-Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. Elements
-are selected by **`id:`**, never by text — the app is localised, so a label is not an identity. An
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. The device
+runs in **English** — `scripts/e2e.sh` refuses any other language — so a flow may assert a rendered
+figure, which is the point: `457.10` on screen proves the ledger summed and read back what the flow
+wrote. Elements are still *reached* by **`id:`**, not by label: a label is copy and gets reworded. An
 `id` is a Compose `Modifier.testTag`, reachable only because a composition root published it with
 `Modifier.exposeTestTags()` (`core/designsystem` — `ui/util/ExposeTestTags`); a modal sheet, dialog
 or popup is its own root and needs its own call.

@@ -45,10 +45,26 @@ command with an error naming none of that ([#3065](https://github.com/mobile-dev
 Maestro Studio holds such an entry, and leaves it behind when it exits. Close Studio, then
 `rm ~/.maestro/sessions`.
 
-## Selecting elements: test tags, never text
+## The device speaks English
 
-The app is localised, and the emulator's locale decides whether a button reads *Salvar* or *Save*.
-So flows address elements by id:
+Every flow runs against a device set to English. `scripts/e2e.sh` checks `persist.sys.locale` and
+refuses to run otherwise, because the alternative is every text assertion turning red for a reason
+no failure message would name.
+
+It is checked and never set: the property needs root and a framework restart, and `pm clear` — which
+each flow performs on launch — wipes any per-app locale. So the device's language is a precondition
+of the suite, not something a run can arrange for itself.
+
+That is what makes it legitimate to assert a rendered figure. `$457.10` is a real assertion about
+the ledger: it proves two writes were persisted, summed and read back. Prefer asserting the number
+without its currency symbol (`457.10`), so the check survives a change of symbol but not a change
+of value.
+
+## Reaching elements: test tags, not labels
+
+Pinning the language settles what a flow may *assert*. It does not make labels good *selectors* —
+a label is copy, it gets reworded, and a renamed button should not break a test that never cared
+about its wording. So flows address elements by id:
 
 ```yaml
 - tapOn:
@@ -62,8 +78,9 @@ or popup is its own root** — that is why the modifier is applied twice: on `Ap
 app window, and in `ModalBottomSheet` for every sheet. A new kind of window needs its own call, or
 its tags will be invisible with no error to explain why.
 
-Text selectors are still right for content the *user* produced — a transaction title typed by the
-flow itself carries no translation.
+Text is the right selector for two things: content the flow itself typed (a transaction title), and
+a value being verified (an amount, a balance). Both are the subject of the assertion rather than an
+incidental way to find a widget.
 
 ### Naming
 

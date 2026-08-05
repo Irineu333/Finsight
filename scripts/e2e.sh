@@ -45,6 +45,23 @@ if [[ -s "$HOME/.maestro/sessions" ]]; then
     echo "  Close Maestro Studio. If nothing is running, the entry is stale: rm ~/.maestro/sessions" >&2
 fi
 
+# The flows assert English labels and English-formatted amounts, so the device's language is part
+# of the contract, not an accident of whoever's machine is running them. Refuse rather than let a
+# Portuguese device turn every assertion red for a reason no failure message would name.
+#
+# It is checked, never set: the app reads `persist.sys.locale`, and writing that needs root plus a
+# framework restart — too fragile to hide inside a test run. `pm clear` also wipes any per-app
+# locale, and every flow starts by clearing state, so that route cannot hold either.
+device_locale="$(adb shell getprop persist.sys.locale | tr -d '\r')"
+[[ -n "$device_locale" ]] || device_locale="$(adb shell getprop ro.product.locale | tr -d '\r')"
+
+if [[ "$device_locale" != en* ]]; then
+    echo "Device language is '${device_locale:-unknown}'; the flows require English." >&2
+    echo "  Change it in Settings > System > Languages, or on a userdebug emulator:" >&2
+    echo "    adb root && adb shell setprop persist.sys.locale en-US && adb shell 'stop; start'" >&2
+    exit 1
+fi
+
 if [[ "$skip_build" == false ]]; then
     ./gradlew :app:android:assembleDebug
     # -t allows the debug (test-only) build; -r keeps the flows free to clear state themselves.

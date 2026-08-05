@@ -47,7 +47,9 @@ jobs:
       - name: Run Maestro flows
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          # Pinned to the same API level and profile as scripts/e2e.sh — the flows scroll, so the
+          # screen they scroll on is part of the contract.
+          api-level: 36
           target: google_apis
           arch: x86_64
           profile: pixel_6

@@ -12,6 +12,16 @@ set -euo pipefail
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly APK="$ROOT/app/android/build/outputs/apk/debug/android-debug.apk"
 
+# The suite is calibrated against one device, and the flows are only as reproducible as the screen
+# they scroll on. A different density or height changes what sits below the fold, which is the
+# difference between `scrollUntilVisible` finding a field and the run turning red. The CI workflow
+# pins the same API level and profile.
+readonly E2E_AVD="${E2E_AVD:-finsight_e2e}"
+readonly E2E_API=36
+readonly E2E_PROFILE=pixel_6
+readonly E2E_IMAGE="system-images;android-36;google_apis_playstore;arm64-v8a"
+readonly ANDROID_SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+
 skip_build=false
 tags=""
 target=".maestro"
@@ -32,10 +42,29 @@ command -v maestro >/dev/null || {
     exit 1
 }
 
-[[ -n "$(adb devices | sed '1d' | grep -w device || true)" ]] || {
-    echo "No Android device attached. Start an emulator first." >&2
+# Nothing attached: boot the pinned emulator rather than let the run pick up whatever happens to
+# be plugged in.
+if [[ -z "$(adb devices | sed '1d' | grep -w device || true)" ]]; then
+    if ! "$ANDROID_SDK/emulator/emulator" -list-avds | grep -qx "$E2E_AVD"; then
+        echo "The pinned emulator '$E2E_AVD' does not exist. Create it once with:" >&2
+        echo "  \$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \\" >&2
+        echo "      -n $E2E_AVD -d $E2E_PROFILE -k \"$E2E_IMAGE\"" >&2
+        exit 1
+    fi
+    echo "Booting $E2E_AVD..."
+    "$ANDROID_SDK/emulator/emulator" -avd "$E2E_AVD" -no-snapshot-load -no-boot-anim >/dev/null 2>&1 &
+    until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
+        sleep 3
+    done
+fi
+
+# Something is attached: it still has to be the device the flows were written against.
+device_api="$(adb shell getprop ro.build.version.sdk | tr -d '\r')"
+if [[ "$device_api" != "$E2E_API" ]]; then
+    echo "Attached device runs API ${device_api:-unknown}; the flows are pinned to API $E2E_API." >&2
+    echo "  Close it and re-run to boot '$E2E_AVD', or set E2E_AVD to a device you trust." >&2
     exit 1
-}
+fi
 
 # While another Maestro session holds the device — Maestro Studio, most often — the CLI skips
 # setting up its driver and then fails on the first command with a bare gRPC error that names

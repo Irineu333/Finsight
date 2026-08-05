@@ -45,6 +45,24 @@ command with an error naming none of that ([#3065](https://github.com/mobile-dev
 Maestro Studio holds such an entry, and leaves it behind when it exits. Close Studio, then
 `rm ~/.maestro/sessions`.
 
+## The pinned device
+
+The suite runs on one device: **API 36, `pixel_6` profile** (1080x2400, density 420). `scripts/e2e.sh`
+boots the `finsight_e2e` emulator when nothing is attached, and refuses to run against a device on a
+different API level. `.github/workflows/e2e-android.yml` pins the same pair.
+
+This is not fussiness. The flows scroll to reach what is below the fold, so density and screen height
+decide whether `scrollUntilVisible` finds a field or the run turns red — the add-transaction sheet
+put its submit button below the fold on one profile and above it on another. The screen is part of
+the contract.
+
+Create it once:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n finsight_e2e -d pixel_6 -k "system-images;android-36;google_apis_playstore;arm64-v8a"
+```
+
 ## The device speaks English
 
 Every flow runs against a device set to English. `scripts/e2e.sh` checks `persist.sys.locale` and

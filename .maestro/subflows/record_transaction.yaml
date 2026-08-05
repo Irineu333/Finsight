@@ -1,0 +1,35 @@
+appId: com.neoutils.finsight
+name: record_transaction
+---
+# Records one transaction from the FAB and leaves the app where it found it — the sheet dismissed,
+# the dashboard behind it. Callers pass TYPE (income|expense), TITLE and AMOUNT.
+#
+# AMOUNT is bare digits: the field is a money input that places the separator itself, so "50000"
+# is what a person presses to mean 500.00.
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_save"
+    timeout: 15000
+
+- tapOn:
+    id: "add_transaction_type_${TYPE}"
+
+- tapOn:
+    id: "add_transaction_title"
+- inputText: ${TITLE}
+
+- tapOn:
+    id: "add_transaction_amount"
+- inputText: ${AMOUNT}
+
+# The numeric IME can cover the submit button, and the sheet only dismisses once the write lands —
+# so the wait is what keeps the caller from racing the ledger.
+- hideKeyboard
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_save"
+    timeout: 15000

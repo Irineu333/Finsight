@@ -66,6 +66,12 @@ if [[ "$device_api" != "$E2E_API" ]]; then
     exit 1
 fi
 
+# An emulator forwards the host's keyboard, and Android answers a hardware keyboard by hiding the
+# soft IME and putting its physical-keyboard toolbar there instead. Maestro types through the IME,
+# so what it types goes nowhere — the field stays empty, the form silently refuses to submit, and
+# the failure surfaces screens later as a disabled button. Ask for the soft keyboard, every run.
+adb shell settings put secure show_ime_with_hard_keyboard 1 >/dev/null 2>&1 || true
+
 # While another Maestro session holds the device — Maestro Studio, most often — the CLI skips
 # setting up its driver and then fails on the first command with a bare gRPC error that names
 # none of this (mobile-dev-inc/maestro#3065). Say it here, where it is still legible.

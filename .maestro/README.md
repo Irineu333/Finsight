@@ -14,9 +14,13 @@ minute of emulator time to tell you nothing new.
 ├── config.yaml            # the workspace: which flows run, where the report goes
 ├── flows/                 # everything here runs as a test, one folder per area
 │   ├── accounts/
+│   ├── dashboard/
+│   ├── ledger/
 │   └── smoke/
 └── subflows/              # reusable pieces; run only when a flow calls them
-    └── launch_fresh.yaml
+    ├── launch_fresh.yaml
+    ├── open_section.yaml
+    └── record_transaction.yaml
 ```
 
 `subflows/` sits outside the `flows/**` glob on purpose — that is what keeps a shared building block
@@ -55,6 +59,12 @@ This is not fussiness. The flows scroll to reach what is below the fold, so dens
 decide whether `scrollUntilVisible` finds a field or the run turns red — the add-transaction sheet
 put its submit button below the fold on one profile and above it on another. The screen is part of
 the contract.
+
+The runner also asks the device for its soft keyboard on every run
+(`show_ime_with_hard_keyboard`). An emulator forwards the host's keyboard, and Android answers a
+hardware keyboard by hiding the IME behind its physical-keyboard toolbar — Maestro types through the
+IME, so the text goes nowhere and the field stays empty. That failure surfaces screens later as a
+button that will not submit, which is why `record_transaction` reads each field back after typing it.
 
 Create it once:
 

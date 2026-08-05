@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -57,7 +58,7 @@ fun TransactionCard(
 
     Card(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.testTag("transaction_card"),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer,
             contentColor = colorScheme.onSurface,
@@ -128,6 +129,7 @@ fun TransactionCard(
             ) {
                 Text(
                     text = transaction.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    modifier = Modifier.testTag("transaction_card_title"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -142,6 +144,7 @@ fun TransactionCard(
 
             Text(
                 text = formatter.format(transaction.amount),
+                modifier = Modifier.testTag("transaction_card_amount"),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = color,

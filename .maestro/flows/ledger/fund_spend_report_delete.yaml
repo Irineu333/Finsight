@@ -1,7 +1,6 @@
 appId: com.neoutils.finsight
 name: ledger_fund_spend_report_delete
 tags:
-  - smoke
   - ledger
 env:
   INCOME_TITLE: "E2E Salary"

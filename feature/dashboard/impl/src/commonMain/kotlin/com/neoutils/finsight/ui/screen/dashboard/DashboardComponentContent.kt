@@ -405,6 +405,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Income,
+            amountTestTag = "dashboard_income_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -416,6 +417,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Expense,
+            amountTestTag = "dashboard_expenses_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)
@@ -884,6 +886,7 @@ private fun TotalBalanceCard(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,
+                modifier = Modifier.testTag("dashboard_total_balance_amount"),
             )
         }
     }

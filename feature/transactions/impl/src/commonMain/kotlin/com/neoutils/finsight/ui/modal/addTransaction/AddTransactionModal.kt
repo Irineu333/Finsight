@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -135,7 +136,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add_transaction_title"),
             )
 
             AnimatedVisibility(type.isExpense) {
@@ -235,7 +238,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 } else null,
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add_transaction_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -286,7 +291,9 @@ class AddTransactionModal : ModalBottomSheet() {
                     viewModel.onAction(AddTransactionAction.Submit(form))
                 },
                 enabled = form.isValid() && !uiState.isInvoiceBlocked,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add_transaction_save"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
@@ -309,7 +316,9 @@ class AddTransactionModal : ModalBottomSheet() {
     ) {
         Button(
             onClick = { onTypeSelected(TransactionType.EXPENSE) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("add_transaction_type_expense"),
             colors = when (selectedType) {
                 TransactionType.EXPENSE -> {
                     ButtonDefaults.buttonColors(
@@ -337,7 +346,9 @@ class AddTransactionModal : ModalBottomSheet() {
 
         Button(
             onClick = { onTypeSelected(TransactionType.INCOME) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("add_transaction_type_income"),
             colors = when (selectedType) {
                 TransactionType.INCOME -> {
                     ButtonDefaults.buttonColors(

@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -399,7 +400,8 @@ class ViewTransactionModal(
                 onClick = {
                     manager.show(DeleteTransactionModal(uiState.transaction))
                 },
-                modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                modifier = (if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth())
+                    .testTag("view_transaction_delete"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.error,

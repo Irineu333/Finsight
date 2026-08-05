@@ -8,28 +8,42 @@ name: record_transaction
 # is what a person presses to mean 500.00.
 - tapOn:
     id: "add_transaction_fab"
+# Anchored on the title field, not the submit button: the sheet scrolls, and how much of it fits
+# depends on the device — the button can sit below the fold while the sheet is perfectly open.
 - extendedWaitUntil:
     visible:
-      id: "add_transaction_save"
+      id: "add_transaction_title"
     timeout: 15000
 
 - tapOn:
     id: "add_transaction_type_${TYPE}"
 
+# The keyboard is dismissed between fields, not just at the end. Whatever the device puts up while
+# typing — the soft IME, or the hardware-keyboard toolbar newer Android versions show instead —
+# overlays the sheet, and the next field can end up underneath it.
 - tapOn:
     id: "add_transaction_title"
 - inputText: ${TITLE}
+- hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
 - tapOn:
     id: "add_transaction_amount"
 - inputText: ${AMOUNT}
-
-# The numeric IME can cover the submit button, and the sheet only dismisses once the write lands —
-# so the wait is what keeps the caller from racing the ledger.
 - hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
 - tapOn:
     id: "add_transaction_save"
 - extendedWaitUntil:
     notVisible:
-      id: "add_transaction_save"
+      id: "add_transaction_title"
     timeout: 15000

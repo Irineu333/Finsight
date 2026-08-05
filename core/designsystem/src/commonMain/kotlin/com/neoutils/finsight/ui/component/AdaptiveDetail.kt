@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
@@ -199,6 +200,9 @@ private fun DetailSheetHost(
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
+            // The phone presentation of every AdaptiveModal, and a composition root of its own —
+            // without this, no test tag inside any detail sheet reaches the accessibility tree.
+            modifier = Modifier.exposeTestTags(),
             content = {
                 DismissKeyboardWhenCovered(covered = LocalModalManager.current.top != null)
 

@@ -13,6 +13,7 @@ minute of emulator time to tell you nothing new.
 .maestro/
 ├── config.yaml            # the workspace: which flows run, where the report goes
 ├── flows/                 # everything here runs as a test, one folder per area
+│   ├── accounts/
 │   └── smoke/
 └── subflows/              # reusable pieces; run only when a flow calls them
     └── launch_fresh.yaml

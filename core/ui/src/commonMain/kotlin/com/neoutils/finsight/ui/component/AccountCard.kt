@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +85,7 @@ fun AccountCard(
 
     Card(
         modifier = modifier
+            .testTag("account_card")
             .then(sizeModifier)
             .then(
                 if (onClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable { onClick() }
@@ -166,6 +168,7 @@ private fun DetailContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),
@@ -255,6 +258,7 @@ private fun CompactContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),

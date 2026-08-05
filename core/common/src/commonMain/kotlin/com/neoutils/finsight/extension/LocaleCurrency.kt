@@ -14,9 +14,14 @@ package com.neoutils.finsight.extension
  * of a locale is a property of its country, so an interface in English on a device set to
  * `en-BR` answers `BRL` — but on Android that country comes from the system language list,
  * where choosing *English (United States)* is `en-US` whatever the user's money is in.
- * The read is right for what it decides here: a **pre-selection**, which the user sees and
- * can change before anything is written. It is not enough to re-denominate a database that
- * already exists, and that is [DeviceRegion]'s job, deliberately separate from this one.
+ *
+ * That is the right read for both of its callers, and for the same reason: neither asks
+ * where the user is. The base currency is a **pre-selection**, which the user sees and can
+ * change before anything is written; and the legacy relabel
+ * (`legacyRelabelCurrency`) re-denominates an existing database precisely to keep the
+ * symbol on screen from changing — so the signal it needs is the one that put the symbol
+ * there, which is this one, and not a stronger statement that could disagree with it
+ * (design D30).
  *
  * The code returned is **raw** — whatever the platform says, including a currency
  * this app does not offer. Reducing it to one the app can denominate an account in is
@@ -25,3 +30,14 @@ package com.neoutils.finsight.extension
  * accepts.
  */
 expect fun localeCurrencyCode(): String?
+
+/**
+ * ISO 4217's code for **no currency**, which is what a platform answers for a locale
+ * that names none — a language chosen without a country, most of it.
+ *
+ * It is translated to `null` here rather than being passed on, because it is not a
+ * currency: it is the absence of one wearing a code. Letting it through would make every
+ * caller re-discover that on its own, and the one that matters re-discovers it by
+ * relabelling a database into it.
+ */
+internal const val NO_CURRENCY = "XXX"

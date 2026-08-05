@@ -31,29 +31,21 @@ class LocaleCurrencyTest {
     }
 
     @Test
-    fun `the country of the locale decides, not its language`() {
-        // An interface in English on a locale whose country is Brazil is still BRL.
-        // What this does *not* prove is that the user is in Brazil: on Android the
-        // country of the locale is the country attached to the chosen language, which
-        // is why the legacy relabelling of design D30 asks `DeviceRegion` instead.
+    fun `the country of the locale decides and not its language`() {
+        // An interface in English on a locale whose country is Brazil is still BRL, and
+        // the reverse is what a user in that locale has been *reading* — which is the
+        // whole of what this answer is used for, in the base currency and in the legacy
+        // relabelling of design D30 alike.
         assertEquals("BRL", withLocale(Locale("en", "BR")) { localeCurrencyCode() })
         assertEquals("USD", withLocale(Locale("pt", "US")) { localeCurrencyCode() })
     }
 
     /**
-     * The desktop's region, which the JVM takes from the operating system's region
-     * setting. It is the same answer as the locale's here — and it is a separate type
-     * because it is *not* the same answer on Android, where only this one may decide a
-     * relabelling.
+     * A locale with no country names no currency, and the callers read that as silence:
+     * the base falls back to its own default, and nothing is relabelled.
      */
     @Test
-    fun `the desktop region names its currency`() {
-        assertEquals("USD", withLocale(Locale("en", "US")) { LocaleDeviceRegion().currencyCode() })
-        assertEquals("BRL", withLocale(Locale("en", "BR")) { LocaleDeviceRegion().currencyCode() })
-    }
-
-    @Test
-    fun `a locale with no country states no region`() {
-        assertNull(withLocale(Locale("en")) { LocaleDeviceRegion().currencyCode() })
+    fun `a locale with no country names no currency`() {
+        assertNull(withLocale(Locale("en")) { localeCurrencyCode() })
     }
 }

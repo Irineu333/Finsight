@@ -22,13 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
  * It is resolved once, from the device's **locale**, on the first run — and a later trip
  * abroad MUST NOT move it, which would silently re-express the whole history.
  *
- * The locale, and deliberately not [com.neoutils.finsight.extension.DeviceRegion]. The
- * two are not interchangeable and the difference is the whole of design D30: on Android
- * the locale's country comes from the language list, so *English (United States)* is
- * `en-US` whatever the user's money is. That is fatal for the legacy relabel, which
- * rewrites stored rows and cannot be undone, and harmless here — the base only decides
- * how a **consolidated** figure reads, appears nowhere for a single-currency user, and is
- * seeded from the same source the app has always formatted money with.
+ * The locale, which is the source the app has always formatted money with — the same one
+ * the legacy relabel of design D30 reads, and for a reason of the same shape: neither
+ * asks where the user is, both ask what the user has been reading. Here the answer only
+ * decides how a **consolidated** figure reads, appears nowhere at all for a
+ * single-currency user, and the user can change it.
  */
 interface IBaseCurrencyRepository {
 

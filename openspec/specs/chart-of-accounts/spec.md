@@ -99,44 +99,48 @@ O sistema MUST NOT prover conta de sistema para representar a ausência de class
 - **WHEN** o plano de contas é inspecionado após a migração
 - **THEN** não existe conta de sistema de "saldo inicial", pois nenhuma operação a referencia
 
-### Requirement: A migração resolve a moeda das contas legadas pela região do dispositivo
+### Requirement: A migração reetiqueta as contas legadas para a moeda que o usuário já lia
 
-Na primeira execução após a atualização, quando a moeda da **região do dispositivo** diferir da moeda padrão legada e pertencer ao conjunto oferecido, o sistema SHALL **reetiquetar** as contas existentes para a moeda daquela região.
+Na primeira execução após a atualização, quando a moeda que o dispositivo nomeia diferir da moeda padrão legada e satisfizer a premissa de duas casas decimais, o sistema SHALL **reetiquetar** as contas existentes para aquela moeda.
 
-Quem decide SHALL ser a região, e MUST NOT ser o locale. Os dois não são intercambiáveis: numa plataforma em que a região é ajuste próprio eles coincidem, mas noutra o país do locale vem da lista de idiomas, e ali não existe idioma sem país — escolher *English (United States)* é `en-US` seja qual for a moeda do usuário. Disparar por locale reetiquetaria, irreversivelmente, todo usuário que apenas **lê** a interface em outro idioma. A região SHALL ser uma afirmação sobre **lugar**, e o silêncio SHALL ser resposta: um dispositivo que não sabe dizer onde está MUST NOT ser reetiquetado, e recair no locale nesse caso restauraria exatamente a leitura de que esta regra existe para desconfiar. O locale permanece decidindo o que ele pode decidir sozinho — a **pré-seleção** de um formulário, que o usuário vê e altera antes de qualquer escrita.
+Quem decide SHALL ser **a mesma leitura que sempre produziu o símbolo na tela** — o locale do dispositivo, que é o que `NumberFormat.getCurrencyInstance()` e `NSLocale.currentLocale` consultavam dentro do formatador. Isso não é uma inferência sobre **onde** o usuário está, e MUST NOT ser substituído por uma: um sinal de lugar — operadora, rede, região do sistema — é um segundo palpite sobre uma pergunta que o primeiro já respondeu, e por isso pode discordar dele. Num aparelho em que a rede diz uma coisa e o locale diz outra, o que foi renderizado sempre foi o símbolo do locale; reetiquetar por qualquer outro sinal é a única forma de **mudar** o que o usuário vê, que é justamente o que esta regra existe para evitar.
 
-As contas existentes antes desta mudança estão denominadas na moeda padrão que o modelo aplicava, e essa denominação **nunca foi fato visível ao usuário**: a formatação sempre usou o locale do dispositivo, de modo que um usuário de região estrangeira sempre leu o símbolo dela sobre um dado que dizia outra coisa. Reetiquetar faz o dado dizer o que aquele usuário sempre leu. Reetiquetar SHALL alterar apenas a denominação: **nenhum valor e nenhum saldo** MUST ser alterado, e a denominação de uma conta e a das suas entries SHALL mudar **junta, na mesma transação**. A invariante de soma zero por moeda SHALL continuar satisfeita, porque a moeda de todas as linhas envolvidas muda junto. Reetiquetar a conta sem reetiquetar as suas entries partiria a história daquela conta em duas moedas, e tornaria a verificação da invariante — que lê apenas as entries — incapaz de ser lida como verdade sobre a conta.
+Segue disso que um usuário que apenas **lê** a interface noutro idioma é reetiquetado, e esse é o resultado correto: numa plataforma sem idioma sem país, escolher *English (United States)* é `en-US`, e esse usuário vem lendo `$` sobre os seus reais desde sempre. Manter a denominação legada é a opção que **muda** a tela dele; reetiquetar é a que não muda. O que nenhum sinal do dispositivo recupera é a **intenção** por trás dos números, e o locale de hoje não relata o de ontem: o falso positivo residual SHALL ser declarado e é estreito — quem trocou o idioma da interface pouco antes de atualizar é reetiquetado para a moeda que passou a ler quando trocou.
 
-A reetiquetagem SHALL ocorrer **uma única vez** e SHALL registrar que ocorreu. O registro SHALL ser a própria versão do esquema, e não um sinalizador próprio: a reetiquetagem acontece dentro da migração que introduz esta mudança, que por construção não roda duas vezes. Uma alteração posterior da região do dispositivo MUST NOT dispará-la novamente.
+O silêncio SHALL ser resposta: um locale para o qual a plataforma não nomeia moeda alguma MUST NOT disparar reetiquetagem, e não há leitura mais fraca em que recair nem moeda de último recurso em que aterrissar.
 
-A moeda-alvo SHALL ser fornecida à migração já resolvida e já validada contra o conjunto oferecido. A camada de persistência MUST NOT conhecer região, locale nem o conjunto de moedas oferecidas — ela recebe um código de moeda, ou a ausência dele, que significa "não reetiquetar".
+As contas existentes antes desta mudança estão denominadas na moeda padrão que o modelo aplicava, e essa denominação **nunca foi fato visível ao usuário**: a formatação sempre usou o locale do dispositivo, de modo que um usuário de locale estrangeiro sempre leu o símbolo dele sobre um dado que dizia outra coisa. Reetiquetar faz o dado dizer o que aquele usuário sempre leu. Reetiquetar SHALL alterar apenas a denominação: **nenhum valor e nenhum saldo** MUST ser alterado, e a denominação de uma conta e a das suas entries SHALL mudar **junta, na mesma transação**. A invariante de soma zero por moeda SHALL continuar satisfeita, porque a moeda de todas as linhas envolvidas muda junto. Reetiquetar a conta sem reetiquetar as suas entries partiria a história daquela conta em duas moedas, e tornaria a verificação da invariante — que lê apenas as entries — incapaz de ser lida como verdade sobre a conta.
+
+A reetiquetagem SHALL ocorrer **uma única vez** e SHALL registrar que ocorreu. O registro SHALL ser a própria versão do esquema, e não um sinalizador próprio: a reetiquetagem acontece dentro da migração que introduz esta mudança, que por construção não roda duas vezes. Uma alteração posterior do locale do dispositivo MUST NOT dispará-la novamente.
+
+A moeda-alvo SHALL ser fornecida à migração já resolvida e já validada contra a premissa. A camada de persistência MUST NOT conhecer locale nem premissa alguma — ela recebe um código de moeda, ou a ausência dele, que significa "não reetiquetar".
 
 Isso MUST NOT ser lido como exceção à imutabilidade da moeda de uma conta: a reetiquetagem é migração, e acontece antes de aquela denominação ser observável. Após ela, a imutabilidade vale sem exceção — pelo mesmo princípio que o sistema já aplica a dado migrado, que obedece às mesmas regras que o novo mesmo quando a migração produziu o que o runtime não produz.
 
-Consequência aceita: um usuário cuja moeda real seja a legada mas cujo dispositivo esteja em região estrangeira terá as contas reetiquetadas sem aviso, e o sistema MUST NOT oferecer caminho para desfazê-lo.
+Consequência aceita: um usuário cuja moeda real seja a legada mas que vinha lendo o símbolo de outra terá as contas reetiquetadas sem aviso, e o sistema MUST NOT oferecer caminho para desfazê-lo. É a mesma tela que ele já via, com o dado passando a concordar com ela.
 
-#### Scenario: Usuário de região estrangeira tem as contas reetiquetadas
-- **WHEN** um banco existente inteiramente na moeda legada é aberto pela primeira vez após a atualização, num dispositivo cuja região indica dólar
-- **THEN** as contas passam a ser denominadas em dólar, nenhum valor muda, e as figuras deixam de exibir o símbolo da moeda legada
+#### Scenario: Usuário que lia outro símbolo tem as contas reetiquetadas
+- **WHEN** um banco existente inteiramente na moeda legada é aberto pela primeira vez após a atualização, num dispositivo cujo locale nomeia dólar
+- **THEN** as contas passam a ser denominadas em dólar, nenhum valor muda, e as figuras seguem exibindo o mesmo símbolo que sempre exibiram
 
-#### Scenario: Usuário da região de origem não é tocado
-- **WHEN** o mesmo banco é aberto num dispositivo cuja região indica a moeda legada
+#### Scenario: Usuário que já lia a moeda legada não é tocado
+- **WHEN** o mesmo banco é aberto num dispositivo cujo locale nomeia a moeda legada
 - **THEN** nenhuma reetiquetagem ocorre
 
-#### Scenario: Idioma não decide
-- **WHEN** o dispositivo tem a interface em outro idioma mas a região da moeda legada
-- **THEN** nenhuma reetiquetagem ocorre, porque quem decide é a região e não o idioma
+#### Scenario: Ler a interface noutro idioma reetiqueta, e a tela não muda
+- **WHEN** o dispositivo tem a interface noutro idioma, e o locale correspondente nomeia outra moeda
+- **THEN** a reetiquetagem ocorre para aquela moeda, porque é a que o usuário vinha lendo sobre todos os seus valores
 
-#### Scenario: Dispositivo que não sabe dizer onde está não dispara
-- **WHEN** o dispositivo não consegue afirmar a sua região
-- **THEN** nenhuma reetiquetagem ocorre, e o locale MUST NOT ser usado como substituto
+#### Scenario: Dispositivo que não nomeia moeda não dispara
+- **WHEN** a plataforma não nomeia moeda alguma para o locale do dispositivo
+- **THEN** nenhuma reetiquetagem ocorre, e nenhuma outra leitura MUST ser usada como substituto
 
-#### Scenario: Moeda fora do conjunto oferecido não dispara
-- **WHEN** a região do dispositivo indica uma moeda fora do conjunto oferecido
+#### Scenario: Moeda fora da premissa de duas casas não dispara
+- **WHEN** o locale do dispositivo nomeia uma moeda de zero ou três casas decimais
 - **THEN** nenhuma reetiquetagem ocorre e as contas permanecem na moeda legada
 
 #### Scenario: Reetiquetagem não se repete
-- **WHEN** o usuário troca a região do dispositivo depois de a reetiquetagem já ter ocorrido
+- **WHEN** o usuário troca o locale do dispositivo depois de a reetiquetagem já ter ocorrido
 - **THEN** nada é reetiquetado, e a moeda das contas permanece a que ficou
 
 #### Scenario: Reetiquetar preserva o balanceamento

@@ -18,13 +18,11 @@ import kotlinx.coroutines.flow.StateFlow
  * moving it would silently re-express every consolidated figure in the history
  * (design D28).
  *
- * **The locale, not `DeviceRegion`** — the two say different things and only one of them
- * belongs here (design D30). `DeviceRegion` exists for the legacy relabel, which rewrites
- * stored rows irreversibly and therefore may not be triggered by which language someone
- * reads; on Android the locale's country rides along with the language list, so it would
- * be. This is the other case: seeding a display preference from the very source the app
- * has always formatted money with, which for a single-currency user never reaches a
- * screen at all.
+ * **The locale, which is the source the app has always formatted money with** — the same
+ * read the legacy relabel of design D30 makes, and deliberately so: both want what the
+ * user has been *reading*, not where the user is. The difference between them is what
+ * they do with it — this seeds a display preference the user can change, and which for a
+ * single-currency user never reaches a screen at all.
  *
  * **The write path is two lines, and that is the whole switch** (design D5). Every rate
  * on file names both of its ends, so none of them changes meaning when this does; no

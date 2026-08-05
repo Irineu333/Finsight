@@ -23,9 +23,9 @@ import org.koin.dsl.module
  * accounts by the accounts feature.
  */
 val modelModule = module {
-    // The one-shot relabelling of design D30, resolved where the device region and the
-    // catalog are both visible and asked for by `core/database`, which may name neither.
-    single<LegacyRelabel> { LegacyRelabel { legacyRelabelCurrency(region = get()) } }
+    // The one-shot relabelling of design D30, resolved where the device's locale and the
+    // premise are both visible and asked for by `core/database`, which may read neither.
+    single<LegacyRelabel> { LegacyRelabel { legacyRelabelCurrency() } }
 
     factory {
         ConsolidateMoneyUseCase(

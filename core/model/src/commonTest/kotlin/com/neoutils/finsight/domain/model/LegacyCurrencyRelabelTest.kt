@@ -1,6 +1,5 @@
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.extension.DeviceRegion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -9,52 +8,57 @@ import kotlin.test.assertNull
  * Which devices the legacy relabelling fires on — and, more to the point, which it
  * does not.
  *
- * The resolution is where the false positive of design D30 is narrowed, so it is where
- * the narrowing has to be proved: only a statement about **location** fires it, a device
- * that cannot make one is left alone, and the curated catalog bars a currency the app
- * does not offer instead of coercing it into the currency of last resort.
+ * The resolution is where the false positive of design D30 lives, so it is where the
+ * rule has to be proved: what the device names is adopted, because it is what the user
+ * has been reading; a device that names nothing is left alone; and the two-decimal
+ * premise bars a currency the app cannot denominate an account in, instead of coercing
+ * it into the currency of last resort.
  *
- * The region arrives as a value here rather than being read from a locale, which is the
- * point of the change this test was rewritten for: a locale's country is the country of
- * the chosen *language*, and on Android that is the only country there is.
+ * The code arrives as a value here rather than being read from the platform. The reading
+ * is a single call to `localeCurrencyCode()` — everything that can go wrong is the rule.
  */
 class LegacyCurrencyRelabelTest {
 
-    private fun region(code: String?) = DeviceRegion { code }
-
     @Test
-    fun `a foreign region relabels`() {
-        assertEquals("USD", legacyRelabelCurrency(region("USD")))
-        assertEquals("EUR", legacyRelabelCurrency(region("EUR")))
+    fun `a foreign denomination relabels`() {
+        assertEquals("USD", legacyRelabelCurrency("USD"))
+        assertEquals("EUR", legacyRelabelCurrency("EUR"))
     }
 
     @Test
-    fun `the region of origin is not touched`() {
-        assertNull(legacyRelabelCurrency(region(LEGACY_DENOMINATION)))
+    fun `the legacy denomination is not touched`() {
+        assertNull(legacyRelabelCurrency(LEGACY_DENOMINATION))
     }
 
     /**
-     * A device that cannot say where it is says nothing, and nothing is what happens.
+     * The interface language is not excluded, and that is the decision.
      *
-     * This is the whole of the narrowing: on Android the only country available without
-     * a location signal is the one attached to the interface language, so a Brazilian
-     * reading English would have had every row they own re-denominated in dollars,
-     * irreversibly, for reading English. Silence has to leave the data alone, and it
-     * must not fall back to a weaker read — that would restore exactly the answer this
-     * refuses to trust.
+     * On Android there is no language without a country, so *English (United States)* is
+     * `en-US` — and that user has been reading `$` over their reais for as long as they
+     * have had the app, because the old formatter read the same locale. Relabelling is
+     * what leaves their screen alone; keeping BRL is what would change it.
      */
     @Test
-    fun `a device that cannot state a region does not fire`() {
-        assertNull(legacyRelabelCurrency(region(null)))
+    fun `what the device names is adopted whatever it names`() {
+        assertEquals("USD", legacyRelabelCurrency("usd"))
     }
 
     /**
-     * A currency the app does not offer falls into the silent case of leaving the
-     * denomination alone — **not** into [CurrencyCatalog.FALLBACK_CURRENCY], which
-     * would relabel a Japanese device's accounts to dollars.
+     * A device that names no currency says nothing, and nothing is what happens: there is
+     * no weaker read to fall back to and no currency of last resort to land on.
      */
     @Test
-    fun `a currency outside the offered set does not fire`() {
-        assertNull(legacyRelabelCurrency(region("JPY")))
+    fun `a device that names no currency does not fire`() {
+        assertNull(legacyRelabelCurrency(null))
+    }
+
+    /**
+     * A currency outside the base-100 premise falls into the silent case of leaving the
+     * denomination alone — **not** into [FALLBACK_CURRENCY], which would relabel a
+     * Japanese device's accounts to dollars.
+     */
+    @Test
+    fun `a currency outside the two-decimal premise does not fire`() {
+        assertNull(legacyRelabelCurrency("JPY"))
     }
 }

@@ -1,0 +1,495 @@
+appId: com.neoutils.finsight
+name: recurring_lifecycle
+tags:
+  - recurring
+  - ledger
+env:
+  INCOME_TITLE: "E2E Salary"
+  INCOME_DIGITS: "94000"
+  CONFIRMED_DIGITS: "86500"
+  EXPENSE_TITLE: "E2E Rent"
+  EXPENSE_DIGITS: "7700"
+  DAY: "1"
+  # A month turns for certain in 31 days, whatever day the suite runs on.
+  JUMP_DAYS: 31
+---
+# Two recurring transactions, from the day they are created to the month after: the app asks for
+# them, one is paid — for a corrected amount — the other is skipped, one is archived, the month
+# turns, and only the one still in circulation comes back to ask again.
+#
+# Both are due on day 1, which is what makes the flow indifferent to the date it runs on: a
+# recurring is pending once its day has arrived and no occurrence exists for the month, so day 1 is
+# due on every day of every month. Day 31 would be pending on one day in thirty.
+#
+# The figures: $940.00 is what the *model* asks for, $865.00 is what this cycle was actually paid,
+# and $77.00 is the one that is skipped and comes back. The first two differing is the point — the
+# confirmation may correct the instalment, and correcting it must not rewrite the model.
+#
+# Everything that writes to the ledger happens before the clock jump, deliberately: confirming and
+# skipping read the system clock rather than the injected one, so under an offset they would file
+# the occurrence in the real month and leave the recurring pending in the shifted one. That is an
+# app bug, worth its own fix; this flow stays on the near side of it rather than papering over it.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- The app has nothing recurring to ask about --------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: recurring
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
+- assertVisible:
+    id: "recurring_add"
+
+# --- I tell it about my salary -------------------------------------------------------------------
+- tapOn:
+    id: "recurring_add"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_form_title"
+    timeout: 15000
+- tapOn:
+    id: "recurring_form_type_income"
+- waitForAnimationToEnd
+- tapOn:
+    id: "recurring_form_title"
+- waitForAnimationToEnd
+- inputText: ${INCOME_TITLE}
+- assertVisible:
+    id: "recurring_form_title"
+    text: ${INCOME_TITLE}
+- hideKeyboard
+- tapOn:
+    id: "recurring_form_amount"
+- waitForAnimationToEnd
+- inputText: ${INCOME_DIGITS}
+- assertVisible:
+    id: "recurring_form_amount"
+    text: "[$]940[.,]00"
+- hideKeyboard
+- tapOn:
+    id: "recurring_form_day"
+- waitForAnimationToEnd
+- inputText: ${DAY}
+- hideKeyboard
+# The account is never selected: the form opens on the default one, which is the only one there is.
+- scrollUntilVisible:
+    element:
+      id: "recurring_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "recurring_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "recurring_form_title"
+    timeout: 15000
+
+# --- ...and about my rent ------------------------------------------------------------------------
+# Expense is the type the form opens on, so this one only says what is different about it.
+- tapOn:
+    id: "recurring_add"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_form_title"
+    timeout: 15000
+- tapOn:
+    id: "recurring_form_title"
+- waitForAnimationToEnd
+- inputText: ${EXPENSE_TITLE}
+- assertVisible:
+    id: "recurring_form_title"
+    text: ${EXPENSE_TITLE}
+- hideKeyboard
+- tapOn:
+    id: "recurring_form_amount"
+- waitForAnimationToEnd
+- inputText: ${EXPENSE_DIGITS}
+- assertVisible:
+    id: "recurring_form_amount"
+    text: "[$]77[.,]00"
+- hideKeyboard
+- tapOn:
+    id: "recurring_form_day"
+- waitForAnimationToEnd
+- inputText: ${DAY}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "recurring_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "recurring_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "recurring_form_title"
+    timeout: 15000
+
+- assertVisible: ${INCOME_TITLE}
+- assertVisible: ${EXPENSE_TITLE}
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+
+# --- A recurring is not money --------------------------------------------------------------------
+# Two things are due and the balance is still zero: what the app knows it will ask for has not been
+# asked for yet. The pending row appears to say exactly that — the day-zero story asserts its
+# absence, and this is the other half.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "dashboard_component_balance_stats_pending"
+- assertVisible:
+    id: "dashboard_pending_income_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "dashboard_pending_expense_amount"
+    text: "[$]77[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_pending_recurring"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${INCOME_TITLE}
+- assertVisible: ${EXPENSE_TITLE}
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]77[.,]00"
+
+# --- I am paid, and for less than the model says -------------------------------------------------
+# The sheet opens on the recurring's own day, not on today, and holds the model's figure ready to be
+# corrected. Erased before retyping: the money field appends digits, so typing over $940.00 would
+# read as $94,086,500.
+- tapOn: ${INCOME_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "confirm_recurring_amount"
+    timeout: 15000
+- assertVisible:
+    id: "confirm_recurring_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "confirm_recurring_date"
+    text: "01[/][0-9]{2}[/][0-9]{4}"
+- assertVisible:
+    id: "confirm_recurring_skip"
+- tapOn:
+    id: "confirm_recurring_amount"
+- waitForAnimationToEnd
+- eraseText: 20
+- inputText: ${CONFIRMED_DIGITS}
+- assertVisible:
+    id: "confirm_recurring_amount"
+    text: "[$]865[.,]00"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "confirm_recurring_confirm"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "confirm_recurring_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "confirm_recurring_amount"
+    timeout: 15000
+
+# What was written is the corrected figure, not the model's — and the app stops asking for this one.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]865[.,]00"
+- assertVisible:
+    id: "dashboard_income_amount"
+    text: "[$]865[.,]00"
+- assertVisible:
+    id: "dashboard_pending_income_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "dashboard_pending_expense_amount"
+    text: "[$]77[.,]00"
+
+# --- I skip the rent -----------------------------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_pending_recurring"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+# The absence is asserted on the figure rather than on the title: the salary's *transaction* is on
+# this dashboard too, in Recents, so a bare text assertion could not tell the two apart.
+- assertNotVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]77[.,]00"
+- tapOn: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "confirm_recurring_skip"
+    timeout: 15000
+- tapOn:
+    id: "confirm_recurring_skip"
+- extendedWaitUntil:
+    notVisible:
+      id: "confirm_recurring_skip"
+    timeout: 15000
+
+# Nothing is owed for this month any more, so both pending components go away — and skipping moved
+# no money: the balance is still what the salary put there, and no expense was recorded.
+# The premise for the two absences is the pair of components that surround them: the cards pager
+# (position 5) and recents (position 9) were laid out, so positions 2 and 8 were too.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_credit_cards_pager"
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_pending"
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]865[.,]00"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]0[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_recents"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertNotVisible:
+    id: "dashboard_component_pending_recurring"
+
+# ...and the ledger holds one transaction, not two.
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible: ${INCOME_TITLE}
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]865[.,]00"
+- assertNotVisible: ${EXPENSE_TITLE}
+
+# --- What each of them may now become ------------------------------------------------------------
+# The one that produced a transaction can only be archived; the one that was merely skipped can
+# still be deleted. Both sides of `retireAction`, on two recurrings this flow already has.
+- tapOn:
+    id: "nav_item_dashboard"
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: recurring
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
+- tapOn: ${INCOME_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_status"
+    timeout: 15000
+- assertVisible:
+    id: "view_recurring_status"
+    text: "Active"
+# The model kept its own figure: the confirmation corrected one cycle, not the standing order.
+- assertVisible:
+    id: "view_recurring_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "view_recurring_day"
+    text: "Day 1"
+- assertVisible:
+    id: "view_recurring_retire_label"
+    text: "Archive"
+- assertNotVisible:
+    id: "view_recurring_unarchive"
+- back
+
+- tapOn: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_retire_label"
+    timeout: 15000
+- assertVisible:
+    id: "view_recurring_retire_label"
+    text: "Delete"
+- back
+
+# --- I archive the salary ------------------------------------------------------------------------
+# The detail sheet stays open through it, and states the new answer itself: archived, and offering
+# to undo rather than to retire again.
+- tapOn: ${INCOME_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_retire"
+    timeout: 15000
+- tapOn:
+    id: "view_recurring_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_recurring_confirm"
+    timeout: 15000
+- tapOn:
+    id: "archive_recurring_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_unarchive"
+    timeout: 15000
+- assertVisible:
+    id: "view_recurring_status"
+    text: "Archived"
+- assertNotVisible:
+    id: "view_recurring_retire"
+- back
+
+# It left the active list without leaving the app — the filter is where it went, not oblivion.
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
+- assertVisible: ${EXPENSE_TITLE}
+- assertNotVisible: ${INCOME_TITLE}
+- tapOn:
+    id: "recurring_filter"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_filter_option_archived"
+    timeout: 15000
+- tapOn:
+    id: "recurring_filter_option_archived"
+- extendedWaitUntil:
+    visible: ${INCOME_TITLE}
+    timeout: 15000
+
+# --- The month turns -----------------------------------------------------------------------------
+# The clock moves; the database does not. What was skipped is due again — a skip settles one cycle,
+# not the standing order — and what was archived stays quiet.
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: ${JUMP_DAYS}
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+# The money is not the month's: it stays. The month's income is, and it is back to nothing.
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]865[.,]00"
+- assertVisible:
+    id: "dashboard_income_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "dashboard_pending_expense_amount"
+    text: "[$]77[.,]00"
+- assertVisible:
+    id: "dashboard_pending_income_amount"
+    text: "[$]0[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_pending_recurring"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${EXPENSE_TITLE}
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]77[.,]00"
+- assertNotVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]940[.,]00"
+
+# --- I put the salary back in circulation ---------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: recurring
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
+- tapOn:
+    id: "recurring_filter"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_filter_option_archived"
+    timeout: 15000
+- tapOn:
+    id: "recurring_filter_option_archived"
+- extendedWaitUntil:
+    visible: ${INCOME_TITLE}
+    timeout: 15000
+- tapOn: ${INCOME_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_unarchive"
+    timeout: 15000
+- tapOn:
+    id: "view_recurring_unarchive"
+- extendedWaitUntil:
+    visible:
+      id: "unarchive_recurring_confirm"
+    timeout: 15000
+- tapOn:
+    id: "unarchive_recurring_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "view_recurring_retire_label"
+    timeout: 15000
+- assertVisible:
+    id: "view_recurring_status"
+    text: "Active"
+- back
+
+# And it asks again — once, for this month. Reactivating puts a recurring back in circulation; it
+# does not bill for the months it spent archived.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_pending_recurring"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]940[.,]00"
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]77[.,]00"

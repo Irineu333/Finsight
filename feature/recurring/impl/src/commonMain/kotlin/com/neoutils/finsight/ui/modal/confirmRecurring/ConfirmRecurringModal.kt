@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -187,7 +188,9 @@ class ConfirmRecurringModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("confirm_recurring_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -220,7 +223,9 @@ class ConfirmRecurringModal(
                 },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("confirm_recurring_date"),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -231,7 +236,9 @@ class ConfirmRecurringModal(
             ) {
                 OutlinedButton(
                     onClick = { viewModel.onAction(ConfirmRecurringAction.Skip) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("confirm_recurring_skip"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(
@@ -251,7 +258,9 @@ class ConfirmRecurringModal(
                             } else {
                                 uiState.selectedAccount != null
                             },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("confirm_recurring_confirm"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(

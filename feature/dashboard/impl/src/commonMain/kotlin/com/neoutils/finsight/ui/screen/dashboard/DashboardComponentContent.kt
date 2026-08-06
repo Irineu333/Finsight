@@ -481,12 +481,14 @@ private fun DashboardPendingBalanceSection(
             balance = component.pendingIncome,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingIncome,
+            amountTestTag = "dashboard_pending_income_amount",
         )
 
         BalanceCard(
             balance = component.pendingExpense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingExpense,
+            amountTestTag = "dashboard_pending_expense_amount",
         )
     }
 }
@@ -844,6 +846,7 @@ private fun PendingRecurringCard(
 
             Text(
                 text = formatter.format(recurring.amount),
+                modifier = Modifier.testTag("dashboard_pending_recurring_amount"),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = typeColor,

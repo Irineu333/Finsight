@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -146,7 +147,9 @@ class RecurringFormModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("recurring_form_title"),
             )
 
             AnimatedVisibility(type.isExpense) {
@@ -213,7 +216,9 @@ class RecurringFormModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("recurring_form_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -228,7 +233,9 @@ class RecurringFormModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("recurring_form_day"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -236,7 +243,9 @@ class RecurringFormModal(
             Button(
                 onClick = { viewModel.onAction(RecurringFormAction.Submit(form)) },
                 enabled = form.isValid(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("recurring_form_save"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(
@@ -258,7 +267,9 @@ class RecurringFormModal(
     ) {
         Button(
             onClick = { onTypeSelected(TransactionType.EXPENSE) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("recurring_form_type_expense"),
             colors = when (selectedType) {
                 TransactionType.EXPENSE -> ButtonDefaults.buttonColors(
                     containerColor = Expense,
@@ -281,7 +292,9 @@ class RecurringFormModal(
 
         Button(
             onClick = { onTypeSelected(TransactionType.INCOME) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("recurring_form_type_income"),
             colors = when (selectedType) {
                 TransactionType.INCOME -> ButtonDefaults.buttonColors(
                     containerColor = Income,

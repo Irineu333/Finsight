@@ -296,6 +296,49 @@ env:
     id: "transaction_card_title"
     text: "${SPEND_TITLE} . 2/3"
 
+# --- And a month on, the second instalment is the one on the list --------------------------------
+# The other half of the claim above. "Not in this month" alone would also hold if the instalment had
+# been written nowhere at all, which is exactly the bug it is supposed to catch.
+#
+# Shifted by a calendar month rather than by thirty-one days: +31 from the 30th of a long month
+# lands two months on, and the flow would be red on a handful of days a year for a reason nothing on
+# screen names. The day offset is carried along, because the whole story lives forty-five days ahead.
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: 45
+      clockOffsetMonths: 1
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 2/3"
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]320[.,]00"
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 1/3"
+
+# Back to where the rest of the story stands, so the undo below is read on the month that holds
+# instalment one.
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: 45
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+
 # --- I undo the purchase -------------------------------------------------------------------------
 # Created as one thing and undone as one thing: three transactions, across three invoices, removed
 # by a single command.

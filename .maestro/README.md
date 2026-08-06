@@ -262,10 +262,14 @@ precisão.
    que ela calcula, e um fluxo que já passa pelos dois lados ganha a asserção quase de graça.
 8. **Uma jornada, um assunto.** Se o nome precisa de dois "e", são dois fluxos — dentro do limite do
    que `launch_fresh` permite (§3).
-9. **Use o relógio móvel para alcançar o que a data esconde.** `clockOffsetDays` (só em debug) é o
-   que permite fechar uma fatura ou virar o mês. Toda tela lê o `Clock` injetado; qualquer código que
-   leia `Clock.System` direto discorda do resto do app no instante em que esse argumento é passado —
-   isso é bug, e se conserta, não se contorna.
+9. **Use o relógio móvel para alcançar o que a data esconde.** `clockOffsetDays` e
+   `clockOffsetMonths` (só em debug, e somáveis) são o que permite fechar uma fatura ou virar o mês.
+   Toda tela lê o `Clock` injetado; qualquer código que leia `Clock.System` direto discorda do resto
+   do app no instante em que esse argumento é passado — isso é bug, e se conserta, não se contorna.
+
+   Para virar o mês, use `clockOffsetMonths`, não trinta e um dias. `+31` a partir do dia 30 de um
+   mês de 31 dias cai **dois** meses adiante, e o fluxo fica vermelho num punhado de dias por ano
+   por um motivo que nenhuma mensagem de falha nomeia — o que o §6 chama de bug, não de azar.
 10. **Reuse o meio, mantenha inline o assunto.** Subflow para preparo; asserção compartilhada
     esconde o que o fluxo afirma e torna a falha ilegível.
 11. **Marque só o que um fluxo precisa tocar.** Uma tag sem fluxo por trás é peso morto que ainda

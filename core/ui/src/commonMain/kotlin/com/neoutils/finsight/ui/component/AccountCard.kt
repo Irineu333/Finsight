@@ -160,6 +160,7 @@ private fun DetailContent(
                     color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("account_name"),
                 )
             }
 
@@ -284,6 +285,7 @@ private fun CompactContent(
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("account_name"),
             )
 
             if (variant is AccountCardVariant.Dashboard) {

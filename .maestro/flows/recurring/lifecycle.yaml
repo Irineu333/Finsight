@@ -294,11 +294,19 @@ env:
     visible:
       id: "screen_transactions"
     timeout: 15000
-- assertVisible: ${INCOME_TITLE}
+# Read on the nodes that render a transaction, not as loose text: the list composed (there is a
+# card), it holds the confirmed income, and the skipped expense produced nothing to hold.
+- assertVisible:
+    id: "transaction_card"
+- assertVisible:
+    id: "transaction_card_title"
+    text: ${INCOME_TITLE}
 - assertVisible:
     id: "transaction_card_amount"
     text: "[$]865[.,]00"
-- assertNotVisible: ${EXPENSE_TITLE}
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
 
 # --- What each of them may now become ------------------------------------------------------------
 # The one that produced a transaction can only be archived; the one that was merely skipped can
@@ -377,8 +385,14 @@ env:
     visible:
       id: "screen_recurring"
     timeout: 15000
-- assertVisible: ${EXPENSE_TITLE}
-- assertNotVisible: ${INCOME_TITLE}
+# By the figure each one carries, on the node that renders it: $77.00 is still listed, $940.00 is
+# not. A bare title match would also pass on a screen that never composed a card at all.
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
 - tapOn:
     id: "recurring_filter"
 - extendedWaitUntil:

@@ -43,12 +43,20 @@ env:
 
 # ...and I can reach it. The accounts screen is a pager: one account at a time, swiped horizontally,
 # and the summary figures on screen always belong to the one in view.
-- assertVisible: "Wallet"
+# Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
+# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
+# after it lets the settle finish before anything is read off the page.
+- extendedWaitUntil:
+    visible:
+      id: "account_name"
+      text: "Wallet"
+    timeout: 15000
 - swipe:
     from:
       id: "account_card"
     direction: LEFT
     duration: 400
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -141,11 +149,20 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
+# Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
+# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
+# after it lets the settle finish before anything is read off the page.
+- extendedWaitUntil:
+    visible:
+      id: "account_name"
+      text: "Wallet"
+    timeout: 15000
 - swipe:
     from:
       id: "account_card"
     direction: LEFT
     duration: 400
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -276,11 +293,20 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
+# Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
+# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
+# after it lets the settle finish before anything is read off the page.
+- extendedWaitUntil:
+    visible:
+      id: "account_name"
+      text: "Wallet"
+    timeout: 15000
 - swipe:
     from:
       id: "account_card"
     direction: LEFT
     duration: 400
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -389,7 +415,14 @@ env:
 - extendedWaitUntil:
     visible: "Wallet"
     timeout: 15000
-- assertNotVisible: ${NEW_ACCOUNT}
+# Read on the node that renders an account's name, not as loose text: a bare `assertNotVisible` of
+# the name would also pass on a screen that failed to compose at all.
+- assertVisible:
+    id: "account_name"
+    text: "Wallet"
+- assertNotVisible:
+    id: "account_name"
+    text: ${NEW_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]125[.,]50"

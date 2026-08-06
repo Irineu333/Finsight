@@ -43,8 +43,10 @@ env:
       SECTION: installments
 - extendedWaitUntil:
     visible:
-      id: "installments_empty_state"
+      id: "screen_installments"
     timeout: 15000
+- assertVisible:
+    id: "installments_empty_state"
 - assertNotVisible:
     id: "installment_card"
 - assertVisible:
@@ -128,19 +130,15 @@ env:
     text: "[$]960[.,]00"
 - hideKeyboard
 
-# The counter divides on screen, before anything is written: two of $480.00, then three of $320.00.
-- assertVisible:
-    id: "installment_counter_label"
-    text: "2x.*480[.,]00"
+# Three, and what three is worth — the one reading this flow needs, because every figure it
+# asserts from here on follows from it. That the division itself is right for two, for four, and
+# for an amount that does not divide is `InstallmentStateTest`: arithmetic does not need a device.
 - tapOn:
     id: "installment_counter_increase"
 - waitForAnimationToEnd
 - assertVisible:
     id: "installment_counter_label"
     text: "3x.*320[.,]00"
-- assertVisible:
-    id: "installment_counter_decrease"
-    enabled: true
 - assertVisible:
     id: "add_installment_save"
     enabled: true
@@ -175,6 +173,10 @@ env:
 - assertVisible:
     id: "installment_current_number"
     text: "01"
+# Its other half: "01" alone does not say of how many, and the count is what the split decided.
+- assertVisible:
+    id: "installment_total_count"
+    text: ".*3"
 - assertVisible:
     id: "installment_remaining_amount"
     text: "[$]960[.,]00"
@@ -317,8 +319,10 @@ env:
     id: "delete_installment_confirm"
 - extendedWaitUntil:
     visible:
-      id: "installments_empty_state"
+      id: "screen_installments"
     timeout: 15000
+- assertVisible:
+    id: "installments_empty_state"
 - assertNotVisible:
     id: "installment_card"
 

@@ -43,6 +43,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -95,6 +96,7 @@ private fun CategoriesContent(
     val detailController = LocalDetailPaneController.current
 
     Scaffold(
+        modifier = Modifier.testTag("screen_categories"),
         topBar = {
             TopAppBar(
                 title = {
@@ -134,6 +136,8 @@ private fun CategoriesContent(
                     onClick = {
                         modalManager.show(CategoryFormModal(initialType = uiState.filter.fabInitialType))
                     },
+                    // Same command as the empty state's button below, hence the same id.
+                    modifier = Modifier.testTag("categories_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -336,7 +340,9 @@ private fun EmptyDatabaseState(
 
             OutlinedButton(
                 onClick = onCreateManualCategory,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("categories_add"),
             ) {
                 Text(text = stringResource(Res.string.categories_create_manual))
             }

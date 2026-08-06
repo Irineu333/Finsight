@@ -212,7 +212,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 },
                 onCategorySelected = { selectedCategory = it },
                 onEmpty = { manager.show(categoriesEntry.categoryFormModal()) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add_transaction_category")
             )
 
             Spacer(modifier = Modifier.height(8.dp))

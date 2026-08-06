@@ -1,0 +1,380 @@
+appId: com.neoutils.finsight
+name: budgets_lifecycle
+tags:
+  - budgets
+  - ledger
+env:
+  CATEGORY: "E2E Groceries"
+  BUDGET: "E2E Groceries Cap"
+  INCOME_TITLE: "E2E Payday"
+  INCOME_DIGITS: "70000"
+  LIMIT_DIGITS: "24000"
+  SPEND1_TITLE: "E2E Market"
+  SPEND1_DIGITS: "8730"
+  SPEND2_TITLE: "E2E Market Refill"
+  SPEND2_DIGITS: "17645"
+---
+# A budget from nothing to exceeded, and back to nothing. It is one story because `launch_fresh`
+# wipes the database: without the category there is no budget, without the budget there is nothing
+# to measure, and without the expense there is no progress to read.
+#
+# It is also the only flow in the suite that categorises a transaction. That single act is what
+# makes two dashboard components — spending by category and budgets — go from absent to present,
+# and the day-zero story asserts exactly those absences. This is the other half of that claim.
+#
+# The figures: $700.00 earned, a $240.00 limit, $87.30 spent and then $176.45 more. They leave
+# $152.70 remaining and, once past the limit, $23.75 over it — six figures, no two of which share
+# their cents, so no assertion can pass by reading a neighbour.
+#
+# A fresh install has a default account but *no categories*: `CreateDefaultCategoriesUseCase` runs
+# from the categories screen's own offer, never at boot. So the category is this flow's to create —
+# manually, one of them, because a name it typed itself is a selector that survives translation.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# The premise, before anything scrolls: the first component (position 0) and the last (position 10)
+# are on screen together, so everything between them was laid out and a missing one is genuinely
+# missing rather than merely uncomposed.
+- assertVisible:
+    id: "dashboard_component_total_balance"
+- assertVisible:
+    id: "dashboard_component_quick_actions"
+- assertNotVisible:
+    id: "dashboard_component_budgets"
+- assertNotVisible:
+    id: "dashboard_component_spending_by_category"
+
+# --- I create a category -------------------------------------------------------------------------
+# The screen stands in its empty state, whose two offers are "seed the defaults" and "create one".
+# The second is taken: fourteen categories named by resources would be fourteen selectors this flow
+# does not own.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: categories
+- extendedWaitUntil:
+    visible:
+      id: "screen_categories"
+    timeout: 15000
+- assertVisible:
+    id: "categories_add"
+
+- tapOn:
+    id: "categories_add"
+- extendedWaitUntil:
+    visible:
+      id: "category_form_name"
+    timeout: 15000
+- tapOn:
+    id: "category_form_name"
+- waitForAnimationToEnd
+- inputText: ${CATEGORY}
+- assertVisible:
+    id: "category_form_name"
+    text: ${CATEGORY}
+- hideKeyboard
+# The icon and the type are left alone: an expense category with the default icon is a valid one,
+# and the icon picker is a modal of its own with no claim in this story.
+# Save waits to be offered — the name is validated on a debounce, so tapping it the instant it is
+# rendered would tap a disabled button and fail two screens later, as a form that will not submit.
+- extendedWaitUntil:
+    visible:
+      id: "category_form_save"
+      enabled: true
+    timeout: 15000
+- tapOn:
+    id: "category_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "category_form_name"
+    timeout: 15000
+- assertVisible: ${CATEGORY}
+
+# --- I am paid, so there is money to spend -------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+
+# --- I set a budget on that category -------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: budgets
+- extendedWaitUntil:
+    visible:
+      id: "screen_budgets"
+    timeout: 15000
+- assertVisible:
+    id: "budgets_add"
+
+- tapOn:
+    id: "budgets_add"
+- extendedWaitUntil:
+    visible:
+      id: "budget_form_title"
+    timeout: 15000
+- tapOn:
+    id: "budget_form_title"
+- waitForAnimationToEnd
+- inputText: ${BUDGET}
+- assertVisible:
+    id: "budget_form_title"
+    text: ${BUDGET}
+- hideKeyboard
+
+# This selector takes more than one category, so it does not close when one is chosen — it waits to
+# be told. Left open, it would cover the fields below and take their taps.
+- tapOn:
+    id: "budget_form_categories"
+- extendedWaitUntil:
+    visible: ${CATEGORY}
+    timeout: 10000
+- tapOn: ${CATEGORY}
+- waitForAnimationToEnd
+- tapOn:
+    id: "budget_form_categories"
+- waitForAnimationToEnd
+- assertVisible: ${CATEGORY}
+
+- tapOn:
+    id: "budget_form_limit"
+- waitForAnimationToEnd
+- inputText: ${LIMIT_DIGITS}
+- assertVisible:
+    id: "budget_form_limit"
+    text: "[$]240[.,]00"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "budget_form_save"
+    direction: DOWN
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "budget_form_save"
+      enabled: true
+    timeout: 15000
+- tapOn:
+    id: "budget_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "budget_form_title"
+    timeout: 15000
+
+# --- Nothing spent yet ---------------------------------------------------------------------------
+- extendedWaitUntil:
+    visible:
+      id: "budget_card"
+    timeout: 15000
+- assertVisible: ${BUDGET}
+- assertVisible:
+    id: "budget_limit_amount"
+    text: "[$]240[.,]00"
+- assertVisible:
+    id: "budget_spent_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "budget_remaining_label"
+    text: "Remaining"
+- assertVisible:
+    id: "budget_remaining_amount"
+    text: "[$]240[.,]00"
+
+# ...and the dashboard has a budget to show, where day zero had none.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_budgets"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${BUDGET}
+- assertVisible:
+    id: "dashboard_budget_amount"
+    text: "[$]0[.,]00 / [$]240[.,]00"
+
+# --- I spend $87.30 on it ------------------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/record_categorized_expense.yaml
+    env:
+      TITLE: ${SPEND1_TITLE}
+      AMOUNT: ${SPEND1_DIGITS}
+      CATEGORY: ${CATEGORY}
+
+# One expense, three readings of it: the balance it left, the category it was classified under, and
+# the budget that category is watched by. The middle one is the dimension the ledger carried.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]612[.,]70"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_spending_by_category"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${CATEGORY}
+- assertVisible:
+    id: "category_spending_amount"
+    text: "[$]87[.,]30"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_budgets"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_budget_amount"
+    text: "[$]87[.,]30 / [$]240[.,]00"
+
+# The budgets screen recomputes the same figures by its own path, and says what is left.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: budgets
+- extendedWaitUntil:
+    visible:
+      id: "budget_card"
+    timeout: 15000
+- assertVisible:
+    id: "budget_limit_amount"
+    text: "[$]240[.,]00"
+- assertVisible:
+    id: "budget_spent_amount"
+    text: "[$]87[.,]30"
+- assertVisible:
+    id: "budget_remaining_label"
+    text: "Remaining"
+- assertVisible:
+    id: "budget_remaining_amount"
+    text: "[$]152[.,]70"
+
+# The detail sheet is a third path to the same three numbers, and it is the one that has to agree
+# with the card it was opened from.
+- tapOn:
+    id: "budget_card"
+- extendedWaitUntil:
+    visible:
+      id: "view_budget_limit_amount"
+    timeout: 15000
+- assertVisible:
+    id: "view_budget_limit_amount"
+    text: "[$]240[.,]00"
+- assertVisible:
+    id: "view_budget_spent_amount"
+    text: "[$]87[.,]30"
+- assertVisible:
+    id: "view_budget_remaining_amount"
+    text: "[$]152[.,]70"
+- assertNotVisible:
+    id: "view_budget_exceeded_amount"
+- back
+
+# --- I spend $176.45 more, and go over ------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/record_categorized_expense.yaml
+    env:
+      TITLE: ${SPEND2_TITLE}
+      AMOUNT: ${SPEND2_DIGITS}
+      CATEGORY: ${CATEGORY}
+
+# $87.30 + $176.45 = $263.75, past a limit of $240.00. The card does not merely render a bigger
+# number: the line that read "Remaining" now reads "Exceeded by", and the figure beside it changes
+# formula with it. That substitution is the rule, and asserting both sides of it is why this flow
+# spends a second expense.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: budgets
+- extendedWaitUntil:
+    visible:
+      id: "budget_card"
+    timeout: 15000
+- assertVisible:
+    id: "budget_limit_amount"
+    text: "[$]240[.,]00"
+- assertVisible:
+    id: "budget_spent_amount"
+    text: "[$]263[.,]75"
+- assertVisible:
+    id: "budget_remaining_label"
+    text: "Exceeded by"
+- assertNotVisible:
+    id: "budget_remaining_label"
+    text: "Remaining"
+- assertVisible:
+    id: "budget_remaining_amount"
+    text: "[$]23[.,]75"
+
+# The detail sheet takes the same branch, by its own path.
+- tapOn:
+    id: "budget_card"
+- extendedWaitUntil:
+    visible:
+      id: "view_budget_exceeded_amount"
+    timeout: 15000
+- assertVisible:
+    id: "view_budget_spent_amount"
+    text: "[$]263[.,]75"
+- assertVisible:
+    id: "view_budget_exceeded_amount"
+    text: "[$]23[.,]75"
+- assertNotVisible:
+    id: "view_budget_remaining_amount"
+
+# --- I delete the budget -------------------------------------------------------------------------
+# From the sheet that is already open, which is where the command lives.
+- scrollUntilVisible:
+    element:
+      id: "view_budget_delete"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "view_budget_delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete_budget_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_budget_confirm"
+
+# The screen is empty again, offering to create one — and the money is untouched. Deleting a budget
+# deletes a watch, not the spending it was watching: the same $263.75 is still on the category, and
+# the balance is still what the two expenses left.
+- extendedWaitUntil:
+    visible:
+      id: "budgets_add"
+    timeout: 15000
+- assertNotVisible:
+    id: "budget_card"
+
+# `back` returns the dashboard wherever the last scroll left it, which is below what follows — so
+# this climbs to the top before descending again, or the search would run away from its target.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]436[.,]25"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_spending_by_category"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "category_spending_amount"
+    text: "[$]263[.,]75"

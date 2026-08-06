@@ -15,6 +15,7 @@ val mapperModule = module {
         InvoiceUiMapperImpl(
             calculateInvoiceUseCase = get(),
             calculateAvailableLimitUseCase = get(),
+            clock = get(),
         )
     }
 }

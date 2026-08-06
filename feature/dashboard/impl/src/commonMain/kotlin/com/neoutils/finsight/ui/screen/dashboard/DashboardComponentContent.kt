@@ -60,6 +60,7 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
@@ -203,6 +204,7 @@ private fun DashboardPendingRecurringSection(
 ) {
     val modalManager = LocalModalManager.current
     val recurringEntry = koinInject<RecurringEntry>()
+    val clock = koinInject<Clock>()
     val component = variant.component
     val showHeader = variant.config.showHeader(variant.key)
 
@@ -228,9 +230,7 @@ private fun DashboardPendingRecurringSection(
                 recurring = recurring,
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
-                        val currentDate = Clock.System.now()
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                            .date
+                        val currentDate = clock.today()
                         val targetDate = currentDate.yearMonth
                             .safeOnDay(recurring.dayOfMonth)
                             .takeIf { it <= currentDate }

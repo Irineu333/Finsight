@@ -23,6 +23,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
+import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -43,6 +44,7 @@ class DashboardViewModel(
     private val dashboardPreviewFactory: DashboardPreviewFactory,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
 
     init {
@@ -53,7 +55,7 @@ class DashboardViewModel(
         }
     }
 
-    private val instant get() = Clock.System.now()
+    private val instant get() = clock.now()
 
     private val invoices = invoiceRepository
         .observeUnpaidInvoices()
@@ -139,7 +141,7 @@ class DashboardViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DashboardUiState.Loading(),
+        initialValue = DashboardUiState.Loading(instant.toYearMonth()),
     )
 
     fun onAction(action: DashboardAction) = when (action) {

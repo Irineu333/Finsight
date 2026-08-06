@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.addInstallment
 
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import org.koin.compose.koinInject
 
@@ -40,12 +41,10 @@ import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AddInstallmentModal : ModalBottomSheet() {
 
@@ -60,6 +59,7 @@ class AddInstallmentModal : ModalBottomSheet() {
 
         val title = rememberTextFieldState()
         val amount = rememberTextFieldState()
+        val currentDate = koinInject<Clock>().today()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
         var selectedCategory by remember { mutableStateOf<Category?>(null) }

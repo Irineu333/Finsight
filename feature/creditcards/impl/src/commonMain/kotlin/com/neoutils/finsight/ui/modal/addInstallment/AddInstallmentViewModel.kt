@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.add_installment_error_generic
@@ -37,6 +38,7 @@ class AddInstallmentViewModel(
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -112,7 +114,7 @@ class AddInstallmentViewModel(
                 .getInvoicesByCreditCard(creditCard.id)
                 .firstOrNull { it.status.isOpen }
                 ?.dueMonth
-                ?: Clock.System.now().toYearMonth()
+                ?: clock.currentYearMonth()
         }
     }
 

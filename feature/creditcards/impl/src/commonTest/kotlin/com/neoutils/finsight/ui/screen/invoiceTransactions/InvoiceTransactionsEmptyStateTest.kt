@@ -25,6 +25,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
 
 /**
  * The two emptinesses of the invoice list, and the loading state that used to look
@@ -77,6 +78,7 @@ class InvoiceTransactionsEmptyStateTest {
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
         crashlytics = NoCrashlytics,
+        clock = Clock.System,
     )
 
     @Test

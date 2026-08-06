@@ -20,6 +20,10 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
 
+        // Before anything composes: whatever reads the clock must read the shifted one from the
+        // start. A no-op outside a debug build.
+        applyTimeTravel()
+
         setContent {
             App()
         }

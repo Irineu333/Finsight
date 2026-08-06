@@ -103,6 +103,12 @@ env:
     visible: ${NEW_ACCOUNT}
     timeout: 10000
 - tapOn: ${NEW_ACCOUNT}
+# Read back: the wait above only proves the menu opened, and the form defaults to the seeded
+# account — so without this, an income that quietly stayed on the Wallet would be caught two
+# screens later as a figure on the wrong card, or not at all.
+- assertVisible:
+    id: "add_transaction_account"
+    text: ${NEW_ACCOUNT}
 
 - scrollUntilVisible:
     element:
@@ -168,12 +174,18 @@ env:
     visible:
       id: "transfer_save"
     timeout: 15000
+- assertVisible:
+    id: "transfer_source_account"
+    text: ${NEW_ACCOUNT}
 - tapOn:
     id: "transfer_destination_account"
 - extendedWaitUntil:
     visible: "Wallet"
     timeout: 10000
 - tapOn: "Wallet"
+- assertVisible:
+    id: "transfer_destination_account"
+    text: "Wallet"
 - tapOn:
     id: "transfer_amount"
 - waitForAnimationToEnd

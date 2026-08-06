@@ -208,8 +208,8 @@ class EditTransactionModal(
                         },
                         modifier = Modifier
                             .padding(top = 8.dp)
-                            .fillMaxWidth()
-                            .testTag("edit_transaction_account")
+                            .fillMaxWidth(),
+                        valueTestTag = "edit_transaction_account",
                     )
                 }
 

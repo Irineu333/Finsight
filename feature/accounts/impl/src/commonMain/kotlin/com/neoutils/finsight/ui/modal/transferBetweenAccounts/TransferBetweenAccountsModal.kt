@@ -81,8 +81,8 @@ class TransferBetweenAccountsModal(
                     },
                     label = stringResource(Res.string.transfer_source_account_label),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("transfer_source_account"),
+                        .fillMaxWidth(),
+                    valueTestTag = "transfer_source_account",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -95,8 +95,8 @@ class TransferBetweenAccountsModal(
                     },
                     label = stringResource(Res.string.transfer_destination_account_label),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("transfer_destination_account"),
+                        .fillMaxWidth(),
+                    valueTestTag = "transfer_destination_account",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

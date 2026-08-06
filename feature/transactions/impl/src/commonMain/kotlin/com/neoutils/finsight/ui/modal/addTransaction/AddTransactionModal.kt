@@ -147,8 +147,8 @@ class AddTransactionModal : ModalBottomSheet() {
                     availableTargets = uiState.targets,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
-                        .testTag("add_transaction_target")
+                        .fillMaxWidth(),
+                    valueTestTag = "add_transaction_target",
                 )
             }
 
@@ -164,8 +164,8 @@ class AddTransactionModal : ModalBottomSheet() {
                     onEmpty = { manager.show(creditCardsEntry.creditCardFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
-                        .testTag("add_transaction_credit_card")
+                        .fillMaxWidth(),
+                    valueTestTag = "add_transaction_credit_card",
                 )
             }
 
@@ -196,8 +196,8 @@ class AddTransactionModal : ModalBottomSheet() {
                         },
                         modifier = Modifier
                             .padding(top = 8.dp)
-                            .fillMaxWidth()
-                            .testTag("add_transaction_account")
+                            .fillMaxWidth(),
+                        valueTestTag = "add_transaction_account",
                 )
             }
 
@@ -213,8 +213,8 @@ class AddTransactionModal : ModalBottomSheet() {
                 onCategorySelected = { selectedCategory = it },
                 onEmpty = { manager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("add_transaction_category")
+                    .fillMaxWidth(),
+                valueTestTag = "add_transaction_category",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

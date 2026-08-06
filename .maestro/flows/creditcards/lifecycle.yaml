@@ -349,6 +349,11 @@ env:
 - assertVisible:
     id: "pay_invoice_amount"
     text: "[$]70[.,]00"
+# And which account settles it. The dashboard balance below drops by exactly this payment, but with
+# more than one account on the app that consequence stops naming the account — here it is named.
+- assertVisible:
+    id: "pay_invoice_account"
+    text: "Wallet"
 - tapOn:
     id: "pay_invoice_confirm"
 - extendedWaitUntil:

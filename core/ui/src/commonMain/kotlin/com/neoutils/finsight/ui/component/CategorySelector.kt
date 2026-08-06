@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_selector_label
 import com.neoutils.finsight.resources.category_selector_none
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -24,6 +25,7 @@ fun CategorySelector(
     categories: List<Category>,
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
     onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -74,6 +76,7 @@ fun CategorySelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
         )
 
         ExposedDropdownMenu(

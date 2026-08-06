@@ -56,21 +56,26 @@ env:
       NAME: ${RESERVE_ACCOUNT}
 
 # The pager stays on the seeded account after the form closes, and the transfer modal takes the
-# account in view as its source. Which way the money went is not read off the selector — the tag
-# sits on the dropdown box and the name on the field inside it, so no single node carries both —
-# but off the two reports below: −180.25 on one side and +180.25 on the other is the direction.
+# account in view as its source. Both ends are read off the selectors before the transfer is made,
+# so a wrong direction fails here rather than as an unexplained figure three screens later.
 - tapOn:
     id: "account_transfer"
 - extendedWaitUntil:
     visible:
       id: "transfer_save"
     timeout: 15000
+- assertVisible:
+    id: "transfer_source_account"
+    text: "Wallet"
 - tapOn:
     id: "transfer_destination_account"
 - extendedWaitUntil:
     visible: ${RESERVE_ACCOUNT}
     timeout: 10000
 - tapOn: ${RESERVE_ACCOUNT}
+- assertVisible:
+    id: "transfer_destination_account"
+    text: ${RESERVE_ACCOUNT}
 - tapOn:
     id: "transfer_amount"
 - waitForAnimationToEnd
@@ -109,9 +114,9 @@ env:
       CARD: ${CARD_NAME}
 
 # Paid from the credit cards screen rather than from inside the invoice: it is the offer a user
-# meets first, and it reaches the same modal. The account is the default one, already selected, and
-# which one that was shows up as $20.00 of the Wallet's outgoings below — the same reason the
-# transfer's direction is left to the reports to state.
+# meets first, and it reaches the same modal. The account arrives already selected — the default
+# one — and that is asserted rather than assumed, because "$20.00 left the Wallet" below is only a
+# claim about this payment if this payment came from the Wallet.
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -132,6 +137,9 @@ env:
     visible:
       id: "advance_payment_amount"
     timeout: 15000
+- assertVisible:
+    id: "advance_payment_account"
+    text: "Wallet"
 - tapOn:
     id: "advance_payment_amount"
 - waitForAnimationToEnd

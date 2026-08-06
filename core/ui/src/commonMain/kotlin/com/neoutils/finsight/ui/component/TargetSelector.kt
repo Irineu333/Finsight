@@ -5,12 +5,12 @@ package com.neoutils.finsight.ui.component
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,11 +21,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.target_selector_account
 import com.neoutils.finsight.resources.target_selector_credit_card
 import com.neoutils.finsight.resources.target_selector_label
+import com.neoutils.finsight.ui.util.exposeTestTags
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -33,7 +34,8 @@ fun TargetSelector(
     selectedTarget: TransactionTarget,
     onTargetSelected: (TransactionTarget) -> Unit,
     availableTargets: List<TransactionTarget>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -60,6 +62,7 @@ fun TargetSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
         )
 
         ExposedDropdownMenu(

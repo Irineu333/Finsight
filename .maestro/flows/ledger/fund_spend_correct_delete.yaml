@@ -216,13 +216,24 @@ env:
     text: ".*68[.,]35.*"
 - hideKeyboard
 
-# Picked by name, the way the transfer modal picks its destination.
+# The other half of "the form reopens over what is stored": the amount above came back as the
+# ledger holds it, and so does the account. A form that defaulted to the default account would
+# still look right here — Wallet *is* the default — were it not for the second assertion below,
+# which is the one that proves the selection took.
+- assertVisible:
+    id: "edit_transaction_account"
+    text: "Wallet"
 - tapOn:
     id: "edit_transaction_account"
 - extendedWaitUntil:
     visible: ${SAVINGS_ACCOUNT}
     timeout: 10000
 - tapOn: ${SAVINGS_ACCOUNT}
+# Read back before saving: submitting against a selector that silently kept its old value is the
+# failure this whole act exists to catch, and catching it here names it.
+- assertVisible:
+    id: "edit_transaction_account"
+    text: ${SAVINGS_ACCOUNT}
 
 - scrollUntilVisible:
     element:

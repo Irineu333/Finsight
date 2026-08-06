@@ -117,8 +117,8 @@ class AdvancePaymentModal(
                     viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("advance_payment_account")
+                    .fillMaxWidth(),
+                valueTestTag = "advance_payment_account",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

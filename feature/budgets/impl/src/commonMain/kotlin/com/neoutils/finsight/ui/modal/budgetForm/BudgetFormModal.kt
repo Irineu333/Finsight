@@ -126,8 +126,8 @@ class BudgetFormModal(
                 onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
                 onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("budget_form_categories"),
+                    .fillMaxWidth(),
+                valueTestTag = "budget_form_categories",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

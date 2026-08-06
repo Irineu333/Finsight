@@ -118,8 +118,8 @@ class PayInvoiceModal(
                     viewModel.onAction(PayInvoiceAction.SelectAccount(it))
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("pay_invoice_account")
+                    .fillMaxWidth(),
+                valueTestTag = "pay_invoice_account",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

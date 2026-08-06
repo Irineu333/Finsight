@@ -125,7 +125,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `ledger/fund_spend_correct_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
-| `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga |
+| `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
@@ -301,10 +301,10 @@ uma história só — a decisão está tomada e não é para ser reaberta a cada
   no mês do relógio do app*, e ela depende de tudo que veio antes: dois recorrentes, um confirmado
   por valor corrigido, um pulado, um arquivado e reativado. Partir ao meio obrigaria a segunda
   metade a refazer esse arranjo inteiro.
-- **`creditcards/lifecycle`** (138, era 218) — o ciclo de vida da fatura é indivisível pelo mesmo
-  motivo: fechar exige ter gasto, pagar exige ter fechado, e a fatura seguinte só existe porque a
-  anterior fechou. Encolheu por extração de subflow e pela saída da perna de relatório, não por
-  divisão, e a permanência do ciclo completo é deliberada.
+- **`creditcards/lifecycle`** (179) — o ciclo de vida da fatura é indivisível pelo mesmo motivo:
+  fechar exige ter gasto, pagar exige ter fechado, e a fatura seguinte só existe porque a anterior
+  fechou. E o cartão só se aposenta por arquivamento porque teve movimento, e só é aceito porque não
+  deve mais nada — as duas coisas só valem para um cartão que esta história inteira produziu.
 - **`accounts/lifecycle`** (126) — arquivar **exige** saldo zero, que exige o ajuste, que exige a
   transferência. O cabeçalho do arquivo diz isso.
 

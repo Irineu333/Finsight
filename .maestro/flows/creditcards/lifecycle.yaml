@@ -20,9 +20,9 @@ env:
   NEXT_SPEND_DIGITS: "3300"
 ---
 # The credit half of the ledger, told as one story: a card is created, spent on, paid down early,
-# then closed, paid, and replaced by the invoice that follows it. It is a single flow because
-# `launch_fresh` wipes the database — split up, each part would have to re-create the card and
-# re-earn the money before it could say anything.
+# then closed, paid, replaced by the invoice that follows it, and finally retired. It is a single
+# flow because `launch_fresh` wipes the database — split up, each part would have to re-create the
+# card and re-earn the money before it could say anything.
 #
 # A card is a LIABILITY account, so a card expense creates debt instead of moving cash. That is the
 # claim this flow exists for, and it is asserted three times: the account balance does not move
@@ -37,6 +37,11 @@ env:
 # The figures are chosen so no two share their digits: $2,000.00 of limit, $500.00 earned, $120.00
 # spent, $50.00 advanced, $70.00 owed and then paid, $33.00 spent on the invoice that follows,
 # leaving $380.00 in the account and $1,967.00 of limit available.
+#
+# The last act is the card's retirement, and it belongs here rather than in a flow of its own: a
+# card is offered archiving instead of deletion *because* it has movement, and is allowed to retire
+# only *because* it owes nothing. Only a card that has been spent on and then squared satisfies
+# both, and this is the flow that produces one.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -595,3 +600,162 @@ env:
 - assertVisible:
     id: "report_invoice_total_amount"
     text: "[$]33[.,]00"
+
+# --- The card retires ----------------------------------------------------------------------------
+# The end of the same story, and it could not be reached any earlier: a card is retired by archiving
+# only because it has movement, and it is *allowed* to retire only because it owes nothing. This
+# flow is the one place where both are true of the same card — everything above is what made it so.
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+
+# A card that has been spent on cannot be deleted — the entries reference it — so archiving is what
+# the screen offers. Which of the two it offers is `retireActionOf(mustPreserve)`, and this is its
+# `true` branch; the accounts story asserts the other one.
+- assertVisible:
+    id: "credit_card_retire_label"
+    text: "Archive"
+
+# The refusal, stated before the attempt: the open invoice still owes $33.00, and a card owing
+# anything cannot be retired. The sheet says so with the command disabled rather than by failing
+# after the tap.
+- tapOn:
+    id: "credit_card_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_credit_card_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "archive_credit_card_confirm"
+    enabled: false
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "archive_credit_card_confirm"
+    timeout: 15000
+
+# --- I undo the only spend the card still carries ------------------------------------------------
+# The settled invoice is already square — everything spent on it was paid into it — so this $33.00
+# is the whole of what the card owes, and deleting it is what flips the rule above.
+- scrollUntilVisible:
+    element:
+      id: "transaction_card_title"
+      text: ${NEXT_SPEND_TITLE}
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- tapOn:
+    id: "transaction_card_title"
+    text: ${NEXT_SPEND_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_delete"
+    timeout: 15000
+- tapOn:
+    id: "view_transaction_delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete_transaction_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_transaction_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "delete_transaction_confirm"
+    timeout: 15000
+
+# Undoing the spend takes the debt with it and gives the limit back whole — the same pair the
+# instalment story asserts in the other direction.
+- scrollUntilVisible:
+    element:
+      id: "credit_card_invoice_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]2[.,]000[.,]00"
+
+# --- Now it can be archived ----------------------------------------------------------------------
+# The same command, on the same card, answering the opposite way. Nothing about the card changed
+# except what it owes, which is the whole rule.
+- tapOn:
+    id: "credit_card_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_credit_card_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "archive_credit_card_confirm"
+    enabled: true
+- tapOn:
+    id: "archive_credit_card_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "archive_credit_card_confirm"
+    timeout: 15000
+
+# The card left the active list, and the screen stands in the empty state it had before the card
+# existed. The absence is read on the node that renders a card, with the screen itself asserted
+# around it — a bare `assertNotVisible` would also pass on a screen that failed to compose.
+- extendedWaitUntil:
+    visible:
+      id: "credit_cards_add"
+    timeout: 15000
+- assertVisible:
+    id: "screen_credit_cards"
+- assertNotVisible:
+    id: "credit_card_card"
+
+# --- Archived is retired, not deleted ------------------------------------------------------------
+# The card is still there to be found, which is the promise archiving makes and deletion does not —
+# and it is what keeps the settled invoice's history readable.
+- tapOn:
+    id: "credit_cards_more_options"
+- extendedWaitUntil:
+    visible:
+      id: "credit_cards_view_archived"
+    timeout: 15000
+- tapOn:
+    id: "credit_cards_view_archived"
+- extendedWaitUntil:
+    visible:
+      id: "screen_archived_credit_cards"
+    timeout: 15000
+- assertVisible: ${CARD_NAME}
+
+# --- And the dashboard is back to having no card -------------------------------------------------
+# The pager returns to the empty state day zero found it in — the premise for that absence is the
+# pager itself, which renders either the figure or the offer to create a card, never both. The money
+# is untouched: archiving retires a card, it does not undo what was paid through it.
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_credit_cards_pager"
+- assertNotVisible:
+    id: "dashboard_credit_card_invoice_amount"
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]380[.,]00"

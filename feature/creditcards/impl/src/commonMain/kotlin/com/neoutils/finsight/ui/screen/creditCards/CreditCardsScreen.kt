@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import com.neoutils.finsight.ui.util.exposeTestTags
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +119,10 @@ private fun CreditCardsContent(
                 actions = {
                     var expanded by remember { mutableStateOf(false) }
 
-                    IconButton(onClick = { expanded = true }) {
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.testTag("credit_cards_more_options"),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = null,
@@ -128,13 +132,17 @@ private fun CreditCardsContent(
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
+                        // Its own popup window: the app window's opt-in does not reach it, and its
+                        // single option is copy a translation reworks.
+                        modifier = Modifier.exposeTestTags(),
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.credit_cards_view_archived)) },
                             onClick = {
                                 expanded = false
                                 navController.navigate(ArchivedCreditCardsRoute)
-                            }
+                            },
+                            modifier = Modifier.testTag("credit_cards_view_archived"),
                         )
                     }
                 },
@@ -489,7 +497,9 @@ private fun CardActions(
                         }
                     )
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("credit_card_retire"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Expense
@@ -508,7 +518,8 @@ private fun CardActions(
                 Text(
                     text = stringResource(creditCardUi.retireAction.label),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.testTag("credit_card_retire_label")
                 )
             }
 

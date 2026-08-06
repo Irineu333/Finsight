@@ -97,6 +97,7 @@ class TransactionScopeTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        clock = Clock.System,
     )
 
     /**

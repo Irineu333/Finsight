@@ -20,15 +20,16 @@ import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import com.neoutils.finsight.extension.today
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
 class BuildTransactionUseCaseImpl(
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
+    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val clock: Clock,
 ) : BuildTransactionUseCase {
+
+    private val currentDate get() = clock.today()
 
     override suspend operator fun invoke(
         form: TransactionForm,

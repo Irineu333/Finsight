@@ -45,11 +45,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.neoutils.finsight.extension.today
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AddTransactionModal : ModalBottomSheet() {
 
@@ -57,6 +55,7 @@ class AddTransactionModal : ModalBottomSheet() {
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
+        val currentDate = koinInject<Clock>().today()
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
@@ -293,7 +292,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 onClick = {
                     viewModel.onAction(AddTransactionAction.Submit(form))
                 },
-                enabled = form.isValid() && !uiState.isInvoiceBlocked,
+                enabled = form.isValid(currentDate) && !uiState.isInvoiceBlocked,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("add_transaction_save"),

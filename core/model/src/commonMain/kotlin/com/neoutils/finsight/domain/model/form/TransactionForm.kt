@@ -11,13 +11,14 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.dayMonthYear
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
+private val systemDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 data class TransactionForm(
@@ -50,7 +51,13 @@ data class TransactionForm(
             if (creditCard?.isArchived == true) add(ClosedFacade.CREDIT_CARD)
         }
 
-    fun isValid(): Boolean {
+    /**
+     * [today] is passed in rather than read here: a build that moves the app's clock — the E2E
+     * suite does, to reach an invoice past its closing date — would otherwise have this rule
+     * comparing a date the rest of the app calls today against one only this file believes in,
+     * and refusing the submit. The default keeps every caller that has no clock at hand honest.
+     */
+    fun isValid(today: LocalDate = systemDate): Boolean {
         // Not a second copy of the closure invariant — that one lives on the
         // `Account` and is enforced at the write boundary, which stays. This is the
         // form declining to offer a submit the ledger is known to refuse.
@@ -65,7 +72,7 @@ data class TransactionForm(
             dayMonthYear.parse(date)
         }.getOrElse { return false }
 
-        if (date > currentDate) return false
+        if (date > today) return false
 
         if (target.isAccount) return account != null
 

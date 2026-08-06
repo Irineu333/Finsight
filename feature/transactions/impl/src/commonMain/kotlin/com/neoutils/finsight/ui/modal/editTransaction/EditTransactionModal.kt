@@ -48,11 +48,9 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.neoutils.finsight.extension.today
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class EditTransactionModal(
     private val transaction: Transaction,
@@ -64,6 +62,7 @@ class EditTransactionModal(
 
 
         val manager = LocalModalManager.current
+        val currentDate = koinInject<Clock>().today()
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
@@ -310,7 +309,7 @@ class EditTransactionModal(
                             )
                         )
                     },
-                    enabled = form.isValid() && !uiState.isInvoiceBlocked,
+                    enabled = form.isValid(currentDate) && !uiState.isInvoiceBlocked,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {

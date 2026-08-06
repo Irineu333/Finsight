@@ -32,6 +32,7 @@ val transactionsModule = module {
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
+            clock = get(),
         )
     }
 
@@ -63,6 +64,7 @@ val transactionsModule = module {
             categoryRepository = get(),
             installmentRepository = get(),
             entryRepository = get(),
+            clock = get(),
         )
     }
     viewModel {

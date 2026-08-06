@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.yearMonth
+import com.neoutils.finsight.extension.currentYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -33,9 +34,10 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
-    private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
+    private val selectedYearMonth = MutableStateFlow(clock.currentYearMonth())
 
     /**
      * The screen opens on the whole of the user's money, so the list stays exactly what

@@ -145,3 +145,9 @@ concluding something is missing, and check `GetDashboardPreferencesUseCase` befo
 
 Prefer `extendedWaitUntil` to a bare `assertVisible` right after an action that animates or loads;
 prefer an assertion that states the intent to one that merely happens to be true.
+
+Two gestures to know. The accounts screen is a horizontal pager, and the figures on it always belong
+to the account in view — but **never swipe RIGHT to page back**: from the left edge that is the
+system's back gesture, and it leaves the screen instead. Re-enter the section, which opens on the
+first account. And on the dashboard, `back` returns you wherever the last scroll left it, so scroll
+before asserting anything near the top.

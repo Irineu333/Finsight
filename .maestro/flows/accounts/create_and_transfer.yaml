@@ -1,0 +1,264 @@
+appId: com.neoutils.finsight
+name: accounts_create_and_transfer
+tags:
+  - accounts
+  - ledger
+env:
+  NEW_ACCOUNT: "E2E Savings"
+  INCOME_TITLE: "E2E Bonus"
+  INCOME_DIGITS: "37500"
+  TRANSFER_DIGITS: "12550"
+---
+# A second account, funded, and money moved between the two. The figures are chosen so every one of
+# them is distinct: $375.00 in, $125.50 across, leaving $249.50 on the new account and $125.50 on
+# the seeded one — and $375.00 in total, because a transfer between two assets moves money without
+# creating or destroying any. That last one is the claim worth the emulator time.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# The dashboard withholds its accounts row while the seeded account is the only one. The day-zero
+# story asserts that absence; this is the other half — the row appears once a second account exists.
+- assertNotVisible:
+    id: "dashboard_component_accounts_overview"
+
+# --- I create an account -------------------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+
+- tapOn:
+    id: "accounts_add"
+- extendedWaitUntil:
+    visible:
+      id: "account_form_name"
+    timeout: 15000
+- tapOn:
+    id: "account_form_name"
+- waitForAnimationToEnd
+- inputText: ${NEW_ACCOUNT}
+- assertVisible:
+    id: "account_form_name"
+    text: ${NEW_ACCOUNT}
+- hideKeyboard
+- tapOn:
+    id: "account_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "account_form_name"
+    timeout: 15000
+
+# ...and I can reach it. The accounts screen is a pager: one account at a time, swiped horizontally,
+# and the summary figures on screen always belong to the one in view.
+- assertVisible: "Wallet"
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]0[.,]00"
+
+# ...and the dashboard now has something to say about accounts. Reaching the section scrolled the
+# dashboard down, so this scrolls back before asserting — otherwise the row would be missing only
+# because the viewport moved.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_accounts_overview"
+    direction: UP
+    timeout: 25000
+
+# --- I put money in it ---------------------------------------------------------------------------
+# The account picker is a dropdown, and its options are account names — here, the name this flow
+# typed itself, so selecting by text is selecting by the thing under test.
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_income"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${INCOME_TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${INCOME_TITLE}
+- hideKeyboard
+
+- tapOn:
+    id: "add_transaction_account"
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 10000
+- tapOn: ${NEW_ACCOUNT}
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${INCOME_DIGITS}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+# It landed on the account it was addressed to, and nowhere else.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_income_amount"
+    text: "[+][$]375[.,]00"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]375[.,]00"
+- assertVisible: ${INCOME_TITLE}
+
+# --- I move some of it to the wallet -------------------------------------------------------------
+# Opened from the account in view, so it is the source; the destination is picked by name.
+- tapOn:
+    id: "account_transfer"
+- extendedWaitUntil:
+    visible:
+      id: "transfer_save"
+    timeout: 15000
+- tapOn:
+    id: "transfer_destination_account"
+- extendedWaitUntil:
+    visible: "Wallet"
+    timeout: 10000
+- tapOn: "Wallet"
+- tapOn:
+    id: "transfer_amount"
+- waitForAnimationToEnd
+- inputText: ${TRANSFER_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "transfer_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "transfer_save"
+    timeout: 15000
+
+# --- Each account tells its own side of it -------------------------------------------------------
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]249[.,]50"
+
+# Re-entered rather than swiped back: a rightward swipe from the left edge is the system's back
+# gesture, and it leaves the screen instead of turning the page. The section always opens on the
+# first account, which is the seeded one.
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible: "Wallet"
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]125[.,]50"
+
+# --- And the whole is unchanged ------------------------------------------------------------------
+# Nothing entered or left the ledger, so net worth is exactly the income. A transfer that moved the
+# total would be a transfer that leaked.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]375[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_recents"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: "Transfer"
+
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible: "Transfer"
+- assertVisible: ${INCOME_TITLE}
+
+# --- And the report agrees -----------------------------------------------------------------------
+- tapOn:
+    id: "nav_item_dashboard"
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: report
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_balance_amount"
+    timeout: 20000
+# The report is scoped to one account and opens on the seeded one, so this is the destination's
+# side of the transfer: money it did not earn, arriving as income, and a balance that is exactly
+# what crossed over. The origin's side was asserted on the accounts screen.
+- assertVisible:
+    id: "report_opening_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "report_income_amount"
+    text: "[+][$]125[.,]50"
+- assertVisible:
+    id: "report_balance_amount"
+    text: "[$]125[.,]50"
+- assertVisible: "Transfer"

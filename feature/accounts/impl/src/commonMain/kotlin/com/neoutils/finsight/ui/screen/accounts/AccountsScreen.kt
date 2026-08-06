@@ -198,6 +198,7 @@ private fun AccountsContent(
                 onClick = {
                     modalManager.show(AccountFormModal())
                 },
+                modifier = Modifier.testTag("accounts_add"),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -522,7 +523,9 @@ private fun AccountActions(
                 onClick = {
                     modalManager.show(TransferBetweenAccountsModal(account))
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("account_transfer"),
             )
         }
     }

@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -142,7 +143,8 @@ class AccountFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
                     .animateContentSize()
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag("account_form_name"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -191,7 +193,9 @@ class AccountFormModal(
                     viewModel.onAction(AccountFormAction.Submit)
                 },
                 enabled = uiState.canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("account_form_save"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

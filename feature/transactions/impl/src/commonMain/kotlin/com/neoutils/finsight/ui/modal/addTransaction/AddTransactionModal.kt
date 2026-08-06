@@ -195,7 +195,8 @@ class AddTransactionModal : ModalBottomSheet() {
                         },
                         modifier = Modifier
                             .padding(top = 8.dp)
-                        .fillMaxWidth()
+                            .fillMaxWidth()
+                            .testTag("add_transaction_account")
                 )
             }
 

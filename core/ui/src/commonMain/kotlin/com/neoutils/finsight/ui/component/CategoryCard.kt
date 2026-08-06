@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,7 +26,7 @@ fun CategoryCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.testTag("category_card"),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer,
             contentColor = colorScheme.onSurface,
@@ -50,7 +51,9 @@ fun CategoryCard(
                 text = category.name,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("category_card_name")
             )
 
             // The muted colour alone cannot carry "archived" — it fails for anyone who
@@ -70,6 +73,7 @@ fun CategoryCard(
                         text = stringResource(Res.string.category_card_archived),
                         style = MaterialTheme.typography.labelSmall,
                         color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("category_card_archived_badge"),
                     )
                 }
             }

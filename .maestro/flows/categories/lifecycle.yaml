@@ -1,0 +1,357 @@
+appId: com.neoutils.finsight
+name: categories_lifecycle
+tags:
+  - categories
+env:
+  TRIAL_CATEGORY: "E2E Trial"
+  CATEGORY: "E2E Bakery"
+  EXPENSE_TITLE: "E2E Croissant"
+  EXPENSE_DIGITS: "6340"
+---
+# A category is a dimension, not an account: with no movement it deletes and the screen falls back
+# to day zero; with movement the same button offers archiving instead, and archived it leaves the
+# selectors without taking the spending it classified — unarchiving brings it back whole.
+#
+# It is one story because each act is the previous one's product: archiving is only offered because
+# an expense was written, the empty selector only exists because the one category was archived, and
+# `launch_fresh` wipes the database, so a second half would have to rebuild all of it first.
+#
+# What is *not* here, deliberately: the fourteen seeded defaults (`CreateDefaultCategoriesUseCase`,
+# unit-tested — this flow never takes that offer, it only watches it appear and disappear), the
+# matrix of refusals that produces "must archive" (`ResolveCategoryRetirabilityUseCaseTest`), and
+# the per-filter sectioning (`CategoriesViewModelTest`). One instance of each swap is E2E's share.
+#
+# The figures — $0.00 and $63.40, and the counts 0 and 1 — share no digits, so no assertion can
+# pass by reading a neighbour.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Day zero offers two things ------------------------------------------------------------------
+# A fresh install has a default account but no categories at all, and that is the only state that
+# earns the seed button. It is never tapped here; it exists in this flow to die and come back.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: categories
+- extendedWaitUntil:
+    visible:
+      id: "screen_categories"
+    timeout: 15000
+- assertVisible:
+    id: "categories_create_default"
+- assertVisible:
+    id: "categories_add"
+
+# --- I create one, and the day-zero offer is gone ------------------------------------------------
+- runFlow:
+    file: ../../subflows/create_category.yaml
+    env:
+      NAME: ${TRIAL_CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "category_card_name"
+    timeout: 15000
+- assertVisible:
+    id: "category_card_name"
+    text: ${TRIAL_CATEGORY}
+# Not merely off-screen: the card above proves the list composed. The seed button is withheld
+# because the database stopped being empty — a distinction no state below the screen encodes.
+- assertNotVisible:
+    id: "categories_create_default"
+
+# --- With no movement, it deletes ----------------------------------------------------------------
+- tapOn:
+    id: "category_card_name"
+    text: ${TRIAL_CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "category_retire_label"
+    timeout: 15000
+- assertVisible:
+    id: "view_category_total_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "view_category_transaction_count"
+    text: "0"
+- assertVisible:
+    id: "category_retire_label"
+    text: "Delete"
+- tapOn:
+    id: "category_retire"
+- extendedWaitUntil:
+    visible:
+      id: "delete_category_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_category_confirm"
+
+# The row is gone from the database, not hidden from a view: the screen is back in the state only
+# an empty database earns, and the offer that vanished five steps ago is on screen again.
+- extendedWaitUntil:
+    visible:
+      id: "categories_create_default"
+    timeout: 15000
+- assertNotVisible:
+    id: "category_card"
+
+# --- I create the one this story is about --------------------------------------------------------
+- runFlow:
+    file: ../../subflows/create_category.yaml
+    env:
+      NAME: ${CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "category_card_name"
+    timeout: 15000
+- assertVisible:
+    id: "category_card_name"
+    text: ${CATEGORY}
+
+# --- I spend $63.40 on it ------------------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/record_categorized_expense.yaml
+    env:
+      TITLE: ${EXPENSE_TITLE}
+      AMOUNT: ${EXPENSE_DIGITS}
+      CATEGORY: ${CATEGORY}
+
+# --- With movement, the offer changes ------------------------------------------------------------
+# This is the flow's central claim: a write made through another feature's sheet changed the command
+# this one offers. The label is read on the node that renders the word, and its counterpart is
+# asserted absent on that same node — so a screen that rendered both would fail here.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: categories
+- extendedWaitUntil:
+    visible:
+      id: "screen_categories"
+    timeout: 15000
+- tapOn:
+    id: "category_card_name"
+    text: ${CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "category_retire_label"
+    timeout: 15000
+- assertVisible:
+    id: "view_category_total_amount"
+    text: "[$]63[.,]40"
+- assertVisible:
+    id: "view_category_transaction_count"
+    text: "1"
+- assertVisible:
+    id: "category_retire_label"
+    text: "Archive"
+- assertNotVisible:
+    id: "category_retire_label"
+    text: "Delete"
+
+# --- I archive it, and the money stays -----------------------------------------------------------
+# Confirming dismisses the confirmation sheet only; the detail observes the category, so it redraws
+# itself over the same row with the other offer. The total is re-read afterwards on purpose:
+# archiving retires the label, not the spending.
+- tapOn:
+    id: "category_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_category_confirm"
+    timeout: 15000
+- tapOn:
+    id: "archive_category_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "category_unarchive"
+    timeout: 15000
+- assertNotVisible:
+    id: "category_retire"
+- assertVisible:
+    id: "view_category_total_amount"
+    text: "[$]63[.,]40"
+- back
+
+# --- It leaves the active view without leaving the database --------------------------------------
+# Three states the screen must keep apart: empty database, empty filter, and content. This is the
+# middle one — a quiet note with no seed button, which is what proves the row is still there.
+- extendedWaitUntil:
+    visible:
+      id: "categories_empty_filter"
+    timeout: 15000
+- assertNotVisible:
+    id: "category_card"
+- assertNotVisible:
+    id: "categories_create_default"
+
+- tapOn:
+    id: "categories_filter"
+- extendedWaitUntil:
+    visible:
+      id: "categories_filter_archived"
+    timeout: 15000
+- tapOn:
+    id: "categories_filter_archived"
+- extendedWaitUntil:
+    visible:
+      id: "category_card_name"
+    timeout: 15000
+- assertVisible:
+    id: "category_card_name"
+    text: ${CATEGORY}
+- assertVisible:
+    id: "category_card_archived_badge"
+
+# --- One flag, two consumers, on purpose reading it differently ----------------------------------
+# The dashboard still counts what the archived category spent this month — the ledger aggregate
+# includes it, so the breakdown must agree. The transaction sheet, meanwhile, has nothing left to
+# offer: asserted by the "+" the selector only renders when it is empty, which is evidence the
+# category is absent rather than merely out of view inside a popup.
+- back
+# `back` returns the dashboard wherever the last scroll left it — which is already past the
+# component below — so this climbs to the top before descending, or the search runs away from it.
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_spending_by_category"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${CATEGORY}
+- assertVisible:
+    id: "category_spending_amount"
+    text: "[$]63[.,]40"
+
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_category"
+    direction: DOWN
+    timeout: 15000
+- assertVisible:
+    id: "category_selector_empty_add"
+- back
+
+# --- I unarchive it, and it comes back whole -----------------------------------------------------
+# `back` leaves the dashboard wherever the last scroll put it, which is below the quick-action grid
+# the section is reached from — so this climbs before descending again.
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: categories
+- extendedWaitUntil:
+    visible:
+      id: "categories_filter"
+    timeout: 15000
+- tapOn:
+    id: "categories_filter"
+- extendedWaitUntil:
+    visible:
+      id: "categories_filter_archived"
+    timeout: 15000
+- tapOn:
+    id: "categories_filter_archived"
+- extendedWaitUntil:
+    visible:
+      id: "category_card_name"
+    timeout: 15000
+- tapOn:
+    id: "category_card_name"
+    text: ${CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "category_unarchive"
+    timeout: 15000
+- tapOn:
+    id: "category_unarchive"
+
+# Coming back does not erase what it did: the category is still tied to its expense, so the offer
+# it earns is still archiving, never deleting.
+- extendedWaitUntil:
+    visible:
+      id: "category_retire_label"
+    timeout: 15000
+- assertVisible:
+    id: "category_retire_label"
+    text: "Archive"
+- assertNotVisible:
+    id: "category_unarchive"
+- back
+
+# The exact inverse of the reading three acts ago: it is the archived view that has nothing now.
+- extendedWaitUntil:
+    visible:
+      id: "categories_empty_filter"
+    timeout: 15000
+- assertNotVisible:
+    id: "category_card"
+- tapOn:
+    id: "categories_filter"
+- extendedWaitUntil:
+    visible:
+      id: "categories_filter_active"
+    timeout: 15000
+- tapOn:
+    id: "categories_filter_active"
+- extendedWaitUntil:
+    visible:
+      id: "category_card_name"
+    timeout: 15000
+- assertVisible:
+    id: "category_card_name"
+    text: ${CATEGORY}
+- assertNotVisible:
+    id: "category_card_archived_badge"
+
+# --- And the selector offers it again ------------------------------------------------------------
+# Read on the field that renders the choice, not merely as the absence of the empty state's "+":
+# a selector that listed it but would not take the pick reads the same as one that never had it.
+- back
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_category"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_category"
+- extendedWaitUntil:
+    visible: ${CATEGORY}
+    timeout: 10000
+- tapOn: ${CATEGORY}
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add_transaction_category"
+    text: ${CATEGORY}

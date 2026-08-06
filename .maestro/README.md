@@ -29,7 +29,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) 
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~23 minutos** para 11 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~25 minutos** para 12 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -109,10 +109,10 @@ $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são sete: `launch_fresh` (estado inicial), `open_section`
+ser executado como teste próprio. Hoje são oito: `launch_fresh` (estado inicial), `open_section`
 (chegar a uma seção pela grade de ações rápidas), `record_transaction`, `record_categorized_expense`
-e `record_card_expense` (lançar), `create_account` e `create_credit_card` (abrir uma conta, abrir um
-cartão).
+e `record_card_expense` (lançar), `create_account`, `create_credit_card` e `create_category` (abrir
+uma conta, abrir um cartão, criar uma categoria).
 
 Um subflow carrega o **arranjo**, nunca a afirmação: quem chama é que diz o que o estado criado
 deve mostrar. É por isso que `create_credit_card` não assere o limite disponível do cartão que
@@ -133,6 +133,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
+| `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai dos seletores e continua no gasto do mês, e volta inteira |
 | `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
 
 **Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
@@ -329,7 +330,7 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~23 minutos e 11 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~25 minutos e 12 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
 
@@ -346,6 +347,18 @@ componente também — os comandos em massa movem os onze ou nenhum. Nenhuma out
 editor e a tela que lê o resultado, e todo o resto da suíte lê um dashboard que ninguém nunca
 rearranjou. O `initial_state` continua dono do dia zero — são claims diferentes, e os dois juntos
 custam 1m52.
+
+E subiu uma última vez, de ~23 para ~25, com `categories/lifecycle` (**~2m**, a medir no primeiro run
+verde). Entrou pelo mesmo precedente de `support/lifecycle`: categorias era a última feature de
+negócio sem travessia própria. `budgets/lifecycle` a atravessa de raspão — prova que uma categoria
+criada à mão chega ao orçamento — e nunca apaga, arquiva, desarquiva nem abre a folha de detalhe.
+Todo o ciclo de aposentadoria da dimensão estava descoberto, e é a mesma claim que já pagou
+`accounts/lifecycle` e `creditcards/lifecycle` para as outras duas fachadas. O que ele compra e
+nenhuma camada abaixo alcança: o comando que a folha oferece trocar de *Delete* para *Archive*
+porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção
+certa — o seletor de transação deixa de oferecê-la no mesmo instante em que o dashboard continua
+somando o que ela gastou. Nada sai em troca. Não entrou a oferta "Use default": quatorze categorias
+nomeadas por recurso seriam quatorze seletores que o fluxo não é dono.
 
 A aritmética por trás do arrasto **não** está aqui: `DashboardEditLayout.move` foi extraída do
 ViewModel e tem sua própria matriz unitária (`DashboardEditLayoutTest`, 12 casos). O E2E prova uma

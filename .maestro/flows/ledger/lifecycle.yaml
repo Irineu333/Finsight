@@ -1,5 +1,5 @@
 appId: com.neoutils.finsight
-name: ledger_fund_spend_correct_delete
+name: ledger_lifecycle
 tags:
   - ledger
 env:
@@ -10,9 +10,10 @@ env:
   SAVINGS_ACCOUNT: "E2E Savings"
   CORRECTED_DIGITS: "6835"
 ---
-# One story, told once: a US user installs the app, is paid, spends, corrects the spend, and undoes
-# it. It is a single flow because `launch_fresh` wipes the database — split in two, the second half
-# would have to re-earn the money before it could spend it.
+# A figure's whole life in the ledger: written by two entries of different natures, summed, read
+# back through every screen that reads it, corrected, and undone. It is a single flow because
+# `launch_fresh` wipes the database — split in two, the second half would have to re-earn the money
+# before it could spend it.
 #
 # Reading these same figures back through the report is `report/lifecycle`'s job, not this one's:
 # a report leg here could only re-assert this flow's numbers, which proves the report runs, not
@@ -148,8 +149,40 @@ env:
 - assertVisible: ${EXPENSE_TITLE}
 - assertVisible: ${INCOME_TITLE}
 
+# --- The expense figure is a filter, not a caption -----------------------------------------------
+# Tapping it opens the list already cut to expenses (`TransactionsRoute.filterLabel`), and the two
+# assertions above are what make the cut readable: the same list, reached the other way, held both.
+#
+# The claim is the hand-off, not the filter. Which rows a filter keeps is the ViewModel's, tested
+# there against every nature; that the *dashboard* passes the label matching the figure the user
+# tapped needs both screens mounted, and no layer below mounts two.
 - tapOn:
     id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_expenses_amount"
+    direction: UP
+    timeout: 25000
+- tapOn:
+    id: "dashboard_expenses_amount"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]42[.,]90"
+# The income is not merely off-screen: the list composed — the expense above proves it — and cut it
+# out. Read on the node that renders a title, so a stray match elsewhere cannot answer for it.
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: ${INCOME_TITLE}
+- back
+
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:

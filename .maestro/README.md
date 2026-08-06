@@ -122,7 +122,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
 | `dashboard/initial_state` | o que o dia zero mostra e — tanto quanto — o que ele retém |
-| `ledger/fund_spend_correct_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
+| `ledger/lifecycle` | duas escritas de naturezas diferentes, somadas e lidas de volta; corrigir uma reescreve as duas pernas, não acrescenta uma terceira; e a figura do dashboard leva à lista já cortada por ela |
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
@@ -205,7 +205,7 @@ Daí em diante todo trecho tem a mesma forma — esperar, agir, asserir a figura
     text: "[$]500[.,]00"                    # ...e a figura, tolerante a símbolo e separador
 ```
 
-**Leia `flows/ledger/fund_spend_report_delete.yaml` antes de escrever o seu.** É o mais curto dos
+**Leia `flows/ledger/lifecycle.yaml` antes de escrever o seu.** É o mais curto dos
 fluxos de jornada e o que melhor mostra a forma inteira: uma história só, figuras que não
 compartilham dígitos, e cada asserção comentada com a claim que ela sustenta.
 

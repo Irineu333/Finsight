@@ -5,6 +5,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.accounts
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.*
@@ -171,7 +172,10 @@ private fun AccountsContent(
                     val navController = LocalNavController.current
                     var expanded by remember { mutableStateOf(false) }
 
-                    IconButton(onClick = { expanded = true }) {
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.testTag("accounts_more_options"),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = stringResource(Res.string.accounts_more_options_content_description),
@@ -181,13 +185,17 @@ private fun AccountsContent(
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
+                        // Its own popup window: the app window's opt-in does not reach it, and its
+                        // single option is copy a translation reworks.
+                        modifier = Modifier.exposeTestTags(),
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.accounts_view_archived)) },
                             onClick = {
                                 expanded = false
                                 navController.navigate(ArchivedAccountsRoute)
-                            }
+                            },
+                            modifier = Modifier.testTag("accounts_view_archived"),
                         )
                     }
                 }

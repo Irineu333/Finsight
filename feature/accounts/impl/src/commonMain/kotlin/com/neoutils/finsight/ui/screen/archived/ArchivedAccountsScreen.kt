@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.Res
@@ -60,6 +61,7 @@ private fun ArchivedAccountsContent(
     val detailController = LocalDetailPaneController.current
 
     Scaffold(
+        modifier = Modifier.testTag("screen_archived_accounts"),
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.accounts_archived_title)) },

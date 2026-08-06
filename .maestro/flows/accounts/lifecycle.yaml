@@ -1,5 +1,5 @@
 appId: com.neoutils.finsight
-name: accounts_create_and_transfer
+name: accounts_lifecycle
 tags:
   - accounts
   - ledger
@@ -9,10 +9,15 @@ env:
   INCOME_DIGITS: "37500"
   TRANSFER_DIGITS: "12550"
 ---
-# A second account, funded, and money moved between the two. The figures are chosen so every one of
-# them is distinct: $375.00 in, $125.50 across, leaving $249.50 on the new account and $125.50 on
-# the seeded one — and $375.00 in total, because a transfer between two assets moves money without
-# creating or destroying any. That last one is the claim worth the emulator time.
+# An account from its creation to its retirement: created, funded, money moved to the seeded one,
+# then emptied by a balance adjustment and archived. The figures are chosen so every one of them is
+# distinct: $375.00 in, $125.50 across, leaving $249.50 on the new account and $125.50 on the seeded
+# one — and $375.00 in total, because a transfer between two assets moves money without creating or
+# destroying any. That last one is the claim worth the emulator time.
+#
+# The tail is one story rather than two because archiving *requires* a zero balance: the adjustment
+# is not a step placed before the archive for convenience, it is the only thing that makes the
+# archive possible. Both branches of that refusal are asserted, on either side of the adjustment.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -334,3 +339,180 @@ env:
     text: "[$]249[.,]50"
 - assertVisible: ${INCOME_TITLE}
 - assertVisible: "Transfer"
+
+# --- I want the account gone, and the app will not have it --------------------------------------
+# Out of the viewer, out of the report's configuration screen, and back to the account.
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 15000
+
+# The refusal, stated before the attempt: an account still holding money cannot be archived, and the
+# sheet says so with the command disabled rather than by failing after the tap. This is the `false`
+# branch of the rule the adjustment below is about to flip.
+- tapOn:
+    id: "account_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_account_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "archive_account_confirm"
+    enabled: false
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "archive_account_confirm"
+    timeout: 15000
+
+# --- I empty it with an adjustment ---------------------------------------------------------------
+# The balance line is itself the command — tapping the figure opens the sheet that sets it. The field
+# arrives holding the current balance, so it is erased before the new one is typed: the money input
+# appends digits rather than replacing them, and typing over $249.50 would read as $2,495.00.
+- tapOn:
+    id: "account_balance_amount"
+- extendedWaitUntil:
+    visible:
+      id: "edit_account_balance_amount"
+    timeout: 15000
+- tapOn:
+    id: "edit_account_balance_amount"
+- waitForAnimationToEnd
+- eraseText: 20
+- inputText: "0"
+- assertVisible:
+    id: "edit_account_balance_amount"
+    text: "[$]0[.,]00"
+- hideKeyboard
+- tapOn:
+    id: "edit_account_balance_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "edit_account_balance_amount"
+    timeout: 15000
+
+# What an adjustment is, read off the card: not an erasure but a movement of its own. The balance is
+# zero, the income the account was funded with is untouched, and the difference stands on the line
+# that exists to name it — the only line whose direction its label withholds, hence the sign.
+- extendedWaitUntil:
+    visible:
+      id: "account_adjustment_amount"
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "account_income_amount"
+    text: "[+][$]375[.,]00"
+- assertVisible:
+    id: "account_adjustment_amount"
+    text: "[-][$]249[.,]50"
+
+# ...and it was written as a transaction, not as a number on a card. It stands in the account's own
+# list, beside the income and the transfer that preceded it — and it is the one row whose sign is
+# spelled out, because "adjustment" alone does not say in which direction (`itemDisplayAmount`).
+- scrollUntilVisible:
+    element:
+      id: "transaction_card_amount"
+      text: "[-][$]249[.,]50"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+
+# --- Now it can be archived ----------------------------------------------------------------------
+# The same command as above, on the same account, offering the opposite answer. Nothing about the
+# account changed except its balance, which is the whole rule.
+- scrollUntilVisible:
+    element:
+      id: "account_retire"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "account_retire_label"
+    text: "Archive"
+- tapOn:
+    id: "account_retire"
+- extendedWaitUntil:
+    visible:
+      id: "archive_account_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "archive_account_confirm"
+    enabled: true
+- tapOn:
+    id: "archive_account_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "archive_account_confirm"
+    timeout: 15000
+
+# The pager holds only the seeded account now, and its balance is what the transfer left it — the
+# archive retired an account, it did not take its money with it.
+- extendedWaitUntil:
+    visible: "Wallet"
+    timeout: 15000
+- assertNotVisible: ${NEW_ACCOUNT}
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]125[.,]50"
+
+# --- Archived is retired, not deleted ------------------------------------------------------------
+# The account is still there to be found, which is the promise archiving makes and deletion does not.
+- tapOn:
+    id: "accounts_more_options"
+- extendedWaitUntil:
+    visible:
+      id: "accounts_view_archived"
+    timeout: 15000
+- tapOn:
+    id: "accounts_view_archived"
+- extendedWaitUntil:
+    visible:
+      id: "screen_archived_accounts"
+    timeout: 15000
+- assertVisible: ${NEW_ACCOUNT}
+
+# --- And the dashboard is back to having one account ---------------------------------------------
+# The row appeared when the second account was created; retiring it takes the row away again, by the
+# same rule (HIDE_SINGLE_ACCOUNT) that withheld it on day zero. The premise for the absence is the
+# component that follows it: the cards pager sits at position 5 and the accounts row at position 4,
+# so a visible pager means the row was laid out and is genuinely missing rather than below the fold.
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_credit_cards_pager"
+- assertNotVisible:
+    id: "dashboard_component_accounts_overview"
+
+# The adjustment left the ledger too: $375.00 earned, $249.50 written off, and the $125.50 the
+# transfer had already moved to safety is all that is left.
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]125[.,]50"

@@ -205,6 +205,7 @@ private fun DetailContent(
         if (accountUi.adjustment.value != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_adjustments),
+                amountTestTag = "account_adjustment_amount",
                 amount = accountUi.adjustment,
                 color = Adjustment,
             )

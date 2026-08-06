@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,6 +67,7 @@ fun InstallmentCounter(
                     }
                 },
                 enabled = canDecrease,
+                modifier = Modifier.testTag("installment_counter_decrease"),
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
@@ -77,6 +79,7 @@ fun InstallmentCounter(
 
             Text(
                 text = state.format(formatter),
+                modifier = Modifier.testTag("installment_counter_label"),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = colorScheme.primary
@@ -86,6 +89,7 @@ fun InstallmentCounter(
                 onClick = {
                     onInstallmentsChange(state.count + 1)
                 },
+                modifier = Modifier.testTag("installment_counter_increase"),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,

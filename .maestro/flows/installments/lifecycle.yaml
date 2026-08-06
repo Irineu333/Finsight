@@ -1,0 +1,374 @@
+appId: com.neoutils.finsight
+name: installments_lifecycle
+tags:
+  - installments
+  - creditcards
+  - ledger
+env:
+  CARD_NAME: "E2E Card"
+  CARD_LIMIT_DIGITS: "700000"
+  CARD_CLOSING_DAY: "10"
+  CARD_DUE_DAY: "20"
+  SPEND_TITLE: "E2E Sofa"
+  SPEND_DIGITS: "96000"
+---
+# One purchase, three invoices, one command to undo it. A $960.00 sofa in three, on a card with
+# $7,000.00 of limit: each invoice owes $320.00 — one instalment — while the limit falls by the
+# whole $960.00. That pair is the claim the flow exists for: paying in instalments does not spend
+# everything on one invoice, it commits the whole limit and spreads the debt.
+#
+# The card is created inside this flow rather than inherited, because an instalment is refused if
+# any invoice in its span is already closed, and a card created here has three open ones.
+#
+# No clock offset anywhere: the add-instalment sheet validates its date against the system clock
+# rather than the injected one, so under an offset the date it pre-fills reads as future and Save
+# never enables. That is an app bug of its own; closing and paying an invoice with instalments on it
+# is the second flow to write once it is fixed.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Nothing is being paid in instalments --------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: installments
+- extendedWaitUntil:
+    visible:
+      id: "installments_empty_state"
+    timeout: 15000
+- assertNotVisible:
+    id: "installment_card"
+- assertVisible:
+    id: "installments_add"
+
+# --- I have a card to pay with -------------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- tapOn:
+    id: "credit_cards_add"
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_form_name"
+    timeout: 15000
+- tapOn:
+    id: "credit_card_form_name"
+- waitForAnimationToEnd
+- inputText: ${CARD_NAME}
+- assertVisible:
+    id: "credit_card_form_name"
+    text: ${CARD_NAME}
+- hideKeyboard
+- tapOn:
+    id: "credit_card_form_limit"
+- waitForAnimationToEnd
+- inputText: ${CARD_LIMIT_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "credit_card_form_closing_day"
+- waitForAnimationToEnd
+- inputText: ${CARD_CLOSING_DAY}
+- hideKeyboard
+- tapOn:
+    id: "credit_card_form_due_day"
+- waitForAnimationToEnd
+- inputText: ${CARD_DUE_DAY}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "credit_card_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "credit_card_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "credit_card_form_name"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_card"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]7[.,]000[.,]00"
+
+# --- I buy a sofa in three -----------------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: installments
+- extendedWaitUntil:
+    visible:
+      id: "installments_empty_state"
+    timeout: 15000
+- tapOn:
+    id: "installments_add"
+
+# The sheet resolves its card and its first invoice asynchronously; waiting for the card's name is
+# what makes the two assertions below measure rules rather than loading.
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 15000
+- assertVisible:
+    id: "add_installment_save"
+    enabled: false
+# Two is the floor, and the screen says so rather than failing on submit: there is no such thing as
+# paying in one instalment.
+- assertVisible:
+    id: "installment_counter_decrease"
+    enabled: false
+
+- tapOn:
+    id: "add_installment_title"
+- waitForAnimationToEnd
+- inputText: ${SPEND_TITLE}
+- assertVisible:
+    id: "add_installment_title"
+    text: ${SPEND_TITLE}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "add_installment_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_installment_amount"
+- waitForAnimationToEnd
+- inputText: ${SPEND_DIGITS}
+- assertVisible:
+    id: "add_installment_amount"
+    text: "[$]960[.,]00"
+- hideKeyboard
+
+# The counter divides on screen, before anything is written: two of $480.00, then three of $320.00.
+- assertVisible:
+    id: "installment_counter_label"
+    text: "2x.*480[.,]00"
+- tapOn:
+    id: "installment_counter_increase"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "installment_counter_label"
+    text: "3x.*320[.,]00"
+- assertVisible:
+    id: "installment_counter_decrease"
+    enabled: true
+- assertVisible:
+    id: "add_installment_save"
+    enabled: true
+
+- scrollUntilVisible:
+    element:
+      id: "add_installment_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_installment_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_installment_amount"
+    timeout: 15000
+
+# --- One decision, three transactions ------------------------------------------------------------
+# `totalAmount` and `remaining` both read $960.00 on purpose: nothing has been paid yet, so what is
+# left is the whole of it.
+- extendedWaitUntil:
+    visible:
+      id: "installment_card"
+    timeout: 15000
+- assertNotVisible:
+    id: "installments_empty_state"
+- assertVisible:
+    id: "installment_status"
+    text: "Active"
+- assertVisible:
+    id: "installment_total_amount"
+    text: "[$]960[.,]00"
+- assertVisible:
+    id: "installment_current_number"
+    text: "01"
+- assertVisible:
+    id: "installment_remaining_amount"
+    text: "[$]960[.,]00"
+# Deletion is offered while every invoice in the span still accepts a change.
+- assertVisible:
+    id: "installment_delete"
+
+# The three rows, each carrying its position in the series.
+- assertVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 1/3"
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]320[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "transaction_card_title"
+      text: "${SPEND_TITLE} . 3/3"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+
+# --- The claim: one instalment owed, the whole purchase committed --------------------------------
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]320[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]6[.,]040[.,]00"
+
+# --- Each invoice carries exactly one instalment --------------------------------------------------
+- tapOn:
+    id: "credit_card_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_invoice_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_expenses_amount"
+    text: "[-][$]320[.,]00"
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]320[.,]00"
+- assertVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 1/3"
+
+# The next invoice is the page to the right, so the gesture travels leftwards — and starts away from
+# the right edge, which the system would read as a back gesture instead of a page turn.
+- swipe:
+    start: "75%, 30%"
+    end: "20%, 30%"
+    duration: 500
+- extendedWaitUntil:
+    visible:
+      id: "transaction_card_title"
+      text: "${SPEND_TITLE} . 2/3"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]320[.,]00"
+
+# --- The dashboard: debt, not cash, and only this month's part of it -----------------------------
+- back
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]0[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_credit_card"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_expenses_amount"
+    text: "[$]320[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_credit_cards_pager"
+    direction: UP
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_invoice_amount"
+    text: "[$]320[.,]00"
+
+# The month's list holds this month's instalment, and only it — the other two belong to months that
+# have not arrived.
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 1/3"
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]320[.,]00"
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: "${SPEND_TITLE} . 2/3"
+
+# --- I undo the purchase -------------------------------------------------------------------------
+# Created as one thing and undone as one thing: three transactions, across three invoices, removed
+# by a single command.
+- tapOn:
+    id: "nav_item_dashboard"
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: installments
+- extendedWaitUntil:
+    visible:
+      id: "installment_delete"
+    timeout: 15000
+- tapOn:
+    id: "installment_delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete_installment_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_installment_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "installments_empty_state"
+    timeout: 15000
+- assertNotVisible:
+    id: "installment_card"
+
+# ...and nothing of it is left: the invoice owes nothing and the whole limit is back.
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]7[.,]000[.,]00"
+
+- back
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertNotVisible:
+    id: "transaction_card_title"

@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -112,7 +113,9 @@ class AddInstallmentModal : ModalBottomSheet() {
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_title"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -176,7 +179,9 @@ class AddInstallmentModal : ModalBottomSheet() {
                     },
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_amount"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -239,7 +244,9 @@ class AddInstallmentModal : ModalBottomSheet() {
                             && uiState.invoiceSelection != null
                             && !uiState.isInvoiceBlocked
                             && installments > 1,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_save"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(

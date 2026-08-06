@@ -67,6 +67,15 @@ env:
     id: "account_balance_amount"
     text: "[$]0[.,]00"
 
+# An account with nothing on it can simply be deleted, and the screen says so. Which of delete and
+# archive is offered is `retireActionOf(hasMovement)`, and this is its `false` branch.
+- assertVisible:
+    id: "account_retire_label"
+    text: "Delete"
+- assertVisible:
+    id: "account_retire"
+    enabled: true
+
 # ...and the dashboard now has something to say about accounts. Reaching the section scrolled the
 # dashboard down, so this scrolls back before asserting — otherwise the row would be missing only
 # because the viewport moved.
@@ -153,6 +162,15 @@ env:
     text: "[$]375[.,]00"
 - assertVisible: ${INCOME_TITLE}
 
+# ...and now that it has history, deleting it is no longer on the table — the same button offers
+# archiving instead, which is what keeps the history from being destroyed by a stray tap.
+- assertVisible:
+    id: "account_retire_label"
+    text: "Archive"
+- assertNotVisible:
+    id: "account_retire_label"
+    text: "Delete"
+
 # --- I move some of it to the wallet -------------------------------------------------------------
 # Opened from the account in view, so it is the source; the destination is picked by name.
 - tapOn:
@@ -201,6 +219,12 @@ env:
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]125[.,]50"
+
+# The seeded account is the default one, and the default cannot be retired at all. The screen still
+# shows the action — disabled — rather than hiding it, so the refusal is visible instead of puzzling.
+- assertVisible:
+    id: "account_retire"
+    enabled: false
 
 # --- And the whole is unchanged ------------------------------------------------------------------
 # Nothing entered or left the ledger, so net worth is exactly the income. A transfer that moved the

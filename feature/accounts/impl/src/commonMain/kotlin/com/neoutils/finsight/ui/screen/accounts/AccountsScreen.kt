@@ -493,6 +493,7 @@ private fun AccountActions(
                 icon = retireOffer.action.icon,
                 contentColor = Expense,
                 enabled = retireOffer is AccountRetireOffer.Retire,
+                labelTestTag = "account_retire_label",
                 onClick = {
                     modalManager.show(
                         when (retireOffer.action) {
@@ -501,7 +502,9 @@ private fun AccountActions(
                         }
                     )
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("account_retire"),
             )
 
             OutlinedActionButton(

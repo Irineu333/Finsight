@@ -120,6 +120,11 @@ tag can never drift from the destination it names.
 Tag what a flow needs to touch, when it needs it. A tag with no flow behind it is dead weight that
 still has to be kept correct.
 
+A flow that already walks through two states should assert both. What the UI *offers* is as much a
+rule as what it computes — an account with no history offers Delete and one with history offers
+Archive — and a flow standing on both sides of that change gets the assertion nearly free. Look for
+those before writing a second flow to reach the same place.
+
 ## Writing a flow
 
 Start from a known state. `subflows/launch_fresh.yaml` clears app data and waits for the shell, so

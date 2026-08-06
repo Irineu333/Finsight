@@ -29,8 +29,8 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) 
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~20 minutos** para 9 fluxos. Os dois de fumaça somam
-menos de 20 segundos; os sete de jornada custam de 2m20 a 4m **cada um**. Isso é o orçamento (§6), e é
+**O custo, com números.** A suíte inteira leva **~21 minutos** para 10 fluxos. Os dois de fumaça somam
+menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
 
@@ -47,8 +47,11 @@ scripts/e2e.sh .maestro/flows/smoke   # uma pasta, ou um único .yaml
 ```
 
 Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e de um emulador ligado
-ou aparelho conectado. A suíte instala o APK de debug — o de release não serve, porque o relógio
-móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug.
+ou aparelho conectado. A suíte instala o APK de debug — o de release não serve, e por dois motivos:
+o relógio móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug, e o suporte só é
+testável porque o build de debug o responde da memória em vez do Firestore
+(`InMemorySupportRepository`, no source set de debug do app). Esse armazenamento morre com o
+processo, então `support/lifecycle` é o único fluxo que **não pode** relançar o app.
 
 No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou quando um pull
 request recebe o label `e2e`.
@@ -129,6 +132,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
+| `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
 
 **Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
 `bottom_navigation_bar`. Itens de navegação derivam o seu da rota — `NavDestination.name` transforma
@@ -324,11 +328,18 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~20 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~21 minutos e 10 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
 
-O teto subiu uma vez, de ~16 para ~20, e a justificativa fica registrada porque é ela que autoriza
+O teto subiu de ~20 para ~21 com `support/lifecycle`, e é o fluxo mais barato da suíte fora os de
+fumaça: **1m06 e 1m12** em duas medições. Entrou porque suporte era a última feature sem nenhuma travessia — e era
+intestável até o build de debug passar a responder suporte da memória
+(`InMemorySupportRepository`), no lugar do Firestore, que exigiria rede, credenciais e um projeto
+de verdade. Nada sai em troca: um minuto pela única jornada que ninguém cobria é o melhor preço da
+suíte inteira.
+
+O teto subiu antes disso, de ~16 para ~20, e a justificativa fica registrada porque é ela que autoriza
 a próxima recusa. Duas coisas entraram: a **edição de transação**, que era o único comando
 corretivo do app sem nenhuma travessia — o botão sequer tinha `testTag`, então nenhum fluxo
 conseguia alcançá-lo; e **`report/lifecycle`**, que recolheu as pernas de relatório espalhadas por

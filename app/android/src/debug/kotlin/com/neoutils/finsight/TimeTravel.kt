@@ -2,7 +2,6 @@ package com.neoutils.finsight
 
 import android.app.Activity
 import android.util.Log
-import com.neoutils.finsight.util.ShiftableClock
 import org.koin.core.context.GlobalContext
 import kotlin.time.Duration.Companion.days
 

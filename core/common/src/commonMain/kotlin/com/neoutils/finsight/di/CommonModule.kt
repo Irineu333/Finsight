@@ -4,7 +4,6 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.util.DebounceManager
-import com.neoutils.finsight.util.ShiftableClock
 import com.russhwolf.settings.Settings
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -15,9 +14,8 @@ val commonModule = module {
     single { CurrencyFormatter() }
     factory { DebounceManager(delayMillis = 500L) }
 
-    // One clock, bound twice: everything that reads the time asks for `Clock` and cannot move it;
-    // only whoever resolves the concrete type can. That is the debug-only reader of the launch
-    // argument, and nothing else in the app.
-    single { ShiftableClock() }
-    single<Clock> { get<ShiftableClock>() }
+    // The app reads the time from here rather than from `Clock.System` at each call site, so that
+    // a build which needs to move it — only a debug one does, to reach behaviour that requires
+    // time to have passed — can bind another clock over this one. This module ships the real one.
+    single<Clock> { Clock.System }
 }

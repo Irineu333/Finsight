@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -208,6 +209,7 @@ class EditTransactionModal(
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
+                            .testTag("edit_transaction_account")
                     )
                 }
 
@@ -255,7 +257,9 @@ class EditTransactionModal(
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_transaction_amount"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -310,7 +314,9 @@ class EditTransactionModal(
                         )
                     },
                     enabled = form.isValid(currentDate) && !uiState.isInvoiceBlocked,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_transaction_save"),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(

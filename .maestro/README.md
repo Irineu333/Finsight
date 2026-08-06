@@ -103,9 +103,9 @@ $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são três: `launch_fresh` (estado inicial), `open_section`
+ser executado como teste próprio. Hoje são cinco: `launch_fresh` (estado inicial), `open_section`
 (chegar a uma seção pela grade de ações rápidas), `record_transaction` e
-`record_categorized_expense` (lançar).
+`record_categorized_expense` (lançar) e `create_account` (abrir uma conta).
 
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
 então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
@@ -115,7 +115,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `smoke/launch` | o app sobe e publica seu chrome |
 | `dashboard/initial_state` | o que o dia zero mostra e — tanto quanto — o que ele retém |
 | `accounts/default_account` | um app de primeira execução nunca fica sem conta |
-| `ledger/fund_spend_report_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta |
+| `ledger/fund_spend_report_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |

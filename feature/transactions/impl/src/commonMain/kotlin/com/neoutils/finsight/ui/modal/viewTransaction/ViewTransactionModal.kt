@@ -205,7 +205,8 @@ class ViewTransactionModal(
             DetailRow(
                 label = stringResource(Res.string.view_transaction_amount_label),
                 value = formatter.format(uiState.amount),
-                valueColor = uiState.transactionColor()
+                valueColor = uiState.transactionColor(),
+                valueTestTag = "view_transaction_amount"
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -430,7 +431,9 @@ class ViewTransactionModal(
                     onClick = {
                         manager.show(EditTransactionModal(uiState.transaction))
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("view_transaction_edit"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Info,
@@ -461,6 +464,7 @@ class ViewTransactionModal(
         value: String,
         modifier: Modifier = Modifier,
         valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -490,7 +494,8 @@ class ViewTransactionModal(
                     text = value,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = valueColor
+                    color = valueColor,
+                    modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier
                 )
             }
         }

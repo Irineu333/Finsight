@@ -7,14 +7,17 @@ env:
   INCOME_DIGITS: "50000"
   EXPENSE_TITLE: "E2E Coffee"
   EXPENSE_DIGITS: "4290"
+  SAVINGS_ACCOUNT: "E2E Savings"
+  CORRECTED_DIGITS: "6835"
 ---
-# One story, told once: a US user installs the app, is paid, spends, checks the report, and undoes
-# the spend. It is a single flow because `launch_fresh` wipes the database — split in two, the
-# second half would have to re-earn the money before it could spend it.
+# One story, told once: a US user installs the app, is paid, spends, checks the report, corrects the
+# spend, and undoes it. It is a single flow because `launch_fresh` wipes the database — split in
+# two, the second half would have to re-earn the money before it could spend it.
 #
 # Every figure is asserted on the node that renders it (`id` + `text` in one selector), so a pass
 # means "this number is here", not "this number is somewhere on screen". The amounts — 500.00 and
-# 42.90, leaving 457.10 — share no digits, so no assertion can succeed by matching a neighbour.
+# 42.90 leaving 457.10, then 68.35 leaving 431.65 — end in five distinct pairs of cents, so no
+# assertion can succeed by matching a neighbour.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -190,7 +193,7 @@ env:
     id: "report_balance_amount"
     text: "[$]457[.,]10"
 
-# --- I undo the spend ----------------------------------------------------------------------------
+# --- I open a second account ---------------------------------------------------------------------
 # Two steps out of the report: the viewer, then the configuration screen that opened it.
 - back
 - back
@@ -198,6 +201,146 @@ env:
     visible:
       id: "bottom_navigation_bar"
     timeout: 15000
+# It exists only to be the destination of the correction below — a corrected amount alone would not
+# distinguish "the ledger rewrote the entry" from "the ledger wrote a second one". Created here,
+# after every single-account assertion above, because the accounts screen is a pager and a second
+# page makes `account_balance_amount` ambiguous.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_account.yaml
+    env:
+      NAME: ${SAVINGS_ACCOUNT}
+- back
+
+# --- I got the coffee wrong: it was $68.35, and I paid it from savings ---------------------------
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- tapOn:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_edit"
+    timeout: 15000
+# The detail sheet shows what the ledger holds, not what was typed into the form an hour ago.
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[-]?[$]42[.,]90"
+- tapOn:
+    id: "view_transaction_edit"
+- extendedWaitUntil:
+    visible:
+      id: "edit_transaction_amount"
+    timeout: 15000
+# The form reopens over the stored figure. Nothing else in the suite proves this: every other form
+# is filled from empty, so a form that silently opened blank would still pass everywhere else.
+- assertVisible:
+    id: "edit_transaction_amount"
+    text: ".*42[.,]90.*"
+
+- tapOn:
+    id: "edit_transaction_amount"
+- waitForAnimationToEnd
+- eraseText: 20
+- inputText: ${CORRECTED_DIGITS}
+- assertVisible:
+    id: "edit_transaction_amount"
+    text: ".*68[.,]35.*"
+- hideKeyboard
+
+# Picked by name, the way the transfer modal picks its destination.
+- tapOn:
+    id: "edit_transaction_account"
+- extendedWaitUntil:
+    visible: ${SAVINGS_ACCOUNT}
+    timeout: 10000
+- tapOn: ${SAVINGS_ACCOUNT}
+
+- scrollUntilVisible:
+    element:
+      id: "edit_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "edit_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "edit_transaction_save"
+    timeout: 15000
+
+# --- Both accounts count the same money ----------------------------------------------------------
+# Saving returns to the detail sheet, which re-reads the transaction rather than echoing the form.
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_amount"
+    timeout: 15000
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[-]?[$]68[.,]35"
+# The sheet is its own composition root: while it is up, it is the whole hierarchy Maestro sees, so
+# the list underneath cannot be asserted until it is dismissed.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]68[.,]35"
+
+# 500.00 − 68.35 = 431.65. An edit is two corrections at once, and the second is the one an
+# append-only bug would get wrong: Wallet has to be made whole, not merely charged less.
+- tapOn:
+    id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]431[.,]65"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]68[.,]35"
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]500[.,]00"
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- extendedWaitUntil:
+    visible: ${SAVINGS_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[-][$]68[.,]35"
+
+# --- I undo the spend ----------------------------------------------------------------------------
+- back
 - tapOn:
     id: "nav_item_transactions"
 - extendedWaitUntil:

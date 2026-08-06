@@ -656,6 +656,25 @@ env:
     text: "[$]0[.,]00"
 - assertVisible: ${SPEND_TITLE}
 
+# ...and it is settled, so it is no longer the user's to change. A paid invoice withdraws both
+# offers at once; the sheet is asserted open on its own figure first, so the two absences below are
+# read against a sheet that composed, not against one that never opened.
+- tapOn:
+    id: "transaction_card_title"
+    text: ${SPEND_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_amount"
+    timeout: 15000
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[-]?[$]120[.,]00"
+- assertNotVisible:
+    id: "view_transaction_edit"
+- assertNotVisible:
+    id: "view_transaction_delete"
+- back
+
 # --- The dashboard, in the month the jump landed on ----------------------------------------------
 # The month turned, so the card row speaks of this month alone: the $33.00 just spent, and nothing
 # paid. The settlement is not missing — it is dated at the invoice's due date, the month before,

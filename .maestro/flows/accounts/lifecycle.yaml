@@ -36,26 +36,10 @@ env:
       id: "screen_accounts"
     timeout: 15000
 
-- tapOn:
-    id: "accounts_add"
-- extendedWaitUntil:
-    visible:
-      id: "account_form_name"
-    timeout: 15000
-- tapOn:
-    id: "account_form_name"
-- waitForAnimationToEnd
-- inputText: ${NEW_ACCOUNT}
-- assertVisible:
-    id: "account_form_name"
-    text: ${NEW_ACCOUNT}
-- hideKeyboard
-- tapOn:
-    id: "account_form_save"
-- extendedWaitUntil:
-    notVisible:
-      id: "account_form_name"
-    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_account.yaml
+    env:
+      NAME: ${NEW_ACCOUNT}
 
 # ...and I can reach it. The accounts screen is a pager: one account at a time, swiped horizontally,
 # and the summary figures on screen always belong to the one in view.

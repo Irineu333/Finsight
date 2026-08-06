@@ -66,48 +66,17 @@ tags:
 - assertNotVisible:
     id: "dashboard_component_recents"
 
-# --- Every feature is one tap away ---------------------------------------------------------------
-# The grid is the catalog's projection: every destination that is not a bottom-bar tab, minus those
-# marked hidden — and nothing is hidden by default. So all eight are here, asserted in catalog order,
-# which is the order the grid promises to preserve.
+# --- The grid reaches the end of the catalog ------------------------------------------------------
+# One destination, not eight, and the last one: reaching Support means the grid composed every entry
+# before it. Which entries those are, and in what order, is `AppNavCatalogTest` — a property of a
+# list, checked where checking it is exact.
 #
-# Scrolled to one at a time because the grid runs past the fold; asserting them from the top would
-# only prove the first one composed. This runs last: it moves the viewport for good.
-- scrollUntilVisible:
-    element:
-      id: "nav_item_budgets"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_categories"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_creditCards"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_accounts"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_recurring"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_report"
-    direction: DOWN
-    timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: "nav_item_installments"
-    direction: DOWN
-    timeout: 20000
+# This flow used to walk all eight and claim in a comment that it asserted them "in catalog order".
+# It did not: `scrollUntilVisible` finds an element wherever it happens to be, so the eight steps
+# proved presence and nothing about sequence. The comment was the only thing asserting order.
+#
+# This runs last: it moves the viewport for good, and every absence above depends on it not having
+# moved yet.
 - scrollUntilVisible:
     element:
       id: "nav_item_support"

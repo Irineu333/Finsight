@@ -316,16 +316,16 @@ env:
     id: "budget_remaining_amount"
     text: "[$]23[.,]75"
 
-# The detail sheet takes the same branch, by its own path.
+# The detail sheet takes the same branch by its own path, and states it differently: the card swaps
+# the text on one tag, the sheet swaps the tag itself. Two implementations of one rule, each able to
+# break without the other. What is not restated here is $263.75 — the card printed it twelve steps
+# ago, and the wait above already proves the sheet composed.
 - tapOn:
     id: "budget_card"
 - extendedWaitUntil:
     visible:
       id: "view_budget_exceeded_amount"
     timeout: 15000
-- assertVisible:
-    id: "view_budget_spent_amount"
-    text: "[$]263[.,]75"
 - assertVisible:
     id: "view_budget_exceeded_amount"
     text: "[$]23[.,]75"

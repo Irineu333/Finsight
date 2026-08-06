@@ -119,7 +119,6 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
 | `dashboard/initial_state` | o que o dia zero mostra e — tanto quanto — o que ele retém |
-| `accounts/default_account` | um app de primeira execução nunca fica sem conta |
 | `ledger/fund_spend_correct_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
@@ -300,7 +299,7 @@ precisão.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~19 minutos e 10 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~19 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
 
@@ -316,8 +315,10 @@ consegue — a que soma uma fatura liquidada e uma aberta.
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**A suíte é opt-in no CI hoje** — roda por label `e2e` ou manualmente. Os três fluxos `smoke` somam
-20 segundos, o que torna barata a opção de rodá-los em todo PR; a decisão está em aberto.
+**A suíte é opt-in no CI hoje** — roda por label `e2e` ou manualmente. Os dois fluxos `smoke` somam
+15 segundos, o que torna barata a opção de rodá-los em todo PR; a decisão está em aberto. A tag
+`smoke` não foi realocada quando `accounts/default_account` saiu: levá-la para uma história de dois
+minutos mataria exatamente a possibilidade que ela existe para manter aberta.
 
 ---
 

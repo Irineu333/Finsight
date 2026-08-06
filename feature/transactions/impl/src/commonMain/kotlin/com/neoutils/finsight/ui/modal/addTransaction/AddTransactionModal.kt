@@ -149,6 +149,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
+                        .testTag("add_transaction_target")
                 )
             }
 
@@ -165,6 +166,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
+                        .testTag("add_transaction_credit_card")
                 )
             }
 

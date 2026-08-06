@@ -17,9 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.target_selector_account
 import com.neoutils.finsight.resources.target_selector_credit_card
@@ -62,7 +64,11 @@ fun TargetSelector(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            // The menu is its own popup window, and the app window's opt-in does not reach it.
+            // Its options are copy — "Account", "Credit card" — so reaching one by label would be
+            // reaching it by a string that translation reworks; a tag is what survives that.
+            modifier = Modifier.exposeTestTags(),
         ) {
             availableTargets.forEach { target ->
                 DropdownMenuItem(
@@ -78,7 +84,13 @@ fun TargetSelector(
                     onClick = {
                         onTargetSelected(target)
                         expanded = false
-                    }
+                    },
+                    modifier = Modifier.testTag(
+                        when (target) {
+                            TransactionTarget.ACCOUNT -> "target_option_account"
+                            TransactionTarget.CREDIT_CARD -> "target_option_credit_card"
+                        }
+                    ),
                 )
             }
         }

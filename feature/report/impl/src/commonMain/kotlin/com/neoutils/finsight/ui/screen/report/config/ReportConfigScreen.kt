@@ -179,6 +179,7 @@ private fun ReportConfigContent(
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                             colors = segmentedButtonColors,
                             icon = {},
+                            modifier = Modifier.testTag("report_perspective_credit_card"),
                         ) {
                             Text(stringResource(Res.string.report_config_perspective_credit_card))
                         }

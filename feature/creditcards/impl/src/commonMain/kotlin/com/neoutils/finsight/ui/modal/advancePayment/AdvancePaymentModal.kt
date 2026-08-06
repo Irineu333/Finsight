@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -102,7 +103,9 @@ class AdvancePaymentModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("advance_payment_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -113,7 +116,9 @@ class AdvancePaymentModal(
                 onAccountSelected = {
                     viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("advance_payment_account")
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +186,9 @@ class AdvancePaymentModal(
                         currentBillAmount
                     }.coerceAtLeast(0.0),
                 ) && uiState.selectedAccount != null,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("advance_payment_confirm"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

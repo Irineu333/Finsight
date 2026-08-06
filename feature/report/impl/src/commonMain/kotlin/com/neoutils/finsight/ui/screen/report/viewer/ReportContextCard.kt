@@ -203,6 +203,7 @@ internal fun ReportContextCard(
                         )
                         Text(
                             text = formatter.format(stats.expense),
+                            modifier = Modifier.testTag("report_invoice_expenses_amount"),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = Expense,
@@ -222,6 +223,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.total),
+                                modifier = Modifier.testTag("report_invoice_total_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (stats.total.value >= 0) Expense else Income,
@@ -239,6 +241,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.advancePayment),
+                                modifier = Modifier.testTag("report_advance_payment_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Income,

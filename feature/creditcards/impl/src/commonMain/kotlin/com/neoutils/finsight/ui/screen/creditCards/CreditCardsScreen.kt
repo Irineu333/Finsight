@@ -33,6 +33,7 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -144,12 +145,14 @@ private fun CreditCardsContent(
                 ),
             )
         },
+        modifier = Modifier.testTag("screen_credit_cards"),
         floatingActionButton = {
             if (uiState is CreditCardsUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(CreditCardFormModal())
                     },
+                    modifier = Modifier.testTag("credit_cards_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -340,7 +343,11 @@ private fun EmptyCreditCardsState(
 
             Button(
                 onClick = onCreateCreditCard,
-                modifier = Modifier.fillMaxWidth(),
+                // The same command as the FAB, which this state replaces: the two never stand
+                // together, so naming both is naming one thing — "create a card".
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("credit_cards_add"),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
@@ -439,11 +446,13 @@ private fun CreditCardPager(
             // contentPadding would be lifted to the overlay and lose its clip.
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("credit_card_card")
                 .then(
                     if (page == selectedIndex) {
                         Modifier.creditCardSharedElement(creditCards[page].cardId)
                     } else Modifier
                 ),
+            testTagPrefix = "credit_card",
             variant = CreditCardCardVariant.Listing(
                 onClick = { onCardClick(creditCards[page]) },
                 onEditInvoice = onEditInvoice,
@@ -542,7 +551,9 @@ private fun CardActions(
                             )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_advance_payment"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.primary

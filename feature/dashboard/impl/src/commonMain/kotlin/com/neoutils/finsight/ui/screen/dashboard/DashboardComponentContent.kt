@@ -507,12 +507,14 @@ private fun DashboardCreditCardBalanceSection(
             balance = component.payment,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.InvoicePayment,
+            amountTestTag = "dashboard_credit_card_payment_amount",
         )
 
         BalanceCard(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.CreditCardExpense,
+            amountTestTag = "dashboard_credit_card_expenses_amount",
         )
     }
 }
@@ -584,6 +586,7 @@ private fun DashboardCreditCardsSection(
                         dueDay = creditCardUi.dueDay,
                         limit = creditCardUi.limit,
                         invoiceUi = creditCardUi.invoiceUi,
+                        testTagPrefix = "dashboard_credit_card",
                         // Only the current page is promoted: a neighbour composed by the pager's
                         // contentPadding would be lifted to the overlay and lose its clip.
                         modifier = Modifier

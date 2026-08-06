@@ -240,7 +240,10 @@ class AddInstallmentModal : ModalBottomSheet() {
                             )
                         )
                     },
-                    enabled = form.isValid()
+                    // Against the clock the app was given, like the other transaction sheets:
+                    // the date field above was pre-filled from it, so validating against the
+                    // system's would read that very date as future and never enable the submit.
+                    enabled = form.isValid(currentDate)
                             && uiState.invoiceSelection != null
                             && !uiState.isInvoiceBlocked
                             && installments > 1,

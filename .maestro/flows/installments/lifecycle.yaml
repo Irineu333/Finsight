@@ -20,12 +20,21 @@ env:
 # The card is created inside this flow rather than inherited, because an instalment is refused if
 # any invoice in its span is already closed, and a card created here has three open ones.
 #
-# No clock offset anywhere: the add-instalment sheet validates its date against the system clock
-# rather than the injected one, so under an offset the date it pre-fills reads as future and Save
-# never enables. That is an app bug of its own; closing and paying an invoice with instalments on it
-# is the second flow to write once it is fixed.
+# The whole story runs forty-five days ahead of the real day, and the figures are unchanged by that:
+# a card created under the moved clock opens its invoices relative to it. The jump is here as a
+# regression test, because the sheet validates its date against the clock the app was given — read
+# the system's instead, as it once did, and the date the sheet pre-filled itself reads as future,
+# Save never enables, and nothing below this line can happen.
 
 - runFlow: ../../subflows/launch_fresh.yaml
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: 45
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
 
 # --- Nothing is being paid in instalments --------------------------------------------------------
 - runFlow:

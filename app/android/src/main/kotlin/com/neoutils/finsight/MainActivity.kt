@@ -1,5 +1,6 @@
 package com.neoutils.finsight
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -27,6 +28,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             App()
         }
+    }
+
+    /**
+     * A launch that finds this activity alive delivers its extras here instead of to [onCreate] —
+     * which is what happens whenever the app is relaunched without being stopped first. Reading
+     * them in only one of the two places is how a test-only clock shift goes missing without
+     * anything saying so.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        applyTimeTravel()
     }
 }
 

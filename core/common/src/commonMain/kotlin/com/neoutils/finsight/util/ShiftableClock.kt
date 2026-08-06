@@ -20,9 +20,11 @@ import kotlin.time.Instant
  * The shift is applied, never the absolute date: what a test needs is *later than the state it
  * just created*, and only a relative move keeps that relation whatever day the suite runs on.
  *
- * Who may move it is a build-type question, not a platform one, and it is answered outside this
- * module: the reader of the launch argument lives in `:app:android`'s debug source set, so the
- * release APK does not contain it. Left alone, this reads exactly as `Clock.System` does.
+ * Who may move it is answered outside this module, and by a build type rather than by a platform:
+ * the reader of the launch argument lives in `:app:android`'s debug source set. Only Android has
+ * one today, because that is where the E2E suite runs — the other targets simply never move it,
+ * and would need a channel of their own before they could. Left alone, this reads exactly as
+ * `Clock.System` does.
  */
 class ShiftableClock(
     private val source: Clock = Clock.System,
@@ -33,7 +35,11 @@ class ShiftableClock(
 
     override fun now(): Instant = source.now() + shift
 
-    fun shiftBy(duration: Duration) {
-        shift = duration
+    /**
+     * Sets the distance from the real now — it does not accumulate. `shiftTo(Duration.ZERO)` is
+     * how a caller returns to the present, which is what a relaunch carrying no offset means.
+     */
+    fun shiftTo(offset: Duration) {
+        shift = offset
     }
 }

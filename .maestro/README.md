@@ -1,7 +1,7 @@
 # Testes E2E (Maestro)
 
 ```bash
-scripts/e2e.sh                                   # compila, instala e roda tudo (~16 min)
+scripts/e2e.sh                                   # compila, instala e roda tudo (~23 min)
 scripts/e2e.sh --skip-build                      # reaproveita o APK instalado — o ciclo rápido
 scripts/e2e.sh .maestro/flows/budgets            # uma pasta, ou um único .yaml
 ```
@@ -29,7 +29,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) 
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~21 minutos** para 10 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~23 minutos** para 11 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -125,6 +125,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
 | `dashboard/initial_state` | o que o dia zero mostra e — tanto quanto — o que ele retém |
+| `dashboard/customization` | o dashboard é do usuário: reordenado, esvaziado, repovoado, um componente por vez e configurado — e continua assim depois que o processo morre |
 | `ledger/lifecycle` | duas escritas de naturezas diferentes, somadas e lidas de volta; corrigir uma reescreve as duas pernas, não acrescenta uma terceira; e a figura do dashboard leva à lista já cortada por ela |
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
@@ -328,7 +329,7 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~21 minutos e 10 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~23 minutos e 11 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
 
@@ -338,6 +339,17 @@ intestável até o build de debug passar a responder suporte da memória
 (`InMemorySupportRepository`), no lugar do Firestore, que exigiria rede, credenciais e um projeto
 de verdade. Nada sai em troca: um minuto pela única jornada que ninguém cobria é o melhor preço da
 suíte inteira.
+
+E subiu de novo, de ~21 para ~23, com `dashboard/customization` (**1m42**). O que ele compra é o
+único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um**
+componente também — os comandos em massa movem os onze ou nenhum. Nenhuma outra camada monta o
+editor e a tela que lê o resultado, e todo o resto da suíte lê um dashboard que ninguém nunca
+rearranjou. O `initial_state` continua dono do dia zero — são claims diferentes, e os dois juntos
+custam 1m52.
+
+A aritmética por trás do arrasto **não** está aqui: `DashboardEditLayout.move` foi extraída do
+ViewModel e tem sua própria matriz unitária (`DashboardEditLayoutTest`, 12 casos). O E2E prova uma
+vez que o gesto chega nela; as cinco ramificações custam milissegundos onde estão.
 
 O teto subiu antes disso, de ~16 para ~20, e a justificativa fica registrada porque é ela que autoriza
 a próxima recusa. Duas coisas entraram: a **edição de transação**, que era o único comando

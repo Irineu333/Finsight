@@ -128,7 +128,9 @@ internal fun DashboardEmptyContent(
 
             Button(
                 onClick = { onAction(DashboardAction.EnterEditMode) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("dashboard_empty_edit"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)

@@ -287,12 +287,30 @@ precisão.
 | **Ausência sem premissa** | `assertNotVisible` passa porque o componente está fora da viewport, não porque sumiu | Assere a ausência com um componente *posterior* visível, provando que a região foi composta |
 | **Ausência por texto solto** | `assertNotVisible: "E2E Salary"` passa (ou falha) por causa de outro lugar da tela que renderiza o mesmo nome | Ausência por `id` — e com a figura, quando vários nós compartilham o id |
 | **Oráculo espelhado** | A regra muda, a implementação erra, o fluxo continua verde porque errou igual | Valor literal, conferido por gente |
-| **A grande turnê** | Um fluxo de 120 passos; quando falha no 90, ninguém sabe se o app quebrou ou se a navegação mudou | Uma jornada por fluxo |
+| **A grande turnê** | Um fluxo longo que encadeia assuntos sem relação; quando falha no passo 90, ninguém sabe se o app quebrou ou se a navegação mudou | Uma jornada por fluxo — o teste é o assunto, não a contagem |
 | **Retry analgésico** | A suíte "passa" em três vezes o tempo, e ninguém abre as tentativas descartadas | Instabilidade é bug — do app ou do fluxo |
 | **Cemitério de ignorados** | N fluxos comentados com "flaky, ver depois"; a suíte é verde e não protege nada | Consertar ou apagar |
 | **Espelhar a pirâmide** | Um fluxo para cada regra de validação; a suíte passa de meia hora e ninguém lê o relatório | Combinatória desce de camada (§5.1) |
 | **Ramificação defensiva** | `if` no fluxo ("se aparecer o modal, feche"); ele passa em cenários que ninguém projetou | Estado inicial determinístico |
 | **Screenshot como asserção** | Toda troca de tema gera dezenas de diffs e o time aprova baselines em massa | Captura é artefato de diagnóstico; comparação visual é outra suíte |
+
+**Sobre "a grande turnê", que já foi contada em passos.** Três fluxos passam de 120 e os três são
+uma história só — a decisão está tomada e não é para ser reaberta a cada leitura:
+
+- **`recurring/lifecycle`** (170) — a claim final é *confirmar depois do salto arquiva a ocorrência
+  no mês do relógio do app*, e ela depende de tudo que veio antes: dois recorrentes, um confirmado
+  por valor corrigido, um pulado, um arquivado e reativado. Partir ao meio obrigaria a segunda
+  metade a refazer esse arranjo inteiro.
+- **`creditcards/lifecycle`** (138, era 218) — o ciclo de vida da fatura é indivisível pelo mesmo
+  motivo: fechar exige ter gasto, pagar exige ter fechado, e a fatura seguinte só existe porque a
+  anterior fechou. Encolheu por extração de subflow e pela saída da perna de relatório, não por
+  divisão, e a permanência do ciclo completo é deliberada.
+- **`accounts/lifecycle`** (126) — arquivar **exige** saldo zero, que exige o ajuste, que exige a
+  transferência. O cabeçalho do arquivo diz isso.
+
+O que o antipadrão condena é encadear assuntos sem relação, e o sintoma é o nome precisar de dois
+"e" (§5.2, padrão 8). Um fluxo longo cujo último passo depende do primeiro não é uma turnê; é uma
+história que custa o que custa.
 
 ### 5.4 Antes de abrir o PR
 

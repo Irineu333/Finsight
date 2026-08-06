@@ -51,6 +51,13 @@ if [[ -z "$(adb devices | sed '1d' | grep -w device || true)" ]]; then
         echo "      -n $E2E_AVD -d $E2E_PROFILE -k \"$E2E_IMAGE\"" >&2
         exit 1
     fi
+    # `avdmanager` leaves the keyboard lid open, which is what tips Android into treating the host's
+    # keyboard as a hardware one. Close it before the first boot; it is read at startup.
+    avd_config="$HOME/.android/avd/$E2E_AVD.avd/config.ini"
+    if [[ -f "$avd_config" ]]; then
+        sed -i '' 's/^hw.keyboard.lid *= *yes/hw.keyboard.lid = no/' "$avd_config" 2>/dev/null || true
+    fi
+
     echo "Booting $E2E_AVD..."
     "$ANDROID_SDK/emulator/emulator" -avd "$E2E_AVD" -no-snapshot-load -no-boot-anim >/dev/null 2>&1 &
     until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
@@ -66,11 +73,12 @@ if [[ "$device_api" != "$E2E_API" ]]; then
     exit 1
 fi
 
-# An emulator forwards the host's keyboard, and Android answers a hardware keyboard by hiding the
-# soft IME and putting its physical-keyboard toolbar there instead. Maestro types through the IME,
-# so what it types goes nowhere — the field stays empty, the form silently refuses to submit, and
-# the failure surfaces screens later as a disabled button. Ask for the soft keyboard, every run.
-adb shell settings put secure show_ime_with_hard_keyboard 1 >/dev/null 2>&1 || true
+# The device is a phone with a phone's keyboard: the ordinary on-screen one, and none of the
+# physical-keyboard affordances. Left to itself the emulator drifts into the latter — Gboard puts up
+# a small floating toolbar instead of a keyboard, it overlays whatever sheet is open, and text typed
+# into a field underneath it is simply lost. Both halves of the setting matter: the AVD must not
+# advertise a keyboard lid (below, before boot), and the IME must not be asked to coexist with one.
+adb shell settings put secure show_ime_with_hard_keyboard 0 >/dev/null 2>&1 || true
 
 # While another Maestro session holds the device — Maestro Studio, most often — the CLI skips
 # setting up its driver and then fails on the first command with a bare gRPC error that names

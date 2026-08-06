@@ -60,11 +60,17 @@ decide whether `scrollUntilVisible` finds a field or the run turns red — the a
 put its submit button below the fold on one profile and above it on another. The screen is part of
 the contract.
 
-The runner also asks the device for its soft keyboard on every run
-(`show_ime_with_hard_keyboard`). An emulator forwards the host's keyboard, and Android answers a
-hardware keyboard by hiding the IME behind its physical-keyboard toolbar — Maestro types through the
-IME, so the text goes nowhere and the field stays empty. That failure surfaces screens later as a
-button that will not submit, which is why `record_transaction` reads each field back after typing it.
+It is a phone with a phone's keyboard: the ordinary on-screen one, and none of the
+physical-keyboard affordances. Left alone the emulator drifts into the latter — Gboard replaces the
+keyboard with a small floating toolbar, which overlays whatever sheet is open, and text typed into a
+field beneath it is lost. Two things hold it in place, and both are needed: the AVD must not
+advertise a keyboard lid (`hw.keyboard.lid = no`, read at boot, which `scripts/e2e.sh` sets before
+starting it), and `show_ime_with_hard_keyboard` must stay `0`. Turning that setting *on* sounds like
+asking for a keyboard and does the opposite: it is what invites the toolbar in.
+
+Text still goes missing when a field is typed into before it has focus, which is why
+`record_transaction` reads each field back after typing it — a dropped keystroke fails there rather
+than screens later, as a button that will not submit.
 
 Create it once:
 
@@ -72,6 +78,8 @@ Create it once:
 $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
     -n finsight_e2e -d pixel_6 -k "system-images;android-36;google_apis_playstore;arm64-v8a"
 ```
+
+`scripts/e2e.sh` closes the keyboard lid in its config the first time it boots it.
 
 ## The device speaks English
 

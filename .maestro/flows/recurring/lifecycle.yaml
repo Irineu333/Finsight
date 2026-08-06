@@ -25,10 +25,10 @@ env:
 # and $77.00 is the one that is skipped and comes back. The first two differing is the point — the
 # confirmation may correct the instalment, and correcting it must not rewrite the model.
 #
-# Everything that writes to the ledger happens before the clock jump, deliberately: confirming and
-# skipping read the system clock rather than the injected one, so under an offset they would file
-# the occurrence in the real month and leave the recurring pending in the shifted one. That is an
-# app bug, worth its own fix; this flow stays on the near side of it rather than papering over it.
+# The last act confirms a cycle *after* the clock jump, which is the regression test for it: the
+# confirmation reads the clock the app was given, so the occurrence is filed in the month the app is
+# in. Reading the system clock instead — as it once did — files it in the real month and leaves the
+# recurring pending in the shifted one, which is exactly what the final two assertions catch.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -491,5 +491,53 @@ env:
     id: "dashboard_pending_recurring_amount"
     text: "[$]940[.,]00"
 - assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]77[.,]00"
+
+# --- I pay the rent, in the month the app is now in ----------------------------------------------
+# The confirmation is dated by the clock the app was given, so it settles *this* month's cycle: the
+# rent stops being asked for, and the salary — reactivated a moment ago — is all that is left
+# pending. A confirmation dated by the system clock would file the occurrence in the real month and
+# leave this one still owing, which is what these two assertions exist to catch.
+- tapOn: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "confirm_recurring_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "confirm_recurring_amount"
+    text: "[$]77[.,]00"
+- tapOn:
+    id: "confirm_recurring_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "confirm_recurring_confirm"
+    timeout: 15000
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]788[.,]00"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]77[.,]00"
+- assertVisible:
+    id: "dashboard_pending_expense_amount"
+    text: "[$]0[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_pending_recurring"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_pending_recurring_amount"
+    text: "[$]940[.,]00"
+- assertNotVisible:
     id: "dashboard_pending_recurring_amount"
     text: "[$]77[.,]00"

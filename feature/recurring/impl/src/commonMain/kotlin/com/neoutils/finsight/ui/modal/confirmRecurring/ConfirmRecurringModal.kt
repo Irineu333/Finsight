@@ -38,13 +38,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import com.neoutils.finsight.extension.today
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
 
 class ConfirmRecurringModal(
     private val recurring: Recurring,
@@ -54,6 +55,9 @@ class ConfirmRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
+        // The same clock the ViewModel confirms against — the picker must not offer a date the
+        // confirmation would then clamp.
+        val currentDate = koinInject<Clock>().today()
         val viewModel = koinViewModel<ConfirmRecurringViewModel> {
             parametersOf(recurring, targetDate)
         }

@@ -60,46 +60,13 @@ env:
     visible:
       id: "screen_credit_cards"
     timeout: 15000
-- tapOn:
-    id: "credit_cards_add"
-- extendedWaitUntil:
-    visible:
-      id: "credit_card_form_name"
-    timeout: 15000
-- tapOn:
-    id: "credit_card_form_name"
-- waitForAnimationToEnd
-- inputText: ${CARD_NAME}
-- assertVisible:
-    id: "credit_card_form_name"
-    text: ${CARD_NAME}
-- hideKeyboard
-- tapOn:
-    id: "credit_card_form_limit"
-- waitForAnimationToEnd
-- inputText: ${CARD_LIMIT_DIGITS}
-- hideKeyboard
-- tapOn:
-    id: "credit_card_form_closing_day"
-- waitForAnimationToEnd
-- inputText: ${CARD_CLOSING_DAY}
-- hideKeyboard
-- tapOn:
-    id: "credit_card_form_due_day"
-- waitForAnimationToEnd
-- inputText: ${CARD_DUE_DAY}
-- hideKeyboard
-- scrollUntilVisible:
-    element:
-      id: "credit_card_form_save"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "credit_card_form_save"
-- extendedWaitUntil:
-    notVisible:
-      id: "credit_card_form_name"
-    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_credit_card.yaml
+    env:
+      NAME: ${CARD_NAME}
+      LIMIT: ${CARD_LIMIT_DIGITS}
+      CLOSING_DAY: ${CARD_CLOSING_DAY}
+      DUE_DAY: ${CARD_DUE_DAY}
 - extendedWaitUntil:
     visible:
       id: "credit_card_card"

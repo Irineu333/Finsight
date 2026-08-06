@@ -103,9 +103,14 @@ $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são cinco: `launch_fresh` (estado inicial), `open_section`
-(chegar a uma seção pela grade de ações rápidas), `record_transaction` e
-`record_categorized_expense` (lançar) e `create_account` (abrir uma conta).
+ser executado como teste próprio. Hoje são sete: `launch_fresh` (estado inicial), `open_section`
+(chegar a uma seção pela grade de ações rápidas), `record_transaction`, `record_categorized_expense`
+e `record_card_expense` (lançar), `create_account` e `create_credit_card` (abrir uma conta, abrir um
+cartão).
+
+Um subflow carrega o **arranjo**, nunca a afirmação: quem chama é que diz o que o estado criado
+deve mostrar. É por isso que `create_credit_card` não assere o limite disponível do cartão que
+acabou de criar — dois fluxos criam cartões com limites diferentes, e a afirmação é de cada um.
 
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
 então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
@@ -115,7 +120,8 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `smoke/launch` | o app sobe e publica seu chrome |
 | `dashboard/initial_state` | o que o dia zero mostra e — tanto quanto — o que ele retém |
 | `accounts/default_account` | um app de primeira execução nunca fica sem conta |
-| `ledger/fund_spend_report_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
+| `ledger/fund_spend_correct_delete` | duas escritas de naturezas diferentes, somadas e lidas de volta; e corrigir uma reescreve as duas pernas, não acrescenta uma terceira |
+| `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
@@ -294,9 +300,17 @@ precisão.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~16 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~19 minutos e 10 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
+
+O teto subiu uma vez, de ~16 para ~19, e a justificativa fica registrada porque é ela que autoriza
+a próxima recusa. Duas coisas entraram: a **edição de transação**, que era o único comando
+corretivo do app sem nenhuma travessia — o botão sequer tinha `testTag`, então nenhum fluxo
+conseguia alcançá-lo; e **`report/lifecycle`**, que recolheu as pernas de relatório espalhadas por
+três outras histórias. Essa segunda quase se paga: cinco gerações de relatório viraram três, e o
+que sobrou em `creditcards/lifecycle` é a única que aquela história ganha e nenhuma outra
+consegue — a que soma uma fatura liquidada e uma aberta.
 
 **Instabilidade é bug.** Um fluxo que fica vermelho sem mudança de código entra em investigação no
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a

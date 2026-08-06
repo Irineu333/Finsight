@@ -1,5 +1,5 @@
 appId: com.neoutils.finsight
-name: ledger_fund_spend_report_delete
+name: ledger_fund_spend_correct_delete
 tags:
   - ledger
 env:
@@ -10,9 +10,13 @@ env:
   SAVINGS_ACCOUNT: "E2E Savings"
   CORRECTED_DIGITS: "6835"
 ---
-# One story, told once: a US user installs the app, is paid, spends, checks the report, corrects the
-# spend, and undoes it. It is a single flow because `launch_fresh` wipes the database — split in
-# two, the second half would have to re-earn the money before it could spend it.
+# One story, told once: a US user installs the app, is paid, spends, corrects the spend, and undoes
+# it. It is a single flow because `launch_fresh` wipes the database — split in two, the second half
+# would have to re-earn the money before it could spend it.
+#
+# Reading these same figures back through the report is `report/lifecycle`'s job, not this one's:
+# a report leg here could only re-assert this flow's numbers, which proves the report runs, not
+# that it scopes.
 #
 # Every figure is asserted on the node that renders it (`id` + `text` in one selector), so a pass
 # means "this number is here", not "this number is somewhere on screen". The amounts — 500.00 and
@@ -161,58 +165,11 @@ env:
     id: "account_balance_amount"
     text: "[$]457[.,]10"
 
-# --- I check the report --------------------------------------------------------------------------
-- back
-# Worth its own checkpoint rather than a repeat of the dashboard: the report recomputes the same
-# figures through `CalculateReportStatsUseCase`, a different path to the same truth.
-- runFlow:
-    file: ../../subflows/open_section.yaml
-    env:
-      SECTION: report
-- extendedWaitUntil:
-    visible:
-      id: "report_generate"
-    timeout: 15000
-- tapOn:
-    id: "report_generate"
-
-- extendedWaitUntil:
-    visible:
-      id: "report_balance_amount"
-    timeout: 20000
-- assertVisible:
-    id: "report_opening_balance_amount"
-    text: "[$]0[.,]00"
-- assertVisible:
-    id: "report_income_amount"
-    text: "[+][$]500[.,]00"
-- assertVisible:
-    id: "report_expenses_amount"
-    text: "[-][$]42[.,]90"
-- assertVisible:
-    id: "report_balance_amount"
-    text: "[$]457[.,]10"
-
 # --- I open a second account ---------------------------------------------------------------------
-# Two steps out of the report: the viewer, then the configuration screen that opened it.
-- back
-- back
-- extendedWaitUntil:
-    visible:
-      id: "bottom_navigation_bar"
-    timeout: 15000
 # It exists only to be the destination of the correction below — a corrected amount alone would not
 # distinguish "the ledger rewrote the entry" from "the ledger wrote a second one". Created here,
-# after every single-account assertion above, because the accounts screen is a pager and a second
-# page makes `account_balance_amount` ambiguous.
-- runFlow:
-    file: ../../subflows/open_section.yaml
-    env:
-      SECTION: accounts
-- extendedWaitUntil:
-    visible:
-      id: "screen_accounts"
-    timeout: 15000
+# on the screen this act is already standing on, and after every single-account assertion above,
+# because the accounts screen is a pager and a second page makes `account_balance_amount` ambiguous.
 - runFlow:
     file: ../../subflows/create_account.yaml
     env:

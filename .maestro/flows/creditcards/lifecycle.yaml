@@ -78,53 +78,13 @@ env:
       id: "screen_credit_cards"
     timeout: 15000
 
-- tapOn:
-    id: "credit_cards_add"
-- extendedWaitUntil:
-    visible:
-      id: "credit_card_form_name"
-    timeout: 15000
-
-- tapOn:
-    id: "credit_card_form_name"
-- waitForAnimationToEnd
-- inputText: ${CARD_NAME}
-- assertVisible:
-    id: "credit_card_form_name"
-    text: ${CARD_NAME}
-- hideKeyboard
-
-- tapOn:
-    id: "credit_card_form_limit"
-- waitForAnimationToEnd
-- inputText: ${CARD_LIMIT_DIGITS}
-- hideKeyboard
-
-# Both days are typed, though either alone would do — the form derives the missing one. Typing both
-# keeps the invoice period a fact of this flow rather than of a rule it does not assert.
-- tapOn:
-    id: "credit_card_form_closing_day"
-- waitForAnimationToEnd
-- inputText: ${CARD_CLOSING_DAY}
-- hideKeyboard
-
-- tapOn:
-    id: "credit_card_form_due_day"
-- waitForAnimationToEnd
-- inputText: ${CARD_DUE_DAY}
-- hideKeyboard
-
-- scrollUntilVisible:
-    element:
-      id: "credit_card_form_save"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "credit_card_form_save"
-- extendedWaitUntil:
-    notVisible:
-      id: "credit_card_form_name"
-    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_credit_card.yaml
+    env:
+      NAME: ${CARD_NAME}
+      LIMIT: ${CARD_LIMIT_DIGITS}
+      CLOSING_DAY: ${CARD_CLOSING_DAY}
+      DUE_DAY: ${CARD_DUE_DAY}
 
 # Creating a card opens its first invoice, so the screen has a card with nothing on it: no debt,
 # and the whole limit still available.
@@ -154,68 +114,12 @@ env:
     text: "[$]0[.,]00"
 
 # --- I spend $120.00 on it -----------------------------------------------------------------------
-# Not the shared `record_transaction` subflow: that one records against an account, and the target
-# and card selectors below are the whole point of this leg.
-- tapOn:
-    id: "add_transaction_fab"
-- extendedWaitUntil:
-    visible:
-      id: "add_transaction_title"
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_type_expense"
-- waitForAnimationToEnd
-
-- tapOn:
-    id: "add_transaction_title"
-- waitForAnimationToEnd
-- inputText: ${SPEND_TITLE}
-- assertVisible:
-    id: "add_transaction_title"
-    text: ${SPEND_TITLE}
-- hideKeyboard
-
-# The target is what turns an account expense into a card expense. Its options are copy, so they
-# are reached by tag; the card below is reached by the name this flow typed itself.
-- tapOn:
-    id: "add_transaction_target"
-- extendedWaitUntil:
-    visible:
-      id: "target_option_credit_card"
-    timeout: 10000
-- tapOn:
-    id: "target_option_credit_card"
-- waitForAnimationToEnd
-
-- tapOn:
-    id: "add_transaction_credit_card"
-- extendedWaitUntil:
-    visible: ${CARD_NAME}
-    timeout: 10000
-- tapOn: ${CARD_NAME}
-- waitForAnimationToEnd
-
-- scrollUntilVisible:
-    element:
-      id: "add_transaction_amount"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_amount"
-- waitForAnimationToEnd
-- inputText: ${SPEND_DIGITS}
-- hideKeyboard
-- scrollUntilVisible:
-    element:
-      id: "add_transaction_save"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_save"
-- extendedWaitUntil:
-    notVisible:
-      id: "add_transaction_title"
-    timeout: 15000
+- runFlow:
+    file: ../../subflows/record_card_expense.yaml
+    env:
+      TITLE: ${SPEND_TITLE}
+      AMOUNT: ${SPEND_DIGITS}
+      CARD: ${CARD_NAME}
 
 # --- The dashboard: debt appeared, cash did not move ---------------------------------------------
 # The balance is still the whole income. A card expense that moved it would be a card expense
@@ -372,66 +276,10 @@ env:
     id: "dashboard_credit_card_invoice_amount"
     text: "[$]70[.,]00"
 
-# --- And the report tells both sides of it -------------------------------------------------------
-# The two perspectives read the same two writes from opposite ends: the account paid, the card was
-# paid. Either alone would be half the story.
-- runFlow:
-    file: ../../subflows/open_section.yaml
-    env:
-      SECTION: report
-- extendedWaitUntil:
-    visible:
-      id: "report_generate"
-    timeout: 15000
-
-# The account, which opens selected: it earned $500.00 and $50.00 left it for the card.
-- tapOn:
-    id: "report_generate"
-- extendedWaitUntil:
-    visible:
-      id: "report_balance_amount"
-    timeout: 20000
-- assertVisible:
-    id: "report_opening_balance_amount"
-    text: "[$]0[.,]00"
-- assertVisible:
-    id: "report_income_amount"
-    text: "[+][$]500[.,]00"
-- assertVisible:
-    id: "report_expenses_amount"
-    text: "[-][$]50[.,]00"
-- assertVisible:
-    id: "report_balance_amount"
-    text: "[$]450[.,]00"
-
-# The card, whose open invoice is selected for us: spent $120.00, $50.00 of it already paid,
-# $70.00 still owed.
-- back
-- extendedWaitUntil:
-    visible:
-      id: "report_generate"
-    timeout: 15000
-- tapOn:
-    id: "report_perspective_credit_card"
-- extendedWaitUntil:
-    visible: ${CARD_NAME}
-    timeout: 15000
-- tapOn:
-    id: "report_generate"
-- extendedWaitUntil:
-    visible:
-      id: "report_invoice_total_amount"
-    timeout: 20000
-- assertVisible: ${CARD_NAME}
-- assertVisible:
-    id: "report_invoice_expenses_amount"
-    text: "[-][$]120[.,]00"
-- assertVisible:
-    id: "report_advance_payment_amount"
-    text: "[+][$]50[.,]00"
-- assertVisible:
-    id: "report_invoice_total_amount"
-    text: "[$]70[.,]00"
+# Reading an open invoice from both perspectives — the account that paid, the card that was paid —
+# is `report/lifecycle`'s claim, arranged there from its own money. What stays with this flow is
+# the report the invoice lifecycle earns and nothing else can: the one below, spanning a settled
+# invoice and an open one.
 
 # --- Forty-five days later -----------------------------------------------------------------------
 # The clock moves; the database does not. `clearState: false` is the whole point — the card and its
@@ -543,63 +391,15 @@ env:
     text: "[$]380[.,]00"
 
 # --- The invoice a new expense is offered is the new one -----------------------------------------
-# Asserted by consequence rather than by reading the month off the picker: nothing is touched in the
-# invoice navigator, and the expense is then found on the invoice that closing opened. A month label
-# would only say what the picker rendered; the figure says where the ledger put it.
-- tapOn:
-    id: "add_transaction_fab"
-- extendedWaitUntil:
-    visible:
-      id: "add_transaction_title"
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_type_expense"
-- waitForAnimationToEnd
-- tapOn:
-    id: "add_transaction_title"
-- waitForAnimationToEnd
-- inputText: ${NEXT_SPEND_TITLE}
-- assertVisible:
-    id: "add_transaction_title"
-    text: ${NEXT_SPEND_TITLE}
-- hideKeyboard
-- tapOn:
-    id: "add_transaction_target"
-- extendedWaitUntil:
-    visible:
-      id: "target_option_credit_card"
-    timeout: 10000
-- tapOn:
-    id: "target_option_credit_card"
-- waitForAnimationToEnd
-- tapOn:
-    id: "add_transaction_credit_card"
-- extendedWaitUntil:
-    visible: ${CARD_NAME}
-    timeout: 10000
-- tapOn: ${CARD_NAME}
-- waitForAnimationToEnd
-- scrollUntilVisible:
-    element:
-      id: "add_transaction_amount"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_amount"
-- waitForAnimationToEnd
-- inputText: ${NEXT_SPEND_DIGITS}
-- hideKeyboard
-- scrollUntilVisible:
-    element:
-      id: "add_transaction_save"
-    direction: DOWN
-    timeout: 15000
-- tapOn:
-    id: "add_transaction_save"
-- extendedWaitUntil:
-    notVisible:
-      id: "add_transaction_title"
-    timeout: 15000
+# Asserted by consequence rather than by reading the month off the picker: the subflow leaves the
+# invoice navigator alone, and the expense is then found on the invoice that closing opened. A month
+# label would only say what the picker rendered; the figure says where the ledger put it.
+- runFlow:
+    file: ../../subflows/record_card_expense.yaml
+    env:
+      TITLE: ${NEXT_SPEND_TITLE}
+      AMOUNT: ${NEXT_SPEND_DIGITS}
+      CARD: ${CARD_NAME}
 
 # --- Both invoices, each telling its own half ----------------------------------------------------
 - runFlow:

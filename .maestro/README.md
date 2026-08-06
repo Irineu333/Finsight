@@ -1,40 +1,114 @@
 # Testes E2E (Maestro)
 
-Fluxos ponta a ponta que dirigem o app de verdade num aparelho de verdade. São o anel mais externo da
-pirâmide de testes: a suíte unitária (`./gradlew allTests`) é dona do comportamento, estes são donos
-*da jornada* — de que telas, navegação, modais e persistência se sustentam quando uma pessoa
-realmente toca por eles.
+```bash
+scripts/e2e.sh                                   # compila, instala e roda tudo (~16 min)
+scripts/e2e.sh --skip-build                      # reaproveita o APK instalado — o ciclo rápido
+scripts/e2e.sh .maestro/flows/budgets            # uma pasta, ou um único .yaml
+```
 
-Mantenha-os poucos e portantes. Um fluxo que duplica o que um teste de ViewModel já prova custa um
-minuto de emulador para não lhe contar nada de novo.
+Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela**. O
+`scripts/e2e.sh` sobe o `finsight_e2e` quando não há nada conectado e recusa qualquer outro perfil.
+Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
-## Layout
+---
+
+## 1. O que esta suíte é dona (e o que não é)
+
+O E2E dirige o app de verdade num aparelho de verdade. Ele é dono **da travessia** — de que telas,
+navegação, modais e persistência se sustentam quando uma pessoa realmente toca por eles. Não é dono
+das regras.
+
+**É dono de:** jornadas de negócio de ponta a ponta; contratos entre telas; persistência real
+observada pela UI; o que o app **oferece** em cada estado (botão habilitado, comando que aparece e
+some); e o que só existe no aparelho — relógio do sistema, teclado, gesto de voltar.
+
+**Não é dono de:** correção de regra de negócio; formatação; validação de campo; combinatória de
+estados; layout e pixels; performance.
+
+Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) é dona do comportamento,
+esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
+falhar por integração, e é só por isso que valem o que custam.
+
+**O custo, com números.** A suíte inteira leva **~16 minutos** para 9 fluxos. Os três de fumaça
+somam 20 segundos; os seis de jornada custam de 1m40 a 3m51 **cada um**. Isso é o orçamento (§6), e é
+o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
+teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
+
+## 2. Rodar a suíte
+
+```bash
+scripts/e2e.sh                        # compila, instala, roda tudo
+scripts/e2e.sh --skip-build           # reaproveita o APK instalado
+scripts/e2e.sh --tags smoke           # só os fluxos com a tag `smoke`
+scripts/e2e.sh .maestro/flows/smoke   # uma pasta, ou um único .yaml
+```
+
+Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e de um emulador ligado
+ou aparelho conectado. A suíte instala o APK de debug — o de release não serve, porque o relógio
+móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug.
+
+No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou quando um pull
+request recebe o label `e2e`.
+
+Duas ferramentas de inspeção: `maestro studio` abre um inspetor sobre o app em execução, e
+`maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma
+tela de fato expõe.
+
+### 2.1 O dispositivo de referência
+
+A suíte roda num aparelho só, e isso não é frescura: cada linha abaixo é uma **entrada do teste**.
+Deixá-la livre é aceitar entrada aleatória.
+
+| Fixado | Valor | Por que é fixo |
+|---|---|---|
+| API | 36 | Diálogos de permissão, animações e gestos de sistema mudam entre versões |
+| Perfil | `pixel_6` (1080x2400, densidade 420) | Os fluxos rolam para alcançar o que está abaixo da dobra; densidade e altura decidem se o `scrollUntilVisible` acha o campo. A folha de adicionar transação põe o botão de enviar abaixo da dobra num perfil e acima em outro |
+| Idioma | inglês (`persist.sys.locale`) | As asserções leem figuras e rótulos renderizados; o locale muda separador decimal, ordem de data e as palavras assertadas |
+| Teclado | o de tela, sem facilidades de teclado físico | Sem IME, digitar e fechar o teclado divergem do usuário real e o campo pode não receber foco |
+| `hw.keyboard.lid` | `no` (lido no boot) | Sem isso o Gboard troca o teclado por uma barra flutuante que se sobrepõe à folha aberta, e o texto digitado por baixo se perde |
+| `show_ime_with_hard_keyboard` | `0` | Ligar *parece* pedir um teclado e faz o oposto: é o que convida a barra a aparecer |
+| Animações | desligadas (`config.yaml`) | Transição em curso é a causa nº 1 de toque perdido |
+
+**Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
+conta. O `scripts/e2e.sh` verifica a API e o idioma e recusa rodar fora deles.
+
+O idioma é verificado e **nunca ajustado**: a propriedade exige root e reinício do framework, e o
+`pm clear` que cada fluxo executa apaga qualquer idioma por app. É pré-condição da suíte, não algo
+que um run providencie.
+
+Crie a AVD uma vez — o `scripts/e2e.sh` fecha a tampa do teclado na primeira vez que a inicia:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n finsight_e2e -d pixel_6 -k "system-images;android-36;google_apis_playstore;arm64-v8a"
+```
+
+### 2.2 Quando nada roda
+
+| Sintoma | Causa provável | O que fazer |
+|---|---|---|
+| Todo fluxo morre em `UNAVAILABLE: io exception` | Sessão órfã do Maestro Studio ([#3065](https://github.com/mobile-dev-inc/maestro/issues/3065)) | Feche o Studio e `rm ~/.maestro/sessions` |
+| O script recusa antes de começar | Aparelho em outra API ou outro idioma | Ajuste o aparelho; a suíte não o ajusta por você (§2.1) |
+| Fluxos falham no primeiro toque | Emulador sem `hw.keyboard.lid = no` | Recrie a AVD; a configuração é lida no boot |
+| Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
+| Tudo vermelho depois de mexer no app | APK velho instalado | Rode sem `--skip-build` |
+
+## 3. Mapa da suíte
 
 ```
 .maestro/
 ├── config.yaml            # o workspace: quais fluxos rodam, onde vai o relatório
 ├── flows/                 # tudo aqui roda como teste, uma pasta por área
-│   ├── accounts/
-│   ├── budgets/
-│   ├── creditcards/
-│   ├── dashboard/
-│   ├── installments/
-│   ├── ledger/
-│   ├── recurring/
-│   └── smoke/
 └── subflows/              # peças reutilizáveis; só rodam quando um fluxo as chama
-    ├── launch_fresh.yaml
-    ├── open_section.yaml
-    ├── record_categorized_expense.yaml
-    └── record_transaction.yaml
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio.
+ser executado como teste próprio. Hoje são três: `launch_fresh` (estado inicial), `open_section`
+(chegar a uma seção pela grade de ações rápidas), `record_transaction` e
+`record_categorized_expense` (lançar).
 
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
-então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa. Cada
-uma leva seu assunto da criação à aposentadoria.
+então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
 
 | Fluxo | A afirmação pela qual ele existe |
 |---|---|
@@ -48,125 +122,47 @@ uma leva seu assunto da criação à aposentadoria.
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
 
-Três deles movem o relógio (`clockOffsetDays`, só em debug): `creditcards` para alcançar uma fatura
-depois da data de fechamento; `installments` e `recurring` para provar que as folhas leem o relógio
-que o app recebeu. Qualquer coisa que leia o relógio do sistema passa a discordar do resto do app no
-momento em que esse argumento é passado — o que é um bug, e os dois lugares onde ele existia foram
-corrigidos, não contornados.
+**Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
+`bottom_navigation_bar`. Itens de navegação derivam o seu da rota — `NavDestination.name` transforma
+`DashboardRoute` em `dashboard`, dando `nav_item_dashboard` — então a tag não pode se descolar do
+destino que nomeia.
 
-## Rodando
+Um id é um `Modifier.testTag` do Compose, e ele só chega ao Maestro porque a raiz de composição
+publica as tags na árvore de acessibilidade, via `Modifier.exposeTestTags()` (`core/designsystem` —
+`ui/util/ExposeTestTags`). **Uma raiz precisa aderir explicitamente, e uma folha modal, um diálogo ou
+um popup são raízes próprias.** Hoje aderem: o `Surface` do `App`, o `ModalBottomSheet`, o painel de
+detalhe e dois `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
+invisíveis sem nenhum erro que explique o porquê.
 
-```bash
-scripts/e2e.sh                        # compila, instala, roda tudo
-scripts/e2e.sh --skip-build           # reaproveita o APK instalado — o ciclo rápido ao escrever fluxos
-scripts/e2e.sh --tags smoke           # só os fluxos com a tag `smoke`
-scripts/e2e.sh .maestro/flows/smoke   # só uma pasta, ou um único .yaml
-```
+## 4. Quando um teste fica vermelho
 
-Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e de um emulador ligado
-ou aparelho conectado. `maestro studio` abre um inspetor sobre o app em execução, e
-`maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma
-tela de fato expõe.
+Perguntas em ordem fixa, da mais barata para a mais cara:
 
-No CI a suíte roda por `.github/workflows/e2e-android.yml`: manualmente, ou num pull request no
-instante em que ele recebe o label `e2e`.
+1. **O aparelho bate com a §2.1?** Perfil divergente é resultado inválido, não pista.
+2. **O fluxo falha sozinho?** `scripts/e2e.sh --skip-build .maestro/flows/<área>` responde em dois
+   minutos. Falha sozinho e passa na suíte (ou o contrário) é dependência de ordem — que nesta suíte
+   não deveria existir, porque todo fluxo começa de `launch_fresh`.
+3. **É determinístico?** Rode duas vezes. Intermitente é quase sempre sincronização (§5.2, padrão 3).
+4. **O passo que falhou é o assunto do fluxo ou um passo de preparo?** Falha no preparo raramente é
+   bug do app; é a UI que mudou de forma debaixo do fluxo.
+5. **Reproduz no CI e localmente?** Se só no CI, volte à pergunta 1.
 
-Se todos os fluxos morrerem instantaneamente com `UNAVAILABLE: io exception`, o app não é o suspeito.
-O Maestro registra a sessão ativa do aparelho em `~/.maestro/sessions`, e enquanto houver uma entrada
-lá a CLI assume que outra coisa já preparou o driver e pula esse passo — e então falha no primeiro
-comando com um erro que não nomeia nada disso
-([#3065](https://github.com/mobile-dev-inc/maestro/issues/3065)). O Maestro Studio mantém uma entrada
-dessas, e a deixa para trás ao sair. Feche o Studio e rode `rm ~/.maestro/sessions`.
+**"Elemento não encontrado" quase nunca significa que o elemento não existe.** Significa: fora da
+viewport; ainda não composto (o dashboard é uma `LazyColumn` — o que não foi rolado **não existe** na
+árvore); atrás do teclado; ou numa raiz de composição que não publicou suas tags (§3).
 
-## O aparelho fixado
+Onde olhar: o log de passos impresso pelo run, e a pasta que ele imprime no fim
+(`~/.maestro/tests/<timestamp>/`) com captura e hierarquia no momento da falha.
 
-A suíte roda num aparelho só: **API 36, perfil `pixel_6`** (1080x2400, densidade 420). O
-`scripts/e2e.sh` sobe o emulador `finsight_e2e` quando não há nada conectado, e se recusa a rodar
-contra um aparelho de outra API. O `.github/workflows/e2e-android.yml` fixa o mesmo par.
+**Fluxo vermelho não vira comentado nem ignorado.** Ou conserta, ou reverte a mudança que o
+quebrou — a suíte só protege enquanto for verde por inteiro.
 
-Isso não é frescura. Os fluxos rolam a tela para alcançar o que está abaixo da dobra, então densidade
-e altura decidem se o `scrollUntilVisible` acha um campo ou se o run fica vermelho — a folha de
-adicionar transação colocou o botão de enviar abaixo da dobra num perfil e acima dela em outro. A
-tela faz parte do contrato.
+## 5. Escrever um fluxo novo
 
-É um telefone com teclado de telefone: o comum, de tela, e nenhuma das facilidades de teclado físico.
-Deixado por conta própria, o emulador escorrega para o segundo caso — o Gboard troca o teclado por
-uma pequena barra flutuante, que se sobrepõe a qualquer folha aberta, e o texto digitado num campo
-por baixo dela se perde. Duas coisas o mantêm no lugar, e as duas são necessárias: a AVD não pode
-anunciar tampa de teclado (`hw.keyboard.lid = no`, lido no boot, que o `scripts/e2e.sh` ajusta antes
-de iniciá-la), e `show_ime_with_hard_keyboard` precisa continuar em `0`. Ligar essa configuração
-*parece* pedir um teclado e faz o oposto: é ela que convida a barra a aparecer.
+Decidir se cabe (§5.1) → escrever seguindo os padrões (§5.2) → revisar contra os antipadrões (§5.3)
+e o checklist (§5.4).
 
-Ainda assim texto se perde quando se digita num campo antes de ele ter o foco, e é por isso que o
-`record_transaction` relê cada campo depois de digitá-lo — uma tecla perdida falha ali, e não telas
-adiante, na forma de um botão que não envia.
-
-Crie a AVD uma vez:
-
-```bash
-$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-    -n finsight_e2e -d pixel_6 -k "system-images;android-36;google_apis_playstore;arm64-v8a"
-```
-
-O `scripts/e2e.sh` fecha a tampa do teclado na configuração dela na primeira vez que a inicia.
-
-## O aparelho fala inglês
-
-Todo fluxo roda contra um aparelho configurado em inglês. O `scripts/e2e.sh` verifica
-`persist.sys.locale` e se recusa a rodar de outro jeito, porque a alternativa é toda asserção de
-texto ficar vermelha por um motivo que nenhuma mensagem de falha nomearia.
-
-Ele é verificado e nunca ajustado: a propriedade exige root e reinício do framework, e o `pm clear` —
-que cada fluxo executa ao iniciar — apaga qualquer idioma por app. Então o idioma do aparelho é
-pré-condição da suíte, não algo que um run possa providenciar sozinho.
-
-É isso que torna legítimo asserir uma figura renderizada. `$457.10` é uma afirmação real sobre o
-razão: prova que duas escritas foram persistidas, somadas e lidas de volta. Prefira asserir o número
-sem o símbolo de moeda (`457.10`), para que a verificação sobreviva a uma troca de símbolo, mas não a
-uma troca de valor.
-
-## Alcançando elementos: test tags, não rótulos
-
-Fixar o idioma resolve o que um fluxo pode *asserir*. Não torna rótulos bons *seletores* — um rótulo
-é texto de interface, é reescrito, e um botão renomeado não deveria quebrar um teste que nunca se
-importou com a redação dele. Então os fluxos endereçam elementos por id:
-
-```yaml
-- tapOn:
-    id: "add_transaction_save"
-```
-
-Esse id é um `Modifier.testTag` no Compose. Ele só chega ao Maestro porque a raiz de composição
-publica as tags na árvore de acessibilidade, via `Modifier.exposeTestTags()`
-(`core/designsystem` — `ui/util/ExposeTestTags`). **Uma raiz precisa aderir explicitamente, e uma
-folha modal, um diálogo ou um popup são raízes próprias** — é por isso que o modifier é aplicado duas
-vezes: no `Surface` do `App`, para a janela do app, e no `ModalBottomSheet`, para toda folha. Um novo
-tipo de janela precisa da sua própria chamada, ou suas tags serão invisíveis sem nenhum erro que
-explique o porquê.
-
-Texto é o seletor certo para duas coisas: conteúdo que o próprio fluxo digitou (o título de uma
-transação) e um valor sendo verificado (um montante, um saldo). Ambos são o *assunto* da asserção, e
-não uma forma incidental de encontrar um widget.
-
-### Nomenclatura
-
-`snake_case`, descrevendo o elemento e não sua posição na tela: `add_transaction_save`,
-`bottom_navigation_bar`. Itens de navegação derivam a sua da rota — `NavDestination.name` transforma
-`DashboardRoute` em `dashboard`, dando `nav_item_dashboard` — de modo que uma tag nunca pode se
-descolar do destino que nomeia.
-
-Marque o que um fluxo precisa tocar, quando precisa. Uma tag sem fluxo por trás é peso morto que
-ainda assim tem de ser mantido correto.
-
-Um fluxo que já passa por dois estados deve asserir os dois. O que a UI *oferece* é tanto uma regra
-quanto o que ela calcula — uma conta sem histórico oferece Excluir e uma com histórico oferece
-Arquivar — e um fluxo que já está dos dois lados dessa mudança ganha a asserção quase de graça.
-Procure por essas antes de escrever um segundo fluxo para chegar ao mesmo lugar.
-
-## Escrevendo um fluxo
-
-Comece de um estado conhecido. O `subflows/launch_fresh.yaml` limpa os dados do app e espera o
-shell, para que nenhum fluxo herde as sobras de qualquer um que tenha rodado antes:
+Todo fluxo começa de um estado conhecido:
 
 ```yaml
 appId: com.neoutils.finsight
@@ -177,47 +173,139 @@ tags:
 - runFlow: ../../subflows/launch_fresh.yaml
 ```
 
-Uma instalação nova não é um app vazio: a conta padrão (*Carteira* / *Wallet*) é semeada, e o
-dashboard já carrega seu layout padrão completo — saldos, contas, cartões, gastos por categoria,
-orçamentos, recentes, ações rápidas (`GetDashboardPreferencesUseCase`).
+Uma instalação nova **não é um app vazio**: a conta padrão (*Carteira* / *Wallet*) é semeada e o
+dashboard já carrega seu layout padrão completo (`GetDashboardPreferencesUseCase`). Também **não é um
+app mobiliado**: a conta é semeada, **as categorias não** — o `CreateDefaultCategoriesUseCase` roda a
+partir da oferta da tela de categorias, nunca no boot. Um fluxo que precise de categoria cria uma.
 
-Também não é um app *mobiliado*, e a linha cai num lugar que vale conhecer: a conta é semeada, **as
-categorias não**. O `CreateDefaultCategoriesUseCase` roda a partir da oferta da própria tela de
-categorias, nunca no boot — então um fluxo que precise de categoria cria uma, e um nome que ele mesmo
-digitou é um seletor melhor do que catorze nomeados por recursos.
+Daí em diante todo trecho tem a mesma forma — esperar, agir, asserir a figura no nó que a renderiza:
 
-Boa parte desse layout começa abaixo da dobra. O dashboard é uma `LazyColumn`, então um componente
-até o qual não se rolou **não está composto**, e nem o `maestro hierarchy` nem um `assertNotVisible`
-conseguem distinguir isso de um componente que não está configurado. Recorra ao `scrollUntilVisible`
-antes de concluir que algo está faltando, e consulte o `GetDashboardPreferencesUseCase` antes de
-acreditar nisso.
+```yaml
+- runFlow:                                  # o meio, reutilizado
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: "50000"                       # dígitos: o campo põe o separador sozinho
+- scrollUntilVisible:                       # o que não foi rolado não está composto
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"    # o nó que renderiza a figura...
+    text: "[$]500[.,]00"                    # ...e a figura, tolerante a símbolo e separador
+```
 
-Prefira `extendedWaitUntil` a um `assertVisible` seco logo depois de uma ação que anima ou carrega; e
-prefira uma asserção que enuncie a intenção a uma que apenas por acaso seja verdadeira.
+**Leia `flows/ledger/fund_spend_report_delete.yaml` antes de escrever o seu.** É o mais curto dos
+fluxos de jornada e o que melhor mostra a forma inteira: uma história só, figuras que não
+compartilham dígitos, e cada asserção comentada com a claim que ela sustenta.
 
-Dois gestos a conhecer. A tela de contas é um pager horizontal, e as figuras nela sempre pertencem à
-conta em vista — mas **nunca deslize para a DIREITA para voltar de página**: a partir da borda
-esquerda isso é o gesto de voltar do sistema, e ele sai da tela em vez de virar a página. Reentre na
-seção, que abre na primeira conta. E no dashboard o `back` devolve você onde a última rolagem parou,
-então role antes de asserir qualquer coisa perto do topo.
+### 5.1 Cabe em E2E?
 
-Esse último morde numa forma que vale nomear: o `scrollUntilVisible` só viaja na direção que recebe,
-então voltar a um dashboard que ficou rolado *além* do componente desejado e rolar para BAIXO procura
-para longe dele para sempre. Suba ao topo primeiro, depois desça.
+> **Cabe se, e somente se, a pergunta for "as peças reais, montadas, entregam este resultado?" — e
+> não puder ser respondida com o sistema desmontado.**
 
-## Dois jeitos de uma asserção mentir
+Três perguntas resolvem qualquer caso fora da tabela:
 
-**Um campo de dinheiro anexa.** O input coloca o separador sozinho reformatando todos os dígitos do
-buffer, então digitar num campo que já contém uma figura concatena as duas — `$249.50` digitado por
-cima com `0` lê `$2,495.00`. Todo campo que abre preenchido (um ajuste, a confirmação de um
-recorrente, uma edição) precisa de `eraseText` antes do `inputText`. Campos que abrem vazios não
-precisam, e reler o campo depois de digitar pega os dois erros no próprio campo, em vez de três telas
-adiante, na forma de um botão que não envia.
+1. **Desmonta?** Se uma camada só responde, o teste é dessa camada.
+2. **É combinatória?** De N variações da mesma regra, no máximo **uma** é E2E.
+3. **Depende do aparelho real?** Relógio, teclado, gesto de voltar, ciclo de vida do processo — aí é
+   E2E mesmo que pareça pequeno, porque nenhuma outra camada alcança.
 
-**Uma asserção de texto casa o nó inteiro e vale a tela inteira.** O texto é comparado com a string
-completa do nó — `assertVisible: "E2E Sofa"` falha numa linha renderizada como `E2E Sofa • 1/3` e,
-pior, `assertNotVisible: "E2E Sofa"` passaria nela pelo mesmo motivo. E não fica restrita ao
-componente até o qual você acabou de rolar: depois de confirmar um recorrente, o título dele está no
-dashboard duas vezes — uma na linha de pendentes que ele deveria ter deixado, outra em Recentes, onde
-está sua nova transação. Assira ausência por `id` (com a figura, quando vários nós compartilham o
-mesmo id), nunca por uma string solta que outra coisa na página também possa estar renderizando.
+**Na dúvida, desça uma camada.** Um teste bom na camada de baixo custa uma fração e falha com mais
+precisão.
+
+| Cabe em E2E | Não cabe — cabe em |
+|---|---|
+| Lançar receita e despesa e o saldo na tela ser a soma delas | O cálculo do saldo a partir dos lançamentos — **unitário** do repositório de lançamentos |
+| Transferir entre contas e o patrimônio total não se mover | A regra de que transferência é neutra — **unitário** do caso de uso |
+| Gastar no cartão e o caixa não se mover, mas a fatura sim | Como um lançamento vira lançamentos contábeis — **unitário** do escritor do razão |
+| Uma conta zerada poder ser arquivada, e uma com saldo não | A mensagem de erro de cada motivo de recusa — **unitário** do caso de uso |
+| O rótulo virar "Excluir" ou "Arquivar" conforme o histórico | A matriz completa de estados que produz cada rótulo — **unitário** do mapeador |
+| Passado o limite, o orçamento trocar "Restante" por "Excedido em" | O cálculo do percentual e do restante — **unitário** do progresso de orçamento |
+| Confirmar um recorrente depois de virar o mês e a ocorrência cair no mês certo | A idempotência de confirmar duas vezes — **unitário** do caso de uso |
+| Uma compra em 3x aparecer em três faturas | A divisão do valor e o arredondamento — **unitário** |
+| O dashboard esconder a linha de contas enquanto só há uma | Quais componentes o layout padrão declara — **unitário** das preferências |
+| Fechar uma fatura e a seguinte abrir com o limite de volta | O cálculo do limite disponível — **unitário** |
+| Um valor gravado continuar lá depois de reiniciar o app | Uma consulta devolver as linhas certas — **integração** do DAO |
+| Migração de esquema não quebrar as telas | A migração em si, versão a versão — **integração** do banco |
+| Um formulário válido concluir a jornada | Cada mensagem de campo inválido — **unitário** da validação |
+| A aparência de um estado vazio | — **screenshot test**, não esta suíte |
+
+### 5.2 Padrões
+
+1. **Alcance elementos por `id`, nunca pelo texto da interface.** Rótulo é copy: muda numa revisão
+   de UX e quebra um teste que não tinha nada com o assunto.
+2. **Asserte a figura renderizada, não a existência do elemento.** `assertVisible: id=balance` passa
+   com o saldo errado. `457.10` no nó que o renderiza prova que duas escritas foram persistidas,
+   somadas e lidas de volta — a única coisa que o E2E prova melhor que qualquer camada. Prefira o
+   número sem o símbolo (`457.10`), para sobreviver a uma troca de símbolo mas não de valor.
+3. **Sincronize por condição, nunca por tempo.** `extendedWaitUntil` depois de qualquer ação que
+   anime ou carregue; nunca uma espera fixa.
+4. **Releia cada campo depois de digitar.** Uma tecla perdida falha ali, e não três telas adiante,
+   como um botão que não envia. E `hideKeyboard` entre campos: o que o aparelho põe na tela se
+   sobrepõe à folha, e o próximo campo pode ficar por baixo.
+5. **Escreva o valor esperado literal; nunca o calcule no fluxo.** Um valor calculado reimplementa a
+   regra do app, e quando os dois erram juntos o teste fica verde para sempre.
+6. **Escolha figuras que não compartilhem dígitos.** `500.00` e `42.90` deixando `457.10`: nenhuma
+   asserção pode passar lendo a figura do vizinho.
+7. **Asserte o que o app oferece, nos dois estados.** O que a UI *oferece* é tanto uma regra quanto o
+   que ela calcula, e um fluxo que já passa pelos dois lados ganha a asserção quase de graça.
+8. **Uma jornada, um assunto.** Se o nome precisa de dois "e", são dois fluxos — dentro do limite do
+   que `launch_fresh` permite (§3).
+9. **Use o relógio móvel para alcançar o que a data esconde.** `clockOffsetDays` (só em debug) é o
+   que permite fechar uma fatura ou virar o mês. Toda tela lê o `Clock` injetado; qualquer código que
+   leia `Clock.System` direto discorda do resto do app no instante em que esse argumento é passado —
+   isso é bug, e se conserta, não se contorna.
+10. **Reuse o meio, mantenha inline o assunto.** Subflow para preparo; asserção compartilhada
+    esconde o que o fluxo afirma e torna a falha ilegível.
+11. **Marque só o que um fluxo precisa tocar.** Uma tag sem fluxo por trás é peso morto que ainda
+    assim tem de ser mantido correto.
+12. **Comente a claim, não o comando.** `tapOn: save` não precisa de comentário; *por que aquele
+    número prova alguma coisa* precisa.
+
+### 5.3 Antipadrões
+
+| Antipadrão | Como você percebe que caiu nele | Em vez disso |
+|---|---|---|
+| **Espera mágica** | O fluxo passa localmente e falha no CI; alguém aumenta o sleep; a suíte engorda e segue instável | `extendedWaitUntil` na condição |
+| **Seletor por copy** | Um PR que só reescreve textos deixa dez fluxos vermelhos | `id` para alcançar; texto só para asserir |
+| **Asserção tautológica** | O fluxo nunca falhou na vida — e afirma "a tela existe" | Quebre a funcionalidade de propósito uma vez; se não fica vermelho, a asserção é enfeite |
+| **Ausência sem premissa** | `assertNotVisible` passa porque o componente está fora da viewport, não porque sumiu | Assere a ausência com um componente *posterior* visível, provando que a região foi composta |
+| **Ausência por texto solto** | `assertNotVisible: "E2E Salary"` passa (ou falha) por causa de outro lugar da tela que renderiza o mesmo nome | Ausência por `id` — e com a figura, quando vários nós compartilham o id |
+| **Oráculo espelhado** | A regra muda, a implementação erra, o fluxo continua verde porque errou igual | Valor literal, conferido por gente |
+| **A grande turnê** | Um fluxo de 120 passos; quando falha no 90, ninguém sabe se o app quebrou ou se a navegação mudou | Uma jornada por fluxo |
+| **Retry analgésico** | A suíte "passa" em três vezes o tempo, e ninguém abre as tentativas descartadas | Instabilidade é bug — do app ou do fluxo |
+| **Cemitério de ignorados** | N fluxos comentados com "flaky, ver depois"; a suíte é verde e não protege nada | Consertar ou apagar |
+| **Espelhar a pirâmide** | Um fluxo para cada regra de validação; a suíte passa de meia hora e ninguém lê o relatório | Combinatória desce de camada (§5.1) |
+| **Ramificação defensiva** | `if` no fluxo ("se aparecer o modal, feche"); ele passa em cenários que ninguém projetou | Estado inicial determinístico |
+| **Screenshot como asserção** | Toda troca de tema gera dezenas de diffs e o time aprova baselines em massa | Captura é artefato de diagnóstico; comparação visual é outra suíte |
+
+### 5.4 Antes de abrir o PR
+
+- [ ] O fluxo passa sozinho **e** dentro da suíte inteira.
+- [ ] Passou duas vezes seguidas.
+- [ ] Toda figura assertada está no nó que a renderiza (`id` + `text` no mesmo seletor).
+- [ ] Nenhuma figura do fluxo compartilha dígitos com outra.
+- [ ] Toda `assertNotVisible` tem premissa de que a região foi composta.
+- [ ] Nenhuma tag nova ficou sem fluxo por trás.
+- [ ] O cabeçalho do arquivo diz, em duas linhas, qual é a claim do fluxo.
+
+## 6. Saúde da suíte
+
+**Orçamento: ~16 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
+por que o teto muda.
+
+**Instabilidade é bug.** Um fluxo que fica vermelho sem mudança de código entra em investigação no
+mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
+mantém confiável.
+
+**A suíte é opt-in no CI hoje** — roda por label `e2e` ou manualmente. Os três fluxos `smoke` somam
+20 segundos, o que torna barata a opção de rodá-los em todo PR; a decisão está em aberto.
+
+---
+
+**Referência da ferramenta:** [docs.maestro.dev](https://docs.maestro.dev). Este documento não a
+repete — descreve o que é nosso.

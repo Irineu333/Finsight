@@ -267,15 +267,20 @@ env:
     visible:
       id: "report_generate"
     timeout: 15000
+
+# The report is scoped per account, and each account tells a different truth about the same
+# transfer. Both are generated, because either one alone would be a half of it.
+
+# --- Wallet: it received the transfer ------------------------------------------------------------
+# The report opens on the seeded account, so this needs no selection. From here the transfer is
+# income — money that arrived without being earned — and it is the whole of this account's balance.
 - tapOn:
     id: "report_generate"
 - extendedWaitUntil:
     visible:
       id: "report_balance_amount"
     timeout: 20000
-# The report is scoped to one account and opens on the seeded one, so this is the destination's
-# side of the transfer: money it did not earn, arriving as income, and a balance that is exactly
-# what crossed over. The origin's side was asserted on the accounts screen.
+- assertVisible: "Wallet"
 - assertVisible:
     id: "report_opening_balance_amount"
     text: "[$]0[.,]00"
@@ -283,6 +288,49 @@ env:
     id: "report_income_amount"
     text: "[+][$]125[.,]50"
 - assertVisible:
+    id: "report_expenses_amount"
+    text: "[-][$]0[.,]00"
+- assertVisible:
     id: "report_balance_amount"
     text: "[$]125[.,]50"
+- assertVisible: "Transfer"
+
+# --- The created account: it was funded, then sent some on ---------------------------------------
+# The new account is selected first and the seeded one dropped after, because a report with no
+# account selected cannot be generated at all.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: ${NEW_ACCOUNT}
+    direction: DOWN
+    timeout: 20000
+- tapOn: ${NEW_ACCOUNT}
+- tapOn: "Wallet"
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_balance_amount"
+    timeout: 20000
+
+# The same transfer, read from the side that sent it: an expense here, against the income it was
+# funded with, leaving what it kept.
+- assertVisible: ${NEW_ACCOUNT}
+- assertVisible:
+    id: "report_opening_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "report_income_amount"
+    text: "[+][$]375[.,]00"
+- assertVisible:
+    id: "report_expenses_amount"
+    text: "[-][$]125[.,]50"
+- assertVisible:
+    id: "report_balance_amount"
+    text: "[$]249[.,]50"
+- assertVisible: ${INCOME_TITLE}
 - assertVisible: "Transfer"

@@ -353,7 +353,9 @@ private fun ReportConfigContent(
                                 invoice = invoice,
                                 selected = invoice.id in uiState.config.selectedInvoiceIds,
                                 onClick = { onAction(ReportConfigAction.ToggleInvoice(invoice.id)) },
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier
+                                    .animateItem()
+                                    .testTag("report_invoice_card"),
                             )
                         }
                     }

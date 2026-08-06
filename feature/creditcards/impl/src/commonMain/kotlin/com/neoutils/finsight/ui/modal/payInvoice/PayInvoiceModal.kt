@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -103,7 +104,9 @@ class PayInvoiceModal(
                 enabled = false,
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pay_invoice_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -114,7 +117,9 @@ class PayInvoiceModal(
                 onAccountSelected = {
                     viewModel.onAction(PayInvoiceAction.SelectAccount(it))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pay_invoice_account")
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -176,7 +181,9 @@ class PayInvoiceModal(
                     maxDate = maxDate,
                     outstandingDebt = outstandingDebt,
                 ) && uiState.selectedAccount != null,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pay_invoice_confirm"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

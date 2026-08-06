@@ -1,0 +1,773 @@
+appId: com.neoutils.finsight
+name: creditcards_lifecycle
+tags:
+  - creditcards
+  - ledger
+env:
+  CARD_NAME: "E2E Card"
+  # Past the invoice's closing date from any day the suite runs on: a card created today closes
+  # between 1 and ~40 days out, depending on where in the month "today" falls.
+  JUMP_DAYS: 45
+  CARD_LIMIT_DIGITS: "200000"
+  CARD_CLOSING_DAY: "10"
+  CARD_DUE_DAY: "20"
+  INCOME_TITLE: "E2E Payday"
+  INCOME_DIGITS: "50000"
+  SPEND_TITLE: "E2E Laptop"
+  SPEND_DIGITS: "12000"
+  ADVANCE_DIGITS: "5000"
+  NEXT_SPEND_TITLE: "E2E Cinema"
+  NEXT_SPEND_DIGITS: "3300"
+---
+# The credit half of the ledger, told as one story: a card is created, spent on, paid down early,
+# then closed, paid, and replaced by the invoice that follows it. It is a single flow because
+# `launch_fresh` wipes the database — split up, each part would have to re-create the card and
+# re-earn the money before it could say anything.
+#
+# A card is a LIABILITY account, so a card expense creates debt instead of moving cash. That is the
+# claim this flow exists for, and it is asserted three times: the account balance does not move
+# when the card is spent on, and it does move — by exactly what was paid — both when the invoice is
+# paid down early and when it is settled.
+#
+# Halfway through, the app is relaunched forty-five days ahead (`clockOffsetDays`, the debug-only
+# clock shift) with the database untouched, because an invoice cannot be closed before its closing
+# date and no card created today has one in the past. Nothing after that point could be reached
+# otherwise.
+#
+# The figures are chosen so no two share their digits: $2,000.00 of limit, $500.00 earned, $120.00
+# spent, $50.00 advanced, $70.00 owed and then paid, $33.00 spent on the invoice that follows,
+# leaving $380.00 in the account and $1,967.00 of limit available.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Day zero: the offer to create a card, and no card figures yet -------------------------------
+# The cards widget shows its empty state (SHOW_EMPTY_STATE) while the card balance row hides
+# (HIDE_WHEN_EMPTY). Both are asserted before anything scrolls: a component the viewport has moved
+# past is not composed, and `assertNotVisible` cannot tell that apart from one never configured.
+- assertVisible:
+    id: "dashboard_component_credit_cards_pager"
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_credit_card"
+
+# --- I am paid, so the account has something to pay a card with ----------------------------------
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]500[.,]00"
+
+# --- I create a credit card ----------------------------------------------------------------------
+# Reached from the quick-action grid; with no card yet the screen stands in its empty state, whose
+# create button carries the same id as the FAB that replaces it.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+
+- tapOn:
+    id: "credit_cards_add"
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_form_name"
+    timeout: 15000
+
+- tapOn:
+    id: "credit_card_form_name"
+- waitForAnimationToEnd
+- inputText: ${CARD_NAME}
+- assertVisible:
+    id: "credit_card_form_name"
+    text: ${CARD_NAME}
+- hideKeyboard
+
+- tapOn:
+    id: "credit_card_form_limit"
+- waitForAnimationToEnd
+- inputText: ${CARD_LIMIT_DIGITS}
+- hideKeyboard
+
+# Both days are typed, though either alone would do — the form derives the missing one. Typing both
+# keeps the invoice period a fact of this flow rather than of a rule it does not assert.
+- tapOn:
+    id: "credit_card_form_closing_day"
+- waitForAnimationToEnd
+- inputText: ${CARD_CLOSING_DAY}
+- hideKeyboard
+
+- tapOn:
+    id: "credit_card_form_due_day"
+- waitForAnimationToEnd
+- inputText: ${CARD_DUE_DAY}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "credit_card_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "credit_card_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "credit_card_form_name"
+    timeout: 15000
+
+# Creating a card opens its first invoice, so the screen has a card with nothing on it: no debt,
+# and the whole limit still available.
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_card"
+    timeout: 15000
+- assertVisible: ${CARD_NAME}
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]2[.,]000[.,]00"
+
+# ...and the dashboard's cards widget now carries the card instead of its empty state.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_credit_cards_pager"
+    direction: UP
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${CARD_NAME}
+- assertVisible:
+    id: "dashboard_credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+
+# --- I spend $120.00 on it -----------------------------------------------------------------------
+# Not the shared `record_transaction` subflow: that one records against an account, and the target
+# and card selectors below are the whole point of this leg.
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${SPEND_TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${SPEND_TITLE}
+- hideKeyboard
+
+# The target is what turns an account expense into a card expense. Its options are copy, so they
+# are reached by tag; the card below is reached by the name this flow typed itself.
+- tapOn:
+    id: "add_transaction_target"
+- extendedWaitUntil:
+    visible:
+      id: "target_option_credit_card"
+    timeout: 10000
+- tapOn:
+    id: "target_option_credit_card"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 10000
+- tapOn: ${CARD_NAME}
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${SPEND_DIGITS}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+# --- The dashboard: debt appeared, cash did not move ---------------------------------------------
+# The balance is still the whole income. A card expense that moved it would be a card expense
+# charged to the wrong account — the single assertion this leg exists for.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]500[.,]00"
+
+# The card balance row was withheld while there was nothing on any card; the spend is what gives
+# it something to say.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_credit_card"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_expenses_amount"
+    text: "[$]120[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_credit_cards_pager"
+    direction: UP
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_invoice_amount"
+    text: "[$]120[.,]00"
+
+# --- The cards screen: the same debt, and the limit it consumed ----------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]120[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]1[.,]880[.,]00"
+- assertVisible: ${SPEND_TITLE}
+
+# --- The invoice: the same debt, broken down -----------------------------------------------------
+- tapOn:
+    id: "credit_card_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_invoice_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_expenses_amount"
+    text: "[-][$]120[.,]00"
+- assertVisible:
+    id: "invoice_advance_payments_amount"
+    text: "[+][$]0[.,]00"
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]120[.,]00"
+- assertVisible: ${SPEND_TITLE}
+
+# --- I pay $50.00 of it early --------------------------------------------------------------------
+# The account is the default one, already selected by the modal; only the amount is this flow's to
+# type. The date defaults to today, which the invoice's open period contains.
+- tapOn:
+    id: "invoice_advance_payment"
+- extendedWaitUntil:
+    visible:
+      id: "advance_payment_amount"
+    timeout: 15000
+- tapOn:
+    id: "advance_payment_amount"
+- waitForAnimationToEnd
+- inputText: ${ADVANCE_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "advance_payment_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "advance_payment_amount"
+    timeout: 15000
+
+# What was spent is untouched — an early payment settles debt, it does not unspend anything — and
+# what is owed is the difference.
+- extendedWaitUntil:
+    visible:
+      id: "invoice_advance_payments_amount"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_expenses_amount"
+    text: "[-][$]120[.,]00"
+- assertVisible:
+    id: "invoice_advance_payments_amount"
+    text: "[+][$]50[.,]00"
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]70[.,]00"
+
+# --- The cards screen agrees, and so does the dashboard ------------------------------------------
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]70[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]1[.,]930[.,]00"
+
+# Now the cash did move: $500.00 earned less $50.00 paid to the card. The expense figure stays the
+# income's counterpart — a card payment is not a category expense — so it is the balance that
+# carries it.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]450[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_credit_card"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_payment_amount"
+    text: "[$]50[.,]00"
+- assertVisible:
+    id: "dashboard_credit_card_expenses_amount"
+    text: "[$]120[.,]00"
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_credit_cards_pager"
+    direction: UP
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_invoice_amount"
+    text: "[$]70[.,]00"
+
+# --- And the report tells both sides of it -------------------------------------------------------
+# The two perspectives read the same two writes from opposite ends: the account paid, the card was
+# paid. Either alone would be half the story.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: report
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+
+# The account, which opens selected: it earned $500.00 and $50.00 left it for the card.
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_balance_amount"
+    timeout: 20000
+- assertVisible:
+    id: "report_opening_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "report_income_amount"
+    text: "[+][$]500[.,]00"
+- assertVisible:
+    id: "report_expenses_amount"
+    text: "[-][$]50[.,]00"
+- assertVisible:
+    id: "report_balance_amount"
+    text: "[$]450[.,]00"
+
+# The card, whose open invoice is selected for us: spent $120.00, $50.00 of it already paid,
+# $70.00 still owed.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- tapOn:
+    id: "report_perspective_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 15000
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_invoice_total_amount"
+    timeout: 20000
+- assertVisible: ${CARD_NAME}
+- assertVisible:
+    id: "report_invoice_expenses_amount"
+    text: "[-][$]120[.,]00"
+- assertVisible:
+    id: "report_advance_payment_amount"
+    text: "[+][$]50[.,]00"
+- assertVisible:
+    id: "report_invoice_total_amount"
+    text: "[$]70[.,]00"
+
+# --- Forty-five days later -----------------------------------------------------------------------
+# The clock moves; the database does not. `clearState: false` is the whole point — the card and its
+# invoice were created before the jump, and it is those rows that have to age. A full relaunch is
+# what makes it take: the process is new, so every screen composes against the moved clock.
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: ${JUMP_DAYS}
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+
+# Debt belongs to no month, so what is owed is exactly what it was before the jump. What changed is
+# what the screen offers: the closing date is now in the past, so closing is on the table.
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]70[.,]00"
+- assertVisible:
+    id: "credit_card_close_invoice"
+
+# --- I close the invoice -------------------------------------------------------------------------
+- tapOn:
+    id: "credit_card_close_invoice"
+- extendedWaitUntil:
+    visible:
+      id: "close_invoice_confirm"
+    timeout: 15000
+- tapOn:
+    id: "close_invoice_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "close_invoice_confirm"
+    timeout: 15000
+
+# The card stays on this invoice — it is the oldest one still unpaid — and now offers to settle it
+# instead of to close it. Closing is spent: a closed invoice cannot be closed twice.
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_pay_invoice"
+    timeout: 15000
+- assertNotVisible:
+    id: "credit_card_close_invoice"
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]70[.,]00"
+
+# --- I pay it ------------------------------------------------------------------------------------
+# The amount is the invoice's, not the user's: the modal states what is owed and does not accept a
+# different figure. Asserting it here is asserting that the debt reached the payment intact.
+- tapOn:
+    id: "credit_card_pay_invoice"
+- extendedWaitUntil:
+    visible:
+      id: "pay_invoice_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "pay_invoice_amount"
+    text: "[$]70[.,]00"
+- tapOn:
+    id: "pay_invoice_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "pay_invoice_confirm"
+    timeout: 15000
+
+# --- Paying opened the next invoice --------------------------------------------------------------
+# The paid invoice leaves the card's view — the screen shows the oldest *unpaid* one — and what
+# stands in its place is the invoice closing opened: empty, and with the whole limit back.
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_invoice_amount"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]2[.,]000[.,]00"
+
+# It is a different invoice, and the commands say which: nothing to settle, because this one was
+# never closed. It does offer closing — the jump cleared its closing date too, a month after the
+# one it replaced — and that is the point: the offer moved to the new invoice with it.
+- assertNotVisible:
+    id: "credit_card_pay_invoice"
+- assertVisible:
+    id: "credit_card_close_invoice"
+
+# --- And the account paid for it -----------------------------------------------------------------
+# $500.00 earned, less $50.00 advanced and $70.00 settled.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]380[.,]00"
+
+# --- The invoice a new expense is offered is the new one -----------------------------------------
+# Asserted by consequence rather than by reading the month off the picker: nothing is touched in the
+# invoice navigator, and the expense is then found on the invoice that closing opened. A month label
+# would only say what the picker rendered; the figure says where the ledger put it.
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${NEXT_SPEND_TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${NEXT_SPEND_TITLE}
+- hideKeyboard
+- tapOn:
+    id: "add_transaction_target"
+- extendedWaitUntil:
+    visible:
+      id: "target_option_credit_card"
+    timeout: 10000
+- tapOn:
+    id: "target_option_credit_card"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add_transaction_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 10000
+- tapOn: ${CARD_NAME}
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${NEXT_SPEND_DIGITS}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+# --- Both invoices, each telling its own half ----------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]33[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]1[.,]967[.,]00"
+
+- tapOn:
+    id: "credit_card_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_invoice_transactions"
+    timeout: 15000
+
+# The open one: the new expense and nothing else.
+- assertVisible:
+    id: "invoice_expenses_amount"
+    text: "[-][$]33[.,]00"
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]33[.,]00"
+- assertVisible: ${NEXT_SPEND_TITLE}
+
+# The paid one, one page back: everything spent on it, everything paid into it — the $50.00 advance
+# and the $70.00 settlement — and therefore nothing owed.
+#
+# Swiped by coordinates rather than from the summary card: the gesture has to travel rightwards to
+# bring in the page on the left, and one that starts at the screen's left edge is the system's back
+# gesture instead. Starting at a quarter across keeps it a page turn.
+- swipe:
+    start: "25%, 30%"
+    end: "90%, 30%"
+    duration: 500
+- extendedWaitUntil:
+    visible:
+      id: "invoice_expenses_amount"
+      text: "[-][$]120[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_advance_payments_amount"
+    text: "[+][$]120[.,]00"
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]0[.,]00"
+- assertVisible: ${SPEND_TITLE}
+
+# --- The dashboard, in the month the jump landed on ----------------------------------------------
+# The month turned, so the card row speaks of this month alone: the $33.00 just spent, and nothing
+# paid. The settlement is not missing — it is dated at the invoice's due date, the month before,
+# because that is the date the payment modal offers and the only one the invoice accepts. What the
+# jump moved was the day the *user* is on, not the day a bill falls due.
+- back
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]380[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_credit_card"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_expenses_amount"
+    text: "[$]33[.,]00"
+- assertVisible:
+    id: "dashboard_credit_card_payment_amount"
+    text: "[$]0[.,]00"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_credit_cards_pager"
+    direction: UP
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_credit_card_invoice_amount"
+    text: "[$]33[.,]00"
+
+# --- And the transaction list holds this month's movement ----------------------------------------
+# The list opens on the month the app is in, so it holds the card expense and not the settlement —
+# same reason as above, and the invoice above already showed the $70.00 landing on it.
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible: ${NEXT_SPEND_TITLE}
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]33[.,]00"
+
+# --- The report closes the story -----------------------------------------------------------------
+- tapOn:
+    id: "nav_item_dashboard"
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: report
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- tapOn:
+    id: "report_perspective_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 15000
+
+# The open invoice comes selected — it is the one the card is on — and owes what was just spent.
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_invoice_total_amount"
+    timeout: 20000
+- assertVisible:
+    id: "report_invoice_expenses_amount"
+    text: "[-][$]33[.,]00"
+- assertVisible:
+    id: "report_invoice_total_amount"
+    text: "[$]33[.,]00"
+
+# With the settled invoice added, the report spans the whole cycle: everything ever spent on this
+# card, everything ever paid into it, and the one invoice still open as the difference.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "report_invoice_card"
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+# The open invoice is already selected, so this adds the settled one beside it rather than
+# replacing it — the cards are laid out oldest first, and tapping the selected one would clear it.
+- tapOn:
+    id: "report_invoice_card"
+    index: 0
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_invoice_total_amount"
+    timeout: 20000
+- assertVisible:
+    id: "report_invoice_expenses_amount"
+    text: "[-][$]153[.,]00"
+- assertVisible:
+    id: "report_advance_payment_amount"
+    text: "[+][$]120[.,]00"
+- assertVisible:
+    id: "report_invoice_total_amount"
+    text: "[$]33[.,]00"

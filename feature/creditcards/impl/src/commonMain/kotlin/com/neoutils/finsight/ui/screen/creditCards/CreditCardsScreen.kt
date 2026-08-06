@@ -582,7 +582,9 @@ private fun CardActions(
                     onClick = {
                         modalManager.show(CloseInvoiceModal(invoiceUi.id, invoiceUi.closingDate))
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_close_invoice"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color(0xFFFFA726)
@@ -645,7 +647,9 @@ private fun CardActions(
                             )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_pay_invoice"),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(12.dp),
                 ) {

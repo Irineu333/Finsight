@@ -29,10 +29,13 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) 
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~16 minutos** para 9 fluxos. Os três de fumaça
-somam 20 segundos; os seis de jornada custam de 1m40 a 3m51 **cada um**. Isso é o orçamento (§6), e é
+**O custo, com números.** A suíte inteira leva **~20 minutos** para 9 fluxos. Os dois de fumaça somam
+menos de 20 segundos; os sete de jornada custam de 2m20 a 4m **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
+
+Meça com a máquina ociosa. Um build Gradle rodando ao lado disputa CPU com o emulador e a mesma
+suíte sobe para mais de 30 minutos — um número que não descreve a suíte e não deve entrar aqui.
 
 ## 2. Rodar a suíte
 
@@ -299,11 +302,11 @@ precisão.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~19 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
+**Orçamento: ~20 minutos e 9 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
 reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
 por que o teto muda.
 
-O teto subiu uma vez, de ~16 para ~19, e a justificativa fica registrada porque é ela que autoriza
+O teto subiu uma vez, de ~16 para ~20, e a justificativa fica registrada porque é ela que autoriza
 a próxima recusa. Duas coisas entraram: a **edição de transação**, que era o único comando
 corretivo do app sem nenhuma travessia — o botão sequer tinha `testTag`, então nenhum fluxo
 conseguia alcançá-lo; e **`report/lifecycle`**, que recolheu as pernas de relatório espalhadas por

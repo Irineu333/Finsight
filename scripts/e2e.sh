@@ -19,6 +19,8 @@ readonly APK="$ROOT/app/android/build/outputs/apk/debug/android-debug.apk"
 readonly E2E_AVD="${E2E_AVD:-finsight_e2e}"
 readonly E2E_API=36
 readonly E2E_PROFILE=pixel_6
+readonly E2E_SCREEN="1080x2400"
+readonly E2E_DENSITY=420
 readonly E2E_IMAGE="system-images;android-36;google_apis_playstore;arm64-v8a"
 readonly ANDROID_SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 
@@ -51,12 +53,10 @@ if [[ -z "$(adb devices | sed '1d' | grep -w device || true)" ]]; then
         echo "      -n $E2E_AVD -d $E2E_PROFILE -k \"$E2E_IMAGE\"" >&2
         exit 1
     fi
-    # `avdmanager` leaves the keyboard lid open, which is what tips Android into treating the host's
-    # keyboard as a hardware one. Close it before the first boot; it is read at startup.
-    avd_config="$HOME/.android/avd/$E2E_AVD.avd/config.ini"
-    if [[ -f "$avd_config" ]]; then
-        sed -i '' 's/^hw.keyboard.lid *= *yes/hw.keyboard.lid = no/' "$avd_config" 2>/dev/null || true
-    fi
+    # The keyboard settings are read at startup, so they are fixed before the first boot and cannot
+    # be repaired from `adb` afterwards. CI runs the same script against the AVD its emulator action
+    # creates (see .github/workflows/e2e-android.yml).
+    "$ROOT/scripts/pin_avd_keyboard.sh" "$E2E_AVD" >/dev/null
 
     echo "Booting $E2E_AVD..."
     "$ANDROID_SDK/emulator/emulator" -avd "$E2E_AVD" -no-snapshot-load -no-boot-anim >/dev/null 2>&1 &
@@ -73,12 +73,53 @@ if [[ "$device_api" != "$E2E_API" ]]; then
     exit 1
 fi
 
-# The device is a phone with a phone's keyboard: the ordinary on-screen one, and none of the
-# physical-keyboard affordances. Left to itself the emulator drifts into the latter — Gboard puts up
-# a small floating toolbar instead of a keyboard, it overlays whatever sheet is open, and text typed
-# into a field underneath it is simply lost. Both halves of the setting matter: the AVD must not
-# advertise a keyboard lid (below, before boot), and the IME must not be asked to coexist with one.
+# Asking for the ordinary on-screen keyboard rather than the toolbar a hardware keyboard invites.
+# It only has an effect where a hardware keyboard exists — which the check below refuses outright —
+# so it is a nudge, not the guarantee.
 adb shell settings put secure show_ime_with_hard_keyboard 0 >/dev/null 2>&1 || true
+
+# The device's own `Configuration` — the same one the app resolves its resources against, rather
+# than properties that may or may not reach it. On the pinned device it reads:
+#
+#   ...-en-rUS-...-420dpi-finger-keysexposed-nokeys-navhidden-nonav-2400x1080-v36
+#
+# Read `nokeys` from here and nothing else: the density in this string is the *bucket* name whenever
+# there is one (480 prints as `xxhdpi`), so matching a number against it works for 420 and quietly
+# stops working for whoever repins the profile.
+device_config="$(adb shell am get-config 2>/dev/null | tr -d '\r')"
+
+# The screen is part of the contract, not of whoever's machine is running the suite: the flows
+# scroll, and density and height are what decide whether `scrollUntilVisible` reaches a field or the
+# run turns red. A tablet in English on API 36 would pass every other check and still be an invalid
+# result.
+device_size="$(adb shell wm size | sed -n 's/^Physical size: *//p' | tr -d '\r')"
+device_density="$(adb shell wm density | sed -n 's/^Physical density: *//p' | tr -d '\r')"
+if [[ "$device_size" != "$E2E_SCREEN" || "$device_density" != "$E2E_DENSITY" ]]; then
+    echo "Attached device is ${device_size:-?} @ ${device_density:-?}dpi;" \
+         "the flows are pinned to the $E2E_PROFILE screen ($E2E_SCREEN @ ${E2E_DENSITY}dpi)." >&2
+    echo "  Close it and re-run to boot '$E2E_AVD', or set E2E_AVD to a device you trust." >&2
+    exit 1
+fi
+
+# `nokeys` is Android's own word for "no hardware keyboard", and it is the half of the keyboard
+# contract that no `adb` command can repair: it comes from `hw.keyboard` in the AVD's config.ini,
+# which is read at boot. With a hardware keyboard present, Gboard shows a floating toolbar over the
+# open sheet instead of a keyboard and the text typed underneath is lost — silently, and three
+# screens later.
+if [[ "$device_config" != *-nokeys-* ]]; then
+    echo "Attached device advertises a hardware keyboard; the flows type on the on-screen one." >&2
+    echo "  Shut the emulator down, then: scripts/pin_avd_keyboard.sh $E2E_AVD" >&2
+    exit 1
+fi
+
+# And the other half: a soft keyboard the device will actually put up. A system image with no IME
+# installed fails every flow at its first `inputText`, for a reason no failure message would name.
+device_ime="$(adb shell settings get secure default_input_method | tr -d '\r')"
+if [[ -z "$device_ime" || "$device_ime" == "null" ]]; then
+    echo "Attached device has no default input method; the flows need an on-screen keyboard." >&2
+    echo "  Use a system image that ships one (the pinned $E2E_IMAGE does)." >&2
+    exit 1
+fi
 
 # While another Maestro session holds the device — Maestro Studio, most often — the CLI skips
 # setting up its driver and then fails on the first command with a bare gRPC error that names

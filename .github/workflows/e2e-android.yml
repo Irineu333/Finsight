@@ -61,11 +61,19 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          avd-name: finsight_e2e
           disable-animations: true
+          # The one precondition `scripts/e2e.sh` cannot enforce here. `hw.keyboard` is read at boot,
+          # and this action creates *and boots* the AVD before the script gets a look at the device
+          # — so the script's own call to this happens only when it boots the emulator itself,
+          # which locally is the usual case and here is never. Without this hook CI would run with
+          # whatever keyboard `avdmanager` defaulted to, and a lost keystroke would surface as a
+          # button that does not submit, three screens later.
+          pre-emulator-launch-script: scripts/pin_avd_keyboard.sh finsight_e2e
           # The suite runs through scripts/e2e.sh, not `maestro test` — the script is where the
-          # preconditions live (API level, device language, and the on-screen-keyboard setting
-          # whose absence loses typed text silently). Calling Maestro directly skips all of them
-          # and produces a green run that proves less than it appears to.
+          # preconditions live (API level, screen, language and the absence of a hardware keyboard,
+          # which loses typed text silently). Calling Maestro directly skips all of them and
+          # produces a green run that proves less than it appears to.
           script: |
             adb install -r -t app/android/build/outputs/apk/debug/android-debug.apk
             scripts/e2e.sh --skip-build

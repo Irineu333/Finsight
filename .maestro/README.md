@@ -55,7 +55,9 @@ processo, então `support/lifecycle` é o único fluxo que **não pode** relanç
 
 No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou num pull
 request que carregue o label `e2e` — inclusive nos commits que vierem depois do label, porque a
-condição lê os labels do PR e não o evento que a disparou.
+condição lê os labels do PR e não o evento que a disparou. A única coisa que ele faz a mais é
+chamar `scripts/pin_avd_keyboard.sh` pelo `pre-emulator-launch-script` da action: lá a AVD já sobe
+pronta, e o `scripts/e2e.sh` chegaria tarde demais para acertar o teclado (§2.1).
 
 Duas coisas fazem o run não acontecer, e nenhuma delas dá erro: o label `e2e` não existir no
 repositório (o job simplesmente pula, em segundos), e o *Run workflow* não aparecer na aba Actions
@@ -71,24 +73,43 @@ tela de fato expõe.
 A suíte roda num aparelho só, e isso não é frescura: cada linha abaixo é uma **entrada do teste**.
 Deixá-la livre é aceitar entrada aleatória.
 
-| Fixado | Valor | Por que é fixo |
-|---|---|---|
-| API | 36 | Diálogos de permissão, animações e gestos de sistema mudam entre versões |
-| Perfil | `pixel_6` (1080x2400, densidade 420) | Os fluxos rolam para alcançar o que está abaixo da dobra; densidade e altura decidem se o `scrollUntilVisible` acha o campo. A folha de adicionar transação põe o botão de enviar abaixo da dobra num perfil e acima em outro |
-| Idioma | inglês (`persist.sys.locale`) | As asserções leem figuras e rótulos renderizados; o locale muda separador decimal, ordem de data e as palavras assertadas |
-| Teclado | o de tela, sem facilidades de teclado físico | Sem IME, digitar e fechar o teclado divergem do usuário real e o campo pode não receber foco |
-| `hw.keyboard.lid` | `no` (lido no boot) | Sem isso o Gboard troca o teclado por uma barra flutuante que se sobrepõe à folha aberta, e o texto digitado por baixo se perde |
-| `show_ime_with_hard_keyboard` | `0` | Ligar *parece* pedir um teclado e faz o oposto: é o que convida a barra a aparecer |
-| Animações | desligadas (`config.yaml`) | Transição em curso é a causa nº 1 de toque perdido |
+| Fixado | Valor | Verificado por | Por que é fixo |
+|---|---|---|---|
+| API | 36 | `ro.build.version.sdk` | Diálogos de permissão, animações e gestos de sistema mudam entre versões |
+| Perfil | `pixel_6` — 1080x2400, densidade 420 | `wm size` e `wm density` | Os fluxos rolam para alcançar o que está abaixo da dobra; densidade e altura decidem se o `scrollUntilVisible` acha o campo. A folha de adicionar transação põe o botão de enviar abaixo da dobra num perfil e acima em outro |
+| Idioma | inglês (`persist.sys.locale`) | `getprop`, com fallback em `ro.product.locale` | As asserções leem figuras e rótulos renderizados; o locale muda separador decimal, ordem de data e as palavras assertadas |
+| Sem teclado físico | `hw.keyboard = no` (lido no boot) | `am get-config` (`nokeys`) | Com um teclado físico anunciado, o Gboard troca o teclado por uma barra flutuante que se sobrepõe à folha aberta, e o texto digitado por baixo se perde |
+| Teclado virtual ativo | um IME padrão instalado | `settings get secure default_input_method` | Sem IME o primeiro `inputText` de todo fluxo falha, e por um motivo que nenhuma mensagem nomeia |
+| `hw.keyboard.lid` | `no` (lido no boot) | — (fixado antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
+| `show_ime_with_hard_keyboard` | `0` | — (aplicado a cada run) | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a suíte recusa — então é reforço, não a garantia |
+| Animações | desligadas (`config.yaml`) | — | Transição em curso é a causa nº 1 de toque perdido |
 
 **Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
-conta. O `scripts/e2e.sh` verifica a API e o idioma e recusa rodar fora deles.
+conta. O `scripts/e2e.sh` verifica as cinco primeiras linhas e **recusa rodar** fora delas: um
+tablet em inglês na API 36 passaria em tudo o mais e ainda assim não contaria.
+
+A ausência de teclado físico sai de `adb shell am get-config`, a `Configuration` que o próprio app
+resolve — `nokeys` é a palavra do Android para ela:
+
+```
+...-en-rUS-...-420dpi-finger-keysexposed-nokeys-navhidden-nonav-2400x1080-v36
+```
+
+Só `nokeys` é lido dessa linha. A densidade nela é o *nome do bucket* sempre que existe um (480 sai
+como `xxhdpi`), então comparar número contra ela funciona para 420 e para de funcionar em silêncio
+para quem repinar o perfil — a tela vem de `wm size` e `wm density`, que sempre dão o número.
 
 O idioma é verificado e **nunca ajustado**: a propriedade exige root e reinício do framework, e o
 `pm clear` que cada fluxo executa apaga qualquer idioma por app. É pré-condição da suíte, não algo
 que um run providencie.
 
-Crie a AVD uma vez — o `scripts/e2e.sh` fecha a tampa do teclado na primeira vez que a inicia:
+O teclado, ao contrário, **não é verificável tarde demais**: `hw.keyboard` e `hw.keyboard.lid` são
+lidos no boot e nenhum comando `adb` os conserta depois. Quem os fixa é
+`scripts/pin_avd_keyboard.sh <avd>`, chamado de dois lugares porque a AVD nasce em dois lugares — o
+`scripts/e2e.sh` a chama antes de subir o emulador, e o CI a chama pelo
+`pre-emulator-launch-script` da action, que roda entre criar a AVD e ligá-la.
+
+Crie a AVD uma vez — o `scripts/e2e.sh` acerta o teclado dela na primeira vez que a inicia:
 
 ```bash
 $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
@@ -100,8 +121,9 @@ $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
 | Todo fluxo morre em `UNAVAILABLE: io exception` | Sessão órfã do Maestro Studio ([#3065](https://github.com/mobile-dev-inc/maestro/issues/3065)) | Feche o Studio e `rm ~/.maestro/sessions` |
-| O script recusa antes de começar | Aparelho em outra API ou outro idioma | Ajuste o aparelho; a suíte não o ajusta por você (§2.1) |
-| Fluxos falham no primeiro toque | Emulador sem `hw.keyboard.lid = no` | Recrie a AVD; a configuração é lida no boot |
+| O script recusa antes de começar | Aparelho fora de uma das cinco linhas verificadas da §2.1 | A mensagem diz qual; ajuste o aparelho, a suíte não o ajusta por você |
+| "advertises a hardware keyboard" | AVD com `hw.keyboard = yes` | Desligue o emulador e rode `scripts/pin_avd_keyboard.sh finsight_e2e`; a configuração é lida no boot |
+| Texto some por baixo de uma barra flutuante | Idem — e é o sintoma se a recusa acima for contornada | Idem; não existe conserto por `adb` com o emulador ligado |
 | Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
 | Tudo vermelho depois de mexer no app | APK velho instalado | Rode sem `--skip-build` |
 

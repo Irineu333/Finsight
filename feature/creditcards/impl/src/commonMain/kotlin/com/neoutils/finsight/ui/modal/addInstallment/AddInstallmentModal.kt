@@ -4,7 +4,6 @@ package com.neoutils.finsight.ui.modal.addInstallment
 
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
-import org.koin.compose.koinInject
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -39,8 +38,6 @@ import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel

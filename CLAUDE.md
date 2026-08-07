@@ -10,7 +10,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
-scripts/e2e.sh                                             # Maestro E2E suite (Android device)
+maestro test .maestro/flows                                # Maestro E2E suite (Android device)
 ```
 
 ## Features
@@ -133,7 +133,7 @@ compiler, not by discipline (see below).
 
 ## E2E (Maestro)
 Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. The device
-runs in **English** — `scripts/e2e.sh` refuses any other language — so a flow may assert a rendered
+must run in **English** — a precondition of the suite, not something a run fixes — so a flow may assert a rendered
 figure, which is the point: `457.10` on screen proves the ledger summed and read back what the flow
 wrote. Elements are still *reached* by **`id:`**, not by label: a label is copy and gets reworded. An
 `id` is a Compose `Modifier.testTag`, reachable only because a composition root published it with

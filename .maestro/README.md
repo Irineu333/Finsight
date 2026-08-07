@@ -1,14 +1,14 @@
 # Testes E2E (Maestro)
 
 ```bash
-scripts/e2e.sh                                   # compila, instala e roda tudo (~23 min)
-scripts/e2e.sh --skip-build                      # reaproveita o APK instalado — o ciclo rápido
-scripts/e2e.sh .maestro/flows/budgets            # uma pasta, ou um único .yaml
+./gradlew :app:android:installDebug              # instala o APK de debug (o de release não serve)
+maestro test .maestro/flows                      # roda tudo (~23 min)
+maestro test .maestro/flows/budgets              # uma pasta, ou um único .yaml
 ```
 
 Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem teclado
-físico**. O `scripts/e2e.sh` **cria e sobe** o `finsight_e2e` quando não há nada conectado, e recusa
-qualquer aparelho que divirja disso (§2.1) — não há passo de setup manual.
+físico** (§2.1). Essas linhas são **pré-condição sua**: nada as verifica nem as conserta antes do
+run, e um aparelho divergente produz resultado inválido — vermelho ou verde nele não conta.
 Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
 ---
@@ -41,29 +41,21 @@ suíte sobe para mais de 30 minutos — um número que não descreve a suíte e 
 ## 2. Rodar a suíte
 
 ```bash
-scripts/e2e.sh                        # compila, instala, roda tudo
-scripts/e2e.sh --skip-build           # reaproveita o APK instalado
-scripts/e2e.sh --tags smoke           # só os fluxos com a tag `smoke`
-scripts/e2e.sh .maestro/flows/smoke   # uma pasta, ou um único .yaml
+./gradlew :app:android:installDebug        # instala o APK de debug; refaça sempre que mexer no app
+maestro test .maestro/flows                # roda tudo
+maestro test --include-tags smoke .maestro/flows   # só os fluxos com a tag `smoke`
+maestro test .maestro/flows/smoke          # uma pasta, ou um único .yaml
 ```
 
 Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e de um emulador ligado
-ou aparelho conectado. A suíte instala o APK de debug — o de release não serve, e por dois motivos:
+ou aparelho conectado. Rode com o APK de debug — o de release não serve, e por dois motivos:
 o relógio móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug, e o suporte só é
 testável porque o build de debug o responde da memória em vez do Firestore
 (`InMemorySupportRepository`, no source set de debug do app). Esse armazenamento morre com o
 processo, então `support/lifecycle` é o único fluxo que **não pode** relançar o app.
 
-No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou num pull
-request que carregue o label `e2e` — inclusive nos commits que vierem depois do label, porque a
-condição lê os labels do PR e não o evento que a disparou. A única coisa que ele faz a mais é
-chamar `scripts/pin_avd_keyboard.sh` pelo `pre-emulator-launch-script` da action: lá a AVD já sobe
-pronta, e o `scripts/e2e.sh` chegaria tarde demais para acertar o teclado (§2.1).
-
-Duas coisas fazem o run não acontecer, e nenhuma delas dá erro: o label `e2e` não existir no
-repositório (o job simplesmente pula, em segundos), e o *Run workflow* não aparecer na aba Actions
-enquanto este arquivo não estiver na branch default — o GitHub só oferece `workflow_dispatch` para
-workflows que já estão na `main`.
+**Não há execução em CI.** A suíte roda na máquina de quem mexe no app, e nada a dispara por PR —
+quem muda uma tela é quem responde se a travessia continua de pé.
 
 Duas ferramentas de inspeção: `maestro studio` abre um inspetor sobre o app em execução, e
 `maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma
@@ -74,20 +66,20 @@ tela de fato expõe.
 A suíte roda num aparelho só, e isso não é frescura: cada linha abaixo é uma **entrada do teste**.
 Deixá-la livre é aceitar entrada aleatória.
 
-| Fixado | Valor | Verificado por | Por que é fixo |
+| Fixado | Valor | Como conferir | Por que é fixo |
 |---|---|---|---|
 | API | 36 | `ro.build.version.sdk` | Diálogos de permissão, animações e gestos de sistema mudam entre versões |
 | Perfil | `pixel_6` — 1080x2400, densidade 420 | `wm size` e `wm density` | Os fluxos rolam para alcançar o que está abaixo da dobra; densidade e altura decidem se o `scrollUntilVisible` acha o campo. A folha de adicionar transação põe o botão de enviar abaixo da dobra num perfil e acima em outro |
 | Idioma | inglês (`persist.sys.locale`) | `getprop`, com fallback em `ro.product.locale` | As asserções leem figuras e rótulos renderizados; o locale muda separador decimal, ordem de data e as palavras assertadas |
 | Sem teclado físico | `hw.keyboard = no` (lido no boot) | `am get-config` (`nokeys`) | Com um teclado físico anunciado, o Gboard troca o teclado por uma barra flutuante que se sobrepõe à folha aberta, e o texto digitado por baixo se perde |
 | Teclado virtual ativo | um IME padrão instalado | `settings get secure default_input_method` | Sem IME o primeiro `inputText` de todo fluxo falha, e por um motivo que nenhuma mensagem nomeia |
-| `hw.keyboard.lid` | `no` (lido no boot) | — (fixado antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
-| `show_ime_with_hard_keyboard` | `0` | — (aplicado a cada run) | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a suíte recusa — então é reforço, não a garantia |
+| `hw.keyboard.lid` | `no` (lido no boot) | — (escrito no `config.ini` antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
+| `show_ime_with_hard_keyboard` | `0` | `settings get secure show_ime_with_hard_keyboard` | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a linha acima já exclui — então é reforço, não a garantia |
 | Animações | desligadas (`config.yaml`) | — | Transição em curso é a causa nº 1 de toque perdido |
 
 **Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
-conta. O `scripts/e2e.sh` verifica as cinco primeiras linhas e **recusa rodar** fora delas: um
-tablet em inglês na API 36 passaria em tudo o mais e ainda assim não contaria.
+conta, e um tablet em inglês na API 36 bateria em tudo o mais e ainda assim não contaria. Nada
+verifica isso por você: a coluna do meio existe para você conferir à mão antes de rodar.
 
 A ausência de teclado físico sai de `adb shell am get-config`, a `Configuration` que o próprio app
 resolve — `nokeys` é a palavra do Android para ela:
@@ -96,43 +88,47 @@ resolve — `nokeys` é a palavra do Android para ela:
 ...-en-rUS-...-420dpi-finger-keysexposed-nokeys-navhidden-nonav-2400x1080-v36
 ```
 
-Só `nokeys` é lido dessa linha. A densidade nela é o *nome do bucket* sempre que existe um (480 sai
-como `xxhdpi`), então comparar número contra ela funciona para 420 e para de funcionar em silêncio
+Só `nokeys` importa dessa linha. A densidade nela é o *nome do bucket* sempre que existe um (480 sai
+como `xxhdpi`), então conferir número contra ela funciona para 420 e para de funcionar em silêncio
 para quem repinar o perfil — a tela vem de `wm size` e `wm density`, que sempre dão o número.
 
-O idioma é verificado e **nunca ajustado**: a propriedade exige root e reinício do framework, e o
-`pm clear` que cada fluxo executa apaga qualquer idioma por app. É pré-condição da suíte, não algo
-que um run providencie.
+O idioma **não se ajusta depois**: a propriedade exige root e reinício do framework, e o `pm clear`
+que cada fluxo executa apaga qualquer idioma por app. Crie a AVD já em inglês.
 
-O teclado, ao contrário, **não é verificável tarde demais**: `hw.keyboard` e `hw.keyboard.lid` são
-lidos no boot e nenhum comando `adb` os conserta depois. Quem os fixa é
-`scripts/pin_avd_keyboard.sh <avd>`, chamado de dois lugares porque a AVD nasce em dois lugares — o
-`scripts/e2e.sh` a chama antes de subir o emulador, e o CI a chama pelo
-`pre-emulator-launch-script` da action, que roda entre criar a AVD e ligá-la.
-
-**Não crie a AVD à mão.** Se ela não existir, o `scripts/e2e.sh` a cria — perfil, imagem e teclado
-— e sobe. Um aparelho montado por gente é um aparelho montado diferente a cada vez, e cada linha
-dele é uma entrada do teste. Rodar a suíte é o suficiente:
+O teclado também **não se conserta tarde demais**: `hw.keyboard` e `hw.keyboard.lid` são lidos no
+boot e nenhum comando `adb` os muda depois. O `avdmanager` não tem flag para nenhum dos dois — ele
+aceita um perfil de aparelho e mais nada — então eles vão no `config.ini` da AVD **depois de
+criada** e antes de ligá-la. Vale para as duas metades: `-d pixel_6` já dá `hw.keyboard = no`, mas
+deixa `hw.keyboard.lid = yes`, que é justamente o que convida a barra flutuante.
 
 ```bash
-scripts/e2e.sh            # cria finsight_e2e se faltar, fixa o teclado, sobe, roda
+IMAGE="system-images;android-36;google_apis_playstore;arm64-v8a"
+sdkmanager "$IMAGE"                                            # uma vez
+avdmanager create avd -n finsight_e2e -d pixel_6 -k "$IMAGE" <<< "no"
+
+CFG=~/.android/avd/finsight_e2e.avd/config.ini                 # as chaves podem não existir:
+grep -v -E '^hw\.keyboard(\.lid)? *=' "$CFG" > "$CFG.tmp"      # tire as que houver...
+printf 'hw.keyboard = no\nhw.keyboard.lid = no\n' >> "$CFG.tmp"  # ...e acrescente as suas
+mv "$CFG.tmp" "$CFG"
+
+emulator -avd finsight_e2e -no-snapshot-load -no-boot-anim      # só depois do config.ini
 ```
 
-O `avdmanager` não tem flag para nenhuma dessas propriedades — ele aceita um perfil de aparelho e
-mais nada — então o teclado é escrito no `config.ini` **depois**, e é por isso que criar e corrigir
-são dois passos e não um. Vale para as duas metades: `-d pixel_6` já dá `hw.keyboard = no`, mas
-deixa `hw.keyboard.lid = yes`, que é justamente o que convida a barra flutuante.
+O `<<< "no"` responde ao prompt de hardware customizado que o `avdmanager` faz sempre que a entrada
+padrão é um terminal.
+
+Um aparelho montado à mão é um aparelho montado diferente a cada vez, e cada linha dele é uma
+entrada do teste — monte a AVD uma vez e reutilize sempre a mesma.
 
 ### 2.2 Quando nada roda
 
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
 | Todo fluxo morre em `UNAVAILABLE: io exception` | Sessão órfã do Maestro Studio ([#3065](https://github.com/mobile-dev-inc/maestro/issues/3065)) | Feche o Studio e `rm ~/.maestro/sessions` |
-| O script recusa antes de começar | Aparelho fora de uma das cinco linhas verificadas da §2.1 | A mensagem diz qual; ajuste o aparelho, a suíte não o ajusta por você |
-| "advertises a hardware keyboard" | AVD com `hw.keyboard = yes` | Desligue o emulador e rode `scripts/pin_avd_keyboard.sh finsight_e2e`; a configuração é lida no boot |
-| Texto some por baixo de uma barra flutuante | Idem — e é o sintoma se a recusa acima for contornada | Idem; não existe conserto por `adb` com o emulador ligado |
+| Falhas espalhadas sem padrão | Aparelho fora de uma das linhas da §2.1 | Confira as cinco primeiras à mão; nenhum resultado num aparelho divergente conta |
+| Texto some por baixo de uma barra flutuante | AVD com `hw.keyboard = yes` | Desligue o emulador, corrija o `config.ini` (§2.1) e suba de novo; não existe conserto por `adb` com ele ligado |
 | Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
-| Tudo vermelho depois de mexer no app | APK velho instalado | Rode sem `--skip-build` |
+| Tudo vermelho depois de mexer no app | APK velho instalado | `./gradlew :app:android:installDebug` antes de rodar |
 
 ## 3. Mapa da suíte
 
@@ -188,13 +184,13 @@ invisíveis sem nenhum erro que explique o porquê.
 Perguntas em ordem fixa, da mais barata para a mais cara:
 
 1. **O aparelho bate com a §2.1?** Perfil divergente é resultado inválido, não pista.
-2. **O fluxo falha sozinho?** `scripts/e2e.sh --skip-build .maestro/flows/<área>` responde em dois
+2. **O fluxo falha sozinho?** `maestro test .maestro/flows/<área>` responde em dois
    minutos. Falha sozinho e passa na suíte (ou o contrário) é dependência de ordem — que nesta suíte
    não deveria existir, porque todo fluxo começa de `launch_fresh`.
 3. **É determinístico?** Rode duas vezes. Intermitente é quase sempre sincronização (§5.2, padrão 3).
 4. **O passo que falhou é o assunto do fluxo ou um passo de preparo?** Falha no preparo raramente é
    bug do app; é a UI que mudou de forma debaixo do fluxo.
-5. **Reproduz no CI e localmente?** Se só no CI, volte à pergunta 1.
+5. **Reproduz noutra máquina?** Se só na sua, volte à pergunta 1 — a diferença está no aparelho.
 
 **"Elemento não encontrado" quase nunca significa que o elemento não existe.** Significa: fora da
 viewport; ainda não composto (o dashboard é uma `LazyColumn` — o que não foi rolado **não existe** na
@@ -322,7 +318,7 @@ precisão.
 
 | Antipadrão | Como você percebe que caiu nele | Em vez disso |
 |---|---|---|
-| **Espera mágica** | O fluxo passa localmente e falha no CI; alguém aumenta o sleep; a suíte engorda e segue instável | `extendedWaitUntil` na condição |
+| **Espera mágica** | O fluxo passa numa máquina e falha noutra; alguém aumenta o sleep; a suíte engorda e segue instável | `extendedWaitUntil` na condição |
 | **Seletor por copy** | Um PR que só reescreve textos deixa dez fluxos vermelhos | `id` para alcançar; texto só para asserir |
 | **Asserção tautológica** | O fluxo nunca falhou na vida — e afirma "a tela existe" | Quebre a funcionalidade de propósito uma vez; se não fica vermelho, a asserção é enfeite |
 | **Ausência sem premissa** | `assertNotVisible` passa porque o componente está fora da viewport, não porque sumiu | Assere a ausência com um componente *posterior* visível, provando que a região foi composta |
@@ -366,8 +362,8 @@ história que custa o que custa.
 ## 6. Saúde da suíte
 
 **Orçamento: ~25 minutos e 12 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
-reflexo. Cada fluxo novo compete com os existentes pelo tempo de CI; ao propor um, diga qual sai ou
-por que o teto muda.
+reflexo. Cada fluxo novo compete com os existentes pelo tempo de quem roda a suíte; ao propor um,
+diga qual sai ou por que o teto muda.
 
 O teto subiu de ~20 para ~21 com `support/lifecycle`, e é o fluxo mais barato da suíte fora os de
 fumaça: **1m06 e 1m12** em duas medições. Entrou porque suporte era a última feature sem nenhuma travessia — e era
@@ -411,8 +407,8 @@ consegue — a que soma uma fatura liquidada e uma aberta.
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**A suíte é opt-in no CI hoje** — roda por label `e2e` ou manualmente. Os dois fluxos `smoke` somam
-15 segundos, o que torna barata a opção de rodá-los em todo PR; a decisão está em aberto. A tag
+**A suíte roda só à mão hoje** — não há job de CI por trás dela. Os dois fluxos `smoke` somam 15
+segundos, o que mantém barata a opção de automatizá-los um dia; a decisão está em aberto. A tag
 `smoke` não foi realocada quando `accounts/default_account` saiu: levá-la para uma história de dois
 minutos mataria exatamente a possibilidade que ela existe para manter aberta.
 

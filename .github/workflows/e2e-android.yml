@@ -6,12 +6,18 @@ name: E2E Android
 on:
   workflow_dispatch:
   pull_request:
-    types: [labeled]
+    types: [labeled, synchronize, reopened]
 
 jobs:
   maestro:
-    # Only the `e2e` label triggers it on a pull request; workflow_dispatch always runs.
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'e2e'
+    # The `e2e` label is the switch, and it is read from the pull request rather than from the
+    # event: `github.event.label` only exists on `labeled`, so testing it would run the suite once,
+    # at the moment the label lands, and never again for the commits that follow it. Reading the
+    # PR's labels makes `synchronize` re-run a labelled PR on every push, which is the point of
+    # labelling it. `workflow_dispatch` always runs.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')
     # A hardware-accelerated emulator needs a nested-virtualisation-capable runner.
     runs-on: ubuntu-latest
     timeout-minutes: 45

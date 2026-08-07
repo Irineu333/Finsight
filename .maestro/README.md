@@ -53,8 +53,14 @@ testável porque o build de debug o responde da memória em vez do Firestore
 (`InMemorySupportRepository`, no source set de debug do app). Esse armazenamento morre com o
 processo, então `support/lifecycle` é o único fluxo que **não pode** relançar o app.
 
-No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou quando um pull
-request recebe o label `e2e`.
+No CI, o `.github/workflows/e2e-android.yml` roda **o mesmo comando**, manualmente ou num pull
+request que carregue o label `e2e` — inclusive nos commits que vierem depois do label, porque a
+condição lê os labels do PR e não o evento que a disparou.
+
+Duas coisas fazem o run não acontecer, e nenhuma delas dá erro: o label `e2e` não existir no
+repositório (o job simplesmente pula, em segundos), e o *Run workflow* não aparecer na aba Actions
+enquanto este arquivo não estiver na branch default — o GitHub só oferece `workflow_dispatch` para
+workflows que já estão na `main`.
 
 Duas ferramentas de inspeção: `maestro studio` abre um inspetor sobre o app em execução, e
 `maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma

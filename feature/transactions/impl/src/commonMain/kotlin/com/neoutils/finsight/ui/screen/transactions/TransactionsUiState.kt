@@ -13,14 +13,21 @@ import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
-private val currentMonth
+private val systemYearMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
     val listState: ListState = ListState.Loading,
     val balanceOverview: BalanceOverview = BalanceOverview.Overall(),
     val selectedScope: TransactionScope = TransactionScope.ALL,
-    val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
+    val selectedYearMonth: YearMonth = systemYearMonth,
+    /**
+     * The month the app is in, told by the ViewModel rather than read here: [selectedYearMonth]
+     * already comes from the clock the app was given, and a state that read its own would be
+     * comparing two months against two different todays. Defaults to the selected one, so a
+     * caller that says nothing gets "this is the current month" instead of a second clock.
+     */
+    val currentYearMonth: YearMonth = selectedYearMonth,
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
     val selectedLabel: TransactionLabel? = null,
@@ -29,8 +36,8 @@ data class TransactionsUiState(
     val showInstallmentOnly: Boolean = false,
 ) {
 
-    val isCurrentMonth = selectedYearMonth == currentMonth
-    val isFutureMonth = selectedYearMonth > currentMonth
+    val isCurrentMonth = selectedYearMonth == currentYearMonth
+    val isFutureMonth = selectedYearMonth > currentYearMonth
 
     /**
      * Whether the target chip still has work to do. In the scoped modes it would be

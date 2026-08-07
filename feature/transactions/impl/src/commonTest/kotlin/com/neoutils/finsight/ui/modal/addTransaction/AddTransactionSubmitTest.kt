@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
@@ -161,6 +162,7 @@ class AddTransactionSubmitTest {
         modalManager = ModalManager(),
         analytics = FakeAnalytics,
         crashlytics = FakeCrashlytics(),
+        validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = FixedClock(today)),
         clock = FixedClock(today),
     )
 }

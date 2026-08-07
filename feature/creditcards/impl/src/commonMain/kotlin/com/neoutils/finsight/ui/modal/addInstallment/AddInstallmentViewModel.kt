@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
@@ -14,6 +15,12 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.today
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
@@ -23,7 +30,6 @@ import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -35,11 +41,26 @@ class AddInstallmentViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val addInstallmentUseCase: AddInstallmentUseCase,
+    private val validateTransactionForm: ValidateTransactionFormUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
     private val clock: Clock,
 ) : ViewModel() {
+
+    /**
+     * What the user is filling in. An instalment purchase is always an expense on a card, so
+     * neither type nor target is a choice here — they are constants of this sheet.
+     */
+    private data class Input(
+        val date: String,
+        val title: String = "",
+        val amount: String = "",
+        val category: Category? = null,
+        val installments: Int = 2,
+    )
+
+    private val input = MutableStateFlow(Input(date = dayMonthYear.format(clock.today())))
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
@@ -58,27 +79,64 @@ class AddInstallmentViewModel(
     }
 
     val uiState = combine(
+        input,
         categories,
         creditCards,
         invoices,
         selectedCreditCard,
         selectedDueMonth,
-    ) { categories, creditCards, invoices, selectedCard, dueMonth ->
+    ) { input, categories, creditCards, invoices, selectedCard, dueMonth ->
+
+        val invoiceSelection = dueMonth?.let { month ->
+            InvoiceMonthSelection(
+                dueMonth = month,
+                existingInvoice = invoices.find { it.dueMonth == month },
+            )
+        }
+
+        val form = input.toForm(
+            creditCard = selectedCard,
+            invoiceDueMonth = invoiceSelection?.dueMonth,
+        )
+
         AddInstallmentUiState(
+            form = form,
+            today = clock.today(),
+            // The invoice and the instalment count are this sheet's own conditions: the form
+            // is a single expense as far as the rule is concerned, and two is what makes it
+            // an instalment purchase at all.
+            canSubmit = validateTransactionForm(form).isRight() &&
+                invoiceSelection != null &&
+                !invoiceSelection.isClosedToNewExpenses &&
+                form.installments > 1,
             categories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
-            invoiceSelection = dueMonth?.let { month ->
-                InvoiceMonthSelection(
-                    dueMonth = month,
-                    existingInvoice = invoices.find { it.dueMonth == month },
-                )
-            },
+            invoiceSelection = invoiceSelection,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = AddInstallmentUiState(),
+        initialValue = AddInstallmentUiState(
+            form = input.value.toForm(),
+            today = clock.today(),
+        ),
+    )
+
+    private fun Input.toForm(
+        creditCard: CreditCard? = null,
+        invoiceDueMonth: YearMonth? = null,
+    ) = TransactionForm.from(
+        type = TransactionType.EXPENSE,
+        amount = amount,
+        title = title,
+        date = date,
+        category = category,
+        target = TransactionTarget.CREDIT_CARD,
+        creditCard = creditCard,
+        invoiceDueMonth = invoiceDueMonth,
+        account = null,
+        installments = installments,
     )
 
     init {
@@ -97,12 +155,19 @@ class AddInstallmentViewModel(
 
     fun onAction(action: AddInstallmentAction) {
         when (action) {
+            is AddInstallmentAction.ChangeTitle -> input.update { it.copy(title = action.title) }
+            is AddInstallmentAction.ChangeAmount -> input.update { it.copy(amount = action.amount) }
+            is AddInstallmentAction.ChangeDate -> input.update { it.copy(date = action.date) }
+            is AddInstallmentAction.ChangeInstallments -> input.update {
+                // Two is the floor: one instalment is just an expense, and the sheet that
+                // records those is another one.
+                it.copy(installments = action.installments.coerceAtLeast(2))
+            }
+
+            is AddInstallmentAction.SelectCategory -> input.update { it.copy(category = action.category) }
             is AddInstallmentAction.SelectCreditCard -> selectCreditCard(action.creditCard)
             is AddInstallmentAction.NavigateToMonth -> selectedDueMonth.value = action.dueMonth
-            is AddInstallmentAction.Submit -> submit(
-                form = action.form,
-                installments = action.installments,
-            )
+            is AddInstallmentAction.Submit -> submit()
         }
     }
 
@@ -118,10 +183,10 @@ class AddInstallmentViewModel(
         }
     }
 
-    private fun submit(
-        form: TransactionForm,
-        installments: Int,
-    ) = viewModelScope.launch {
+    private fun submit() = viewModelScope.launch {
+        val form = uiState.value.form
+        val installments = form.installments
+
         addInstallmentUseCase(
             form = form,
             installments = installments,

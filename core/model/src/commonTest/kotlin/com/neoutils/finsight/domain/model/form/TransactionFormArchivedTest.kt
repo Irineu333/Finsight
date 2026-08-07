@@ -10,13 +10,14 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * A form seeded from an old transaction can point at an archived leg, which the
- * write boundary refuses. The form declines to offer the submit instead of letting
- * the user press it and read an error.
+ * Which of a form's legs are archived — the set, and nothing more.
+ *
+ * What is *done* about it is not the form's to say: `ValidateTransactionFormUseCase` turns a
+ * non-empty set into `BuildTransactionError.ClosedSelection`, and is tested there. This is the
+ * reading it works from.
  */
 class TransactionFormArchivedTest {
 
@@ -59,39 +60,34 @@ class TransactionFormArchivedTest {
     )
 
     @Test
-    fun `a form with no archived leg is valid`() {
-        val form = form()
-        assertTrue(form.archivedSelections.isEmpty())
-        assertTrue(form.isValid())
+    fun `a form with no archived leg reports nothing`() {
+        assertTrue(form().archivedSelections.isEmpty())
     }
 
     @Test
-    fun `an archived category leaves the form valid`() {
+    fun `an archived category is never reported`() {
         // A category is not monetary: closing one strands no money, so it blocks
         // nothing the ledger cares about. This is the edit case — the user is
         // fixing an old transaction whose category was archived meanwhile, and
         // refusing it froze the transaction for a rule that does not exist.
         val form = form(category = category(isArchived = true))
         assertTrue(form.archivedSelections.isEmpty())
-        assertTrue(form.isValid())
     }
 
     @Test
-    fun `an archived account invalidates the form`() {
+    fun `an archived account is reported`() {
         val form = form(account = account(isArchived = true))
         assertEquals(setOf(ClosedFacade.ACCOUNT), form.archivedSelections)
-        assertFalse(form.isValid())
     }
 
     @Test
-    fun `an archived credit card invalidates the form`() {
+    fun `an archived credit card is reported`() {
         val form = form(
             account = null,
             creditCard = card(isArchived = true),
             target = TransactionTarget.CREDIT_CARD,
         )
         assertEquals(setOf(ClosedFacade.CREDIT_CARD), form.archivedSelections)
-        assertFalse(form.isValid())
     }
 
     @Test

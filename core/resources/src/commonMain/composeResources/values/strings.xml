@@ -809,4 +809,18 @@
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>
     <string name="view_recurring_title">Recorrência</string>
+
+    <string name="build_transaction_error_amount_required">Informe o valor.</string>
+    <string name="build_transaction_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="build_transaction_error_date_required">Informe a data.</string>
+    <string name="build_transaction_error_date_invalid">Data inválida.</string>
+    <string name="build_transaction_error_date_future">A data não pode ser futura.</string>
+    <string name="build_transaction_error_recurring_month_locked">Uma transação recorrente não pode mudar de mês.</string>
+    <string name="build_transaction_error_title_or_category_required">Informe um título ou uma categoria.</string>
+    <string name="build_transaction_error_credit_card_expense_only">Só despesas podem ir em um cartão de crédito.</string>
+    <string name="build_transaction_error_invoice_required">Selecione a fatura.</string>
+    <string name="build_transaction_error_credit_card_required">Selecione o cartão de crédito.</string>
+    <string name="build_transaction_error_account_required">Selecione a conta.</string>
+    <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
+    <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
 </resources>

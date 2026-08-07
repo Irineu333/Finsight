@@ -102,6 +102,7 @@ val creditCardsModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             addInstallmentUseCase = get(),
+            validateTransactionForm = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

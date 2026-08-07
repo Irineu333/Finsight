@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.today
@@ -50,6 +51,7 @@ class AddTransactionViewModel(
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val validateTransactionForm: ValidateTransactionFormUseCase,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -140,10 +142,10 @@ class AddTransactionViewModel(
         AddTransactionUiState(
             form = form,
             today = clock.today(),
-            // Decided here because this is where the clock is. The rule stays on the form —
-            // it is the form's business what makes one submittable — and the layer that has
-            // a today is the one that tells it which today.
-            canSubmit = form.isValid(clock.today()) &&
+            // The rule is the use case's, and it carries its own clock — there is no today to
+            // pass and no way to pass the wrong one. What is decided here is only the part the
+            // form cannot see: whether the invoice it points at still takes spending.
+            canSubmit = validateTransactionForm(form).isRight() &&
                 invoiceSelection?.isClosedToNewExpenses != true,
             selectedTarget = input.target,
             incomeCategories = categories.filter { it.type.isIncome },

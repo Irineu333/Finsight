@@ -6,8 +6,8 @@ maestro test .maestro                            # roda tudo (~25 min)
 maestro test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
 ```
 
-A suíte roda **à mão**: não há script que a prepare nem CI que a rode, e a ausência é deliberada
-(§2.1). Ela exige um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem
+A suíte roda **à mão**: hoje não há script que a prepare nem CI que a rode (§2.1). Ela exige um
+emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem
 teclado físico** — pré-condição de quem executa, que nada verifica nem conserta, e que na maior
 parte não tem conserto depois do boot da AVD. Confira as sete linhas da **§2.2** antes de rodar: num
 aparelho divergente, vermelho ou verde não conta.
@@ -66,12 +66,12 @@ tela de fato expõe.
 
 ### 2.1 Quem roda é quem responde
 
-Não existe script de preparo, alvo Gradle, `make e2e` nem job de CI por trás desta pasta, e a
-ausência é deliberada: um script que monta a AVD daria a impressão de garantir o aparelho, e ele
-**não pode** — metade das linhas da §2.2 é lida no boot da AVD, a outra metade exige que ela tenha
-sido criada em inglês, e nenhuma das duas se conserta com o emulador ligado. Automação que não
-garante o aparelho só produziria vermelhos e verdes que não contam. Quem muda uma tela é quem
-responde se a travessia continua de pé.
+Hoje não existe script de preparo, alvo Gradle, `make e2e` nem job de CI por trás desta pasta:
+acertar os dois ficou fora do escopo de quando a suíte entrou, e ninguém voltou a eles. Não é uma
+proibição — é o estado atual, e enquanto ele durar **o aparelho não tem outro dono senão quem
+executa**. Metade das linhas da §2.2 é lida no boot da AVD e a outra metade exige que ela tenha sido
+criada em inglês, então nada as conserta com o emulador ligado, e nenhum comando avisa quando estão
+erradas: sobra conferir antes. Quem muda uma tela é quem responde se a travessia continua de pé.
 
 Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
 

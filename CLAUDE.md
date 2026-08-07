@@ -134,7 +134,7 @@ compiler, not by discipline (see below).
 ## E2E (Maestro)
 Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour.
 
-**There is no setup script and no CI job.** The suite is run by hand, and whoever runs it — human or
+**There is no setup script and no CI job today.** The suite is run by hand, and whoever runs it — human or
 AI agent, no distinction — owns building and checking the device it needs: an **API 36 `pixel_6`
 AVD, in English, with an on-screen keyboard and no hardware keyboard**. Nothing verifies that for
 you and most of it cannot be fixed once the AVD has booted, so a divergent device makes the run

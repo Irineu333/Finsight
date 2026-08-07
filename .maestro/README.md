@@ -6,8 +6,9 @@ scripts/e2e.sh --skip-build                      # reaproveita o APK instalado �
 scripts/e2e.sh .maestro/flows/budgets            # uma pasta, ou um único .yaml
 ```
 
-Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela**. O
-`scripts/e2e.sh` sobe o `finsight_e2e` quando não há nada conectado e recusa qualquer outro perfil.
+Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem teclado
+físico**. O `scripts/e2e.sh` **cria e sobe** o `finsight_e2e` quando não há nada conectado, e recusa
+qualquer aparelho que divirja disso (§2.1) — não há passo de setup manual.
 Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
 ---
@@ -109,12 +110,18 @@ lidos no boot e nenhum comando `adb` os conserta depois. Quem os fixa é
 `scripts/e2e.sh` a chama antes de subir o emulador, e o CI a chama pelo
 `pre-emulator-launch-script` da action, que roda entre criar a AVD e ligá-la.
 
-Crie a AVD uma vez — o `scripts/e2e.sh` acerta o teclado dela na primeira vez que a inicia:
+**Não crie a AVD à mão.** Se ela não existir, o `scripts/e2e.sh` a cria — perfil, imagem e teclado
+— e sobe. Um aparelho montado por gente é um aparelho montado diferente a cada vez, e cada linha
+dele é uma entrada do teste. Rodar a suíte é o suficiente:
 
 ```bash
-$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-    -n finsight_e2e -d pixel_6 -k "system-images;android-36;google_apis_playstore;arm64-v8a"
+scripts/e2e.sh            # cria finsight_e2e se faltar, fixa o teclado, sobe, roda
 ```
+
+O `avdmanager` não tem flag para nenhuma dessas propriedades — ele aceita um perfil de aparelho e
+mais nada — então o teclado é escrito no `config.ini` **depois**, e é por isso que criar e corrigir
+são dois passos e não um. Vale para as duas metades: `-d pixel_6` já dá `hw.keyboard = no`, mas
+deixa `hw.keyboard.lid = yes`, que é justamente o que convida a barra flutuante.
 
 ### 2.2 Quando nada roda
 

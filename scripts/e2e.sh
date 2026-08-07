@@ -11,6 +11,7 @@ set -euo pipefail
 
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly APK="$ROOT/app/android/build/outputs/apk/debug/android-debug.apk"
+readonly E2E_APP_ID="com.neoutils.finsight"
 
 # The suite is calibrated against one device, and the flows are only as reproducible as the screen
 # they scroll on. A different density or height changes what sits below the fold, which is the
@@ -48,13 +49,22 @@ command -v maestro >/dev/null || {
 # be plugged in.
 if [[ -z "$(adb devices | sed '1d' | grep -w device || true)" ]]; then
     if ! "$ANDROID_SDK/emulator/emulator" -list-avds | grep -qx "$E2E_AVD"; then
-        echo "The pinned emulator '$E2E_AVD' does not exist. Create it once with:" >&2
-        echo "  \$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \\" >&2
-        echo "      -n $E2E_AVD -d $E2E_PROFILE -k \"$E2E_IMAGE\"" >&2
-        exit 1
+        # Created here rather than left as a step in a README, because a device assembled by hand
+        # is a device assembled differently each time — and every line of it is an input to the
+        # test. `avdmanager` answers "no" to the custom-hardware prompt on its own only when it is
+        # not asked; it is asked whenever stdin is a terminal.
+        echo "Creating $E2E_AVD ($E2E_PROFILE, API $E2E_API)..."
+        "$ANDROID_SDK/cmdline-tools/latest/bin/avdmanager" create avd \
+            -n "$E2E_AVD" -d "$E2E_PROFILE" -k "$E2E_IMAGE" <<< "no" || {
+            echo "Could not create '$E2E_AVD'. Install the image once with:" >&2
+            echo "  \$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \"$E2E_IMAGE\"" >&2
+            exit 1
+        }
     fi
-    # The keyboard settings are read at startup, so they are fixed before the first boot and cannot
-    # be repaired from `adb` afterwards. CI runs the same script against the AVD its emulator action
+    # `avdmanager` has no flag for any of this — it takes a device profile and nothing else — so the
+    # keyboard is written into config.ini afterwards, whether the AVD was just created or has been
+    # sitting there since last month. Both keys are read at startup and neither can be repaired from
+    # `adb` once the emulator is up. CI applies the same script to the AVD its emulator action
     # creates (see .github/workflows/e2e-android.yml).
     "$ROOT/scripts/pin_avd_keyboard.sh" "$E2E_AVD" >/dev/null
 
@@ -144,6 +154,17 @@ if [[ "$device_locale" != en* ]]; then
     echo "  Change it in Settings > System > Languages, or on a userdebug emulator:" >&2
     echo "    adb root && adb shell setprop persist.sys.locale en-US && adb shell 'stop; start'" >&2
     exit 1
+fi
+
+# `--skip-build` means "reuse what is installed", and on a device that has nothing installed — a
+# freshly created AVD, most often — it would otherwise hand every flow the same unhelpful
+# "Package com.neoutils.finsight is not installed". Install what is on disk when there is something
+# on disk; build when there is not.
+if [[ "$skip_build" == true ]] &&
+   ! adb shell pm list packages 2>/dev/null | grep -q "^package:$E2E_APP_ID\$"; then
+    echo "$E2E_APP_ID is not installed on the device; ignoring --skip-build."
+    skip_build=false
+    [[ -f "$APK" ]] && { adb install -r -t "$APK" && skip_build=true; }
 fi
 
 if [[ "$skip_build" == false ]]; then

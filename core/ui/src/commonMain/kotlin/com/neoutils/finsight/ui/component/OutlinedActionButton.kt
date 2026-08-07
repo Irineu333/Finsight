@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +38,9 @@ fun OutlinedActionButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fontWeight: FontWeight = FontWeight.Medium,
+    // On the label rather than the button, because when a caller's label is the thing under test
+    // — "does this still offer Delete?" — the assertion has to read the node that carries the word.
+    labelTestTag: String? = null,
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -60,6 +64,7 @@ fun OutlinedActionButton(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
+            modifier = if (labelTestTag != null) Modifier.testTag(labelTestTag) else Modifier,
             text = label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = fontWeight,

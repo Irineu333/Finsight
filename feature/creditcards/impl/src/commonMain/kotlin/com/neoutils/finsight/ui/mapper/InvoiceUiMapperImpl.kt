@@ -7,16 +7,16 @@ import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.model.InvoiceUi
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class InvoiceUiMapperImpl(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val calculateAvailableLimitUseCase: CalculateAvailableLimitUseCase,
+    private val clock: Clock,
 ) : InvoiceUiMapper {
     override suspend fun toUi(
         invoice: Invoice,
@@ -26,7 +26,7 @@ class InvoiceUiMapperImpl(
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
         val hasProgress = outstandingDebt > 0 && limit.usage != 0.0
         val status = invoice.status
-        val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val currentDate = clock.today()
 
         // The status is decomposed into flat facts here, so no UI model or component
         // re-derives an invoice rule — they consume what the domain already decided.

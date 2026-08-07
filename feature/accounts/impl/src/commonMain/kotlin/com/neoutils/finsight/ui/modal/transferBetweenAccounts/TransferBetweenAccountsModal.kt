@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -29,16 +31,13 @@ import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class TransferBetweenAccountsModal(
     private val sourceAccount: Account,
@@ -52,6 +51,10 @@ class TransferBetweenAccountsModal(
 
         val uiState by viewModel.uiState.collectAsState()
         val modalManager = LocalModalManager.current
+
+        // The clock the app was given, like the other sheets that write a transaction: this date
+        // both seeds the field and bounds the picker, and the picker reads the same clock.
+        val currentDate = koinInject<Clock>().today()
 
         val amount = rememberTextFieldState()
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
@@ -79,7 +82,9 @@ class TransferBetweenAccountsModal(
                         viewModel.onAction(TransferBetweenAccountsAction.SelectSourceAccount(it))
                     },
                     label = stringResource(Res.string.transfer_source_account_label),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    valueTestTag = "transfer_source_account",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -91,7 +96,9 @@ class TransferBetweenAccountsModal(
                         viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(it))
                     },
                     label = stringResource(Res.string.transfer_destination_account_label),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    valueTestTag = "transfer_destination_account",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -108,7 +115,9 @@ class TransferBetweenAccountsModal(
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("transfer_amount"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -168,8 +177,11 @@ class TransferBetweenAccountsModal(
                         date = date.text.toString(),
                         sourceAccount = uiState.selectedSourceAccount,
                         destinationAccount = uiState.selectedDestinationAccount,
+                        today = currentDate,
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("transfer_save"),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -188,6 +200,7 @@ class TransferBetweenAccountsModal(
         date: String,
         sourceAccount: Account?,
         destinationAccount: Account?,
+        today: LocalDate,
     ): Boolean {
         if (amount.isEmpty()) return false
         if (amount.moneyToDouble() <= 0.0) return false
@@ -199,6 +212,6 @@ class TransferBetweenAccountsModal(
             dayMonthYear.parse(date)
         }.getOrElse { return false }
 
-        return parsedDate <= currentDate
+        return parsedDate <= today
     }
 }

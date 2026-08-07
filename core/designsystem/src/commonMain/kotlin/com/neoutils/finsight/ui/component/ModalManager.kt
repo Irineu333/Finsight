@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.util.UiText
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
@@ -138,6 +139,9 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
             onDismissRequest = {
                 manager.dismiss(modal)
             },
+            // A sheet is its own composition root, so the app window's opt-in does not reach it:
+            // without this, no test tag inside any modal is visible to the E2E driver.
+            modifier = Modifier.exposeTestTags(),
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),

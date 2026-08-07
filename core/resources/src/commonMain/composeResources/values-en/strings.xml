@@ -183,6 +183,8 @@
     <string name="installments_delete">Delete Installment</string>
     <string name="installments_empty">No installments</string>
     <string name="installments_create">Create installment</string>
+    <string name="installment_counter_single">%1$dx</string>
+    <string name="installment_counter_label">%1$dx of %2$s</string>
     <string name="installments_total_value">Total Value</string>
     <string name="installments_current_installment">Current Installment</string>
     <string name="installments_remaining">Remaining</string>
@@ -806,4 +808,18 @@
     <string name="view_category_title">Category</string>
     <string name="view_budget_title">Budget</string>
     <string name="view_recurring_title">Recurring</string>
+
+    <string name="build_transaction_error_amount_required">Enter an amount.</string>
+    <string name="build_transaction_error_amount_zero">The amount cannot be zero.</string>
+    <string name="build_transaction_error_date_required">Enter a date.</string>
+    <string name="build_transaction_error_date_invalid">That is not a date.</string>
+    <string name="build_transaction_error_date_future">The date cannot be in the future.</string>
+    <string name="build_transaction_error_recurring_month_locked">A recurring transaction cannot change month.</string>
+    <string name="build_transaction_error_title_or_category_required">Enter a title or pick a category.</string>
+    <string name="build_transaction_error_credit_card_expense_only">Only expenses can go on a credit card.</string>
+    <string name="build_transaction_error_invoice_required">Pick the invoice.</string>
+    <string name="build_transaction_error_credit_card_required">Pick the credit card.</string>
+    <string name="build_transaction_error_account_required">Pick the account.</string>
+    <string name="build_transaction_error_closed_invoice">A closed invoice takes no new spending.</string>
+    <string name="build_transaction_error_closed_selection">An archived account or card takes no new transactions.</string>
 </resources>

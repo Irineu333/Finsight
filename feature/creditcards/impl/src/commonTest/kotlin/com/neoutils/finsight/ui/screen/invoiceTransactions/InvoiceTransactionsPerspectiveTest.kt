@@ -27,6 +27,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
 
 /**
  * This screen shows one card, so it reads a transaction through the card's own leg.
@@ -95,6 +96,7 @@ class InvoiceTransactionsPerspectiveTest {
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
         crashlytics = NoCrashlytics,
+        clock = Clock.System,
     )
 
     private suspend fun settledState(

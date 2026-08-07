@@ -66,6 +66,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -143,6 +144,7 @@ private fun InstallmentsContent(
     val transactionsEntry = koinInject<TransactionsEntry>()
 
     Scaffold(
+        modifier = Modifier.testTag("screen_installments"),
         topBar = {
             TopAppBar(
                 title = {
@@ -231,6 +233,9 @@ private fun InstallmentsContent(
                     onClick = {
                         modalManager.show(AddInstallmentModal())
                     },
+                    // Same id as the empty state's button below: the flow asks to create
+                    // an installment, not for the affordance the current state renders.
+                    modifier = Modifier.testTag("installments_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -257,7 +262,8 @@ private fun InstallmentsContent(
                     onCreateInstallment = { modalManager.show(AddInstallmentModal()) },
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
+                        .padding(paddingValues)
+                        .testTag("installments_empty_state"),
                 )
             }
 
@@ -295,7 +301,8 @@ private fun InstallmentsContent(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp)
                                         .fillMaxWidth()
-                                        .animateItem(),
+                                        .animateItem()
+                                        .testTag("installment_delete"),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         contentColor = colorScheme.error,
@@ -395,7 +402,9 @@ private fun EmptyInstallmentsState(
 
             Button(
                 onClick = onCreateInstallment,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("installments_add"),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
@@ -439,7 +448,9 @@ private fun InstallmentPager(
     ) { page ->
         InstallmentSummaryCard(
             ui = installments[page],
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("installment_card"),
         )
     }
 }
@@ -521,6 +532,7 @@ private fun InstallmentSummaryCard(
                 )
                 Text(
                     text = formatter.format(ui.totalAmount),
+                    modifier = Modifier.testTag("installment_total_amount"),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -543,13 +555,17 @@ private fun InstallmentSummaryCard(
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface,
-                            modifier = Modifier.alignByBaseline(),
+                            modifier = Modifier
+                                .alignByBaseline()
+                                .testTag("installment_current_number"),
                         )
                         Text(
                             text = " / ${ui.totalCount}",
                             fontSize = 16.sp,
                             color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.alignByBaseline(),
+                            modifier = Modifier
+                                .alignByBaseline()
+                                .testTag("installment_total_count"),
                         )
                     }
                 }
@@ -564,6 +580,7 @@ private fun InstallmentSummaryCard(
                     )
                     Text(
                         text = formatter.format(ui.remainingAmount),
+                        modifier = Modifier.testTag("installment_remaining_amount"),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface,
@@ -605,10 +622,12 @@ private fun StatusBadge(
             text = if (isActive) stringResource(Res.string.installments_status_active) else stringResource(Res.string.installments_status_completed),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(
-                horizontal = 8.dp,
-                vertical = 4.dp,
-            ),
+            modifier = Modifier
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 4.dp,
+                )
+                .testTag("installment_status"),
         )
     }
 }

@@ -10,6 +10,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
+maestro test .maestro                                      # Maestro E2E suite (see .maestro/README.md first)
 ```
 
 ## Features
@@ -129,6 +130,26 @@ compiler, not by discipline (see below).
 
 > Normative reference: **`core/ledger/README.md`** — the full vocabulary, the read and
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
+
+## E2E (Maestro)
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour.
+
+**There is no setup script and no CI job today.** The suite is run by hand, and whoever runs it — human or
+AI agent, no distinction — owns building and checking the device it needs: an **API 36 `pixel_6`
+AVD, in English, with an on-screen keyboard and no hardware keyboard**. Nothing verifies that for
+you and most of it cannot be fixed once the AVD has booted, so a divergent device makes the run
+*invalid*. **Read `.maestro/README.md` §2 before running** — the seven `adb` checks, how to create
+the AVD, and how to pin the target when more than one device is connected. Reinstall the debug APK
+first (`./gradlew :app:android:installDebug`); the release build does not work. Report which device
+the run happened on — a bare "12/12 green" is a claim with nothing behind it.
+
+Two conventions reach into the app's code, not just the flows: elements are reached by **`id:`**,
+never by label (copy gets reworded), and an `id` is a Compose `Modifier.testTag` that only reaches
+Maestro because its composition root published it with `Modifier.exposeTestTags()`
+(`core/designsystem` — `ui/util/ExposeTestTags`) — a modal sheet, dialog or popup is its own root
+and needs its own call.
+
+> Normative reference: **`.maestro/README.md`** — how to run, the device, the suite map, writing a flow.
 
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.

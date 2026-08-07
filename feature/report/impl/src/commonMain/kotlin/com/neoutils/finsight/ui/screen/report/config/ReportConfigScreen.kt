@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,7 +120,8 @@ private fun ReportConfigContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .navigationBarsPadding(),
+                    .navigationBarsPadding()
+                    .testTag("report_generate"),
             ) {
                 Text(stringResource(Res.string.report_config_generate))
             }
@@ -177,6 +179,7 @@ private fun ReportConfigContent(
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                             colors = segmentedButtonColors,
                             icon = {},
+                            modifier = Modifier.testTag("report_perspective_credit_card"),
                         ) {
                             Text(stringResource(Res.string.report_config_perspective_credit_card))
                         }
@@ -350,7 +353,9 @@ private fun ReportConfigContent(
                                 invoice = invoice,
                                 selected = invoice.id in uiState.config.selectedInvoiceIds,
                                 onClick = { onAction(ReportConfigAction.ToggleInvoice(invoice.id)) },
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier
+                                    .animateItem()
+                                    .testTag("report_invoice_card"),
                             )
                         }
                     }

@@ -47,6 +47,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
 
 /**
  * The two emptinesses of the card's transaction list — and the third, older one:
@@ -104,6 +105,7 @@ class CreditCardsEmptyStateTest {
                     invoiceRepository = invoiceRepository,
                     calculateInvoiceUseCase = calculateInvoice,
                 ),
+                clock = Clock.System,
             ),
         )
     }

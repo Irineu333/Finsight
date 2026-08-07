@@ -10,18 +10,20 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.extension.currentYearMonth
 import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentMonth get() = Clock.System.now().toYearMonth()
-private val nextMonth get() = currentMonth.plusMonth()
-
 class CreateInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val creditCardRepository: ICreditCardRepository
+    private val creditCardRepository: ICreditCardRepository,
+    private val clock: Clock,
 ) {
+
+    private val currentMonth get() = clock.currentYearMonth()
+    private val nextMonth get() = currentMonth.plusMonth()
+
 
     suspend operator fun invoke(
         creditCardId: Long

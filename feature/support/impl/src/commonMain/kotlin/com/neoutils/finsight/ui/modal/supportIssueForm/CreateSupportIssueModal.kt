@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -111,7 +112,9 @@ class CreateSupportIssueModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("support_form_title"),
             )
 
             OutlinedTextField(
@@ -125,7 +128,9 @@ class CreateSupportIssueModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = 5, maxHeightInLines = 8),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("support_form_description"),
             )
 
             Button(
@@ -140,7 +145,9 @@ class CreateSupportIssueModal(
                     modalManager.dismiss()
                 },
                 enabled = canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("support_form_submit"),
             ) {
                 androidx.compose.material3.Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,

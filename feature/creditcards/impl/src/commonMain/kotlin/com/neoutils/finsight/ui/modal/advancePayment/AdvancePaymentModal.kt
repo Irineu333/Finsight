@@ -16,12 +16,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -31,16 +33,12 @@ import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvancePaymentModal(
     private val invoice: Invoice,
@@ -57,6 +55,7 @@ class AdvancePaymentModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val manager = LocalModalManager.current
+        val currentDate = koinInject<Clock>().today()
 
         val amount = rememberTextFieldState()
 
@@ -102,7 +101,9 @@ class AdvancePaymentModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("advance_payment_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -113,7 +114,9 @@ class AdvancePaymentModal(
                 onAccountSelected = {
                     viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth(),
+                valueTestTag = "advance_payment_account",
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +184,9 @@ class AdvancePaymentModal(
                         currentBillAmount
                     }.coerceAtLeast(0.0),
                 ) && uiState.selectedAccount != null,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("advance_payment_confirm"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

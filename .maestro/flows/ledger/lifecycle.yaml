@@ -1,0 +1,380 @@
+appId: com.neoutils.finsight
+name: ledger_lifecycle
+tags:
+  - ledger
+env:
+  INCOME_TITLE: "E2E Salary"
+  INCOME_DIGITS: "50000"
+  EXPENSE_TITLE: "E2E Coffee"
+  EXPENSE_DIGITS: "4290"
+  SAVINGS_ACCOUNT: "E2E Savings"
+  CORRECTED_DIGITS: "6835"
+---
+# A figure's whole life in the ledger: written by two entries of different natures, summed, read
+# back through every screen that reads it, corrected, and undone. It is a single flow because
+# `launch_fresh` wipes the database — split in two, the second half would have to re-earn the money
+# before it could spend it.
+#
+# Reading these same figures back through the report is `report/lifecycle`'s job, not this one's:
+# a report leg here could only re-assert this flow's numbers, which proves the report runs, not
+# that it scopes.
+#
+# Every figure is asserted on the node that renders it (`id` + `text` in one selector), so a pass
+# means "this number is here", not "this number is somewhere on screen". The amounts — 500.00 and
+# 42.90 leaving 457.10, then 68.35 leaving 431.65 — end in five distinct pairs of cents, so no
+# assertion can succeed by matching a neighbour.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- I have an American account, and it is empty -------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible:
+    id: "account_default_badge"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "account_opening_balance_amount"
+    text: "[$]0[.,]00"
+
+# --- I am paid $500.00 ---------------------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+
+# ...the dashboard totals move, and the transaction is in Recents — below the fold, hence the scroll.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]500[.,]00"
+- assertVisible:
+    id: "dashboard_income_amount"
+    text: "[$]500[.,]00"
+# Recents is configured on the default dashboard but withheld while empty — the dashboard story
+# asserts its absence by this same id, and this is the other half of that claim.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_recents"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible: ${INCOME_TITLE}
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]500[.,]00"
+
+# ...it is in the transaction list...
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible: ${INCOME_TITLE}
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]500[.,]00"
+
+# ...and it landed on the account.
+- tapOn:
+    id: "nav_item_dashboard"
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible:
+    id: "account_income_amount"
+    text: "[+][$]500[.,]00"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]500[.,]00"
+
+# --- I spend $42.90 ------------------------------------------------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: expense
+      TITLE: ${EXPENSE_TITLE}
+      AMOUNT: ${EXPENSE_DIGITS}
+
+# 500.00 − 42.90 = 457.10. This is the assertion the whole suite exists for: two writes of different
+# natures, summed by the ledger and read back through the UI.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]457[.,]10"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]42[.,]90"
+- scrollUntilVisible:
+    element:
+      text: ${EXPENSE_TITLE}
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]42[.,]90"
+
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible: ${EXPENSE_TITLE}
+- assertVisible: ${INCOME_TITLE}
+
+# --- The expense figure is a filter, not a caption -----------------------------------------------
+# Tapping it opens the list already cut to expenses (`TransactionsRoute.filterLabel`), and the two
+# assertions above are what make the cut readable: the same list, reached the other way, held both.
+#
+# The claim is the hand-off, not the filter. Which rows a filter keeps is the ViewModel's, tested
+# there against every nature; that the *dashboard* passes the label matching the figure the user
+# tapped needs both screens mounted, and no layer below mounts two.
+- tapOn:
+    id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_expenses_amount"
+    direction: UP
+    timeout: 25000
+- tapOn:
+    id: "dashboard_expenses_amount"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]42[.,]90"
+# The income is not merely off-screen: the list composed — the expense above proves it — and cut it
+# out. Read on the node that renders a title, so a stray match elsewhere cannot answer for it.
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: ${INCOME_TITLE}
+- back
+
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible:
+    id: "account_expenses_amount"
+    text: "[-][$]42[.,]90"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]457[.,]10"
+
+# --- I open a second account ---------------------------------------------------------------------
+# It exists only to be the destination of the correction below — a corrected amount alone would not
+# distinguish "the ledger rewrote the entry" from "the ledger wrote a second one". Created here,
+# on the screen this act is already standing on, and after every single-account assertion above,
+# because the accounts screen is a pager and a second page makes `account_balance_amount` ambiguous.
+- runFlow:
+    file: ../../subflows/create_account.yaml
+    env:
+      NAME: ${SAVINGS_ACCOUNT}
+- back
+
+# --- I got the coffee wrong: it was $68.35, and I paid it from savings ---------------------------
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- tapOn:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_edit"
+    timeout: 15000
+# The detail sheet shows what the ledger holds, not what was typed into the form an hour ago.
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[-]?[$]42[.,]90"
+- tapOn:
+    id: "view_transaction_edit"
+- extendedWaitUntil:
+    visible:
+      id: "edit_transaction_amount"
+    timeout: 15000
+# The form reopens over the stored figure. Nothing else in the suite proves this: every other form
+# is filled from empty, so a form that silently opened blank would still pass everywhere else.
+- assertVisible:
+    id: "edit_transaction_amount"
+    text: ".*42[.,]90.*"
+
+- tapOn:
+    id: "edit_transaction_amount"
+- waitForAnimationToEnd
+- eraseText: 20
+- inputText: ${CORRECTED_DIGITS}
+- assertVisible:
+    id: "edit_transaction_amount"
+    text: ".*68[.,]35.*"
+- hideKeyboard
+
+# The other half of "the form reopens over what is stored": the amount above came back as the
+# ledger holds it, and so does the account. A form that defaulted to the default account would
+# still look right here — Wallet *is* the default — were it not for the second assertion below,
+# which is the one that proves the selection took.
+- assertVisible:
+    id: "edit_transaction_account"
+    text: "Wallet"
+- tapOn:
+    id: "edit_transaction_account"
+- extendedWaitUntil:
+    visible: ${SAVINGS_ACCOUNT}
+    timeout: 10000
+- tapOn: ${SAVINGS_ACCOUNT}
+# Read back before saving: submitting against a selector that silently kept its old value is the
+# failure this whole act exists to catch, and catching it here names it.
+- assertVisible:
+    id: "edit_transaction_account"
+    text: ${SAVINGS_ACCOUNT}
+
+- scrollUntilVisible:
+    element:
+      id: "edit_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "edit_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "edit_transaction_save"
+    timeout: 15000
+
+# --- Both accounts count the same money ----------------------------------------------------------
+# Saving returns to the detail sheet, which re-reads the transaction rather than echoing the form.
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_amount"
+    timeout: 15000
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[-]?[$]68[.,]35"
+# The sheet is its own composition root: while it is up, it is the whole hierarchy Maestro sees, so
+# the list underneath cannot be asserted until it is dismissed.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]68[.,]35"
+
+# 500.00 − 68.35 = 431.65. An edit is two corrections at once, and the second is the one an
+# append-only bug would get wrong: Wallet has to be made whole, not merely charged less.
+- tapOn:
+    id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]431[.,]65"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]68[.,]35"
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]500[.,]00"
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- extendedWaitUntil:
+    visible: ${SAVINGS_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[-][$]68[.,]35"
+
+# --- I undo the spend ----------------------------------------------------------------------------
+- back
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- tapOn: ${EXPENSE_TITLE}
+
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_delete"
+    timeout: 15000
+- tapOn:
+    id: "view_transaction_delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete_transaction_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_transaction_confirm"
+
+# The expense is gone, the income is not, and the balance is exactly what it was before the spend.
+- extendedWaitUntil:
+    notVisible: ${EXPENSE_TITLE}
+    timeout: 15000
+- assertVisible: ${INCOME_TITLE}
+- tapOn:
+    id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]500[.,]00"

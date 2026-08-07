@@ -1,0 +1,17 @@
+# The E2E workspace. `maestro test .maestro` picks this file up and runs everything under `flows/`.
+# `subflows/` is deliberately outside that glob, so its reusable pieces only run when a flow calls
+# them with `runFlow`.
+
+flows:
+  - flows/**
+
+executionOrder:
+  continueOnFailure: true
+
+testOutputDir: .maestro/report
+
+platform:
+  android:
+    disableAnimations: true
+  ios:
+    disableAnimations: true

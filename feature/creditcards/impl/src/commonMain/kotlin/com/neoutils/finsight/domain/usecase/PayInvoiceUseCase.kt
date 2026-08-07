@@ -10,18 +10,18 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
 class PayInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
+    private val clock: Clock,
 ) {
+
+    private val currentDate get() = clock.today()
+
     suspend operator fun invoke(
         invoiceId: Long,
         paidAt: LocalDate,

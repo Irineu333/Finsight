@@ -1,0 +1,29 @@
+appId: com.neoutils.finsight
+name: create_account
+---
+# Creates one account from the accounts screen and leaves that screen open, the form dismissed.
+# Callers pass NAME. The caller is responsible for being on the accounts screen already, and for
+# asserting whatever the new account should show — a subflow carries the arrangement, never the
+# claim.
+- tapOn:
+    id: "accounts_add"
+- extendedWaitUntil:
+    visible:
+      id: "account_form_name"
+    timeout: 15000
+- tapOn:
+    id: "account_form_name"
+- waitForAnimationToEnd
+- inputText: ${NAME}
+# Read the field back: a dropped keystroke has to fail here, not later as an account whose name
+# nothing on screen matches.
+- assertVisible:
+    id: "account_form_name"
+    text: ${NAME}
+- hideKeyboard
+- tapOn:
+    id: "account_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "account_form_name"
+    timeout: 15000

@@ -14,7 +14,8 @@ class AndroidApp : Application() {
             androidLogger()
             androidContext(this@AndroidApp)
 
-            modules(appModules)
+            // Aggregated last: a debug build replaces a shipped definition by declaring it again.
+            modules(appModules + debugModule)
         }
     }
 }

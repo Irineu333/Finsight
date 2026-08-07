@@ -5,8 +5,21 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.form.TransactionForm
+import kotlinx.datetime.LocalDate
 
 data class EditTransactionUiState(
+    /** What the sheet renders and what the ViewModel would write — the same object. */
+    val form: TransactionForm,
+    /** Today as the app understands it, which bounds the date picker. */
+    val today: LocalDate,
+    /** Whether the form is worth submitting, decided where the clock is. */
+    val canSubmit: Boolean = false,
+    /**
+     * The target the user picked, which the form normalises away for an income. Kept apart
+     * so switching to income and back does not forget the card.
+     */
+    val selectedTarget: TransactionTarget = TransactionTarget.ACCOUNT,
     /**
      * The category the transaction already carries, resolved from the dimension of
      * its nominal leg. It arrives asynchronously, unlike the rest of the form's
@@ -25,4 +38,10 @@ data class EditTransactionUiState(
     val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 
     val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
+
+    val categories = when {
+        form.type.isIncome -> incomeCategories
+        form.type.isExpense -> expenseCategories
+        else -> emptyList()
+    }
 }

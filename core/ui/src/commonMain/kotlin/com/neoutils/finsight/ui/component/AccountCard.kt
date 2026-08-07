@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +85,7 @@ fun AccountCard(
 
     Card(
         modifier = modifier
+            .testTag("account_card")
             .then(sizeModifier)
             .then(
                 if (onClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable { onClick() }
@@ -158,6 +160,7 @@ private fun DetailContent(
                     color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("account_name"),
                 )
             }
 
@@ -166,6 +169,7 @@ private fun DetailContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),
@@ -179,6 +183,7 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_opening_balance),
+            amountTestTag = "account_opening_balance_amount",
             amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
             onEditClick = variant.onEditOpeningBalance,
@@ -186,12 +191,14 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_income),
+            amountTestTag = "account_income_amount",
             amount = accountUi.income,
             color = Income,
         )
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_expenses),
+            amountTestTag = "account_expenses_amount",
             amount = accountUi.expense,
             color = Expense,
         )
@@ -199,6 +206,7 @@ private fun DetailContent(
         if (accountUi.adjustment.value != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_adjustments),
+                amountTestTag = "account_adjustment_amount",
                 amount = accountUi.adjustment,
                 color = Adjustment,
             )
@@ -216,6 +224,7 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_balance),
+            amountTestTag = "account_balance_amount",
             amount = accountUi.balance,
             color = colorScheme.onSurface,
             isTotal = true,
@@ -255,6 +264,7 @@ private fun CompactContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),
@@ -275,6 +285,7 @@ private fun CompactContent(
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("account_name"),
             )
 
             if (variant is AccountCardVariant.Dashboard) {
@@ -294,6 +305,7 @@ private fun CompactContent(
 private fun AccountSummaryRow(
     label: String,
     amount: DisplayAmount,
+    amountTestTag: String? = null,
     color: Color,
     modifier: Modifier = Modifier,
     isTotal: Boolean = false,
@@ -335,6 +347,7 @@ private fun AccountSummaryRow(
 
             Text(
                 text = formatter.format(amount),
+                modifier = if (amountTestTag != null) Modifier.testTag(amountTestTag) else Modifier,
                 fontSize = if (isTotal) 20.sp else 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = color,

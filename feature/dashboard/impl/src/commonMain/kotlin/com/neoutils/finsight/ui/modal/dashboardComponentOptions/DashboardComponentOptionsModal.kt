@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,7 +65,8 @@ class DashboardComponentOptionsModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 16.dp),
+                .padding(bottom = 16.dp)
+                .testTag("dashboard_component_options"),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -294,7 +296,9 @@ class DashboardComponentOptionsModal(
                     onAction(DashboardAction.UpdateComponentConfig(item.key, config))
                     detailController.dismiss()
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("dashboard_component_options_confirm"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(
@@ -549,6 +553,7 @@ private fun AccountsOverviewConfigContent(
     DashboardConfigCard {
         DashboardConfigToggleRow(
             title = stringResource(Res.string.component_config_hide_single_account),
+            modifier = Modifier.testTag("dashboard_component_options_hide_single_account"),
             checked = hideSingleAccount,
             onCheckedChange = { enabled ->
                 onConfigChange(config.toMutableMap().apply {

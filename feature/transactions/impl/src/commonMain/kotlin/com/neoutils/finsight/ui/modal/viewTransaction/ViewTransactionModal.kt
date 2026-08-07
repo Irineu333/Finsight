@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -204,7 +205,8 @@ class ViewTransactionModal(
             DetailRow(
                 label = stringResource(Res.string.view_transaction_amount_label),
                 value = formatter.format(uiState.amount),
-                valueColor = uiState.transactionColor()
+                valueColor = uiState.transactionColor(),
+                valueTestTag = "view_transaction_amount"
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -399,7 +401,8 @@ class ViewTransactionModal(
                 onClick = {
                     manager.show(DeleteTransactionModal(uiState.transaction))
                 },
-                modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                modifier = (if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth())
+                    .testTag("view_transaction_delete"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.error,
@@ -428,7 +431,9 @@ class ViewTransactionModal(
                     onClick = {
                         manager.show(EditTransactionModal(uiState.transaction))
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("view_transaction_edit"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Info,
@@ -459,6 +464,7 @@ class ViewTransactionModal(
         value: String,
         modifier: Modifier = Modifier,
         valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -488,7 +494,8 @@ class ViewTransactionModal(
                     text = value,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = valueColor
+                    color = valueColor,
+                    modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier
                 )
             }
         }

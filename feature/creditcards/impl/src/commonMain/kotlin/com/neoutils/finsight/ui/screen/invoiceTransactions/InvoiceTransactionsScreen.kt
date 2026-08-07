@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -239,6 +240,7 @@ private fun InvoiceTransactionsContent(
                 }
             )
         },
+        modifier = Modifier.testTag("screen_invoice_transactions"),
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         LazyColumn(
@@ -528,13 +530,15 @@ private fun InvoiceSummaryItem(
             SummaryRow(
                 label = stringResource(Res.string.invoice_transactions_expenses),
                 amount = summary.expense,
-                color = Expense
+                color = Expense,
+                amountTestTag = "invoice_expenses_amount",
             )
 
             SummaryRow(
                 label = stringResource(Res.string.invoice_transactions_advance_payments),
                 amount = summary.advancePayment,
-                color = InvoicePayment
+                color = InvoicePayment,
+                amountTestTag = "invoice_advance_payments_amount",
             )
 
             if (summary.mustShowAdjustment) {
@@ -552,6 +556,7 @@ private fun InvoiceSummaryItem(
                 amount = summary.total,
                 color = colorScheme.onSurface,
                 isTotal = true,
+                amountTestTag = "invoice_total_amount",
                 onEditClick = if (summary.canEdit && onEditClick != null) {
                     {
                         onEditClick(summary.invoice)
@@ -584,7 +589,9 @@ private fun InvoiceActions(
                         )
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("invoice_advance_payment"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.primary
@@ -727,6 +734,8 @@ private fun SummaryRow(
     modifier: Modifier = Modifier,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
+    // On the amount, not on the row: an assertion binds a figure to the node that renders it.
+    amountTestTag: String? = null,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -768,7 +777,8 @@ private fun SummaryRow(
                 text = formatter.format(amount),
                 fontSize = if (isTotal) 20.sp else 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = color
+                color = color,
+                modifier = amountTestTag?.let { Modifier.testTag(it) } ?: Modifier,
             )
         }
     }

@@ -52,6 +52,7 @@ val dashboardModule = module {
             dashboardPreviewFactory = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
 }

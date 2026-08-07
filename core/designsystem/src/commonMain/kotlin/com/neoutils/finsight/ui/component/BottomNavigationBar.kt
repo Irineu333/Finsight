@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.theme.Primary1
 import org.jetbrains.compose.resources.StringResource
@@ -13,6 +14,9 @@ import org.jetbrains.compose.resources.stringResource
 interface BottomNavigationItem {
     val icon: ImageVector
     val labelRes: StringResource
+
+    /** Locale-independent handle on this item, so an E2E flow never selects it by its label. */
+    val testTag: String
 }
 
 @Composable
@@ -24,7 +28,9 @@ fun <T : BottomNavigationItem> BottomNavigationBar(
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("bottom_navigation_bar")
     ) {
         items.forEach { item ->
             val label = stringResource(item.labelRes)
@@ -43,7 +49,9 @@ fun <T : BottomNavigationItem> BottomNavigationBar(
                     selectedTextColor = Primary1,
                     indicatorColor = Primary1.copy(alpha = 0.1f)
                 ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(item.testTag)
             )
         }
     }

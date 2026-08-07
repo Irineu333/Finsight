@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_selector_label
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
@@ -28,6 +29,7 @@ fun CreditCardSelector(
     creditCard: CreditCard?,
     onCreditCardSelected: (CreditCard) -> Unit,
     modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
     onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -77,6 +79,7 @@ fun CreditCardSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
                 .animateContentSize()
         )
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -125,6 +126,7 @@ internal fun ReportContextCard(
                         )
                         Text(
                             text = formatter.format(stats.balance),
+                            modifier = Modifier.testTag("report_balance_amount"),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (stats.balance.value >= 0) Income else Expense,
@@ -144,6 +146,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.openingBalance),
+                                modifier = Modifier.testTag("report_opening_balance_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (stats.openingBalance.value >= 0) Income else Expense,
@@ -164,6 +167,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.income),
+                                modifier = Modifier.testTag("report_income_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Income,
@@ -181,6 +185,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.expense),
+                                modifier = Modifier.testTag("report_expenses_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Expense,
@@ -198,6 +203,7 @@ internal fun ReportContextCard(
                         )
                         Text(
                             text = formatter.format(stats.expense),
+                            modifier = Modifier.testTag("report_invoice_expenses_amount"),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = Expense,
@@ -217,6 +223,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.total),
+                                modifier = Modifier.testTag("report_invoice_total_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (stats.total.value >= 0) Expense else Income,
@@ -234,6 +241,7 @@ internal fun ReportContextCard(
                             )
                             Text(
                                 text = formatter.format(stats.advancePayment),
+                                modifier = Modifier.testTag("report_advance_payment_amount"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Income,

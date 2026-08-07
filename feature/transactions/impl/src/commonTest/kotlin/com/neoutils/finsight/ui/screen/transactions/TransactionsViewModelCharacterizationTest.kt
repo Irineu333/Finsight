@@ -80,6 +80,7 @@ class TransactionsViewModelCharacterizationTest {
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
             entryRepository = FakeLedger(transactions),
+            clock = Clock.System,
         )
 
         vm.uiState.test {

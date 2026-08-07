@@ -1,59 +1,35 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
-import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.exception.BuildTransactionException
-import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.ContraLeg
-import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.util.dayMonthYear
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
+/**
+ * The form's validity is [ValidateTransactionFormUseCase]'s answer, not a second reading of
+ * it: this used to repeat all eight checks, and the screens repeated them a third time
+ * through `TransactionForm.isValid`. What is left here is what only building does — resolving
+ * the invoice, which touches the database and so cannot run while someone is still typing.
+ */
 class BuildTransactionUseCaseImpl(
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
+    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val validateTransactionForm: ValidateTransactionFormUseCase,
 ) : BuildTransactionUseCase {
 
     override suspend operator fun invoke(
         form: TransactionForm,
     ): Either<Throwable, TransactionIntent> = either {
-        ensure(form.amount.isNotEmpty()) {
-            BuildTransactionException(BuildTransactionError.AmountRequired)
-        }
 
-        ensure(form.amount.moneyToDouble() != 0.0) {
-            BuildTransactionException(BuildTransactionError.AmountZero)
-        }
-
-        ensure(form.date.isNotEmpty()) {
-            BuildTransactionException(BuildTransactionError.DateRequired)
-        }
-
-        ensure(!form.title.isNullOrEmpty() || form.category != null) {
-            BuildTransactionException(BuildTransactionError.TitleOrCategoryRequired)
-        }
-
-        val date = catch { dayMonthYear.parse(form.date) }.bind()
-
-        ensure(date <= currentDate) {
-            BuildTransactionException(BuildTransactionError.DateFuture)
-        }
+        val date = validateTransactionForm(form)
+            .mapLeft { BuildTransactionException(it) }
+            .bind()
 
         if (form.target.isAccount) {
 
@@ -73,10 +49,6 @@ class BuildTransactionUseCaseImpl(
                 ),
                 contra = contraLegFor(form.type, form.category),
             )
-        }
-
-        ensure(form.type == TransactionType.EXPENSE) {
-            BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
         }
 
         val creditCard = ensureNotNull(form.creditCard) {

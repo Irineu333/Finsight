@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -44,6 +43,7 @@ import com.neoutils.finsight.resources.balance_card_invoice_payments
 import com.neoutils.finsight.resources.balance_card_pay_invoice
 import com.neoutils.finsight.resources.balance_card_pending_expense
 import com.neoutils.finsight.resources.balance_card_pending_income
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
@@ -130,7 +130,7 @@ fun BalanceCard(
             Text(
                 text = formatter.format(balance),
                 style = config.style,
-                modifier = if (amountTestTag != null) Modifier.testTag(amountTestTag) else Modifier,
+                modifier = Modifier.optionalTestTag(amountTestTag),
             )
 
             if (onEditClick != null) {

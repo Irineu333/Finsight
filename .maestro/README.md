@@ -348,8 +348,8 @@ editor e a tela que lê o resultado, e todo o resto da suíte lê um dashboard q
 rearranjou. O `initial_state` continua dono do dia zero — são claims diferentes, e os dois juntos
 custam 1m52.
 
-E subiu uma última vez, de ~23 para ~25, com `categories/lifecycle` (**~2m**, a medir no primeiro run
-verde). Entrou pelo mesmo precedente de `support/lifecycle`: categorias era a última feature de
+E subiu uma última vez, de ~23 para ~25, com `categories/lifecycle` (**2m19 e 2m22** em duas
+medições; a suíte inteira mediu 24m36). Entrou pelo mesmo precedente de `support/lifecycle`: categorias era a última feature de
 negócio sem travessia própria. `budgets/lifecycle` a atravessa de raspão — prova que uma categoria
 criada à mão chega ao orçamento — e nunca apaga, arquiva, desarquiva nem abre a folha de detalhe.
 Todo o ciclo de aposentadoria da dimensão estava descoberto, e é a mesma claim que já pagou

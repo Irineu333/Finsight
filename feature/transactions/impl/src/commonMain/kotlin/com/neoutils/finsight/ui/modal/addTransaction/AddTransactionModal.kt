@@ -27,11 +27,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
@@ -41,10 +37,9 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import com.neoutils.finsight.extension.today
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class AddTransactionModal : ModalBottomSheet() {
@@ -53,7 +48,6 @@ class AddTransactionModal : ModalBottomSheet() {
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
-        val currentDate = koinInject<Clock>().today()
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
@@ -61,47 +55,29 @@ class AddTransactionModal : ModalBottomSheet() {
 
         val uiState by viewModel.uiState.collectAsState()
 
-        var type by remember { mutableStateOf(TransactionType.EXPENSE) }
-        var target by remember { mutableStateOf(TransactionTarget.ACCOUNT) }
+        // The only state left here: Compose edits text through a `TextFieldState`, and that
+        // is an editing buffer, not the form. Each one reports to the ViewModel, which owns
+        // what the field means.
+        val title = rememberTextFieldState(uiState.form.title.orEmpty())
+        val amount = rememberTextFieldState(uiState.form.amount)
+        val date = rememberTextFieldState(uiState.form.date)
 
-        val amount = rememberTextFieldState()
-        val title = rememberTextFieldState()
-        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
-
-        var selectedCategory by remember { mutableStateOf<Category?>(null) }
-        var installments by remember { mutableStateOf(1) }
-
-        LaunchedEffect(type) {
-            selectedCategory = selectedCategory?.takeIf {
-                it.type.isAccept(type)
-            }
+        LaunchedEffect(Unit) {
+            snapshotFlow { title.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddTransactionAction.ChangeTitle(it)) }
         }
 
-        LaunchedEffect(target, uiState.creditCards) {
-            if (target.isCreditCard && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
-                viewModel.onAction(
-                    AddTransactionAction.SelectCreditCard(
-                        uiState.creditCards.first()
-                    )
-                )
-            }
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddTransactionAction.ChangeAmount(it)) }
         }
 
-        val form by remember {
-            derivedStateOf {
-                TransactionForm.from(
-                    type = type,
-                    amount = amount.text.toString(),
-                    title = title.text.toString(),
-                    date = date.text.toString(),
-                    category = selectedCategory,
-                    target = target,
-                    creditCard = uiState.selectedCreditCard,
-                    invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
-                    installments = installments,
-                    account = uiState.selectedAccount,
-                )
-            }
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddTransactionAction.ChangeDate(it)) }
         }
 
         Column(
@@ -113,9 +89,9 @@ class AddTransactionModal : ModalBottomSheet() {
         ) {
 
             TypeToggle(
-                selectedType = type,
+                selectedType = uiState.form.type,
                 onTypeSelected = {
-                    type = it
+                    viewModel.onAction(AddTransactionAction.ChangeType(it))
                 }
             )
 
@@ -138,10 +114,12 @@ class AddTransactionModal : ModalBottomSheet() {
                     .testTag("add_transaction_title"),
             )
 
-            AnimatedVisibility(type.isExpense) {
+            AnimatedVisibility(uiState.form.type.isExpense) {
                 TargetSelector(
-                    selectedTarget = target,
-                    onTargetSelected = { target = it },
+                    selectedTarget = uiState.selectedTarget,
+                    onTargetSelected = {
+                        viewModel.onAction(AddTransactionAction.ChangeTarget(it))
+                    },
                     availableTargets = uiState.targets,
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -151,7 +129,7 @@ class AddTransactionModal : ModalBottomSheet() {
             }
 
             AnimatedVisibility(
-                type.isExpense && target.isCreditCard
+                uiState.form.type.isExpense && uiState.selectedTarget.isCreditCard
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
@@ -168,7 +146,9 @@ class AddTransactionModal : ModalBottomSheet() {
             }
 
             AnimatedVisibility(
-                type.isExpense && target.isCreditCard && uiState.invoiceSelection != null
+                uiState.form.type.isExpense &&
+                    uiState.selectedTarget.isCreditCard &&
+                    uiState.invoiceSelection != null
             ) {
                     uiState.invoiceSelection?.let { selection ->
                         InvoiceMonthNavigator(
@@ -184,7 +164,7 @@ class AddTransactionModal : ModalBottomSheet() {
             }
 
             AnimatedVisibility(
-                visible = target.isAccount || type.isIncome
+                visible = uiState.selectedTarget.isAccount || uiState.form.type.isIncome
             ) {
                     AccountSelector(
                         selectedAccount = uiState.selectedAccount,
@@ -202,13 +182,11 @@ class AddTransactionModal : ModalBottomSheet() {
             Spacer(modifier = Modifier.height(8.dp))
 
             CategorySelector(
-                selectedCategory = selectedCategory,
-                categories = when (type) {
-                    TransactionType.INCOME -> uiState.incomeCategories
-                    TransactionType.EXPENSE -> uiState.expenseCategories
-                    else -> listOf()
+                selectedCategory = uiState.form.category,
+                categories = uiState.categories,
+                onCategorySelected = {
+                    viewModel.onAction(AddTransactionAction.SelectCategory(it))
                 },
-                onCategorySelected = { selectedCategory = it },
                 onEmpty = { manager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -227,14 +205,20 @@ class AddTransactionModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                trailingIcon = if (type.isExpense && target == TransactionTarget.CREDIT_CARD && uiState.invoiceSelection != null) {
+                trailingIcon = if (
+                    uiState.form.type.isExpense &&
+                    uiState.selectedTarget.isCreditCard &&
+                    uiState.invoiceSelection != null
+                ) {
                     {
                         InstallmentCounter(
                             state = InstallmentState(
-                                count = installments,
-                                total = amount.text.toString().moneyToDouble(),
+                                count = uiState.form.installments,
+                                total = uiState.form.amount.moneyToDouble(),
                             ),
-                            onInstallmentsChange = { installments = it },
+                            onInstallmentsChange = {
+                                viewModel.onAction(AddTransactionAction.ChangeInstallments(it))
+                            },
                         )
                     }
                 } else null,
@@ -263,7 +247,7 @@ class AddTransactionModal : ModalBottomSheet() {
                             manager.show(
                                 DatePickerModal(
                                     initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
-                                    maxDate = currentDate,
+                                    maxDate = uiState.today,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, dayMonthYear.format(selectedDate))
@@ -290,9 +274,9 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
-                    viewModel.onAction(AddTransactionAction.Submit(form))
+                    viewModel.onAction(AddTransactionAction.Submit)
                 },
-                enabled = form.isValid(currentDate) && !uiState.isInvoiceBlocked,
+                enabled = uiState.canSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("add_transaction_save"),

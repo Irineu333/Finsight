@@ -79,6 +79,7 @@ val transactionsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {

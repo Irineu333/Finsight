@@ -2,12 +2,16 @@
 
 ```bash
 ./gradlew :app:android:installDebug              # instala o APK de debug (o de release não serve)
-maestro test .maestro/flows                      # roda tudo (~23 min)
-maestro test .maestro/flows/budgets              # uma pasta, ou um único .yaml
+maestro test .maestro                            # roda tudo (~25 min)
+maestro test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
 ```
 
+**Não há script que prepare isto, e não há CI que rode isto.** A suíte roda à mão, na máquina de
+quem mexe no app, contra um emulador que **quem executa monta** — e "quem executa" inclui um agente
+de IA rodando os comandos: a exigência é a mesma, e ninguém a cumpre por você.
+
 Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem teclado
-físico** (§2.1). Essas linhas são **pré-condição sua**: nada as verifica nem as conserta antes do
+físico** (§2.2). Essas linhas são **pré-condição sua**: nada as verifica nem as conserta antes do
 run, e um aparelho divergente produz resultado inválido — vermelho ou verde nele não conta.
 Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
@@ -42,26 +46,50 @@ suíte sobe para mais de 30 minutos — um número que não descreve a suíte e 
 
 ```bash
 ./gradlew :app:android:installDebug        # instala o APK de debug; refaça sempre que mexer no app
-maestro test .maestro/flows                # roda tudo
-maestro test --include-tags smoke .maestro/flows   # só os fluxos com a tag `smoke`
-maestro test .maestro/flows/smoke          # uma pasta, ou um único .yaml
+maestro test .maestro                      # roda tudo
+maestro test --include-tags smoke .maestro # só os fluxos com a tag `smoke`
 ```
 
-Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e de um emulador ligado
-ou aparelho conectado. Rode com o APK de debug — o de release não serve, e por dois motivos:
+**O caminho é `.maestro`, o workspace — não `.maestro/flows`.** O Maestro só executa os `.yaml` na
+raiz do caminho que recebe; alcançar as subpastas depende do `flows: [flows/**]` do `config.yaml`,
+que ele lê da raiz do workspace. Apontar para `.maestro/flows` faz o Maestro não achar fluxo nenhum
+e **sair com código 0**, imprimindo "Top-level directories do not contain any Flows" — falha em
+silêncio que se parece com sucesso. Rodar um fluxo isolado tem a mesma pegadinha; §2.3.
+
+Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e do emulador da §2.2
+ligado. Rode com o APK de debug — o de release não serve, e por dois motivos:
 o relógio móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug, e o suporte só é
 testável porque o build de debug o responde da memória em vez do Firestore
 (`InMemorySupportRepository`, no source set de debug do app). Esse armazenamento morre com o
 processo, então `support/lifecycle` é o único fluxo que **não pode** relançar o app.
 
-**Não há execução em CI.** A suíte roda na máquina de quem mexe no app, e nada a dispara por PR —
-quem muda uma tela é quem responde se a travessia continua de pé.
-
 Duas ferramentas de inspeção: `maestro studio` abre um inspetor sobre o app em execução, e
 `maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma
 tela de fato expõe.
 
-### 2.1 O dispositivo de referência
+### 2.1 Quem roda é quem responde
+
+Não existe script de preparo, alvo Gradle, `make e2e` nem job de CI por trás desta pasta, e a
+ausência é deliberada: um script que monta a AVD daria a impressão de garantir o aparelho, e ele
+**não pode** — metade das linhas da §2.2 é lida no boot da AVD, a outra metade exige que ela tenha
+sido criada em inglês, e nenhuma das duas se conserta com o emulador ligado.
+
+O que isso quer dizer na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
+
+1. **Montar o ambiente é parte da tarefa, não pré-requisito de outra pessoa.** Se não há AVD que
+   sirva, crie-a (§2.2). Não rode "no que estiver conectado".
+2. **Conferir as linhas da §2.2 à mão, antes do run.** A tabela traz o comando de cada uma. São
+   cinco `adb` e menos de um minuto, contra 25 minutos de resultado que não vale nada.
+3. **Reinstalar o APK de debug antes de rodar**, sempre que o app tiver mudado.
+4. **Reportar em que aparelho rodou.** Um "12/12 verde" sem o aparelho ao lado não é um resultado,
+   é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
+5. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
+   respondida com dados, não usada como explicação de saída.
+
+Nada disso é dispensável porque "a suíte passou da última vez". O aparelho é entrada do teste; o
+único jeito de saber qual entrada foi usada é olhar.
+
+### 2.2 O dispositivo de referência
 
 A suíte roda num aparelho só, e isso não é frescura: cada linha abaixo é uma **entrada do teste**.
 Deixá-la livre é aceitar entrada aleatória.
@@ -75,11 +103,26 @@ Deixá-la livre é aceitar entrada aleatória.
 | Teclado virtual ativo | um IME padrão instalado | `settings get secure default_input_method` | Sem IME o primeiro `inputText` de todo fluxo falha, e por um motivo que nenhuma mensagem nomeia |
 | `hw.keyboard.lid` | `no` (lido no boot) | — (escrito no `config.ini` antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
 | `show_ime_with_hard_keyboard` | `0` | `settings get secure show_ime_with_hard_keyboard` | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a linha acima já exclui — então é reforço, não a garantia |
-| Animações | desligadas (`config.yaml`) | — | Transição em curso é a causa nº 1 de toque perdido |
+| Animações | desligadas (`config.yaml`, §2.3) | `settings get global window_animation_scale` | Transição em curso é a causa nº 1 de toque perdido |
 
 **Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
 conta, e um tablet em inglês na API 36 bateria em tudo o mais e ainda assim não contaria. Nada
-verifica isso por você: a coluna do meio existe para você conferir à mão antes de rodar.
+verifica isso por você: a coluna do meio existe para você conferir à mão antes de rodar. As sete
+primeiras linhas, em ordem, são estes sete comandos:
+
+```bash
+adb shell getprop ro.build.version.sdk                       # 36
+adb shell wm size                                            # 1080x2400
+adb shell wm density                                         # 420
+adb shell getprop persist.sys.locale || adb shell getprop ro.product.locale   # en-US
+adb shell am get-config                                      # contém `-en-rUS-` e `-nokeys-`
+adb shell settings get secure default_input_method           # um IME, não `null`
+adb shell settings get secure show_ime_with_hard_keyboard    # 0
+```
+
+`am get-config` responde por duas linhas de uma vez: é ele que prova o `nokeys`, e é onde o
+`hw.keyboard.lid` do `config.ini` deixa de ser uma aposta. Nenhum dos sete conserta nada — quatro
+não têm conserto com a AVD ligada, e é para isso que serve criar a AVD certa uma vez.
 
 A ausência de teclado físico sai de `adb shell am get-config`, a `Configuration` que o próprio app
 resolve — `nokeys` é a palavra do Android para ela:
@@ -120,15 +163,34 @@ padrão é um terminal.
 Um aparelho montado à mão é um aparelho montado diferente a cada vez, e cada linha dele é uma
 entrada do teste — monte a AVD uma vez e reutilize sempre a mesma.
 
-### 2.2 Quando nada roda
+### 2.3 Rodar menos que a suíte inteira
+
+O `config.yaml` é do **workspace**, e o workspace é a pasta que o `maestro test` recebe. Duas coisas
+saem dele — o glob `flows/**` e `disableAnimations` —, e as duas se perdem juntas quando o caminho
+aponta para dentro:
+
+| Comando | O que acontece |
+|---|---|
+| `maestro test .maestro` | Workspace: os 12 fluxos, com as animações desligadas pelo `config.yaml` |
+| `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
+| `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
+| `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
+
+Apontar um `.yaml` direto é o laço de iteração legítimo enquanto se escreve um fluxo. Só não é o
+run que conta: com animação ligada, um toque perdido vira um vermelho que não é do app. Antes do
+veredito, rode pelo workspace.
+
+### 2.4 Quando nada roda
 
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
 | Todo fluxo morre em `UNAVAILABLE: io exception` | Sessão órfã do Maestro Studio ([#3065](https://github.com/mobile-dev-inc/maestro/issues/3065)) | Feche o Studio e `rm ~/.maestro/sessions` |
-| Falhas espalhadas sem padrão | Aparelho fora de uma das linhas da §2.1 | Confira as cinco primeiras à mão; nenhum resultado num aparelho divergente conta |
-| Texto some por baixo de uma barra flutuante | AVD com `hw.keyboard = yes` | Desligue o emulador, corrija o `config.ini` (§2.1) e suba de novo; não existe conserto por `adb` com ele ligado |
+| "Top-level directories do not contain any Flows", código 0 | O caminho foi `.maestro/flows` | Rode o workspace: `maestro test .maestro` (§2.3) |
+| Falhas espalhadas sem padrão | Aparelho fora de uma das linhas da §2.2 | Rode os sete comandos da §2.2; nenhum resultado num aparelho divergente conta |
+| Texto some por baixo de uma barra flutuante | AVD com `hw.keyboard = yes` | Desligue o emulador, corrija o `config.ini` (§2.2) e suba de novo; não existe conserto por `adb` com ele ligado |
 | Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
 | Tudo vermelho depois de mexer no app | APK velho instalado | `./gradlew :app:android:installDebug` antes de rodar |
+| Toques perdidos só quando se roda um fluxo isolado | Animações ligadas: o `config.yaml` ficou de fora | Confirme pelo workspace antes de culpar o app (§2.3) |
 
 ## 3. Mapa da suíte
 
@@ -183,10 +245,12 @@ invisíveis sem nenhum erro que explique o porquê.
 
 Perguntas em ordem fixa, da mais barata para a mais cara:
 
-1. **O aparelho bate com a §2.1?** Perfil divergente é resultado inválido, não pista.
-2. **O fluxo falha sozinho?** `maestro test .maestro/flows/<área>` responde em dois
+1. **O aparelho bate com a §2.2?** Os sete comandos de lá, com a saída colada na resposta. Perfil
+   divergente é resultado inválido, não pista — e "acho que bate" não responde a pergunta.
+2. **O fluxo falha sozinho?** `maestro test .maestro/flows/<área>/lifecycle.yaml` responde em dois
    minutos. Falha sozinho e passa na suíte (ou o contrário) é dependência de ordem — que nesta suíte
-   não deveria existir, porque todo fluxo começa de `launch_fresh`.
+   não deveria existir, porque todo fluxo começa de `launch_fresh`. Lembre que aí o `config.yaml`
+   fica de fora (§2.3): confirme o vermelho pelo workspace antes de abrir bug.
 3. **É determinístico?** Rode duas vezes. Intermitente é quase sempre sincronização (§5.2, padrão 3).
 4. **O passo que falhou é o assunto do fluxo ou um passo de preparo?** Falha no preparo raramente é
    bug do app; é a UI que mudou de forma debaixo do fluxo.
@@ -407,10 +471,15 @@ consegue — a que soma uma fatura liquidada e uma aberta.
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**A suíte roda só à mão hoje** — não há job de CI por trás dela. Os dois fluxos `smoke` somam 15
-segundos, o que mantém barata a opção de automatizá-los um dia; a decisão está em aberto. A tag
-`smoke` não foi realocada quando `accounts/default_account` saiu: levá-la para uma história de dois
-minutos mataria exatamente a possibilidade que ela existe para manter aberta.
+**A suíte roda só à mão** — não há job de CI por trás dela, nem script que a prepare ou a dispare.
+As duas ausências têm o mesmo motivo, e é o da §2.1: o resultado depende de um aparelho que só quem
+roda pode garantir, e automação que não garante o aparelho só produziria vermelhos e verdes que não
+contam. Quem muda uma tela é quem responde se a travessia continua de pé.
+
+Os dois fluxos `smoke` somam 15 segundos, o que mantém barata a opção de automatizá-los um dia; a
+decisão está em aberto, e o que ela custa não é o minuto de execução — é montar, em CI, o aparelho
+da §2.2. A tag `smoke` não foi realocada quando `accounts/default_account` saiu: levá-la para uma
+história de dois minutos mataria exatamente a possibilidade que ela existe para manter aberta.
 
 ---
 

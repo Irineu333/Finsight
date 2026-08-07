@@ -10,7 +10,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
-maestro test .maestro/flows                                # Maestro E2E suite (Android device)
+maestro test .maestro                                      # Maestro E2E suite (see .maestro/README.md first)
 ```
 
 ## Features
@@ -132,10 +132,21 @@ compiler, not by discipline (see below).
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
 
 ## E2E (Maestro)
-Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. The device
-must run in **English** — a precondition of the suite, not something a run fixes — so a flow may assert a rendered
-figure, which is the point: `457.10` on screen proves the ledger summed and read back what the flow
-wrote. Elements are still *reached* by **`id:`**, not by label: a label is copy and gets reworded. An
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour.
+
+**There is no setup script and no CI job.** The suite is run by hand, locally, and whoever runs it —
+human or AI agent, no distinction — owns building the device it needs: an **API 36 `pixel_6` AVD, in
+English, with an on-screen keyboard and no hardware keyboard**. Nothing checks or fixes any of that
+for you, and most of it cannot be fixed once the AVD has booted, so a divergent device makes the run
+*invalid* — red or green on it counts for nothing. Read **`.maestro/README.md` §2 before running**:
+it lists the seven `adb` checks and how to create the AVD. Reinstall the debug APK first
+(`./gradlew :app:android:installDebug`); the release build does not work. Report which device the
+run happened on — a bare "12/12 green" is a claim with nothing behind it.
+
+Point `maestro test` at **`.maestro`**, the workspace — `.maestro/flows` finds no flows and **exits
+0**, a silent pass. Because the device runs in English, a flow may assert a rendered figure, which is
+the point: `457.10` on screen proves the ledger summed and read back what the flow wrote. Elements
+are still *reached* by **`id:`**, not by label: a label is copy and gets reworded. An
 `id` is a Compose `Modifier.testTag`, reachable only because a composition root published it with
 `Modifier.exposeTestTags()` (`core/designsystem` — `ui/util/ExposeTestTags`); a modal sheet, dialog
 or popup is its own root and needs its own call.

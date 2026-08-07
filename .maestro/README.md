@@ -6,13 +6,12 @@ maestro test .maestro                            # roda tudo (~25 min)
 maestro test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
 ```
 
-**Não há script que prepare isto, e não há CI que rode isto.** A suíte roda à mão, na máquina de
-quem mexe no app, contra um emulador que **quem executa monta** — e "quem executa" inclui um agente
-de IA rodando os comandos: a exigência é a mesma, e ninguém a cumpre por você.
+A suíte roda **à mão**: não há script que a prepare nem CI que a rode, e a ausência é deliberada
+(§2.1). Ela exige um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem
+teclado físico** — pré-condição de quem executa, que nada verifica nem conserta, e que na maior
+parte não tem conserto depois do boot da AVD. Confira as sete linhas da **§2.2** antes de rodar: num
+aparelho divergente, vermelho ou verde não conta.
 
-Precisa de um emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem teclado
-físico** (§2.2). Essas linhas são **pré-condição sua**: nada as verifica nem as conserta antes do
-run, e um aparelho divergente produz resultado inválido — vermelho ou verde nele não conta.
 Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
 ---
@@ -50,11 +49,9 @@ maestro test .maestro                      # roda tudo
 maestro test --include-tags smoke .maestro # só os fluxos com a tag `smoke`
 ```
 
-**O caminho é `.maestro`, o workspace — não `.maestro/flows`.** O Maestro só executa os `.yaml` na
-raiz do caminho que recebe; alcançar as subpastas depende do `flows: [flows/**]` do `config.yaml`,
-que ele lê da raiz do workspace. Apontar para `.maestro/flows` faz o Maestro não achar fluxo nenhum
-e **sair com código 0**, imprimindo "Top-level directories do not contain any Flows" — falha em
-silêncio que se parece com sucesso. Rodar um fluxo isolado tem a mesma pegadinha; §2.3.
+O caminho é `.maestro`, o **workspace**. Apontar para dentro dele muda o que roda e o que vale — e
+o modo mais barato de perder um run é apontar para `.maestro/flows`, que não acha fluxo nenhum e
+sai com código 0. A tabela da §2.3 diz o que cada caminho faz.
 
 Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e do emulador da §2.2
 ligado. Rode com o APK de debug — o de release não serve, e por dois motivos:
@@ -72,18 +69,19 @@ tela de fato expõe.
 Não existe script de preparo, alvo Gradle, `make e2e` nem job de CI por trás desta pasta, e a
 ausência é deliberada: um script que monta a AVD daria a impressão de garantir o aparelho, e ele
 **não pode** — metade das linhas da §2.2 é lida no boot da AVD, a outra metade exige que ela tenha
-sido criada em inglês, e nenhuma das duas se conserta com o emulador ligado.
+sido criada em inglês, e nenhuma das duas se conserta com o emulador ligado. Automação que não
+garante o aparelho só produziria vermelhos e verdes que não contam. Quem muda uma tela é quem
+responde se a travessia continua de pé.
 
-O que isso quer dizer na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
+Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
 
-1. **Montar o ambiente é parte da tarefa, não pré-requisito de outra pessoa.** Se não há AVD que
-   sirva, crie-a (§2.2). Não rode "no que estiver conectado".
-2. **Conferir as linhas da §2.2 à mão, antes do run.** A tabela traz o comando de cada uma. São
-   cinco `adb` e menos de um minuto, contra 25 minutos de resultado que não vale nada.
-3. **Reinstalar o APK de debug antes de rodar**, sempre que o app tiver mudado.
-4. **Reportar em que aparelho rodou.** Um "12/12 verde" sem o aparelho ao lado não é um resultado,
+1. **Montar o aparelho é parte da tarefa.** Se não há AVD que sirva, crie-a (§2.2). Não rode "no que
+   estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
+2. **Conferir as sete linhas da §2.2 à mão, antes do run**, e **reinstalar o APK de debug**. Menos
+   de um minuto, contra 25 de resultado que não vale nada.
+3. **Reportar em que aparelho rodou.** Um "12/12 verde" sem o aparelho ao lado não é um resultado,
    é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
-5. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
+4. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
    respondida com dados, não usada como explicação de saída.
 
 Nada disso é dispensável porque "a suíte passou da última vez". O aparelho é entrada do teste; o
@@ -103,12 +101,16 @@ Deixá-la livre é aceitar entrada aleatória.
 | Teclado virtual ativo | um IME padrão instalado | `settings get secure default_input_method` | Sem IME o primeiro `inputText` de todo fluxo falha, e por um motivo que nenhuma mensagem nomeia |
 | `hw.keyboard.lid` | `no` (lido no boot) | — (escrito no `config.ini` antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
 | `show_ime_with_hard_keyboard` | `0` | `settings get secure show_ime_with_hard_keyboard` | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a linha acima já exclui — então é reforço, não a garantia |
-| Animações | desligadas (`config.yaml`, §2.3) | `settings get global window_animation_scale` | Transição em curso é a causa nº 1 de toque perdido |
+
+Falta uma oitava entrada, e ela **não é do aparelho**: as animações, que o `config.yaml` desliga em
+tempo de execução (§2.3) porque transição em curso é a causa nº 1 de toque perdido. Não a confira
+por `adb` — num aparelho correto `settings get global window_animation_scale` responde `1.0`, e
+isso não é reprovação. O que garante essa entrada é rodar pelo workspace.
 
 **Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
 conta, e um tablet em inglês na API 36 bateria em tudo o mais e ainda assim não contaria. Nada
 verifica isso por você: a coluna do meio existe para você conferir à mão antes de rodar. As sete
-primeiras linhas, em ordem, são estes sete comandos:
+linhas da tabela, em ordem, são estes sete comandos:
 
 ```bash
 adb shell getprop ro.build.version.sdk                       # 36
@@ -163,6 +165,23 @@ padrão é um terminal.
 Um aparelho montado à mão é um aparelho montado diferente a cada vez, e cada linha dele é uma
 entrada do teste — monte a AVD uma vez e reutilize sempre a mesma.
 
+### 2.2.1 Mais de um aparelho ligado
+
+Com dois aparelhos conectados nada disto vale por si: os sete comandos da §2.2 podem conferir um
+aparelho e o run acontecer noutro, sem erro que denuncie. `adb` recusa (`more than one device`), mas
+`installDebug` e `maestro test` escolhem sozinhos. Descubra quem é quem e fixe o alvo:
+
+```bash
+adb devices -l                                    # os seriais ligados
+adb -s emulator-5554 emu avd name                 # qual AVD é cada serial
+export ANDROID_SERIAL=emulator-5554               # vale para o adb e para o installDebug
+maestro test --device emulator-5554 .maestro      # o Maestro tem a sua própria flag
+```
+
+`ANDROID_SERIAL` não alcança o Maestro e `--device` não alcança o `adb`, então com dois ligados os
+dois são necessários — e não conferir o aparelho **por serial** é conferir outro aparelho. Desligar
+o que não é o da §2.2 continua sendo o caminho mais curto.
+
 ### 2.3 Rodar menos que a suíte inteira
 
 O `config.yaml` é do **workspace**, e o workspace é a pasta que o `maestro test` recebe. Duas coisas
@@ -190,6 +209,7 @@ veredito, rode pelo workspace.
 | Texto some por baixo de uma barra flutuante | AVD com `hw.keyboard = yes` | Desligue o emulador, corrija o `config.ini` (§2.2) e suba de novo; não existe conserto por `adb` com ele ligado |
 | Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
 | Tudo vermelho depois de mexer no app | APK velho instalado | `./gradlew :app:android:installDebug` antes de rodar |
+| O run não reflete o que você instalou, ou `adb` diz `more than one device` | Dois aparelhos ligados; o run caiu no outro | Fixe o alvo por serial (§2.2.1) |
 | Toques perdidos só quando se roda um fluxo isolado | Animações ligadas: o `config.yaml` ficou de fora | Confirme pelo workspace antes de culpar o app (§2.3) |
 
 ## 3. Mapa da suíte
@@ -425,56 +445,30 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~25 minutos e 12 fluxos.** Ao estourar, corta-se ou funde-se — o teto não sobe por
-reflexo. Cada fluxo novo compete com os existentes pelo tempo de quem roda a suíte; ao propor um,
-diga qual sai ou por que o teto muda.
-
-O teto subiu de ~20 para ~21 com `support/lifecycle`, e é o fluxo mais barato da suíte fora os de
-fumaça: **1m06 e 1m12** em duas medições. Entrou porque suporte era a última feature sem nenhuma travessia — e era
-intestável até o build de debug passar a responder suporte da memória
-(`InMemorySupportRepository`), no lugar do Firestore, que exigiria rede, credenciais e um projeto
-de verdade. Nada sai em troca: um minuto pela única jornada que ninguém cobria é o melhor preço da
-suíte inteira.
-
-E subiu de novo, de ~21 para ~23, com `dashboard/customization` (**1m42**). O que ele compra é o
-único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um**
-componente também — os comandos em massa movem os onze ou nenhum. Nenhuma outra camada monta o
-editor e a tela que lê o resultado, e todo o resto da suíte lê um dashboard que ninguém nunca
-rearranjou. O `initial_state` continua dono do dia zero — são claims diferentes, e os dois juntos
-custam 1m52.
-
-E subiu uma última vez, de ~23 para ~25, com `categories/lifecycle` (**2m19 e 2m22** em duas
-medições; a suíte inteira mediu 24m36). Entrou pelo mesmo precedente de `support/lifecycle`: categorias era a última feature de
-negócio sem travessia própria. `budgets/lifecycle` a atravessa de raspão — prova que uma categoria
-criada à mão chega ao orçamento — e nunca apaga, arquiva, desarquiva nem abre a folha de detalhe.
-Todo o ciclo de aposentadoria da dimensão estava descoberto, e é a mesma claim que já pagou
-`accounts/lifecycle` e `creditcards/lifecycle` para as outras duas fachadas. O que ele compra e
-nenhuma camada abaixo alcança: o comando que a folha oferece trocar de *Delete* para *Archive*
-porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção
-certa — o seletor de transação deixa de oferecê-la no mesmo instante em que o dashboard continua
-somando o que ela gastou. Nada sai em troca. Não entrou a oferta "Use default": quatorze categorias
-nomeadas por recurso seriam quatorze seletores que o fluxo não é dono.
-
-A aritmética por trás do arrasto **não** está aqui: `DashboardEditLayout.move` foi extraída do
-ViewModel e tem sua própria matriz unitária (`DashboardEditLayoutTest`, 12 casos). O E2E prova uma
-vez que o gesto chega nela; as cinco ramificações custam milissegundos onde estão.
-
-O teto subiu antes disso, de ~16 para ~20, e a justificativa fica registrada porque é ela que autoriza
-a próxima recusa. Duas coisas entraram: a **edição de transação**, que era o único comando
-corretivo do app sem nenhuma travessia — o botão sequer tinha `testTag`, então nenhum fluxo
-conseguia alcançá-lo; e **`report/lifecycle`**, que recolheu as pernas de relatório espalhadas por
-três outras histórias. Essa segunda quase se paga: cinco gerações de relatório viraram três, e o
-que sobrou em `creditcards/lifecycle` é a única que aquela história ganha e nenhuma outra
-consegue — a que soma uma fatura liquidada e uma aberta.
+**Orçamento: ~25 minutos e 12 fluxos** (medido de ponta a ponta: 24m36 e 25m47). Ao estourar,
+corta-se ou funde-se — o teto não sobe por reflexo. Cada fluxo novo compete com os existentes pelo
+tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto muda**.
 
 **Instabilidade é bug.** Um fluxo que fica vermelho sem mudança de código entra em investigação no
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**A suíte roda só à mão** — não há job de CI por trás dela, nem script que a prepare ou a dispare.
-As duas ausências têm o mesmo motivo, e é o da §2.1: o resultado depende de um aparelho que só quem
-roda pode garantir, e automação que não garante o aparelho só produziria vermelhos e verdes que não
-contam. Quem muda uma tela é quem responde se a travessia continua de pé.
+**O precedente.** O teto subiu quatro vezes, e cada uma fica registrada porque é ela que autoriza a
+próxima recusa. Nenhuma tirou um fluxo em troca; todas entraram pelo mesmo argumento — cobrir uma
+travessia que nenhuma camada abaixo alcança:
+
+| Teto | O que entrou | Custo | O que comprou, e só ele compra |
+|---|---|---|---|
+| ~16 → ~20 | edição de transação, e `report/lifecycle` | — | O único comando corretivo do app sem travessia — o botão sequer tinha `testTag`. E recolher as pernas de relatório espalhadas por três histórias: cinco gerações viraram três, e a que sobrou em `creditcards/lifecycle` soma uma fatura liquidada e uma aberta, que nenhuma outra consegue |
+| ~20 → ~21 | `support/lifecycle` | 1m06–1m12 | A última feature sem travessia nenhuma, intestável até o build de debug responder suporte da memória (`InMemorySupportRepository`) no lugar do Firestore, que exigiria rede, credenciais e projeto de verdade |
+| ~21 → ~23 | `dashboard/customization` | 1m42 | O único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um** componente também — os comandos em massa movem os onze ou nenhum. Nenhuma camada monta o editor e a tela que lê o resultado |
+| ~23 → ~25 | `categories/lifecycle` | 2m19–2m22 | O ciclo de aposentadoria da dimensão, que `budgets/lifecycle` só atravessa de raspão: o comando trocar de *Delete* para *Archive* porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção certa — o seletor de transação deixa de oferecê-la no instante em que o dashboard continua somando o que ela gastou |
+
+Duas recusas vêm no mesmo pacote, e valem como precedente igual. A aritmética do arrasto **não** é
+E2E: `DashboardEditLayout.move` foi extraída do ViewModel e tem matriz unitária própria
+(`DashboardEditLayoutTest`, 12 casos) — o E2E prova uma vez que o gesto chega nela, e as cinco
+ramificações custam milissegundos onde estão. E a oferta "Use default" das categorias ficou de
+fora: quatorze categorias nomeadas por recurso seriam quatorze seletores de que o fluxo não é dono.
 
 Os dois fluxos `smoke` somam 15 segundos, o que mantém barata a opção de automatizá-los um dia; a
 decisão está em aberto, e o que ela custa não é o minuto de execução — é montar, em CI, o aparelho

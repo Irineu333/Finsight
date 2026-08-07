@@ -88,6 +88,7 @@ class TransactionScopeYieldTest {
         categoryRepository = YieldAwareCategories(yieldCategory.takeIf { yieldCategoryExists }),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        clock = Clock.System,
     )
 
     private suspend fun overviewUnder(

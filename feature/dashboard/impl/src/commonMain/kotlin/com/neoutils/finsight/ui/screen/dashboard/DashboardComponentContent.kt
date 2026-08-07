@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,7 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
@@ -202,6 +204,7 @@ private fun DashboardPendingRecurringSection(
 ) {
     val modalManager = LocalModalManager.current
     val recurringEntry = koinInject<RecurringEntry>()
+    val clock = koinInject<Clock>()
     val component = variant.component
     val showHeader = variant.config.showHeader(variant.key)
 
@@ -227,9 +230,7 @@ private fun DashboardPendingRecurringSection(
                 recurring = recurring,
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
-                        val currentDate = Clock.System.now()
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                            .date
+                        val currentDate = clock.today()
                         val targetDate = currentDate.yearMonth
                             .safeOnDay(recurring.dayOfMonth)
                             .takeIf { it <= currentDate }
@@ -343,7 +344,10 @@ private fun DashboardQuickActionsSection(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    // The same handle the bottom bar and the rail give this destination: one
+                    // section, one tag, wherever the shell happens to offer it.
+                    .testTag(action.testTag),
             )
         }
     }
@@ -401,6 +405,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Income,
+            amountTestTag = "dashboard_income_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -412,6 +417,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Expense,
+            amountTestTag = "dashboard_expenses_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)
@@ -475,12 +481,14 @@ private fun DashboardPendingBalanceSection(
             balance = component.pendingIncome,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingIncome,
+            amountTestTag = "dashboard_pending_income_amount",
         )
 
         BalanceCard(
             balance = component.pendingExpense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingExpense,
+            amountTestTag = "dashboard_pending_expense_amount",
         )
     }
 }
@@ -501,12 +509,14 @@ private fun DashboardCreditCardBalanceSection(
             balance = component.payment,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.InvoicePayment,
+            amountTestTag = "dashboard_credit_card_payment_amount",
         )
 
         BalanceCard(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.CreditCardExpense,
+            amountTestTag = "dashboard_credit_card_expenses_amount",
         )
     }
 }
@@ -578,6 +588,7 @@ private fun DashboardCreditCardsSection(
                         dueDay = creditCardUi.dueDay,
                         limit = creditCardUi.limit,
                         invoiceUi = creditCardUi.invoiceUi,
+                        testTagPrefix = "dashboard_credit_card",
                         // Only the current page is promoted: a neighbour composed by the pager's
                         // contentPadding would be lifted to the overlay and lose its clip.
                         modifier = Modifier
@@ -835,6 +846,7 @@ private fun PendingRecurringCard(
 
             Text(
                 text = formatter.format(recurring.amount),
+                modifier = Modifier.testTag("dashboard_pending_recurring_amount"),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = typeColor,
@@ -880,6 +892,7 @@ private fun TotalBalanceCard(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,
+                modifier = Modifier.testTag("dashboard_total_balance_amount"),
             )
         }
     }

@@ -36,14 +36,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.Month
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import org.koin.compose.koinInject
 
 @Composable
 fun MonthPickerDropdownMenu(
@@ -150,9 +150,11 @@ private fun MonthGrid(
     onMonthSelected: (Month) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentYearMonth = remember {
-        Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
-    }
+    // Which month gets the "today" outline. Read from the clock the app was given, because the
+    // month this grid is opened on comes from it: with two clocks the highlight could point at a
+    // month the caller does not consider current.
+    val clock = koinInject<Clock>()
+    val currentYearMonth = remember(clock) { clock.currentYearMonth() }
     val dateFormats = LocalDateFormats.current
 
     val months = Month.entries

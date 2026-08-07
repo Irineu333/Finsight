@@ -1,0 +1,68 @@
+appId: com.neoutils.finsight
+name: record_categorized_expense
+---
+# Records one expense against a category and leaves the app where it found it. Callers pass TITLE,
+# AMOUNT (bare digits — the field places the separator itself) and CATEGORY, the name of a category
+# that already exists.
+#
+# Separate from `record_transaction` rather than a flag on it: choosing a category is a different
+# journey through the sheet, and a subflow that branches on whether to take it would be two subflows
+# sharing a file.
+
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${TITLE}
+- hideKeyboard
+
+# The category is picked by the name the calling flow created itself, so selecting it is selecting
+# the thing under test. This selector closes on choice — unlike the budget form's, which does not.
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_category"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_category"
+- extendedWaitUntil:
+    visible: ${CATEGORY}
+    timeout: 10000
+- tapOn: ${CATEGORY}
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${AMOUNT}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000

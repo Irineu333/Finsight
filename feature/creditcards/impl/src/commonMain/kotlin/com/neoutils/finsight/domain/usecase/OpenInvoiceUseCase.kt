@@ -12,21 +12,20 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import kotlinx.datetime.TimeZone
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plusMonth
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now()
-        .toLocalDateTime(TimeZone.currentSystemDefault()).date
-
 class OpenInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val creditCardRepository: ICreditCardRepository
+    private val creditCardRepository: ICreditCardRepository,
+    private val clock: Clock,
 ) {
+
+    private val currentDate get() = clock.today()
+
     suspend operator fun invoke(
         creditCardId: Long,
         openingMonth: YearMonth
@@ -85,7 +84,7 @@ class OpenInvoiceUseCase(
             openedAt = currentDate
         )
 
-        invoice.copy(id = invoiceRepository.insert(invoice))
+        invoiceRepository.insert(invoice)
     }
 }
 

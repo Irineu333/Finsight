@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -71,6 +72,7 @@ fun BudgetsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_budgets"),
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.budgets_title)) },
@@ -102,6 +104,10 @@ fun BudgetsScreen(
             if (uiState is BudgetsUiState.Content) {
                 FloatingActionButton(
                     onClick = { modalManager.show(BudgetFormModal()) },
+                    // The same command as the empty state's button, so it carries the
+                    // same id: a flow asks for "create a budget", not for whichever
+                    // affordance the current state happens to render it as.
+                    modifier = Modifier.testTag("budgets_add"),
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 }
@@ -216,7 +222,9 @@ private fun BudgetProgressItem(
     val formatter = LocalCurrencyFormatter.current
 
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .testTag("budget_card")
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer,
         ),
@@ -274,6 +282,7 @@ private fun BudgetProgressItem(
                 )
                 Text(
                     text = formatter.format(progress.budget.amount),
+                    modifier = Modifier.testTag("budget_limit_amount"),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -292,6 +301,7 @@ private fun BudgetProgressItem(
                     )
                     Text(
                         text = formatter.format(progress.spent),
+                        modifier = Modifier.testTag("budget_spent_amount"),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -303,6 +313,9 @@ private fun BudgetProgressItem(
                         text = if (progress.isExceeded) stringResource(Res.string.budgets_exceeded_by) else stringResource(
                             Res.string.budgets_remaining
                         ),
+                        // The label is the rule: which of the two the card shows is
+                        // `isExceeded`, and the figure beside it changes formula with it.
+                        modifier = Modifier.testTag("budget_remaining_label"),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -312,6 +325,7 @@ private fun BudgetProgressItem(
                         } else {
                             formatter.format(progress.remaining)
                         },
+                        modifier = Modifier.testTag("budget_remaining_amount"),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -360,7 +374,9 @@ private fun EmptyBudgetsState(
 
             Button(
                 onClick = onCreateBudget,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("budgets_add"),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))

@@ -1,0 +1,84 @@
+appId: com.neoutils.finsight
+name: dashboard_initial_state
+tags:
+  - smoke
+  - dashboard
+---
+# Day zero: what the dashboard shows a user who has done nothing yet, and — just as much — what it
+# withholds. The default layout declares eleven components (`GetDashboardPreferencesUseCase`); an
+# empty app renders four of them, and each absence below is a product decision rather than an
+# accident, so each is worth pinning.
+#
+# Order matters in this flow. Everything that asserts an absence runs before anything scrolls,
+# because a component the viewport has moved past is not composed, and `assertNotVisible` cannot
+# tell that apart from a component that was never configured.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# The premise every absence below rests on. At the top of an untouched dashboard the first component
+# (position 0) and the last (position 10) are on screen together, so every component between them
+# has been laid out — and a missing one is genuinely missing. If the layout ever grows enough to
+# break that, this fails here, loudly, instead of quietly turning the absences into tautologies.
+- assertVisible:
+    id: "dashboard_component_total_balance"
+- assertVisible:
+    id: "dashboard_component_quick_actions"
+
+# --- Shown, and reading zero ---------------------------------------------------------------------
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "dashboard_component_balance_stats_overall"
+- assertVisible:
+    id: "dashboard_income_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "dashboard_expenses_amount"
+    text: "[$]0[.,]00"
+
+# The cards widget is the one empty state the dashboard does show: it is how a new user is offered a
+# first card, so `SHOW_EMPTY_STATE` is true where the other widgets hide.
+- assertVisible:
+    id: "dashboard_component_credit_cards_pager"
+
+# --- Withheld until they have something to say ---------------------------------------------------
+# Pending and card balances hide while empty (HIDE_WHEN_EMPTY).
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_pending"
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_credit_card"
+
+# The accounts row hides while the seeded default account is the only one (HIDE_SINGLE_ACCOUNT):
+# a row of one account only restates the balance above it.
+- assertNotVisible:
+    id: "dashboard_component_accounts_overview"
+
+# And the four that need history before they mean anything. Recents is configured on this dashboard
+# — it is absent because there are no transactions yet, not because it was left out; the ledger story
+# is what proves it appears once there are.
+- assertNotVisible:
+    id: "dashboard_component_spending_by_category"
+- assertNotVisible:
+    id: "dashboard_component_budgets"
+- assertNotVisible:
+    id: "dashboard_component_pending_recurring"
+- assertNotVisible:
+    id: "dashboard_component_recents"
+
+# --- The grid reaches the end of the catalog ------------------------------------------------------
+# One destination, not eight, and the last one: reaching Support means the grid composed every entry
+# before it. Which entries those are, and in what order, is `AppNavCatalogTest` — a property of a
+# list, checked where checking it is exact.
+#
+# This flow used to walk all eight and claim in a comment that it asserted them "in catalog order".
+# It did not: `scrollUntilVisible` finds an element wherever it happens to be, so the eight steps
+# proved presence and nothing about sequence. The comment was the only thing asserting order.
+#
+# This runs last: it moves the viewport for good, and every absence above depends on it not having
+# moved yet.
+- scrollUntilVisible:
+    element:
+      id: "nav_item_support"
+    direction: DOWN
+    timeout: 20000

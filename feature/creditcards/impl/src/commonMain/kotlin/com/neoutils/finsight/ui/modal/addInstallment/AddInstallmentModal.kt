@@ -2,8 +2,8 @@
 
 package com.neoutils.finsight.ui.modal.addInstallment
 
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
-import org.koin.compose.koinInject
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -37,15 +38,12 @@ import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AddInstallmentModal : ModalBottomSheet() {
 
@@ -58,29 +56,28 @@ class AddInstallmentModal : ModalBottomSheet() {
         val categoriesEntry = koinInject<CategoriesEntry>()
 
 
-        val title = rememberTextFieldState()
-        val amount = rememberTextFieldState()
-        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
+        // The only state left here: a `TextFieldState` is Compose's editing buffer, not the
+        // form. Each reports to the ViewModel, which owns what the field means.
+        val title = rememberTextFieldState(uiState.form.title.orEmpty())
+        val amount = rememberTextFieldState(uiState.form.amount)
+        val date = rememberTextFieldState(uiState.form.date)
 
-        var selectedCategory by remember { mutableStateOf<Category?>(null) }
-        var installments by remember { mutableStateOf(2) }
+        LaunchedEffect(Unit) {
+            snapshotFlow { title.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddInstallmentAction.ChangeTitle(it)) }
+        }
 
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddInstallmentAction.ChangeAmount(it)) }
+        }
 
-        val form by remember {
-            derivedStateOf {
-                TransactionForm.from(
-                    type = TransactionType.EXPENSE,
-                    amount = amount.text.toString(),
-                    title = title.text.toString(),
-                    date = date.text.toString(),
-                    category = selectedCategory,
-                    target = TransactionTarget.CREDIT_CARD,
-                    creditCard = uiState.selectedCreditCard,
-                    invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
-                    account = null,
-                    installments = installments,
-                )
-            }
+        LaunchedEffect(Unit) {
+            snapshotFlow { date.text.toString() }
+                .drop(1)
+                .collect { viewModel.onAction(AddInstallmentAction.ChangeDate(it)) }
         }
 
         Box {
@@ -112,15 +109,19 @@ class AddInstallmentModal : ModalBottomSheet() {
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_title"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 CategorySelector(
-                    selectedCategory = selectedCategory,
+                    selectedCategory = uiState.form.category,
                     categories = uiState.categories,
-                    onCategorySelected = { selectedCategory = it },
+                    onCategorySelected = {
+                        viewModel.onAction(AddInstallmentAction.SelectCategory(it))
+                    },
                     onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -165,18 +166,20 @@ class AddInstallmentModal : ModalBottomSheet() {
                     trailingIcon = {
                         InstallmentCounter(
                             state = InstallmentState(
-                                count = installments,
-                                total = amount.text.toString().moneyToDouble(),
+                                count = uiState.form.installments,
+                                total = uiState.form.amount.moneyToDouble(),
                             ),
                             onInstallmentsChange = {
-                                installments = it.coerceAtLeast(2)
+                                viewModel.onAction(AddInstallmentAction.ChangeInstallments(it))
                             },
                             minCount = 2,
                         )
                     },
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_amount"),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -197,7 +200,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                                 modalManager.show(
                                     DatePickerModal(
                                         initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
-                                        maxDate = currentDate,
+                                        maxDate = uiState.today,
                                         onDateSelected = { selectedDate ->
                                             date.edit {
                                                 replace(
@@ -228,18 +231,12 @@ class AddInstallmentModal : ModalBottomSheet() {
 
                 Button(
                     onClick = {
-                        viewModel.onAction(
-                            AddInstallmentAction.Submit(
-                                form = form,
-                                installments = installments,
-                            )
-                        )
+                        viewModel.onAction(AddInstallmentAction.Submit)
                     },
-                    enabled = form.isValid()
-                            && uiState.invoiceSelection != null
-                            && !uiState.isInvoiceBlocked
-                            && installments > 1,
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = uiState.canSubmit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add_installment_save"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(

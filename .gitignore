@@ -24,3 +24,6 @@ iosApp/iosApp.xcodeproj/
 node_modules/
 /composeApp/schemas/*
 .claude/agent-memory/
+
+# Maestro E2E run artifacts (reports, recordings, screenshots)
+.maestro/report/

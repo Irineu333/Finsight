@@ -1,0 +1,253 @@
+appId: com.neoutils.finsight
+name: report_lifecycle
+env:
+  INCOME_TITLE: "E2E Report Salary"
+  INCOME_DIGITS: "50000"
+  RESERVE_ACCOUNT: "E2E Reserve"
+  TRANSFER_DIGITS: "18025"
+  CARD_NAME: "E2E Report Card"
+  CARD_LIMIT_DIGITS: "200000"
+  CARD_CLOSING_DAY: "10"
+  CARD_DUE_DAY: "20"
+  SPEND_TITLE: "E2E Report Spend"
+  SPEND_DIGITS: "6440"
+  ADVANCE_DIGITS: "2000"
+---
+# The report is the app's second reading of the ledger: every figure it prints, some other screen
+# already printed by a different path. That is exactly why it needs a story of its own — a leg
+# bolted onto someone else's flow can only re-assert that flow's numbers, which proves the report
+# runs, not that it scopes.
+#
+# What this flow owns is the scoping: money is arranged so that the *same* two writes read
+# differently depending on what the report is pointed at. A transfer is an expense to the account
+# that sent it and income to the one that received it; an advance payment is an expense to the
+# account and a credit to the card. Neither claim can be made by a report that only ever sees one
+# account.
+#
+# What it deliberately does not own: the whole-cycle report across a settled invoice and an open
+# one. That claim is about the invoice lifecycle, and it stays in `creditcards/lifecycle`, where
+# the clock jump that closes an invoice already lives.
+#
+# The figures — 500.00, 180.25, 200.25, 299.75, 64.40, 20.00, 44.40 — are arranged so that no two
+# in the same generation share their cents.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- I am paid $500.00 ---------------------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+
+# --- I put $180.25 aside in a second account -----------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_account.yaml
+    env:
+      NAME: ${RESERVE_ACCOUNT}
+
+# The pager stays on the seeded account after the form closes, and the transfer modal takes the
+# account in view as its source. Both ends are read off the selectors before the transfer is made,
+# so a wrong direction fails here rather than as an unexplained figure three screens later.
+- tapOn:
+    id: "account_transfer"
+- extendedWaitUntil:
+    visible:
+      id: "transfer_save"
+    timeout: 15000
+- assertVisible:
+    id: "transfer_source_account"
+    text: "Wallet"
+- tapOn:
+    id: "transfer_destination_account"
+- extendedWaitUntil:
+    visible: ${RESERVE_ACCOUNT}
+    timeout: 10000
+- tapOn: ${RESERVE_ACCOUNT}
+- assertVisible:
+    id: "transfer_destination_account"
+    text: ${RESERVE_ACCOUNT}
+- tapOn:
+    id: "transfer_amount"
+- waitForAnimationToEnd
+- inputText: ${TRANSFER_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "transfer_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "transfer_save"
+    timeout: 15000
+
+# --- I spend $64.40 on a card, and pay $20.00 of it early ----------------------------------------
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_credit_card.yaml
+    env:
+      NAME: ${CARD_NAME}
+      LIMIT: ${CARD_LIMIT_DIGITS}
+      CLOSING_DAY: ${CARD_CLOSING_DAY}
+      DUE_DAY: ${CARD_DUE_DAY}
+- back
+- runFlow:
+    file: ../../subflows/record_card_expense.yaml
+    env:
+      TITLE: ${SPEND_TITLE}
+      AMOUNT: ${SPEND_DIGITS}
+      CARD: ${CARD_NAME}
+
+# Paid from the credit cards screen rather than from inside the invoice: it is the offer a user
+# meets first, and it reaches the same modal. The account arrives already selected — the default
+# one — and that is asserted rather than assumed, because "$20.00 left the Wallet" below is only a
+# claim about this payment if this payment came from the Wallet.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "credit_card_advance_payment"
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    id: "credit_card_advance_payment"
+- extendedWaitUntil:
+    visible:
+      id: "advance_payment_amount"
+    timeout: 15000
+- assertVisible:
+    id: "advance_payment_account"
+    text: "Wallet"
+- tapOn:
+    id: "advance_payment_amount"
+- waitForAnimationToEnd
+- inputText: ${ADVANCE_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "advance_payment_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "advance_payment_amount"
+    timeout: 15000
+
+# --- The Wallet: what it earned, and everything that left it -------------------------------------
+# It opens selected, so this needs no selection. Both outgoings are here and neither was ever a
+# purchase: $180.25 moved to the other account, $20.00 went to the card. 500.00 − 200.25 = 299.75.
+- back
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: report
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_balance_amount"
+    timeout: 20000
+- assertVisible: "Wallet"
+- assertVisible:
+    id: "report_opening_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "report_income_amount"
+    text: "[+][$]500[.,]00"
+- assertVisible:
+    id: "report_expenses_amount"
+    text: "[-][$]200[.,]25"
+- assertVisible:
+    id: "report_balance_amount"
+    text: "[$]299[.,]75"
+
+# --- The reserve: the same transfer, read from the end that received it --------------------------
+# The new account is selected first and the seeded one dropped after, because a report with no
+# account selected cannot be generated at all. Here the transfer is income — money that arrived
+# without being earned — and it is the whole of this account's balance.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: ${RESERVE_ACCOUNT}
+    direction: DOWN
+    timeout: 20000
+- tapOn: ${RESERVE_ACCOUNT}
+- tapOn: "Wallet"
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_balance_amount"
+    timeout: 20000
+- assertVisible: ${RESERVE_ACCOUNT}
+- assertVisible:
+    id: "report_opening_balance_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "report_income_amount"
+    text: "[+][$]180[.,]25"
+# Nothing has left it, and the report says so with a figure rather than by omitting the row.
+- assertVisible:
+    id: "report_expenses_amount"
+    text: "[-][$]0[.,]00"
+- assertVisible:
+    id: "report_balance_amount"
+    text: "[$]180[.,]25"
+
+# --- The card: the same advance, read as a credit ------------------------------------------------
+# The perspective is the report's own axis — same period, same ledger, a different question. The
+# $20.00 that was an expense on the Wallet report is a payment into the invoice here, and what is
+# owed is the difference. 64.40 − 20.00 = 44.40.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "report_generate"
+    timeout: 15000
+- tapOn:
+    id: "report_perspective_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD_NAME}
+    timeout: 15000
+- tapOn:
+    id: "report_generate"
+- extendedWaitUntil:
+    visible:
+      id: "report_invoice_total_amount"
+    timeout: 20000
+- assertVisible: ${CARD_NAME}
+- assertVisible:
+    id: "report_invoice_expenses_amount"
+    text: "[-][$]64[.,]40"
+- assertVisible:
+    id: "report_advance_payment_amount"
+    text: "[+][$]20[.,]00"
+- assertVisible:
+    id: "report_invoice_total_amount"
+    text: "[$]44[.,]40"

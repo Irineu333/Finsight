@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,16 +35,15 @@ import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import com.neoutils.finsight.extension.today
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
 
 class ConfirmRecurringModal(
     private val recurring: Recurring,
@@ -53,6 +53,9 @@ class ConfirmRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
+        // The same clock the ViewModel confirms against — the picker must not offer a date the
+        // confirmation would then clamp.
+        val currentDate = koinInject<Clock>().today()
         val viewModel = koinViewModel<ConfirmRecurringViewModel> {
             parametersOf(recurring, targetDate)
         }
@@ -187,7 +190,9 @@ class ConfirmRecurringModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("confirm_recurring_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -220,7 +225,9 @@ class ConfirmRecurringModal(
                 },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("confirm_recurring_date"),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -231,7 +238,9 @@ class ConfirmRecurringModal(
             ) {
                 OutlinedButton(
                     onClick = { viewModel.onAction(ConfirmRecurringAction.Skip) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("confirm_recurring_skip"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(
@@ -251,7 +260,9 @@ class ConfirmRecurringModal(
                             } else {
                                 uiState.selectedAccount != null
                             },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("confirm_recurring_confirm"),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(

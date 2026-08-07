@@ -1,0 +1,41 @@
+appId: com.neoutils.finsight
+name: create_category
+---
+# Creates one category and leaves the form closed. Callers pass NAME and must already be on the
+# categories screen. The offer is the same command in both of the screen's states — the empty
+# state's outlined button and the FAB — hence one id for the two.
+#
+# The icon and the type are left alone: an expense category with the default icon is a valid one,
+# and the icon picker is a modal of its own with no claim in any story that calls this.
+#
+# It carries the arrangement only. What the new category should *show* belongs to the calling flow:
+# one caller reads a category with no movement, another one with an expense on it.
+
+- tapOn:
+    id: "categories_add"
+- extendedWaitUntil:
+    visible:
+      id: "category_form_name"
+    timeout: 15000
+- tapOn:
+    id: "category_form_name"
+- waitForAnimationToEnd
+- inputText: ${NAME}
+- assertVisible:
+    id: "category_form_name"
+    text: ${NAME}
+- hideKeyboard
+
+# Save waits to be offered — the name is validated on a debounce, so tapping it the instant it is
+# rendered would tap a disabled button and fail later, as a form that will not submit.
+- extendedWaitUntil:
+    visible:
+      id: "category_form_save"
+      enabled: true
+    timeout: 15000
+- tapOn:
+    id: "category_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "category_form_name"
+    timeout: 15000

@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.retire_action_error_generic
 import com.neoutils.finsight.util.UiText
@@ -40,9 +41,13 @@ class ConfirmRecurringViewModel(
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
 
-    private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    // The clock the app was given, not the system's. What "today" means decides the month the
+    // occurrence is filed under, so a screen reading a different clock from the rest of the app
+    // would confirm a cycle into a month the app is not in.
+    private val currentDate get() = clock.today()
 
     // Only an *open* account or card can be pre-selected. An archived one is still
     // shown on the recurring itself (that is its history), but the ledger refuses

@@ -16,20 +16,20 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvanceInvoicePaymentUseCase(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val calculateInvoiceUseCase: CalculateInvoiceUseCase
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val clock: Clock,
 ) {
+
+    private val currentDate get() = clock.today()
+
     suspend operator fun invoke(
         invoiceId: Long,
         amount: Double,

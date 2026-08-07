@@ -1,0 +1,13 @@
+appId: com.neoutils.finsight
+name: launch_fresh
+---
+# Every flow starts from an app that has never been used: no accounts beyond the seeded default,
+# no transactions, no dashboard customisation. Without this the suite's outcome would depend on
+# the order the flows happened to run in.
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000

@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.navigation.LocalNavController
@@ -62,7 +63,8 @@ fun DashboardScreen(
                                 TextButton(
                                     onClick = {
                                         viewModel.onAction(DashboardAction.CancelEdit)
-                                    }
+                                    },
+                                    modifier = Modifier.testTag("dashboard_edit_cancel"),
                                 ) {
                                     Text(text = stringResource(Res.string.dashboard_edit_cancel))
                                 }
@@ -76,7 +78,8 @@ fun DashboardScreen(
                                 TextButton(
                                     onClick = {
                                         viewModel.onAction(DashboardAction.ConfirmEdit)
-                                    }
+                                    },
+                                    modifier = Modifier.testTag("dashboard_edit_confirm"),
                                 ) {
                                     Text(text = stringResource(Res.string.dashboard_edit_confirm))
                                 }

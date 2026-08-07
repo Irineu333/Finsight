@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -179,6 +180,7 @@ class ViewBudgetModal(
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
                     value = formatter.format(budget.amount),
+                    valueTestTag = "view_budget_limit_amount",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -186,6 +188,7 @@ class ViewBudgetModal(
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
                     value = formatter.format(budgetProgress.spent),
+                    valueTestTag = "view_budget_spent_amount",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -194,11 +197,13 @@ class ViewBudgetModal(
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
                         value = formatter.format(budgetProgress.spent - budget.amount),
+                        valueTestTag = "view_budget_exceeded_amount",
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
                         value = formatter.format(budgetProgress.remaining),
+                        valueTestTag = "view_budget_remaining_amount",
                     )
                 }
             }
@@ -246,7 +251,9 @@ class ViewBudgetModal(
         ) {
             OutlinedButton(
                 onClick = { manager.show(DeleteBudgetModal(budget)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("view_budget_delete"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.error,
@@ -295,6 +302,9 @@ class ViewBudgetModal(
         label: String,
         value: String,
         valueColor: Color = colorScheme.onSurface,
+        // The figure, not the row: an E2E assertion has to land on the node that
+        // renders the number, or it only proves the number is somewhere on screen.
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -322,6 +332,7 @@ class ViewBudgetModal(
                 }
                 Text(
                     text = value,
+                    modifier = if (valueTestTag != null) Modifier.testTag(valueTestTag) else Modifier,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = valueColor,

@@ -68,6 +68,7 @@ class TransactionsNatureFilterTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        clock = Clock.System,
     )
 
     /** What the screen lists: display models, already mapped (`presentation-mapping`). */

@@ -19,6 +19,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
+import kotlin.math.roundToLong
 
 class AddInstallmentUseCaseImpl(
     private val transactionRepository: ITransactionRepository,
@@ -127,6 +128,7 @@ class AddInstallmentUseCaseImpl(
             )
 
             val baseLeg = base.legs.first()
+            val shares = splitIntoShares(baseLeg.amount, invoices.size)
             val intents = invoices.mapIndexed { index, invoice ->
                 base.copy(
                     date = base.date.plus(index, DateTimeUnit.MONTH),
@@ -134,7 +136,7 @@ class AddInstallmentUseCaseImpl(
                     installmentNumber = index + 1,
                     legs = listOf(
                         baseLeg.copy(
-                            amount = baseLeg.amount / invoices.size,
+                            amount = shares[index],
                             // Each share lands on its own invoice's sub-ledger.
                             dimensionId = invoice.dimensionId,
                         )
@@ -149,6 +151,27 @@ class AddInstallmentUseCaseImpl(
             }.onLeft {
                 installmentRepository.deleteInstallmentById(installmentId)
             }.bind()
+        }
+    }
+
+    /**
+     * Splits [total] into [count] instalments that add back up to it.
+     *
+     * Dividing the amount itself loses money. The write boundary rounds each leg to
+     * cents on its own — `(amount * 100).roundToLong()` — so $1,000.00 in three became
+     * three legs of $333.33 and a cent charged to nobody, while the installment row
+     * went on claiming the full $1,000.00. Splitting in cents is what makes the parts
+     * equal the whole; the last instalment carries the remainder, because it is the
+     * one that squares the account.
+     */
+    private fun splitIntoShares(total: Double, count: Int): List<Double> {
+        val totalCents = (total * 100).roundToLong()
+        val share = totalCents / count
+        val remainder = totalCents - share * count
+
+        return List(count) { index ->
+            val cents = if (index == count - 1) share + remainder else share
+            cents / 100.0
         }
     }
 

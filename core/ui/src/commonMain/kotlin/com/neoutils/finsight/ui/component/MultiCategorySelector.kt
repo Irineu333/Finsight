@@ -18,6 +18,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.multi_category_selector_and
 import com.neoutils.finsight.resources.multi_category_selector_label
 import com.neoutils.finsight.resources.multi_category_selector_none
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -26,6 +27,7 @@ fun MultiCategorySelector(
     categories: List<Category>,
     onCategoryToggled: (Category) -> Unit,
     modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
     onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -70,7 +72,8 @@ fun MultiCategorySelector(
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .optionalTestTag(valueTestTag),
         )
 
         ExposedDropdownMenu(

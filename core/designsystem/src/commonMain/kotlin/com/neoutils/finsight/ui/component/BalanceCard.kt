@@ -43,6 +43,7 @@ import com.neoutils.finsight.resources.balance_card_invoice_payments
 import com.neoutils.finsight.resources.balance_card_pay_invoice
 import com.neoutils.finsight.resources.balance_card_pending_expense
 import com.neoutils.finsight.resources.balance_card_pending_income
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
@@ -53,6 +54,9 @@ fun BalanceCard(
     balance: Double,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
+    // Named on the amount itself, not on the card: an E2E assertion binds a figure to the node that
+    // renders it, and a tag on the container would only say the card composed.
+    amountTestTag: String? = null,
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
@@ -126,6 +130,7 @@ fun BalanceCard(
             Text(
                 text = formatter.format(balance),
                 style = config.style,
+                modifier = Modifier.optionalTestTag(amountTestTag),
             )
 
             if (onEditClick != null) {

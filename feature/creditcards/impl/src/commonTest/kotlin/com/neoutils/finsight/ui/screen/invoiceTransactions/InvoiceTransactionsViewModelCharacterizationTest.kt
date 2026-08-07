@@ -42,6 +42,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 
 /**
  * Characterizes the per-invoice sums of [InvoiceTransactionsViewModel] (sites
@@ -105,6 +106,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             recurringRepository = NoRecurring,
             unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
             crashlytics = NoCrashlytics,
+            clock = Clock.System,
         )
 
         vm.uiState.test {

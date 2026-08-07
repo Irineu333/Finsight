@@ -52,6 +52,7 @@ val useCaseModules = module {
             repository = get(),
             openInvoiceUseCase = get(),
             validateCreditCardName = get(),
+            clock = get(),
         )
     }
 
@@ -76,6 +77,7 @@ val useCaseModules = module {
             transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
+            clock = get(),
         )
     }
 
@@ -91,6 +93,7 @@ val useCaseModules = module {
     factory {
         PayInvoiceUseCase(
             invoiceRepository = get(),
+            clock = get(),
         )
     }
 
@@ -98,6 +101,7 @@ val useCaseModules = module {
         CreateInvoiceUseCase(
             invoiceRepository = get(),
             creditCardRepository = get(),
+            clock = get(),
         )
     }
 
@@ -111,6 +115,7 @@ val useCaseModules = module {
         OpenInvoiceUseCase(
             invoiceRepository = get(),
             creditCardRepository = get(),
+            clock = get(),
         )
     }
 

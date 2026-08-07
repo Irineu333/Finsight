@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -177,6 +178,7 @@ class ViewRecurringModal(
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_amount_label),
                     value = formatter.format(recurring.amount),
+                    valueTestTag = "view_recurring_amount",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -184,6 +186,7 @@ class ViewRecurringModal(
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_day_label),
                     value = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
+                    valueTestTag = "view_recurring_day",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -199,6 +202,7 @@ class ViewRecurringModal(
                     // Colour is never the only differentiator: the archived state also
                     // carries its own word and its own icon.
                     valueIcon = if (recurring.isArchived) Icons.Default.Archive else null,
+                    valueTestTag = "view_recurring_status",
                 )
                 recurring.account?.let { account ->
                     Spacer(modifier = Modifier.height(8.dp))
@@ -279,7 +283,9 @@ class ViewRecurringModal(
                     icon = Icons.Default.Unarchive,
                     contentColor = colorScheme.primary,
                     onClick = { manager.show(UnarchiveRecurringModal(content.recurring)) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("view_recurring_unarchive"),
                 )
             } else {
                 OutlinedActionButton(
@@ -294,7 +300,12 @@ class ViewRecurringModal(
                             }
                         )
                     },
-                    modifier = Modifier.weight(1f),
+                    // The label is the rule: which of Delete and Archive is offered is
+                    // `retireAction`, resolved in the state, and the flow reads it here.
+                    labelTestTag = "view_recurring_retire_label",
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("view_recurring_retire"),
                 )
             }
 
@@ -314,6 +325,9 @@ class ViewRecurringModal(
         value: String,
         valueColor: Color = colorScheme.onSurface,
         valueIcon: ImageVector? = null,
+        // The figure, not the row: an assertion has to land on the node that renders
+        // the value, or it only proves the value is somewhere on screen.
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -349,6 +363,7 @@ class ViewRecurringModal(
                 }
                 Text(
                     text = value,
+                    modifier = if (valueTestTag != null) Modifier.testTag(valueTestTag) else Modifier,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = valueColor,

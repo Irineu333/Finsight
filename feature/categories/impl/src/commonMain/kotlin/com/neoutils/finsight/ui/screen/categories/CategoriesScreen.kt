@@ -43,6 +43,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +53,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.categories_create_default
 import com.neoutils.finsight.resources.categories_create_manual
@@ -95,6 +97,7 @@ private fun CategoriesContent(
     val detailController = LocalDetailPaneController.current
 
     Scaffold(
+        modifier = Modifier.testTag("screen_categories"),
         topBar = {
             TopAppBar(
                 title = {
@@ -134,6 +137,8 @@ private fun CategoriesContent(
                     onClick = {
                         modalManager.show(CategoryFormModal(initialType = uiState.filter.fabInitialType))
                     },
+                    // Same command as the empty state's button below, hence the same id.
+                    modifier = Modifier.testTag("categories_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -234,6 +239,7 @@ private fun FilterSelector(
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = Color.Unspecified,
                 ),
+                modifier = Modifier.testTag("categories_filter"),
             ) {
                 Text(text = stringResource(selected.label))
                 Spacer(modifier = Modifier.width(4.dp))
@@ -248,10 +254,16 @@ private fun FilterSelector(
         DropdownMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
+            // Its own popup window: the app window's opt-in does not reach it, and every
+            // option here is copy a translation reworks.
+            modifier = Modifier.exposeTestTags(),
         ) {
             CategoryFilter.entries.forEach { filter ->
                 DropdownMenuItem(
                     text = { Text(stringResource(filter.label)) },
+                    // Derived from the enum, like `nav_item_` is derived from the route, so a
+                    // view cannot be renamed out from under the tag that names it.
+                    modifier = Modifier.testTag("categories_filter_${filter.name.lowercase()}"),
                     trailingIcon = if (selected == filter) {
                         {
                             Icon(
@@ -318,7 +330,9 @@ private fun EmptyDatabaseState(
 
             Button(
                 onClick = onCreateDefaultCategories,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("categories_create_default"),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -336,7 +350,9 @@ private fun EmptyDatabaseState(
 
             OutlinedButton(
                 onClick = onCreateManualCategory,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("categories_add"),
             ) {
                 Text(text = stringResource(Res.string.categories_create_manual))
             }
@@ -350,7 +366,9 @@ private fun EmptyFilterState(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 24.dp),
+        modifier = modifier
+            .padding(horizontal = 24.dp)
+            .testTag("categories_empty_filter"),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.component
 
-import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -18,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_selector_label
-import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.ui.extension.color
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -28,7 +29,8 @@ fun InvoiceSelector(
     invoices: List<Invoice>,
     invoice: Invoice?,
     onInvoiceSelected: (Invoice) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -67,6 +69,7 @@ fun InvoiceSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
                 .animateContentSize()
         )
 

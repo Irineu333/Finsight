@@ -47,6 +47,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
 
 /**
  * The two emptinesses of the card's transaction list — and the third, older one:
@@ -104,6 +105,7 @@ class CreditCardsEmptyStateTest {
                     invoiceRepository = invoiceRepository,
                     calculateInvoiceUseCase = calculateInvoice,
                 ),
+                clock = Clock.System,
             ),
         )
     }
@@ -179,7 +181,7 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = invoices
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoices.firstOrNull { it.status.isOpen }
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }

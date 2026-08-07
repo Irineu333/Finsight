@@ -87,6 +87,7 @@ class TransactionsEmptyStateTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        clock = Clock.System,
     )
 
     /** The settled state after [actions], skipping the `Loading` initialValue. */

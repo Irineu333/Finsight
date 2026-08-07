@@ -91,7 +91,7 @@ private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRe
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = listOf(invoice)
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoice
     override suspend fun getInvoiceById(id: Long): Invoice? = invoice.takeIf { it.id == id }
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }

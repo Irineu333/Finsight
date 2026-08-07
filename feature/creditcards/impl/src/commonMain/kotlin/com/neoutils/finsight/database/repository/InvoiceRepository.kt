@@ -221,11 +221,12 @@ class InvoiceRepository(
      * The invoice and the ledger identity its legs will carry are born together. A
      * row in `invoices` without a dimension could never be summed.
      */
-    override suspend fun insert(invoice: Invoice): Long {
+    override suspend fun insert(invoice: Invoice): Invoice {
         return database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val dimensionId = dimensionDao.emit(DimensionKind.INVOICE)
-                dao.insert(mapper.toEntity(invoice.copy(dimensionId = dimensionId)))
+                val persisted = invoice.copy(dimensionId = dimensionId)
+                persisted.copy(id = dao.insert(mapper.toEntity(persisted)))
             }
         }
     }

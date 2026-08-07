@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.theme.Primary1
 import org.jetbrains.compose.resources.stringResource
@@ -62,7 +63,8 @@ fun <T : BottomNavigationItem> NavigationRailBar(
                         selectedIconColor = Primary1,
                         selectedTextColor = Primary1,
                         indicatorColor = Primary1.copy(alpha = 0.1f)
-                    )
+                    ),
+                    modifier = Modifier.testTag(item.testTag),
                 )
             }
         }

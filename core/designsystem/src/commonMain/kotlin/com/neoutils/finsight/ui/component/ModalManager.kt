@@ -8,13 +8,17 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.util.UiText
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
@@ -25,6 +29,9 @@ val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManage
 class ModalManager {
 
     private var modalState = mutableStateListOf<Modal>()
+
+    /** The modal the user is interacting with — everything below it is covered. */
+    val top: Modal? get() = modalState.lastOrNull()
 
     /**
      * Surfaces why an action was refused, as a modal over the one that tried it.
@@ -72,11 +79,37 @@ fun ModalManagerHost(
 ) {
     val modalManager = koinInject<ModalManager>()
 
+    // Opening a modal is an interaction with something else: whatever the user was typing into
+    // below it gives up the focus, so the keyboard does not stay over the modal that covers it.
+    DismissKeyboardWhenCovered(covered = modalManager.top != null)
+
     CompositionLocalProvider(
         LocalModalManager provides modalManager,
     ) {
         content()
         modalManager.Content()
+    }
+}
+
+/**
+ * Releases the focus — and with it the keyboard — of the layer that just got covered.
+ *
+ * Android closes the keyboard on its own when a modal opens, because the new sheet takes the
+ * window focus; iOS keeps the same window, so the field stays focused and the keyboard is left
+ * standing over the modal. This makes the behaviour the platform gives us for free explicit,
+ * and therefore the same everywhere.
+ */
+@Composable
+internal fun DismissKeyboardWhenCovered(covered: Boolean) {
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(covered) {
+        if (covered) {
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+        }
     }
 }
 
@@ -100,21 +133,31 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
     override fun Content() {
 
         val manager = LocalModalManager.current
+        val modal = this
 
         ModalBottomSheet(
             onDismissRequest = {
-                manager.dismiss(this@ModalBottomSheet)
+                manager.dismiss(modal)
             },
+            // A sheet is its own composition root, so the app window's opt-in does not reach it:
+            // without this, no test tag inside any modal is visible to the E2E driver.
+            modifier = Modifier.exposeTestTags(),
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
             content = {
 
+                // Called from inside the sheet: the field that gives up the focus is the one this
+                // sheet owns, and only this sheet's focus scope can reach it.
+                DismissKeyboardWhenCovered(covered = manager.top !== modal)
+
                 CompositionLocalProvider(providedValue) {
                     BottomSheetContent()
                 }
 
-                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+                // The keyboard is a bottom inset like any other — union, not sum, because the
+                // navigation bar sits behind it while it is up.
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars.union(WindowInsets.ime)))
             },
             contentWindowInsets = {
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top)

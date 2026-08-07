@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -59,6 +60,7 @@ import com.neoutils.finsight.ui.component.DetailPane
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.ui.component.NavigationRailBar
+import com.neoutils.finsight.ui.component.OverlayPriority
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -97,7 +99,7 @@ fun ChromeHost(
 
     LaunchedEffect(selectedItem) {
         if (selectedItem?.primaryTab == true) {
-            analytics.logScreenView(selectedItem.screenName)
+            analytics.logScreenView(selectedItem.name)
         }
     }
 
@@ -145,7 +147,7 @@ fun ChromeHost(
                         exit = shrinkVertically() + slideOutVertically { it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aboveSharedElements(),
+                            .aboveSharedElements(OverlayPriority.NavigationChrome),
                     ) {
                         BottomNavigationBar(
                             items = bottomItems,
@@ -164,7 +166,7 @@ fun ChromeHost(
                         modifier = Modifier
                             .offset(y = 40.dp)
                             .size(56.dp)
-                            .aboveSharedElements()
+                            .aboveSharedElements(OverlayPriority.FloatingActionButton)
                     ) {
                         AddTransactionFab(onClick = onAddTransaction)
                     }
@@ -178,7 +180,7 @@ fun ChromeHost(
                         visible = { it.isBottomBarVisible },
                         enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
                         exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
-                        modifier = Modifier.aboveSharedElements(),
+                        modifier = Modifier.aboveSharedElements(OverlayPriority.NavigationChrome),
                     ) {
                         NavigationRailBar(
                             items = railItems,
@@ -214,26 +216,25 @@ fun ChromeHost(
 }
 
 /**
- * Draws the chrome in the transition overlay, above every shared element. A shared element is
- * lifted out of its containers while it animates, so nothing but this ordering keeps it from
- * being painted over the rail, the bottom bar or the FAB.
+ * Draws this chrome component in the transition overlay, above every shared element. A shared
+ * element is lifted out of its containers while it animates, so nothing but this ordering keeps
+ * it from being painted over the rail, the bottom bar or the FAB.
+ *
+ * The chrome is not a single priority block: the bar and the FAB take distinct levels from
+ * [OverlayPriority], and unifying them reintroduces the defect this separation fixes. The docked
+ * FAB overlaps the bottom bar, and equal priorities are broken by attach order — which for the
+ * `Scaffold` slots is the reverse of the placement order, so the bar would be painted over the
+ * FAB during a transition and under it at rest.
  *
  * Inert when the shell is composed outside a `SharedTransitionProvider`.
  */
 @Composable
-private fun Modifier.aboveSharedElements(): Modifier {
+private fun Modifier.aboveSharedElements(priority: Float): Modifier {
     val sharedTransitionScope = LocalSharedTransitionScope.current ?: return this
     return with(sharedTransitionScope) {
-        this@aboveSharedElements.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)
+        this@aboveSharedElements.renderInSharedTransitionScopeOverlay(zIndexInOverlay = priority)
     }
 }
-
-private val CatalogDestination.screenName: String
-    get() = route::class.simpleName
-        .orEmpty()
-        .removeSuffix("Route")
-        .removeSuffix("Graph")
-        .replaceFirstChar { it.lowercase() }
 
 @Composable
 private fun AddTransactionFab(
@@ -242,6 +243,7 @@ private fun AddTransactionFab(
     FloatingActionButton(
         onClick = onClick,
         contentColor = Color.White,
+        modifier = Modifier.testTag("add_transaction_fab"),
     ) {
         Icon(
             imageVector = Icons.Default.Add,

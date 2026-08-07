@@ -10,21 +10,21 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.extension.effectiveDay
-import com.neoutils.finsight.extension.yearMonth
-import kotlinx.datetime.TimeZone
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.minusMonth
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
 class AddCreditCardUseCase(
     private val repository: ICreditCardRepository,
     private val openInvoiceUseCase: OpenInvoiceUseCase,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
+    private val clock: Clock,
 ) {
+
+    private val currentDate get() = clock.today()
+
     suspend operator fun invoke(
         form: CreditCardForm
     ): Either<Throwable, CreditCard> {

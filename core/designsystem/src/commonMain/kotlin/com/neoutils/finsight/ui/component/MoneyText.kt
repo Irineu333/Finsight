@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -64,6 +65,19 @@ enum class MoneyLayout {
  * to give, and [singleTerm] when it genuinely cannot hold more than one term — said out
  * loud, rather than letting the layout truncate.
  */
+/**
+ * What keeps a figure of several terms **one node**, and not a container with text under
+ * it. A single term renders as one [Text] and carries the caller's `modifier` — including
+ * whatever `testTag` it put there — on the node that renders the figure. The moment a
+ * figure has two terms that node becomes a [Row] or a [Column], and a bare container
+ * publishes no text of its own: the tag would still be found and would read empty, which
+ * is exactly the defect an assertion on `id` **and** `text` exists to catch.
+ *
+ * Merging is also the honest reading. Two terms are one amount continued, not two amounts
+ * — a screen reader that announces them separately is wrong for the same reason.
+ */
+private fun Modifier.asOneFigure() = semantics(mergeDescendants = true) {}
+
 @Composable
 fun MoneyText(
     figure: ConsolidatedAmount,
@@ -79,7 +93,7 @@ fun MoneyText(
         // Declared degradation: the base term, its mark, and the fact that something is
         // not in it. Never a silent truncation.
         Column(
-            modifier = modifier,
+            modifier = modifier.asOneFigure(),
             horizontalAlignment = if (align == TextAlign.Start) Alignment.Start else Alignment.End,
         ) {
             Text(text = formatter.format(figure.degradedTerm()), style = style)
@@ -113,7 +127,7 @@ fun MoneyText(
 
     if (layout == MoneyLayout.INLINE) {
         Row(
-            modifier = modifier,
+            modifier = modifier.asOneFigure(),
             horizontalArrangement = Arrangement.spacedBy(INLINE_TERM_GAP),
         ) {
             terms.forEachIndexed { index, term ->
@@ -144,7 +158,7 @@ fun MoneyText(
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier.asOneFigure(),
         horizontalAlignment = if (align == TextAlign.Start) Alignment.Start else Alignment.End,
     ) {
         terms.forEachIndexed { index, term ->

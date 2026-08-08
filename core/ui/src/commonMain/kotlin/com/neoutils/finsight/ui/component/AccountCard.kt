@@ -36,6 +36,7 @@ import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_income
 import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
+import com.neoutils.finsight.resources.accounts_yield
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
@@ -55,6 +56,7 @@ sealed class AccountCardVariant {
         val accountUi: AccountUi,
         val onEditBalance: () -> Unit,
         val onEditOpeningBalance: () -> Unit,
+        val onLaunchYield: () -> Unit,
     ) : AccountCardVariant()
 }
 
@@ -196,6 +198,25 @@ private fun DetailContent(
             color = Income,
         )
 
+        // The declaration puts the line on screen at zero — a freshly declared account
+        // has yielded nothing yet, and a line that appeared only once it had would
+        // leave the first launch nowhere to be tapped. A yield already recorded keeps
+        // it there whatever the account declares now, because `income` no longer holds
+        // that money and the column has to keep adding up.
+        //
+        // Only the declaration makes it *actionable*, though: an account that no longer
+        // declares a yield is not offered the launch path.
+        if (accountUi.showsYield) {
+            AccountSummaryRow(
+                label = stringResource(Res.string.accounts_yield),
+                amountTestTag = "account_yield_amount",
+                amount = accountUi.yield,
+                color = Income,
+                onEditClick = variant.onLaunchYield.takeIf { accountUi.yieldsInterest },
+                editTint = Income.copy(alpha = 0.5f),
+            )
+        }
+
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_expenses),
             amountTestTag = "account_expenses_amount",
@@ -310,6 +331,11 @@ private fun AccountSummaryRow(
     modifier: Modifier = Modifier,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
+    // Chrome by default, so the pencil reads the same on the rows where it is only a
+    // way in. A row whose action *is* the figure — launching a yield — passes the
+    // figure's colour, faded, so the two read as one thing without the control
+    // competing with the number it creates.
+    editTint: Color = colorScheme.onSurfaceVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -340,7 +366,7 @@ private fun AccountSummaryRow(
                 Icon(
                     imageVector = Icons.Rounded.ModeEdit,
                     contentDescription = null,
-                    tint = color.copy(alpha = 0.5f),
+                    tint = editTint,
                     modifier = Modifier.size(16.dp),
                 )
             }

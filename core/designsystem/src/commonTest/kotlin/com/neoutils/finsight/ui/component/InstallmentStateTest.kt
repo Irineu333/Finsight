@@ -30,7 +30,7 @@ class InstallmentStateTest {
     }
 
     @Test
-    fun `an amount that does not divide is an estimate, and says so by rounding`() {
+    fun `an amount that does not divide is an estimate and says so by rounding`() {
         // $333.33… — the label reads $333.33, while the ledger writes 333.33, 333.33
         // and 333.34. The counter is not the source of what is charged.
         val shown = InstallmentState(count = 3, total = 1_000.0).installment

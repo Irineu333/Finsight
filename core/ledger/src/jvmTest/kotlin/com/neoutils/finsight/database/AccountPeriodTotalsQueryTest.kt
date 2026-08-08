@@ -52,11 +52,12 @@ class AccountPeriodTotalsQueryTest {
         assertEquals(
             AccountPeriodTotals(
                 income = 10_000,      // the salary
+                yield = 0,            // no dimension to separate
                 expense = 8_000,      // the expense (3000) plus the transfer out (5000)
                 adjustment = 4_000,   // signed, and kept out of income
                 settlement = 8_000,
             ),
-            entryDao.accountPeriodTotals(1, "2026-01"),
+            entryDao.accountPeriodTotals(1, "2026-01", yieldDimensionId = null),
         )
     }
 
@@ -65,8 +66,8 @@ class AccountPeriodTotalsQueryTest {
         seed()
 
         assertEquals(
-            AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, settlement = 0),
-            entryDao.accountPeriodTotals(3, "2026-01"),
+            AccountPeriodTotals(income = 5_000, yield = 0, expense = 0, adjustment = 0, settlement = 0),
+            entryDao.accountPeriodTotals(3, "2026-01", yieldDimensionId = null),
         )
     }
 
@@ -81,12 +82,12 @@ class AccountPeriodTotalsQueryTest {
         // `accountPeriodTotals` deliberately does *not* do, and why the summary needs
         // its own read.
         assertEquals(
-            AssetMonthTotals(income = 10_000, expense = 3_000, adjustment = 4_000),
-            entryDao.assetMonthTotals("2026-01"),
+            AssetMonthTotals(income = 10_000, yield = 0, expense = 3_000, adjustment = 4_000),
+            entryDao.assetMonthTotals("2026-01", yieldDimensionId = null),
         )
         assertEquals(
-            AssetMonthTotals(income = 0, expense = 0, adjustment = 0),
-            entryDao.assetMonthTotals("2026-03"),
+            AssetMonthTotals(income = 0, yield = 0, expense = 0, adjustment = 0),
+            entryDao.assetMonthTotals("2026-03", yieldDimensionId = null),
         )
     }
 

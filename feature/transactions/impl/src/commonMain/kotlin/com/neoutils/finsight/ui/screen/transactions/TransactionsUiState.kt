@@ -90,11 +90,19 @@ data class TransactionsUiState(
          * leg lies outside the perimeter — which is why [invoicePayment] exists and a
          * transfer between accounts does not appear at all.
          *
-         * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
+         * [yield] is a **repartition** of [income], not an addition to it: what it
+         * shows, [income] no longer does, so the column still closes. It is `null`
+         * whenever the period holds no yield, and no account's declaration brings the
+         * line back: a summary has nothing to launch from, so a line at zero here would
+         * say nothing. The account card decides otherwise, and for its own reason — it
+         * is where the launching happens.
+         *
+         * `finalBalance = openingBalance + income + yield − expense − invoicePayment + adjustment`
          */
         data class Accounts(
             val openingBalance: DisplayAmount = DisplayAmount.natural(0.0),
             val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
+            val yield: DisplayAmount? = null,
             val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
             val invoicePayment: DisplayAmount? = null,
             val adjustment: DisplayAmount? = null,
@@ -123,11 +131,14 @@ data class TransactionsUiState(
          * [invoicePayment] is *informative*: both of its legs are inside the perimeter,
          * so it sums to zero here and must be shown without a sign, outside the total.
          *
-         * `finalNet = openingNet + income − expense + adjustment`
+         * [yield] repartitions [income] exactly as in [Accounts].
+         *
+         * `finalNet = openingNet + income + yield − expense + adjustment`
          */
         data class Overall(
             val openingNet: DisplayAmount = DisplayAmount.natural(0.0),
             val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
+            val yield: DisplayAmount? = null,
             val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
             val invoicePayment: DisplayAmount? = null,
             val adjustment: DisplayAmount? = null,

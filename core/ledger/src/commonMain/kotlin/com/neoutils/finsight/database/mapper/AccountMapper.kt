@@ -18,4 +18,5 @@ fun AccountEntity.toDomain(): Account = Account(
     isDefault = isDefault,
     createdAt = createdAt,
     isArchived = isArchived,
+    yieldsInterest = yieldsInterest,
 )

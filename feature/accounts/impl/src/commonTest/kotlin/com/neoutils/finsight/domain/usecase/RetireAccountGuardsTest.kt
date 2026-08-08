@@ -193,6 +193,7 @@ private class RecordingAccountRepository : IAccountRepository {
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()
@@ -212,12 +213,12 @@ private class FakeEntries(
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,
@@ -248,6 +249,7 @@ private class RecordingAccountDao : AccountDao {
     override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): AccountEntity? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: AccountEntity): Long = throw NotImplementedError()
     override suspend fun update(account: AccountEntity) = throw NotImplementedError()

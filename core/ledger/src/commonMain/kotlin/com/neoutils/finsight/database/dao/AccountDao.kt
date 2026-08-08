@@ -64,6 +64,18 @@ interface AccountDao {
     suspend fun getAccountCount(): Int
 
     /**
+     * Whether any open account declares that it yields — the fact behind the guard
+     * on retiring the yield category.
+     *
+     * Closed accounts are excluded deliberately. One offers no yield affordance and
+     * cannot be edited to withdraw the declaration, so counting it would hold the
+     * category hostage with no way out — and the refusal must name something the
+     * user can actually do.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM accounts WHERE type = 'ASSET' AND isArchived = 0 AND yieldsInterest = 1)")
+    suspend fun hasYieldingAccount(): Boolean
+
+    /**
      * Closing is the only way an account with history leaves the app: the rows
      * that reference it stay valid, and reopening is a single flag away.
      */

@@ -27,6 +27,7 @@ class AccountRepositoryTest {
         override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): AccountEntity? = throw NotImplementedError()
         override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()
+        override suspend fun hasYieldingAccount(): Boolean = false
         override suspend fun getAccountCount(): Int = throw NotImplementedError()
         override suspend fun insert(account: AccountEntity): Long = throw NotImplementedError()
         override suspend fun update(account: AccountEntity) = throw NotImplementedError()

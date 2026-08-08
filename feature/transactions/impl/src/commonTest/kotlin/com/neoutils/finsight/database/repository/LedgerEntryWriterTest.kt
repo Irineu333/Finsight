@@ -267,12 +267,12 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = inserted.filter { it.transactionId == transactionId }
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
-    override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
+    override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String, yieldDimensionId: Long?): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
     override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()
-    override suspend fun assetMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.AssetMonthTotals = throw NotImplementedError()
+    override suspend fun assetMonthTotals(yearMonth: String, yieldDimensionId: Long?): com.neoutils.finsight.database.dao.AssetMonthTotals = throw NotImplementedError()
     override suspend fun totalsByDimensionWithSiblingLeg(
         nominalType: String,
         start: kotlinx.datetime.LocalDate,
@@ -340,6 +340,7 @@ private class FakeAccountDao : AccountDao {
     override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): AccountEntity? = null
     override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = accounts.size
     override suspend fun update(account: AccountEntity) { accounts[account.id] = account }
     override suspend fun delete(account: AccountEntity) { accounts.remove(account.id) }

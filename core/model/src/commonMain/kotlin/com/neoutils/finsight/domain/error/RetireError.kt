@@ -6,6 +6,7 @@ import com.neoutils.finsight.resources.retire_action_error_generic
 import com.neoutils.finsight.resources.retire_error_has_budget
 import com.neoutils.finsight.resources.retire_error_has_recurring
 import com.neoutils.finsight.resources.retire_error_has_transactions
+import com.neoutils.finsight.resources.retire_error_has_yielding_accounts
 import com.neoutils.finsight.util.UiText
 
 /**
@@ -30,12 +31,21 @@ enum class RetireError(val message: String) {
      * uncategorized rather than failing. Refused so the orphan is never created.
      */
     HAS_RECURRING(message = "Cannot delete a category a recurring transaction still uses"),
+
+    /**
+     * An account still declares that it yields, and classifies that yield here. The
+     * protection is conditional and reversible, not an immutability of the category:
+     * turn the declaration off on the last account and it becomes removable like any
+     * other (design D4).
+     */
+    HAS_YIELDING_ACCOUNTS(message = "Cannot delete the yield category while an account declares it yields"),
 }
 
 fun RetireError.toUiText() = when (this) {
     RetireError.HAS_TRANSACTIONS -> UiText.Res(Res.string.retire_error_has_transactions)
     RetireError.HAS_BUDGET -> UiText.Res(Res.string.retire_error_has_budget)
     RetireError.HAS_RECURRING -> UiText.Res(Res.string.retire_error_has_recurring)
+    RetireError.HAS_YIELDING_ACCOUNTS -> UiText.Res(Res.string.retire_error_has_yielding_accounts)
 }
 
 /**

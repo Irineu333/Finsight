@@ -229,8 +229,8 @@
     <string name="accounts_title">Accounts</string>
     <string name="accounts_default">Default</string>
     <string name="accounts_opening_balance">Initial Balance</string>
-    <string name="accounts_income">Income</string>
-    <string name="accounts_expenses">Expenses</string>
+    <string name="accounts_income">Money In</string>
+    <string name="accounts_expenses">Money Out</string>
     <string name="accounts_adjustments">Adjustments</string>
     <string name="accounts_invoices">Invoices</string>
     <string name="accounts_advance_payments">Advance Payments</string>
@@ -241,6 +241,7 @@
     <string name="retire_error_has_transactions">This category has transactions and cannot be deleted. Archive it to keep the history.</string>
     <string name="retire_error_has_budget">This category is in a budget. Remove it from the budget before deleting.</string>
     <string name="retire_error_has_recurring">Recurring entries depend on this category. Point them at another category or delete them before deleting this one.</string>
+    <string name="retire_error_has_yielding_accounts">Accounts that yield classify their yield in this category. Turn yield off on them before deleting.</string>
     <string name="error_modal_dismiss">Got it</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
@@ -321,6 +322,9 @@
     <string name="account_form_default_state_on">Used by default</string>
     <string name="account_form_default_state_off">Set as default</string>
     <string name="account_form_default_state_disabled">Already default account</string>
+    <string name="account_form_yield_label">Yielding account</string>
+    <string name="account_form_yield_state_on">Shows the yield line</string>
+    <string name="account_form_yield_state_off">Turn on if the balance earns interest</string>
     <string name="account_form_save">Save</string>
 
     <!-- Credit Card Form Modal -->
@@ -532,8 +536,8 @@
     <string name="balance_card_current_balance">Current Balance</string>
     <string name="balance_card_income">Income</string>
     <string name="balance_card_expense">Expenses</string>
-    <string name="balance_card_account_income">Account Inflow</string>
-    <string name="balance_card_account_expense">Account Outflow</string>
+    <string name="balance_card_account_income">Income in the account</string>
+    <string name="balance_card_account_expense">Expenses in the account</string>
     <string name="balance_card_invoices">Invoices</string>
     <string name="balance_card_invoice_payments">Payments</string>
     <string name="balance_card_credit_card_expense">Card Expense</string>
@@ -542,8 +546,8 @@
     <string name="balance_card_pending_expense">Pending Expenses</string>
 
     <string name="summary_card_opening_balance">Initial Balance</string>
-    <string name="summary_card_income">Income</string>
-    <string name="summary_card_outgoing">Outgoing</string>
+    <string name="summary_card_income">Money In</string>
+    <string name="summary_card_outgoing">Money Out</string>
     <string name="summary_card_adjustments">Adjustments</string>
     <string name="summary_card_current_balance">Current Balance</string>
     <string name="summary_card_final_balance">Final Balance</string>
@@ -611,10 +615,18 @@
     <string name="invoice_status_retroactive">Retroactive</string>
     <string name="invoice_status_new">New</string>
 
+    <!-- Yield -->
+    <string name="category_yield">Yield</string>
+    <string name="launch_yield_title">Record yield</string>
+    <string name="launch_yield_amount_label">Yield amount</string>
+    <string name="launch_yield_date_label">Date</string>
+    <string name="launch_yield_save">Record</string>
+    <string name="accounts_yield">Yield</string>
+    <string name="summary_card_yield">Yield</string>
+
     <!-- Default category names -->
     <string name="category_default_salary">Salary</string>
     <string name="category_default_freelance">Freelance</string>
-    <string name="category_default_investments">Investments</string>
     <string name="category_default_benefits">Benefits</string>
     <string name="category_default_refund">Refund</string>
     <string name="category_default_housing">Housing</string>

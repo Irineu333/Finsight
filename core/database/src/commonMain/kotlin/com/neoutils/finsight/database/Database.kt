@@ -608,6 +608,38 @@ val MIGRATION_7_10 = object : Migration(7, 10) {
     }
 }
 
+/**
+ * The yield account, in two additive columns.
+ *
+ * `accounts.yieldsInterest` is the account's declaration that its money is
+ * remunerated — affordance only, consulted by no read (design D2) — and
+ * `categories.systemKey` is how the app finds a category it provides without
+ * depending on its name, so the user may rename it (design D3).
+ *
+ * `systemKey` is unique, and that is the whole guarantee: two rows under one key
+ * would split the dimension, and the reads that separate by it would return one half
+ * silently — the other half's money back in the line it had left, with no error to
+ * catch. NULLs are exempt in SQLite, so the user's own categories are untouched.
+ *
+ * There is no backfill, by design. No existing account yields until the user says
+ * so, and no existing category becomes a system one. Adjustments already recorded
+ * stay adjustments: they record what the user actually asked for at the time, and
+ * reclassifying them as yield would be inventing intent.
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `accounts` ADD COLUMN `yieldsInterest` INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execSQL(
+            "ALTER TABLE `categories` ADD COLUMN `systemKey` TEXT DEFAULT NULL"
+        )
+        connection.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_systemKey` ON `categories` (`systemKey`)"
+        )
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
@@ -620,6 +652,7 @@ fun getRoomDatabase(
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_10,
+            MIGRATION_10_11,
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)

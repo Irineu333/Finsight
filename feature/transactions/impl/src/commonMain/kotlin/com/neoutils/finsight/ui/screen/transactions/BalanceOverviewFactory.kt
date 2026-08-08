@@ -28,19 +28,27 @@ import kotlinx.datetime.minusMonth
  * - a balance shows only its negative, while a *debt* line answers "how much is owed" and
  *   carries no sign at all. Reading the card's book the other way round — debt positive —
  *   would make spending read `+90`, which is not how anyone reads a statement.
+ *
+ * [yieldDimensionId] is what separates yield from ordinary income. The line appears
+ * when the period actually holds one, and not on any account's declaration: the summary
+ * has nothing to launch from, so a line at zero here would say nothing — while a yield
+ * already recorded must stay visible however the account is configured now, since
+ * `income` no longer contains it.
  */
 internal suspend fun IEntryRepository.balanceOverview(
     scope: TransactionScope,
     month: YearMonth,
+    yieldDimensionId: Long? = null,
 ): BalanceOverview {
     val previous = month.minusMonth()
 
     return when (scope) {
         TransactionScope.ACCOUNTS -> {
-            val flows = assetMonthFlows(month)
+            val flows = assetMonthFlows(month, yieldDimensionId)
             BalanceOverview.Accounts(
                 openingBalance = DisplayAmount.natural(naturalBalanceUpTo(previous, AccountType.ASSET)),
                 income = DisplayAmount.forcedPositive(flows.income),
+                yield = DisplayAmount.forcedPositive(flows.yield).orNullIfZero(),
                 expense = DisplayAmount.forcedNegative(flows.expense),
                 // An invoice payment has a leg outside this perimeter, so it *is* a
                 // flow here — unlike a transfer, whose two legs are both inside.
@@ -51,6 +59,8 @@ internal suspend fun IEntryRepository.balanceOverview(
             )
         }
 
+        // No yield line here: the perimeter is LIABILITY, where there is nothing to
+        // segregate, and the scope already speaks its own vocabulary (design D7).
         TransactionScope.CARDS -> {
             val flows = liabilityMonthFlows(month)
             // The ledger's own sign, so the column reads like a statement and still
@@ -65,11 +75,12 @@ internal suspend fun IEntryRepository.balanceOverview(
         }
 
         TransactionScope.ALL -> {
-            val asset = assetMonthFlows(month)
+            val asset = assetMonthFlows(month, yieldDimensionId)
             val liability = liabilityMonthFlows(month)
             BalanceOverview.Overall(
                 openingNet = DisplayAmount.natural(netBalanceUpTo(previous)),
                 income = DisplayAmount.forcedPositive(asset.income),
+                yield = DisplayAmount.forcedPositive(asset.yield).orNullIfZero(),
                 // Disjoint sets — a card purchase has no ASSET leg — so aggregating
                 // them cannot double-count. Which book the money left is the scope's
                 // question, not the summary's.

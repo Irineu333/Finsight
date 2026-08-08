@@ -89,6 +89,7 @@ class BudgetClosedCategoryTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = MutableStateFlow(all)
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
         override suspend fun archive(id: Long) = Unit
@@ -211,12 +212,12 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth() = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,

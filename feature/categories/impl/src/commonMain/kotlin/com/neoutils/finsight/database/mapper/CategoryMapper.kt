@@ -17,6 +17,7 @@ class CategoryMapper {
             createdAt = entity.createdAt,
             isArchived = entity.isArchived,
             dimensionId = entity.dimensionId,
+            systemKey = entity.systemKey,
         )
     }
 
@@ -40,6 +41,7 @@ class CategoryMapper {
             createdAt = domain.createdAt,
             isArchived = domain.isArchived,
             dimensionId = domain.dimensionId,
+            systemKey = domain.systemKey,
         )
     }
 

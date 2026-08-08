@@ -69,6 +69,7 @@ class ViewCategoryViewModelTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun archive(id: Long) = Unit
         override suspend fun unarchive(id: Long) { unarchived += id }
@@ -98,13 +99,13 @@ class ViewCategoryViewModelTest {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
         override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
+        override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun totalsByDimension(
             nominalType: AccountType,
@@ -149,6 +150,7 @@ class ViewCategoryViewModelTest {
             entryRepository = entryRepository,
             budgetRepository = budgetRepository,
             recurringRepository = recurringRepository,
+            accountRepository = com.neoutils.finsight.domain.usecase.FakeAccounts(hasYieldingAccount = false),
         ),
         unarchiveCategory = unarchiveCategory,
         crashlytics = crashlytics,
@@ -241,7 +243,7 @@ class ViewCategoryViewModelTest {
     }
 
     @Test
-    fun `an archived category is shown archived, so the view offers unarchive`() = runTest(dispatcher) {
+    fun `an archived category is shown archived so the view offers unarchive`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
         val vm = viewModel(categoryRepository = repository)
         vm.uiState.test {
@@ -252,7 +254,7 @@ class ViewCategoryViewModelTest {
     }
 
     @Test
-    fun `a non-archived category is shown active, so the view offers retire`() = runTest(dispatcher) {
+    fun `a non-archived category is shown active so the view offers retire`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
         val vm = viewModel(categoryRepository = repository)
         vm.uiState.test {

@@ -15,6 +15,10 @@ internal fun SQLiteConnection.verifyLedgerBalanced(stage: String) {
     if (offenders.isNotEmpty()) throw UnbalancedLedgerException(stage, offenders)
 }
 
+/**
+ * The offending `(transactionId, currency)` pairs, up to [limit] of them. Exposed apart
+ * from [verifyLedgerBalanced] so a test can read them without provoking the exception.
+ */
 internal fun SQLiteConnection.unbalancedTransactions(limit: Int = 20): List<UnbalancedTransaction> {
     val statement = prepare(
         """

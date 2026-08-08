@@ -4,7 +4,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Schema 2 → 3 — shipped in 1.4.0-rc01. */
+/**
+ * Schema 2 → 3: recurring transactions.
+ *
+ * Creates `recurring`, which records what it has handled in a single
+ * `lastHandledYearMonth` column — the shape [Migration3To4] replaces.
+ *
+ * Shipped in 1.4.0-rc01.
+ */
 object Migration2To3 : Migration(2, 3) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

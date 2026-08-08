@@ -4,7 +4,18 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Schema 3 → 4 — shipped in 1.4.0-rc02. */
+/**
+ * Schema 3 → 4: a recurrence keeps one row per cycle.
+ *
+ * `recurring.lastHandledYearMonth` becomes `recurring_occurrences`, `recurring` gains
+ * `isActive` in its place, and `operations` gains the pointer back (`recurringId`,
+ * `recurringCycle`).
+ *
+ * The back-fill derives each cycle number and effective date in SQL, so this migration
+ * reads the device's clock and time zone.
+ *
+ * Shipped in 1.4.0-rc02.
+ */
 object Migration3To4 : Migration(3, 4) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("PRAGMA foreign_keys=OFF")

@@ -4,7 +4,11 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Schema 5 → 6 — shipped in 1.5.0-rc01. */
+/**
+ * Schema 5 → 6: `credit_cards` gains `iconKey`.
+ *
+ * Shipped in 1.5.0-rc01.
+ */
 object Migration5To6 : Migration(5, 6) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

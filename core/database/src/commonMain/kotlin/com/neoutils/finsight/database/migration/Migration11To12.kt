@@ -8,23 +8,21 @@ import com.neoutils.finsight.database.extension.verifyLedgerBalanced
 import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
 
 /**
- * Schema 12: a rate stops being *"the currency, against whatever base is in force"* and
- * becomes an observation about a **pair**.
+ * Schema 11 → 12: a rate becomes an observation about a **pair**.
  *
- * **No stored value changes.** `rate`, `date`, `currency` and `source` are read by
- * nothing here. The new column is filled with the base currency in force, and the fill
- * is *exact* rather than approximate: every existing row was measured against that base,
- * which until this schema had no way to change. It is the same quality the budget
- * limit's currency had in [Migration10To11].
+ * `exchange_rates` gains `counterCurrency`, and the unique index widens from
+ * `(currency, date, source)` to `(currency, counterCurrency, date, source)` so the dollar
+ * can be observed against the real and against the euro on the same day. The index names
+ * are the ones Room generates, because it is against those that the identity hash
+ * compares.
  *
- * **The unique index widens rather than moves.** `(currency, date, source)` becomes
- * `(currency, counterCurrency, date, source)`, which is what lets the dollar be observed
- * against the real and against the euro on the same day — two observations, two rows.
- * The names are the canonical ones Room generates, because it is against those that the
- * identity hash check compares.
+ * No stored value changes: the back-fill is exact, since every existing row was measured
+ * against the base in force, which until this schema had no way to change.
  *
- * @param baseCurrency the base currency in force, already resolved outside this module —
- * `core/database` cannot reach `Settings` and receives a plain code.
+ * Not published yet.
+ *
+ * @param baseCurrency the base in force, resolved outside this module — `core/database`
+ * cannot reach `Settings` and receives a plain code.
  */
 class Migration11To12(
     private val baseCurrency: String,

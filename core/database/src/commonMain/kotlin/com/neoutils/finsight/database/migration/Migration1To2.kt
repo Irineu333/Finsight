@@ -4,7 +4,13 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Schema 1 → 2 — shipped in 1.2.0. */
+/**
+ * Schema 1 → 2: budgets.
+ *
+ * Creates `budgets` and the `budget_categories` join table.
+ *
+ * Shipped in 1.2.0.
+ */
 object Migration1To2 : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

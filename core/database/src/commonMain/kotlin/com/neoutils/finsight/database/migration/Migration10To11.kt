@@ -8,42 +8,28 @@ import com.neoutils.finsight.database.extension.verifyLedgerBalanced
 import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
 
 /**
- * Schema 11: the rate archive, and a budget limit that says what it is denominated in.
+ * Schema 10 → 11: the rate archive, and a budget limit that says what denominates it.
  *
- * **No stored value changes.** Every existing database is entirely in `'BRL'` — not
- * because anybody chose it, but because it was the model's default — so the currency
- * the new column receives is exactly the one that already denominated each stored
- * limit. The fill is *exact*, not approximate.
+ * Creates `exchange_rates` and adds `budgets.currency`. No stored value changes: every
+ * existing database is entirely in `'BRL'` — the model's old default — so the currency the
+ * new column receives is exactly the one that already denominated each limit.
  *
- * **And it relabels the legacy chart of accounts**, when asked to. That is
- * re-denomination and not conversion: no value and no balance moves, and `Σ = 0` per
- * currency goes on holding because the currency of every row changes together.
+ * It also **relabels the legacy chart of accounts**, when asked to. That is
+ * re-denomination, not conversion: `accounts`, `entries` and `budgets` change currency
+ * together in this one transaction, so no balance moves and `Σ = 0` per currency goes on
+ * holding. Leaving any of the three behind would split an account's history in two
+ * currencies, or hand the user a limit in a currency they hold nothing in.
  *
- * **Why a migration and not a startup step.** There is no app initialisation step in
- * this project — `App.kt` only sets the user id, and `EnsureDefaultAccountUseCase` runs
- * fire-and-forget from `DashboardViewModel.init`, concurrent with the dashboard's own
- * flows. A migration has the three properties for free: it runs once, it **records
- * that it ran** through `user_version` with no flag to invent or keep correct, and it
- * precedes every read by construction. The objection that a migration reading the
- * environment stops being deterministic is already settled by a stronger
- * precedent — [Migration3To4] reads the device's clock and time zone. With the
- * parameter, this one is *more* deterministic: a test fixes the argument.
+ * The relabel is a migration rather than a startup step because it runs once, records that
+ * it ran through `user_version`, and precedes every read by construction. Its accepted
+ * false positive: a user of the legacy currency whose device is set to a foreign region is
+ * relabelled without being asked, and the app offers no way back.
  *
- * **The false positive, and it is accepted.** Someone whose real currency is the legacy
- * one but whose device is set to a foreign region is relabelled **without being asked**,
- * and design D12 means the app offers no way back. Two things narrow it: the **region**
- * decides rather than the language, so an English interface on a Brazilian device fires
- * nothing; and a currency of other than two decimal places is barred, which falls into
- * the silent case of leaving the denomination alone. The alternative considered — asking
- * once, on the first run after updating, which would get both cases right — was
- * rejected in favour of zero friction: it would put a migration screen in front of
- * every user to serve the rare one, and the common case is a user who has been reading
- * their own currency on screen all along and simply keeps reading it.
+ * Not published yet.
  *
- * @param relabelCurrency the currency the legacy chart of accounts should be
- * re-denominated to, already resolved and validated outside this module — `core/database`
- * receives a currency code and knows nothing of locales or catalogues. `null` means "do
- * not relabel", which is the common case.
+ * @param relabelCurrency the currency the legacy chart should be re-denominated to,
+ * resolved and validated outside this module — `core/database` knows no locale and no
+ * catalogue. `null` means "do not relabel", the common case.
  */
 class Migration10To11(
     private val relabelCurrency: String? = null,

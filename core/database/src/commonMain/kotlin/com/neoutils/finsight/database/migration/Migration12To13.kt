@@ -10,26 +10,19 @@ import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
 import com.neoutils.finsight.domain.model.CurrencySeeding
 
 /**
- * Schema 13: the set of offered currencies stops being an opinion embedded in the code
- * and becomes a **table**.
+ * Schema 12 → 13: the set of offered currencies becomes a **table**.
  *
- * **One write, not two.** The seed, every currency an existing account is already
- * denominated in, and the currency the device's locale names all land in the same
- * `INSERT`. Under an overlay design these would be two migrations with distinct purposes
- * — seed, and materialise what is in use — but with a single table the destination is the
- * same, so they are the same operation.
+ * Creates `currencies` and fills it through
+ * [seedCurrencies][com.neoutils.finsight.database.extension.seedCurrencies] in one write:
+ * the shipped seed, the device's currency, and every currency an account is already
+ * denominated in. A second path to that write would be a second place the user's currency
+ * could fail to exist.
  *
- * The consequence that matters most: **the locale's auto-registration stops being a
- * mechanism.** There is no "automatic registration" to design, test or explain — there is
- * a seeding, and the device's currency is among what it seeds. A second path to that same
- * write would be a second place the user's currency could fail to exist.
+ * Reading `accounts.currency` is also what lets this migration and the legacy relabel of
+ * [Migration10To11] fit together without either knowing the other: the relabel writes that
+ * column, this one reads it.
  *
- * **Nobody loses the currency they already use.** `SELECT DISTINCT currency FROM accounts`
- * is what shrinks the shipped set from twenty-two to six without taking ARS from the
- * Argentinian who already has an account in it. It is also what makes this migration and
- * the legacy relabel of [Migration10To11] fit together **without either knowing the other**:
- * the relabel writes `accounts.currency`, and this reads it. No ordering is required, and
- * none could be arranged — the relabel is `10 → 11` and this can only be `12 → 13`.
+ * Not published yet.
  *
  * @param seeding resolved outside this module: `core/database` may name neither a locale
  * nor the platform, and receives rows and a glyph rather than the means to derive them.

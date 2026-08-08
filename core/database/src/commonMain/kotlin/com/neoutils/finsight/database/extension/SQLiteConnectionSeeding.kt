@@ -6,20 +6,19 @@ import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
 
 /**
- * The seeding itself, as one statement.
+ * Fills `currencies` with the shipped seed, the device's currency and every currency an
+ * account is already denominated in — one statement, so nothing can land half seeded.
  *
- * It is shared by the migration and by the fresh-install callback because a new database
- * never runs a migration: Room creates the schema from the entities, so without this the
- * only user with no currencies at all would be the one who just installed the app.
+ * Shared by [Migration12To13][com.neoutils.finsight.database.migration.Migration12To13]
+ * and by [CurrencySeedingCallback][com.neoutils.finsight.database.callback.CurrencySeedingCallback],
+ * because a fresh install never runs a migration and would otherwise be the only database
+ * with no currencies at all.
  *
- * `INSERT OR IGNORE` makes it idempotent and makes the precedence trivial: the seed's own
- * glyph wins over the platform's suggestion for the same code, and running it twice
- * writes nothing the second time.
+ * `INSERT OR IGNORE` makes it idempotent and settles precedence: the seed's own glyph wins
+ * over the platform's suggestion for the same code.
  *
- * **`name` is left null on purpose.** Storing a name here would freeze it in the language
- * of the first run — switching the app's language would silently stop translating it. A
- * row keeps a name only when the user writes one; otherwise the platform names it at
- * every read.
+ * `name` is left null on purpose — storing one would freeze it in the language of the
+ * first run. A row keeps a name only when the user writes one.
  */
 internal fun SQLiteConnection.seedCurrencies(seeding: CurrencySeeding) {
     val inUse = mutableListOf<String>()

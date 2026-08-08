@@ -8,12 +8,18 @@ env:
   INCOME_TITLE: "E2E Bonus"
   INCOME_DIGITS: "37500"
   TRANSFER_DIGITS: "12550"
+  YIELD_DIGITS: "4075"
 ---
 # An account from its creation to its retirement: created, funded, money moved to the seeded one,
-# then emptied by a balance adjustment and archived. The figures are chosen so every one of them is
-# distinct: $375.00 in, $125.50 across, leaving $249.50 on the new account and $125.50 on the seeded
-# one — and $375.00 in total, because a transfer between two assets moves money without creating or
-# destroying any. That last one is the claim worth the emulator time.
+# declared to earn and then earning, and finally emptied by a balance adjustment and archived. The
+# figures are chosen so every one of them is distinct: $375.00 in, $125.50 across, leaving $249.50
+# on the new account and $125.50 on the seeded one — and $375.00 in total, because a transfer
+# between two assets moves money without creating or destroying any. That last one is the claim
+# worth the emulator time.
+#
+# The yield adds $40.75 to the account without adding it to "Money In" — it repartitions the income
+# rather than summing over it — so the account holds $290.25 when the adjustment writes it off, and
+# 375.00 + 40.75 - 290.25 leaves the $125.50 the transfer had already moved to safety.
 #
 # The tail is one story rather than two because archiving *requires* a zero balance: the adjustment
 # is not a step placed before the archive for convenience, it is the only thing that makes the
@@ -314,6 +320,123 @@ env:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
 
+# --- The account earns, and one feature writes into another's ------------------------------------
+# Declaring a yield is what creates the yield category, on demand, in the real database — a write
+# accounts makes into the categories facade, guarded by a unique index on the system key. Nothing
+# below this screen exercises that: every layer under it has the other side mocked.
+#
+# The premise for this absence is the card that was just read above: the balance is on screen, so
+# the line is genuinely missing rather than merely not composed yet.
+- assertNotVisible:
+    id: "account_yield_amount"
+
+- scrollUntilVisible:
+    element:
+      id: "account_edit"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "account_edit"
+- extendedWaitUntil:
+    visible:
+      id: "account_form_yield"
+    timeout: 15000
+- tapOn:
+    id: "account_form_yield"
+# Read the switch back: a tap that landed beside it has to fail here, not three screens later as a
+# line that never appears.
+- assertVisible:
+    id: "account_form_yield"
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: "account_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "account_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "account_form_yield"
+    timeout: 15000
+
+# The line arrives at zero, because it is itself the path to the first launch and deriving it from
+# the launches would hide it exactly when it is needed. And declaring is not earning: the two
+# figures that were already there are untouched.
+- extendedWaitUntil:
+    visible:
+      id: "account_yield_amount"
+      text: "[+][$]0[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "account_income_amount"
+    text: "[+][$]375[.,]00"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]249[.,]50"
+
+# The launch opens from the account in view, so that is where the money lands — read back, because
+# the sheet resolves the account itself and a silent swap would be money on the wrong card.
+- tapOn:
+    id: "account_yield_amount"
+- extendedWaitUntil:
+    visible:
+      id: "launch_yield_save"
+    timeout: 15000
+- assertVisible:
+    id: "launch_yield_account"
+    text: ${NEW_ACCOUNT}
+- tapOn:
+    id: "launch_yield_amount"
+- waitForAnimationToEnd
+- inputText: ${YIELD_DIGITS}
+- assertVisible:
+    id: "launch_yield_amount"
+    text: "[$]40[.,]75"
+- hideKeyboard
+- tapOn:
+    id: "launch_yield_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "launch_yield_save"
+    timeout: 15000
+
+# The whole claim, in three figures: the balance grew by $40.75, "Money In" did *not*, and the money
+# stands on the line that exists to hold it apart. A yield whose dimension failed to resolve would
+# land inside "Money In" and read $415.75 here — and would pass every test below this screen.
+- extendedWaitUntil:
+    visible:
+      id: "account_yield_amount"
+      text: "[+][$]40[.,]75"
+    timeout: 15000
+- assertVisible:
+    id: "account_income_amount"
+    text: "[+][$]375[.,]00"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]290[.,]25"
+
+# ...and it was written as a transaction, not as a figure on a card. It carries no title of its own:
+# the name on the row is the category the declaration created a moment ago, which is the dimension
+# surviving the write and coming back named.
+- scrollUntilVisible:
+    element:
+      id: "transaction_card_amount"
+      text: "[$]40[.,]75"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "transaction_card_title"
+    text: "Yield"
+
+# The yield line made the card taller, so the retire action is no longer where the flow left it.
+- scrollUntilVisible:
+    element:
+      id: "account_retire"
+    direction: UP
+    timeout: 25000
+
 # The refusal, stated before the attempt: an account still holding money cannot be archived, and the
 # sheet says so with the command disabled rather than by failing after the tap. This is the `false`
 # branch of the rule the adjustment below is about to flip.
@@ -335,7 +458,7 @@ env:
 # --- I empty it with an adjustment ---------------------------------------------------------------
 # The balance line is itself the command — tapping the figure opens the sheet that sets it. The field
 # arrives holding the current balance, so it is erased before the new one is typed: the money input
-# appends digits rather than replacing them, and typing over $249.50 would read as $2,495.00.
+# appends digits rather than replacing them, and typing over $290.25 would read as $29,025.00.
 - tapOn:
     id: "account_balance_amount"
 - extendedWaitUntil:
@@ -359,8 +482,9 @@ env:
     timeout: 15000
 
 # What an adjustment is, read off the card: not an erasure but a movement of its own. The balance is
-# zero, the income the account was funded with is untouched, and the difference stands on the line
-# that exists to name it — the only line whose direction its label withholds, hence the sign.
+# zero, the income and the yield the account was funded with are both untouched, and the difference
+# stands on the line that exists to name it — the only line whose direction its label withholds,
+# hence the sign.
 - extendedWaitUntil:
     visible:
       id: "account_adjustment_amount"
@@ -372,16 +496,20 @@ env:
     id: "account_income_amount"
     text: "[+][$]375[.,]00"
 - assertVisible:
+    id: "account_yield_amount"
+    text: "[+][$]40[.,]75"
+- assertVisible:
     id: "account_adjustment_amount"
-    text: "[-][$]249[.,]50"
+    text: "[-][$]290[.,]25"
 
 # ...and it was written as a transaction, not as a number on a card. It stands in the account's own
-# list, beside the income and the transfer that preceded it — and it is the one row whose sign is
-# spelled out, because "adjustment" alone does not say in which direction (`itemDisplayAmount`).
+# list, beside the income, the transfer and the yield that preceded it — and it is the one row whose
+# sign is spelled out, because "adjustment" alone does not say in which direction
+# (`itemDisplayAmount`).
 - scrollUntilVisible:
     element:
       id: "transaction_card_amount"
-      text: "[-][$]249[.,]50"
+      text: "[-][$]290[.,]25"
     direction: DOWN
     centerElement: true
     timeout: 25000
@@ -467,8 +595,8 @@ env:
 - assertNotVisible:
     id: "dashboard_component_accounts_overview"
 
-# The adjustment left the ledger too: $375.00 earned, $249.50 written off, and the $125.50 the
-# transfer had already moved to safety is all that is left.
+# The adjustment left the ledger too: $375.00 earned, $40.75 yielded, $290.25 written off, and the
+# $125.50 the transfer had already moved to safety is all that is left.
 - assertVisible:
     id: "dashboard_total_balance_amount"
     text: "[$]125[.,]50"

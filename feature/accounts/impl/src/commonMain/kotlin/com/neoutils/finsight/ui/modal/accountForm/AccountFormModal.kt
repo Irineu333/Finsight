@@ -382,6 +382,7 @@ private fun YieldsInterestSelector(
                     uncheckedThumbColor = Color.LightGray,
                 ),
                 onCheckedChange = onCheckedChange,
+                modifier = Modifier.testTag("account_form_yield"),
             )
         }
     }

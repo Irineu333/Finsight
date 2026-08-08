@@ -209,6 +209,7 @@ private fun DetailContent(
         if (accountUi.showsYield) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_yield),
+                amountTestTag = "account_yield_amount",
                 amount = accountUi.yield,
                 color = Income,
                 onEditClick = variant.onLaunchYield.takeIf { accountUi.yieldsInterest },

@@ -528,7 +528,9 @@ private fun AccountActions(
                 onClick = {
                     modalManager.show(AccountFormModal(account))
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("account_edit"),
             )
         }
 

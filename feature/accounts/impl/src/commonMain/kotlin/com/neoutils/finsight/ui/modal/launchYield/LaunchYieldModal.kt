@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -109,6 +110,7 @@ class LaunchYieldModal(
                         onAccountSelected = { selected ->
                             selected?.let { viewModel.onAction(LaunchYieldAction.SelectAccount(it)) }
                         },
+                        valueTestTag = "launch_yield_account",
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -124,7 +126,9 @@ class LaunchYieldModal(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done,
                         ),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("launch_yield_amount"),
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -166,7 +170,9 @@ class LaunchYieldModal(
                     Button(
                         onClick = { viewModel.onAction(LaunchYieldAction.Submit(yieldAmount)) },
                         enabled = yieldAmount > 0.0 && !state.isSubmitting,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("launch_yield_save"),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Income),
                     ) {

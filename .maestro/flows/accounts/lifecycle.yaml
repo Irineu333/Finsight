@@ -223,16 +223,19 @@ env:
     id: "account_balance_amount"
     text: "[$]249[.,]50"
 
-# Re-entered rather than swiped back: a rightward swipe from the left edge is the system's back
-# gesture, and it leaves the screen instead of turning the page. The section always opens on the
-# first account, which is the seeded one.
-- back
-- runFlow:
-    file: ../../subflows/open_section.yaml
-    env:
-      SECTION: accounts
+# Turned back by coordinates rather than `from: account_card`, which is the one swipe on this screen
+# that cannot be issued by element: the card spans the width, so a RIGHT swipe anchored on it starts
+# at the left edge and Android reads it as the back gesture, leaving the screen instead of turning
+# the page. Starting at 30% of the width is past that strip, so the pager gets the gesture.
+- swipe:
+    start: 30%, 30%
+    end: 85%, 30%
+    duration: 400
+- waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: "Wallet"
+    visible:
+      id: "account_name"
+      text: "Wallet"
     timeout: 15000
 - assertVisible:
     id: "account_balance_amount"

@@ -77,11 +77,11 @@ class Migration13To14Test {
     fun `the seed is what an empty database gets`() {
         Migration13To14(testSeeding()).migrate(connection)
 
-        assertEquals(CURRENCY_SEED.map { it.code }.sorted(), currencies().keys.toList())
+        assertEquals(CURRENCY_SEED.sorted(), currencies().keys.toList())
         assertEquals(
-            CURRENCY_SEED.associate { it.code to it.symbol },
+            CURRENCY_SEED.associateWith { it },
             currencies(),
-            "the seed's own glyph is what is stored, not the code",
+            "the glyph the seeding resolved is what is stored",
         )
     }
 
@@ -189,7 +189,7 @@ class Migration13To14Test {
                 }
 
             val codes = database.currencyDao().getAll().map { it.code }
-            assertTrue(CURRENCY_SEED.map { it.code }.all { it in codes })
+            assertTrue(CURRENCY_SEED.all { it in codes })
             assertTrue("PLN" in codes)
             database.close()
         } finally {

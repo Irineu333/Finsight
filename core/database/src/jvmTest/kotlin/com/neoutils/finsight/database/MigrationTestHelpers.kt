@@ -14,7 +14,8 @@ import com.neoutils.finsight.domain.model.SeedCurrency
 internal fun testSeeding(
     locale: SeedCurrency? = null,
 ) = object : CurrencySeeding {
-    override fun rows(): List<SeedCurrency> = CURRENCY_SEED + listOfNotNull(locale)
+    override fun rows(): List<SeedCurrency> =
+        CURRENCY_SEED.map { SeedCurrency(it, symbolOf(it)) } + listOfNotNull(locale)
     override fun symbolOf(code: String): String = code
 }
 

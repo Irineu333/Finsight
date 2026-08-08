@@ -31,15 +31,16 @@ data class SeedCurrency(val code: String, val symbol: String)
  * The currency of **last resort** belongs here by obligation: without it the fallback
  * would point at a row that may not exist, which is the only way resolving the base
  * currency could have no answer.
+ *
+ * **Codes, not glyphs.** Which currencies the app brings is a decision; how a currency
+ * is written is not one this list gets to make, because it differs by who is reading:
+ * the dollar is `$` to someone reading in English and `US$` to someone reading in
+ * Portuguese, and both are right on their own screen. The glyph therefore comes from
+ * the reader's locale, through [CurrencySeeding.symbolOf] — the same source the
+ * currencies found *in use* already resolve through, so a row means the same thing
+ * however it entered the table.
  */
-val CURRENCY_SEED: List<SeedCurrency> = listOf(
-    SeedCurrency("BRL", "R$"),
-    SeedCurrency("USD", "$"),
-    SeedCurrency("EUR", "€"),
-    SeedCurrency("GBP", "£"),
-    SeedCurrency("CHF", "CHF"),
-    SeedCurrency("CNY", "¥"),
-)
+val CURRENCY_SEED: List<String> = listOf("BRL", "USD", "EUR", "GBP", "CHF", "CNY")
 
 /**
  * The seeding, as something `core/database` can ask for.
@@ -52,13 +53,14 @@ interface CurrencySeeding {
 
     /**
      * The rows the app itself brings: [CURRENCY_SEED] plus the currency the device's
-     * locale names, when it has one and it has two decimal places.
+     * locale names, when it has one and it has two decimal places — each already
+     * carrying the glyph [symbolOf] resolves for it.
      */
     fun rows(): List<SeedCurrency>
 
     /**
-     * The glyph the platform suggests for a code the seeding found **in use**, falling
-     * back to the code itself — the same worst case the display already has.
+     * The glyph the platform suggests for a code, in the reader's locale, falling back
+     * to the code itself — the same worst case the display already has.
      */
     fun symbolOf(code: String): String
 }
@@ -73,9 +75,10 @@ class PlatformCurrencySeeding : CurrencySeeding {
         val locale = localeCurrencyCode()
             ?.uppercase()
             ?.takeIf { it.isNotBlank() && isTwoDecimalCurrency(it) }
-            ?.let { SeedCurrency(it, symbolOf(it)) }
 
-        return CURRENCY_SEED + listOfNotNull(locale)
+        return (CURRENCY_SEED + listOfNotNull(locale))
+            .distinct()
+            .map { SeedCurrency(it, symbolOf(it)) }
     }
 
     override fun symbolOf(code: String): String =

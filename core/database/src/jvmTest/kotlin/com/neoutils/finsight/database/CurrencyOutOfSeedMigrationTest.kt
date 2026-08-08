@@ -90,7 +90,7 @@ class CurrencyOutOfSeedMigrationTest {
 
         assertTrue(outOfSeed in offeredCodes(), "the currency in use has to exist, and be offered")
         assertTrue(
-            outOfSeed !in CURRENCY_SEED.map { it.code },
+            outOfSeed !in CURRENCY_SEED,
             "the fixture only means something while this currency is outside the seed",
         )
         assertEquals(before, balanceOfAccount(), "no figure of the account may move")

@@ -14,8 +14,9 @@ import com.neoutils.finsight.domain.model.SeedCurrency
  * because a fresh install never runs a migration and would otherwise be the only database
  * with no currencies at all.
  *
- * `INSERT OR IGNORE` makes it idempotent and settles precedence: the seed's own glyph wins
- * over the platform's suggestion for the same code.
+ * `INSERT OR IGNORE` makes it idempotent, and that is what protects an edit: every glyph
+ * here comes from the same [CurrencySeeding.symbolOf], so there is no precedence to settle
+ * between sources — what a later run must not do is overwrite a symbol the user replaced.
  *
  * `name` is left null on purpose — storing one would freeze it in the language of the
  * first run. A row keeps a name only when the user writes one.

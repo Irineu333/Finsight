@@ -16,9 +16,18 @@ import androidx.room.PrimaryKey
  * it does not, the platform names the code at every read, in the current language, and
  * the code itself is the worst case.
  *
- * **[symbol] is always stored**, because it is short, stable across languages, and it is
- * what sits over a value. The platform suggests it in the form, and the user may replace
- * it.
+ * **[symbol] is always stored, and [name] is not — for the same reason, read the other
+ * way round.** A glyph is not stable across languages either: the dollar is `$` to
+ * someone reading in English and `US$` to someone reading in Portuguese. But unlike a
+ * name, the glyph is *what sits over a value*, so it must be one thing the user can fix,
+ * and fixing it must survive the next read. It is therefore resolved once — from the
+ * reader's locale, when the row is born — and never re-resolved, because re-resolving it
+ * would overwrite an edit the user made deliberately.
+ *
+ * The cost is stated rather than hidden: someone who seeds in one language and then
+ * switches the device to another keeps the glyph the first language chose, while [name]
+ * follows the switch. Editing the row is the way out, and it is the same gesture that
+ * makes a seeded row no different from a typed one.
  *
  * The ledger does not know this table exists. `accounts.currency` and `entries.currency`
  * are plain ISO strings with no foreign key here, which is precisely what keeps offering

@@ -4,18 +4,22 @@ import androidx.room.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
+import com.neoutils.finsight.database.migration.Migration10To11
+import com.neoutils.finsight.database.migration.Migration11To12
+import com.neoutils.finsight.database.migration.Migration12To13
+import com.neoutils.finsight.database.migration.Migration7To10
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 
 /**
  * Closes the parity gap the other migration tests leave open: they assert the
  * migrated rows with their own raw SQL, and the query tests run the production DAOs
  * over a hand-built ledger — the two halves never meet. Here the fixture is a real
- * v7 database, Room runs [MIGRATION_7_10], and the figures the app actually shows
+ * v7 database, Room runs [Migration7To10], and the figures the app actually shows
  * are read back through the **production** DAOs and compared to the v7 legacy
  * values. A silent sign flip or off-by-one between how the migration writes and how
  * a screen reads would surface here, not on a device.
@@ -109,10 +113,10 @@ class MigrationLedgerReadParityTest {
         // The whole chain, not just the step this test is about: a v7 device has to
         // reach the current version, and parity is about the figures at the end of it.
         .addMigrations(
-            MIGRATION_7_10,
-            migration1011(),
-            migration1112(baseCurrency = "BRL"),
-            migration1213(testSeeding()),
+            Migration7To10,
+            Migration10To11(),
+            Migration11To12(baseCurrency = "BRL"),
+            Migration12To13(testSeeding()),
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)

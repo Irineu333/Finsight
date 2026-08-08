@@ -3,6 +3,8 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration11To12
+import com.neoutils.finsight.database.migration.Migration12To13
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -26,7 +28,7 @@ class CurrencyOutOfSeedMigrationTest {
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
         V11_SCHEMA.forEach(connection::execSQL)
-        migration1112(baseCurrency = "BRL").migrate(connection)
+        Migration11To12(baseCurrency = "BRL").migrate(connection)
     }
 
     @AfterTest
@@ -84,7 +86,7 @@ class CurrencyOutOfSeedMigrationTest {
         seedDatabase()
         val before = balanceOfAccount()
 
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         assertTrue(outOfSeed in offeredCodes(), "the currency in use has to exist, and be offered")
         assertTrue(
@@ -100,7 +102,7 @@ class CurrencyOutOfSeedMigrationTest {
     fun `no entry and no account is touched`() {
         seedDatabase()
 
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `currency`, `isArchived` FROM `accounts` WHERE `id` = 1"

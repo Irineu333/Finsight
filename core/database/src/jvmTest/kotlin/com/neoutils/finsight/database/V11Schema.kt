@@ -1,5 +1,7 @@
 package com.neoutils.finsight.database
 
+import com.neoutils.finsight.database.migration.Migration11To12
+
 /**
  * The v11 schema, verbatim from `schemas/…/11.json` — the shape a device is on before
  * the upgrade to 12. Frozen history, in the mould of [V7_SCHEMA] and [V10_SCHEMA]: a
@@ -7,7 +9,7 @@ package com.neoutils.finsight.database
  *
  * Note `exchange_rates` here: a `currency` and no counterpart, unique on
  * `(currency, date, source)`. That is exactly the implicit denomination
- * `migration1112` exists to make explicit.
+ * `Migration11To12` exists to make explicit.
  *
  * Order matters only in that foreign keys are not enforced at CREATE time.
  */

@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration11To12
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -36,7 +37,7 @@ class Migration11To12Test {
     }
 
     private fun migrate(baseCurrency: String = "BRL") =
-        migration1112(baseCurrency).migrate(connection)
+        Migration11To12(baseCurrency).migrate(connection)
 
     private fun seedRate(currency: String, date: String, rate: Double, source: String) {
         connection.execSQL(

@@ -4,12 +4,16 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
+import com.neoutils.finsight.database.migration.Migration10To11
+import com.neoutils.finsight.database.migration.Migration11To12
+import com.neoutils.finsight.database.migration.Migration12To13
+import com.neoutils.finsight.database.migration.Migration7To10
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 
 /**
  * Opens the migrated database through Room itself, which is the only way to run
@@ -39,12 +43,12 @@ class MigrationSchemaEquivalenceTest {
 
         // The chain has to reach the *current* version, not the one it used to end at:
         // the moment `AppDatabase` became 11, a v7 device stopped being migratable by
-        // `MIGRATION_7_10` alone, and this test is what says so before a user does.
+        // `Migration7To10` alone, and this test is what says so before a user does.
         val database = openWith(
-            MIGRATION_7_10,
-            migration1011(),
-            migration1112(baseCurrency = "BRL"),
-            migration1213(testSeeding()),
+            Migration7To10,
+            Migration10To11(),
+            Migration11To12(baseCurrency = "BRL"),
+            Migration12To13(testSeeding()),
         )
 
         // Room runs the migrations and validates the result against the entities on
@@ -64,9 +68,9 @@ class MigrationSchemaEquivalenceTest {
         }
 
         val database = openWith(
-            migration1011(),
-            migration1112(baseCurrency = "BRL"),
-            migration1213(testSeeding()),
+            Migration10To11(),
+            Migration11To12(baseCurrency = "BRL"),
+            Migration12To13(testSeeding()),
         )
 
         // The identity-hash check that would otherwise fail on the device: the rate
@@ -86,8 +90,8 @@ class MigrationSchemaEquivalenceTest {
         }
 
         val database = openWith(
-            migration1112(baseCurrency = "BRL"),
-            migration1213(testSeeding()),
+            Migration11To12(baseCurrency = "BRL"),
+            Migration12To13(testSeeding()),
         )
 
         // The identity-hash check for the pair: `counterCurrency`, appended by ALTER,

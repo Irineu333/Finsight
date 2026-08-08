@@ -4,22 +4,25 @@ import androidx.room.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration10To11
+import com.neoutils.finsight.database.migration.Migration11To12
+import com.neoutils.finsight.database.migration.Migration12To13
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.SeedCurrency
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 
 /**
  * Schema 13: the offered set of currencies becomes a table, seeded in **one** write.
  *
  * The claim worth testing is not that six rows appear. It is that the seeding and the
- * legacy relabel of [migration1011] fit together **without knowing each other**: the
+ * legacy relabel of [Migration10To11] fit together **without knowing each other**: the
  * relabel is `10 → 11` and this can only be `12 → 13`, so on an upgrade from v10 the
  * relabel runs before this table exists. No ordering could fix that — and none is needed,
  * because this reads `SELECT DISTINCT currency FROM accounts`, which is what the relabel
@@ -38,7 +41,7 @@ class Migration12To13Test {
         V11_SCHEMA.forEach(connection::execSQL)
         // v12 derived by running the real `11 → 12` over the frozen v11: a device on v12
         // got there this way, and a hand-written fixture would only prove itself.
-        migration1112(baseCurrency = "BRL").migrate(connection)
+        Migration11To12(baseCurrency = "BRL").migrate(connection)
     }
 
     @AfterTest
@@ -72,7 +75,7 @@ class Migration12To13Test {
 
     @Test
     fun `the seed is what an empty database gets`() {
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         assertEquals(CURRENCY_SEED.map { it.code }.sorted(), currencies().keys.toList())
         assertEquals(
@@ -85,7 +88,7 @@ class Migration12To13Test {
     /** The currency of last resort belongs to the seed, or the base could resolve to nothing. */
     @Test
     fun `the currency of last resort is one of the seeded rows`() {
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         assertTrue("USD" in currencies())
     }
@@ -96,7 +99,7 @@ class Migration12To13Test {
         account("Cuenta 2", "ARS")
         account("Soles", "PEN")
 
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         assertTrue("ARS" in currencies(), "a currency out of the seed but in use has to survive")
         assertTrue("PEN" in currencies())
@@ -105,7 +108,7 @@ class Migration12To13Test {
 
     @Test
     fun `the device's currency arrives by the same write, not by a mechanism of its own`() {
-        migration1213(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
+        Migration12To13(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
 
         assertEquals("zł", currencies()["PLN"])
     }
@@ -128,9 +131,9 @@ class Migration12To13Test {
 
             // A device in Chile: the relabel re-denominates the legacy chart to CLP, and
             // CLP is in no seed anywhere.
-            migration1011(relabelCurrency = "CLP").migrate(fresh)
-            migration1112(baseCurrency = "CLP").migrate(fresh)
-            migration1213(testSeeding()).migrate(fresh)
+            Migration10To11(relabelCurrency = "CLP").migrate(fresh)
+            Migration11To12(baseCurrency = "CLP").migrate(fresh)
+            Migration12To13(testSeeding()).migrate(fresh)
 
             val stmt = fresh.prepare("SELECT `code` FROM `currencies` WHERE `code` = 'CLP'")
             assertTrue(stmt.step(), "the relabelled currency has to exist as a row")
@@ -148,18 +151,18 @@ class Migration12To13Test {
     fun `no seeded row stores a name`() {
         account("Cuenta", "ARS")
 
-        migration1213(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
+        Migration12To13(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
 
         assertTrue(names().all { it == null })
     }
 
     @Test
     fun `running the seeding twice writes nothing the second time`() {
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
         val first = currencies()
 
         connection.execSQL("UPDATE `currencies` SET `symbol` = 'X' WHERE `code` = 'BRL'")
-        migration1213(testSeeding()).migrate(connection)
+        Migration12To13(testSeeding()).migrate(connection)
 
         assertEquals(first.keys, currencies().keys)
         assertEquals("X", currencies()["BRL"], "an existing row is not overwritten by the seed")

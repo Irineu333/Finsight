@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration5To6
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -37,14 +38,14 @@ class Migration5To6Test {
 
     @Test
     fun `given database at version 5 when migrated to 6 then credit_cards table still exists`() {
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         assertTrue(connection.tableExists("credit_cards"))
     }
 
     @Test
     fun `given database at version 5 when migrated to 6 then credit_cards has iconKey column`() {
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         assertTrue("iconKey" in connection.getColumns("credit_cards"))
     }
@@ -56,7 +57,7 @@ class Migration5To6Test {
                 "VALUES (1, 'Nubank', 5000.0, 20, 27, 1000)"
         )
 
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `id`, `name`, `limit`, `closingDay`, `dueDay`, `createdAt` FROM `credit_cards`"
@@ -78,7 +79,7 @@ class Migration5To6Test {
                 "VALUES ('Inter', 1200.0, 5, 12, 1000)"
         )
 
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         val stmt = connection.prepare("SELECT `iconKey` FROM `credit_cards`")
         assertTrue(stmt.step())
@@ -95,7 +96,7 @@ class Migration5To6Test {
                 "('Itaú', 800.0, 1, 8, 3000)"
         )
 
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `credit_cards` WHERE `iconKey` = 'card'")
         stmt.step()
@@ -105,7 +106,7 @@ class Migration5To6Test {
 
     @Test
     fun `given no credit card when migrated to 6 then iconKey is still available for new rows`() {
-        MIGRATION_5_6.migrate(connection)
+        Migration5To6.migrate(connection)
 
         connection.execSQL(
             "INSERT INTO `credit_cards` (`name`, `limit`, `closingDay`, `dueDay`, `createdAt`) " +

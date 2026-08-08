@@ -3,6 +3,9 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.exception.UnbalancedLedgerException
+import com.neoutils.finsight.database.extension.verifyLedgerBalanced
+import com.neoutils.finsight.database.model.UnbalancedTransaction
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -14,7 +17,7 @@ import kotlin.test.assertTrue
  * The gate the v10 migration will stand on. It runs over `entries` alone, which is
  * what lets the same check guard both sides of a rewrite of the chart of accounts.
  */
-class LedgerBalanceCheckTest {
+class SQLiteConnectionGuardTest {
 
     private lateinit var connection: SQLiteConnection
 

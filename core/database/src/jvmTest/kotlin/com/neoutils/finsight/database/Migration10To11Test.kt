@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration10To11
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -38,7 +39,7 @@ class Migration10To11Test {
     }
 
     private fun migrate(relabelCurrency: String? = null) =
-        migration1011(relabelCurrency).migrate(connection)
+        Migration10To11(relabelCurrency).migrate(connection)
 
     private fun seedBudget(id: Long, title: String, amount: Double) {
         connection.execSQL(
@@ -303,7 +304,7 @@ class Migration10To11Test {
      */
     @Test
     fun `the record that it ran is the schema version, not a flag of its own`() {
-        val migration = migration1011("USD")
+        val migration = Migration10To11("USD")
 
         assertEquals(10, migration.startVersion)
         assertEquals(11, migration.endVersion)

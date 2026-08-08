@@ -3,6 +3,8 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.extension.verifyLedgerBalanced
+import com.neoutils.finsight.database.migration.Migration7To10
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -111,7 +113,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 when migrated then the schema is the v10 one`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertTrue(connection.tableExists("entries"))
         assertTrue(connection.tableExists("dimensions"))
@@ -133,7 +135,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 when migrated then entries indices exist and are attached to entries`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertTrue(connection.indexExists("index_entries_transactionId"))
         assertTrue(connection.indexExists("index_entries_accountId"))
@@ -148,7 +150,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 when migrated then entries point at transactions and dimensions`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(
             "transactions",
@@ -162,7 +164,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 when migrated then every facade carries the NOT NULL link it needs`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // A card is a facade over a chart row; a category is a facade over a dimension.
         // Neither may exist without it, so no reader has to handle the absence.
@@ -185,7 +187,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 categories when migrated then they become dimensions and never accounts`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(
             "CATEGORY",
@@ -202,7 +204,7 @@ class Migration7To10Test {
 
     @Test
     fun `given v7 when migrated then the chart holds exactly two nominal accounts`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(2L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `type` IN ('EXPENSE','INCOME')"))
         assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Despesas' AND `type` = 'EXPENSE'"))
@@ -212,7 +214,7 @@ class Migration7To10Test {
 
     @Test
     fun `given a credit card when migrated then it becomes a LIABILITY account`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         val cardAccount = scalar("SELECT `accountId` FROM `credit_cards` WHERE `id` = 1")
         assertEquals("LIABILITY", text("SELECT `type` FROM `accounts` WHERE `id` = $cardAccount"))
@@ -221,7 +223,7 @@ class Migration7To10Test {
 
     @Test
     fun `given invoices and categories when migrated then their dimension ids do not collide`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // One row per invoice plus one per category, each of its own kind and each
         // reachable from its facade.
@@ -241,7 +243,7 @@ class Migration7To10Test {
 
     @Test
     fun `given legacy operations when migrated then every transaction sums to zero`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         val unbalanced = scalar(
             "SELECT COUNT(*) FROM (" +
@@ -254,7 +256,7 @@ class Migration7To10Test {
 
     @Test
     fun `given legacy transactions when migrated then account balances are preserved in cents`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // A = -50 (expense) - 100 (transfer out) + 30 (adjustment) + 900 (salary) = 780.00.
         assertEquals(78000L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries` WHERE `accountId` = 1"))
@@ -266,7 +268,7 @@ class Migration7To10Test {
 
     @Test
     fun `given the migrated ledger then net worth equals v7 assets minus liabilities`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // A(+78000) + B(+10000) + C(-4000) + card(-6000) = 78000. The two reconstructed
         // closed accounts are zeroed by their write-off, so a deleted account's money no
@@ -280,7 +282,7 @@ class Migration7To10Test {
 
     @Test
     fun `given a card purchase and payment when migrated then the invoice dimension carries what is owed`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         val invoiceDimension = scalar("SELECT `dimensionId` FROM `invoices` WHERE `id` = 1")
         // Owed = Σ entries tagged with the invoice: only the card legs (purchase -10000,
@@ -294,7 +296,7 @@ class Migration7To10Test {
 
     @Test
     fun `given category legs when migrated then the total lands on the right nominal and dimension`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // Food is the contra of three expenses: op1 (50.00), op6 (20.00, deleted
         // account) and op7 (15.00, deleted card). Debit-positive: +8500.
@@ -328,7 +330,7 @@ class Migration7To10Test {
 
     @Test
     fun `given an adjustment when migrated then its contra is the reconciliation equity account`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // op3 has two entries: +3000 on A and -3000 on reconciliation. Scoped to op3,
         // because reconciliation is also the counter-leg of the write-offs.
@@ -346,7 +348,7 @@ class Migration7To10Test {
 
     @Test
     fun `given orphaned legs from a deleted account or card when migrated then they become closed accounts`() {
-        MIGRATION_7_10.migrate(connection) // must not throw on NULL accountId/creditCardId
+        Migration7To10.migrate(connection) // must not throw on NULL accountId/creditCardId
 
         // No entry has a null account — a single null would have aborted the whole upgrade.
         assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` IS NULL"))
@@ -386,7 +388,7 @@ class Migration7To10Test {
                 "VALUES (NULL,'EXPENSE',99.0,'2024-04-01',1,'ACCOUNT',1)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         // Account A: 78000 (base fixture) − 9900 = 68100.
         assertEquals(68100L, scalar("SELECT COALESCE(SUM(amount),0) FROM entries WHERE accountId = 1"))
@@ -414,7 +416,7 @@ class Migration7To10Test {
                 "VALUES (20,'INCOME',7.0,'2024-04-02','ACCOUNT',2)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COALESCE(SUM(amount),0) FROM entries WHERE transactionId = 20"))
         // The 3.00 that did not balance is an explicit equity movement, not a silent hole.
@@ -436,7 +438,7 @@ class Migration7To10Test {
                 "VALUES (21,'EXPENSE',12.0,'2024-04-03',NULL,'ACCOUNT',1)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(
             1200L,
@@ -459,7 +461,7 @@ class Migration7To10Test {
                 "VALUES (22,'INCOME',33.0,'2024-04-04',NULL,'ACCOUNT',2)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(
             -3300L,
@@ -482,7 +484,7 @@ class Migration7To10Test {
                 "VALUES (23,'EXPENSE',25.0,'2024-04-05',2,'ACCOUNT',1)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(
             2500L,
@@ -499,7 +501,7 @@ class Migration7To10Test {
     fun `given an operation with no legs when migrated then it produces no entries`() {
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (24,'TRANSACTION','2024-04-06')")
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(1L, scalar("SELECT COUNT(*) FROM transactions WHERE id = 24"))
         assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE transactionId = 24"))
@@ -508,7 +510,7 @@ class Migration7To10Test {
 
     @Test
     fun `given the write-off ids when migrated then the next insert does not collide`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         val maxBefore = scalar("SELECT COALESCE(MAX(id),0) FROM transactions")
         connection.execSQL("INSERT INTO `transactions` (`title`,`date`) VALUES ('after','2024-05-01')")
@@ -526,7 +528,7 @@ class Migration7To10Test {
                 "VALUES (1,1,1,'2024-01','CONFIRMED',1,'2024-01-10',1000)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(1L, scalar("SELECT transactionId FROM recurring_occurrences WHERE id = 1"))
         assertFalse("operationId" in connection.getColumns("recurring_occurrences"))
@@ -544,7 +546,7 @@ class Migration7To10Test {
         )
         connection.execSQL("INSERT INTO `budget_categories` (`budgetId`,`categoryId`) VALUES (1,1)")
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_table_info('budgets') WHERE name = 'categoryId'"))
         assertEquals(1L, scalar("SELECT COUNT(*) FROM budgets WHERE id = 1"))
@@ -555,7 +557,7 @@ class Migration7To10Test {
 
     @Test
     fun `given the migrated database then its integrity and foreign keys hold`() {
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_foreign_key_check"))
         assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE accountId NOT IN (SELECT id FROM accounts)"))
@@ -583,7 +585,7 @@ class Migration7To10Test {
                 "VALUES (NULL,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_foreign_key_check"))
         assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE accountId NOT IN (SELECT id FROM accounts)"))
@@ -600,7 +602,7 @@ class Migration7To10Test {
         try {
             V7_SCHEMA.forEach(empty::execSQL)
 
-            MIGRATION_7_10.migrate(empty)
+            Migration7To10.migrate(empty)
 
             val stmt = empty.prepare("SELECT COUNT(*) FROM `accounts`")
             stmt.step()
@@ -622,7 +624,7 @@ class Migration7To10Test {
                 "VALUES (25,'EXPENSE',0.29,'2024-04-07',1,'ACCOUNT',1)"
         )
 
-        MIGRATION_7_10.migrate(connection)
+        Migration7To10.migrate(connection)
 
         assertEquals(-29L, scalar("SELECT COALESCE(SUM(amount),0) FROM entries WHERE transactionId = 25 AND accountId = 1"))
         assertEquals(0L, wholeLedgerSum())

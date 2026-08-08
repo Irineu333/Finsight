@@ -127,6 +127,11 @@ env:
 - assertVisible:
     id: "dashboard_total_balance_amount"
     text: "[$]457[.,]10"
+# And the figure says nothing about currency, because there is nothing to say. The badge marks a
+# total that needed a rate to become one number; this one is exact, and holding a single currency
+# is the case it must never appear in. The premise is the line above: the card was just read.
+- assertNotVisible:
+    id: "dashboard_total_balance_badge"
 - assertVisible:
     id: "dashboard_expenses_amount"
     text: "[$]42[.,]90"

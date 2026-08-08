@@ -933,6 +933,11 @@ private fun TotalBalanceCard(
                 ConsolidationBadge(
                     figures = listOf(component.amount),
                     onSeeRates = navController.seeRates(),
+                    // Named here and not inside the badge: it is one component drawn by a
+                    // dozen surfaces, and a tag of its own would be ambiguous the moment
+                    // two of them share a screen. Same reason `BalanceCard` names the
+                    // amount from the outside.
+                    modifier = Modifier.testTag("dashboard_total_balance_badge"),
                 )
             }
 

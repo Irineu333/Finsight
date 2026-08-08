@@ -46,7 +46,7 @@ const val LEGACY_DENOMINATION: String = "BRL"
  * answers for a code — with no table, no database and no ordering.
  *
  * That the table is not consulted is what makes this work at all. The relabel is
- * migration `10 → 11` and the currency seeding can only be `12 → 13`, so on an upgrade
+ * migration `11 → 12` and the currency seeding can only be `13 → 14`, so on an upgrade
  * from v10 the relabel runs *before* the table exists, and no ordering fixes that without
  * rewriting a published migration. The two fit together from the other direction instead:
  * this writes `accounts.currency`, and the seeding reads `SELECT DISTINCT currency FROM

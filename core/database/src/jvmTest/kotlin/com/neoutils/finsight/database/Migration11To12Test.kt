@@ -13,7 +13,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Schema 11 over the real v10 shape: a table appears, a column appears, and **nothing
+ * Schema 12 over the real v11 shape: a table appears, a column appears, and **nothing
  * else moves**.
  *
  * That last part is the claim worth testing. The change this migration belongs to

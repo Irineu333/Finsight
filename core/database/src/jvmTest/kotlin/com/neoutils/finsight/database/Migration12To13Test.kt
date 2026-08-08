@@ -13,7 +13,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Schema 12 over the real v11 shape: a rate stops depending on the preference in force
+ * Schema 13 over the real v12 shape: a rate stops depending on the preference in force
  * to mean anything, and **no stored value moves**.
  *
  * The fill is exact rather than approximate — every existing row was measured against

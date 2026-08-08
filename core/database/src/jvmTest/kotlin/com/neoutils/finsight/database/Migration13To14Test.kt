@@ -19,11 +19,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 
 /**
- * Schema 13: the offered set of currencies becomes a table, seeded in **one** write.
+ * Schema 14: the offered set of currencies becomes a table, seeded in **one** write.
  *
  * The claim worth testing is not that six rows appear. It is that the seeding and the
  * legacy relabel of [Migration11To12] fit together **without knowing each other**: the
- * relabel is `10 → 11` and this can only be `12 → 13`, so on an upgrade from v10 the
+ * relabel is `11 → 12` and this can only be `13 → 14`, so on an upgrade from v10 the
  * relabel runs before this table exists. No ordering could fix that — and none is needed,
  * because this reads `SELECT DISTINCT currency FROM accounts`, which is what the relabel
  * wrote.
@@ -39,7 +39,7 @@ class Migration13To14Test {
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
         V12_SCHEMA.forEach(connection::execSQL)
-        // v12 derived by running the real `11 → 12` over the frozen v11: a device on v12
+        // v13 derived by running the real `12 → 13` over the frozen v12: a device on v13
         // got there this way, and a hand-written fixture would only prove itself.
         Migration12To13(baseCurrency = "BRL").migrate(connection)
     }

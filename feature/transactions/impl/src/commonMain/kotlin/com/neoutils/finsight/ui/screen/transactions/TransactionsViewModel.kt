@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.yearMonth
+import com.neoutils.finsight.extension.currentYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -39,6 +41,7 @@ class TransactionsViewModel(
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     baseCurrencyRepository: IBaseCurrencyRepository,
+    clock: Clock,
 ) : ViewModel() {
 
     // Not a currency this list displays anything in: it only decides which of the two
@@ -46,7 +49,7 @@ class TransactionsViewModel(
     // so the card and the detail it opens cannot answer with different money.
     private val baseCurrency = baseCurrencyRepository.observe()
 
-    private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
+    private val selectedYearMonth = MutableStateFlow(clock.currentYearMonth())
 
     /**
      * The screen opens on the whole of the user's money, so the list stays exactly what
@@ -83,11 +86,15 @@ class TransactionsViewModel(
         // re-runs this block on every ledger write, and on scope or month change.
         // Every line of it spans accounts, so every line is a consolidated figure: the
         // reducer is what denominates them, and the base currency is never named here
-        // (design D29).
+        // (design D29). Translating the facade into a dimension belongs here too, not
+        // in the ledger.
         val balanceOverview = entryRepository.balanceOverview(
             scope = scope,
             month = yearMonth,
             consolidate = consolidateMoney,
+            yieldDimensionId = categoryRepository
+                .getCategoryBySystemKey(SystemCategoryKey.YIELD)
+                ?.dimensionId,
         )
 
         // The scope decides between account and card; offering the chip as well would
@@ -119,6 +126,7 @@ class TransactionsViewModel(
             balanceOverview = balanceOverview,
             selectedScope = scope,
             selectedYearMonth = yearMonth,
+            currentYearMonth = clock.currentYearMonth(),
             categories = categories,
             selectedCategory = filters.category,
             selectedLabel = filters.label,
@@ -155,7 +163,7 @@ class TransactionsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = TransactionsUiState()
+        initialValue = TransactionsUiState(selectedYearMonth = clock.currentYearMonth())
     )
 
     fun onAction(action: TransactionsAction) = viewModelScope.launch {

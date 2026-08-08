@@ -43,7 +43,7 @@ class CurrencyRelabelIsMigrationOnlyTest {
             .toSet()
 
         assertEquals(
-            setOf("core/database/src/commonMain/kotlin/com/neoutils/finsight/database/Database.kt"),
+            setOf("core/database/src/commonMain/kotlin/com/neoutils/finsight/database/migration/Migration11To12.kt"),
             found,
             "A production site re-denominates an existing row. The migration is allowed " +
                 "to, once, before the denomination is observable; the runtime never is.\n" +

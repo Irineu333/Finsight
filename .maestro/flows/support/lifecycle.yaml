@@ -1,0 +1,154 @@
+appId: com.neoutils.finsight
+name: support_lifecycle
+tags:
+  - support
+env:
+  ISSUE_TITLE: "E2E Missing legend"
+  ISSUE_BODY: "E2E Reproduced on tablet"
+  REPLY: "E2E Also happens on phone"
+---
+# A conversation with support, from the empty state to a reply read back: an issue is opened, it
+# reaches the list carrying what was written, its chat is opened, replied to, and the reply is still
+# there when the chat is left and reopened.
+#
+# This is a journey, not a rule. What a filter selects and what a status is called belong to the
+# ViewModel; what only the assembled app can answer is whether a form in a modal sheet, a list on
+# one screen and a composer on another hand the same conversation to each other. That hand-off had
+# no coverage at all — support was the last feature with no traversal.
+#
+# It is reachable at all because a debug build answers support from memory
+# (`InMemorySupportRepository`, in the app's debug source set) instead of from Firestore, which
+# would need network, credentials and a real project, and would leave rows behind in one. Two
+# things follow. The suite already installs the debug APK, so nothing changes there. And that store
+# is memory, not storage: this flow must never relaunch the app, or the issue it is about would be
+# gone. It is the one journey in the suite that cannot use the moving clock.
+#
+# The three texts share no words, so no assertion can pass by matching another: the title, the
+# description written under it, and the reply.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Support, with nothing in it -----------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: support
+- extendedWaitUntil:
+    visible:
+      id: "screen_support"
+    timeout: 15000
+
+# The empty state stands where the list would be, and it carries the same command as the FAB that
+# replaces it — so the tap below is the same act either way.
+- assertVisible:
+    id: "support_add"
+- assertNotVisible:
+    id: "support_issue_card"
+
+# --- I open an issue -----------------------------------------------------------------------------
+- tapOn:
+    id: "support_add"
+- extendedWaitUntil:
+    visible:
+      id: "support_form_title"
+    timeout: 15000
+
+# An issue with no title and no description cannot be sent, and the sheet says so by withholding
+# the command rather than by failing after the tap. This is the offer's `false` branch; the `true`
+# one is asserted below, on the same button, with nothing changed but the two fields.
+- assertVisible:
+    id: "support_form_submit"
+    enabled: false
+
+- tapOn:
+    id: "support_form_title"
+- waitForAnimationToEnd
+- inputText: ${ISSUE_TITLE}
+# Read each field back: a dropped keystroke has to fail here, not three screens later as an issue
+# whose title nothing matches.
+- assertVisible:
+    id: "support_form_title"
+    text: ${ISSUE_TITLE}
+- hideKeyboard
+
+- tapOn:
+    id: "support_form_description"
+- waitForAnimationToEnd
+- inputText: ${ISSUE_BODY}
+- assertVisible:
+    id: "support_form_description"
+    text: ${ISSUE_BODY}
+- hideKeyboard
+
+- assertVisible:
+    id: "support_form_submit"
+    enabled: true
+- tapOn:
+    id: "support_form_submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "support_form_submit"
+    timeout: 15000
+
+# --- It reaches the list, carrying what was written ----------------------------------------------
+# The empty state gave way to a card, and the card holds the title the sheet was given — the whole
+# point of writing it on the node that renders it rather than as loose text.
+- extendedWaitUntil:
+    visible:
+      id: "support_issue_card"
+    timeout: 15000
+- assertVisible:
+    id: "support_issue_title"
+    text: ${ISSUE_TITLE}
+- assertVisible: ${ISSUE_BODY}
+
+# --- I open the conversation and reply ------------------------------------------------------------
+# The chat repeats the issue in its header, which is what proves the card that was tapped is the
+# conversation that opened — the list and the chat resolve the same issue by id, not by position.
+- tapOn:
+    id: "support_issue_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_support_issue"
+    timeout: 15000
+- assertVisible:
+    id: "support_issue_title"
+    text: ${ISSUE_TITLE}
+- assertNotVisible:
+    id: "support_message_body"
+
+- tapOn:
+    id: "support_reply_input"
+- waitForAnimationToEnd
+- inputText: ${REPLY}
+- assertVisible:
+    id: "support_reply_input"
+    text: ${REPLY}
+- hideKeyboard
+- tapOn:
+    id: "support_reply_send"
+
+- extendedWaitUntil:
+    visible:
+      id: "support_message_body"
+      text: ${REPLY}
+    timeout: 15000
+
+# --- And it was kept, not just shown --------------------------------------------------------------
+# Leaving the chat and coming back is what separates a message the composer echoed from one the
+# repository stored: the screen is composed again, from scratch, and asks for the conversation
+# afresh.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_support"
+    timeout: 15000
+- tapOn:
+    id: "support_issue_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_support_issue"
+    timeout: 15000
+- assertVisible:
+    id: "support_message_body"
+    text: ${REPLY}

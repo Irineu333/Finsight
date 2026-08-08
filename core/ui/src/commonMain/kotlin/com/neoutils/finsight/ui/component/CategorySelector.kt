@@ -10,12 +10,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_selector_label
 import com.neoutils.finsight.resources.category_selector_none
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -24,6 +26,7 @@ fun CategorySelector(
     categories: List<Category>,
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
     onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -56,7 +59,12 @@ fun CategorySelector(
             },
             trailingIcon = {
                 if (categories.isEmpty() && onEmpty != null) {
-                    IconButton(onClick = onEmpty) {
+                    // Tagged because "the selector has nothing to offer" is a claim a flow
+                    // asserts positively — the absence of a name inside a popup cannot be.
+                    IconButton(
+                        onClick = onEmpty,
+                        modifier = Modifier.testTag("category_selector_empty_add"),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
@@ -74,6 +82,7 @@ fun CategorySelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
         )
 
         ExposedDropdownMenu(

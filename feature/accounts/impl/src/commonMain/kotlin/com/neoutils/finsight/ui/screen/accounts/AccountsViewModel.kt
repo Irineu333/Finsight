@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -88,11 +89,20 @@ class AccountsViewModel(
         // balance adjustment left the cards showing the old number.
         entryRepository.observeLedgerChanges(),
     ) { accounts, month, _ ->
+        // Resolving the facade into a dimension is this feature's job, not the
+        // ledger's: it takes the identity and never learns what it names (design D3).
+        val yieldDimensionId = categoryRepository
+            .getCategoryBySystemKey(SystemCategoryKey.YIELD)
+            ?.dimensionId
         // Derived entirely from the ledger (task 4.4): opening = Σ entries up to the
         // previous month; balance = Σ entries up to the month; the month's flows come
         // from the per-account aggregate (task 2.4). No summing of legs in memory.
         accounts.map { account ->
-            val flows = entryRepository.accountFlows(month = month, accountId = account.id)
+            val flows = entryRepository.accountFlows(
+                month = month,
+                accountId = account.id,
+                yieldDimensionId = yieldDimensionId,
+            )
             account to AccountUi(
                 id = account.id,
                 // The card only renders: the sign of each line is the effect of that
@@ -115,6 +125,11 @@ class AccountsViewModel(
                     account.currency,
                     isApproximate = false,
                 ),
+                yield = DisplayAmount.forcedPositive(
+                    flows.yield,
+                    account.currency,
+                    isApproximate = false,
+                ),
                 expense = DisplayAmount.forcedNegative(
                     flows.expense,
                     account.currency,
@@ -133,6 +148,7 @@ class AccountsViewModel(
                 ),
                 hasMovement = entryRepository.hasEntries(account.id),
                 isDefault = account.isDefault,
+                yieldsInterest = account.yieldsInterest,
             )
         }
     }

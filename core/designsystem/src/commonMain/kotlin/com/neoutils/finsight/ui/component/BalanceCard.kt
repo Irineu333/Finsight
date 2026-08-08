@@ -45,6 +45,7 @@ import com.neoutils.finsight.resources.balance_card_invoice_payments
 import com.neoutils.finsight.resources.balance_card_pay_invoice
 import com.neoutils.finsight.resources.balance_card_pending_expense
 import com.neoutils.finsight.resources.balance_card_pending_income
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
@@ -59,11 +60,14 @@ fun BalanceCard(
     balance: DisplayAmount,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
+    // Named on the amount itself, not on the card: an E2E assertion binds a figure to the node that
+    // renders it, and a tag on the container would only say the card composed.
+    amountTestTag: String? = null,
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) = BalanceCard(modifier, config, onEditClick, onPayClick, onClick, badge = null) { style ->
-    MoneyText(amount = balance, style = style)
+    MoneyText(amount = balance, style = style, modifier = Modifier.optionalTestTag(amountTestTag))
 }
 
 /**
@@ -87,6 +91,9 @@ fun BalanceCard(
     balance: ConsolidatedAmount,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
+    // Named on the amount itself, not on the card: an E2E assertion binds a figure to the node that
+    // renders it, and a tag on the container would only say the card composed.
+    amountTestTag: String? = null,
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -110,7 +117,12 @@ fun BalanceCard(
 ) { style ->
     // The card reads from its left edge — title above, figure below — so a figure of
     // several terms stacks that way too.
-    MoneyText(figure = balance, style = style, align = TextAlign.Start)
+    MoneyText(
+        figure = balance,
+        style = style,
+        align = TextAlign.Start,
+        modifier = Modifier.optionalTestTag(amountTestTag),
+    )
 }
 
 @Composable

@@ -3,48 +3,60 @@ package com.neoutils.finsight.database.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import com.neoutils.finsight.database.extension.seedCurrencies
 import com.neoutils.finsight.database.extension.verifyForeignKeys
 import com.neoutils.finsight.database.extension.verifyLedgerBalanced
 import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
-import com.neoutils.finsight.domain.model.CurrencySeeding
 
 /**
- * Schema 12 → 13: the set of offered currencies becomes a **table**.
+ * Schema 12 → 13: a rate becomes an observation about a **pair**.
  *
- * Creates `currencies` and fills it through
- * [seedCurrencies][com.neoutils.finsight.database.extension.seedCurrencies] in one write:
- * the shipped seed, the device's currency, and every currency an account is already
- * denominated in. A second path to that write would be a second place the user's currency
- * could fail to exist.
+ * `exchange_rates` gains `counterCurrency`, and the unique index widens from
+ * `(currency, date, source)` to `(currency, counterCurrency, date, source)` so the dollar
+ * can be observed against the real and against the euro on the same day. The index names
+ * are the ones Room generates, because it is against those that the identity hash
+ * compares.
  *
- * Reading `accounts.currency` is also what lets this migration and the legacy relabel of
- * [Migration10To11] fit together without either knowing the other: the relabel writes that
- * column, this one reads it.
+ * No stored value changes: the back-fill is exact, since every existing row was measured
+ * against the base in force, which until this schema had no way to change.
  *
  * Not published yet.
  *
- * @param seeding resolved outside this module: `core/database` may name neither a locale
- * nor the platform, and receives rows and a glyph rather than the means to derive them.
+ * @param baseCurrency the base in force, resolved outside this module — `core/database`
+ * cannot reach `Settings` and receives a plain code.
  */
 class Migration12To13(
-    private val seeding: CurrencySeeding,
+    private val baseCurrency: String,
 ) : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
+        // `execSQL` binds nothing, so the code is interpolated — and a code that is not
+        // a code stops here rather than reaching the statement. The caller resolved it
+        // above this module; this is it refusing to depend on that being true.
+        require(baseCurrency.matches(Regex("[A-Z]{3}"))) {
+            "baseCurrency must be an ISO 4217 code, was '$baseCurrency'"
+        }
+
+        // --- 1. The counterpart becomes explicit. The SQL default is only how SQLite
+        //        accepts a NOT NULL column on an existing table — the entity declares
+        //        none, deliberately: a row that does not say its pair is the defect. ---
         connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `currencies` (" +
-                "`code` TEXT NOT NULL, " +
-                "`symbol` TEXT NOT NULL, " +
-                "`name` TEXT, " +
-                "`isArchived` INTEGER NOT NULL, " +
-                "PRIMARY KEY(`code`))"
+            "ALTER TABLE `exchange_rates` ADD COLUMN `counterCurrency` TEXT NOT NULL DEFAULT ''"
+        )
+        connection.execSQL("UPDATE `exchange_rates` SET `counterCurrency` = '$baseCurrency'")
+
+        // --- 2. The indices follow the pair. ---
+        connection.execSQL("DROP INDEX IF EXISTS `index_exchange_rates_currency_date_source`")
+        connection.execSQL("DROP INDEX IF EXISTS `index_exchange_rates_currency_date`")
+        connection.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                "`index_exchange_rates_currency_counterCurrency_date_source` " +
+                "ON `exchange_rates` (`currency`, `counterCurrency`, `date`, `source`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_exchange_rates_currency_counterCurrency_date` " +
+                "ON `exchange_rates` (`currency`, `counterCurrency`, `date`)"
         )
 
-        connection.seedCurrencies(seeding)
-
-        // --- Verification, the same three guards every migration closes
-        //     with. Nothing here touches the ledger, and that is exactly what they
-        //     assert. ---
+        // --- 3. Verification, the same three guards every migration closes with. ---
         connection.verifyLedgerBalanced(stage = "v12 → v13")
         connection.verifyNoOrphanDimensions(stage = "v12 → v13")
         connection.verifyForeignKeys(stage = "v12 → v13")

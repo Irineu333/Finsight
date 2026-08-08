@@ -17,14 +17,10 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 /**
  * Pays part of an open invoice ahead of time.
@@ -41,7 +37,11 @@ class AdvanceInvoicePaymentUseCase(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val harvestExchangeRate: HarvestExchangeRateUseCase,
     private val accountRepository: IAccountRepository,
+    private val clock: Clock,
 ) {
+
+    private val currentDate get() = clock.today()
+
     /**
      * @param amount how much of the invoice is being settled, in the **card's** currency.
      * @param paidAmount what leaves [account], when it is denominated differently.

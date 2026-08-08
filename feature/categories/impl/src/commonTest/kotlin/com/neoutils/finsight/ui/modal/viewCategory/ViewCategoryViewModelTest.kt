@@ -83,6 +83,7 @@ class ViewCategoryViewModelTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun archive(id: Long) = Unit
         override suspend fun unarchive(id: Long) { unarchived += id }
@@ -116,7 +117,7 @@ class ViewCategoryViewModelTest {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
@@ -126,7 +127,7 @@ class ViewCategoryViewModelTest {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
@@ -174,6 +175,7 @@ class ViewCategoryViewModelTest {
             entryRepository = entryRepository,
             budgetRepository = budgetRepository,
             recurringRepository = recurringRepository,
+            accountRepository = com.neoutils.finsight.domain.usecase.FakeAccounts(hasYieldingAccount = false),
         ),
         unarchiveCategory = unarchiveCategory,
         consolidateMoney = ConsolidateMoneyUseCase(

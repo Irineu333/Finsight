@@ -533,8 +533,8 @@ O que ele **espera** encontrar no grafo:
 ## Testes
 
 Os testes de query do módulo (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`,
-`AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`,
-`AccountSelectionQueryTest`) rodam sobre o **`LedgerDatabase`** — exercitam os DAOs de
+`AccountPeriodTotalsQueryTest`, `YieldSeparationQueryTest`, `ReportStatsQueryTest`,
+`BalanceUpToMonthQueryTest`, `AccountSelectionQueryTest`) rodam sobre o **`LedgerDatabase`** — exercitam os DAOs de
 produção contra exatamente o schema que o módulo diz precisar. `LedgerFixture` monta o
 cenário.
 

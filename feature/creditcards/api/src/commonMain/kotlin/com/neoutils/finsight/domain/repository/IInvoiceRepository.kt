@@ -16,7 +16,12 @@ interface IInvoiceRepository {
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getOpenInvoice(creditCardId: Long): Invoice?
     suspend fun getInvoiceById(id: Long): Invoice?
-    suspend fun insert(invoice: Invoice): Long
+    /**
+     * Returns the invoice as it was persisted — with the `id` and the `dimensionId`
+     * only the repository knows. A caller that rebuilt the invoice from a bare id
+     * would lose the dimension, and every leg it tagged would land on no invoice.
+     */
+    suspend fun insert(invoice: Invoice): Invoice
     suspend fun update(invoice: Invoice)
     suspend fun deleteById(id: Long)
 }

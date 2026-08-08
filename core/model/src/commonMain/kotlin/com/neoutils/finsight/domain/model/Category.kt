@@ -17,6 +17,12 @@ data class Category(
     // store on insert, exactly like [id]: a persisted category always has its
     // dimension.
     val dimensionId: Long = 0,
+    // The key under which the app finds a category it provides. Identification is by
+    // key, never by name, so the user is free to rename the category and change its
+    // icon without breaking the lookup or the reads that separate it (design D3).
+    // Being a system category confers no immutability: it is protected only while
+    // something depends on it, like any other facade.
+    val systemKey: String? = null,
 ) {
     enum class Type {
         INCOME,

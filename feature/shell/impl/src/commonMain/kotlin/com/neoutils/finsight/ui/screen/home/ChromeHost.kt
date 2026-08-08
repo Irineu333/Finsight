@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -98,7 +99,7 @@ fun ChromeHost(
 
     LaunchedEffect(selectedItem) {
         if (selectedItem?.primaryTab == true) {
-            analytics.logScreenView(selectedItem.screenName)
+            analytics.logScreenView(selectedItem.name)
         }
     }
 
@@ -235,13 +236,6 @@ private fun Modifier.aboveSharedElements(priority: Float): Modifier {
     }
 }
 
-private val CatalogDestination.screenName: String
-    get() = route::class.simpleName
-        .orEmpty()
-        .removeSuffix("Route")
-        .removeSuffix("Graph")
-        .replaceFirstChar { it.lowercase() }
-
 @Composable
 private fun AddTransactionFab(
     onClick: () -> Unit,
@@ -249,6 +243,7 @@ private fun AddTransactionFab(
     FloatingActionButton(
         onClick = onClick,
         contentColor = Color.White,
+        modifier = Modifier.testTag("add_transaction_fab"),
     ) {
         Icon(
             imageVector = Icons.Default.Add,

@@ -1,0 +1,19 @@
+appId: com.neoutils.finsight
+name: open_section
+---
+# Only Dashboard and Transactions are bottom-bar tabs; every other section is reached from the
+# dashboard's quick-action grid, below the fold. Callers pass SECTION (the `nav_item_` suffix) and
+# must already be on the dashboard — a section publishes content only, so the bar is not there to
+# navigate back with. Use `back` to return.
+#
+# `centerElement` is not cosmetic: the docked FAB sits over the bottom centre of the screen, and a
+# card that stops there takes the tap on the FAB instead — which silently opens the add-transaction
+# sheet rather than the section.
+- scrollUntilVisible:
+    element:
+      id: "nav_item_${SECTION}"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- tapOn:
+    id: "nav_item_${SECTION}"

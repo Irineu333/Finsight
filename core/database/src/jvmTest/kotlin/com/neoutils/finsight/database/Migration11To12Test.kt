@@ -13,13 +13,15 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Schema 12 over the real v11 shape: a rate stops depending on the preference in force
- * to mean anything, and **no stored value moves**.
+ * Schema 11 over the real v10 shape: a table appears, a column appears, and **nothing
+ * else moves**.
  *
- * The fill is exact rather than approximate — every existing row was measured against
- * the base in force, which until this schema had no way to change — so the claim worth
- * testing is that `rate`, `date`, `currency` and `source` come out byte for byte, and
- * that the code the migration writes is the one it was handed.
+ * That last part is the claim worth testing. The change this migration belongs to
+ * denominates money everywhere, and the one thing it promises is that no stored figure
+ * changes — every existing database is entirely in `'BRL'`, so the currency the new
+ * column receives is exactly the one that already denominated each limit. A migration
+ * that adjusted an `amount` would be indistinguishable from this one on a fresh
+ * install and catastrophic on a real device.
  */
 class Migration11To12Test {
 
@@ -36,128 +38,288 @@ class Migration11To12Test {
         connection.close()
     }
 
-    private fun migrate(baseCurrency: String = "BRL") =
-        Migration11To12(baseCurrency).migrate(connection)
+    private fun migrate(relabelCurrency: String? = null) =
+        Migration11To12(relabelCurrency).migrate(connection)
 
-    private fun seedRate(currency: String, date: String, rate: Double, source: String) {
+    private fun seedBudget(id: Long, title: String, amount: Double) {
         connection.execSQL(
-            "INSERT INTO `exchange_rates` (`currency`, `date`, `rate`, `source`) " +
-                "VALUES ('$currency', '$date', $rate, '$source')"
+            "INSERT INTO `budgets` " +
+                "(`id`, `iconCategoryId`, `iconKey`, `title`, `amount`, `period`, " +
+                "`limitType`, `percentage`, `recurringId`, `createdAt`) " +
+                "VALUES ($id, 1, 'food', '$title', $amount, 'MONTHLY', 'FIXED', NULL, NULL, 1000)"
         )
-    }
-
-    private fun rows(): List<List<String>> {
-        val stmt = connection.prepare(
-            "SELECT `currency`, `counterCurrency`, `date`, `rate`, `source` " +
-                "FROM `exchange_rates` ORDER BY `currency`, `date`, `source`"
-        )
-        val out = mutableListOf<List<String>>()
-        while (stmt.step()) {
-            out += listOf(stmt.getText(0), stmt.getText(1), stmt.getText(2), stmt.getDouble(3).toString(), stmt.getText(4))
-        }
-        stmt.close()
-        return out
     }
 
     @Test
-    fun `the counterpart column exists and is not nullable`() {
+    fun `the rate table is created, and it is born empty`() {
         migrate()
 
-        // Appended, as `ALTER TABLE` does — and the entity declares it in the middle.
-        // That the two are still the same table is what
-        // `MigrationSchemaEquivalenceTest` asserts, through Room's own identity hash.
-        assertEquals(
-            listOf("id", "currency", "date", "rate", "source", "counterCurrency"),
-            connection.getColumns("exchange_rates"),
-        )
-
-        val stmt = connection.prepare("PRAGMA table_info(`exchange_rates`)")
-        var notNull = false
-        while (stmt.step()) {
-            if (stmt.getText(1) == "counterCurrency") notNull = stmt.getLong(3) == 1L
-        }
-        stmt.close()
-        assertTrue(notNull, "counterCurrency has to be NOT NULL — a row without a pair is the defect")
-    }
-
-    @Test
-    fun `every pre-existing row is denominated in the base it was measured against`() {
-        seedRate("USD", "2026-03-10", 5.5, "DERIVED")
-        seedRate("EUR", "2026-03-10", 6.0, "USER")
-        seedRate("JPY", "2026-01-02", 0.037, "DERIVED")
-
-        migrate()
-
-        assertEquals(listOf("BRL", "BRL", "BRL"), rows().map { it[1] })
-    }
-
-    /** The parameter is the parameter, and not a literal hiding behind a default. */
-    @Test
-    fun `a base that is not BRL is the one written`() {
-        seedRate("BRL", "2026-03-10", 0.18, "USER")
-
-        migrate(baseCurrency = "USD")
-
-        assertEquals(listOf("USD"), rows().map { it[1] })
-    }
-
-    @Test
-    fun `no stored value moves`() {
-        seedRate("USD", "2026-03-10", 5.5, "DERIVED")
-        seedRate("EUR", "2026-02-01", 6.25, "USER")
-
-        migrate()
-
-        assertEquals(
-            listOf(
-                listOf("EUR", "BRL", "2026-02-01", "6.25", "USER"),
-                listOf("USD", "BRL", "2026-03-10", "5.5", "DERIVED"),
-            ),
-            rows(),
-        )
-    }
-
-    @Test
-    fun `the unique index follows the pair, and the old one is gone`() {
-        migrate()
-
-        assertTrue(connection.indexExists("index_exchange_rates_currency_counterCurrency_date_source"))
-        assertTrue(connection.indexExists("index_exchange_rates_currency_counterCurrency_date"))
-        assertFalse(connection.indexExists("index_exchange_rates_currency_date_source"))
-        assertFalse(connection.indexExists("index_exchange_rates_currency_date"))
-    }
-
-    /**
-     * What the new index opens: the dollar priced against the real and against the euro
-     * on the same day are two observations, and both fit.
-     */
-    @Test
-    fun `the same currency and date in two counterparts now coexist`() {
-        migrate()
-
-        connection.execSQL(
-            "INSERT INTO `exchange_rates` (`currency`, `counterCurrency`, `date`, `rate`, `source`) " +
-                "VALUES ('USD', 'BRL', '2026-03-10', 5.5, 'USER')"
-        )
-        connection.execSQL(
-            "INSERT INTO `exchange_rates` (`currency`, `counterCurrency`, `date`, `rate`, `source`) " +
-                "VALUES ('USD', 'EUR', '2026-03-10', 0.92, 'USER')"
-        )
-
-        assertEquals(2, rows().size)
-    }
-
-    /**
-     * `execSQL` binds nothing, so the code is interpolated. It stops before any
-     * statement runs rather than reaching one.
-     */
-    @Test
-    fun `a code that is not a code is refused before any statement runs`() {
-        assertFailsWith<IllegalArgumentException> { migrate(baseCurrency = "not a code") }
-
+        assertTrue(connection.tableExists("exchange_rates"))
         assertEquals(
             listOf("id", "currency", "date", "rate", "source"),
             connection.getColumns("exchange_rates"),
         )
+        assertTrue(connection.indexExists("index_exchange_rates_currency_date_source"))
+        assertTrue(connection.indexExists("index_exchange_rates_currency_date"))
+
+        val stmt = connection.prepare("SELECT COUNT(*) FROM `exchange_rates`")
+        assertTrue(stmt.step())
+        assertEquals(0L, stmt.getLong(0), "no rate is invented; the archive starts empty")
+        stmt.close()
+    }
+
+    @Test
+    fun `the unique triple lets a correction coexist with the observation it corrects`() {
+        migrate()
+
+        connection.execSQL(
+            "INSERT INTO `exchange_rates` (`currency`, `date`, `rate`, `source`) " +
+                "VALUES ('USD', '2026-03-10', 5.5, 'DERIVED')"
+        )
+        connection.execSQL(
+            "INSERT INTO `exchange_rates` (`currency`, `date`, `rate`, `source`) " +
+                "VALUES ('USD', '2026-03-10', 5.6, 'USER')"
+        )
+
+        val stmt = connection.prepare(
+            "SELECT COUNT(*) FROM `exchange_rates` WHERE `currency` = 'USD' AND `date` = '2026-03-10'"
+        )
+        assertTrue(stmt.step())
+        assertEquals(2L, stmt.getLong(0), "correcting a rate must not destroy the one an operation observed")
+        stmt.close()
+    }
+
+    @Test
+    fun `every pre-existing budget limit is denominated in the currency it already had`() {
+        seedBudget(1, "Alimentação", 500.0)
+        seedBudget(2, "Transporte", 120.55)
+
+        migrate()
+
+        assertTrue("currency" in connection.getColumns("budgets"))
+
+        val stmt = connection.prepare("SELECT `id`, `amount`, `currency` FROM `budgets` ORDER BY `id`")
+        assertTrue(stmt.step())
+        assertEquals(1L, stmt.getLong(0))
+        assertEquals(500.0, stmt.getDouble(1), "no stored figure moves")
+        assertEquals("BRL", stmt.getText(2))
+        assertTrue(stmt.step())
+        assertEquals(2L, stmt.getLong(0))
+        assertEquals(120.55, stmt.getDouble(1))
+        assertEquals("BRL", stmt.getText(2))
+        assertFalse(stmt.step())
+        stmt.close()
+    }
+
+    @Test
+    fun `a database with no budgets migrates just the same`() {
+        migrate()
+
+        val stmt = connection.prepare("SELECT COUNT(*) FROM `budgets`")
+        assertTrue(stmt.step())
+        assertEquals(0L, stmt.getLong(0))
+        stmt.close()
+    }
+
+    @Test
+    fun `the ledger still balances and no reference dangles`() {
+        // A balanced pair of entries and a card purchase, so the three guards the
+        // migration closes with have something to actually check.
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                "VALUES (1, 'Nubank', 'ASSET', 'BRL', 'wallet', 1, 1000, 0, 0), " +
+                "(2, 'Despesas', 'EXPENSE', 'BRL', 'wallet', 0, 1000, 0, 0)"
+        )
+        connection.execSQL(
+            "INSERT INTO `transactions` (`id`, `title`, `date`) VALUES (1, 'Mercado', '2026-03-10')"
+        )
+        connection.execSQL(
+            "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, `dimensionId`) " +
+                "VALUES (1, 1, -5000, 'BRL', NULL), (1, 2, 5000, 'BRL', NULL)"
+        )
+        seedBudget(1, "Alimentação", 500.0)
+
+        // The guards throw from inside `migrate`; reaching the assertions is the proof.
+        migrate()
+
+        val stmt = connection.prepare("SELECT SUM(`amount`) FROM `entries`")
+        assertTrue(stmt.step())
+        assertEquals(0L, stmt.getLong(0))
+        stmt.close()
+    }
+
+    @Test
+    fun `a null relabel currency touches no denomination at all`() {
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                "VALUES (1, 'Nubank', 'ASSET', 'BRL', 'wallet', 1, 1000, 0, 0)"
+        )
+
+        migrate(relabelCurrency = null)
+
+        val stmt = connection.prepare("SELECT `currency` FROM `accounts` WHERE `id` = 1")
+        assertTrue(stmt.step())
+        assertEquals("BRL", stmt.getText(0), "not relabelling is the common case")
+        stmt.close()
+    }
+
+    /**
+     * Seeds a chart and a balanced transaction, all in the legacy denomination — the
+     * shape every existing database actually has.
+     */
+    private fun seedLegacyLedger() {
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                "VALUES (1, 'Nubank', 'ASSET', 'BRL', 'wallet', 1, 1000, 0, 0), " +
+                "(2, 'EXPENSES', 'EXPENSE', 'BRL', 'wallet', 0, 1000, 0, 0), " +
+                "(3, 'CLOSED_ACCOUNT', 'EQUITY', 'BRL', 'wallet', 0, 1000, 0, 0)"
+        )
+        connection.execSQL(
+            "INSERT INTO `transactions` (`id`, `title`, `date`) VALUES (1, 'Mercado', '2026-03-10')"
+        )
+        connection.execSQL(
+            "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, `dimensionId`) " +
+                "VALUES (1, 1, -5000, 'BRL', NULL), (1, 2, 5000, 'BRL', NULL)"
+        )
+    }
+
+    private fun currenciesOf(table: String): List<String> {
+        val stmt = connection.prepare("SELECT `currency` FROM `$table` ORDER BY rowid")
+        val out = buildList { while (stmt.step()) add(stmt.getText(0)) }
+        stmt.close()
+        return out
+    }
+
+    /**
+     * The user who has been reading `$` over data that said BRL all along. The data
+     * starts saying what they always read, and not one figure moves.
+     */
+    @Test
+    fun `a foreign region relabels accounts and entries in the same transaction`() {
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        assertEquals(listOf("USD", "USD", "USD"), currenciesOf("accounts"))
+        assertEquals(listOf("USD", "USD"), currenciesOf("entries"))
+
+        val stmt = connection.prepare("SELECT `amount` FROM `entries` ORDER BY rowid")
+        assertTrue(stmt.step())
+        assertEquals(-5000L, stmt.getLong(0), "relabelling is re-denomination, never conversion")
+        assertTrue(stmt.step())
+        assertEquals(5000L, stmt.getLong(0))
+        stmt.close()
+    }
+
+    /**
+     * The account and its entries move **together**. Relabelling one without the other
+     * would split that account's history into two currencies, and `LedgerBalanceCheck`
+     * — which groups by `(transactionId, currency)` without consulting `accounts` —
+     * would stop being readable as the truth about the account.
+     */
+    @Test
+    fun `relabelling preserves the per-currency balance`() {
+        seedLegacyLedger()
+
+        // The guard runs inside `migrate`; reaching the assertion is half the proof.
+        migrate(relabelCurrency = "EUR")
+
+        val stmt = connection.prepare(
+            "SELECT `currency`, SUM(`amount`) FROM `entries` GROUP BY `transactionId`, `currency`"
+        )
+        var groups = 0
+        while (stmt.step()) {
+            groups++
+            assertEquals("EUR", stmt.getText(0))
+            assertEquals(0L, stmt.getLong(1), "every transaction still sums to zero in each currency")
+        }
+        stmt.close()
+        assertEquals(1, groups, "one currency, one group — the history was not split")
+    }
+
+    /**
+     * **A budget limit is relabelled with the chart it is measured against.**
+     *
+     * Its denomination was never a choice either — the column was filled with the legacy
+     * code because that is what already denominated it. Left behind, the relabelled user
+     * gets a limit in a currency he holds nothing in, and a progress bar that
+     * consolidates and reads `≈` forever: exactly the cost design D13 keeps off the
+     * single-currency user, arriving through the migration instead of through the form.
+     */
+    @Test
+    fun `a relabelled chart takes the budget limits with it`() {
+        seedBudget(id = 1, title = "Alimentação", amount = 500.0)
+        seedBudget(id = 2, title = "Transporte", amount = 120.55)
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        val stmt = connection.prepare("SELECT `amount`, `currency` FROM `budgets` ORDER BY `id`")
+        var rows = 0
+        while (stmt.step()) {
+            rows++
+            assertEquals("USD", stmt.getText(1), "a limit left in the legacy currency the user no longer holds")
+        }
+        stmt.close()
+        assertEquals(2, rows)
+
+        // Re-denomination, not conversion — here as everywhere else.
+        val amounts = connection.prepare("SELECT `amount` FROM `budgets` ORDER BY `id`")
+        assertTrue(amounts.step())
+        assertEquals(500.0, amounts.getDouble(0))
+        assertTrue(amounts.step())
+        assertEquals(120.55, amounts.getDouble(0))
+        amounts.close()
+    }
+
+    /**
+     * The system rows go with the rest. They are lines of the chart like any other, and
+     * `Account.currency` has to mean the same thing on every one of them — which is
+     * what makes "the currency of an account is immutable" a rule of the chart rather
+     * than a rule of the account facade.
+     */
+    @Test
+    fun `the system rows are relabelled too`() {
+        seedLegacyLedger()
+
+        migrate(relabelCurrency = "USD")
+
+        val stmt = connection.prepare(
+            "SELECT `currency` FROM `accounts` WHERE `name` IN ('EXPENSES', 'CLOSED_ACCOUNT')"
+        )
+        var rows = 0
+        while (stmt.step()) {
+            rows++
+            assertEquals("USD", stmt.getText(0))
+        }
+        stmt.close()
+        assertEquals(2, rows)
+    }
+
+    /**
+     * **Relabelling does not repeat**, and no flag records that it ran: the migration
+     * is declared for `11 → 12` and `user_version` is what stops it. A later change of
+     * device region cannot fire it again, because there is no version left for it to
+     * migrate from.
+     */
+    @Test
+    fun `the record that it ran is the schema version, not a flag of its own`() {
+        val migration = Migration11To12("USD")
+
+        assertEquals(11, migration.startVersion)
+        assertEquals(12, migration.endVersion)
+    }
+
+    /**
+     * `execSQL` binds nothing, so the code is interpolated. The caller validates it
+     * against the catalog; this is the module declining to depend on that being true.
+     */
+    @Test
+    fun `a code that is not a code never reaches the statement`() {
+        seedLegacyLedger()
+
+        assertFailsWith<IllegalArgumentException> { migrate(relabelCurrency = "US'; DROP TABLE accounts; --") }
+
+        assertEquals(listOf("BRL", "BRL", "BRL"), currenciesOf("accounts"))
     }
 }

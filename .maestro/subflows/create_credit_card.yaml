@@ -1,0 +1,56 @@
+appId: com.neoutils.finsight
+name: create_credit_card
+---
+# Creates one card from the credit cards screen and leaves that screen open, the form dismissed.
+# Callers pass NAME, LIMIT (bare digits), CLOSING_DAY and DUE_DAY. The caller is responsible for
+# being on the credit cards screen already, and for asserting whatever the new card should show —
+# a subflow carries the arrangement, never the claim.
+- tapOn:
+    id: "credit_cards_add"
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_form_name"
+    timeout: 15000
+
+- tapOn:
+    id: "credit_card_form_name"
+- waitForAnimationToEnd
+- inputText: ${NAME}
+# Read the field back: a dropped keystroke has to fail here, not later as a card whose name nothing
+# on screen matches.
+- assertVisible:
+    id: "credit_card_form_name"
+    text: ${NAME}
+- hideKeyboard
+
+- tapOn:
+    id: "credit_card_form_limit"
+- waitForAnimationToEnd
+- inputText: ${LIMIT}
+- hideKeyboard
+
+# Both days are typed, though either alone would do — the form derives the missing one. Typing both
+# keeps the invoice period a fact of the calling flow rather than of a rule it does not assert.
+- tapOn:
+    id: "credit_card_form_closing_day"
+- waitForAnimationToEnd
+- inputText: ${CLOSING_DAY}
+- hideKeyboard
+
+- tapOn:
+    id: "credit_card_form_due_day"
+- waitForAnimationToEnd
+- inputText: ${DUE_DAY}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "credit_card_form_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "credit_card_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "credit_card_form_name"
+    timeout: 15000

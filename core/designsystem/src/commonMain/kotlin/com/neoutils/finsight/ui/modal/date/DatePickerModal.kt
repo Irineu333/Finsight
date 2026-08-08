@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.date_picker_cancel
 import com.neoutils.finsight.resources.date_picker_confirm
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import kotlinx.datetime.LocalDate
@@ -22,6 +23,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -44,9 +46,13 @@ class DatePickerModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
+        // The clock the app was given: the bounds this picker is opened with come from it, and a
+        // fallback read from the system's would land the calendar outside its own selectable range.
+        val clock = koinInject<Clock>()
+
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = localDateToMillis(
-                initialDate ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                initialDate ?: clock.today()
             ),
             selectableDates = selectableDates
         )

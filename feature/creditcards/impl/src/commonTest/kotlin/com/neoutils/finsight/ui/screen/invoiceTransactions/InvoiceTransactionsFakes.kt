@@ -74,7 +74,7 @@ internal class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInv
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }
@@ -101,6 +101,7 @@ internal class FakeCategoryRepository : ICategoryRepository {
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override suspend fun archive(id: Long) = Unit
     override suspend fun unarchive(id: Long) = Unit
@@ -137,7 +138,7 @@ internal class FakeEntryRepository(
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
@@ -145,7 +146,7 @@ internal class FakeEntryRepository(
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,

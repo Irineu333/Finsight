@@ -2,6 +2,8 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
+import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -29,9 +31,16 @@ val transactionsModule = module {
     }
     factory<DeleteTransactionUseCase> { DeleteTransactionUseCaseImpl(transactionRepository = get()) }
 
+    factory<ValidateTransactionFormUseCase> {
+        ValidateTransactionFormUseCaseImpl(
+            clock = get(),
+        )
+    }
+
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
+            validateTransactionForm = get(),
         )
     }
 
@@ -67,6 +76,7 @@ val transactionsModule = module {
             consolidateMoney = get(),
             observeConsolidationChanges = get(),
             baseCurrencyRepository = get(),
+            clock = get(),
         )
     }
     viewModel {
@@ -81,6 +91,8 @@ val transactionsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            validateTransactionForm = get(),
+            clock = get(),
         )
     }
     viewModel {
@@ -92,9 +104,12 @@ val transactionsModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             buildTransactionUseCase = get(),
+            validateTransactionForm = get(),
+            formatter = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {

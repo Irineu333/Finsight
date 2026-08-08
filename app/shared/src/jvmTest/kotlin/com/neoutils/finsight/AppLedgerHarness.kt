@@ -121,7 +121,9 @@ internal class AppLedgerHarness(
 
     /** An open invoice of [card] closing in [month] — with the dimension its store emits. */
     suspend fun invoice(card: CreditCard, month: YearMonth): Invoice {
-        val id = invoices.insert(
+        // The store answers with the row it wrote, dimension and all — there is nothing
+        // to read back.
+        return invoices.insert(
             Invoice(
                 creditCard = card,
                 openingMonth = month.minus(1, DateTimeUnit.MONTH),
@@ -130,7 +132,6 @@ internal class AppLedgerHarness(
                 status = Invoice.Status.OPEN,
             ),
         )
-        return requireNotNull(invoices.getInvoiceById(id))
     }
 
     /** Closes an invoice, which is what makes it payable. */

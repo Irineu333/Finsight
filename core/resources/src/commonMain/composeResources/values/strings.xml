@@ -162,7 +162,7 @@
     <string name="transactions_filter_category_all">Todas</string>
     <string name="transactions_filter_type">Tipo</string>
     <string name="transactions_filter_type_all">Todos</string>
-    <string name="transactions_filter_type_income">Entrada</string>
+    <string name="transactions_filter_type_income">Receita</string>
     <string name="transactions_filter_type_expense">Despesa</string>
     <string name="transactions_filter_type_adjustment">Ajuste</string>
     <string name="transactions_filter_type_transfer">Transferência</string>
@@ -186,6 +186,8 @@
     <string name="installments_delete">Excluir Parcelamento</string>
     <string name="installments_empty">Sem parcelamentos</string>
     <string name="installments_create">Criar parcelamento</string>
+    <string name="installment_counter_single">%1$dx</string>
+    <string name="installment_counter_label">%1$dx de %2$s</string>
     <string name="installments_total_value">Valor Total</string>
     <string name="installments_current_installment">Parcela Atual</string>
     <string name="installments_remaining">Restante</string>
@@ -230,8 +232,8 @@
     <string name="accounts_title">Contas</string>
     <string name="accounts_default">Padrão</string>
     <string name="accounts_opening_balance">Saldo Inicial</string>
-    <string name="accounts_income">Receitas</string>
-    <string name="accounts_expenses">Despesas</string>
+    <string name="accounts_income">Entradas</string>
+    <string name="accounts_expenses">Saídas</string>
     <string name="accounts_adjustments">Ajustes</string>
     <string name="accounts_invoices">Faturas</string>
     <string name="accounts_advance_payments">Adiantamentos</string>
@@ -242,6 +244,7 @@
     <string name="retire_error_has_transactions">Esta categoria tem lançamentos e não pode ser excluída. Arquive-a para preservar o histórico.</string>
     <string name="retire_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
     <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra categoria ou exclua-as antes de excluir esta.</string>
+    <string name="retire_error_has_yielding_accounts">Há contas que rendem e classificam o rendimento nesta categoria. Desligue o rendimento delas antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
@@ -326,6 +329,9 @@
     <string name="account_form_default_state_on">Usada por padrão</string>
     <string name="account_form_default_state_off">Definir como padrão</string>
     <string name="account_form_default_state_disabled">Já é a conta padrão</string>
+    <string name="account_form_yield_label">Conta que rende</string>
+    <string name="account_form_yield_state_on">Exibe a linha de rendimentos</string>
+    <string name="account_form_yield_state_off">Marque se o saldo é remunerado</string>
     <string name="account_form_save">Salvar</string>
 
     <!-- Credit Card Form Modal -->
@@ -551,8 +557,8 @@
     <string name="balance_card_current_balance">Saldo Atual</string>
     <string name="balance_card_income">Receitas</string>
     <string name="balance_card_expense">Despesas</string>
-    <string name="balance_card_account_income">Entradas na conta</string>
-    <string name="balance_card_account_expense">Saídas na conta</string>
+    <string name="balance_card_account_income">Receitas na conta</string>
+    <string name="balance_card_account_expense">Despesas na conta</string>
     <string name="balance_card_invoices">Faturas</string>
     <string name="balance_card_invoice_payments">Pagamentos</string>
     <string name="balance_card_credit_card_expense">Gasto no Cartão</string>
@@ -630,10 +636,18 @@
     <string name="invoice_status_retroactive">Retroativa</string>
     <string name="invoice_status_new">Nova</string>
 
+    <!-- Yield -->
+    <string name="category_yield">Rendimentos</string>
+    <string name="launch_yield_title">Lançar rendimento</string>
+    <string name="launch_yield_amount_label">Valor do rendimento</string>
+    <string name="launch_yield_date_label">Data</string>
+    <string name="launch_yield_save">Lançar</string>
+    <string name="accounts_yield">Rendimentos</string>
+    <string name="summary_card_yield">Rendimentos</string>
+
     <!-- Default category names -->
     <string name="category_default_salary">Salário</string>
     <string name="category_default_freelance">Freelance</string>
-    <string name="category_default_investments">Investimentos</string>
     <string name="category_default_benefits">Benefícios</string>
     <string name="category_default_refund">Reembolso</string>
     <string name="category_default_housing">Moradia</string>
@@ -925,4 +939,17 @@
     <string name="currency_error_base_currency_not_archivable">Esta é a moeda base. Troque a moeda base antes de arquivá-la.</string>
     <string name="currency_error_not_found">Esta moeda não existe mais.</string>
     <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
+    <string name="build_transaction_error_amount_required">Informe o valor.</string>
+    <string name="build_transaction_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="build_transaction_error_date_required">Informe a data.</string>
+    <string name="build_transaction_error_date_invalid">Data inválida.</string>
+    <string name="build_transaction_error_date_future">A data não pode ser futura.</string>
+    <string name="build_transaction_error_recurring_month_locked">Uma transação recorrente não pode mudar de mês.</string>
+    <string name="build_transaction_error_title_or_category_required">Informe um título ou uma categoria.</string>
+    <string name="build_transaction_error_credit_card_expense_only">Só despesas podem ir em um cartão de crédito.</string>
+    <string name="build_transaction_error_invoice_required">Selecione a fatura.</string>
+    <string name="build_transaction_error_credit_card_required">Selecione o cartão de crédito.</string>
+    <string name="build_transaction_error_account_required">Selecione a conta.</string>
+    <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
+    <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
 </resources>

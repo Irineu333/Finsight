@@ -16,6 +16,7 @@ val mapperModule = module {
             calculateInvoiceUseCase = get(),
             calculateAvailableLimitUseCase = get(),
             accountRepository = get(),
+            clock = get(),
         )
     }
 }

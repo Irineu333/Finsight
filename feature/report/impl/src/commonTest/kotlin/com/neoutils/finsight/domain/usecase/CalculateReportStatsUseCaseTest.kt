@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -93,7 +94,7 @@ private class CapturingEntryRepository : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
@@ -105,7 +106,7 @@ private class CapturingEntryRepository : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
@@ -129,6 +130,7 @@ private class FakeAccountRepository(private val accounts: List<Account>) : IAcco
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()

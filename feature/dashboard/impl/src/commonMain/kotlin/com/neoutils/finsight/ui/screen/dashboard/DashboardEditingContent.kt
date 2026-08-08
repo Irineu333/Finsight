@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.*
@@ -132,7 +133,8 @@ fun DashboardEditingContent(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 16.dp)
+                                .testTag("dashboard_edit_section_header"),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
@@ -153,7 +155,8 @@ fun DashboardEditingContent(
                                             .size(24.dp)
                                             .clip(CircleShape)
                                             .clickable { onAction(DashboardAction.AddAllComponents) }
-                                            .padding(2.dp),
+                                            .padding(2.dp)
+                                            .testTag("dashboard_edit_add_all"),
                                     )
                                 }
 
@@ -166,7 +169,8 @@ fun DashboardEditingContent(
                                             .size(24.dp)
                                             .clip(CircleShape)
                                             .clickable { onAction(DashboardAction.RemoveAllComponents) }
-                                            .padding(2.dp),
+                                            .padding(2.dp)
+                                            .testTag("dashboard_edit_remove_all"),
                                     )
                                 }
                             }
@@ -201,7 +205,9 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
         color = colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            // Named from the component's own key, like the viewing list's tags.
+            .testTag("dashboard_edit_item_${item.key}"),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(bottom = 16.dp)) {
@@ -252,6 +258,7 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                     tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier
                         .size(20.dp)
+                        .testTag("dashboard_edit_drag_${item.key}")
                         .draggableHandle(
                             onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
                             onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },

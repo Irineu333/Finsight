@@ -90,6 +90,7 @@ class TransactionsEmptyStateTest {
         consolidateMoney = consolidator(),
         observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
             baseCurrencyRepository = FakeBaseCurrency(),
+        clock = Clock.System,
     )
 
     /** The settled state after [actions], skipping the `Loading` initialValue. */

@@ -105,9 +105,11 @@ val creditCardsModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             addInstallmentUseCase = get(),
+            validateTransactionForm = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {
@@ -179,6 +181,7 @@ val creditCardsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {
@@ -254,6 +257,7 @@ val creditCardsModule = module {
             recurringRepository = get(),
             unarchiveCreditCard = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
 }

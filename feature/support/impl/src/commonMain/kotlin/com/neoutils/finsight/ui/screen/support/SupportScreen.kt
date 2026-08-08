@@ -18,6 +18,7 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +62,7 @@ fun SupportScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_support"),
         topBar = {
             TopAppBar(
                 title = {
@@ -100,7 +102,8 @@ fun SupportScreen(
                                 },
                             )
                         )
-                    }
+                    },
+                    modifier = Modifier.testTag("support_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -209,7 +212,10 @@ private fun EmptySupportState(
         )
         androidx.compose.material3.Button(
             onClick = onCreateIssue,
-            modifier = Modifier.padding(top = 16.dp),
+            // The same command as the FAB this state replaces: the two never stand together.
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .testTag("support_add"),
         ) {
             Text(text = stringResource(Res.string.support_empty_cta))
         }

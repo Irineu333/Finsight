@@ -15,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.ui.util.optionalTestTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.ui.component.AdaptiveModal
@@ -167,14 +169,16 @@ class ViewCategoryModal(
             DetailRow(
                 label = totalLabel,
                 amount = uiState.totalAmount,
-                valueColor = uiState.category.displayColor
+                valueColor = uiState.category.displayColor,
+                valueTestTag = "view_category_total_amount",
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
                 label = stringResource(Res.string.view_category_transactions_month),
-                value = uiState.transactionCount.toString()
+                value = uiState.transactionCount.toString(),
+                valueTestTag = "view_category_transaction_count",
             )
         }
     }
@@ -201,7 +205,9 @@ class ViewCategoryModal(
                     icon = Icons.Default.Unarchive,
                     contentColor = colorScheme.primary,
                     onClick = { viewModel.onAction(ViewCategoryAction.Unarchive) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("category_unarchive"),
                 )
             } else {
                 OutlinedActionButton(
@@ -216,7 +222,12 @@ class ViewCategoryModal(
                             }
                         )
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("category_retire"),
+                    // Which of the two words this button carries *is* the claim, so the
+                    // assertion has to read the node that renders it.
+                    labelTestTag = "category_retire_label",
                 )
             }
 
@@ -238,7 +249,8 @@ class ViewCategoryModal(
     private fun DetailRow(
         label: String,
         amount: ConsolidatedAmount,
-        valueColor: Color = colorScheme.onSurface
+        valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -252,6 +264,7 @@ class ViewCategoryModal(
             MoneyText(
                 figure = amount,
                 style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
+                modifier = Modifier.optionalTestTag(valueTestTag),
             )
         }
     }
@@ -260,7 +273,8 @@ class ViewCategoryModal(
     private fun DetailRow(
         label: String,
         value: String,
-        valueColor: Color = colorScheme.onSurface
+        valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -274,7 +288,8 @@ class ViewCategoryModal(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
-                color = valueColor
+                color = valueColor,
+                modifier = Modifier.optionalTestTag(valueTestTag),
             )
         }
     }

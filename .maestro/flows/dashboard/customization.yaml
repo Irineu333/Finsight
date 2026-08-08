@@ -1,0 +1,316 @@
+appId: com.neoutils.finsight
+name: dashboard_customization
+tags:
+  - dashboard
+---
+# The dashboard as the user's to arrange: two components swapped by dragging one past the other and
+# kept across a relaunch; emptied and filled again by the two bulk commands, with a discarded edit
+# in between to prove that leaving the editor is not the same as confirming it; one component put
+# back on its own, which only a drag can do; and one option changed in a component's own sheet.
+#
+# `dashboard/initial_state` owns what the default layout shows on day zero. This owns what happens
+# when someone changes it, which is a different claim and the larger untested surface: every screen
+# in the suite reads a dashboard nobody had ever rearranged.
+#
+# The drag is the reason this flow is worth its minute and a half. It is the one gesture in the app
+# with no button behind it — a real press-move-release on a `draggableHandle` — and the order it
+# produces is asserted with `above:`, on the dashboard itself rather than in the editor, so a pass
+# means the new order was saved and re-read, not merely shown while the editor was open.
+#
+# What the drag *computes* is not this flow's: `DashboardEditLayout.move` owns the index arithmetic
+# and `DashboardEditLayoutTest` owns its matrix. Here the gesture is proven to reach it, once.
+#
+# Every read of the dashboard below scrolls to the top first. Leaving the editor does not reset the
+# list's scroll, and a component sitting above the fold is not composed — indistinguishable, to
+# `assertVisible`, from one that was removed. That distinction cost an investigation once already.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- The order the app ships with ----------------------------------------------------------------
+# Both are on screen without scrolling, which is what makes `above:` a statement about order rather
+# than about what happens to be composed.
+- assertVisible:
+    id: "dashboard_component_total_balance"
+    above:
+      id: "dashboard_component_balance_stats_overall"
+
+# --- I drag the first component past the second --------------------------------------------------
+# A long press on any component opens the editor — there is no button for it, which is itself worth
+# pinning: lose the gesture and customisation becomes unreachable.
+- longPressOn:
+    id: "dashboard_component_total_balance"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "dashboard_edit_item_total_balance"
+    above:
+      id: "dashboard_edit_item_balance_stats_overall"
+
+# The handle drags on touch (`draggableHandle`), unlike the item body, which waits for a long press.
+# The swipe is slow on purpose: the reorder follows the pointer, and a flick delivers too few moves
+# for it to settle on a new index. It travels several positions rather than one — how far is the
+# gesture's business, and the claim is only that the two ends swapped.
+- swipe:
+    from:
+      id: "dashboard_edit_drag_total_balance"
+    direction: DOWN
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible:
+    id: "dashboard_edit_item_balance_stats_overall"
+    above:
+      id: "dashboard_edit_item_total_balance"
+
+- tapOn:
+    id: "dashboard_edit_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+
+# The dashboard renders in the order the drag left, which is the claim: what was dragged in the
+# editor is what the screen is built from.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_overall"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_balance_stats_overall"
+    above:
+      id: "dashboard_component_total_balance"
+
+# --- It survives the process ---------------------------------------------------------------------
+# A relaunch with the state kept: the layout was written down, not held in a ViewModel. Nothing else
+# in the suite reads a dashboard that was ever rearranged, so nothing else could catch this.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+- assertVisible:
+    id: "dashboard_component_balance_stats_overall"
+    above:
+      id: "dashboard_component_total_balance"
+
+# --- An edit I abandon changes nothing -----------------------------------------------------------
+# Everything is removed and then the editor is left by cancelling. The dashboard has to be exactly
+# as it was — including the swapped order, which is what tells "cancel restored the layout" apart
+# from "cancel rebuilt the default one".
+- longPressOn:
+    id: "dashboard_component_balance_stats_overall"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+# The bulk commands live in the header that separates active from available, so with every
+# component active they sit below the whole list.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_edit_section_header"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- tapOn:
+    id: "dashboard_edit_remove_all"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_item_total_balance"
+    timeout: 15000
+- tapOn:
+    id: "dashboard_edit_cancel"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_cancel"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_balance_stats_overall"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_balance_stats_overall"
+    above:
+      id: "dashboard_component_total_balance"
+
+# --- And an edit I confirm empties it ------------------------------------------------------------
+# The same two taps, ending on the other command. An empty dashboard is a state of its own: it
+# stands in its own content, offering the editor as the only way out of it.
+- longPressOn:
+    id: "dashboard_component_balance_stats_overall"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+# The bulk commands live in the header that separates active from available, so with every
+# component active they sit below the whole list.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_edit_section_header"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- tapOn:
+    id: "dashboard_edit_remove_all"
+- tapOn:
+    id: "dashboard_edit_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_empty_edit"
+    timeout: 15000
+- assertNotVisible:
+    id: "dashboard_component_total_balance"
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_overall"
+
+# --- One component at a time, and only by dragging -------------------------------------------------
+# Reached from the empty state's own button, which is the only entry left once there is no component
+# to long-press.
+#
+# Nothing is active here, so the boundary is at the very top and `total_balance` — the first
+# available, since removing all preserved the order — sits right under it. That is what keeps these
+# two drags short and away from the list's autoscroll.
+#
+# Whether a component is on the dashboard is read as its side of the header: `above` is active,
+# `below` is not. There is no button for either direction — the bulk commands move all eleven, never
+# one — so this gesture is the only way a person adds or removes a single component.
+- tapOn:
+    id: "dashboard_empty_edit"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_section_header"
+    timeout: 15000
+- assertVisible:
+    id: "dashboard_edit_item_total_balance"
+    below:
+      id: "dashboard_edit_section_header"
+
+- swipe:
+    from:
+      id: "dashboard_edit_drag_total_balance"
+    direction: UP
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible:
+    id: "dashboard_edit_item_total_balance"
+    above:
+      id: "dashboard_edit_section_header"
+
+# And back, which is the same gesture read the other way — the drop target that promotes is the one
+# that demotes.
+- swipe:
+    from:
+      id: "dashboard_edit_drag_total_balance"
+    direction: DOWN
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible:
+    id: "dashboard_edit_item_total_balance"
+    below:
+      id: "dashboard_edit_section_header"
+
+# Promoted once more, and this time confirmed: a dashboard of exactly the one component a drag put
+# there. The absence needs no scrolling premise — a single-component dashboard does not scroll.
+- swipe:
+    from:
+      id: "dashboard_edit_drag_total_balance"
+    direction: UP
+    duration: 1500
+- waitForAnimationToEnd
+- tapOn:
+    id: "dashboard_edit_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+- assertVisible:
+    id: "dashboard_component_total_balance"
+- assertNotVisible:
+    id: "dashboard_component_quick_actions"
+
+# --- Filling it again is one command --------------------------------------------------------------
+# The editor is reached by long press again, the empty state having been left behind.
+- longPressOn:
+    id: "dashboard_component_total_balance"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_section_header"
+    timeout: 15000
+- tapOn:
+    id: "dashboard_edit_add_all"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_item_total_balance"
+    timeout: 15000
+- tapOn:
+    id: "dashboard_edit_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_total_balance"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_total_balance"
+- assertVisible:
+    id: "dashboard_component_balance_stats_overall"
+
+# --- An option changed in a component's own sheet reaches the dashboard ---------------------------
+# The accounts row is active but withheld, because the seeded Wallet is the only account
+# (HIDE_SINGLE_ACCOUNT) — the absence `dashboard/initial_state` pins on day zero. Turning that option
+# off is what makes it appear, and the chain it travels is the claim: a sheet writes a component's
+# config, the editor saves it, the builder reads it back and decides what to render. Every link has
+# a unit test; the seam has none, because no layer below mounts a modal and a screen together.
+#
+# One config key, not eleven: which options a component offers is combinatorics, and it stays in the
+# builder's unit tests (§5.1). This is the single passage that proves the wiring exists at all.
+- longPressOn:
+    id: "dashboard_component_total_balance"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_edit_item_accounts_overview"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+
+# The card's whole body opens the sheet; the drag handle sits in its top-right corner, away from
+# the centre a tap lands on.
+- tapOn:
+    id: "dashboard_edit_item_accounts_overview"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_component_options"
+    timeout: 15000
+- tapOn:
+    id: "dashboard_component_options_hide_single_account"
+- tapOn:
+    id: "dashboard_component_options_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_component_options"
+    timeout: 15000
+
+- tapOn:
+    id: "dashboard_edit_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "dashboard_edit_confirm"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_component_accounts_overview"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_component_accounts_overview"

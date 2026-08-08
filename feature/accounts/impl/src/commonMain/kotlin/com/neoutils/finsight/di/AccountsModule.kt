@@ -16,6 +16,8 @@ import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
+import com.neoutils.finsight.domain.usecase.LaunchYieldUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
@@ -28,6 +30,7 @@ import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
+import com.neoutils.finsight.ui.modal.launchYield.LaunchYieldViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.modal.viewAccount.ViewAccountViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
@@ -80,6 +83,13 @@ val accountsModule = module {
         )
     }
     factory { UnarchiveAccountUseCase(repository = get()) }
+    factory { EnsureYieldCategoryUseCase(categoryRepository = get()) }
+    factory {
+        LaunchYieldUseCase(
+            transactionRepository = get(),
+            ensureYieldCategory = get(),
+        )
+    }
     factory {
         AdjustBalanceUseCase(
             transactionRepository = get(),
@@ -116,6 +126,7 @@ val accountsModule = module {
             currencyRepository = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
+            ensureYieldCategory = get(),
             modalManager = get(),
             debounceManager = get(),
             analytics = get(),
@@ -151,6 +162,16 @@ val accountsModule = module {
             adjustFinalBalanceUseCase = get(),
             adjustOpeningBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
+            accountRepository = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+    viewModel {
+        LaunchYieldViewModel(
+            account = it.get(),
+            launchYieldUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),

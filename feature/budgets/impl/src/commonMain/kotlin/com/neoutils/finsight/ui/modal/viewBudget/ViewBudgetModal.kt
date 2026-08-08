@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -34,6 +35,7 @@ import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import kotlinx.datetime.YearMonth
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.MoneyText
@@ -210,6 +212,7 @@ class ViewBudgetModal(
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
                     value = formatter.format(budget.amount, currency),
+                    valueTestTag = "view_budget_limit_amount",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -219,6 +222,7 @@ class ViewBudgetModal(
                 // The money is known — only its expression in the limit's currency is not.
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
+                    valueTestTag = "view_budget_spent_amount",
                     value = {
                         val figure = budgetProgress.spentFigure
                         if (figure != null) {
@@ -260,6 +264,13 @@ class ViewBudgetModal(
                     ),
                     value = formatter.formatOrUnresolved(leftOrOver),
                     valueColor = if (leftOrOver != null) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+                    // One row, two readings: the tag names which of them is on screen,
+                    // exactly as the label above it does.
+                    valueTestTag = if (budgetProgress.isExceeded) {
+                        "view_budget_exceeded_amount"
+                    } else {
+                        "view_budget_remaining_amount"
+                    },
                 )
             }
 
@@ -310,7 +321,9 @@ class ViewBudgetModal(
         ) {
             OutlinedButton(
                 onClick = { manager.show(DeleteBudgetModal(budget)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("view_budget_delete"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.error,
@@ -366,6 +379,10 @@ class ViewBudgetModal(
     private fun DetailRow(
         label: String,
         value: @Composable () -> Unit,
+        // The figure, not the row: an E2E assertion has to land on the node that
+        // renders the number, or it only proves the number is somewhere on screen.
+        // Applied to the slot's container, since what it holds is the caller's.
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -391,7 +408,9 @@ class ViewBudgetModal(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                value()
+                Box(modifier = Modifier.optionalTestTag(valueTestTag)) {
+                    value()
+                }
             }
         }
     }
@@ -401,10 +420,12 @@ class ViewBudgetModal(
         label: String,
         value: String,
         valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) = DetailRow(
         label = label,
         onClick = onClick,
+        valueTestTag = valueTestTag,
         value = {
             Text(
                 text = value,

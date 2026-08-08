@@ -75,10 +75,17 @@ class RateIsNeverWrittenTest {
 
     @Test
     fun `no column of the schema holds a value converted to the base`() {
-        val schema = File(
+        // The current schema, whichever version that is. Naming a version here would
+        // make this test pass by going stale: the claim is about the shape the app
+        // ships, and a new migration must not quietly stop being covered by it.
+        val schemas = File(
             repoRoot,
-            "core/database/schemas/com.neoutils.finsight.database.AppDatabase/11.json",
-        ).readText()
+            "core/database/schemas/com.neoutils.finsight.database.AppDatabase",
+        ).listFiles { file -> file.extension == "json" }.orEmpty()
+
+        val schema = checkNotNull(schemas.maxByOrNull { it.nameWithoutExtension.toInt() }) {
+            "no exported schema to read"
+        }.readText()
 
         val columnNames = Regex(""""fieldPath"\s*:\s*"([^"]+)"""")
             .findAll(schema)

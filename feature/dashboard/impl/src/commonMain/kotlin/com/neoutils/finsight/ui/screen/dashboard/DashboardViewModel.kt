@@ -24,6 +24,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
+import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -46,6 +47,7 @@ class DashboardViewModel(
     private val baseCurrencyRepository: IBaseCurrencyRepository,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
 
     init {
@@ -56,7 +58,7 @@ class DashboardViewModel(
         }
     }
 
-    private val instant get() = Clock.System.now()
+    private val instant get() = clock.now()
 
     private val invoices = invoiceRepository
         .observeUnpaidInvoices()
@@ -149,7 +151,7 @@ class DashboardViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DashboardUiState.Loading(),
+        initialValue = DashboardUiState.Loading(instant.toYearMonth()),
     )
 
     fun onAction(action: DashboardAction) = when (action) {
@@ -232,66 +234,15 @@ class DashboardViewModel(
     private fun moveComponent(fromKey: String, toKey: String) {
         val current = editingState.value ?: return
 
-        val allItems = current.activeItems + current.availableItems
-        val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
+        val moved = DashboardEditLayout(
+            activeItems = current.activeItems,
+            availableItems = current.availableItems,
+        ).move(fromKey, toKey)
 
-        val activeCount = current.activeItems.size
-
-        when (toKey) {
-            EDIT_ACTIVE_PLACEHOLDER_KEY -> {
-                if (activeCount != 0) return
-
-                val mutable = allItems.toMutableList()
-                val moved = mutable.removeAt(fromIndex)
-                mutable.add(0, moved)
-
-                editingState.value = current.copy(
-                    activeItems = mutable.take(1),
-                    availableItems = mutable.drop(1),
-                )
-            }
-
-            EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
-                val fromInActive = fromIndex < activeCount
-                val mutable = allItems.toMutableList()
-                val moved = mutable.removeAt(fromIndex)
-                if (fromInActive) {
-                    val newActiveCount = activeCount - 1
-                    mutable.add(newActiveCount, moved)
-                    editingState.value = current.copy(
-                        activeItems = mutable.take(newActiveCount),
-                        availableItems = mutable.drop(newActiveCount),
-                    )
-                } else {
-                    mutable.add(activeCount, moved)
-                    val newActiveCount = activeCount + 1
-                    editingState.value = current.copy(
-                        activeItems = mutable.take(newActiveCount),
-                        availableItems = mutable.drop(newActiveCount),
-                    )
-                }
-            }
-
-            else -> {
-                val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
-                val fromInActive = fromIndex < activeCount
-                val toInActive = toIndex < activeCount
-
-                val mutable = allItems.toMutableList()
-                val moved = mutable.removeAt(fromIndex)
-                mutable.add(toIndex.coerceAtMost(mutable.size), moved)
-
-                val newActiveCount = when {
-                    fromInActive && !toInActive -> activeCount - 1
-                    !fromInActive && toInActive -> activeCount + 1
-                    else -> activeCount
-                }
-                editingState.value = current.copy(
-                    activeItems = mutable.take(newActiveCount),
-                    availableItems = mutable.drop(newActiveCount),
-                )
-            }
-        }
+        editingState.value = current.copy(
+            activeItems = moved.activeItems,
+            availableItems = moved.availableItems,
+        )
     }
 
     private fun removeAllComponents() {

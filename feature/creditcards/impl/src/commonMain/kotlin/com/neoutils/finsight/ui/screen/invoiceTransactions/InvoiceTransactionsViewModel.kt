@@ -36,13 +36,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import com.neoutils.finsight.extension.today
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
     private val creditCardId: Long,
@@ -56,7 +52,10 @@ class InvoiceTransactionsViewModel(
     private val recurringRepository: IRecurringRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
+
+    private val currentDate get() = clock.today()
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
 

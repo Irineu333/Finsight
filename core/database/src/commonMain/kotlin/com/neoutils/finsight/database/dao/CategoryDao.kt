@@ -43,6 +43,14 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE dimensionId = :dimensionId LIMIT 1")
     suspend fun getCategoryByDimensionId(dimensionId: Long): CategoryEntity?
 
+    /**
+     * The category the app provides under a key. Archived ones included: closure
+     * hides a facade from the selectors, it does not withdraw it from whoever
+     * already uses it.
+     */
+    @Query("SELECT * FROM categories WHERE systemKey = :systemKey LIMIT 1")
+    suspend fun getCategoryBySystemKey(systemKey: String): CategoryEntity?
+
     @Query("UPDATE categories SET isArchived = 1 WHERE id = :id")
     suspend fun archive(id: Long)
 

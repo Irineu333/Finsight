@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,6 +81,10 @@ fun CreditCardCard(
     variant: CreditCardCardVariant,
     modifier: Modifier = Modifier,
     invoiceUi: InvoiceUi? = null,
+    // Names the figures this card renders, not the card itself: the same component stands on the
+    // dashboard and on the cards screen, and an E2E assertion has to say which of the two it read.
+    // Null on the call sites no flow drives.
+    testTagPrefix: String? = null,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -218,6 +223,9 @@ fun CreditCardCard(
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface,
+                                modifier = testTagPrefix
+                                    ?.let { prefix -> Modifier.testTag("${prefix}_invoice_amount") }
+                                    ?: Modifier,
                             )
                         } ?: Text(
                             text = "",
@@ -261,7 +269,13 @@ fun CreditCardCard(
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colorScheme.onSurface,
-                                modifier = Modifier.alignByBaseline(),
+                                modifier = Modifier
+                                    .alignByBaseline()
+                                    .then(
+                                        testTagPrefix
+                                            ?.let { prefix -> Modifier.testTag("${prefix}_available_limit") }
+                                            ?: Modifier
+                                    ),
                             )
                             Text(
                                 text = " / ${formatter.format(limit)}",

@@ -11,6 +11,8 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
+import com.neoutils.finsight.ui.screen.accounts.FakeCategoryRepository
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
@@ -69,6 +71,9 @@ class AccountFormCurrencyRowTest {
                 validateAccountName = ValidateAccountNameUseCase(repository),
                 setDefaultAccount = SetDefaultAccountUseCase(repository),
             ),
+            // The form declares whether an account yields; this test is about the
+            // currency row, and never submits, so the category is never reached.
+            ensureYieldCategory = EnsureYieldCategoryUseCase(FakeCategoryRepository()),
             modalManager = ModalManager(),
             debounceManager = DebounceManager(),
             analytics = StubAnalytics(),
@@ -143,6 +148,7 @@ private class StubCrashlytics : Crashlytics {
 }
 
 private class StubAccounts : IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
     override suspend fun getAllAccounts(): List<Account> = emptyList()
     override suspend fun getAccountById(accountId: Long): Account? = null

@@ -6,6 +6,7 @@ import com.neoutils.finsight.database.callback.CurrencySeedingCallback
 import com.neoutils.finsight.database.migration.Migration10To11
 import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
+import com.neoutils.finsight.database.migration.Migration13To14
 import com.neoutils.finsight.database.migration.Migration1To2
 import com.neoutils.finsight.database.migration.Migration2To3
 import com.neoutils.finsight.database.migration.Migration3To4
@@ -24,9 +25,9 @@ import kotlinx.coroutines.Dispatchers
  * ones that need something the module cannot reach — a currency code, a seeding — take
  * it as a constructor parameter; the rest are objects.
  *
- * @param relabelCurrency see [Migration10To11].
- * @param baseCurrency see [Migration11To12].
- * @param currencySeeding see [Migration12To13].
+ * @param relabelCurrency see [Migration11To12].
+ * @param baseCurrency see [Migration12To13].
+ * @param currencySeeding see [Migration13To14].
  */
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>,
@@ -43,9 +44,10 @@ fun getRoomDatabase(
             Migration5To6,
             Migration6To7,
             Migration7To10,
-            Migration10To11(relabelCurrency),
-            Migration11To12(baseCurrency),
-            Migration12To13(currencySeeding),
+            Migration10To11,
+            Migration11To12(relabelCurrency),
+            Migration12To13(baseCurrency),
+            Migration13To14(currencySeeding),
         )
         .addCallback(CurrencySeedingCallback(currencySeeding))
         .setDriver(BundledSQLiteDriver())

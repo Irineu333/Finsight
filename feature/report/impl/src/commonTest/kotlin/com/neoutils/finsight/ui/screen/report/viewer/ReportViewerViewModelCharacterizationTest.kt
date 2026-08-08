@@ -261,6 +261,7 @@ private class Fakes {
         override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
         override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+        override suspend fun hasYieldingAccount(): Boolean = false
         override suspend fun getAccountCount(): Int = throw NotImplementedError()
         override suspend fun insert(account: Account): Long = throw NotImplementedError()
         override suspend fun update(account: Account) = throw NotImplementedError()
@@ -295,7 +296,7 @@ private class Fakes {
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
         override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
-        override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+        override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
         override suspend fun update(invoice: Invoice) = throw NotImplementedError()
         override suspend fun deleteById(id: Long) = throw NotImplementedError()
     }
@@ -308,6 +309,7 @@ private class Fakes {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun archive(id: Long) = Unit
         override suspend fun unarchive(id: Long) = Unit
@@ -334,7 +336,7 @@ private class Fakes {
         override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
         override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
         override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) =
             dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
@@ -349,7 +351,7 @@ private class Fakes {
             flows[dimensionId] ?: DimensionFlowsByCurrency.zero
 
         override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
-        override suspend fun assetMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+        override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
         override suspend fun totalsByDimensionByCurrency(
             nominalType: AccountType,
             startDate: LocalDate,

@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.EditAccount
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -39,6 +40,7 @@ class AccountFormViewModel(
     currencyRepository: ICurrencyRepository,
     private val createAccountUseCase: CreateAccountUseCase,
     private val updateAccountUseCase: UpdateAccountUseCase,
+    private val ensureYieldCategory: EnsureYieldCategoryUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val analytics: Analytics,
@@ -61,6 +63,7 @@ class AccountFormViewModel(
     )
 
     private val isDefault = MutableStateFlow(account?.isDefault ?: false)
+    private val yieldsInterest = MutableStateFlow(account?.yieldsInterest ?: false)
 
     private val currency = MutableStateFlow(
         account?.currency ?: baseCurrencyRepository.observe().value
@@ -68,18 +71,29 @@ class AccountFormViewModel(
 
     private val offeredCurrencies = currencyRepository.observeOffered()
 
+    // `combine` takes five, and the form has six pieces of state: the two that answer
+    // the same question — which currency, and which ones may be picked — travel
+    // together, with the yield flag alongside them.
+    private val currencyAndYield = combine(
+        currency,
+        offeredCurrencies,
+        yieldsInterest,
+        ::Triple,
+    )
+
     val uiState = combine(
         name,
         selectedIcon,
         isDefault,
         validation,
-        combine(currency, offeredCurrencies, ::Pair),
-    ) { name, selectedIcon, isDefault, validation, (currency, selectableCurrencies) ->
+        currencyAndYield,
+    ) { name, selectedIcon, isDefault, validation, (currency, selectableCurrencies, yieldsInterest) ->
         AccountFormUiState(
             name = name,
             selectedIcon = selectedIcon,
             validation = validation,
             isDefault = isDefault,
+            yieldsInterest = yieldsInterest,
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
@@ -95,6 +109,7 @@ class AccountFormViewModel(
             selectedIcon = selectedIcon.value,
             validation = validation,
             isDefault = isDefault.value,
+            yieldsInterest = yieldsInterest.value,
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
@@ -112,6 +127,10 @@ class AccountFormViewModel(
 
             is AccountFormAction.IsDefaultChanged -> {
                 isDefault.value = action.isDefault
+            }
+
+            is AccountFormAction.YieldsInterestChanged -> {
+                yieldsInterest.value = action.yieldsInterest
             }
 
             is AccountFormAction.IconSelected -> {
@@ -158,6 +177,16 @@ class AccountFormViewModel(
             return@launch
         }
 
+        // The first account to declare it yields is what brings the category into
+        // existence — before the save completes, so no account is ever left declaring
+        // a yield with nowhere to classify it.
+        if (yieldsInterest.value) {
+            runCatching { ensureYieldCategory() }.onFailure {
+                crashlytics.recordException(it)
+                return@launch
+            }
+        }
+
         if (account != null) {
             updateAccountUseCase(
                 accountId = account.id,
@@ -165,7 +194,8 @@ class AccountFormViewModel(
                 it.copy(
                     name = name,
                     iconKey = selectedIcon.value.key,
-                    isDefault = isDefault.value
+                    isDefault = isDefault.value,
+                    yieldsInterest = yieldsInterest.value,
                 )
             }.onLeft {
                 crashlytics.recordException(it)
@@ -181,6 +211,7 @@ class AccountFormViewModel(
             isDefault = isDefault.value,
             iconKey = selectedIcon.value.key,
             currency = currency.value,
+            yieldsInterest = yieldsInterest.value,
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {

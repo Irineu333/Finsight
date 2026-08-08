@@ -53,11 +53,12 @@ class AccountPeriodTotalsQueryTest {
             AccountPeriodTotals(
                 currency = "BRL",     // the account's own, not a group: one account, one currency
                 income = 10_000,      // the salary
+                yield = 0,            // no dimension to separate
                 expense = 8_000,      // the expense (3000) plus the transfer out (5000)
                 adjustment = 4_000,   // signed, and kept out of income
                 settlement = 8_000,
             ),
-            entryDao.accountPeriodTotals(1, "2026-01"),
+            entryDao.accountPeriodTotals(1, "2026-01", yieldDimensionId = null),
         )
     }
 
@@ -69,11 +70,12 @@ class AccountPeriodTotalsQueryTest {
             AccountPeriodTotals(
                 currency = "BRL",
                 income = 5_000,
+                yield = 0,
                 expense = 0,
                 adjustment = 0,
                 settlement = 0,
             ),
-            entryDao.accountPeriodTotals(3, "2026-01"),
+            entryDao.accountPeriodTotals(3, "2026-01", yieldDimensionId = null),
         )
     }
 
@@ -91,14 +93,15 @@ class AccountPeriodTotalsQueryTest {
             AssetMonthTotals(
                 currency = "BRL",
                 income = 10_000,
+                yield = 0,
                 expense = 3_000,
                 adjustment = 4_000,
             ),
-            entryDao.assetMonthTotals("2026-01").sole(),
+            entryDao.assetMonthTotals("2026-01", yieldDimensionId = null).sole(),
         )
         // A month with no movement has no group to report, so no row at all — not a
         // row of zeros, which is what the ungrouped aggregate used to return.
-        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03"))
+        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03", yieldDimensionId = null))
     }
 
     @Test
@@ -130,14 +133,14 @@ class AccountPeriodTotalsQueryTest {
             )
         }
 
-        val totals = entryDao.assetMonthTotals("2026-01")
+        val totals = entryDao.assetMonthTotals("2026-01", yieldDimensionId = null)
 
         assertEquals(
-            AssetMonthTotals(currency = "BRL", income = 10_000, expense = 3_000, adjustment = 0),
+            AssetMonthTotals(currency = "BRL", income = 10_000, yield = 0, expense = 3_000, adjustment = 0),
             totals.forCurrency("BRL"),
         )
         assertEquals(
-            AssetMonthTotals(currency = "USD", income = 0, expense = 1_500, adjustment = 0),
+            AssetMonthTotals(currency = "USD", income = 0, yield = 0, expense = 1_500, adjustment = 0),
             totals.forCurrency("USD"),
         )
         assertEquals(2, totals.size)
@@ -160,11 +163,12 @@ class AccountPeriodTotalsQueryTest {
             AccountPeriodTotals(
                 currency = "USD",
                 income = 0,
+                yield = 0,
                 expense = 1_500,
                 adjustment = 0,
                 settlement = 0,
             ),
-            entryDao.accountPeriodTotals(2, "2026-01"),
+            entryDao.accountPeriodTotals(2, "2026-01", yieldDimensionId = null),
         )
     }
 }

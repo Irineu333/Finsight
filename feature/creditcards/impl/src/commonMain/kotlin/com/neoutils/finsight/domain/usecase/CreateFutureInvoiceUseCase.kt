@@ -47,7 +47,7 @@ class CreateFutureInvoiceUseCase(
         )
 
         catch {
-            invoice.copy(id = invoiceRepository.insert(invoice))
+            invoiceRepository.insert(invoice)
         }.bind()
     }
 }

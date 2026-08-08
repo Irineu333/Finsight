@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -22,6 +22,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -97,6 +99,7 @@ class InvoiceTransactionsPerspectiveTest {
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
         crashlytics = NoCrashlytics,
+        clock = Clock.System,
     )
 
     private suspend fun settledState(

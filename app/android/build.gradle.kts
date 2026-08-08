@@ -17,8 +17,8 @@ android {
         applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 28
-        versionName = "1.9.0-rc01"
+        versionCode = 30
+        versionName = "1.9.0"
     }
     packaging {
         resources {
@@ -69,4 +69,7 @@ dependencies {
     implementation(libs.koin.android)
 
     debugImplementation(compose.uiTooling)
+    // Debug only: `TimeTravel` converts a calendar month shift into the days the clock understands,
+    // and asking a calendar is the whole point — adding 31 days is not adding a month.
+    debugImplementation(libs.kotlinx.datetime)
 }

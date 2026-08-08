@@ -1,16 +1,11 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.util.dayMonthYear
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
  * The submit button covering the **second** field — the validation change design D26
@@ -23,8 +18,9 @@ import kotlin.time.ExperimentalTime
  */
 class TransferSubmitEnablementTest {
 
-    private val today = Clock.System.now()
-        .toLocalDateTime(TimeZone.currentSystemDefault()).date
+    // Fixed, and handed to the rule: what "today" is belongs to the caller, so the
+    // assertion never depends on the day the suite happens to run.
+    private val today = LocalDate(2026, 3, 14)
 
     private val date = dayMonthYear.format(today)
 
@@ -42,6 +38,7 @@ class TransferSubmitEnablementTest {
                 date = date,
                 sourceAccount = nubank,
                 destinationAccount = chase,
+                today = today,
             )
         )
     }
@@ -56,6 +53,7 @@ class TransferSubmitEnablementTest {
                 date = date,
                 sourceAccount = nubank,
                 destinationAccount = chase,
+                today = today,
             )
         )
     }
@@ -70,6 +68,7 @@ class TransferSubmitEnablementTest {
                 date = date,
                 sourceAccount = nubank,
                 destinationAccount = chase,
+                today = today,
             )
         )
     }
@@ -85,6 +84,7 @@ class TransferSubmitEnablementTest {
                 date = date,
                 sourceAccount = nubank,
                 destinationAccount = itau,
+                today = today,
             )
         )
     }

@@ -33,6 +33,8 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import com.neoutils.finsight.ui.util.exposeTestTags
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +120,10 @@ private fun CreditCardsContent(
                 actions = {
                     var expanded by remember { mutableStateOf(false) }
 
-                    IconButton(onClick = { expanded = true }) {
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.testTag("credit_cards_more_options"),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = null,
@@ -128,13 +133,17 @@ private fun CreditCardsContent(
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
+                        // Its own popup window: the app window's opt-in does not reach it, and its
+                        // single option is copy a translation reworks.
+                        modifier = Modifier.exposeTestTags(),
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.credit_cards_view_archived)) },
                             onClick = {
                                 expanded = false
                                 navController.navigate(ArchivedCreditCardsRoute)
-                            }
+                            },
+                            modifier = Modifier.testTag("credit_cards_view_archived"),
                         )
                     }
                 },
@@ -145,12 +154,14 @@ private fun CreditCardsContent(
                 ),
             )
         },
+        modifier = Modifier.testTag("screen_credit_cards"),
         floatingActionButton = {
             if (uiState is CreditCardsUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(CreditCardFormModal())
                     },
+                    modifier = Modifier.testTag("credit_cards_add"),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -342,7 +353,11 @@ private fun EmptyCreditCardsState(
 
             Button(
                 onClick = onCreateCreditCard,
-                modifier = Modifier.fillMaxWidth(),
+                // The same command as the FAB, which this state replaces: the two never stand
+                // together, so naming both is naming one thing — "create a card".
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("credit_cards_add"),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
@@ -442,11 +457,13 @@ private fun CreditCardPager(
             // contentPadding would be lifted to the overlay and lose its clip.
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("credit_card_card")
                 .then(
                     if (page == selectedIndex) {
                         Modifier.creditCardSharedElement(creditCards[page].cardId)
                     } else Modifier
                 ),
+            testTagPrefix = "credit_card",
             variant = CreditCardCardVariant.Listing(
                 onClick = { onCardClick(creditCards[page]) },
                 onEditInvoice = onEditInvoice,
@@ -483,7 +500,9 @@ private fun CardActions(
                         }
                     )
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("credit_card_retire"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Expense
@@ -502,7 +521,8 @@ private fun CardActions(
                 Text(
                     text = stringResource(creditCardUi.retireAction.label),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.testTag("credit_card_retire_label")
                 )
             }
 
@@ -545,7 +565,9 @@ private fun CardActions(
                             )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_advance_payment"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.primary
@@ -574,7 +596,9 @@ private fun CardActions(
                     onClick = {
                         modalManager.show(CloseInvoiceModal(invoiceUi.id, invoiceUi.closingDate))
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_close_invoice"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color(0xFFFFA726)
@@ -637,7 +661,9 @@ private fun CardActions(
                             )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("credit_card_pay_invoice"),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(12.dp),
                 ) {

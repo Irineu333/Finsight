@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -64,6 +66,9 @@ import com.neoutils.finsight.resources.account_form_icon_modal_title
 import com.neoutils.finsight.resources.account_form_name_label
 import com.neoutils.finsight.resources.account_form_new_title
 import com.neoutils.finsight.resources.account_form_save
+import com.neoutils.finsight.resources.account_form_yield_label
+import com.neoutils.finsight.resources.account_form_yield_state_off
+import com.neoutils.finsight.resources.account_form_yield_state_on
 import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
@@ -153,7 +158,8 @@ class AccountFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
                     .animateContentSize()
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag("account_form_name"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -195,6 +201,17 @@ class AccountFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                YieldsInterestSelector(
+                    checked = uiState.yieldsInterest,
+                    onCheckedChange = { viewModel.onAction(AccountFormAction.YieldsInterestChanged(it)) },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
                 accentColor = accentColor,
@@ -227,7 +244,9 @@ class AccountFormModal(
                     viewModel.onAction(AccountFormAction.Submit)
                 },
                 enabled = uiState.canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("account_form_save"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
@@ -320,6 +339,86 @@ private fun DefaultAccountSelector(
                     uncheckedThumbColor = Color.LightGray,
                 ),
                 onCheckedChange = onCheckedChange,
+            )
+        }
+    }
+}
+
+/**
+ * The declaration that the account's money is remunerated. It governs affordance and
+ * nothing else — whether the account offers the yield line and the launch path — so
+ * turning it off never touches a figure already recorded.
+ */
+@Composable
+private fun YieldsInterestSelector(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val accentColor = MaterialTheme.colorScheme.primary
+
+    Surface(
+        onClick = { onCheckedChange(!checked) },
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = accentColor.copy(alpha = 0.12f),
+                modifier = Modifier.size(52.dp),
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Savings,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = stringResource(Res.string.account_form_yield_label),
+                    fontWeight = FontWeight.Medium,
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = if (checked) {
+                        stringResource(Res.string.account_form_yield_state_on)
+                    } else {
+                        stringResource(Res.string.account_form_yield_state_off)
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Switch(
+                checked = checked,
+                colors = SwitchDefaults.colors(
+                    uncheckedThumbColor = Color.LightGray,
+                ),
+                onCheckedChange = onCheckedChange,
+                modifier = Modifier.testTag("account_form_yield"),
             )
         }
     }

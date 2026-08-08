@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,7 @@ fun SupportIssueScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_support_issue"),
         topBar = {
             TopAppBar(
                 title = { },
@@ -244,6 +246,7 @@ private fun MessageBubble(
                 text = message.body,
                 color = contentColor,
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("support_message_body"),
             )
         }
         Row(
@@ -374,6 +377,7 @@ private fun ReplyComposer(
                 IconButton(
                     onClick = onSend,
                     enabled = enabled,
+                    modifier = Modifier.testTag("support_reply_send"),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
@@ -391,7 +395,8 @@ private fun ReplyComposer(
                 .padding(16.dp)
                 .imePadding()
                 .navigationBarsPadding()
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .testTag("support_reply_input"),
             minLines = 1,
             maxLines = 4,
         )

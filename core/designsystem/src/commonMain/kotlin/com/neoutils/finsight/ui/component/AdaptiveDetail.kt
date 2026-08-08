@@ -22,11 +22,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
@@ -197,7 +200,12 @@ private fun DetailSheetHost(
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
+            // The phone presentation of every AdaptiveModal, and a composition root of its own —
+            // without this, no test tag inside any detail sheet reaches the accessibility tree.
+            modifier = Modifier.exposeTestTags(),
             content = {
+                DismissKeyboardWhenCovered(covered = LocalModalManager.current.top != null)
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -206,7 +214,7 @@ private fun DetailSheetHost(
                     modal.RenderBody()
                     HorizontalDivider(Modifier.padding(horizontal = 24.dp))
                     modal.RenderActions()
-                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars.union(WindowInsets.ime)))
                 }
             },
             contentWindowInsets = {

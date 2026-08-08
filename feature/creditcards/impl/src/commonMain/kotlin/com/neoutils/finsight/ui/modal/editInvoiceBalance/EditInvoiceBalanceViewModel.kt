@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.ledger_action_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
@@ -39,10 +40,11 @@ class EditInvoiceBalanceViewModel(
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val timeZone get() = TimeZone.currentSystemDefault()
-    private val currentDate get() = Clock.System.now().toLocalDateTime(timeZone).date
+    private val currentDate get() = clock.today(timeZone)
 
     private val selectedCreditCard = MutableStateFlow(initialInvoice.creditCard)
 

@@ -87,11 +87,16 @@ class EntryRepository(
     ): MoneyByCurrency =
         entryDao.dimensionBalanceInMonth(dimensionId, month.toString()).toMoney { it.total }
 
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows {
-        val totals = entryDao.accountPeriodTotals(accountId, month.toString())
+    override suspend fun accountFlows(
+        month: YearMonth,
+        accountId: Long,
+        yieldDimensionId: Long?,
+    ): AccountFlows {
+        val totals = entryDao.accountPeriodTotals(accountId, month.toString(), yieldDimensionId)
         return AccountFlows(
             currency = totals.currency,
             income = totals.income / CENTS_PER_UNIT,
+            yield = totals.yield / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,
             settlement = totals.settlement / CENTS_PER_UNIT,
@@ -153,10 +158,14 @@ class EntryRepository(
         )
     }
 
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency {
-        val rows = entryDao.assetMonthTotals(month.toString())
+    override suspend fun assetMonthFlowsByCurrency(
+        month: YearMonth,
+        yieldDimensionId: Long?,
+    ): AssetMonthFlowsByCurrency {
+        val rows = entryDao.assetMonthTotals(month.toString(), yieldDimensionId)
         return AssetMonthFlowsByCurrency(
             income = rows.toMoney { it.income },
+            yield = rows.toMoney { it.yield },
             expense = rows.toMoney { it.expense },
             adjustment = rows.toMoney { it.adjustment },
         )

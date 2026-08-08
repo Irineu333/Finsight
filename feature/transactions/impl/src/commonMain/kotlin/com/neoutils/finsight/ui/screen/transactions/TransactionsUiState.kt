@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
-private val currentMonth
+private val systemYearMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
@@ -28,7 +28,14 @@ data class TransactionsUiState(
      */
     val balanceOverview: BalanceOverview? = null,
     val selectedScope: TransactionScope = TransactionScope.ALL,
-    val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
+    val selectedYearMonth: YearMonth = systemYearMonth,
+    /**
+     * The month the app is in, told by the ViewModel rather than read here: [selectedYearMonth]
+     * already comes from the clock the app was given, and a state that read its own would be
+     * comparing two months against two different todays. Defaults to the selected one, so a
+     * caller that says nothing gets "this is the current month" instead of a second clock.
+     */
+    val currentYearMonth: YearMonth = selectedYearMonth,
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
     val selectedLabel: TransactionLabel? = null,
@@ -37,8 +44,8 @@ data class TransactionsUiState(
     val showInstallmentOnly: Boolean = false,
 ) {
 
-    val isCurrentMonth = selectedYearMonth == currentMonth
-    val isFutureMonth = selectedYearMonth > currentMonth
+    val isCurrentMonth = selectedYearMonth == currentYearMonth
+    val isFutureMonth = selectedYearMonth > currentYearMonth
 
     /**
      * Whether the target chip still has work to do. In the scoped modes it would be
@@ -104,18 +111,26 @@ data class TransactionsUiState(
          * leg lies outside the perimeter — which is why [invoicePayment] exists and a
          * transfer between accounts does not appear at all.
          *
-         * `finalBalance = openingBalance + income − expense − invoicePayment + adjustment`
+         * [yield] is a **repartition** of [income], not an addition to it: what it
+         * shows, [income] no longer does, so the column still closes. It is `null`
+         * whenever the period holds no yield, and no account's declaration brings the
+         * line back: a summary has nothing to launch from, so a line at zero here would
+         * say nothing. The account card decides otherwise, and for its own reason — it
+         * is where the launching happens.
+         *
+         * `finalBalance = openingBalance + income + yield − expense − invoicePayment + adjustment`
          */
         data class Accounts(
             val openingBalance: ConsolidatedAmount,
             val income: ConsolidatedAmount,
+            val yield: ConsolidatedAmount? = null,
             val expense: ConsolidatedAmount,
             val invoicePayment: ConsolidatedAmount? = null,
             val adjustment: ConsolidatedAmount? = null,
             val finalBalance: ConsolidatedAmount,
         ) : BalanceOverview {
             override val figures get() = listOfNotNull(
-                openingBalance, income, expense, invoicePayment, adjustment, finalBalance,
+                openingBalance, income, yield, expense, invoicePayment, adjustment, finalBalance,
             )
         }
 
@@ -145,18 +160,21 @@ data class TransactionsUiState(
          * [invoicePayment] is *informative*: both of its legs are inside the perimeter,
          * so it sums to zero here and must be shown without a sign, outside the total.
          *
-         * `finalNet = openingNet + income − expense + adjustment`
+         * [yield] repartitions [income] exactly as in [Accounts].
+         *
+         * `finalNet = openingNet + income + yield − expense + adjustment`
          */
         data class Overall(
             val openingNet: ConsolidatedAmount,
             val income: ConsolidatedAmount,
+            val yield: ConsolidatedAmount? = null,
             val expense: ConsolidatedAmount,
             val invoicePayment: ConsolidatedAmount? = null,
             val adjustment: ConsolidatedAmount? = null,
             val finalNet: ConsolidatedAmount,
         ) : BalanceOverview {
             override val figures get() = listOfNotNull(
-                openingNet, income, expense, invoicePayment, adjustment, finalNet,
+                openingNet, income, yield, expense, invoicePayment, adjustment, finalNet,
             )
         }
     }

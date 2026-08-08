@@ -1,35 +1,25 @@
 package com.neoutils.finsight.database
 
-import androidx.room.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import com.neoutils.finsight.database.migration.Migration10To11
-import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
-import com.neoutils.finsight.domain.model.CURRENCY_SEED
-import com.neoutils.finsight.domain.model.SeedCurrency
-import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
 
 /**
- * Schema 13: the offered set of currencies becomes a table, seeded in **one** write.
+ * Schema 12 over the real v11 shape: a rate stops depending on the preference in force
+ * to mean anything, and **no stored value moves**.
  *
- * The claim worth testing is not that six rows appear. It is that the seeding and the
- * legacy relabel of [Migration10To11] fit together **without knowing each other**: the
- * relabel is `10 → 11` and this can only be `12 → 13`, so on an upgrade from v10 the
- * relabel runs before this table exists. No ordering could fix that — and none is needed,
- * because this reads `SELECT DISTINCT currency FROM accounts`, which is what the relabel
- * wrote.
- *
- * A fresh install runs no migration at all, so it is covered through Room itself, against
- * the callback that is the seeding's second entry point onto the same write.
+ * The fill is exact rather than approximate — every existing row was measured against
+ * the base in force, which until this schema had no way to change — so the claim worth
+ * testing is that `rate`, `date`, `currency` and `source` come out byte for byte, and
+ * that the code the migration writes is the one it was handed.
  */
 class Migration12To13Test {
 
@@ -38,10 +28,7 @@ class Migration12To13Test {
     @BeforeTest
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
-        V11_SCHEMA.forEach(connection::execSQL)
-        // v12 derived by running the real `11 → 12` over the frozen v11: a device on v12
-        // got there this way, and a hand-written fixture would only prove itself.
-        Migration11To12(baseCurrency = "BRL").migrate(connection)
+        V12_SCHEMA.forEach(connection::execSQL)
     }
 
     @AfterTest
@@ -49,151 +36,128 @@ class Migration12To13Test {
         connection.close()
     }
 
-    private fun account(name: String, currency: String) {
+    private fun migrate(baseCurrency: String = "BRL") =
+        Migration12To13(baseCurrency).migrate(connection)
+
+    private fun seedRate(currency: String, date: String, rate: Double, source: String) {
         connection.execSQL(
-            "INSERT INTO `accounts` " +
-                "(`name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
-                "VALUES ('$name', 'ASSET', '$currency', 'wallet', 0, 0, 0)"
+            "INSERT INTO `exchange_rates` (`currency`, `date`, `rate`, `source`) " +
+                "VALUES ('$currency', '$date', $rate, '$source')"
         )
     }
 
-    private fun currencies(): Map<String, String> {
-        val stmt = connection.prepare("SELECT `code`, `symbol` FROM `currencies` ORDER BY `code`")
-        val out = linkedMapOf<String, String>()
-        while (stmt.step()) out[stmt.getText(0)] = stmt.getText(1)
-        stmt.close()
-        return out
-    }
-
-    private fun names(): List<String?> {
-        val stmt = connection.prepare("SELECT `name` FROM `currencies`")
-        val out = mutableListOf<String?>()
-        while (stmt.step()) out += if (stmt.isNull(0)) null else stmt.getText(0)
+    private fun rows(): List<List<String>> {
+        val stmt = connection.prepare(
+            "SELECT `currency`, `counterCurrency`, `date`, `rate`, `source` " +
+                "FROM `exchange_rates` ORDER BY `currency`, `date`, `source`"
+        )
+        val out = mutableListOf<List<String>>()
+        while (stmt.step()) {
+            out += listOf(stmt.getText(0), stmt.getText(1), stmt.getText(2), stmt.getDouble(3).toString(), stmt.getText(4))
+        }
         stmt.close()
         return out
     }
 
     @Test
-    fun `the seed is what an empty database gets`() {
-        Migration12To13(testSeeding()).migrate(connection)
+    fun `the counterpart column exists and is not nullable`() {
+        migrate()
 
-        assertEquals(CURRENCY_SEED.map { it.code }.sorted(), currencies().keys.toList())
+        // Appended, as `ALTER TABLE` does — and the entity declares it in the middle.
+        // That the two are still the same table is what
+        // `MigrationSchemaEquivalenceTest` asserts, through Room's own identity hash.
         assertEquals(
-            CURRENCY_SEED.associate { it.code to it.symbol },
-            currencies(),
-            "the seed's own glyph is what is stored, not the code",
+            listOf("id", "currency", "date", "rate", "source", "counterCurrency"),
+            connection.getColumns("exchange_rates"),
+        )
+
+        val stmt = connection.prepare("PRAGMA table_info(`exchange_rates`)")
+        var notNull = false
+        while (stmt.step()) {
+            if (stmt.getText(1) == "counterCurrency") notNull = stmt.getLong(3) == 1L
+        }
+        stmt.close()
+        assertTrue(notNull, "counterCurrency has to be NOT NULL — a row without a pair is the defect")
+    }
+
+    @Test
+    fun `every pre-existing row is denominated in the base it was measured against`() {
+        seedRate("USD", "2026-03-10", 5.5, "DERIVED")
+        seedRate("EUR", "2026-03-10", 6.0, "USER")
+        seedRate("JPY", "2026-01-02", 0.037, "DERIVED")
+
+        migrate()
+
+        assertEquals(listOf("BRL", "BRL", "BRL"), rows().map { it[1] })
+    }
+
+    /** The parameter is the parameter, and not a literal hiding behind a default. */
+    @Test
+    fun `a base that is not BRL is the one written`() {
+        seedRate("BRL", "2026-03-10", 0.18, "USER")
+
+        migrate(baseCurrency = "USD")
+
+        assertEquals(listOf("USD"), rows().map { it[1] })
+    }
+
+    @Test
+    fun `no stored value moves`() {
+        seedRate("USD", "2026-03-10", 5.5, "DERIVED")
+        seedRate("EUR", "2026-02-01", 6.25, "USER")
+
+        migrate()
+
+        assertEquals(
+            listOf(
+                listOf("EUR", "BRL", "2026-02-01", "6.25", "USER"),
+                listOf("USD", "BRL", "2026-03-10", "5.5", "DERIVED"),
+            ),
+            rows(),
         )
     }
 
-    /** The currency of last resort belongs to the seed, or the base could resolve to nothing. */
     @Test
-    fun `the currency of last resort is one of the seeded rows`() {
-        Migration12To13(testSeeding()).migrate(connection)
+    fun `the unique index follows the pair, and the old one is gone`() {
+        migrate()
 
-        assertTrue("USD" in currencies())
-    }
-
-    @Test
-    fun `nobody loses the currency they already use`() {
-        account("Cuenta", "ARS")
-        account("Cuenta 2", "ARS")
-        account("Soles", "PEN")
-
-        Migration12To13(testSeeding()).migrate(connection)
-
-        assertTrue("ARS" in currencies(), "a currency out of the seed but in use has to survive")
-        assertTrue("PEN" in currencies())
-        assertEquals(CURRENCY_SEED.size + 2, currencies().size, "and only once, however many accounts")
-    }
-
-    @Test
-    fun `the device's currency arrives by the same write, not by a mechanism of its own`() {
-        Migration12To13(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
-
-        assertEquals("zł", currencies()["PLN"])
+        assertTrue(connection.indexExists("index_exchange_rates_currency_counterCurrency_date_source"))
+        assertTrue(connection.indexExists("index_exchange_rates_currency_counterCurrency_date"))
+        assertFalse(connection.indexExists("index_exchange_rates_currency_date_source"))
+        assertFalse(connection.indexExists("index_exchange_rates_currency_date"))
     }
 
     /**
-     * The whole of D9: no ordering is arranged, and none is needed. The relabel writes
-     * `accounts.currency` two schemas earlier, and the seeding picks it up because it
-     * reads that column — neither migration names the other.
+     * What the new index opens: the dollar priced against the real and against the euro
+     * on the same day are two observations, and both fit.
      */
     @Test
-    fun `what the relabel denominated is collected by the seeding`() {
-        val fresh = BundledSQLiteDriver().open(":memory:")
-        try {
-            V10_SCHEMA.forEach(fresh::execSQL)
-            fresh.execSQL(
-                "INSERT INTO `accounts` " +
-                    "(`name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
-                    "VALUES ('Carteira', 'ASSET', 'BRL', 'wallet', 1, 0, 0)"
-            )
+    fun `the same currency and date in two counterparts now coexist`() {
+        migrate()
 
-            // A device in Chile: the relabel re-denominates the legacy chart to CLP, and
-            // CLP is in no seed anywhere.
-            Migration10To11(relabelCurrency = "CLP").migrate(fresh)
-            Migration11To12(baseCurrency = "CLP").migrate(fresh)
-            Migration12To13(testSeeding()).migrate(fresh)
+        connection.execSQL(
+            "INSERT INTO `exchange_rates` (`currency`, `counterCurrency`, `date`, `rate`, `source`) " +
+                "VALUES ('USD', 'BRL', '2026-03-10', 5.5, 'USER')"
+        )
+        connection.execSQL(
+            "INSERT INTO `exchange_rates` (`currency`, `counterCurrency`, `date`, `rate`, `source`) " +
+                "VALUES ('USD', 'EUR', '2026-03-10', 0.92, 'USER')"
+        )
 
-            val stmt = fresh.prepare("SELECT `code` FROM `currencies` WHERE `code` = 'CLP'")
-            assertTrue(stmt.step(), "the relabelled currency has to exist as a row")
-            stmt.close()
-        } finally {
-            fresh.close()
-        }
+        assertEquals(2, rows().size)
     }
 
     /**
-     * `name` stays null. Storing it would freeze it in the language of the run that
-     * seeded it, and switching the app's language would silently stop translating it.
+     * `execSQL` binds nothing, so the code is interpolated. It stops before any
+     * statement runs rather than reaching one.
      */
     @Test
-    fun `no seeded row stores a name`() {
-        account("Cuenta", "ARS")
+    fun `a code that is not a code is refused before any statement runs`() {
+        assertFailsWith<IllegalArgumentException> { migrate(baseCurrency = "not a code") }
 
-        Migration12To13(testSeeding(locale = SeedCurrency("PLN", "zł"))).migrate(connection)
-
-        assertTrue(names().all { it == null })
-    }
-
-    @Test
-    fun `running the seeding twice writes nothing the second time`() {
-        Migration12To13(testSeeding()).migrate(connection)
-        val first = currencies()
-
-        connection.execSQL("UPDATE `currencies` SET `symbol` = 'X' WHERE `code` = 'BRL'")
-        Migration12To13(testSeeding()).migrate(connection)
-
-        assertEquals(first.keys, currencies().keys)
-        assertEquals("X", currencies()["BRL"], "an existing row is not overwritten by the seed")
-    }
-
-    /**
-     * A fresh install runs no migration: Room creates the schema from the entities. The
-     * callback is the seeding's second entry point onto the *same* write, and without it
-     * the only user with no currencies at all would be the one who just installed.
-     */
-    @Test
-    fun `a fresh install is seeded too`() = runTest {
-        val file = File.createTempFile("finsight-seed", ".db").also { it.delete() }
-        try {
-            val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-                .setDriver(BundledSQLiteDriver())
-                .setQueryCoroutineContext(Dispatchers.Unconfined)
-                .let {
-                    getRoomDatabase(
-                        builder = it,
-                        baseCurrency = "BRL",
-                        currencySeeding = testSeeding(locale = SeedCurrency("PLN", "zł")),
-                    )
-                }
-
-            val codes = database.currencyDao().getAll().map { it.code }
-            assertTrue(CURRENCY_SEED.map { it.code }.all { it in codes })
-            assertTrue("PLN" in codes)
-            database.close()
-        } finally {
-            file.delete()
-        }
+        assertEquals(
+            listOf("id", "currency", "date", "rate", "source"),
+            connection.getColumns("exchange_rates"),
+        )
     }
 }

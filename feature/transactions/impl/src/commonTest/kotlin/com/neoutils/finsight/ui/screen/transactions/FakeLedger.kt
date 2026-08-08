@@ -77,8 +77,17 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
      * "not a transfer and not a card payment", the two forms whose money never leaves
      * the user's own accounts.
      */
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency {
+    /** Whether the income counter-leg of this transaction carries [dimensionId]. */
+    private fun Transaction.isYield(dimensionId: Long?) = dimensionId != null && entries.any {
+        it.account.type == AccountType.INCOME && it.dimensionId == dimensionId
+    }
+
+    override suspend fun assetMonthFlowsByCurrency(
+        month: YearMonth,
+        yieldDimensionId: Long?,
+    ): AssetMonthFlowsByCurrency {
         val income = Bucket()
+        val yield = Bucket()
         val expense = Bucket()
         val adjustment = Bucket()
 
@@ -86,12 +95,21 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
             if (!transaction.hasEquityLeg() && !transaction.hasNominalLeg()) return@forEach
             when {
                 transaction.hasEquityLeg() -> adjustment.add(entry, entry.amount)
+                // The yield line takes exactly what the income line gives up, so the
+                // two together are what income alone was.
+                entry.amount > 0 && transaction.isYield(yieldDimensionId) ->
+                    yield.add(entry, entry.amount)
                 entry.amount > 0 -> income.add(entry, entry.amount)
                 entry.amount < 0 -> expense.add(entry, -entry.amount)
             }
         }
 
-        return AssetMonthFlowsByCurrency(income.money(), expense.money(), adjustment.money())
+        return AssetMonthFlowsByCurrency(
+            income.money(),
+            yield.money(),
+            expense.money(),
+            adjustment.money(),
+        )
     }
 
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency {
@@ -125,7 +143,7 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()

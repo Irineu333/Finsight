@@ -29,6 +29,7 @@ class CreateAccountUseCase(
         isDefault: Boolean,
         iconKey: String,
         currency: String,
+        yieldsInterest: Boolean = false,
     ): Either<Throwable, Account> {
         return either {
             validateAccountName(
@@ -43,7 +44,8 @@ class CreateAccountUseCase(
                     currency = currency,
                     iconKey = iconKey,
                     isDefault = false,
-                    createdAt = Clock.System.now().toEpochMilliseconds()
+                    createdAt = Clock.System.now().toEpochMilliseconds(),
+                    yieldsInterest = yieldsInterest,
                 )
             }.bind()
 

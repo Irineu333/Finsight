@@ -15,3 +15,6 @@ object DeleteAccount : Event("delete_account")
 object AdjustAccountBalance : Event("adjust_account_balance")
 
 object TransferBetweenAccounts : Event("transfer_between_accounts")
+
+/** A yield launched on an account — a transaction, not a balance adjustment (D1). */
+object LaunchYield : Event("launch_yield")

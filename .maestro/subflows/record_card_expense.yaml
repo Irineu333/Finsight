@@ -1,0 +1,74 @@
+appId: com.neoutils.finsight
+name: record_card_expense
+---
+# Records one expense against a credit card from the FAB and leaves the app where it found it.
+# Callers pass TITLE, AMOUNT (bare digits) and CARD.
+#
+# Not `record_transaction` with an extra parameter: that one records against an account, and the
+# target selector below is what turns an account expense into a card expense — a different intent,
+# not a variation on the same one.
+#
+# Nothing is touched in the invoice navigator: the card's open invoice is the one offered, and
+# leaving it alone is what lets a caller assert where the ledger put the expense rather than what
+# the picker rendered.
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${TITLE}
+- hideKeyboard
+
+# The target's options are copy, so they are reached by tag; the card is reached by the name the
+# calling flow typed itself.
+- tapOn:
+    id: "add_transaction_target"
+- extendedWaitUntil:
+    visible:
+      id: "target_option_credit_card"
+    timeout: 10000
+- tapOn:
+    id: "target_option_credit_card"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_credit_card"
+- extendedWaitUntil:
+    visible: ${CARD}
+    timeout: 10000
+- tapOn: ${CARD}
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${AMOUNT}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000

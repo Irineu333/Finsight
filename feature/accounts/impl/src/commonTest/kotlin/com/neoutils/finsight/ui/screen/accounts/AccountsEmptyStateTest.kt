@@ -172,6 +172,7 @@ private class FakeAccountRepository(private val account: Account) : IAccountRepo
     override fun observeAccountById(accountId: Long): Flow<Account?> = MutableStateFlow(account)
     override suspend fun getDefaultAccount(): Account = account
     override fun observeDefaultAccount(): Flow<Account?> = MutableStateFlow(account)
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = 1
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()
@@ -196,7 +197,7 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
 }
 
-private class FakeCategoryRepository(private val categories: List<Category>) : ICategoryRepository {
+internal class FakeCategoryRepository(private val categories: List<Category> = emptyList()) : ICategoryRepository {
     override fun observeAllCategories(): Flow<List<Category>> = MutableStateFlow(categories)
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
@@ -204,6 +205,7 @@ private class FakeCategoryRepository(private val categories: List<Category>) : I
     override suspend fun getAllCategoriesIncludingClosed(): List<Category> = categories
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = categories.firstOrNull { it.id == id }
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? =
         categories.firstOrNull { it.dimensionId == dimensionId }
 
@@ -234,7 +236,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun balance(accountId: Long): Double = 0.0
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0)
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
 
     override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
@@ -245,7 +247,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,

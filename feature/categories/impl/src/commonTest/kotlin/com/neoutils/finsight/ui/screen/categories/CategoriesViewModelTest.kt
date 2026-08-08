@@ -47,6 +47,7 @@ class CategoriesViewModelTest {
         override suspend fun getAllCategoriesIncludingClosed(): List<Category> = all.value
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = null
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override fun observeCategoryById(id: Long): Flow<Category?> = flowOf(null)
         override suspend fun archive(id: Long) = Unit

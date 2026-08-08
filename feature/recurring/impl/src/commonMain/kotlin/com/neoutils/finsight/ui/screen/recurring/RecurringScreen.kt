@@ -32,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import com.neoutils.finsight.ui.util.exposeTestTags
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -82,6 +84,7 @@ fun RecurringScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_recurring"),
         topBar = {
             TopAppBar(
                 title = {
@@ -120,6 +123,9 @@ fun RecurringScreen(
             if (uiState !is RecurringUiState.Loading) {
                 FloatingActionButton(
                     onClick = { modalManager.show(RecurringFormModal()) },
+                    // The empty state's button carries the same id: a flow asks to create
+                    // a recurring, not for whichever affordance renders that offer.
+                    modifier = Modifier.testTag("recurring_add"),
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 }
@@ -201,6 +207,7 @@ private fun FilterSelector(
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = Color.Unspecified,
                 ),
+                modifier = Modifier.testTag("recurring_filter"),
             ) {
                 Text(text = stringResource(selected.label))
                 Spacer(modifier = Modifier.width(4.dp))
@@ -215,10 +222,15 @@ private fun FilterSelector(
         DropdownMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
+            // Its own popup window, which the app window's opt-in does not reach. The
+            // options are reached by id because "Active" and "Archived" are also the
+            // words a recurring's *status* is rendered with.
+            modifier = Modifier.exposeTestTags(),
         ) {
             RecurringFilter.entries.forEach { filter ->
                 DropdownMenuItem(
                     text = { Text(stringResource(filter.label)) },
+                    modifier = Modifier.testTag("recurring_filter_option_${filter.name.lowercase()}"),
                     trailingIcon = if (selected == filter) {
                         {
                             Icon(
@@ -298,7 +310,9 @@ private fun EmptyDatabaseState(
 
             Button(
                 onClick = onCreateClick,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("recurring_add"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
@@ -426,6 +440,7 @@ private fun RecurringCard(
                     )
                     Text(
                         text = formatter.format(amount),
+                        modifier = Modifier.testTag("recurring_card_amount"),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = typeColor,

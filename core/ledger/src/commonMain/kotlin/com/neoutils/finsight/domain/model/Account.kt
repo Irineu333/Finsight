@@ -22,6 +22,13 @@ data class Account(
     // from here, through its accountId — one flag, one owner (D21). A category does
     // not: it owns no account, so it owns its flag (D4).
     val isArchived: Boolean = false,
+    // Whether the account's own money is remunerated. It governs affordance and
+    // nothing else: it enters no sum, no classification and no total query. What
+    // separates yield from ordinary income in every read is the dimension the yield
+    // category carries — two owners, two questions (design D2). It exists as primary
+    // state rather than a derivation because a freshly declared account has yielded
+    // nothing yet, and a line derived from entries would have nowhere to be tapped.
+    val yieldsInterest: Boolean = false,
 ) {
     init {
         // A last-resort guard, not the validation the user sees: an empty name is

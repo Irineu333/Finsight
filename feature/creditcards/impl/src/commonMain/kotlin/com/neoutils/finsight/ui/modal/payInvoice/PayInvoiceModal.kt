@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.moneyToDouble
@@ -37,16 +39,12 @@ import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class PayInvoiceModal(
     private val invoice: Invoice,
@@ -61,6 +59,7 @@ class PayInvoiceModal(
 
         val uiState by viewModel.uiState.collectAsState()
         val manager = LocalModalManager.current
+        val currentDate = koinInject<Clock>().today()
 
         // The sheet reads the debt, whichever sign the caller's figure carried, and in
         // the card's own currency — which travels with the figure (design D17).
@@ -120,7 +119,8 @@ class PayInvoiceModal(
                 onAccountSelected = {
                     viewModel.onAction(PayInvoiceAction.SelectAccount(it))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                valueTestTag = "pay_invoice_account",
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -139,7 +139,9 @@ class PayInvoiceModal(
                 enabled = false,
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pay_invoice_amount"),
             )
 
             CounterpartAmountField(
@@ -155,6 +157,7 @@ class PayInvoiceModal(
                 suggestion = uiState.suggestion,
                 date = runCatching { dayMonthYear.parse(date.text.toString()) }
                     .getOrDefault(currentDate),
+                modifier = Modifier.testTag("pay_invoice_paid_amount"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -219,7 +222,9 @@ class PayInvoiceModal(
                     paidAmount = paidAmount.text.toString(),
                     isCrossCurrency = uiState.isCrossCurrency,
                 ) && uiState.selectedAccount != null,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pay_invoice_confirm"),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

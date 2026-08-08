@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_selector_label
+import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -40,6 +41,7 @@ fun AccountSelector(
     label: String = "",
     currencyScope: List<Account> = accounts,
     modifier: Modifier = Modifier,
+    valueTestTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -80,6 +82,7 @@ fun AccountSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .optionalTestTag(valueTestTag)
         )
 
         ExposedDropdownMenu(

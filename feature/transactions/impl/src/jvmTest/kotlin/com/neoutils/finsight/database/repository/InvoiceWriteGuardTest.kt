@@ -376,6 +376,7 @@ private class LedgerAccountRepository(private val db: AppDatabase) : IAccountRep
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()
@@ -396,7 +397,7 @@ private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRe
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }

@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -80,8 +81,7 @@ class BudgetFormModal(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .imePadding(),
+                .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -123,7 +123,9 @@ class BudgetFormModal(
                 },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("budget_form_title"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -133,7 +135,9 @@ class BudgetFormModal(
                 categories = uiState.availableCategories,
                 onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
                 onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
+                valueTestTag = "budget_form_categories",
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -158,7 +162,9 @@ class BudgetFormModal(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("budget_form_limit"),
                     )
                 }
 
@@ -266,7 +272,9 @@ class BudgetFormModal(
             Button(
                 onClick = { viewModel.onAction(BudgetFormAction.Submit) },
                 enabled = uiState.canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("budget_form_save"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(

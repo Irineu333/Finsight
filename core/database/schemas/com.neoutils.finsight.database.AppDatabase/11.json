@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "1927b5850a464fa73a9e44a53bba600a",
+    "identityHash": "c29a9c498d3075494afe693eb33874e0",
     "entities": [
       {
         "tableName": "transactions",
@@ -84,7 +84,7 @@
       },
       {
         "tableName": "categories",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `dimensionId` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, FOREIGN KEY(`dimensionId`) REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `dimensionId` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, `systemKey` TEXT, FOREIGN KEY(`dimensionId`) REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "id",
@@ -127,6 +127,11 @@
             "columnName": "isArchived",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "systemKey",
+            "columnName": "systemKey",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -144,6 +149,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_dimensionId` ON `${TABLE_NAME}` (`dimensionId`)"
+          },
+          {
+            "name": "index_categories_systemKey",
+            "unique": true,
+            "columnNames": [
+              "systemKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_systemKey` ON `${TABLE_NAME}` (`systemKey`)"
           }
         ],
         "foreignKeys": [
@@ -394,7 +408,7 @@
       },
       {
         "tableName": "accounts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL, `currency` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `isDefault` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL, `currency` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `isDefault` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, `yieldsInterest` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -443,6 +457,12 @@
             "columnName": "isArchived",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "yieldsInterest",
+            "columnName": "yieldsInterest",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -484,7 +504,7 @@
       },
       {
         "tableName": "budgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `iconCategoryId` INTEGER NOT NULL, `iconKey` TEXT NOT NULL, `title` TEXT NOT NULL, `amount` REAL NOT NULL, `currency` TEXT NOT NULL, `period` TEXT NOT NULL, `limitType` TEXT NOT NULL, `percentage` REAL, `recurringId` INTEGER, `createdAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `iconCategoryId` INTEGER NOT NULL, `iconKey` TEXT NOT NULL, `title` TEXT NOT NULL, `amount` REAL NOT NULL, `period` TEXT NOT NULL, `limitType` TEXT NOT NULL, `percentage` REAL, `recurringId` INTEGER, `createdAt` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -514,12 +534,6 @@
             "fieldPath": "amount",
             "columnName": "amount",
             "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "currency",
-            "columnName": "currency",
-            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -1016,76 +1030,11 @@
             "id"
           ]
         }
-      },
-      {
-        "tableName": "exchange_rates",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `currency` TEXT NOT NULL, `date` TEXT NOT NULL, `rate` REAL NOT NULL, `source` TEXT NOT NULL)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "currency",
-            "columnName": "currency",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "date",
-            "columnName": "date",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "rate",
-            "columnName": "rate",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "source",
-            "columnName": "source",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_exchange_rates_currency_date_source",
-            "unique": true,
-            "columnNames": [
-              "currency",
-              "date",
-              "source"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_exchange_rates_currency_date_source` ON `${TABLE_NAME}` (`currency`, `date`, `source`)"
-          },
-          {
-            "name": "index_exchange_rates_currency_date",
-            "unique": false,
-            "columnNames": [
-              "currency",
-              "date"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_exchange_rates_currency_date` ON `${TABLE_NAME}` (`currency`, `date`)"
-          }
-        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1927b5850a464fa73a9e44a53bba600a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c29a9c498d3075494afe693eb33874e0')"
     ]
   }
 }

@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_income
 import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
+import com.neoutils.finsight.resources.accounts_yield
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
@@ -54,6 +56,7 @@ sealed class AccountCardVariant {
         val accountUi: AccountUi,
         val onEditBalance: () -> Unit,
         val onEditOpeningBalance: () -> Unit,
+        val onLaunchYield: () -> Unit,
     ) : AccountCardVariant()
 }
 
@@ -84,6 +87,7 @@ fun AccountCard(
 
     Card(
         modifier = modifier
+            .testTag("account_card")
             .then(sizeModifier)
             .then(
                 if (onClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable { onClick() }
@@ -158,6 +162,7 @@ private fun DetailContent(
                     color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("account_name"),
                 )
             }
 
@@ -166,6 +171,7 @@ private fun DetailContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),
@@ -179,6 +185,7 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_opening_balance),
+            amountTestTag = "account_opening_balance_amount",
             amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
             onEditClick = variant.onEditOpeningBalance,
@@ -186,12 +193,33 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_income),
+            amountTestTag = "account_income_amount",
             amount = accountUi.income,
             color = Income,
         )
 
+        // The declaration puts the line on screen at zero — a freshly declared account
+        // has yielded nothing yet, and a line that appeared only once it had would
+        // leave the first launch nowhere to be tapped. A yield already recorded keeps
+        // it there whatever the account declares now, because `income` no longer holds
+        // that money and the column has to keep adding up.
+        //
+        // Only the declaration makes it *actionable*, though: an account that no longer
+        // declares a yield is not offered the launch path.
+        if (accountUi.showsYield) {
+            AccountSummaryRow(
+                label = stringResource(Res.string.accounts_yield),
+                amountTestTag = "account_yield_amount",
+                amount = accountUi.yield,
+                color = Income,
+                onEditClick = variant.onLaunchYield.takeIf { accountUi.yieldsInterest },
+                editTint = Income.copy(alpha = 0.5f),
+            )
+        }
+
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_expenses),
+            amountTestTag = "account_expenses_amount",
             amount = accountUi.expense,
             color = Expense,
         )
@@ -199,6 +227,7 @@ private fun DetailContent(
         if (accountUi.adjustment.value != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_adjustments),
+                amountTestTag = "account_adjustment_amount",
                 amount = accountUi.adjustment,
                 color = Adjustment,
             )
@@ -216,6 +245,7 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_balance),
+            amountTestTag = "account_balance_amount",
             amount = accountUi.balance,
             color = colorScheme.onSurface,
             isTotal = true,
@@ -255,6 +285,7 @@ private fun CompactContent(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.testTag("account_default_badge"),
                 ) {
                     Text(
                         text = stringResource(Res.string.accounts_default),
@@ -275,6 +306,7 @@ private fun CompactContent(
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("account_name"),
             )
 
             if (variant is AccountCardVariant.Dashboard) {
@@ -294,10 +326,16 @@ private fun CompactContent(
 private fun AccountSummaryRow(
     label: String,
     amount: DisplayAmount,
+    amountTestTag: String? = null,
     color: Color,
     modifier: Modifier = Modifier,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
+    // Chrome by default, so the pencil reads the same on the rows where it is only a
+    // way in. A row whose action *is* the figure — launching a yield — passes the
+    // figure's colour, faded, so the two read as one thing without the control
+    // competing with the number it creates.
+    editTint: Color = colorScheme.onSurfaceVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -328,13 +366,14 @@ private fun AccountSummaryRow(
                 Icon(
                     imageVector = Icons.Rounded.ModeEdit,
                     contentDescription = null,
-                    tint = color.copy(alpha = 0.5f),
+                    tint = editTint,
                     modifier = Modifier.size(16.dp),
                 )
             }
 
             Text(
                 text = formatter.format(amount),
+                modifier = if (amountTestTag != null) Modifier.testTag(amountTestTag) else Modifier,
                 fontSize = if (isTotal) 20.sp else 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = color,

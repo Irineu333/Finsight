@@ -86,6 +86,7 @@ class FakeBudgetRepository(
 class FakeAccountRepository(
     private val accounts: List<Account> = emptyList(),
 ) : IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountById(accountId: Long): Account? =
         accounts.firstOrNull { it.id == accountId }
 

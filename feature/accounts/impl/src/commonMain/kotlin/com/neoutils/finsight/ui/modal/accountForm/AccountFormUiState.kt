@@ -9,6 +9,9 @@ data class AccountFormUiState(
     val selectedIcon: AppIcon = AppIcon.WALLET,
     val validation: Map<AccountField, Validation> = mapOf(),
     val isDefault: Boolean = false,
+    // Affordance only: it decides whether the account offers the yield line and the
+    // launch path, and enters no sum anywhere (design D2).
+    val yieldsInterest: Boolean = false,
     val isEditMode: Boolean = false,
     val canSubmit: Boolean = false,
     val canChangeDefault: Boolean = true,

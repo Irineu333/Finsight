@@ -193,6 +193,7 @@ internal object FakeCategoryRepository : ICategoryRepository {
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override suspend fun archive(id: Long) = Unit
     override suspend fun unarchive(id: Long) = Unit
@@ -231,7 +232,7 @@ private object FakeInvoiceRepository : IInvoiceRepository {
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }
@@ -264,6 +265,7 @@ internal class FakeAccountRepository(private val accounts: List<Account>) : IAcc
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()

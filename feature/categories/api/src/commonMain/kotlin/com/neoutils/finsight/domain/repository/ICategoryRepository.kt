@@ -24,6 +24,15 @@ interface ICategoryRepository {
      * which is the kind of thing that reads fine and then runs once per row.
      */
     suspend fun getCategoryByDimensionId(dimensionId: Long): Category?
+
+    /**
+     * The category the app provides under [systemKey], or `null` if it was never
+     * needed. Keyed, not named, so a rename cannot lose it (design D3).
+     *
+     * Archived categories are included on purpose: closing one stops offering it in
+     * selectors, it does not revoke it from whoever already depends on it.
+     */
+    suspend fun getCategoryBySystemKey(systemKey: String): Category?
     fun observeCategoryById(id: Long): Flow<Category?>
     /** Retires the category on its own facade — it owns no account to close (D4). */
     suspend fun archive(id: Long)

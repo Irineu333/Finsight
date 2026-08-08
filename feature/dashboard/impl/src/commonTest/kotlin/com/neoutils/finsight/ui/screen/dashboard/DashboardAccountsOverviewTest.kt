@@ -210,7 +210,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) =
@@ -223,10 +223,11 @@ private object ThrowingEntryRepository : IEntryRepository {
     // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
     // March holds income 100, expense 30; other months are empty — and "empty" is the
     // figure with no currency at all, which is not the same fact as zero in one.
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth) =
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) =
         if (month == YearMonth(2026, 3)) {
             com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency(
                 income = MoneyByCurrency.of("BRL", 100.0),
+                yield = MoneyByCurrency.zero,
                 expense = MoneyByCurrency.of("BRL", 30.0),
                 adjustment = MoneyByCurrency.zero,
             )

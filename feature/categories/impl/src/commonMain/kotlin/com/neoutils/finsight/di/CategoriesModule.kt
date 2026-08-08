@@ -78,6 +78,7 @@ val categoriesModule = module {
             entryRepository = get(),
             budgetRepository = get(),
             recurringRepository = get(),
+            accountRepository = get(),
         )
     }
 

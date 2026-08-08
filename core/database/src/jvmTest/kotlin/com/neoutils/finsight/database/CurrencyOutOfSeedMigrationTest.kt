@@ -3,8 +3,8 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
+import com.neoutils.finsight.database.migration.Migration13To14
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -27,8 +27,8 @@ class CurrencyOutOfSeedMigrationTest {
     @BeforeTest
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
-        V11_SCHEMA.forEach(connection::execSQL)
-        Migration11To12(baseCurrency = "BRL").migrate(connection)
+        V12_SCHEMA.forEach(connection::execSQL)
+        Migration12To13(baseCurrency = "BRL").migrate(connection)
     }
 
     @AfterTest
@@ -42,15 +42,15 @@ class CurrencyOutOfSeedMigrationTest {
     private fun seedDatabase() {
         connection.execSQL(
             "INSERT INTO `accounts` " +
-                "(`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
-                "VALUES (1, 'Cuenta', 'ASSET', '$outOfSeed', 'wallet', 1, 0, 0)"
+                "(`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                "VALUES (1, 'Cuenta', 'ASSET', '$outOfSeed', 'wallet', 1, 0, 0, 0)"
         )
         // The nominal the expense lands on — the ledger balances per currency, and the
         // migration verifies exactly that before it commits.
         connection.execSQL(
             "INSERT INTO `accounts` " +
-                "(`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
-                "VALUES (2, 'Gastos', 'EXPENSE', '$outOfSeed', 'wallet', 0, 0, 0)"
+                "(`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                "VALUES (2, 'Gastos', 'EXPENSE', '$outOfSeed', 'wallet', 0, 0, 0, 0)"
         )
         connection.execSQL(
             "INSERT INTO `transactions` (`id`, `title`, `date`) VALUES (1, 'Almuerzo', '2026-03-10')"
@@ -86,7 +86,7 @@ class CurrencyOutOfSeedMigrationTest {
         seedDatabase()
         val before = balanceOfAccount()
 
-        Migration12To13(testSeeding()).migrate(connection)
+        Migration13To14(testSeeding()).migrate(connection)
 
         assertTrue(outOfSeed in offeredCodes(), "the currency in use has to exist, and be offered")
         assertTrue(
@@ -102,7 +102,7 @@ class CurrencyOutOfSeedMigrationTest {
     fun `no entry and no account is touched`() {
         seedDatabase()
 
-        Migration12To13(testSeeding()).migrate(connection)
+        Migration13To14(testSeeding()).migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `currency`, `isArchived` FROM `accounts` WHERE `id` = 1"

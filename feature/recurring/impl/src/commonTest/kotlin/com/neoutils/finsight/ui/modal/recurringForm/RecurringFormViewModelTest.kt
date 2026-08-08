@@ -60,6 +60,7 @@ class RecurringFormViewModelTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(emptyList())
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = flowOf(emptyList())
         override suspend fun getCategoryById(id: Long): Category? = null
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override fun observeCategoryById(id: Long): Flow<Category?> = flowOf(null)
         override suspend fun archive(id: Long) = Unit
@@ -82,6 +83,7 @@ class RecurringFormViewModelTest {
         override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(account)
         override suspend fun getDefaultAccount(): Account? = account
         override fun observeDefaultAccount(): Flow<Account?> = flowOf(account)
+        override suspend fun hasYieldingAccount(): Boolean = false
         override suspend fun getAccountCount(): Int = 1
         override suspend fun insert(account: Account): Long = 0L
         override suspend fun update(account: Account) = Unit

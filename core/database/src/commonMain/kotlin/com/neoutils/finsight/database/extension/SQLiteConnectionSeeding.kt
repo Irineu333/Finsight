@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.model.SeedCurrency
  * Fills `currencies` with the shipped seed, the device's currency and every currency an
  * account is already denominated in — one statement, so nothing can land half seeded.
  *
- * Shared by [Migration12To13][com.neoutils.finsight.database.migration.Migration12To13]
+ * Shared by [Migration13To14][com.neoutils.finsight.database.migration.Migration13To14]
  * and by [CurrencySeedingCallback][com.neoutils.finsight.database.callback.CurrencySeedingCallback],
  * because a fresh install never runs a migration and would otherwise be the only database
  * with no currencies at all.

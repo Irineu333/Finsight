@@ -66,7 +66,7 @@ class ConversionAccountPredicateTest {
     fun `a cross-currency transfer is not an adjustment on the source account`() = runTest {
         chart().crossCurrencyTransfer()
 
-        val totals = entryDao.accountPeriodTotals(1, "2026-03")
+        val totals = entryDao.accountPeriodTotals(1, "2026-03", yieldDimensionId = null)
 
         assertEquals(0L, totals.adjustment, "the conversion leg is not EQUITY, so `eq` stays 0")
         assertEquals(55_000L, totals.expense, "it reads as money leaving, exactly like a transfer")
@@ -79,7 +79,7 @@ class ConversionAccountPredicateTest {
         // `assetMonthTotals` counts a transaction only when it has a nominal or EQUITY
         // counter-leg — "not a transfer and not a card payment". A cross-currency
         // transfer has neither, so it is excluded on both sides of the currency split.
-        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03"))
+        assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03", yieldDimensionId = null))
     }
 
     @Test
@@ -89,8 +89,8 @@ class ConversionAccountPredicateTest {
         // The EQUITY leg is what makes it an adjustment; nothing about the sixth type
         // weakened that. (The reconciliation row is the BRL one — a pre-existing
         // system account — and the `eq` predicate does not read its currency.)
-        assertEquals(700L, entryDao.accountPeriodTotals(2, "2026-03").adjustment)
-        assertEquals(700L, entryDao.assetMonthTotals("2026-03").sole().adjustment)
+        assertEquals(700L, entryDao.accountPeriodTotals(2, "2026-03", yieldDimensionId = null).adjustment)
+        assertEquals(700L, entryDao.assetMonthTotals("2026-03", yieldDimensionId = null).sole().adjustment)
     }
 
     @Test
@@ -118,7 +118,7 @@ class ConversionAccountPredicateTest {
 
         // And on the paying account it is a settlement, since the transaction does have
         // a LIABILITY leg — the `li` predicate is untouched too.
-        assertEquals(55_000L, entryDao.accountPeriodTotals(1, "2026-03").settlement)
+        assertEquals(55_000L, entryDao.accountPeriodTotals(1, "2026-03", yieldDimensionId = null).settlement)
     }
 
     @Test

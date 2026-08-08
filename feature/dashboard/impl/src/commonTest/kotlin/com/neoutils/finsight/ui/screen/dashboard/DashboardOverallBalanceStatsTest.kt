@@ -92,6 +92,7 @@ class DashboardOverallBalanceStatsTest {
     // so summing them counts it exactly once.
     private val assetFlows = AssetMonthFlowsByCurrency(
         income = brl(1000.0),
+        yield = MoneyByCurrency.zero,
         expense = brl(300.0),
         adjustment = MoneyByCurrency.zero,
     )
@@ -210,7 +211,7 @@ private class FlowsEntryRepository(
     private val asset: AssetMonthFlowsByCurrency,
     private val liability: LiabilityMonthFlowsByCurrency,
 ) : IEntryRepository {
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth) = asset
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = asset
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = liability
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
@@ -219,7 +220,7 @@ private class FlowsEntryRepository(
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()

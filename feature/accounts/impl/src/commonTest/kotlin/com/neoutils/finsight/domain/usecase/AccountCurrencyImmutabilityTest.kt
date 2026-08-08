@@ -75,6 +75,7 @@ class AccountCurrencyImmutabilityTest {
 }
 
 private class RecordingAccounts(private val account: Account) : IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = false
     val updated = mutableListOf<Account>()
     override suspend fun getAccountById(accountId: Long): Account? = account.takeIf { it.id == accountId }
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = listOf(account)

@@ -71,6 +71,7 @@ class TransactionsNatureFilterTest {
         consolidateMoney = consolidator(),
         observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
             baseCurrencyRepository = FakeBaseCurrency(),
+        clock = Clock.System,
     )
 
     /** What the screen lists: display models, already mapped (`presentation-mapping`). */

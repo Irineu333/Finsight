@@ -62,6 +62,7 @@ val dashboardModule = module {
             baseCurrencyRepository = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
 }

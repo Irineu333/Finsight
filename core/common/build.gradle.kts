@@ -10,6 +10,7 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
         }
+
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutinesTest)
             implementation(libs.turbine)

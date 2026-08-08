@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.creditCards
 
@@ -40,6 +40,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -108,6 +110,7 @@ class CreditCardsEmptyStateTest {
                     calculateInvoiceUseCase = calculateInvoice,
                 ),
                 accountRepository = FakeCardAccountRepository(),
+                clock = Clock.System,
             ),
         )
     }
@@ -184,7 +187,7 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = invoices
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoices.firstOrNull { it.status.isOpen }
-    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }
@@ -214,6 +217,7 @@ private class FakeCategoryRepository : ICategoryRepository {
     override suspend fun getAllCategoriesIncludingClosed(): List<Category> = emptyList()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = null
+    override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override suspend fun archive(id: Long) = Unit
     override suspend fun unarchive(id: Long) = Unit
@@ -254,7 +258,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun balance(accountId: Long): Double = 0.0
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0)
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0, 0.0)
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
     override suspend fun dimensionOwedByCurrency(dimensionId: Long) = MoneyByCurrency.of("BRL", 0.0)
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long) = DimensionFlowsByCurrency(
@@ -270,7 +274,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,

@@ -125,6 +125,7 @@ class TransactionScopeTest {
         consolidateMoney = consolidator(),
         observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
             baseCurrencyRepository = FakeBaseCurrency(),
+        clock = Clock.System,
     )
 
     /**

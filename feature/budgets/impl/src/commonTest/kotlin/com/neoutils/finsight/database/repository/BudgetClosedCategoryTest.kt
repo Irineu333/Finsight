@@ -104,6 +104,7 @@ class BudgetClosedCategoryTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = MutableStateFlow(all)
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
         override suspend fun archive(id: Long) = Unit
@@ -226,7 +227,7 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long) = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
@@ -237,7 +238,7 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
-    override suspend fun assetMonthFlowsByCurrency(month: YearMonth): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,

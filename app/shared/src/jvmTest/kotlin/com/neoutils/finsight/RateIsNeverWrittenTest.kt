@@ -83,9 +83,28 @@ class RateIsNeverWrittenTest {
             "core/database/schemas/com.neoutils.finsight.database.AppDatabase",
         ).listFiles { file -> file.extension == "json" }.orEmpty()
 
-        val schema = checkNotNull(schemas.maxByOrNull { it.nameWithoutExtension.toInt() }) {
+        val latest = checkNotNull(schemas.maxByOrNull { it.nameWithoutExtension.toInt() }) {
             "no exported schema to read"
-        }.readText()
+        }
+
+        // Reading the newest export is only "the shape the app ships" while the export
+        // keeps up with the chain. Bumping the version without regenerating would leave
+        // this reading the previous schema and passing — going stale by the other route.
+        val declaredVersion = Regex("""\bversion\s*=\s*(\d+)""").find(
+            File(
+                repoRoot,
+                "core/database/src/commonMain/kotlin/com/neoutils/finsight/database/AppDatabase.kt",
+            ).readText()
+        )?.groupValues?.get(1)?.toInt()
+
+        assertEquals(
+            declaredVersion,
+            latest.nameWithoutExtension.toInt(),
+            "The newest exported schema is not the version the app declares. Regenerate " +
+                "the schema, or this test covers a shape the app no longer ships.",
+        )
+
+        val schema = latest.readText()
 
         val columnNames = Regex(""""fieldPath"\s*:\s*"([^"]+)"""")
             .findAll(schema)

@@ -34,7 +34,7 @@ data class SeedCurrency(val code: String, val symbol: String)
  */
 val CURRENCY_SEED: List<SeedCurrency> = listOf(
     SeedCurrency("BRL", "R$"),
-    SeedCurrency("USD", "US$"),
+    SeedCurrency("USD", "$"),
     SeedCurrency("EUR", "€"),
     SeedCurrency("GBP", "£"),
     SeedCurrency("CHF", "CHF"),

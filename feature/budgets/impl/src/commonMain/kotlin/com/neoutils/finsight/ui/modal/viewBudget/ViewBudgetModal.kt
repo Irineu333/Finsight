@@ -222,7 +222,6 @@ class ViewBudgetModal(
                 // The money is known — only its expression in the limit's currency is not.
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    valueTestTag = "view_budget_spent_amount",
                     value = {
                         val figure = budgetProgress.spentFigure
                         if (figure != null) {
@@ -232,12 +231,14 @@ class ViewBudgetModal(
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                 ),
+                                modifier = Modifier.testTag("view_budget_spent_amount"),
                             )
                         } else {
                             Text(
                                 text = formatter.formatOrUnresolved(budgetProgress.spentAmount),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.testTag("view_budget_spent_amount"),
                             )
                         }
                     },
@@ -379,10 +380,6 @@ class ViewBudgetModal(
     private fun DetailRow(
         label: String,
         value: @Composable () -> Unit,
-        // The figure, not the row: an E2E assertion has to land on the node that
-        // renders the number, or it only proves the number is somewhere on screen.
-        // Applied to the slot's container, since what it holds is the caller's.
-        valueTestTag: String? = null,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
@@ -408,9 +405,7 @@ class ViewBudgetModal(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                Box(modifier = Modifier.optionalTestTag(valueTestTag)) {
-                    value()
-                }
+                value()
             }
         }
     }
@@ -425,13 +420,13 @@ class ViewBudgetModal(
     ) = DetailRow(
         label = label,
         onClick = onClick,
-        valueTestTag = valueTestTag,
         value = {
             Text(
                 text = value,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = valueColor,
+                modifier = Modifier.optionalTestTag(valueTestTag),
             )
         },
     )

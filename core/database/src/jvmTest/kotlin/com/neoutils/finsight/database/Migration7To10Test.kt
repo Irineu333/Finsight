@@ -4,7 +4,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import com.neoutils.finsight.database.migration.Migration7To10
-import com.neoutils.finsight.database.migration.verifyLedgerBalanced
+import com.neoutils.finsight.extension.verifyLedgerBalanced
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

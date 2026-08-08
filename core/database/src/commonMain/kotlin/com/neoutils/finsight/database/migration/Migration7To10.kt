@@ -3,6 +3,9 @@ package com.neoutils.finsight.database.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.extension.verifyForeignKeys
+import com.neoutils.finsight.extension.verifyLedgerBalanced
+import com.neoutils.finsight.extension.verifyNoOrphanDimensions
 
 // 1.9.0-rc01
 object Migration7To10 : Migration(7, 10) {

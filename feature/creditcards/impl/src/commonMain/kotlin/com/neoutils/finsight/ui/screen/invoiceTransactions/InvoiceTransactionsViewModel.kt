@@ -5,6 +5,8 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -41,6 +43,7 @@ import kotlin.time.ExperimentalTime
 class InvoiceTransactionsViewModel(
     private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
@@ -95,16 +98,28 @@ class InvoiceTransactionsViewModel(
         // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
         // Read for every invoice's dimension in one grouped query each, not one per invoice.
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }
-        val owedByDimension = entryRepository.owedByDimension(invoiceDimensionIds)
-        val flowsByDimension = entryRepository.flowsByDimension(invoiceDimensionIds)
+        // Each answer is per currency; an invoice holds one, by this feature's own
+        // guarantee that an invoice's dimension only ever lands on the single LIABILITY
+        // account of its card. The reduction is here, beside that guarantee, and never
+        // presumed by the ledger (design D8).
+        val owedByDimension = entryRepository.owedByDimensionByCurrency(invoiceDimensionIds)
+        val flowsByDimension = entryRepository.flowsByDimensionByCurrency(invoiceDimensionIds)
         val owedByInvoiceId = mutableMapOf<Long, Double>()
-        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
+        val flowsByInvoiceId = mutableMapOf<Long, InvoiceFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
-            owedByInvoiceId[inv.id] = owedByDimension[dimensionId] ?: 0.0
-            flowsByInvoiceId[inv.id] = flowsByDimension[dimensionId]
-                ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
+            owedByInvoiceId[inv.id] = owedByDimension[dimensionId]?.singleOrNull()?.value ?: 0.0
+            val flows = flowsByDimension[dimensionId]
+            flowsByInvoiceId[inv.id] = InvoiceFlows(
+                expense = flows?.expense?.singleOrNull()?.value ?: 0.0,
+                advancePayment = flows?.advancePayment?.singleOrNull()?.value ?: 0.0,
+                adjustment = flows?.adjustment?.singleOrNull()?.value ?: 0.0,
+            )
         }
+
+        // Every figure of this screen is the card's money, so all of them read in the
+        // card's own currency (design D17) — asked once, not once per invoice.
+        val currency = accountRepository.currencyOf(creditCard)
 
         val invoice = invoices.getOrNull(index)
         // The rows render archived categories too, so the lookup keeps them — only the
@@ -188,10 +203,14 @@ class InvoiceTransactionsViewModel(
                     // The row only renders: spending subtracts from what the card is
                     // worth to the user, an advance payment adds, and an adjustment is
                     // the one line whose direction its label withholds.
-                    expense = DisplayAmount.forcedNegative(expense),
-                    advancePayment = DisplayAmount.forcedPositive(advancePayment),
-                    adjustment = DisplayAmount.explicitSign(adjustment),
-                    total = DisplayAmount.natural(owedByInvoiceId.getValue(invoice.id)),
+                    expense = DisplayAmount.forcedNegative(expense, currency, isApproximate = false),
+                    advancePayment = DisplayAmount.forcedPositive(advancePayment, currency, isApproximate = false),
+                    adjustment = DisplayAmount.explicitSign(adjustment, currency, isApproximate = false),
+                    total = DisplayAmount.natural(
+                        owedByInvoiceId.getValue(invoice.id),
+                        currency,
+                        isApproximate = false,
+                    ),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
@@ -321,3 +340,15 @@ private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<
     if (!installmentOnly) return this
     return filter { transaction -> transaction.installmentId != null }
 }
+
+/**
+ * One invoice's expense/advance-payment/adjustment, already reduced to the single
+ * currency its card holds. It is this screen's own shape, not the ledger's: the ledger
+ * answers per currency, and the reduction happens here, beside the facade guarantee
+ * that makes it valid (design D8).
+ */
+private data class InvoiceFlows(
+    val expense: Double,
+    val advancePayment: Double,
+    val adjustment: Double,
+)

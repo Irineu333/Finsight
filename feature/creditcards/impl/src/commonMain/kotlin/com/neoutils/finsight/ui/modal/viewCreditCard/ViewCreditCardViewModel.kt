@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 class ViewCreditCardViewModel(
     private val cardId: Long,
     private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     invoiceRepository: IInvoiceRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
     private val crashlytics: Crashlytics,
@@ -37,7 +40,7 @@ class ViewCreditCardViewModel(
     ) { creditCard, invoices ->
         creditCard ?: return@combine ViewCreditCardUiState.Error
         ViewCreditCardUiState.Content(
-            card = creditCard.toArchivedUi(),
+            card = creditCard.toArchivedUi(accountRepository.currencyOf(creditCard)),
             isArchived = creditCard.isArchived,
             invoiceCount = invoices.size,
         )

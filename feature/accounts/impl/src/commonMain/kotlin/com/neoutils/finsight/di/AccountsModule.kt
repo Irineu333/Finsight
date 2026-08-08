@@ -11,6 +11,8 @@ import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -47,7 +49,7 @@ val accountsModule = module {
     }
     factory { AccountMapper() }
 
-    factory { EnsureDefaultAccountUseCase(repository = get()) }
+    factory { EnsureDefaultAccountUseCase(repository = get(), baseCurrencyRepository = get()) }
     factory { ValidateAccountNameUseCase(repository = get()) }
     factory { SetDefaultAccountUseCase(repository = get()) }
     factory {
@@ -63,6 +65,9 @@ val accountsModule = module {
             validateAccountName = get(),
             setDefaultAccount = get(),
         )
+    }
+    factory<GetAccountCurrenciesUseCase> {
+        GetAccountCurrenciesUseCaseImpl(accountDao = get())
     }
     factory<ArchiveAccountUseCase> {
         ArchiveAccountUseCaseImpl(
@@ -95,6 +100,7 @@ val accountsModule = module {
     factory { AdjustOpeningBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
+            harvestExchangeRate = get(),
             transactionRepository = get(),
             accountRepository = get(),
         )
@@ -116,6 +122,8 @@ val accountsModule = module {
         AccountFormViewModel(
             account = it.getOrNull(),
             validateAccountName = get(),
+            baseCurrencyRepository = get(),
+            currencyRepository = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
             ensureYieldCategory = get(),
@@ -187,6 +195,7 @@ val accountsModule = module {
         TransferBetweenAccountsViewModel(
             initialSourceAccount = it.get(),
             transferBetweenAccountsUseCase = get(),
+            suggestCrossCurrencyAmount = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),

@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -13,31 +15,40 @@ import kotlin.test.assertEquals
  */
 class DashboardEditLayoutTest {
 
+    /**
+     * A figure is what a component carries, not what this test is about: the amounts
+     * below only have to differ from one another so the items do.
+     */
+    private fun figure(value: Double) = ConsolidatedAmount(
+        terms = listOf(DisplayAmount.natural(value, "BRL", isApproximate = false)),
+        isApproximate = false,
+    )
+
     // Four components, built straight from their variants rather than from
     // `DashboardPreviewFactory` — the factory reads string resources, which a JVM test has no
     // access to, and an item's key comes from its variant either way. Which four is immaterial:
     // this is arithmetic over positions.
     private val total = DashboardEditItem(
         preview = DashboardComponentVariant.TotalBalance.Preview(
-            component = DashboardComponent.TotalBalance(amount = 1.0),
+            component = DashboardComponent.TotalBalance(amount = figure(1.0)),
         ),
     )
 
     private val overall = DashboardEditItem(
         preview = DashboardComponentVariant.OverallBalanceStats.Preview(
-            component = DashboardComponent.OverallBalanceStats(income = 2.0, expense = 3.0),
+            component = DashboardComponent.OverallBalanceStats(income = figure(2.0), expense = figure(3.0)),
         ),
     )
 
     private val concrete = DashboardEditItem(
         preview = DashboardComponentVariant.ConcreteBalanceStats.Preview(
-            component = DashboardComponent.ConcreteBalanceStats(income = 4.0, expense = 5.0),
+            component = DashboardComponent.ConcreteBalanceStats(income = figure(4.0), expense = figure(5.0)),
         ),
     )
 
     private val pending = DashboardEditItem(
         preview = DashboardComponentVariant.PendingBalanceStats.Preview(
-            component = DashboardComponent.PendingBalanceStats(pendingIncome = 6.0, pendingExpense = 7.0),
+            component = DashboardComponent.PendingBalanceStats(pendingIncome = figure(6.0), pendingExpense = figure(7.0)),
         ),
     )
 

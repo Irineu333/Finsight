@@ -29,6 +29,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -48,10 +49,10 @@ class TransactionScopeYieldTest {
     private val month = Clock.System.now().toYearMonth()
     private val previous = month.minusMonth()
 
-    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, yieldsInterest = true)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL", yieldsInterest = true)
+    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private val yieldCategory = Category(
         id = 9, name = "Rendimentos", icon = CategoryLazyIcon("savings"),
@@ -88,6 +89,9 @@ class TransactionScopeYieldTest {
         categoryRepository = YieldAwareCategories(yieldCategory.takeIf { yieldCategoryExists }),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        consolidateMoney = consolidator(),
+        observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+        baseCurrencyRepository = FakeBaseCurrency(),
         clock = Clock.System,
     )
 
@@ -97,7 +101,7 @@ class TransactionScopeYieldTest {
         yieldCategoryExists: Boolean = true,
     ): BalanceOverview {
         val vm = viewModel(transactions, yieldCategoryExists)
-        var result: BalanceOverview = BalanceOverview.Overall()
+        var result: BalanceOverview? = null
         vm.uiState.test {
             var state = awaitItem()
             while (state.listState is ListState.Loading) state = awaitItem()
@@ -106,7 +110,7 @@ class TransactionScopeYieldTest {
             result = state.balanceOverview
             cancelAndIgnoreRemainingEvents()
         }
-        return result
+        return assertNotNull(result)
     }
 
     @Test

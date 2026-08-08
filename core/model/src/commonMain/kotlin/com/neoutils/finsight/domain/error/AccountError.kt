@@ -3,6 +3,7 @@ package com.neoutils.finsight.domain.error
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_cannot_archive_default
+import com.neoutils.finsight.resources.account_error_currency_immutable
 import com.neoutils.finsight.resources.account_error_empty_name
 import com.neoutils.finsight.resources.account_error_has_balance
 import com.neoutils.finsight.resources.account_error_has_budget
@@ -43,6 +44,19 @@ enum class AccountError(val message: String) {
      * strip it from the budget silently. Refused so the loss is never created.
      */
     HAS_BUDGET(message = "Cannot delete a category a budget still uses"),
+
+    /**
+     * The currency is fixed when the account is created and never changes — not "until
+     * the first entry", but from the instant the account exists (design D12).
+     *
+     * The refusal reads **no fact at all**, and that is the point: currency is an
+     * attribute of identity, not of history, so a rule that consulted `hasEntries` would
+     * be a conditional refusal — one somebody has to remember to keep correct. The path
+     * to fixing a wrong choice already exists and is not new: an account with no entries
+     * may be deleted and created again. One with entries has no correction possible in
+     * any design, because the meaning of every entry already written depends on it.
+     */
+    CURRENCY_IS_IMMUTABLE(message = "An account's currency cannot be changed"),
 }
 
 fun AccountError.toUiText() = when (this) {
@@ -55,4 +69,5 @@ fun AccountError.toUiText() = when (this) {
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
     AccountError.HAS_RECURRING -> UiText.Res(Res.string.account_error_has_recurring)
     AccountError.HAS_BUDGET -> UiText.Res(Res.string.account_error_has_budget)
+    AccountError.CURRENCY_IS_IMMUTABLE -> UiText.Res(Res.string.account_error_currency_immutable)
 }

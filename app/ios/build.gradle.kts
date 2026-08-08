@@ -37,6 +37,7 @@ kotlin {
             export(projects.feature.shell.api)
             export(projects.feature.recurring.api)
             export(projects.feature.report.api)
+            export(projects.feature.settings.api)
             export(projects.feature.support.api)
             export(projects.feature.transactions.api)
         }
@@ -68,6 +69,7 @@ kotlin {
             api(projects.feature.shell.api)
             api(projects.feature.recurring.api)
             api(projects.feature.report.api)
+            api(projects.feature.settings.api)
             api(projects.feature.support.api)
             api(projects.feature.transactions.api)
 

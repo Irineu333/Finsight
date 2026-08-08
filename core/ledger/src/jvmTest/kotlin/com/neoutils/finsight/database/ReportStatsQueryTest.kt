@@ -28,8 +28,9 @@ class ReportStatsQueryTest {
 
     @AfterTest fun tearDown() = database.close()
 
+    /** The sole row of the grouped aggregate — every suite below seeds one currency. */
     private suspend fun stats(scope: List<Long>, start: String, end: String): ScopeStatsTotals =
-        entryDao.scopeStats(scope, LocalDate.parse(start), LocalDate.parse(end))
+        entryDao.scopeStats(scope, LocalDate.parse(start), LocalDate.parse(end)).sole()
 
     @Test
     fun `account perspective includes adjustments in the period and the opening balance`() = runTest {
@@ -48,7 +49,13 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ScopeStatsTotals(income = 0, expense = 4_000, balance = -1_500, openingBalance = 7_000),
+            ScopeStatsTotals(
+                currency = "BRL",
+                income = 0,
+                expense = 4_000,
+                balance = -1_500,
+                openingBalance = 7_000,
+            ),
             stats(listOf(1), start = "2026-03-10", end = "2026-03-31"),
         )
     }
@@ -72,7 +79,13 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ScopeStatsTotals(income = 8_000, expense = 20_000, balance = -11_000, openingBalance = -7_500),
+            ScopeStatsTotals(
+                currency = "BRL",
+                income = 8_000,
+                expense = 20_000,
+                balance = -11_000,
+                openingBalance = -7_500,
+            ),
             stats(listOf(200), start = "2026-03-01", end = "2026-03-31"),
         )
     }
@@ -114,5 +127,80 @@ class ReportStatsQueryTest {
         assertEquals(10_000L, result.openingBalance)
         assertEquals(4_000L, result.income)
         assertEquals(4_000L, result.balance)
+    }
+
+    // --- the report figures are per currency (task 4.8) ---
+
+    @Test
+    fun `a scope spanning two currencies reports each on its own`() = runTest {
+        with(fixture) {
+            account(1, AccountEntity.Type.ASSET)
+            account(2, AccountEntity.Type.ASSET, currency = "USD")
+            account(100, AccountEntity.Type.INCOME)
+            account(101, AccountEntity.Type.EXPENSE, currency = "USD")
+
+            transaction("2026-03-10", 1L posts 10_000, 100L posts -10_000)
+            transaction(
+                "2026-03-11",
+                2L posts -2_000 inCurrency "USD",
+                101L posts 2_000 inCurrency "USD",
+            )
+        }
+
+        val rows = entryDao.scopeStats(
+            listOf(1, 2),
+            LocalDate.parse("2026-03-01"),
+            LocalDate.parse("2026-03-31"),
+        )
+
+        assertEquals(10_000L, rows.forCurrency("BRL")?.income)
+        assertEquals(0L, rows.forCurrency("BRL")?.expense)
+        assertEquals(2_000L, rows.forCurrency("USD")?.expense)
+        assertEquals(-2_000L, rows.forCurrency("USD")?.balance)
+        assertEquals(2, rows.size, "the most cross-cutting figure of the app sums no currencies")
+    }
+
+    @Test
+    fun `the widest scope includes archived accounts, in every currency they hold`() = runTest {
+        with(fixture) {
+            // "Every account" is resolved by the caller, archived ones included — the
+            // report is about history, and history does not stop at an archived account.
+            account(1, AccountEntity.Type.ASSET)
+            account(2, AccountEntity.Type.ASSET, currency = "USD", isArchived = true)
+            account(100, AccountEntity.Type.INCOME)
+            account(101, AccountEntity.Type.INCOME, currency = "USD")
+
+            transaction("2026-03-10", 1L posts 10_000, 100L posts -10_000)
+            transaction(
+                "2026-03-11",
+                2L posts 500 inCurrency "USD",
+                101L posts -500 inCurrency "USD",
+            )
+        }
+
+        val rows = entryDao.scopeStats(
+            listOf(1, 2),
+            LocalDate.parse("2026-03-01"),
+            LocalDate.parse("2026-03-31"),
+        )
+
+        assertEquals(500L, rows.forCurrency("USD")?.income)
+        assertEquals(10_000L, rows.forCurrency("BRL")?.income)
+    }
+
+    @Test
+    fun `a scope with no movement produces no row`() = runTest {
+        with(fixture) {
+            account(1, AccountEntity.Type.ASSET)
+        }
+
+        assertEquals(
+            emptyList(),
+            entryDao.scopeStats(
+                listOf(1),
+                LocalDate.parse("2026-03-01"),
+                LocalDate.parse("2026-03-31"),
+            ),
+        )
     }
 }

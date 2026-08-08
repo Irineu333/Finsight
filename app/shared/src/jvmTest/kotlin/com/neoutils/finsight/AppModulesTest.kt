@@ -7,6 +7,13 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.IRemoteRateSource
+import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
+import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -59,6 +66,44 @@ class AppModulesTest {
         assertSame(koin.get<AppDatabase>(), koin.get<RoomDatabase>())
     }
 
+    /**
+     * The consolidation layer declares both repositories in `:core:model` and the
+     * settings feature implements them. Nothing in `:core:model` can name the
+     * implementation, so the only thing that closes the graph is the shell binding
+     * `settingsModule` — and a miss would surface as the first consolidated figure
+     * crashing, not as a compile error.
+     */
+    @Test
+    fun appModulesResolveTheConsolidationRepositories() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<IBaseCurrencyRepository>())
+        assertNotNull(koin.get<IExchangeRateRepository>())
+    }
+
+    /**
+     * The upkeep of the archive is resolved by `App` in a `LaunchedEffect`, which no
+     * compiler checks: a missing binding here would not fail the build, it would crash
+     * the user's app on launch. And it closes only if all three of its own ports do —
+     * the remote source, the sync state and the concrete archive the rates screens read.
+     */
+    @Test
+    fun appModulesResolveTheRateSynchronisation() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<IRemoteRateSource>())
+        assertNotNull(koin.get<IRateSyncStateRepository>())
+        assertNotNull(koin.get<SyncExchangeRatesUseCase>())
+    }
+
+    /** One archive, not two: the interface resolves from the concrete binding. */
+    @Test
+    fun theArchiveIsOneInstanceUnderBothTypes() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertSame(koin.get<ExchangeRateRepository>(), koin.get<IExchangeRateRepository>())
+    }
+
     @Test
     fun appModulesResolveTheNavCatalog() {
         val koin = koinApplication { modules(appModules) }.koin
@@ -92,6 +137,13 @@ class AppModulesTest {
         val support = destinations.single { it.route == SupportGraph }
         assertTrue(!support.mobileOnly)
         assertTrue(destinations.filter { !it.mobileOnly }.contains(support))
+
+        // Settings sits immediately before Support: the two are both "about the app",
+        // and Support's KDoc records being last on purpose.
+        assertEquals(
+            destinations.indexOfFirst { it.route == SupportGraph } - 1,
+            destinations.indexOfFirst { it.route == SettingsGraph },
+        )
 
         // Persistence keys (route type names) must be unique — the grid stores hidden actions by them.
         val keys = destinations.map { it.route::class.simpleName }

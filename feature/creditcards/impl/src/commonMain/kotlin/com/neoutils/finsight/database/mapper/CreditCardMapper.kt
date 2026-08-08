@@ -4,8 +4,13 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.domain.model.CreditCard
 
 class CreditCardMapper {
+    /**
+     * The hydrated read: the card, plus what its `LIABILITY` account says about it —
+     * whether it is closed and what it is denominated in. Both come through the join
+     * the query already makes, and neither is copied onto `credit_cards`.
+     */
     fun toDomain(row: com.neoutils.finsight.database.dao.CreditCardWithArchival): CreditCard =
-        toDomain(row.creditCard).copy(isArchived = row.isArchived)
+        toDomain(row.creditCard).copy(isArchived = row.isArchived, currency = row.currency)
 
     fun toDomain(entity: CreditCardEntity): CreditCard {
         return CreditCard(

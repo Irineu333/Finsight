@@ -54,6 +54,7 @@ class YieldSeparationQueryTest {
 
         assertEquals(
             AccountPeriodTotals(
+                currency = "BRL",
                 income = 502_040, // salary + both yields, all in one line
                 yield = 0,
                 expense = 3_000,
@@ -103,8 +104,8 @@ class YieldSeparationQueryTest {
         seed()
 
         assertEquals(
-            AssetMonthTotals(income = 500_000, yield = 2_540, expense = 3_000, adjustment = 0),
-            entryDao.assetMonthTotals("2026-01", yieldDimensionId = YIELD_DIMENSION),
+            AssetMonthTotals(currency = "BRL", income = 500_000, yield = 2_540, expense = 3_000, adjustment = 0),
+            entryDao.assetMonthTotals("2026-01", yieldDimensionId = YIELD_DIMENSION).sole(),
         )
     }
 
@@ -113,8 +114,8 @@ class YieldSeparationQueryTest {
         seed()
 
         assertEquals(
-            AssetMonthTotals(income = 502_540, yield = 0, expense = 3_000, adjustment = 0),
-            entryDao.assetMonthTotals("2026-01", yieldDimensionId = null),
+            AssetMonthTotals(currency = "BRL", income = 502_540, yield = 0, expense = 3_000, adjustment = 0),
+            entryDao.assetMonthTotals("2026-01", yieldDimensionId = null).sole(),
         )
     }
 }

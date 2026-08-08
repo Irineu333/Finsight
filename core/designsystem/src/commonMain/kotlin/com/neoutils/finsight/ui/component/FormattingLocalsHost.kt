@@ -2,8 +2,14 @@ package com.neoutils.finsight.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import com.neoutils.finsight.extension.CurrencyFormatter
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.neoutils.finsight.extension.CurrencySymbols
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.LocalCurrencySymbols
+import com.neoutils.finsight.extension.currencyFormatterOf
+import com.neoutils.finsight.extension.symbolOf
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.day_of_week_friday
 import com.neoutils.finsight.resources.day_of_week_monday
@@ -35,7 +41,16 @@ import org.koin.compose.koinInject
 fun FormattingLocalsHost(
     content: @Composable () -> Unit,
 ) {
-    val formatter = koinInject<CurrencyFormatter>()
+    // The glyph of a currency, collected once here rather than read synchronously by
+    // each composable: the offered set is a table now, and the port is what lets this
+    // module reach it without ever seeing `:core:model` (design D5).
+    val symbols by koinInject<CurrencySymbols>().symbols.collectAsState()
+
+    // Derived from the snapshot rather than injected, so that editing a symbol reaches a
+    // value **already on screen**: the formatter changes identity with the table, and
+    // everything reading it recomposes. Injecting the singleton would read the same
+    // table and redraw nothing until something else happened to recompose.
+    val formatter = remember(symbols) { currencyFormatterOf(symbols) }
     val dateFormats = DateFormats(
         monthNames = MonthNames(
             stringResource(Res.string.month_january),
@@ -64,6 +79,9 @@ fun FormattingLocalsHost(
 
     CompositionLocalProvider(
         LocalCurrencyFormatter provides formatter,
+        // The same resolution the formatter makes, so a selector and the value beside
+        // it cannot disagree about the glyph of one currency.
+        LocalCurrencySymbols provides { code -> symbols.symbolOf(code) },
         LocalDateFormats provides dateFormats,
         content = content,
     )

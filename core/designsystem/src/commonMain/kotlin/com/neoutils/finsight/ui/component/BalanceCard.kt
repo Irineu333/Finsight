@@ -26,10 +26,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.balance_card_account_expense
 import com.neoutils.finsight.resources.balance_card_account_income
@@ -49,9 +51,13 @@ import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
+/**
+ * A balance denominated by the account or facade it belongs to — a single exact term,
+ * and never the base currency (design D29).
+ */
 @Composable
 fun BalanceCard(
-    balance: Double,
+    balance: DisplayAmount,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
     // Named on the amount itself, not on the card: an E2E assertion binds a figure to the node that
@@ -60,8 +66,75 @@ fun BalanceCard(
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
+) = BalanceCard(modifier, config, onEditClick, onPayClick, onClick, badge = null) { style ->
+    MoneyText(amount = balance, style = style, modifier = Modifier.optionalTestTag(amountTestTag))
+}
+
+/**
+ * A figure that crossed accounts and was therefore consolidated: it may hold more than
+ * one term, and the stacking rule that renders it is [MoneyText]'s alone (design D22).
+ *
+ * **The badge belongs to this overload and not to the screens that use it.** Eight of the
+ * dashboard's figures come through here — overall income and expense, the account pair, the
+ * pending pair, the card pair — and every one of them is consolidated, while none of them
+ * had any way to say so: the four widgets that draw them were the surfaces the badge had
+ * skipped. Put on the card, it arrives for all eight at once, per card rather than per
+ * section, so a row whose income needed a rate and whose expense did not marks only the one
+ * that did.
+ *
+ * @param onSeeRates where the explanation leads. `null` leaves the card silent, for a
+ * surface with nowhere to send the user — the same allowance `CategorySpendingCard` makes,
+ * and for the same reason.
+ */
+@Composable
+fun BalanceCard(
+    balance: ConsolidatedAmount,
+    modifier: Modifier = Modifier,
+    config: BalanceCardConfig = BalanceCardConfig.Default,
+    // Named on the amount itself, not on the card: an E2E assertion binds a figure to the node that
+    // renders it, and a tag on the container would only say the card composed.
+    amountTestTag: String? = null,
+    onEditClick: (() -> Unit)? = null,
+    onPayClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    onSeeRates: (() -> Unit)? = null,
+) = BalanceCard(
+    modifier = modifier,
+    config = config,
+    onEditClick = onEditClick,
+    onPayClick = onPayClick,
+    onClick = onClick,
+    // The title row is already `SpaceBetween` with nothing on its right, which is the
+    // corner every badge in the app sits in.
+    badge = onSeeRates?.let {
+        {
+            ConsolidationBadge(
+                figures = listOf(balance),
+                onSeeRates = it,
+            )
+        }
+    },
+) { style ->
+    // The card reads from its left edge — title above, figure below — so a figure of
+    // several terms stacks that way too.
+    MoneyText(
+        figure = balance,
+        style = style,
+        align = TextAlign.Start,
+        modifier = Modifier.optionalTestTag(amountTestTag),
+    )
+}
+
+@Composable
+private fun BalanceCard(
+    modifier: Modifier,
+    config: BalanceCardConfig,
+    onEditClick: (() -> Unit)?,
+    onPayClick: (() -> Unit)?,
+    onClick: (() -> Unit)?,
+    badge: (@Composable () -> Unit)?,
+    money: @Composable (TextStyle) -> Unit,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     Card(
     modifier = modifier.then(
         if (onClick != null) {
@@ -110,6 +183,8 @@ fun BalanceCard(
                     style = config.titleStyle,
                 )
             }
+
+            badge?.invoke()
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -127,11 +202,7 @@ fun BalanceCard(
                     }
                 )
         ) {
-            Text(
-                text = formatter.format(balance),
-                style = config.style,
-                modifier = Modifier.optionalTestTag(amountTestTag),
-            )
+            money(config.style)
 
             if (onEditClick != null) {
                 Icon(

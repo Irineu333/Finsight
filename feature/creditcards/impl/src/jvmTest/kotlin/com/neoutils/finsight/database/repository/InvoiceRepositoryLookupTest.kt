@@ -42,6 +42,7 @@ class InvoiceRepositoryLookupTest {
         dao = db.creditCardDao(),
         accountDao = db.accountDao(),
         mapper = CreditCardMapper(),
+        baseCurrencyRepository = FixedBaseCurrency("BRL"),
     )
 
     private val repository = InvoiceRepository(
@@ -54,6 +55,7 @@ class InvoiceRepositoryLookupTest {
 
     private suspend fun insertCard() = creditCardRepository.insert(
         CreditCard(name = "Card", limit = 1_000.0, closingDay = 20, dueDay = 28),
+        currency = "BRL",
     ).let { creditCardRepository.getCreditCardById(it)!! }
 
     private suspend fun insertInvoice(creditCard: CreditCard) = repository.insert(

@@ -119,7 +119,12 @@ class LaunchYieldModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.launch_yield_amount_label)) },
                         state = amount,
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        // The yield lands on the selected account, so the field wears
+                        // that account's currency — never the device locale's (D10).
+                        inputTransformation = rememberMoneyInputTransformation(
+                            state.account.currency,
+                            amount,
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(

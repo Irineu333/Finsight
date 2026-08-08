@@ -1,14 +1,17 @@
 package com.neoutils.finsight
 
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 
 fun recurring(
     id: Long = 1L,
@@ -73,4 +76,34 @@ class FakeBudgetRepository(
     override suspend fun delete(budget: Budget) = throw NotImplementedError()
     override suspend fun hasBudgetForCategory(categoryId: Long) = false
     override suspend fun hasBudgetForRecurring(recurringId: Long) = hasBudget
+}
+
+/**
+ * The chart of accounts, for the one question these screens ask of it: what currency a
+ * card's account is in. Everything else throws, so a test that starts depending on more
+ * says so instead of quietly passing.
+ */
+class FakeAccountRepository(
+    private val accounts: List<Account> = emptyList(),
+) : IAccountRepository {
+    override suspend fun hasYieldingAccount(): Boolean = false
+    override suspend fun getAccountById(accountId: Long): Account? =
+        accounts.firstOrNull { it.id == accountId }
+
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
+    override suspend fun getAllAccounts(): List<Account> = accounts
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts)
+    override suspend fun getAllLedgerAccounts(): List<Account> = accounts
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
+    override fun observeAccountById(accountId: Long): Flow<Account?> =
+        flowOf(accounts.firstOrNull { it.id == accountId })
+
+    override suspend fun getDefaultAccount(): Account? = accounts.firstOrNull { it.isDefault }
+    override fun observeDefaultAccount(): Flow<Account?> = flowOf(accounts.firstOrNull { it.isDefault })
+    override suspend fun getAccountCount(): Int = accounts.size
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 }

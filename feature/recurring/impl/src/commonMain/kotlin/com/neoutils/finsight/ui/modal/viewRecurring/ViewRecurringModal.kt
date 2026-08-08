@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
@@ -94,6 +96,7 @@ class ViewRecurringModal(
             ViewRecurringUiState.Error -> DetailErrorState()
             is ViewRecurringUiState.Content -> ContentBody(
                 recurring = state.recurring,
+                amount = state.amount,
                 formatter = formatter,
                 detailController = detailController,
                 navController = navController,
@@ -104,6 +107,7 @@ class ViewRecurringModal(
     @Composable
     private fun ContentBody(
         recurring: Recurring,
+        amount: DisplayAmount?,
         formatter: CurrencyFormatter,
         detailController: DetailPaneController,
         navController: NavController,
@@ -175,13 +179,17 @@ class ViewRecurringModal(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DetailRow(
-                    label = stringResource(Res.string.view_recurring_amount_label),
-                    value = formatter.format(recurring.amount),
-                    valueTestTag = "view_recurring_amount",
-                )
+                // Nothing left to denominate the figure: the row is dropped rather than
+                // showing it in a currency nobody chose for it.
+                if (amount != null) {
+                    DetailRow(
+                        label = stringResource(Res.string.view_recurring_amount_label),
+                        value = formatter.format(amount),
+                        valueTestTag = "view_recurring_amount",
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_day_label),

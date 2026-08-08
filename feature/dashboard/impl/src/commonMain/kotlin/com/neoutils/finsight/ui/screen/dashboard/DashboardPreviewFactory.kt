@@ -1,22 +1,76 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.getString
 
 class DashboardPreviewFactory(
+    // A preview shows the same widgets the dashboard does, so its figures are built the
+    // same way: the consolidated ones leave through the one reducer, exactly as the
+    // builder's do. Fabricating a `ConsolidatedAmount` by hand here would be the second
+    // place in the app that produces a figure.
+    private val consolidateMoney: ConsolidateMoneyUseCase,
     private val navCatalog: NavCatalog,
+    baseCurrencyRepository: IBaseCurrencyRepository,
 ) {
-    suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
+    /**
+     * The currency the fabricated accounts of a preview are denominated in.
+     *
+     * A preview has to look like the app, so it asks the same question a new account's
+     * form asks: the **seeded base currency**, never a literal that would render `R$`
+     * beside real cards reading `$`.
+     *
+     * And never the locale read live, which is what this used to do. The locale does
+     * resolve the base — once, on the first run (design D28) — and reading it again here
+     * was a second answer to a question that already has one: the two part company the
+     * moment the user travels, or simply reads the interface in another language, and
+     * the preview would then denominate its cards in a currency the user holds nothing
+     * in, one dashboard row away from the real ones. `money-display` puts it plainly:
+     * the displayed currency MUST NOT be derived from the locale.
+     */
+    private val previewCurrency: String = baseCurrencyRepository.observe().value
+
+    private fun amount(value: Double) =
+        DisplayAmount.magnitude(value, previewCurrency, isApproximate = false)
+
+    private suspend fun previewAccount() = Account(
+        id = 1,
+        currency = previewCurrency,
+        name = getString(Res.string.preview_account_main),
+        iconKey = "wallet",
+        isDefault = true,
+        createdAt = 0,
+    )
+
+    private suspend fun figure(
+        value: Double,
+        on: LocalDate,
+        policy: (Double, String, Boolean) -> DisplayAmount = DisplayAmount::magnitude,
+    ): ConsolidatedAmount = consolidateMoney(
+        money = MoneyByCurrency.of(previewCurrency, value),
+        on = on,
+        policy = policy,
+    )
+
+    /**
+     * @param on the date the preview's consolidated figures are reduced at — the month
+     * the user is editing, so a preview reads at the same rates the real widget would.
+     */
+    suspend fun createPreview(key: String, on: LocalDate): DashboardComponentVariant? = when (key) {
         DashboardComponentType.TOTAL_BALANCE.key -> {
             DashboardComponentVariant.TotalBalance.Preview(
                 component = DashboardComponent.TotalBalance(
-                    amount = 5432.10,
+                    amount = figure(5432.10, on, DisplayAmount::natural),
                 ),
             )
         }
@@ -24,8 +78,8 @@ class DashboardPreviewFactory(
         DashboardComponentType.OVERALL_BALANCE_STATS.key -> {
             DashboardComponentVariant.OverallBalanceStats.Preview(
                 component = DashboardComponent.OverallBalanceStats(
-                    income = 3200.0,
-                    expense = 3950.0,
+                    income = figure(3200.0, on),
+                    expense = figure(3950.0, on),
                 ),
             )
         }
@@ -33,8 +87,8 @@ class DashboardPreviewFactory(
         DashboardComponentType.CONCRETE_BALANCE_STATS.key -> {
             DashboardComponentVariant.ConcreteBalanceStats.Preview(
                 component = DashboardComponent.ConcreteBalanceStats(
-                    income = 3200.0,
-                    expense = 1800.0,
+                    income = figure(3200.0, on),
+                    expense = figure(1800.0, on),
                 ),
             )
         }
@@ -42,8 +96,8 @@ class DashboardPreviewFactory(
         DashboardComponentType.PENDING_BALANCE_STATS.key -> {
             DashboardComponentVariant.PendingBalanceStats.Preview(
                 component = DashboardComponent.PendingBalanceStats(
-                    pendingIncome = 500.0,
-                    pendingExpense = 300.0,
+                    pendingIncome = figure(500.0, on),
+                    pendingExpense = figure(300.0, on),
                 ),
             )
         }
@@ -51,8 +105,8 @@ class DashboardPreviewFactory(
         DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key -> {
             DashboardComponentVariant.CreditCardBalanceStats.Preview(
                 component = DashboardComponent.CreditCardBalanceStats(
-                    payment = 640.0,
-                    expense = 2150.0,
+                    payment = figure(640.0, on),
+                    expense = figure(2150.0, on),
                 ),
             )
         }
@@ -66,14 +120,22 @@ class DashboardPreviewFactory(
                             iconKey = "wallet",
                             name = getString(Res.string.preview_account_main),
                             isDefault = true,
-                            balance = 2500.0,
+                            balance = DisplayAmount.natural(
+                                2500.0,
+                                previewCurrency,
+                                isApproximate = false,
+                            ),
                         ),
                         DashboardAccountUi(
                             id = 2,
                             iconKey = "piggy_bank",
                             name = getString(Res.string.preview_account_savings),
                             isDefault = false,
-                            balance = 1200.0,
+                            balance = DisplayAmount.natural(
+                                1200.0,
+                                previewCurrency,
+                                isApproximate = false,
+                            ),
                         ),
                     ),
                 ),
@@ -96,6 +158,7 @@ class DashboardPreviewFactory(
                         ),
                     ),
                     domainInvoices = listOf(null),
+                    limits = listOf(amount(5000.0)),
                 ),
                 config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
             )
@@ -113,7 +176,7 @@ class DashboardPreviewFactory(
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
-                            amount = 450.0,
+                            amount = figure(450.0, on),
                             percentage = 61.64
                         ),
                         CategorySpending(
@@ -124,7 +187,7 @@ class DashboardPreviewFactory(
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
-                            amount = 280.0,
+                            amount = figure(280.0, on),
                             percentage = 38.36,
                         ),
                     ),
@@ -144,7 +207,7 @@ class DashboardPreviewFactory(
                                 type = Category.Type.INCOME,
                                 createdAt = 0,
                             ),
-                            amount = 3200.0,
+                            amount = figure(3200.0, on),
                             percentage = 84.21
                         ),
                         CategorySpending(
@@ -155,7 +218,7 @@ class DashboardPreviewFactory(
                                 type = Category.Type.INCOME,
                                 createdAt = 0,
                             ),
-                            amount = 600.0,
+                            amount = figure(600.0, on),
                             percentage = 15.79,
                         ),
                     ),
@@ -166,6 +229,7 @@ class DashboardPreviewFactory(
         DashboardComponentType.BUDGETS.key -> {
             DashboardComponentVariant.Budgets.Preview(
                 component = DashboardComponent.Budgets(
+                    targetMonth = on.yearMonth,
                     budgetProgress = listOf(
                         BudgetProgress(
                             budget = Budget(
@@ -182,6 +246,7 @@ class DashboardPreviewFactory(
                                 ),
                                 iconKey = "shopping",
                                 amount = 600.0,
+                                currency = previewCurrency,
                                 createdAt = 0,
                             ),
                             spent = 450.0,
@@ -195,45 +260,39 @@ class DashboardPreviewFactory(
             DashboardComponentVariant.PendingRecurring.Preview(
                 component = DashboardComponent.PendingRecurring(
                     recurringList = listOf(
-                        Recurring(
-                            id = 1,
-                            type = TransactionType.EXPENSE,
-                            amount = 49.90,
-                            title = getString(Res.string.preview_transaction_netflix),
-                            dayOfMonth = 15,
-                            category = null,
-                            account = Account(
+                        PendingRecurringUi(
+                            amount = amount(49.90),
+                            recurring = Recurring(
                                 id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
+                                type = TransactionType.EXPENSE,
+                                amount = 49.90,
+                                title = getString(Res.string.preview_transaction_netflix),
+                                dayOfMonth = 15,
+                                category = null,
+                                account = previewAccount(),
+                                creditCard = null,
                                 createdAt = 0,
                             ),
-                            creditCard = null,
-                            createdAt = 0,
                         ),
-                        Recurring(
-                            id = 2,
-                            type = TransactionType.INCOME,
-                            amount = 3500.0,
-                            title = getString(Res.string.preview_category_salary),
-                            dayOfMonth = 5,
-                            category = Category(
+                        PendingRecurringUi(
+                            amount = amount(3500.0),
+                            recurring = Recurring(
                                 id = 2,
-                                name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
-                                type = Category.Type.INCOME,
+                                type = TransactionType.INCOME,
+                                amount = 3500.0,
+                                title = getString(Res.string.preview_category_salary),
+                                dayOfMonth = 5,
+                                category = Category(
+                                    id = 2,
+                                    name = getString(Res.string.preview_category_salary),
+                                    icon = CategoryLazyIcon("payments"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                ),
+                                account = previewAccount(),
+                                creditCard = null,
                                 createdAt = 0,
                             ),
-                            account = Account(
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
-                            ),
-                            creditCard = null,
-                            createdAt = 0,
                         ),
                     ),
                 ),
@@ -244,6 +303,7 @@ class DashboardPreviewFactory(
         DashboardComponentType.RECENTS.key -> {
             val mainAccount = Account(
                 id = 1,
+                currency = previewCurrency,
                 name = getString(Res.string.preview_account_main),
                 iconKey = "wallet",
                 isDefault = true,
@@ -258,12 +318,14 @@ class DashboardPreviewFactory(
             )
             val foodAccount = Account(
                 id = 101,
+                currency = previewCurrency,
                 name = foodCategory.name,
                 type = AccountType.EXPENSE,
                 createdAt = 0,
             )
             val salaryAccount = Account(
                 id = 102,
+                currency = previewCurrency,
                 name = getString(Res.string.preview_category_salary),
                 type = AccountType.INCOME,
                 createdAt = 0,

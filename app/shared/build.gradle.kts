@@ -32,6 +32,8 @@ kotlin {
             implementation(projects.feature.recurring.impl)
             api(projects.feature.report.api)
             implementation(projects.feature.report.impl)
+            api(projects.feature.settings.api)
+            implementation(projects.feature.settings.impl)
             api(projects.feature.support.api)
             implementation(projects.feature.support.impl)
             api(projects.feature.transactions.api)
@@ -40,6 +42,15 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            // A base currency the test decides, over a `Settings` that is not the
+            // machine's: the gates below are about what the app shows for a given
+            // base, and reading the developer's own preferences would decide it.
+            implementation(libs.arrow.core)
+            implementation(libs.multiplatform.settings)
+            implementation(libs.multiplatform.settings.test)
         }
     }
 }

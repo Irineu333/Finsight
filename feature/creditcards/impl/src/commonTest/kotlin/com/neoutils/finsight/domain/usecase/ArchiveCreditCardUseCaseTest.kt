@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  */
 class ArchiveCreditCardUseCaseTest {
 
-    private val cardAccount = Account(id = 42L, name = "Card", type = AccountType.LIABILITY)
+    private val cardAccount = Account(id = 42L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
     private val card = CreditCard(
         id = 1L, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 42L,
     )

@@ -40,6 +40,7 @@ import com.neoutils.finsight.extension.today
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -62,7 +63,17 @@ class ConfirmRecurringModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount))
+        // Seeded in the currency of where the confirmation will post, and re-rendered
+        // when the user points it somewhere else (design D10, D17). With nothing
+        // selected yet the digits are seeded undressed, and `ReformatOnCurrencyChange`
+        // dresses them as soon as a destination states a currency.
+        val amount = rememberTextFieldState(
+            uiState.currency
+                ?.let { currencyFormatter.format(recurring.amount, it) }
+                ?: (recurring.amount * 100).roundToLong().toString()
+        )
+
+        ReformatOnCurrencyChange(state = amount, currency = uiState.currency)
         val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
 
         val typeLabel = if (recurring.type.isIncome) {
@@ -139,30 +150,44 @@ class ConfirmRecurringModal(
             AnimatedVisibility(
                 uiState.selectedTarget.isAccount || recurring.type.isIncome
             ) {
-                AccountSelector(
-                    selectedAccount = uiState.selectedAccount,
-                    accounts = uiState.accounts,
-                    onAccountSelected = { account ->
-                        viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
-                    },
-                    label = stringResource(Res.string.view_recurring_account_label),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
+                Column {
+                    AccountSelector(
+                        selectedAccount = uiState.selectedAccount,
+                        accounts = uiState.accounts,
+                        onAccountSelected = { account ->
+                            viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
+                        },
+                        label = stringResource(Res.string.view_recurring_account_label),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    CurrencyFilterNote(
+                        visible = uiState.hiddenByCurrency,
+                        currency = uiState.recurringCurrency,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             AnimatedVisibility(uiState.selectedTarget.isCreditCard && recurring.type.isExpense) {
-                CreditCardSelector(
-                    creditCards = uiState.creditCards,
-                    creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { card ->
-                        viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
+                Column {
+                    CreditCardSelector(
+                        creditCards = uiState.creditCards,
+                        creditCard = uiState.selectedCreditCard,
+                        onCreditCardSelected = { card ->
+                            viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    CurrencyFilterNote(
+                        visible = uiState.hiddenByCurrency,
+                        currency = uiState.recurringCurrency,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             AnimatedVisibility(
@@ -183,7 +208,11 @@ class ConfirmRecurringModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_confirm_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(),
+                // Nothing selected denominates nothing: the field does not format, and
+                // Confirm is already refused in that state.
+                inputTransformation = uiState.currency?.let {
+                    rememberMoneyInputTransformation(it, amount)
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,
@@ -274,4 +303,26 @@ class ConfirmRecurringModal(
             }
         }
     }
+}
+
+/**
+ * Why a selector offers less than what the user holds.
+ *
+ * Both selectors of this modal shrink for the same reason and say so with the same
+ * sentence, so the sentence has one place. Without it the control would simply be missing
+ * accounts or cards, which reads as a bug rather than as a rule (design D26).
+ */
+@Composable
+private fun CurrencyFilterNote(
+    visible: Boolean,
+    currency: String?,
+) {
+    if (!visible || currency == null) return
+
+    Text(
+        text = stringResource(Res.string.confirm_recurring_currency_filter, currency),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp, start = 4.dp),
+    )
 }

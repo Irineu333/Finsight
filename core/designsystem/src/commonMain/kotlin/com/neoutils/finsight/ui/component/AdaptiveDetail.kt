@@ -264,8 +264,9 @@ fun DetailPane(
                             .fillMaxSize()
                             .background(paneColor),
                     ) {
-                        Box(
-                            contentAlignment = Alignment.CenterEnd,
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(end = 12.dp)

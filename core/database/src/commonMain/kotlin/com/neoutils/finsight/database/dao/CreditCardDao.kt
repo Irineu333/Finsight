@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.Flow
 
 // Same rule as categories: a card is closed when its LIABILITY account is (D21).
 private const val OPEN_CREDIT_CARDS =
-    "SELECT cc.* FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId " +
+    "SELECT cc.*, a.isArchived AS isArchived, a.currency AS currency " +
+        "FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId " +
         "WHERE a.isArchived = 0"
 
 // Same as categories: history keeps rendering a card that was later closed.
 private const val ALL_CREDIT_CARDS =
-    "SELECT cc.*, a.isArchived AS isArchived FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId"
+    "SELECT cc.*, a.isArchived AS isArchived, a.currency AS currency " +
+        "FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId"
 
 @Dao
 interface CreditCardDao {
@@ -25,11 +27,14 @@ interface CreditCardDao {
     @Query(ALL_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>>
 
+    // The open listings carry the account's row too, and not because they need the
+    // closure flag — it is always false here — but because they need the currency, and
+    // the join that answers it is the one already being made.
     @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
-    fun observeAllCreditCards(): Flow<List<CreditCardEntity>>
+    fun observeAllCreditCards(): Flow<List<CreditCardWithArchival>>
 
     @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
-    suspend fun getAllCreditCardsList(): List<CreditCardEntity>
+    suspend fun getAllCreditCardsList(): List<CreditCardWithArchival>
 
     // Carries the account's archival, like the observe variant: a plain read would
     // report every card as active, so a caller checking `isArchived` off a by-id read

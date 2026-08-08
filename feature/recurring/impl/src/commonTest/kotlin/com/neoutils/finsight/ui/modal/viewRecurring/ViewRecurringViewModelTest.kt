@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.modal.viewRecurring
 
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
+import com.neoutils.finsight.FakeAccountRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.Budget
@@ -81,6 +82,7 @@ class ViewRecurringViewModelTest {
     ) = ViewRecurringViewModel(
         recurringId = 1L,
         recurringRepository = repository,
+        accountRepository = FakeAccountRepository(),
         resolveRetirability = resolver(hasTransaction = hasTransaction),
         crashlytics = crashlytics,
     )

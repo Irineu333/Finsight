@@ -85,6 +85,15 @@ class AddTransactionViewModel(
         }
     }
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto:
+     * the card facade names the account, and the account is the only place a currency is
+     * stated (design D17). Resolved here, beside the card, so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.getAccountById(it.accountId)?.currency }
+    }
+
     private val categories = categoryRepository.observeAllCategories()
 
     private val creditCards = creditCardRepository
@@ -120,7 +129,8 @@ class AddTransactionViewModel(
         selectedCreditCard,
         selectedDueMonth,
         selectedAccount,
-    ) { input, categories, creditCards, accounts, invoices, selectedCard, dueMonth, account ->
+        creditCardCurrency,
+    ) { input, categories, creditCards, accounts, invoices, selectedCard, dueMonth, account, cardCurrency ->
 
         // The account nobody chose is the default one, and the form has to see the same
         // account the selector shows — otherwise a submit writes to neither.
@@ -155,6 +165,7 @@ class AddTransactionViewModel(
             invoiceSelection = invoiceSelection,
             accounts = accounts,
             selectedAccount = effectiveAccount,
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,

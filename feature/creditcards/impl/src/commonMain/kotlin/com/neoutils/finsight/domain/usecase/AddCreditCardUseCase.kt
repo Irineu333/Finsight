@@ -25,8 +25,13 @@ class AddCreditCardUseCase(
 
     private val currentDate get() = clock.today()
 
+    /**
+     * @param currency what the card's `LIABILITY` account is denominated in — chosen in
+     * the form, carried explicitly, and fixed from the moment the card exists (D12).
+     */
     suspend operator fun invoke(
-        form: CreditCardForm
+        form: CreditCardForm,
+        currency: String,
     ): Either<Throwable, CreditCard> {
         return either {
             validateCreditCardName(
@@ -39,7 +44,7 @@ class AddCreditCardUseCase(
 
              catch {
                 creditCard.copy(
-                    id = repository.insert(creditCard)
+                    id = repository.insert(creditCard, currency)
                 )
             }.bind()
         }.onRight { creditCard ->

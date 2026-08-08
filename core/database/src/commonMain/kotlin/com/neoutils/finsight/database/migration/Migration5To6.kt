@@ -5,7 +5,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Gives a credit card its own `iconKey`.
+ * Schema 5 → 6: `credit_cards` gains `iconKey`.
  *
  * Shipped in 1.5.0-rc01.
  */

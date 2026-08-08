@@ -8,12 +8,10 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.DimensionFlows
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -23,6 +21,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * Delete and close are different actions, and each refuses the other's case
@@ -32,7 +35,7 @@ import kotlin.test.assertTrue
  */
 class RetireAccountGuardsTest {
 
-    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET)
+    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, currency = "BRL")
 
     @Test
     fun `deleting an account with transactions is refused and not silently closed`() = runTest {
@@ -123,7 +126,7 @@ class RetireAccountGuardsTest {
         // A category is an EXPENSE account: its balance is accumulated spending, not
         // money sitting anywhere, and it is never zero once used. Requiring zero here
         // made closing a used category impossible.
-        val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL")
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(
             accountDao = dao,
@@ -210,27 +213,34 @@ private class FakeEntries(
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
 private class RecordingAccountDao : AccountDao {
@@ -238,6 +248,7 @@ private class RecordingAccountDao : AccountDao {
     override suspend fun close(id: Long) { closed += id }
     override suspend fun reopen(id: Long) { closed -= id }
     override suspend fun entryCount(accountId: Long): Int = throw NotImplementedError()
+    override suspend fun countByCurrency(currency: String): Int = throw NotImplementedError()
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<AccountEntity> = emptyList()
     override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> = emptyList()
@@ -245,7 +256,8 @@ private class RecordingAccountDao : AccountDao {
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = emptyList()
     override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAccountById(id: Long): AccountEntity? = throw NotImplementedError()
-    override suspend fun getByTypeAndName(type: AccountEntity.Type, name: String): AccountEntity? = throw NotImplementedError()
+    override suspend fun currenciesInUse(systemNames: List<String>): List<String> = throw NotImplementedError()
+    override suspend fun getByTypeAndName(type: AccountEntity.Type, name: String, currency: String): AccountEntity? = throw NotImplementedError()
     override fun observeAccountById(id: Long): Flow<AccountEntity?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): AccountEntity? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<AccountEntity?> = throw NotImplementedError()

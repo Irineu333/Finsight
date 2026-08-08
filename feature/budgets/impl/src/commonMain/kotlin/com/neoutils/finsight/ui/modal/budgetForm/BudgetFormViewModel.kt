@@ -14,9 +14,13 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
+import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
@@ -25,9 +29,11 @@ import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,6 +44,14 @@ class BudgetFormViewModel(
     private val formatter: CurrencyFormatter,
     private val budget: Budget? = null,
     private val budgetRepository: IBudgetRepository,
+    // Which currencies the user holds — across accounts **and** cards, which is why it
+    // is one use case and not a listing this form assembles: a user whose foreign
+    // spending is all on a card is exactly the case D13 exists for, and the account
+    // listing does not report that currency at all.
+    private val getAccountCurrencies: GetAccountCurrenciesUseCase,
+    // The currencies the app offers, read from the single source that holds them; which
+    // of them this form actually presents is still narrowed to the ones in use.
+    currencyRepository: ICurrencyRepository,
     private val categoryRepository: ICategoryRepository,
     private val recurringRepository: IRecurringRepository,
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
@@ -51,10 +65,57 @@ class BudgetFormViewModel(
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
-    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
+    // Only an existing budget seeds the field, and it is read back in the currency it was
+    // created with — the denomination of a stored limit never changes (design D13).
+    private val amount = MutableStateFlow(
+        budget?.let { formatter.format(it.amount, it.currency) } ?: ""
+    )
     private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
     private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
     private val selectedRecurring = MutableStateFlow<Recurring?>(null)
+    /**
+     * What the limit is denominated in. Editing never re-reads it — the denomination of
+     * a stored limit is fixed for the same reason an account's is (design D12/D13), and
+     * reinterpreting it would rewrite in silence the meaning of a number the user typed.
+     * Creating takes it from the **default account**, because that is where the user
+     * actually transacts; the base currency is not the answer, since it only says in
+     * which currency he reads totals.
+     */
+    private val accountCurrencies = flow { emit(getAccountCurrencies()) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = AccountCurrencies(inUse = emptyList(), ofDefaultAccount = null),
+        )
+
+    private val pickedCurrency = MutableStateFlow<String?>(null)
+
+    /**
+     * The denomination of the limit, and **whether the user is asked about it at all**.
+     *
+     * The control is offered only when there is a choice to make (design D13): with one
+     * currency across the user's accounts and cards, the form is exactly the one it has
+     * always been — not a control more — and the limit takes that single currency,
+     * which is the only possible answer rather than a silent default.
+     *
+     * This is why it differs from the account form, which shows its currency row even
+     * with one currency (design D23): that form is the **door** a second currency is
+     * born through and has to stay open, while this one only picks among the ones that
+     * already exist.
+     */
+    private val currencyState: Flow<LimitCurrency> = combine(
+        accountCurrencies,
+        pickedCurrency,
+        currencyRepository.observeOffered(),
+    ) { currencies, picked, offered ->
+        limitCurrencyChoice(
+            existing = budget,
+            currencies = currencies,
+            picked = picked,
+            offered = offered,
+        )
+    }
+
     private val validation = ObservableMutableMap(
         map = mutableMapOf(
             if (isEditMode) {
@@ -93,7 +154,8 @@ class BudgetFormViewModel(
         combine(recurringRepository.observeAllRecurring(), formFields, validation) { rec, fields, v ->
             Triple(rec, fields, v)
         },
-    ) { categories, budgets, (allRecurrings, fields, validation) ->
+        currencyState,
+    ) { categories, budgets, (allRecurrings, fields, validation), limitCurrency ->
         val budgetedCategoryIds = budgets
             .filter { it.id != budget?.id }
             .flatMap { it.categories }
@@ -119,6 +181,10 @@ class BudgetFormViewModel(
             selectedIcon = fields.selectedIcon,
             title = fields.title,
             amount = fields.amount,
+            currency = limitCurrency.currency,
+            hasCurrencyChoice = limitCurrency.hasChoice,
+            canChangeCurrency = limitCurrency.canChange,
+            selectableCurrencies = limitCurrency.selectable,
             validation = validation,
             isEditMode = isEditMode,
             limitType = fields.limitType,
@@ -136,7 +202,8 @@ class BudgetFormViewModel(
             selectedCategories = budget?.categories ?: emptyList(),
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
-            amount = budget?.amount?.let { formatter.format(it) } ?: "",
+            amount = budget?.let { formatter.format(it.amount, it.currency) } ?: "",
+            currency = budget?.currency,
             validation = validation,
             isEditMode = isEditMode,
             limitType = budget?.limitType ?: LimitType.FIXED,
@@ -158,6 +225,11 @@ class BudgetFormViewModel(
                 }
             }
             is BudgetFormAction.AmountChanged -> amount.update { action.amount }
+
+            is BudgetFormAction.CurrencySelected -> {
+                // Never while editing, and never when there was nothing to choose.
+                if (!isEditMode) pickedCurrency.value = action.code
+            }
             is BudgetFormAction.IconSelected -> selectedIcon.update { action.icon }
             is BudgetFormAction.LimitTypeChanged -> limitType.update { action.limitType }
             is BudgetFormAction.PercentageChanged -> percentage.update { action.percentage }
@@ -197,6 +269,9 @@ class BudgetFormViewModel(
 
             val state = uiState.value
             if (!state.canSubmit) return@launch
+            // Guaranteed by `canSubmit`; re-read because a limit must never be stored
+            // with a denomination nobody chose.
+            val currency = state.currency ?: return@launch
 
             val resolvedAmount = when (state.limitType) {
                 LimitType.FIXED -> state.amount.moneyToDouble()
@@ -213,6 +288,8 @@ class BudgetFormViewModel(
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
+                        // `currency` is deliberately absent from this copy: the
+                        // denomination of a stored limit never changes.
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
@@ -225,6 +302,7 @@ class BudgetFormViewModel(
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
+                        currency = currency,
                         limitType = state.limitType,
                         percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
                         recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
@@ -287,4 +365,51 @@ internal fun offeredRecurrings(
     offered = open,
     chosen = listOfNotNull(selected),
     id = Recurring::id,
+)
+
+/**
+ * What the limit is denominated in, and **whether the user is asked about it at all**.
+ *
+ * The two profiles design D13 is written around:
+ *
+ * | currencies across the user's accounts and cards | the form |
+ * |---|---|
+ * | one | **no control** — the limit takes it, the only possible answer |
+ * | more than one | a picker, pre-selected with the default account's |
+ *
+ * The suggestion is the **default account's** currency and deliberately not the base:
+ * the base answers in which currency the user reads totals, not the one he spends in.
+ *
+ * Editing never offers the choice, for the same reason an account's currency is
+ * immutable (design D12): reinterpreting a stored limit rewrites in silence the meaning
+ * of a number the user typed. Changing it is creating another budget.
+ *
+ * And this is why the rule differs from D23, which keeps the account form's currency row
+ * visible even with one currency: that form is the **door** a second currency is born
+ * through and has to stay open; this one only picks among the ones that already exist.
+ */
+internal fun limitCurrencyChoice(
+    existing: Budget?,
+    currencies: AccountCurrencies,
+    picked: String?,
+    offered: List<CurrencyInfo>,
+): LimitCurrency = LimitCurrency(
+    currency = existing?.currency ?: picked ?: currencies.ofDefaultAccount,
+    hasChoice = currencies.inUse.size > 1,
+    canChange = existing == null && currencies.inUse.size > 1,
+    selectable = offered.filter { it.code in currencies.inUse },
+)
+
+internal data class LimitCurrency(
+    val currency: String?,
+    /**
+     * Whether the row is **shown** — decided by the app holding more than one currency,
+     * and by nothing else. Distinct from [canChange], which decides whether it is a
+     * picker or a locked state: editing a budget shows its denomination locked (a
+     * stored limit is never re-denominated), and hiding it there would answer "which
+     * currency is this number in?" with silence.
+     */
+    val hasChoice: Boolean,
+    val canChange: Boolean,
+    val selectable: List<CurrencyInfo>,
 )

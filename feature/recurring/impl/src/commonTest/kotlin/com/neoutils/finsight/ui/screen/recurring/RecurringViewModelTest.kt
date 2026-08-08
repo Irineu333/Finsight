@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.recurring
 
 import app.cash.turbine.test
+import com.neoutils.finsight.FakeAccountRepository
 import com.neoutils.finsight.FakeRecurringRepository
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
@@ -41,7 +42,7 @@ class RecurringViewModelTest {
     ): List<Long> {
         val repository = FakeRecurringRepository()
         repository.all.value = recurrings
-        val vm = RecurringViewModel(repository)
+        val vm = RecurringViewModel(repository, FakeAccountRepository())
 
         var ids: List<Long> = emptyList()
         vm.uiState.test {
@@ -51,7 +52,7 @@ class RecurringViewModelTest {
             while (state !is RecurringUiState.Content || state.filter != filter) {
                 state = awaitItem()
             }
-            ids = state.filteredRecurring.map { it.id }
+            ids = state.filteredRecurring.map { it.recurring.id }
             cancelAndIgnoreRemainingEvents()
         }
         return ids
@@ -85,7 +86,7 @@ class RecurringViewModelTest {
     fun `empty means no recurring at all - not an empty filter`() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
         repository.all.value = listOf(archived)
-        val vm = RecurringViewModel(repository)
+        val vm = RecurringViewModel(repository, FakeAccountRepository())
 
         vm.uiState.test {
             assertIs<RecurringUiState.Loading>(awaitItem())

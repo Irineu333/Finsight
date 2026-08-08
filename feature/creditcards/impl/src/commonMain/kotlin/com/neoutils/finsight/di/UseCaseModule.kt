@@ -65,6 +65,8 @@ val useCaseModules = module {
 
     factory {
         PayInvoicePaymentUseCase(
+            harvestExchangeRate = get(),
+            accountRepository = get(),
             transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
@@ -74,6 +76,8 @@ val useCaseModules = module {
 
     factory {
         AdvanceInvoicePaymentUseCase(
+            harvestExchangeRate = get(),
+            accountRepository = get(),
             transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),

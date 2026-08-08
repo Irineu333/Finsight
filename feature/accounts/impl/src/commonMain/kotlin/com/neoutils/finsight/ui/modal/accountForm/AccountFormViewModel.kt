@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -27,6 +29,15 @@ import kotlinx.coroutines.launch
 class AccountFormViewModel(
     private val account: Account?,
     private val validateAccountName: ValidateAccountNameUseCase,
+    // The base currency is a **pre-selection** here and denominates nothing: it answers
+    // "which currency is this new account most likely in", exactly as it does for the
+    // account a fresh install starts with. What the account is actually denominated in
+    // is whatever the user leaves in the row, and after that it never changes (D12).
+    baseCurrencyRepository: IBaseCurrencyRepository,
+    // The currencies a form may offer are stored data now, read from the single source
+    // that holds them — the archived ones excluded, because archiving answers exactly
+    // "stop offering me this".
+    currencyRepository: ICurrencyRepository,
     private val createAccountUseCase: CreateAccountUseCase,
     private val updateAccountUseCase: UpdateAccountUseCase,
     private val ensureYieldCategory: EnsureYieldCategoryUseCase,
@@ -54,13 +65,29 @@ class AccountFormViewModel(
     private val isDefault = MutableStateFlow(account?.isDefault ?: false)
     private val yieldsInterest = MutableStateFlow(account?.yieldsInterest ?: false)
 
+    private val currency = MutableStateFlow(
+        account?.currency ?: baseCurrencyRepository.observe().value
+    )
+
+    private val offeredCurrencies = currencyRepository.observeOffered()
+
+    // `combine` takes five, and the form has six pieces of state: the two that answer
+    // the same question — which currency, and which ones may be picked — travel
+    // together, with the yield flag alongside them.
+    private val currencyAndYield = combine(
+        currency,
+        offeredCurrencies,
+        yieldsInterest,
+        ::Triple,
+    )
+
     val uiState = combine(
         name,
         selectedIcon,
         isDefault,
-        yieldsInterest,
         validation,
-    ) { name, selectedIcon, isDefault, yieldsInterest, validation ->
+        currencyAndYield,
+    ) { name, selectedIcon, isDefault, validation, (currency, selectableCurrencies, yieldsInterest) ->
         AccountFormUiState(
             name = name,
             selectedIcon = selectedIcon,
@@ -70,6 +97,9 @@ class AccountFormViewModel(
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
+            currency = currency,
+            canChangeCurrency = !isEditMode,
+            selectableCurrencies = selectableCurrencies,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -83,6 +113,9 @@ class AccountFormViewModel(
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
+            currency = currency.value,
+            canChangeCurrency = !isEditMode,
+            selectableCurrencies = emptyList(),
         )
     )
 
@@ -102,6 +135,12 @@ class AccountFormViewModel(
 
             is AccountFormAction.IconSelected -> {
                 selectedIcon.value = action.icon
+            }
+
+            is AccountFormAction.CurrencySelected -> {
+                // Guarded by the mode as well as by the form: an edit has no picker to
+                // open, and the domain refuses the change anyway.
+                if (!isEditMode) currency.value = action.code
             }
 
             is AccountFormAction.Submit -> submit()
@@ -171,6 +210,7 @@ class AccountFormViewModel(
             name = name,
             isDefault = isDefault.value,
             iconKey = selectedIcon.value.key,
+            currency = currency.value,
             yieldsInterest = yieldsInterest.value,
         ).onLeft {
             crashlytics.recordException(it)

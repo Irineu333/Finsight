@@ -50,7 +50,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.navigation.LocalNavController

@@ -13,12 +13,39 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
 /**
- * Aggregated natural balance (cents) of one dimension. A `null` [dimensionId] is
- * the legitimate *unclassified* bucket — entries on a nominal account carrying no
- * dimension — and not an absence of data: it is the same `GROUP BY`, one of whose
- * groups happens to be "none".
+ * What every row of a `GROUP BY currency` aggregate has in common: the currency its
+ * figures are denominated in. It exists so the repository lifts any of those
+ * projections into a per-currency figure through one path instead of one per
+ * projection.
  */
-data class DimensionTotal(val dimensionId: Long?, val total: Long)
+interface CurrencyScoped {
+    val currency: String
+}
+
+/**
+ * One currency's share of a grouped aggregate (cents). Every aggregate that is not
+ * scoped to a single account returns a list of these, one row per currency present —
+ * the ledger never sums two currencies into one number (design D8).
+ *
+ * **A grouped aggregate has no empty row.** `COALESCE(SUM(...), 0)` without a
+ * `GROUP BY` always returns one row of zeros; with one it returns *no rows* when
+ * nothing matched. An empty list is therefore the honest answer to "there is no
+ * movement", and it is a different fact from a row whose total is zero.
+ */
+data class CurrencyTotal(override val currency: String, val total: Long) : CurrencyScoped
+
+/**
+ * One currency's share of a per-dimension grouped aggregate (cents).
+ *
+ * A `null` [dimensionId] is the legitimate *unclassified* bucket — entries on a
+ * nominal account carrying no dimension — and not an absence of data: it is the same
+ * `GROUP BY`, one of whose groups happens to be "none".
+ */
+data class DimensionCurrencyTotal(
+    val dimensionId: Long?,
+    override val currency: String,
+    val total: Long,
+) : CurrencyScoped
 
 /**
  * The per-account, per-period money flows (cents) an account screen shows, derived
@@ -35,6 +62,9 @@ data class DimensionTotal(val dimensionId: Long?, val total: Long)
  * All are positive magnitudes except [adjustment], which is signed.
  */
 data class AccountPeriodTotals(
+    // The account's own currency, not a group: this read is scoped to one account,
+    // so it stays scalar and simply says what its figures are denominated in.
+    val currency: String,
     val income: Long,
     val yield: Long,
     val expense: Long,
@@ -43,33 +73,40 @@ data class AccountPeriodTotals(
 )
 
 /**
- * The money flows (cents) of one sub-ledger, from the entries carrying its
- * dimension. [expense]/[advancePayment] are positive magnitudes; [adjustment] is
- * signed.
+ * The money flows (cents) of one sub-ledger **in one currency**, from the entries
+ * carrying its dimension. [expense]/[advancePayment] are positive magnitudes;
+ * [adjustment] is signed.
  */
 data class DimensionPeriodTotals(
+    override val currency: String,
     val expense: Long,
     val advancePayment: Long,
     val adjustment: Long,
-)
-
-/** [DimensionPeriodTotals] keyed by its dimension, for the batched grouped read. */
-data class DimensionPeriodTotalsRow(
-    val dimensionId: Long,
-    val expense: Long,
-    val advancePayment: Long,
-    val adjustment: Long,
-)
+) : CurrencyScoped
 
 /**
- * Month-wide card [expense]/[payment] (cents), both positive magnitudes, plus the
- * signed [adjustment] — the EQUITY counter-leg — in symmetry with [AssetMonthTotals].
+ * [DimensionPeriodTotals] keyed by its dimension, for the batched grouped read —
+ * one row per (dimension, currency) pair.
+ */
+data class DimensionPeriodTotalsRow(
+    val dimensionId: Long,
+    override val currency: String,
+    val expense: Long,
+    val advancePayment: Long,
+    val adjustment: Long,
+) : CurrencyScoped
+
+/**
+ * Month-wide card [expense]/[payment] (cents) **in one currency**, both positive
+ * magnitudes, plus the signed [adjustment] — the EQUITY counter-leg — in symmetry
+ * with [AssetMonthTotals].
  */
 data class LiabilityMonthTotals(
+    override val currency: String,
     val expense: Long,
     val payment: Long,
     val adjustment: Long,
-)
+) : CurrencyScoped
 
 /**
  * The month-wide income/expense/adjustment (cents) across every ASSET account,
@@ -81,11 +118,12 @@ data class LiabilityMonthTotals(
  * and [income] no longer contains it. See [EntryDao.assetMonthTotals].
  */
 data class AssetMonthTotals(
+    override val currency: String,
     val income: Long,
     val yield: Long,
     val expense: Long,
     val adjustment: Long,
-)
+) : CurrencyScoped
 
 /**
  * The report figures for an account/card scope over a period, all in cents. [income]/
@@ -95,11 +133,12 @@ data class AssetMonthTotals(
  * transaction whose ASSET legs all fall inside the scope — are excluded on both sides.
  */
 data class ScopeStatsTotals(
+    override val currency: String,
     val income: Long,
     val expense: Long,
     val balance: Long,
     val openingBalance: Long,
-)
+) : CurrencyScoped
 
 /** An [EntryEntity] with its referenced [AccountEntity] resolved — a complete leg. */
 data class EntryWithAccount(
@@ -179,41 +218,60 @@ interface EntryDao {
 
     /**
      * Combined natural balance of every account of one nature up to and including the
-     * month. The nature is a parameter, not a literal, so the same aggregate serves
-     * ASSET and LIABILITY — and their consolidated figure is the sum of two calls,
-     * since liabilities are stored in credit.
+     * month, **per currency**. The nature is a parameter, not a literal, so the same
+     * aggregate serves ASSET and LIABILITY — and their consolidated figure is the sum
+     * of two calls, since liabilities are stored in credit.
      */
     @Query(
-        "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
+        "SELECT e.currency AS currency, COALESCE(SUM(e.amount), 0) AS total FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
             "JOIN accounts a ON a.id = e.accountId " +
-            "WHERE a.type = :type AND substr(o.date, 1, 7) <= :yearMonth"
+            "WHERE a.type = :type AND substr(o.date, 1, 7) <= :yearMonth " +
+            "GROUP BY e.currency"
     )
-    suspend fun balanceUpToMonthByType(type: String, yearMonth: String): Long
-
-    /** Natural balance of a dimension within a single month (yyyy-MM). */
-    @Query(
-        "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
-            "JOIN transactions o ON o.id = e.transactionId " +
-            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) = :yearMonth"
-    )
-    suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long
-
-    /** Natural balance of a sub-ledger = Σ the entries tagged with its dimension. */
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE dimensionId = :dimensionId")
-    suspend fun dimensionNaturalBalance(dimensionId: Long): Long
+    suspend fun balanceUpToMonthByType(type: String, yearMonth: String): List<CurrencyTotal>
 
     /**
-     * The natural balance of each dimension in [dimensionIds], in one grouped query,
-     * so a screen listing many sub-ledgers reads them all at once instead of one
-     * query per dimension. A dimension with no entries is simply absent from the
-     * result (its balance is 0).
+     * Natural balance of a dimension within a single month (yyyy-MM), per currency.
+     * A dimension is an analytic axis, not an account: nothing ties it to a single
+     * currency, so this read is grouped whatever the dimension's kind is (design D8).
      */
     @Query(
-        "SELECT dimensionId AS dimensionId, COALESCE(SUM(amount), 0) AS total " +
-            "FROM entries WHERE dimensionId IN (:dimensionIds) GROUP BY dimensionId"
+        "SELECT e.currency AS currency, COALESCE(SUM(e.amount), 0) AS total FROM entries e " +
+            "JOIN transactions o ON o.id = e.transactionId " +
+            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) = :yearMonth " +
+            "GROUP BY e.currency"
     )
-    suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<DimensionTotal>
+    suspend fun dimensionBalanceInMonth(
+        dimensionId: Long,
+        yearMonth: String,
+    ): List<CurrencyTotal>
+
+    /**
+     * Natural balance of a sub-ledger, per currency = Σ the entries tagged with its
+     * dimension, grouped.
+     */
+    @Query(
+        "SELECT currency AS currency, COALESCE(SUM(amount), 0) AS total " +
+            "FROM entries WHERE dimensionId = :dimensionId GROUP BY currency"
+    )
+    suspend fun dimensionNaturalBalance(dimensionId: Long): List<CurrencyTotal>
+
+    /**
+     * The natural balance of each dimension in [dimensionIds], per currency, in one
+     * grouped query, so a screen listing many sub-ledgers reads them all at once
+     * instead of one query per dimension. A dimension with no entries is simply
+     * absent from the result (its balance is 0).
+     */
+    @Query(
+        "SELECT dimensionId AS dimensionId, currency AS currency, " +
+            "COALESCE(SUM(amount), 0) AS total " +
+            "FROM entries WHERE dimensionId IN (:dimensionIds) " +
+            "GROUP BY dimensionId, currency"
+    )
+    suspend fun naturalBalanceByDimension(
+        dimensionIds: List<Long>,
+    ): List<DimensionCurrencyTotal>
 
     /**
      * The account's income/yield/expense/adjustment/invoice-payment flows within a
@@ -230,6 +288,7 @@ interface EntryDao {
     @Query(
         """
         SELECT
+          (SELECT a.currency FROM accounts a WHERE a.id = :accountId) AS currency,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND yl = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND yl = 1 AND amount > 0 THEN amount ELSE 0 END), 0) AS yield,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
@@ -255,24 +314,29 @@ interface EntryDao {
     /**
      * The expense/advance-payment/adjustment breakdown of a sub-ledger, from the
      * entries tagged with its dimension, classified by sign and by whether the
-     * transaction also has an EQUITY counter-leg. See [DimensionPeriodTotals]. All are
-     * positive magnitudes except [adjustment], which is signed.
+     * transaction also has an EQUITY counter-leg, grouped by currency. See
+     * [DimensionPeriodTotals]. All are positive magnitudes except [adjustment], which
+     * is signed.
+     *
+     * The currency has to be projected by the derived table before the outer
+     * `GROUP BY` can group by it — the inner query is what reaches the entry rows.
      */
     @Query(
         """
-        SELECT
+        SELECT currency AS currency,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS advancePayment,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
-          SELECT e.amount AS amount,
+          SELECT e.amount AS amount, e.currency AS currency,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
           FROM entries e
           WHERE e.dimensionId = :dimensionId
         )
+        GROUP BY currency
         """
     )
-    suspend fun dimensionPeriodTotals(dimensionId: Long): DimensionPeriodTotals
+    suspend fun dimensionPeriodTotals(dimensionId: Long): List<DimensionPeriodTotals>
 
     /**
      * The same expense/advance-payment/adjustment breakdown as [dimensionPeriodTotals],
@@ -282,17 +346,17 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT dimensionId AS dimensionId,
+        SELECT dimensionId AS dimensionId, currency AS currency,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS advancePayment,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
-          SELECT e.dimensionId AS dimensionId, e.amount AS amount,
+          SELECT e.dimensionId AS dimensionId, e.amount AS amount, e.currency AS currency,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
           FROM entries e
           WHERE e.dimensionId IN (:dimensionIds)
         )
-        GROUP BY dimensionId
+        GROUP BY dimensionId, currency
         """
     )
     suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<DimensionPeriodTotalsRow>
@@ -306,21 +370,22 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT
+        SELECT currency AS currency,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
-          SELECT e.amount AS amount,
+          SELECT e.amount AS amount, e.currency AS currency,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq
           FROM entries e
           JOIN accounts a ON a.id = e.accountId
           JOIN transactions o ON o.id = e.transactionId
           WHERE a.type = 'LIABILITY' AND substr(o.date, 1, 7) = :yearMonth
         )
+        GROUP BY currency
         """
     )
-    suspend fun liabilityMonthTotals(yearMonth: String): LiabilityMonthTotals
+    suspend fun liabilityMonthTotals(yearMonth: String): List<LiabilityMonthTotals>
 
     /**
      * The month-wide income/expense/adjustment across every ASSET account (yyyy-MM),
@@ -339,13 +404,13 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT
+        SELECT currency AS currency,
           COALESCE(SUM(CASE WHEN eq = 0 AND yl = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
           COALESCE(SUM(CASE WHEN eq = 0 AND yl = 1 AND amount > 0 THEN amount ELSE 0 END), 0) AS yield,
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
-          SELECT e.amount AS amount,
+          SELECT e.amount AS amount, e.currency AS currency,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a5 ON a5.id = x.accountId WHERE x.transactionId = e.transactionId AND a5.type = 'INCOME' AND x.dimensionId = :yieldDimensionId) AS yl
           FROM entries e
@@ -357,9 +422,13 @@ interface EntryDao {
               OR EXISTS(SELECT 1 FROM entries x JOIN accounts a4 ON a4.id = x.accountId WHERE x.transactionId = e.transactionId AND a4.type IN ('EXPENSE', 'INCOME'))
             )
         )
+        GROUP BY currency
         """
     )
-    suspend fun assetMonthTotals(yearMonth: String, yieldDimensionId: Long?): AssetMonthTotals
+    suspend fun assetMonthTotals(
+        yearMonth: String,
+        yieldDimensionId: Long?,
+    ): List<AssetMonthTotals>
 
     /** Number of entries carrying a dimension within a month (yyyy-MM). */
     @Query(
@@ -369,13 +438,24 @@ interface EntryDao {
     )
     suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int
 
-    /** Net worth = Σ ASSET + LIABILITY natural balances (liabilities are stored negative). */
+    /**
+     * Net worth per currency = Σ ASSET + LIABILITY natural balances (liabilities are
+     * stored negative).
+     *
+     * **CONVERSION stays out, and that is the point.** With the rate at 5.50, a
+     * transfer of R$ 550 → US$ 100 leaves `−550 BRL` and `+100 USD` in the user's own
+     * accounts, which consolidate to zero: net worth does not move, as it should. If
+     * the rate goes to 6.00 the same balances consolidate to `+50` — the gain shows up
+     * in the user's own accounts, and including the conversion accounts would count it
+     * twice.
+     */
     @Query(
-        "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
+        "SELECT e.currency AS currency, COALESCE(SUM(e.amount), 0) AS total FROM entries e " +
             "JOIN accounts a ON a.id = e.accountId " +
-            "WHERE a.type IN ('ASSET', 'LIABILITY')"
+            "WHERE a.type IN ('ASSET', 'LIABILITY') " +
+            "GROUP BY e.currency"
     )
-    suspend fun netWorthCents(): Long
+    suspend fun netWorthCents(): List<CurrencyTotal>
 
     /**
      * Per-dimension totals of the nominal legs of a given nature in a date range,
@@ -389,13 +469,14 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT e.dimensionId AS dimensionId, COALESCE(SUM(e.amount), 0) AS total
+        SELECT e.dimensionId AS dimensionId, e.currency AS currency,
+          COALESCE(SUM(e.amount), 0) AS total
         FROM entries e
         JOIN transactions o ON o.id = e.transactionId
         JOIN accounts a ON a.id = e.accountId
         WHERE a.type = :nominalType AND o.date BETWEEN :start AND :end
           AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = o.id AND s.accountId IN (:siblingAccountIds))
-        GROUP BY e.dimensionId
+        GROUP BY e.dimensionId, e.currency
         """
     )
     suspend fun totalsByDimensionWithSiblingLeg(
@@ -403,7 +484,7 @@ interface EntryDao {
         start: LocalDate,
         end: LocalDate,
         siblingAccountIds: List<Long>,
-    ): List<DimensionTotal>
+    ): List<DimensionCurrencyTotal>
 
     /**
      * The income/expense/balance/opening-balance a report shows for an account or card
@@ -418,13 +499,13 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT
+        SELECT currency AS currency,
           COALESCE(SUM(CASE WHEN inPeriod = 1 AND eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
           COALESCE(SUM(CASE WHEN inPeriod = 1 AND eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN inPeriod = 1 THEN amount ELSE 0 END), 0) AS balance,
           COALESCE(SUM(CASE WHEN inPeriod = 0 THEN amount ELSE 0 END), 0) AS openingBalance
         FROM (
-          SELECT e.amount AS amount,
+          SELECT e.amount AS amount, e.currency AS currency,
             CASE WHEN o.date >= :startDate THEN 1 ELSE 0 END AS inPeriod,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId
                    WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
@@ -441,13 +522,14 @@ interface EntryDao {
               )
             )
         )
+        GROUP BY currency
         """
     )
     suspend fun scopeStats(
         scopeIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ScopeStatsTotals
+    ): List<ScopeStatsTotals>
 
     /**
      * Per-dimension totals scoped to a set of sub-ledgers: the nominal legs of
@@ -455,16 +537,17 @@ interface EntryDao {
      */
     @Query(
         """
-        SELECT e.dimensionId AS dimensionId, COALESCE(SUM(e.amount), 0) AS total
+        SELECT e.dimensionId AS dimensionId, e.currency AS currency,
+          COALESCE(SUM(e.amount), 0) AS total
         FROM entries e
         JOIN accounts a ON a.id = e.accountId
         WHERE a.type = :nominalType
           AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.dimensionId IN (:scopeDimensionIds))
-        GROUP BY e.dimensionId
+        GROUP BY e.dimensionId, e.currency
         """
     )
     suspend fun totalsByDimensionInScope(
         nominalType: String,
         scopeDimensionIds: List<Long>,
-    ): List<DimensionTotal>
+    ): List<DimensionCurrencyTotal>
 }

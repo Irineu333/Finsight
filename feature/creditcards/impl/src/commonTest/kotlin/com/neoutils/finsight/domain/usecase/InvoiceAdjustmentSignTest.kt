@@ -43,7 +43,7 @@ class InvoiceAdjustmentSignTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
+    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "BRL")
 
     /**
      * Adjusts the invoice to [target], optionally over an existing purchase of
@@ -83,7 +83,7 @@ class InvoiceAdjustmentSignTest {
     fun raisingTheOwedAmountIsShownNegative() = runTest {
         val ui = adjustmentOf(target = 100.0).toTransactionUi(accountId = card.accountId)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -91,7 +91,7 @@ class InvoiceAdjustmentSignTest {
         val ui = adjustmentOf(target = 40.0, owedBefore = 100.0)
             .toTransactionUi(accountId = card.accountId)
 
-        assertEquals(DisplayAmount.explicitSign(60.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(60.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     private companion object {

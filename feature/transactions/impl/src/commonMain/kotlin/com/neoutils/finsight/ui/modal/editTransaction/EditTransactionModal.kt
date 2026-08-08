@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import com.neoutils.finsight.extension.today
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -215,7 +215,16 @@ class EditTransactionModal(
                     label = {
                         Text(text = stringResource(Res.string.edit_transaction_amount_label))
                     },
-                    inputTransformation = rememberMoneyInputTransformation(),
+                    // Keyed by the currency of what the form writes to, so a field
+                    // already filled changes symbol when the target does (design D10).
+                    // Without a target there is nothing to denominate it with.
+                    inputTransformation = uiState.currencyOf(
+                        if (uiState.form.type.isExpense) {
+                            uiState.selectedTarget
+                        } else {
+                            TransactionTarget.ACCOUNT
+                        }
+                    )?.let { rememberMoneyInputTransformation(it, amount) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next

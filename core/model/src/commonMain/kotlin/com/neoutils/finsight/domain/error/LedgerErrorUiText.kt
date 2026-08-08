@@ -5,6 +5,7 @@ import com.neoutils.finsight.resources.ledger_error_closed_account
 import com.neoutils.finsight.resources.ledger_error_closed_credit_card
 import com.neoutils.finsight.resources.ledger_error_closed_removal_account
 import com.neoutils.finsight.resources.ledger_error_closed_removal_credit_card
+import com.neoutils.finsight.resources.ledger_error_same_sign_residues
 import com.neoutils.finsight.resources.ledger_error_unbalanced
 import com.neoutils.finsight.util.UiText
 
@@ -19,6 +20,7 @@ import com.neoutils.finsight.util.UiText
 fun LedgerError.toUiText() = when (this) {
     LedgerError.Unbalanced -> UiText.Res(Res.string.ledger_error_unbalanced)
     LedgerError.MisplacedDimension -> UiText.Res(Res.string.ledger_error_unbalanced)
+    LedgerError.SameSignResidues -> UiText.Res(Res.string.ledger_error_same_sign_residues)
     is LedgerError.ClosedAccount -> when (facade) {
         ClosedFacade.ACCOUNT -> UiText.Res(Res.string.ledger_error_closed_account)
         ClosedFacade.CREDIT_CARD -> UiText.Res(Res.string.ledger_error_closed_credit_card)

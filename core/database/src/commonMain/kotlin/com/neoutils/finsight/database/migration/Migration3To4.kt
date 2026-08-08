@@ -5,9 +5,14 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Gives a recurrence one row per cycle: `recurring_occurrences` replaces
- * `recurring.lastHandledYearMonth`, which becomes a single SKIPPED occurrence, and
- * `recurring` gains `isActive`. `operations` gains the cycle it came from.
+ * Schema 3 → 4: a recurrence keeps one row per cycle.
+ *
+ * `recurring.lastHandledYearMonth` becomes `recurring_occurrences`, `recurring` gains
+ * `isActive` in its place, and `operations` gains the pointer back (`recurringId`,
+ * `recurringCycle`).
+ *
+ * The back-fill derives each cycle number and effective date in SQL, so this migration
+ * reads the device's clock and time zone.
  *
  * Shipped in 1.4.0-rc02.
  */

@@ -22,7 +22,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.util.AppIcon
@@ -75,7 +77,7 @@ fun CreditCardCard(
     name: String,
     closingDay: Int,
     dueDay: Int,
-    limit: Double,
+    limit: DisplayAmount,
     variant: CreditCardCardVariant,
     modifier: Modifier = Modifier,
     invoiceUi: InvoiceUi? = null,

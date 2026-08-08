@@ -1,47 +1,57 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.BudgetProgress
+import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.TransactionUi
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
 
+/**
+ * **Almost every figure on the dashboard spans accounts**, and a figure that spans
+ * accounts is consolidated by nature: it is a [ConsolidatedAmount], built by the one
+ * reducer in the builder, and never a number a formatting site denominates with the base
+ * currency by hand (design D29). Only what belongs to a single account or facade — an
+ * account's balance, a card's limit, a recurring's amount — carries a [DisplayAmount],
+ * denominated by the account that originated it.
+ */
 sealed interface DashboardComponent {
     val key: String
 
     data class TotalBalance(
-        val amount: Double,
+        val amount: ConsolidatedAmount,
     ) : DashboardComponent {
         override val key = DashboardComponentType.TOTAL_BALANCE.key
     }
 
     data class OverallBalanceStats(
-        val income: Double,
-        val expense: Double,
+        val income: ConsolidatedAmount,
+        val expense: ConsolidatedAmount,
     ) : DashboardComponent {
         override val key = DashboardComponentType.OVERALL_BALANCE_STATS.key
     }
 
     data class ConcreteBalanceStats(
-        val income: Double,
-        val expense: Double,
+        val income: ConsolidatedAmount,
+        val expense: ConsolidatedAmount,
     ) : DashboardComponent {
         override val key = DashboardComponentType.CONCRETE_BALANCE_STATS.key
     }
 
     data class PendingBalanceStats(
-        val pendingIncome: Double,
-        val pendingExpense: Double,
+        val pendingIncome: ConsolidatedAmount,
+        val pendingExpense: ConsolidatedAmount,
     ) : DashboardComponent {
         override val key = DashboardComponentType.PENDING_BALANCE_STATS.key
     }
 
     data class CreditCardBalanceStats(
-        val payment: Double,
-        val expense: Double,
+        val payment: ConsolidatedAmount,
+        val expense: ConsolidatedAmount,
     ) : DashboardComponent {
         override val key = DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key
     }
@@ -61,6 +71,10 @@ sealed interface DashboardComponent {
             // Domain invoices kept alongside the flat cards so the dashboard can open the
             // domain-taking pay/advance/edit-balance modals; aligned by index.
             val domainInvoices: List<Invoice?>,
+            // The limit denominated in the card's own currency — the account behind the
+            // card is the only place that states it, and the flat `CreditCardUi` does not
+            // carry it. Aligned by index, like the invoices above.
+            val limits: List<DisplayAmount>,
         ) : CreditCardsPager
 
         data object Empty : CreditCardsPager
@@ -80,12 +94,18 @@ sealed interface DashboardComponent {
 
     data class Budgets(
         val budgetProgress: List<BudgetProgress>,
+        /**
+         * The month this progress is about — carried so the detail opened from here reads
+         * the same one. Progress is a fact about a month, and the dashboard's month is
+         * chosen by the user.
+         */
+        val targetMonth: YearMonth,
     ) : DashboardComponent {
         override val key = DashboardComponentType.BUDGETS.key
     }
 
     data class PendingRecurring(
-        val recurringList: List<Recurring>,
+        val recurringList: List<PendingRecurringUi>,
     ) : DashboardComponent {
         override val key = DashboardComponentType.PENDING_RECURRING.key
     }

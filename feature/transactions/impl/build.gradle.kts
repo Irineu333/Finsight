@@ -20,6 +20,7 @@ kotlin {
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.recurring.api)
+            implementation(projects.feature.settings.api)
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)

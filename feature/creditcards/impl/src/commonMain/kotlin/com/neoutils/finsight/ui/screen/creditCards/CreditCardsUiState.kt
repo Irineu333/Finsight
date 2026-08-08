@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.model.TransactionUi
 import kotlinx.datetime.LocalDate
@@ -22,6 +23,10 @@ sealed class CreditCardsUiState {
         // index with [creditCards].
         val domainCards: List<CreditCard>,
         val domainInvoices: List<Invoice?>,
+        // Each card's limit, denominated by the card's own account (design D17). It
+        // cannot ride on `CreditCardUi.limit`, which is a bare `Double` in `:core:ui`
+        // and shared with the dashboard. Aligned by index with [creditCards].
+        val cardLimits: List<DisplayAmount>,
         val selectedCardIndex: Int,
         val listState: ListState,
         val categories: List<Category>,

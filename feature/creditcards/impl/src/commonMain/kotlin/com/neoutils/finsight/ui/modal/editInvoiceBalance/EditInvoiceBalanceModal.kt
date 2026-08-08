@@ -23,7 +23,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.InvoiceSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -73,12 +76,12 @@ class EditInvoiceBalanceModal(
 
             is EditInvoiceBalanceUiState.Content -> {
                 val balanceState = rememberTextFieldState(
-                    formatMoney((state.currentBalance * 100).toLong(), currencyFormatter)
+                    currencyFormatter.format(state.balanceAmount)
                 )
 
                 val newBalance by remember {
                     derivedStateOf {
-                        parseMoneyToDouble(balanceState.text.toString())
+                        balanceState.text.toString().moneyToDouble()
                     }
                 }
 
@@ -90,7 +93,7 @@ class EditInvoiceBalanceModal(
 
                 LaunchedEffect(state.currentBalance) {
                     balanceState.edit {
-                        replace(0, length, formatMoney((state.currentBalance * 100).toLong(), currencyFormatter))
+                        replace(0, length, currencyFormatter.format(state.balanceAmount))
                     }
                 }
 
@@ -133,7 +136,7 @@ class EditInvoiceBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        inputTransformation = rememberMoneyInputTransformation(state.currency, balanceState),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(
@@ -154,7 +157,14 @@ class EditInvoiceBalanceModal(
                                         }
                                     ) { currentAdjustment ->
                                         AdjustmentLabel(
-                                            adjustment = currentAdjustment,
+                                            // The direction of an adjustment is not in
+                                            // its label, so it is spelled out — by the
+                                            // type, in the card's currency.
+                                            adjustment = DisplayAmount.explicitSign(
+                                                value = currentAdjustment,
+                                                currency = state.currency,
+                                                isApproximate = false,
+                                            ),
                                             modifier = Modifier.padding(end = 16.dp),
                                         )
                                     }
@@ -186,11 +196,11 @@ class EditInvoiceBalanceModal(
 
     @Composable
     private fun AdjustmentLabel(
-        adjustment: Double,
+        adjustment: DisplayAmount,
         modifier: Modifier = Modifier
     ) {
         val formatter = LocalCurrencyFormatter.current
-        val isPayment = adjustment < 0
+        val isPayment = adjustment.value < 0
         val color = if (isPayment) Income else Expense
         val icon = if (isPayment) Icons.Default.CreditCard else Icons.Default.ArrowDownward
 
@@ -206,24 +216,11 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatter.formatWithSign(adjustment),
+                text = formatter.format(adjustment),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
-        val isNegative = cents < 0
-        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
-        return if (isNegative) "-$formatted" else formatted
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val isNegative = formatted.startsWith("-")
-        val digits = formatted.filter { it.isDigit() }
-        val cents = digits.toLongOrNull() ?: return 0.0
-        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 }

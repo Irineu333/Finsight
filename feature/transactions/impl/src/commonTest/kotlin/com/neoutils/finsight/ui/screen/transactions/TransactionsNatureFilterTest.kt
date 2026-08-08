@@ -38,12 +38,12 @@ class TransactionsNatureFilterTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val month = Clock.System.now().toYearMonth()
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val savings = Account(id = 2, name = "B", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
-    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val savings = Account(id = 2, name = "B", type = AccountType.ASSET, currency = "BRL")
+    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
+    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY, currency = "BRL")
 
     private fun date(day: Int) = LocalDate(month.year, month.month, day)
 
@@ -68,6 +68,9 @@ class TransactionsNatureFilterTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        consolidateMoney = consolidator(),
+        observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+            baseCurrencyRepository = FakeBaseCurrency(),
         clock = Clock.System,
     )
 

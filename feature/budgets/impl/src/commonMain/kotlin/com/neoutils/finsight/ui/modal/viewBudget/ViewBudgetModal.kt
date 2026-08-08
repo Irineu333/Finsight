@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,11 +25,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatOrUnresolved
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
+import kotlinx.datetime.YearMonth
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.ConsolidationBadge
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
@@ -61,6 +71,7 @@ import org.koin.core.parameter.parametersOf
 
 class ViewBudgetModal(
     private val budgetId: Long,
+    private val month: YearMonth,
 ) : AdaptiveModal() {
 
     @Composable
@@ -68,7 +79,7 @@ class ViewBudgetModal(
         val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
 
-        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId, month) }
         val uiState by viewModel.uiState.collectAsState()
 
         LaunchedEffect(viewModel) {
@@ -97,8 +108,15 @@ class ViewBudgetModal(
         recurringEntry: RecurringEntry,
     ) {
         val formatter = LocalCurrencyFormatter.current
+        val navController = LocalNavController.current
         val budget = budgetProgress.budget
-        val accentColor = budgetProgressColor(budgetProgress.progress)
+        // Limit and spending alike are denominated by the budget, never by the base: the
+        // currency is chosen once, at creation, and stays the meaning of both numbers
+        // (design D13).
+        val currency = budget.currency
+        // No fraction, no "how full" to colour by — the neutral accent instead.
+        val accentColor = budgetProgress.progress?.let { budgetProgressColor(it) }
+            ?: colorScheme.onSurfaceVariant
 
         Column(
             modifier = Modifier
@@ -109,6 +127,7 @@ class ViewBudgetModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 CategoryIconBox(
                     icon = budget.icon,
@@ -122,6 +141,19 @@ class ViewBudgetModal(
                     text = budget.title,
                     style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+
+                // The explanation lives **here and not on the list**, because the failure
+                // is a property of one budget: only this budget's categories hold a
+                // currency no rate reaches, and a badge on the card that shows three of
+                // them could not say which. Top-right corner, like every other badge.
+                ConsolidationBadge(
+                    figures = listOfNotNull(budgetProgress.spentFigure),
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                    unresolved = !budgetProgress.isResolved,
                 )
             }
 
@@ -179,55 +211,94 @@ class ViewBudgetModal(
                 }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
-                    value = formatter.format(budget.amount),
+                    value = formatter.format(budget.amount, currency),
                     valueTestTag = "view_budget_limit_amount",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // The one surface with room for the truth: the spending as the figure it
+                // is, stacked, instead of the `***` a one-line label has to fall back to.
+                // The money is known — only its expression in the limit's currency is not.
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = formatter.format(budgetProgress.spent),
-                    valueTestTag = "view_budget_spent_amount",
+                    value = {
+                        val figure = budgetProgress.spentFigure
+                        if (figure != null) {
+                            MoneyText(
+                                figure = figure,
+                                style = LocalTextStyle.current.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                                modifier = Modifier.testTag("view_budget_spent_amount"),
+                            )
+                        } else {
+                            Text(
+                                text = formatter.formatOrUnresolved(budgetProgress.spentAmount),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.testTag("view_budget_spent_amount"),
+                            )
+                        }
+                    },
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (budgetProgress.isExceeded) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = formatter.format(budgetProgress.spent - budget.amount),
-                        valueTestTag = "view_budget_exceeded_amount",
-                    )
+                // No parts to show for these: what is left, and by how much it went over,
+                // are answers *against the limit* rather than sums of pieces, so with the
+                // spending unresolved they do not exist. The absence is said quietly — it
+                // is the lack of a number, not a number worth reading.
+                val leftOrOver = if (budgetProgress.isExceeded) {
+                    budgetProgress.exceededAmount
                 } else {
-                    DetailRow(
-                        label = stringResource(Res.string.view_budget_remaining_label),
-                        value = formatter.format(budgetProgress.remaining),
-                        valueTestTag = "view_budget_remaining_amount",
-                    )
+                    budgetProgress.remainingAmount
                 }
+                DetailRow(
+                    label = stringResource(
+                        if (budgetProgress.isExceeded) {
+                            Res.string.view_budget_exceeded_by_label
+                        } else {
+                            Res.string.view_budget_remaining_label
+                        }
+                    ),
+                    value = formatter.formatOrUnresolved(leftOrOver),
+                    valueColor = if (leftOrOver != null) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+                    // One row, two readings: the tag names which of them is on screen,
+                    // exactly as the label above it does.
+                    valueTestTag = if (budgetProgress.isExceeded) {
+                        "view_budget_exceeded_amount"
+                    } else {
+                        "view_budget_remaining_amount"
+                    },
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // No fraction, no bar: an empty track claims "nothing spent yet", which is
+            // precisely what is not known when part of the spending cannot be priced.
+            budgetProgress.progress?.let { fraction ->
+                Spacer(modifier = Modifier.height(8.dp))
 
-            LinearProgressIndicator(
-                progress = { budgetProgress.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = accentColor,
-                trackColor = colorScheme.surfaceContainerHighest,
-                strokeCap = StrokeCap.Round,
-                drawStopIndicator = {},
-                gapSize = (-4).dp,
-            )
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp),
+                    color = accentColor,
+                    trackColor = colorScheme.surfaceContainerHighest,
+                    strokeCap = StrokeCap.Round,
+                    drawStopIndicator = {},
+                    gapSize = (-4).dp,
+                )
+            }
         }
     }
 
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId, month) }
         val uiState by viewModel.uiState.collectAsState()
 
         val budgetProgress = (uiState as? ViewBudgetUiState.Content)?.budgetProgress ?: return
@@ -297,20 +368,24 @@ class ViewBudgetModal(
         }
     }
 
+    /**
+     * The slot form, for a value that is not one line of text — a figure of several terms,
+     * stacked. The string form below delegates to it, so the two can never drift apart in
+     * spacing or alignment.
+     *
+     * Top-aligned rather than centred: with a stacked value the label belongs beside the
+     * *first* term, which is the one that carries the surface's own weight.
+     */
     @Composable
     private fun DetailRow(
         label: String,
-        value: String,
-        valueColor: Color = colorScheme.onSurface,
-        // The figure, not the row: an E2E assertion has to land on the node that
-        // renders the number, or it only proves the number is somewhere on screen.
-        valueTestTag: String? = null,
+        value: @Composable () -> Unit,
         onClick: (() -> Unit)? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             Text(
                 text = label,
@@ -330,14 +405,30 @@ class ViewBudgetModal(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                Text(
-                    text = value,
-                    modifier = if (valueTestTag != null) Modifier.testTag(valueTestTag) else Modifier,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = valueColor,
-                )
+                value()
             }
         }
     }
+
+    @Composable
+    private fun DetailRow(
+        label: String,
+        value: String,
+        valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
+        onClick: (() -> Unit)? = null,
+    ) = DetailRow(
+        label = label,
+        onClick = onClick,
+        value = {
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = valueColor,
+                modifier = Modifier.optionalTestTag(valueTestTag),
+            )
+        },
+    )
+
 }

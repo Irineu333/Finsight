@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -48,11 +49,26 @@ class ReportConfigViewModel(
         creditCardRepository.observeAllCreditCardsIncludingClosed(),
         invoicesFlow,
         config,
-    ) { accounts, creditCards, invoices, config ->
+        // The chart, not the facade: a card's limit is denominated by the LIABILITY
+        // account it projects onto, and the facade above hides exactly those rows.
+        accountRepository.observeAllLedgerAccounts(),
+    ) { accounts, creditCards, invoices, config, ledgerAccounts ->
+        val currencyByAccount = ledgerAccounts.associate { it.id to it.currency }
         ReportConfigUiState.Content(
             config = config,
             accounts = accounts,
-            creditCards = creditCards,
+            creditCards = creditCards.mapNotNull { card ->
+                currencyByAccount[card.accountId]?.let { currency ->
+                    CreditCardOption(
+                        card = card,
+                        limit = DisplayAmount.magnitude(
+                            card.limit,
+                            currency,
+                            isApproximate = false,
+                        ),
+                    )
+                }
+            },
             invoices = invoices.reversed(),
         )
     }.stateIn(

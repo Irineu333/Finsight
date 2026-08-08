@@ -26,13 +26,21 @@ val dashboardModule = module {
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),
             entryRepository = get(),
+            accountRepository = get(),
+            consolidateMoney = get(),
             navCatalog = get(),
         )
     }
 
     single { GetDashboardPreferencesUseCase(get(), get()) }
     factory { BuildDashboardViewingUseCase(get()) }
-    single { DashboardPreviewFactory(get()) }
+    single {
+        DashboardPreviewFactory(
+            consolidateMoney = get(),
+            navCatalog = get(),
+            baseCurrencyRepository = get(),
+        )
+    }
 
     viewModel {
         DashboardViewModel(
@@ -49,7 +57,9 @@ val dashboardModule = module {
             getDashboardPreferences = get(),
             buildDashboardViewingUseCase = get(),
             dashboardPreferencesRepository = get(),
+            observeConsolidationChanges = get(),
             dashboardPreviewFactory = get(),
+            baseCurrencyRepository = get(),
             analytics = get(),
             crashlytics = get(),
             clock = get(),

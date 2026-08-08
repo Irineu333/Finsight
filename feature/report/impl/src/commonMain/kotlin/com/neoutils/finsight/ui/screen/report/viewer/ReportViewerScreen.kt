@@ -32,6 +32,8 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
@@ -122,6 +124,7 @@ private fun ReportViewerContent(
     val categoriesEntry = koinInject<CategoriesEntry>()
     val transactionsEntry = koinInject<TransactionsEntry>()
     val dateFormats = LocalDateFormats.current
+    val navController = LocalNavController.current
 
     val exportStrings = ReportExportStrings(
         title = stringResource(Res.string.report_viewer_title),
@@ -144,6 +147,7 @@ private fun ReportViewerContent(
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),
         columnPercentage = stringResource(Res.string.report_output_column_percentage),
+        footnote = stringResource(Res.string.report_export_footnote),
     )
 
     Scaffold(
@@ -230,6 +234,7 @@ private fun ReportViewerContent(
                                 perspectiveBadge = state.perspectiveBadge,
                                 perspectiveIconKey = state.perspectiveIconKey,
                                 stats = state.stats,
+                                onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp),
@@ -241,6 +246,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
+                                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                     onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -254,6 +260,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
+                                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                     onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()

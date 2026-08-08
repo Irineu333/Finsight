@@ -73,6 +73,7 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                 }
                 .label{font-size:18px;font-weight:600;}
                 .period,.generated{font-size:13px;color:var(--muted);}
+                .footnote{margin:24px 0 0;font-size:12px;color:var(--muted);}
                 .header-top{
                   display:flex;
                   justify-content:flex-end;
@@ -197,6 +198,14 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
                         appendLine("</section>")
                     }
                 }
+            }
+
+            // Present exactly when the document holds an approximate figure, because that
+            // is when there is a mark to explain. A printed page has no badge to open, so
+            // what every screen says on demand this one says once, at the foot — inside
+            // the page, because it is part of the report and not of the browser around it.
+            layout.footnote?.let {
+                appendLine("<p class=\"footnote\">${it.escapeHtml()}</p>")
             }
 
             appendLine("</main>")

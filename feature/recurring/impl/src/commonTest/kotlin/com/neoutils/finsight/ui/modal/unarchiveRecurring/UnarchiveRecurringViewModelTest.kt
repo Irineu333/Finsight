@@ -71,7 +71,7 @@ class UnarchiveRecurringViewModelTest {
     )
 
     @Test
-    fun `confirming clears the flag, logs the event and closes the sheet`() = runTest(dispatcher) {
+    fun `confirming clears the flag and logs the event and closes the sheet`() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
         val manager = ModalManager()
         val analytics = FakeAnalytics()
@@ -88,7 +88,7 @@ class UnarchiveRecurringViewModelTest {
     }
 
     @Test
-    fun `a failure is recorded, and neither logs the event nor closes the sheet`() = runTest(dispatcher) {
+    fun `a failure is recorded and neither logs the event nor closes the sheet`() = runTest(dispatcher) {
         val failure = IllegalStateException("write failed")
         val repository = FakeRecurringRepository(updateFailure = failure)
         val manager = ModalManager()

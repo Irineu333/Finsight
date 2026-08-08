@@ -20,6 +20,17 @@ data class CreditCard(
     val accountId: Long = 0,
     // Mirrors the closure of its ledger account (D21).
     val isArchived: Boolean = false,
+    /**
+     * What the card's `LIABILITY` account denominates it in — **hydrated on read and
+     * never persisted here**, exactly as [isArchived] mirrors that account's closure.
+     * Every figure of a card is in it (design D17).
+     *
+     * `null` means "this instance did not come from a hydrated read" — a card a form
+     * has just built, on its way to being inserted, whose account does not exist yet.
+     * It is never a currency, and no figure is ever denominated by guessing in its
+     * absence: a default here would be the silent decision D28 removed everywhere else.
+     */
+    val currency: String? = null,
 ) {
     init {
         if (name.isBlank()) {

@@ -17,7 +17,10 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -25,10 +28,17 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.repository.ScopeStats
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
@@ -37,6 +47,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -51,9 +62,9 @@ import kotlin.test.assertEquals
 /**
  * Characterizes the account-perspective stats of [ReportViewerViewModel] (sites
  * :84,87,90): it forwards [CalculateReportStatsUseCase], whose figures now come from
- * the ledger aggregate (`IEntryRepository.scopeStats`, its semantics pinned by
- * ReportStatsQueryTest). This pins the ViewModel wiring — that the use case's
- * [ScopeStats] surface as `Stats.Account`.
+ * the ledger aggregate (`IEntryRepository.scopeStatsByCurrency`, its semantics pinned
+ * by ReportStatsQueryTest). This pins the ViewModel wiring — that the use case's
+ * [ScopeStatsByCurrency] surface as `Stats.Account`.
  */
 class ReportViewerViewModelCharacterizationTest {
 
@@ -62,9 +73,9 @@ class ReportViewerViewModelCharacterizationTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
@@ -101,7 +112,7 @@ class ReportViewerViewModelCharacterizationTest {
             invoiceRepository = fakes.invoiceRepository(),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(
                 entryRepository = fakes.entryRepository(
-                    stats = ScopeStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
+                    stats = brlStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
                 ),
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
@@ -111,8 +122,12 @@ class ReportViewerViewModelCharacterizationTest {
                 categoryRepository = fakes.categoryRepository,
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
+                consolidateMoney = fakes.consolidateMoney,
             ),
             entryRepository = fakes.entryRepository(),
+            consolidateMoney = fakes.consolidateMoney,
+            observeConsolidationChanges = fakes.consolidationChanges(),
+            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -123,20 +138,21 @@ class ReportViewerViewModelCharacterizationTest {
             var state = awaitItem()
             while (state !is ReportViewerUiState.Content) state = awaitItem()
             val stats = state.stats as ReportViewerUiState.Stats.Account
-            // Each figure carries the sign it is displayed with.
-            assertEquals(100.0, stats.income.value)
-            assertEquals(-30.0, stats.expense.value)
-            assertEquals(70.0, stats.balance.value)
-            assertEquals(-20.0, stats.openingBalance.value)
+            // Each figure carries the sign it is displayed with; one currency went in,
+            // so the reducer hands that very figure back, exact and unmarked.
+            assertEquals(100.0, stats.income.degradedTerm().value)
+            assertEquals(-30.0, stats.expense.degradedTerm().value)
+            assertEquals(70.0, stats.balance.degradedTerm().value)
+            assertEquals(-20.0, stats.openingBalance.degradedTerm().value)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `credit card perspective sums the card legs and reads owed from the ledger`() = runTest(dispatcher) {
-        val cardLiability = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-        val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
-        val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET)
+        val cardLiability = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+        val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY, currency = "BRL")
+        val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET, currency = "BRL")
         val card = CreditCard(
             id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15,
             accountId = cardLiability.id,
@@ -172,26 +188,32 @@ class ReportViewerViewModelCharacterizationTest {
                 includeTransactionList = false,
             ),
             transactionRepository = fakes.transactionRepository(transactions),
-            accountRepository = fakes.accountRepository(emptyList()),
+            // The chart, not the facade: the card's LIABILITY row is what denominates
+            // every figure of an invoice report (design D17).
+            accountRepository = fakes.accountRepository(listOf(cardLiability)),
             creditCardRepository = fakes.creditCardRepository(listOf(card)),
             invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(
                 entryRepository = fakes.entryRepository(),
-                accountRepository = fakes.accountRepository(emptyList()),
+                accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
             ),
             calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
                 entryRepository = fakes.entryRepository(),
                 categoryRepository = fakes.categoryRepository,
-                accountRepository = fakes.accountRepository(emptyList()),
+                accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
+                consolidateMoney = fakes.consolidateMoney,
             ),
             entryRepository = fakes.entryRepository(
                 owed = mapOf(1L to 70.0),
                 // The invoice breakdown now reads the ledger's per-dimension flows
                 // (spec `ledger-reporting`): expense 100, advance payment 30, adjustment 10.
-                flows = mapOf(1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
+                flows = mapOf(1L to brlFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
             ),
+            consolidateMoney = fakes.consolidateMoney,
+            observeConsolidationChanges = fakes.consolidationChanges(),
+            baseCurrencyRepository = fakes.baseCurrencyRepository,
             categoryRepository = fakes.categoryRepository,
             installmentRepository = NoInstallments,
             renderer = fakes.renderer,
@@ -254,10 +276,11 @@ private class Fakes {
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = cards.firstOrNull { it.id == creditCardId }
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
-        override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     fun invoiceRepository(invoices: List<Invoice> = emptyList()) = object : IInvoiceRepository {
@@ -300,8 +323,8 @@ private class Fakes {
 
     fun entryRepository(
         owed: Map<Long, Double> = emptyMap(),
-        stats: ScopeStats = ScopeStats(0.0, 0.0, 0.0, 0.0),
-        flows: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
+        stats: ScopeStatsByCurrency = ScopeStatsByCurrency.zero,
+        flows: Map<Long, DimensionFlowsByCurrency> = emptyMap(),
     ) = object : IEntryRepository {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
@@ -309,21 +332,76 @@ private class Fakes {
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
+        override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+        override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+        override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+        override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = owed[dimensionId] ?: 0.0
-        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
-            flows[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(expense = 0.0, advancePayment = 0.0, adjustment = 0.0)
-        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-        override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = stats
+        override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) =
+            dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
+
+        override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>) =
+            dimensionIds.distinct().associateWith { dimensionFlowsByCurrency(it) }
+
+        override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+            com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", owed[dimensionId] ?: 0.0)
+
+        override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
+            flows[dimensionId] ?: DimensionFlowsByCurrency.zero
+
+        override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+        override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
+        override suspend fun totalsByDimensionByCurrency(
+            nominalType: AccountType,
+            startDate: LocalDate,
+            endDate: LocalDate,
+            siblingAccountIds: List<Long>,
+        ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+
+        override suspend fun totalsByDimensionInScopeByCurrency(
+            nominalType: AccountType,
+            scopeDimensionIds: List<Long>,
+        ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+
+        override suspend fun scopeStatsByCurrency(
+            scopeAccountIds: List<Long>,
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ) = stats
     }
+
+    val baseCurrencyRepository = object : IBaseCurrencyRepository {
+        private val state = MutableStateFlow("BRL")
+        override fun observe(): StateFlow<String> = state
+        override suspend fun set(code: String) { state.value = code }
+    }
+
+    private val exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+        override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
+        override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
+        override suspend fun countNaming(currency: String) = 0
+        override suspend fun removeAllNaming(currency: String) = Unit
+    }
+
+    val consolidateMoney = ConsolidateMoneyUseCase(
+        baseCurrencyRepository = baseCurrencyRepository,
+        exchangeRateRepository = exchangeRateRepository,
+        getAccountCurrencies = object : GetAccountCurrenciesUseCase {
+            override suspend fun invoke() = AccountCurrencies(inUse = listOf("BRL"), ofDefaultAccount = "BRL")
+        },
+    )
+
+    /** The composed trigger over the same fakes — a rate moves a figure already on screen. */
+    fun consolidationChanges() = ObserveConsolidationChangesUseCase(
+        entryRepository = entryRepository(),
+        baseCurrencyRepository = baseCurrencyRepository,
+        exchangeRateRepository = exchangeRateRepository,
+    )
 
     val renderer = object : ReportDocumentRenderer {
         override fun render(layout: ReportLayout): ReportDocument = throw NotImplementedError()
@@ -345,3 +423,27 @@ private object NoInstallments : IInstallmentRepository {
     override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }
+
+/** A scope's report figures, all in the one currency these tests transact in. */
+private fun brlStats(
+    income: Double,
+    expense: Double,
+    balance: Double,
+    openingBalance: Double,
+) = ScopeStatsByCurrency(
+    income = MoneyByCurrency.of("BRL", income),
+    expense = MoneyByCurrency.of("BRL", expense),
+    balance = MoneyByCurrency.of("BRL", balance),
+    openingBalance = MoneyByCurrency.of("BRL", openingBalance),
+)
+
+/** A sub-ledger's flows, in that same one currency. */
+private fun brlFlows(
+    expense: Double,
+    advancePayment: Double,
+    adjustment: Double,
+) = DimensionFlowsByCurrency(
+    expense = MoneyByCurrency.of("BRL", expense),
+    advancePayment = MoneyByCurrency.of("BRL", advancePayment),
+    adjustment = MoneyByCurrency.of("BRL", adjustment),
+)

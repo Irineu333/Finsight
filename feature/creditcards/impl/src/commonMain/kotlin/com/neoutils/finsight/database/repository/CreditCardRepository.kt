@@ -7,8 +7,8 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.mapper.CreditCardMapper
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,8 +17,21 @@ class CreditCardRepository(
     private val database: AppDatabase,
     private val dao: CreditCardDao,
     private val accountDao: AccountDao,
-    private val mapper: CreditCardMapper
+    private val mapper: CreditCardMapper,
+    private val baseCurrencyRepository: IBaseCurrencyRepository,
 ) : ICreditCardRepository {
+
+    /**
+     * The base currency — the same answer the account form pre-selects with, and for the
+     * same reason.
+     *
+     * It used to be the device's region read **live**, which was the ledger's old
+     * `BASE_CURRENCY` replaced by the nearest thing at hand. The base is resolved from
+     * the region too, but *once*, on the first run, and a later trip abroad must not move
+     * it (design D28) — so reading the region again here was a second answer to a
+     * question that already has one, and the two part company the moment the user travels.
+     */
+    override suspend fun currencyForNewCard(): String = baseCurrencyRepository.observe().value
 
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
         return dao.observeAllCreditCards().map { entities ->
@@ -47,14 +60,14 @@ class CreditCardRepository(
     }
 
     /** The card and its `LIABILITY` account are one creation — see `CategoryRepository`. */
-    override suspend fun insert(creditCard: CreditCard): Long {
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long {
         return database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val accountId = accountDao.insert(
                     AccountEntity(
                         name = creditCard.name,
                         type = AccountEntity.Type.LIABILITY,
-                        currency = BASE_CURRENCY,
+                        currency = currency,
                         iconKey = creditCard.iconKey,
                         createdAt = creditCard.createdAt,
                     )

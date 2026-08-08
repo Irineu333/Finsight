@@ -4,7 +4,12 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.Recurring
@@ -35,6 +40,12 @@ data class DashboardComponentsInput(
     val today: LocalDate,
     val targetMonth: YearMonth,
     val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
+    /**
+     * Only a tie-break between the two ends of a cross-currency operation, never a
+     * currency a widget is denominated in — see `Transaction.figureLegUnder`. Every
+     * figure that *is* in the base leaves through [ConsolidateMoneyUseCase] instead.
+     */
+    val baseCurrency: String? = null,
 )
 
 data class DashboardBuilderContext(
@@ -49,8 +60,58 @@ class DashboardComponentsBuilder(
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val entryRepository: IEntryRepository,
+    private val accountRepository: IAccountRepository,
+    // The one reducer, and the only place the base currency is allowed to surface: every
+    // widget below that spans accounts leaves through it, denominated and marked by it,
+    // rather than being tagged with the base at the point of formatting (design D29).
+    private val consolidateMoney: ConsolidateMoneyUseCase,
     private val navCatalog: NavCatalog,
 ) {
+
+    /**
+     * A figure of the month displayed, consolidated at that month's rates — the past
+     * would move on its own if a figure about March were reduced at today's.
+     *
+     * What goes in is what the ledger answered, per currency; what comes out carries the
+     * currency, the exactness, and — where a rate is missing — more than one term.
+     */
+    private suspend fun DashboardComponentsInput.figure(
+        money: MoneyByCurrency,
+        policy: (Double, String, Boolean) -> DisplayAmount,
+    ): ConsolidatedAmount = consolidateMoney(
+        money = money,
+        on = targetMonth.lastDay,
+        policy = policy,
+    )
+
+    /**
+     * A figure of money the ledger did not answer for — the pending total of a set of
+     * recurring templates, which are facade rows and not entries.
+     *
+     * Each template is denominated by the account or card it names (design D17), so the
+     * total is grouped by that currency and never by the base. A template whose source
+     * was deleted names nothing and is left out, exactly as the list of them is.
+     */
+    private suspend fun List<Recurring>.moneyByCurrency(): MoneyByCurrency =
+        fold(MoneyByCurrency.zero) { total, recurring ->
+            val currency = currencyOf(recurring) ?: return@fold total
+            total + MoneyByCurrency.of(currency, recurring.amount)
+        }
+
+    /** The account or card a template posts to is what denominates its amount (D17). */
+    private suspend fun currencyOf(recurring: Recurring): String? =
+        recurring.account?.currency
+            ?: recurring.creditCard?.let { accountRepository.getAccountById(it.accountId)?.currency }
+
+    /**
+     * Nothing worth a widget: no term of the figure is positive.
+     *
+     * The per-currency form of the `<= 0.0` the scalar reads used. A widget hidden when
+     * empty stays hidden only when it is empty in **every** currency — one dollar of
+     * expense is a reason to show it, whatever the reais did.
+     */
+    private val MoneyByCurrency.isNothing: Boolean
+        get() = toList().all { it.value <= 0.0 }
 
     suspend fun build(
         key: String,
@@ -64,6 +125,7 @@ class DashboardComponentsBuilder(
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
                 pendingRecurring = context.pendingRecurring,
+                input = input,
                 config = config,
             )
 
@@ -115,8 +177,13 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
     ): DashboardComponent.TotalBalance {
         // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
+        // It spans every account, so it is a balance and it is consolidated: only the
+        // negative is information.
         return DashboardComponent.TotalBalance(
-            amount = calculateBalanceUseCase(target = input.targetMonth),
+            amount = input.figure(
+                calculateBalanceUseCase(target = input.targetMonth),
+                DisplayAmount::natural,
+            ),
         )
     }
 
@@ -129,20 +196,25 @@ class DashboardComponentsBuilder(
         // for it (design D2). The two expense sets are disjoint: a card purchase has no
         // ASSET leg, so nothing is double-counted; and neither read reports an invoice
         // payment, which is internal to this perimeter. Income only ever lands on ASSET.
-        val asset = entryRepository.assetMonthFlows(input.targetMonth)
-        val liability = entryRepository.liabilityMonthFlows(input.targetMonth)
+        val asset = entryRepository.assetMonthFlowsByCurrency(input.targetMonth)
+        val liability = entryRepository.liabilityMonthFlowsByCurrency(input.targetMonth)
 
         val income = asset.income
+        // Each currency summed with its own, by the ledger's one implementation — never
+        // a map added up in line here, and never the consolidation layer's, which
+        // answers for conversion and nothing else.
         val expense = asset.expense + liability.expense
 
-        val isEmpty = income <= 0.0 && expense <= 0.0
+        val isEmpty = income.isNothing && expense.isNothing
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
 
+        // Each widget carries its direction in its own label and icon, so the figures
+        // read as magnitudes — the same text the plain formatting produced before.
         return DashboardComponent.OverallBalanceStats(
-            income = income,
-            expense = expense,
+            income = input.figure(income, DisplayAmount::magnitude),
+            expense = input.figure(expense, DisplayAmount::magnitude),
         )
     }
 
@@ -153,31 +225,32 @@ class DashboardComponentsBuilder(
         // Month-wide income/expense across the user's ASSET accounts, straight from the
         // ledger — transfers and card payments (money between the user's own accounts)
         // are excluded there, not re-derived here (spec `ledger-reporting`).
-        val stats = entryRepository.assetMonthFlows(input.targetMonth)
+        val stats = entryRepository.assetMonthFlowsByCurrency(input.targetMonth)
 
-        val isEmpty = stats.income <= 0.0 && stats.expense <= 0.0
+        val isEmpty = stats.income.isNothing && stats.expense.isNothing
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
             return null
         }
 
         return DashboardComponent.ConcreteBalanceStats(
-            income = stats.income,
-            expense = stats.expense,
+            income = input.figure(stats.income, DisplayAmount::magnitude),
+            expense = input.figure(stats.expense, DisplayAmount::magnitude),
         )
     }
 
-    private fun pendingBalanceStats(
+    private suspend fun pendingBalanceStats(
         pendingRecurring: List<Recurring>,
+        input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.PendingBalanceStats? {
-        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount }
-        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount }
-        val isEmpty = pendingIncome <= 0.0 && pendingExpense <= 0.0
+        val pendingIncome = pendingRecurring.filter { it.type.isIncome }.moneyByCurrency()
+        val pendingExpense = pendingRecurring.filter { it.type.isExpense }.moneyByCurrency()
+        val isEmpty = pendingIncome.isNothing && pendingExpense.isNothing
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.PendingBalanceStats(
-                pendingIncome = pendingIncome,
-                pendingExpense = pendingExpense,
+                pendingIncome = input.figure(pendingIncome, DisplayAmount::magnitude),
+                pendingExpense = input.figure(pendingExpense, DisplayAmount::magnitude),
             )
         } else {
             null
@@ -189,16 +262,16 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent.CreditCardBalanceStats? {
         // Month-wide card expense/payment from the ledger (task 4.11).
-        val flows = entryRepository.liabilityMonthFlows(input.targetMonth)
+        val flows = entryRepository.liabilityMonthFlowsByCurrency(input.targetMonth)
         val payment = flows.payment
         val expense = flows.expense
 
-        val isEmpty = payment <= 0.0 && expense <= 0.0
+        val isEmpty = payment.isNothing && expense.isNothing
 
         return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.CreditCardBalanceStats(
-                payment = payment,
-                expense = expense,
+                payment = input.figure(payment, DisplayAmount::magnitude),
+                expense = input.figure(expense, DisplayAmount::magnitude),
             )
         } else {
             null
@@ -220,13 +293,18 @@ class DashboardComponentsBuilder(
             .filter { it.id !in excludedIds }
             .map { account ->
                 // All-time natural balance from the ledger (task 4.5), replacing the
-                // in-builder per-account sum that used to live here.
+                // in-builder per-account sum that used to live here. One account, one
+                // currency — its own — and nothing was converted to get here.
                 DashboardAccountUi(
                     id = account.id,
                     iconKey = account.iconKey,
                     name = account.name,
                     isDefault = account.isDefault,
-                    balance = entryRepository.balance(account.id),
+                    balance = DisplayAmount.natural(
+                        entryRepository.balance(account.id),
+                        account.currency,
+                        isApproximate = false,
+                    ),
                 )
             }
 
@@ -252,7 +330,14 @@ class DashboardComponentsBuilder(
 
         val creditCardsWithBills = input.creditCards
             .filter { it.id !in excludedIds }
-            .map { creditCard ->
+            .mapNotNull { creditCard ->
+                // The limit is the card's money, so it reads in the card's currency (D17),
+                // and the LIABILITY account behind the card is the only place that states
+                // it. A card whose account does not resolve is an orphan row: it is left
+                // out of the pager rather than denominated by guess.
+                val currency = accountRepository.getAccountById(creditCard.accountId)
+                    ?.currency ?: return@mapNotNull null
+
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
                 val ui = CreditCardUi(
                     cardId = creditCard.id,
@@ -267,13 +352,19 @@ class DashboardComponentsBuilder(
                         invoiceUiMapper.toUi(invoice = it, cardInvoices = listOfNotNull(it))
                     },
                 )
-                ui to invoice
+                val limit = DisplayAmount.magnitude(
+                    creditCard.limit,
+                    currency,
+                    isApproximate = false,
+                )
+                Triple(ui, invoice, limit)
             }
 
         return when {
             creditCardsWithBills.isNotEmpty() -> DashboardComponent.CreditCardsPager.Content(
                 creditCards = creditCardsWithBills.map { it.first },
                 domainInvoices = creditCardsWithBills.map { it.second },
+                limits = creditCardsWithBills.map { it.third },
             )
 
             showEmptyState -> DashboardComponent.CreditCardsPager.Empty
@@ -334,13 +425,14 @@ class DashboardComponentsBuilder(
         return if (budgetProgress.isNotEmpty()) {
             DashboardComponent.Budgets(
                 budgetProgress = budgetProgress,
+                targetMonth = input.targetMonth,
             )
         } else {
             null
         }
     }
 
-    private fun pendingRecurring(
+    private suspend fun pendingRecurring(
         pendingRecurring: List<Recurring>,
         input: DashboardComponentsInput,
         config: Map<String, String>,
@@ -371,8 +463,25 @@ class DashboardComponentsBuilder(
                     .thenBy { it.createdAt }
             )
 
-        return if (visibleRecurring.isNotEmpty()) {
-            DashboardComponent.PendingRecurring(recurringList = visibleRecurring)
+        // One template posts to one account or one card, so its amount is that account's
+        // money — exact, and never the base (design D17, D29). A template whose source was
+        // deleted names no account, and a row no account denominates is left out rather
+        // than shown in a guessed currency.
+        val recurringUi = visibleRecurring.mapNotNull { recurring ->
+            val currency = currencyOf(recurring) ?: return@mapNotNull null
+
+            PendingRecurringUi(
+                recurring = recurring,
+                amount = DisplayAmount.magnitude(
+                    recurring.amount,
+                    currency,
+                    isApproximate = false,
+                ),
+            )
+        }
+
+        return if (recurringUi.isNotEmpty()) {
+            DashboardComponent.PendingRecurring(recurringList = recurringUi)
         } else {
             null
         }
@@ -388,7 +497,10 @@ class DashboardComponentsBuilder(
         return if (recentTransactions.isNotEmpty()) {
             DashboardComponent.Recents(
                 transactions = recentTransactions.mapNotNull {
-                    it.toTransactionUi(lookup = input.facadeLookup)
+                    it.toTransactionUi(
+                        lookup = input.facadeLookup,
+                        baseCurrency = input.baseCurrency,
+                    )
                 },
                 hasMore = presentTransactions.size > count,
             )

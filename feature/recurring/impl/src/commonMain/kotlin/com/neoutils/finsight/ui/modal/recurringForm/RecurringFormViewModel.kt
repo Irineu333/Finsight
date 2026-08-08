@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateRecurring
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.EditRecurring
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -34,6 +35,14 @@ class RecurringFormViewModel(
     private val selectedAccount = MutableStateFlow(recurring?.account)
     private val selectedCreditCard = MutableStateFlow(recurring?.creditCard)
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto
+     * (design D17). Resolved beside the card so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.currencyOf(it) }
+    }
+
     private val categories = categoryRepository.observeAllCategories()
     private val accounts = accountRepository.observeAllAccounts()
     private val creditCards = creditCardRepository.observeAllCreditCards()
@@ -44,7 +53,8 @@ class RecurringFormViewModel(
         categories,
         accounts,
         creditCards,
-    ) { account, creditCard, cats, accs, cards ->
+        creditCardCurrency,
+    ) { account, creditCard, cats, accs, cards, cardCurrency ->
         RecurringFormUiState(
             accounts = accs,
             selectedAccount = account ?: accs.firstOrNull { it.isDefault },
@@ -52,6 +62,7 @@ class RecurringFormViewModel(
             selectedCreditCard = creditCard,
             incomeCategories = cats.filter { it.type == Category.Type.INCOME },
             expenseCategories = cats.filter { it.type == Category.Type.EXPENSE },
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,

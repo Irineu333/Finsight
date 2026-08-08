@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -23,6 +24,7 @@ import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -59,6 +61,13 @@ class ConfirmRecurringViewModel(
     } else {
         TransactionTarget.ACCOUNT
     }
+    /**
+     * What the recurring's own amount is denominated in — the currency of the account or
+     * card it names (design D17). `null` when it names neither, in which case there is
+     * nothing to constrain and every account is offered.
+     */
+    private val recurringCurrency = recurring.account?.currency ?: recurring.creditCard?.currency
+
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)
     private val selectedAccount = MutableStateFlow(initialAccount)
@@ -82,6 +91,14 @@ class ConfirmRecurringViewModel(
         }
     }
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto
+     * (design D17). Resolved beside the card so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.currencyOf(it) }
+    }
+
     val uiState = combine(
         confirmDate,
         selectedTarget,
@@ -91,20 +108,30 @@ class ConfirmRecurringViewModel(
         invoices,
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
-    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards ->
+        creditCardCurrency,
+    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards, cardCurrency ->
         // No fallback to the default account: substituting where the money moves
         // through is not a detail the app gets to decide in silence. With nothing
         // selected the modal keeps Confirm disabled until the user says where.
+        val offeredAccounts = accounts.offeredFor(recurringCurrency) { it.currency }
+        val offeredCreditCards = creditCards.offeredFor(recurringCurrency) { it.currency }
+
         ConfirmRecurringUiState(
             recurring = recurring,
             confirmDate = date,
             selectedTarget = target,
-            accounts = accounts,
+            accounts = offeredAccounts,
+            // A silently shorter list is a lie by omission, so the modal says why —
+            // for either list, since both shrink for the same reason.
+            hiddenByCurrency = offeredAccounts.size < accounts.size ||
+                offeredCreditCards.size < creditCards.size,
+            recurringCurrency = recurringCurrency,
             selectedAccount = account,
-            creditCards = creditCards,
+            creditCards = offeredCreditCards,
             selectedCreditCard = creditCard,
             invoices = invoiceList,
             selectedInvoice = invoice,
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -179,3 +206,27 @@ class ConfirmRecurringViewModel(
         }
     }
 }
+
+/**
+ * The destinations a confirmation may be pointed at, given what the recurring's amount is
+ * denominated in (design D17).
+ *
+ * A selector offers only what the domain accepts — D5's doctrine applied to the UI, and
+ * what `TransferBetweenAccountsModal` already practises by leaving the source out of the
+ * destinations. Redirecting a confirmation to an account or a card of another currency
+ * would write the raw number as if it were that currency, so the refusal is prevented in
+ * the control instead of reported as an error; the domain guard stays as a net, and is
+ * never the designed path.
+ *
+ * **Accounts and cards go through the same function because they are the same rule.** They
+ * had two copies of it and the card's copy was missing, which is the shape this kind of
+ * omission takes: the domain refuses a card of another currency exactly as it refuses an
+ * account, so an unfiltered card list offers what would be rejected. It matters more for
+ * cards, in fact — choosing the card target auto-selects the first one, so the app can
+ * land on the wrong currency without the user touching the selector at all.
+ *
+ * A recurring that names neither account nor card has nothing to constrain, and everything
+ * is offered.
+ */
+internal fun <T> List<T>.offeredFor(currency: String?, currencyOf: (T) -> String?): List<T> =
+    if (currency == null) this else filter { currencyOf(it) == currency }

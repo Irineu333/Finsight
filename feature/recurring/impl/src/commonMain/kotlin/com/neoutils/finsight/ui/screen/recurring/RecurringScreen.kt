@@ -42,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_card_monthly_amount
 import com.neoutils.finsight.resources.recurring_empty_filter
@@ -169,11 +171,12 @@ fun RecurringScreen(
                 ) {
                     items(
                         items = uiState.filteredRecurring,
-                        key = { "recurring_${it.id}" },
-                    ) { recurring ->
+                        key = { "recurring_${it.recurring.id}" },
+                    ) { item ->
                         RecurringCard(
-                            recurring = recurring,
-                            onClick = { detailController.show(ViewRecurringModal(recurring.id)) },
+                            recurring = item.recurring,
+                            amount = item.amount,
+                            onClick = { detailController.show(ViewRecurringModal(item.recurring.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
@@ -323,6 +326,7 @@ private fun EmptyDatabaseState(
 @Composable
 private fun RecurringCard(
     recurring: Recurring,
+    amount: DisplayAmount?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -423,21 +427,25 @@ private fun RecurringCard(
                 }
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(Res.string.recurring_card_monthly_amount),
-                    fontSize = 12.sp,
-                    color = colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = formatter.format(recurring.amount),
-                    modifier = Modifier.testTag("recurring_card_amount"),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = typeColor,
-                )
+            // No account left to denominate it: the figure is omitted rather than
+            // rendered in a currency nobody chose for it.
+            if (amount != null) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.recurring_card_monthly_amount),
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = formatter.format(amount),
+                        modifier = Modifier.testTag("recurring_card_amount"),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = typeColor,
+                    )
+                }
             }
 
             Row(

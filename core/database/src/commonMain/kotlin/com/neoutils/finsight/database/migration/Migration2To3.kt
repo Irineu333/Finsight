@@ -5,7 +5,10 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Creates `recurring`, tracking the last handled month on the recurrence itself.
+ * Schema 2 → 3: recurring transactions.
+ *
+ * Creates `recurring`, which records what it has handled in a single
+ * `lastHandledYearMonth` column — the shape [Migration3To4] replaces.
  *
  * Shipped in 1.4.0-rc01.
  */

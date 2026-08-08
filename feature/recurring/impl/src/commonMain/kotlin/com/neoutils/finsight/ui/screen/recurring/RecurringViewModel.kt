@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -12,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class RecurringViewModel(
     private val recurringRepository: IRecurringRepository,
+    private val accountRepository: IAccountRepository,
 ) : ViewModel() {
 
     private val filter = MutableStateFlow(RecurringFilter.ACTIVE)
@@ -26,7 +30,22 @@ class RecurringViewModel(
             RecurringUiState.Empty(filter = filter)
         } else {
             RecurringUiState.Content(
-                filteredRecurring = filteredFor(filter, recurring),
+                // The card renders a figure, not a bare number: each amount is
+                // denominated here, by the account the template names (design D17),
+                // because only this layer can resolve a card to its account. A template
+                // whose account is gone states no currency, and its card shows no figure.
+                filteredRecurring = filteredFor(filter, recurring).map { item ->
+                    RecurringItem(
+                        recurring = item,
+                        amount = accountRepository.currencyOf(item)?.let { currency ->
+                            DisplayAmount.magnitude(
+                                value = item.amount,
+                                currency = currency,
+                                isApproximate = false,
+                            )
+                        },
+                    )
+                },
                 filter = filter,
             )
         }

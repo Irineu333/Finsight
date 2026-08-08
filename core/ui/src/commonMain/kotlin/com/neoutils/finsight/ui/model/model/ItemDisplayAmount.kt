@@ -24,23 +24,28 @@ import com.neoutils.finsight.extension.DisplayAmount
  * and the report, the detail modal's state for the modal) and one table; each resolving
  * it on its own is how the two would drift apart.
  */
+/**
+ * @param currency the currency of the **leg's own account**. A line of a statement is a
+ * single entry, so it is exact and never the base currency by default — an item of a
+ * dollar account reads in dollars whatever the user's base is (design D29).
+ */
 fun itemDisplayAmount(
     label: TransactionLabel,
     legAmountCents: Long,
+    currency: String,
     hasPerspective: Boolean,
 ): DisplayAmount {
     val value = legAmountCents / 100.0
 
+    fun explicitSign() = DisplayAmount.explicitSign(value, currency, isApproximate = false)
+    fun magnitude() = DisplayAmount.magnitude(value, currency, isApproximate = false)
+
     return when (label) {
-        TransactionLabel.ADJUSTMENT -> DisplayAmount.explicitSign(value)
-        TransactionLabel.TRANSFER -> if (hasPerspective) {
-            DisplayAmount.explicitSign(value)
-        } else {
-            DisplayAmount.magnitude(value)
-        }
+        TransactionLabel.ADJUSTMENT -> explicitSign()
+        TransactionLabel.TRANSFER -> if (hasPerspective) explicitSign() else magnitude()
 
         TransactionLabel.EXPENSE,
         TransactionLabel.INCOME,
-        TransactionLabel.PAYMENT -> DisplayAmount.magnitude(value)
+        TransactionLabel.PAYMENT -> magnitude()
     }
 }

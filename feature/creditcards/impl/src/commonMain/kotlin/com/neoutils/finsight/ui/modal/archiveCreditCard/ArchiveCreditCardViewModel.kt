@@ -10,8 +10,11 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.neoutils.finsight.ui.component.ModalManager
@@ -21,16 +24,36 @@ class ArchiveCreditCardViewModel(
     private val creditCard: CreditCard,
     private val archiveCreditCardUseCase: ArchiveCreditCardUseCase,
     private val entryRepository: IEntryRepository,
+    private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    /** The card's outstanding balance — see `ArchiveAccountViewModel`. */
-    val balance = MutableStateFlow<Double?>(null)
+    /**
+     * The card's outstanding debt — see `ArchiveAccountViewModel`. `OWED` because a
+     * card balance is stored negative and the sentence the user reads is "you still
+     * owe this much", and denominated by the card itself (design D17).
+     */
+    val debt = MutableStateFlow<DisplayAmount?>(null)
+
+    /**
+     * Whether the card still carries **any** balance, in either direction — which is
+     * what the use case refuses on, and not the same question as [debt]: a card in
+     * credit owes nothing and still cannot be retired. Null until it is known.
+     */
+    val hasBalance = MutableStateFlow<Boolean?>(null)
 
     init {
-        viewModelScope.launch { balance.value = entryRepository.balance(creditCard.accountId) }
+        viewModelScope.launch {
+            val balance = entryRepository.balance(creditCard.accountId)
+            hasBalance.value = balance != 0.0
+            debt.value = DisplayAmount.owed(
+                value = balance,
+                currency = accountRepository.currencyOf(creditCard),
+                isApproximate = false,
+            )
+        }
     }
 
 

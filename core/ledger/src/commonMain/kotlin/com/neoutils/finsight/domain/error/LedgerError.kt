@@ -6,6 +6,23 @@ sealed class LedgerError(val message: String) {
     data object Unbalanced : LedgerError("Transaction entries must sum to zero for every currency.")
 
     /**
+     * A cross-currency intent whose residues all point the same way: every currency
+     * involved gains value, so the transaction would create money out of nowhere.
+     *
+     * The cross-currency completion balances *anything* — including a typo — by
+     * posting the negated residue of each currency to that currency's conversion
+     * account. That is what makes it uniform, and it is why it carries this one
+     * guard: an exchange has a side money left and a side money arrived, so the
+     * residues oppose each other by construction. When they do not, it is not an
+     * exchange, it is a defect, and nothing is written.
+     *
+     * Not reachable by a designed user path: in a form where one field is "out" and
+     * the other "in", the submit button already refuses a zeroed value.
+     */
+    data object SameSignResidues :
+        LedgerError("A cross-currency transaction must have residues of opposing signs; money cannot be created without a source.")
+
+    /**
      * A leg was tagged with a dimension its kind does not accept.
      *
      * Never reachable by a user action — it is a defect in the writer, surfaced

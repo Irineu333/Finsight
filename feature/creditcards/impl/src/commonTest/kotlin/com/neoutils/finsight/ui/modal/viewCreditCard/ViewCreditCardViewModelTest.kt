@@ -27,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 class ViewCreditCardViewModelTest {
 
@@ -48,11 +49,12 @@ class ViewCreditCardViewModelTest {
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = byId
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = current
         override suspend fun unarchive(accountId: Long) { unarchived += accountId }
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
         override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
         override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
-        override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     }
@@ -100,13 +102,14 @@ class ViewCreditCardViewModelTest {
     ) = ViewCreditCardViewModel(
         cardId = 1L,
         creditCardRepository = creditCardRepository,
+        accountRepository = FakeCardAccountRepository(),
         invoiceRepository = invoiceRepository,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(creditCardRepository),
         crashlytics = FakeCrashlytics(),
     )
 
     @Test
-    fun `an archived card is shown archived, with its invoice count`() = runTest(dispatcher) {
+    fun `an archived card is shown archived with its invoice count`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
         val shown = card(accountId = 10L, isArchived = true)
         val vm = viewModel(repository, FakeInvoiceRepository(listOf(invoice(shown), invoice(shown))))

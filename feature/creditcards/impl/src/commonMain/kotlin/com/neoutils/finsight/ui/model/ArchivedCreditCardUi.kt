@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.extension.DisplayAmount
 
 /**
  * A flat, display-ready view of an archived card — the fields the archived listing
@@ -11,16 +12,18 @@ data class ArchivedCreditCardUi(
     val cardId: Long,
     val iconKey: String,
     val name: String,
-    val limit: Double,
+    // Denominated by the card's own `LIABILITY` account (design D17), and exact:
+    // a limit is one account's figure and nothing converted it.
+    val limit: DisplayAmount,
     val closingDay: Int,
     val dueDay: Int,
 )
 
-fun CreditCard.toArchivedUi() = ArchivedCreditCardUi(
+fun CreditCard.toArchivedUi(currency: String) = ArchivedCreditCardUi(
     cardId = id,
     iconKey = iconKey,
     name = name,
-    limit = limit,
+    limit = DisplayAmount.magnitude(limit, currency, isApproximate = false),
     closingDay = closingDay,
     dueDay = dueDay,
 )

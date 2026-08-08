@@ -15,6 +15,10 @@ import com.neoutils.finsight.extension.deriveTransactionType
  * about the leg they are all supposedly showing. Returns `null` when the perspective has
  * no matching leg, so the caller omits the item instead of failing on a read.
  *
+ * [baseCurrency] is what a surface with **no perspective** answers with when the two ends
+ * of an operation disagree on currency — see [Transaction.figureLegUnder]. A surface that
+ * does not know it, or that named an account, reads exactly what it read before.
+ *
  * [lookup] closes the gap the ledger leaves: a transaction carries the *dimension*
  * its nominal leg is classified by and the *id* of its installment, and turning
  * either into something with a name belongs to the feature that owns that facade
@@ -23,18 +27,28 @@ import com.neoutils.finsight.extension.deriveTransactionType
 fun Transaction.toTransactionUi(
     accountId: Long? = null,
     lookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
+    baseCurrency: String? = null,
 ): TransactionUi? {
     val category = lookup.categoryOf(this)
     val label = entries.deriveTransactionLabel()
 
     val leg = legUnder(accountId) ?: return null
+    // Two legs, deliberately: direction is the leg this transaction is *read* through,
+    // while the figure may sit at the other end when the two disagree on currency and
+    // one of them is the base ([figureLegUnder]). They coincide everywhere else.
+    val figure = figureLegUnder(accountId, baseCurrency) ?: leg
 
     return TransactionUi(
         id = id,
         label = label,
         direction = deriveTransactionType(leg.amount, entries),
         title = displayTitleOf(title, category),
-        amount = itemDisplayAmount(label, leg.amount, hasPerspective = accountId != null),
+        amount = itemDisplayAmount(
+            label = label,
+            legAmountCents = figure.amount,
+            currency = figure.currency,
+            hasPerspective = accountId != null,
+        ),
         date = date,
         categoryId = category?.id,
         categoryIcon = category?.icon,

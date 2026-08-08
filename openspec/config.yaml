@@ -9,6 +9,11 @@ schema: spec-driven
 #     We use conventional commits
 #     Domain: e-commerce platform
 
+context: |
+  Escreva todo artefato (proposal.md, os deltas de spec, design.md, tasks.md) em português,
+  com a ortografia correta e completa — acentos e cedilhas incluídos. Termos técnicos e
+  identificadores de código permanecem na forma original.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:
@@ -18,3 +23,13 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+
+rules:
+  tasks:
+    - Delegate the generation of tasks.md to a subagent instead of writing it inline.
+    - Give that subagent the artifacts already produced for this change (proposal.md, the spec deltas under specs/, and design.md when it exists) and require it to read them in full before writing anything.
+    - The subagent's only deliverable is tasks.md; it must derive every task from those artifacts and must not introduce scope absent from them.
+    - Plan tasks.md for parallel execution — structure the work into ordered groups where every task inside a group is independent of its siblings, so one subagent per task can implement the whole group at once.
+    - Independence is judged by what a task writes — two tasks in the same group must not touch the same file, and none may depend on a sibling's output. Whatever cannot be made independent belongs to a later group, not to a caveat.
+    - State each group's barrier explicitly — what must be true before it starts, and what is true when it ends (the project compiles, a given test passes). The barrier is what makes the next group's parallelism safe.
+    - Where the artifacts force a sequence (a migration before its readers, a write path before the reads that consolidate it), keep the sequence and say why. Do not fabricate parallelism the design forbids.

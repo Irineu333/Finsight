@@ -3,16 +3,25 @@ package com.neoutils.finsight.database.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import com.neoutils.finsight.extension.verifyForeignKeys
-import com.neoutils.finsight.extension.verifyLedgerBalanced
-import com.neoutils.finsight.extension.verifyNoOrphanDimensions
+import com.neoutils.finsight.database.extension.verifyForeignKeys
+import com.neoutils.finsight.database.extension.verifyLedgerBalanced
+import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
 
 /**
- * Rewrites the app around the double-entry ledger: accounts and cards become rows in
- * the chart of accounts, a category becomes a dimension, and every legacy transaction
- * becomes a balanced set of entries. The numbered steps below are order-dependent —
- * the temp tables carry the id offsets across them — and the last one verifies what
- * the rewrite promised, with foreign keys off until then.
+ * Schema 7 → 10: the double-entry ledger.
+ *
+ * Rebuilds the whole model in one transaction: `accounts` becomes the chart of accounts
+ * (typed, with a currency and a closure flag), cards become `LIABILITY` rows of it,
+ * categories and invoices become `dimensions`, and every legacy leg becomes balanced
+ * `entries`. The legacy `transactions` table is dropped and `operations` takes its name.
+ *
+ * It also repairs what v7 allowed — a leg with no aggregate, a leg pointing at a deleted
+ * account, a multi-leg operation that never summed to zero — as explicit movements, since
+ * nothing may enter the ledger unbalanced. The step comments carry the reasoning case by
+ * case.
+ *
+ * Foreign keys are off for the rewrite, so the guards at the end are the only moment they
+ * — and `Σ = 0` — are checked.
  *
  * Shipped in 1.9.0-rc01.
  */
@@ -89,13 +98,10 @@ object Migration7To10 : Migration(7, 10) {
         //        `transactions.target`; the name and the multiplicity are not, so all
         //        the orphans of a type collapse into one closed account.
         //
-        //        The EXISTS must match every leg that step 9 will route to the bucket,
-        //        which is any leg with a NULL account/card — regardless of `operationId`.
-        //        Step 8 backfills the NULL `operationId` of a leg that never had an
-        //        aggregate, and step 9 then routes it here too; guarding this EXISTS on
-        //        `operationId IS NOT NULL` would skip creating the bucket for a leg that
-        //        is *only* such an orphan, leaving its entry pointing at an account that
-        //        does not exist (a dangling FK the write-off cannot repair). ---
+        //        The EXISTS deliberately ignores `operationId`: step 8 gives an aggregate
+        //        to the legs that have none and step 9 routes those here too, so a
+        //        narrower condition would leave an entry pointing at an account that was
+        //        never created. ---
         connection.execSQL("CREATE TEMP TABLE `_closed` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
             "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
@@ -162,13 +168,12 @@ object Migration7To10 : Migration(7, 10) {
                 "FROM `transactions` t WHERE t.`operationId` IS NOT NULL"
         )
 
-        // The synthesized contra leg of every single-leg operation. It lands on a
-        // nominal — never on a per-category account, which v10 does not have — and
-        // carries the category as its dimension. Which nominal is the *category's*
-        // nature when there is one (a v7 expense filed under an income category kept
-        // landing on the income side, and still does); with no category it is the
-        // leg's own type, and the dimension is absent: "uncategorized" is the absence
-        // of a dimension, never a bucket account.
+        // The synthesized contra leg of every single-leg operation. It lands on a nominal
+        // and carries the category as its dimension — never on a per-category account,
+        // which v10 does not have. Which nominal is the *category's* nature when there is
+        // one, preserving how a v7 expense filed under an income category behaved; with no
+        // category it is the leg's own type and no dimension at all, because
+        // "uncategorized" is the absence of a dimension, not a bucket.
         connection.execSQL(
             "INSERT INTO `entries_build` (`transactionId`, `accountId`, `amount`, `currency`, `dimensionId`) " +
                 "SELECT t.`operationId`, " +

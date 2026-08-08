@@ -1,5 +1,14 @@
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
@@ -18,6 +27,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * A budgeted category that is later archived is **kept**, not filtered out — the same
@@ -35,7 +49,7 @@ class BudgetClosedCategoryTest {
 
     private val mapper = BudgetMapper()
     private fun useCase(balances: Map<Long, Double>) =
-        CalculateBudgetProgressUseCase(MonthBalances(balances))
+        CalculateBudgetProgressUseCase(MonthBalances(balances), reducer())
 
     private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
@@ -47,7 +61,7 @@ class BudgetClosedCategoryTest {
 
     private fun budgetEntity(id: Long) = BudgetEntity(
         id = id, iconCategoryId = 0, iconKey = "shopping", title = "Budget $id",
-        amount = 200.0, period = "MONTHLY", createdAt = 0L,
+        amount = 200.0, currency = "BRL", period = "MONTHLY", createdAt = 0L,
     )
 
     /** Mutable, so an edit round-trip (delete + reinsert links) can be observed. */
@@ -68,6 +82,7 @@ class BudgetClosedCategoryTest {
             linksFlow.value = linksFlow.value.filterNot { it.budgetId == budgetId }
         }
         override suspend fun countByCategory(categoryId: Long): Int = linksFlow.value.count { it.categoryId == categoryId }
+        override suspend fun countByCurrency(currency: String): Int = 0
         override suspend fun existsByRecurring(recurringId: Long): Boolean = false
         override suspend fun update(budget: BudgetEntity) {
             budgetsFlow.value = budgetsFlow.value.map { if (it.id == budget.id) budget else it }
@@ -201,37 +216,78 @@ class BudgetClosedCategoryTest {
 
 /** The one ledger read the budget use case makes; anything else is out of scope. */
 private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRepository {
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
-        balances[dimensionId] ?: 0.0
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+        balances[dimensionId]
+            ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }
+            ?: com.neoutils.finsight.domain.model.MoneyByCurrency.zero
 
     override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeLedgerChanges() = throw NotImplementedError()
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?) = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth() = throw NotImplementedError()
-    override suspend fun totalsByDimension(
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ) = throw NotImplementedError()
-    override suspend fun scopeStats(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ) = throw NotImplementedError()
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }
+
+/** The reducer over an archive holding [rates]; the budget's own currency is the target. */
+private fun reducer(
+    base: String = "BRL",
+    rates: Map<String, Double> = emptyMap(),
+) = ConsolidateMoneyUseCase(
+    baseCurrencyRepository = object : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(code: String) { flow.value = code }
+    },
+    exchangeRateRepository = object : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
+        override suspend fun ratesAsOf(date: LocalDate) = rates.mapValues { (code, rate) ->
+            ExchangeRate(
+                currency = code,
+                counterCurrency = base,
+                date = date,
+                rate = rate,
+                source = ExchangeRate.Source.USER,
+            )
+        }
+
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate) =
+            ratesAsOf(date)[from]?.takeIf { it.counterCurrency == to }
+
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+        override suspend fun countNaming(currency: String) = 0
+        override suspend fun removeAllNaming(currency: String) = Unit
+    },
+    getAccountCurrencies = object : GetAccountCurrenciesUseCase {
+        override suspend fun invoke() = AccountCurrencies(inUse = listOf(base), ofDefaultAccount = base)
+    },
+)

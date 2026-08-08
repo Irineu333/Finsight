@@ -10,10 +10,9 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.repository.DimensionFlows
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -22,6 +21,10 @@ import kotlinx.datetime.YearMonth
 import kotlin.math.roundToLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 /**
  * Characterizes [AdjustInvoiceUseCase] over the ledger, the mirror image of
@@ -65,6 +68,37 @@ class AdjustInvoiceUseCaseTest {
 
         assertEquals(200.0, ledger.dimensionOwed(invoice.id))
     }
+
+    /**
+     * The proof that `AdjustInvoiceUseCase` did not have to change either.
+     *
+     * Its idempotency is even broader than the account one — "any transaction on that
+     * date carrying this invoice, with an `EQUITY` leg" — so a cross-currency invoice
+     * payment made the same day would have been rewritten as the adjustment had the
+     * conversion account been an `EQUITY` row. It stops matching because a conversion
+     * leg is not `EQUITY`, and the owed amount is untouched because the conversion leg
+     * carries no dimension (design D15).
+     */
+    @Test
+    fun `a same-day cross-currency invoice payment is not rewritten as the adjustment`() = runTest {
+        val ledger = InvoiceLedgerStore(card)
+        val useCase = AdjustInvoiceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        val dimensionId = invoice.dimensionId!!
+        val paymentId = ledger.seedCrossCurrencyPayment(date, dimensionId)
+        val paymentEntries = ledger.entriesByTransaction.getValue(paymentId)
+        val owedAfterPayment = ledger.dimensionOwed(dimensionId)
+
+        useCase(invoice = invoice, target = 300.0, adjustmentDate = date).getOrNull()
+
+        assertEquals(paymentEntries, ledger.entriesByTransaction.getValue(paymentId))
+        assertEquals(2, ledger.entriesByTransaction.size)
+        // The adjustment moved the owed amount; the payment's own legs did not change.
+        assertEquals(-100.0, owedAfterPayment)
+    }
 }
 
 /**
@@ -73,8 +107,14 @@ class AdjustInvoiceUseCaseTest {
  * plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class InvoiceLedgerStore(card: CreditCard) {
-    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY)
-    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+    private val cardAccount = Account(id = card.accountId, name = card.name, type = AccountType.LIABILITY, currency = "BRL")
+    private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val payingAccount = Account(id = 2, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
+    private val conversionLocal =
+        Account(id = 900, name = "Conversão", type = AccountType.CONVERSION, currency = "BRL")
+    private val conversionForeign =
+        Account(id = 901, name = "Conversão", type = AccountType.CONVERSION, currency = "USD")
+    private val foreignCard = Account(id = 11, name = "Chase card", type = AccountType.LIABILITY, currency = "USD")
     val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
     val dateByTransaction = mutableMapOf<Long, LocalDate>()
     private var nextTransactionId = 0L
@@ -98,6 +138,24 @@ class InvoiceLedgerStore(card: CreditCard) {
         val transactionId = ++nextTransactionId
         dateByTransaction[transactionId] = date
         write(transactionId, legs)
+        return transactionId
+    }
+
+    /** BRL 550 out of an account, settling USD 100 of a foreign card's invoice. */
+    fun seedCrossCurrencyPayment(date: LocalDate, dimensionId: Long): Long {
+        val transactionId = ++nextTransactionId
+        dateByTransaction[transactionId] = date
+        entriesByTransaction[transactionId] = listOf(
+            Entry(transactionId = transactionId, account = payingAccount, amount = -55_000),
+            Entry(transactionId = transactionId, account = conversionLocal, amount = 55_000),
+            Entry(transactionId = transactionId, account = conversionForeign, amount = -10_000),
+            Entry(
+                transactionId = transactionId,
+                account = foreignCard,
+                amount = 10_000,
+                dimensionId = dimensionId,
+            ),
+        )
         return transactionId
     }
 
@@ -154,7 +212,8 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
 }
 
 class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryRepository {
-    override suspend fun dimensionOwed(dimensionId: Long): Double = ledger.dimensionOwed(dimensionId)
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long) =
+        MoneyByCurrency.of("BRL", ledger.dimensionOwed(dimensionId))
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
@@ -162,25 +221,31 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-
-    override suspend fun totalsByDimensionInScope(
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
-    ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ScopeStatsByCurrency = throw NotImplementedError()
 }

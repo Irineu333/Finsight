@@ -2,8 +2,11 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatTerms
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
@@ -41,6 +44,7 @@ data class ReportExportStrings(
     val columnTransaction: String,
     val columnAmount: String,
     val columnPercentage: String,
+    val footnote: String,
 )
 
 fun ReportViewerUiState.Content.toReportLayout(
@@ -60,22 +64,22 @@ fun ReportViewerUiState.Content.toReportLayout(
         is ReportViewerUiState.Stats.Account -> listOf(
             ReportSummaryItem(
                 label = strings.summaryBalance,
-                value = formatter.format(s.balance),
-                tone = s.balance.value.toTone(),
+                value = formatter.exportText(s.balance),
+                tone = s.balance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryOpeningBalance,
-                value = formatter.format(s.openingBalance),
-                tone = s.openingBalance.value.toTone(),
+                value = formatter.exportText(s.openingBalance),
+                tone = s.openingBalance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,
-                value = formatter.format(s.income),
+                value = formatter.exportText(s.income),
                 tone = ReportTone.POSITIVE,
             ),
             ReportSummaryItem(
                 label = strings.summaryExpense,
-                value = formatter.format(s.expense),
+                value = formatter.exportText(s.expense),
                 tone = ReportTone.NEGATIVE,
             ),
         )
@@ -107,7 +111,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categorySpending.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -122,7 +126,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
-                            amount = formatter.format(item.amount),
+                            amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
                     },
@@ -167,7 +171,29 @@ fun ReportViewerUiState.Content.toReportLayout(
         ),
         summaryItems = summaryItems,
         sections = sections,
+        // Derived, never declared: the document says what its mark means exactly when it
+        // carries one. A single-currency report has no approximate figure in it and gets
+        // no footnote at all — the same rule, and the same silence, as everywhere else.
+        footnote = strings.footnote.takeIf { approximateFigures().any { figure -> figure.isApproximate } },
     )
+}
+
+/**
+ * Every figure of the document that could be approximate.
+ *
+ * The invoice perspective is absent on purpose: an invoice report is scoped to one card,
+ * so each of its lines is a `DisplayAmount` denominated by that card's account and no
+ * reduction ever took place (design D17).
+ */
+private fun ReportViewerUiState.Content.approximateFigures(): List<ConsolidatedAmount> = buildList {
+    (stats as? ReportViewerUiState.Stats.Account)?.let {
+        add(it.openingBalance)
+        add(it.income)
+        add(it.expense)
+        add(it.balance)
+    }
+    categorySpending?.forEach { add(it.amount) }
+    categoryIncome?.forEach { add(it.amount) }
 }
 
 private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
@@ -195,10 +221,41 @@ private fun TransactionUi.exportTone(): ReportTone {
     }
 }
 
-private fun Double.toRoundedPercent(): String {
+/**
+ * A share with no answer renders as a dash, and it survives having no colour — which is
+ * what design D20 asks of an exported document. `0%` would be a claim the app cannot
+ * make: no rate reaches that category's currency, so its share of the total is unknown
+ * rather than nil.
+ */
+private fun Double?.toRoundedPercent(): String {
+    if (this == null) return "—"
+    return roundedPercent()
+}
+
+private fun Double.roundedPercent(): String {
     val rounded = (this * 10).roundToInt() / 10.0
     return "$rounded%"
 }
+
+/**
+ * The exported document stores text and not a figure, so a figure of more than one term
+ * is written out whole, in the order the terms read.
+ *
+ * **Whole, and not degraded to the base term.** D20 lists the exported document among the
+ * surfaces of fixed width or of a grammar of their own, and a table cell is neither: it
+ * holds whatever string it is given. So the rule that applies here is the other one — *a
+ * surface that can show more than one term shows them all* — and nothing is dropped for a
+ * reader to not notice. What the document owes on top of that is saying what the mark
+ * means, which is [ReportLayout.footnote].
+ */
+private fun CurrencyFormatter.exportText(figure: ConsolidatedAmount): String =
+    formatTerms(figure).joinToString(" ")
+
+/**
+ * The tone of a figure is the tone of the term it was reduced into — the one a surface
+ * too narrow for the rest would keep.
+ */
+private fun ConsolidatedAmount.toTone(): ReportTone = degradedTerm().value.toTone()
 
 private fun Double.toTone(): ReportTone {
     return when {

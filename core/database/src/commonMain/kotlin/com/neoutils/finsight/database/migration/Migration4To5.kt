@@ -5,8 +5,10 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Gives a budget its own `iconKey`, seeded from the category it borrowed the icon
- * from, and an account its own.
+ * Schema 4 → 5: an icon of its own.
+ *
+ * `budgets` and `accounts` gain `iconKey`. A budget's is seeded from the category it was
+ * borrowing the icon from, so nothing changes on screen.
  *
  * Shipped in 1.4.0.
  */

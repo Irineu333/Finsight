@@ -39,11 +39,11 @@ class InstallmentRemovalReconcilerTest {
         installmentDao = db.installmentDao(),
     )
 
-    private val card = Account(id = 1, name = "Card", type = AccountType.LIABILITY)
+    private val card = Account(id = 1, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
 
     /** Six shares of R$ 100 under one installment, as `AddInstallmentUseCase` writes them. */
     private suspend fun seed(count: Int = 6, totalAmount: Double = 600.0): Long {
-        db.accountDao().insert(AccountEntity(id = 1, name = "Card", type = AccountEntity.Type.LIABILITY))
+        db.accountDao().insert(AccountEntity(id = 1, name = "Card", type = AccountEntity.Type.LIABILITY, currency = "BRL"))
         val installmentId = db.installmentDao().insert(InstallmentEntity(count = count, totalAmount = totalAmount))
         repeat(count) { index ->
             val transactionId = db.transactionDao().insert(
@@ -55,7 +55,7 @@ class InstallmentRemovalReconcilerTest {
                 )
             )
             db.entryDao().insert(
-                EntryEntity(transactionId = transactionId, accountId = 1, amount = -10_000)
+                EntryEntity(transactionId = transactionId, accountId = 1, amount = -10_000, currency = "BRL")
             )
         }
         return installmentId

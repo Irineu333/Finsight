@@ -87,10 +87,11 @@ class RecurringRepositoryTest {
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
-        override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     // Room opens lazily and this test never writes, so the connection is never made;

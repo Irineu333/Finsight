@@ -27,9 +27,15 @@ import com.neoutils.finsight.resources.installment_counter_label
 import com.neoutils.finsight.resources.installment_counter_single
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * @param currency the currency of the card the installment is charged to. Mono-currency
+ * by construction (design D17): a card's limit and its installments are denominated by
+ * the card, whose currency never changes.
+ */
 data class InstallmentState(
     val count: Int,
     val total: Double,
+    val currency: String,
 ) {
     /**
      * What one instalment is worth, for the label alone.
@@ -88,7 +94,7 @@ fun InstallmentCounter(
                     stringResource(
                         Res.string.installment_counter_label,
                         state.count,
-                        formatter.format(state.installment),
+                        formatter.format(state.installment, state.currency),
                     )
                 },
                 modifier = Modifier.testTag("installment_counter_label"),

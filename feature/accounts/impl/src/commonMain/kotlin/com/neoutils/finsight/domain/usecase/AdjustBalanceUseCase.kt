@@ -27,9 +27,10 @@ class AdjustBalanceUseCase(
         account: Account
     ): Either<Throwable, Unit> = either {
         val currentBalance = catch {
-            calculateBalanceUseCase(
-                target = adjustmentDate.yearMonth,
+            // Scoped to one account, so scalar — and the currency is the account's own.
+            calculateBalanceUseCase.forAccount(
                 accountId = account.id,
+                target = adjustmentDate.yearMonth,
             )
         }.bind()
 

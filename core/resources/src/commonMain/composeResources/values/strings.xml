@@ -14,6 +14,7 @@
     <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de arquivá-la.</string>
     <!-- Neutral wording: the same guard refuses deleting an account and a card. -->
     <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou exclua-as antes de excluir.</string>
+    <string name="account_error_currency_immutable">A moeda de uma conta é definida na criação e não pode ser alterada. Para corrigir, apague a conta (se ela não tiver lançamentos) e crie outra.</string>
     <string name="account_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
     <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
 
@@ -43,6 +44,7 @@
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
     <string name="ledger_error_unbalanced">A operação não está balanceada (as pernas não somam zero).</string>
+    <string name="ledger_error_same_sign_residues">Os valores informados não descrevem uma troca de moeda: em uma delas o dinheiro tem de sair.</string>
     <string name="ledger_error_paid_invoice">Esta fatura já foi paga e não pode mais ser alterada.</string>
     <string name="ledger_error_closed_invoice">Esta fatura está fechada. Só o pagamento dela pode ser registrado.</string>
     <string name="ledger_error_closed_account">Esta conta está arquivada e não aceita novos lançamentos. Escolha outra conta.</string>
@@ -316,6 +318,10 @@
     <string name="account_form_edit_title">Editar Conta</string>
     <string name="account_form_new_title">Nova Conta</string>
     <string name="account_form_name_label">Nome</string>
+    <string name="account_form_currency_label">Moeda · %1$s</string>
+    <string name="account_form_currency_state_new">Escolhida agora e fixa para sempre</string>
+    <string name="account_form_currency_state_locked">Definida na criação e não pode mudar</string>
+    <string name="account_form_currency_modal_title">Moeda da conta</string>
     <string name="account_form_icon_label">Ícone da conta</string>
     <string name="account_form_icon_helper">Toque para abrir a lista de ícones</string>
     <string name="account_form_icon_modal_title">Escolha um ícone para a conta</string>
@@ -332,6 +338,10 @@
     <string name="credit_card_form_edit_title">Editar Cartão</string>
     <string name="credit_card_form_new_title">Novo Cartão</string>
     <string name="credit_card_form_name_label">Nome do Cartão</string>
+    <string name="credit_card_form_currency_label">Moeda · %1$s</string>
+    <string name="credit_card_form_currency_state_new">Escolhida agora e fixa para sempre</string>
+    <string name="credit_card_form_currency_state_locked">Definida na criação e não pode mudar</string>
+    <string name="credit_card_form_currency_modal_title">Moeda do cartão</string>
     <string name="credit_card_form_icon_label">Ícone do cartão</string>
     <string name="credit_card_form_icon_helper">Toque para abrir a lista de ícones</string>
     <string name="credit_card_form_icon_modal_title">Escolha um ícone para o cartão</string>
@@ -358,6 +368,10 @@
     <string name="budget_form_icon_label">Ícone do orçamento</string>
     <string name="budget_form_icon_helper">Toque para abrir a lista de ícones</string>
     <string name="budget_form_icon_modal_title">Escolha um ícone para o orçamento</string>
+    <string name="budget_form_currency_label">Moeda do limite · %1$s</string>
+    <string name="budget_form_currency_state_new">Escolhida agora e fixa para este orçamento</string>
+    <string name="budget_form_currency_state_locked">Definida na criação · troque criando outro orçamento</string>
+    <string name="budget_form_currency_modal_title">Moeda do limite</string>
     <string name="budget_form_limit_label">Limite</string>
     <string name="budget_form_limit_type_fixed">R$</string>
     <string name="budget_form_limit_type_percentage">%</string>
@@ -458,6 +472,11 @@
     <string name="transfer_date_label">Data</string>
     <string name="transfer_confirm">Transferir</string>
 
+    <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
+    <string name="cross_currency_leaves_label">Sai de %1$s</string>
+    <string name="cross_currency_enters_label">Entra em %1$s</string>
+    <string name="cross_currency_implied_by_rate">pela taxa de %1$s: %2$s</string>
+
     <!-- Edit Account Balance Modal -->
     <string name="edit_account_balance_current_title">Editar Saldo Atual</string>
     <string name="edit_account_balance_final_title">Editar Saldo Final</string>
@@ -486,6 +505,7 @@
     <string name="view_transaction_type_expense">Despesa</string>
     <string name="view_transaction_type_adjustment">Ajuste</string>
     <string name="view_transaction_amount_label">Valor</string>
+    <string name="view_transaction_applied_rate_label">Taxa praticada</string>
     <string name="view_transaction_date_label">Data</string>
     <string name="view_transaction_origin_label">Origem</string>
     <string name="view_transaction_origin_account">Conta</string>
@@ -710,6 +730,7 @@
     <string name="view_recurring_amount_label">Valor</string>
     <string name="view_recurring_day_label">Dia do mês</string>
     <string name="view_recurring_status_label">Status</string>
+    <string name="confirm_recurring_currency_filter">Só aparecem contas em %1$s: é a moeda em que esta recorrência foi criada.</string>
     <string name="view_recurring_account_label">Conta</string>
     <string name="view_recurring_credit_card_label">Cartão de crédito</string>
     <string name="view_recurring_category_label">Categoria</string>
@@ -822,6 +843,102 @@
     <string name="view_budget_title">Orçamento</string>
     <string name="view_recurring_title">Recorrência</string>
 
+    <string name="money_unconverted_term">+ parcela não convertida</string>
+    <string name="money_approximate_badge">Por que este valor é aproximado</string>
+    <string name="money_approximate_title">Valor aproximado</string>
+    <string name="money_approximate_converted">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s.</string>
+    <string name="money_approximate_partial">Este valor reúne moedas diferentes. O que pôde ser convertido usou a taxa de %1$s; o restante está em moeda sem taxa cadastrada e aparece à parte, sem conversão.</string>
+    <string name="money_approximate_none">Este valor reúne moedas diferentes e nenhuma taxa está cadastrada, então nada foi convertido: cada moeda aparece por si.</string>
+    <string name="money_stacked_badge">Por que este valor aparece em partes</string>
+    <string name="money_stacked_title">Valor em partes</string>
+    <string name="money_unresolved_badge">Por que falta informação aqui</string>
+    <string name="money_unresolved_title">Sem um valor único para comparar</string>
+    <string name="money_unresolved_body">Alguma parte deste período está em uma moeda sem taxa cadastrada, então não existe um valor único para comparar — e é por isso que a barra e a proporção não aparecem. Os valores continuam exatos, cada um na sua moeda; o que falta é a medida comum entre eles. Cadastre a taxa e isto volta a funcionar.</string>
+    <string name="report_export_footnote">≈ marca um valor que passou por uma taxa de câmbio. Quando não havia taxa, a parcela daquela moeda aparece por si, sem conversão.</string>
+    <string name="money_approximate_see_rates">Ver taxas</string>
+
+    <string name="nav_settings">Configurações</string>
+    <string name="settings_screen_title">Configurações</string>
+    <string name="settings_base_currency_title">Moeda base</string>
+    <string name="settings_base_currency_picker_title">Moeda base</string>
+    <string name="settings_exchange_rates_title">Taxas de câmbio</string>
+    <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
+
+    <string name="exchange_rates_screen_title">Taxas de câmbio</string>
+    <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
+    <string name="exchange_rates_add">Cadastrar taxa</string>
+    <string name="exchange_rates_quote">1 %1$s = %2$s</string>
+    <string name="exchange_rates_group_header">Cotados em %1$s</string>
+    <string name="exchange_rates_quote_pair">1 %1$s = %2$s %3$s</string>
+    <string name="exchange_rates_source_derived">De uma operação</string>
+    <string name="exchange_rates_source_remote">Cotação automática</string>
+    <string name="exchange_rates_source_user">Informada por você</string>
+    <string name="exchange_rates_outdated">Desatualizada</string>
+    <string name="exchange_rates_sync_never">Ainda não atualizado</string>
+    <string name="exchange_rates_currency_not_covered">%1$s não é coberta pela atualização automática — cadastre a taxa à mão</string>
+    <string name="exchange_rates_base_not_covered">%1$s, a sua moeda base, não é coberta pela atualização automática — cadastre as taxas à mão ou escolha outra moeda base</string>
+    <string name="exchange_rates_open_history">Ver histórico</string>
+
+    <string name="exchange_rate_history_title">Histórico de taxas</string>
+    <string name="exchange_rate_history_empty">Nenhuma observação corresponde aos filtros.</string>
+    <string name="exchange_rate_history_filter_date">Data</string>
+    <string name="exchange_rate_history_filter_date_range">De %1$s a %2$s</string>
+    <string name="exchange_rate_history_filter_currency">Moeda</string>
+    <string name="exchange_rate_history_filter_currency_any">Qualquer moeda</string>
+    <string name="exchange_rate_history_filter_source">Origem</string>
+    <string name="exchange_rate_history_filter_source_any">Qualquer origem</string>
+    <string name="exchange_rate_history_filter_clear">Limpar filtros</string>
+
+    <string name="exchange_rate_form_title_new">Nova taxa</string>
+    <string name="exchange_rate_form_title_edit">Editar taxa</string>
+    <string name="exchange_rate_form_from">Moeda precificada</string>
+    <string name="exchange_rate_form_to">Cotada em</string>
+    <string name="exchange_rate_form_currency_locked">A moeda de uma taxa não muda. Para corrigi-la, remova esta e cadastre outra.</string>
+    <string name="exchange_rate_form_rate">Taxa</string>
+    <string name="exchange_rate_form_rate_helper_pair">Quantos %1$s vale 1 %2$s</string>
+    <string name="exchange_rate_form_date">Data</string>
+    <string name="exchange_rate_form_save">Salvar</string>
+    <string name="exchange_rate_form_remove">Remover</string>
+
+    <string name="settings_currencies_title">Moedas</string>
+    <string name="settings_currencies_subtitle">Cadastre, edite, arquive ou apague as moedas que o app oferece</string>
+
+    <string name="currencies_screen_title">Moedas</string>
+    <string name="currencies_add">Cadastrar moeda</string>
+    <string name="currencies_archived_label">Arquivada</string>
+    <string name="currencies_archive_confirm_title">Arquivar %1$s?</string>
+    <string name="currencies_archive_confirm_message">Ela deixa de ser oferecida nos formulários. O que já está nela continua valendo, e você pode desarquivá-la quando quiser.</string>
+    <string name="currencies_archive_confirm_action">Arquivar</string>
+    <string name="currencies_delete_confirm_title">Apagar %1$s?</string>
+    <string name="currencies_delete_confirm_message">A moeda deixa de existir e não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_message_rates">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto. Não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_action">Apagar</string>
+
+    <string name="view_currency_base_label">Moeda base</string>
+    <string name="view_currency_accounts">Contas nesta moeda</string>
+    <string name="view_currency_budgets">Orçamentos nesta moeda</string>
+    <string name="view_currency_rates">Taxas que a citam</string>
+    <string name="view_currency_edit">Editar</string>
+    <string name="view_currency_unarchive">Desarquivar</string>
+
+    <string name="currency_form_title_new">Nova moeda</string>
+    <string name="currency_form_title_edit">Editar moeda</string>
+    <string name="currency_form_code">Código</string>
+    <string name="currency_form_code_helper">O código ISO da moeda, como BRL ou CLP — ou um que você inventar.</string>
+    <string name="currency_form_symbol">Símbolo</string>
+    <string name="currency_form_name">Nome</string>
+    <string name="currency_form_name_helper">Opcional. Sem nome, o app usa o que o sistema chama esta moeda, no idioma corrente.</string>
+    <string name="currency_form_save">Salvar</string>
+
+    <string name="currency_error_code_required">Informe o código da moeda.</string>
+    <string name="currency_error_symbol_required">Informe o símbolo da moeda.</string>
+    <string name="currency_error_code_exists">Já existe uma moeda com este código.</string>
+    <string name="currency_error_unsupported_decimals">Esta moeda não tem duas casas decimais, e o app só trabalha com moedas que têm.</string>
+    <string name="currency_error_denominated_by_account">Existe conta nesta moeda. Apague ou mude as contas antes, ou arquive a moeda.</string>
+    <string name="currency_error_denominated_by_budget">Existe orçamento com limite nesta moeda. Apague ou mude os orçamentos antes, ou arquive a moeda.</string>
+    <string name="currency_error_base_currency_not_archivable">Esta é a moeda base. Troque a moeda base antes de arquivá-la.</string>
+    <string name="currency_error_not_found">Esta moeda não existe mais.</string>
+    <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
     <string name="build_transaction_error_amount_required">Informe o valor.</string>
     <string name="build_transaction_error_amount_zero">O valor não pode ser zero.</string>
     <string name="build_transaction_error_date_required">Informe a data.</string>

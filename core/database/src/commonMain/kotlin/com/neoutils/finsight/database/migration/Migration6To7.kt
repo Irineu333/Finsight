@@ -5,8 +5,10 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Lets a budget be a percentage of a recurring income instead of a fixed amount:
- * `limitType`, `percentage` and `recurringId`.
+ * Schema 6 → 7: a budget limit may be a percentage.
+ *
+ * `budgets` gains `limitType`, `percentage` and the `recurringId` the percentage is taken
+ * from.
  *
  * Shipped in 1.5.0-rc04.
  */

@@ -46,10 +46,10 @@ class TransactionsEmptyStateTest {
     private val previous = month.minusMonth()
     private val next = month.plusMonth()
 
-    private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
-    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
-    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val account = Account(id = 1, name = "A", type = AccountType.ASSET, currency = "BRL")
+    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME, currency = "BRL")
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private val groceries = Category(
         id = 7, name = "Groceries", icon = CategoryLazyIcon("food"),
@@ -87,6 +87,9 @@ class TransactionsEmptyStateTest {
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeLedger(transactions),
+        consolidateMoney = consolidator(),
+        observeConsolidationChanges = FakeLedger(transactions).consolidationChanges(),
+            baseCurrencyRepository = FakeBaseCurrency(),
         clock = Clock.System,
     )
 
@@ -112,7 +115,7 @@ class TransactionsEmptyStateTest {
     }
 
     @Test
-    fun `the initial state is loading, not empty`() = runTest(dispatcher) {
+    fun `the initial state is loading and not empty`() = runTest(dispatcher) {
         // The screen's default value is what it shows before the repository answers, and
         // it must not be mistakable for "there is nothing" — the bug this change fixes.
         assertIs<ListState.Loading>(TransactionsUiState().listState)
@@ -134,7 +137,7 @@ class TransactionsEmptyStateTest {
     }
 
     @Test
-    fun `a month with nothing in it is a cut, not an empty ledger`() = runTest(dispatcher) {
+    fun `a month with nothing in it is a cut and not an empty ledger`() = runTest(dispatcher) {
         // Every filter is neutral here, so a state deduced from the active controls would
         // wrongly tell the user they have never recorded a transaction.
         val state = stateAfter(
@@ -198,7 +201,7 @@ class TransactionsEmptyStateTest {
     }
 
     @Test
-    fun `clearing the filters keeps the month, the scope and the summary`() = runTest(dispatcher) {
+    fun `clearing the filters keeps the month and the scope and the summary`() = runTest(dispatcher) {
         val vm = viewModel(listOf(salary, cardPurchase))
 
         val filtered = stateAfter(

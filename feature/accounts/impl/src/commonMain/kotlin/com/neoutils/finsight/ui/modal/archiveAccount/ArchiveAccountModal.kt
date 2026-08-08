@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.archive_account_confirm
@@ -70,7 +72,18 @@ class ArchiveAccountModal(
 
             Text(
                 text = if (blocked) {
-                    stringResource(Res.string.archive_account_blocked, formatter.format(balance ?: 0.0))
+                    // The balance that blocks the retirement is this account's, so it
+                    // reads in this account's currency (design D29).
+                    stringResource(
+                        Res.string.archive_account_blocked,
+                        formatter.format(
+                            DisplayAmount.natural(
+                                balance ?: 0.0,
+                                account.currency,
+                                isApproximate = false,
+                            )
+                        ),
+                    )
                 } else {
                     stringResource(Res.string.archive_account_message)
                 },

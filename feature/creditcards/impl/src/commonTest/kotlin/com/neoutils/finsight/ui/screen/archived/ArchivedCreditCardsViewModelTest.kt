@@ -18,6 +18,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 class ArchivedCreditCardsViewModelTest {
 
@@ -35,10 +36,11 @@ class ArchivedCreditCardsViewModelTest {
         override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
-        override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     private fun card(id: Long, isArchived: Boolean) = CreditCard(
@@ -54,7 +56,7 @@ class ArchivedCreditCardsViewModelTest {
     @Test
     fun `lists only archived cards`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
-        val vm = ArchivedCreditCardsViewModel(repository)
+        val vm = ArchivedCreditCardsViewModel(repository, FakeCardAccountRepository())
 
         vm.uiState.test {
             assertEquals(ArchivedCreditCardsUiState.Loading, awaitItem())
@@ -73,7 +75,7 @@ class ArchivedCreditCardsViewModelTest {
     @Test
     fun `empty when there are no archived cards`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
-        val vm = ArchivedCreditCardsViewModel(repository)
+        val vm = ArchivedCreditCardsViewModel(repository, FakeCardAccountRepository())
 
         vm.uiState.test {
             assertEquals(ArchivedCreditCardsUiState.Loading, awaitItem())

@@ -44,6 +44,7 @@ class AppNavCatalogTest {
                 "recurring",
                 "report",
                 "installments",
+                "settings",
                 "support",
             ),
             destinations.filterNot { it.primaryTab }.names
@@ -73,6 +74,7 @@ class AppNavCatalogTest {
                 "recurring",
                 "report",
                 "installments",
+                "settings",
                 "support",
             ),
             destinations.names,

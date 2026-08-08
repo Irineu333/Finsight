@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,8 @@ import com.neoutils.finsight.resources.exchange_rate_form_title_new
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
+import com.neoutils.finsight.ui.util.exposeTestTags
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
@@ -229,6 +232,7 @@ class ExchangeRateFormModal(
                     selected = labelOf(uiState.from),
                     options = options,
                     onSelected = { viewModel.onAction(ExchangeRateFormAction.SelectFrom(it)) },
+                    valueTestTag = "exchange_rate_form_from",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -238,6 +242,7 @@ class ExchangeRateFormModal(
                     selected = labelOf(uiState.to),
                     options = options,
                     onSelected = { viewModel.onAction(ExchangeRateFormAction.SelectTo(it)) },
+                    valueTestTag = "exchange_rate_form_to",
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -263,7 +268,9 @@ class ExchangeRateFormModal(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("exchange_rate_form_rate"),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -312,7 +319,9 @@ class ExchangeRateFormModal(
                 // error to report — it is a form that is not finished.
                 enabled = uiState.canSubmit && typedDate != null,
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("exchange_rate_form_save"),
             ) {
                 Text(
                     text = stringResource(Res.string.exchange_rate_form_save),
@@ -381,6 +390,9 @@ private fun CurrencyDropdown(
     selected: String,
     options: List<Pair<String, String>>,
     onSelected: (String) -> Unit,
+    // Named on the field that shows the choice, as `AccountSelector` and `TargetSelector`
+    // already do: the box around it is layout, and only the field renders the code.
+    valueTestTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -407,12 +419,17 @@ private fun CurrencyDropdown(
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .optionalTestTag(valueTestTag),
         )
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            // The menu is its own popup window, and the app window's opt-in does not reach
+            // it — without this its options are invisible to the accessibility tree with
+            // no error to say why. The same call `TargetSelector` already makes.
+            modifier = Modifier.exposeTestTags(),
         ) {
             options.forEach { (code, optionLabel) ->
                 DropdownMenuItem(
@@ -421,6 +438,9 @@ private fun CurrencyDropdown(
                         onSelected(code)
                         expanded = false
                     },
+                    // By code, never by the label beside it: the label is the currency's
+                    // name, which the user may have written themselves.
+                    modifier = Modifier.testTag("exchange_rate_option_$code"),
                 )
             }
         }

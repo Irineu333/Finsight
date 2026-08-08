@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,6 +97,7 @@ fun ExchangeRatesScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_exchange_rates"),
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.exchange_rates_screen_title)) },
@@ -127,7 +129,10 @@ fun ExchangeRatesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { modalManager.show(ExchangeRateFormModal()) }) {
+            FloatingActionButton(
+                onClick = { modalManager.show(ExchangeRateFormModal()) },
+                modifier = Modifier.testTag("exchange_rates_add"),
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(Res.string.exchange_rates_add),

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencySymbols
+import com.neoutils.finsight.ui.util.optionalTestTag
 
 /**
  * The currency of an account or of a card, in a form — **always rendered**, design D23.
@@ -55,6 +56,11 @@ fun CurrencyRow(
     canChange: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    // Named on [label], which is the line stating the currency, and not on the row: the
+    // row is a clickable `Surface` that publishes no text of its own, so a tag there is
+    // found by an assertion and reads empty. Tapping still works through it — the touch
+    // lands on the surface underneath.
+    labelTestTag: String? = null,
 ) {
     val accentColor = MaterialTheme.colorScheme.primary
 
@@ -100,6 +106,7 @@ fun CurrencyRow(
                 Text(
                     text = label,
                     fontWeight = FontWeight.Medium,
+                    modifier = Modifier.optionalTestTag(labelTestTag),
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))

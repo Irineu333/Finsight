@@ -197,6 +197,9 @@ class AccountFormModal(
                         )
                     )
                 },
+                // The label states the currency, which is what a flow reads here — the
+                // choice is irreversible once the account exists.
+                labelTestTag = "account_form_currency",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

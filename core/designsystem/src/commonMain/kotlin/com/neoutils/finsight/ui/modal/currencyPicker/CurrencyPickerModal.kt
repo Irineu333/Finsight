@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -130,6 +131,9 @@ private fun CurrencyRow(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
+            // Derived from the code, so an option is reached by the currency it offers and
+            // not by its position in a list the user's own registry decides the order of.
+            .testTag("currency_picker_option_${currency.code}")
             .then(
                 if (isSelected) {
                     Modifier.border(

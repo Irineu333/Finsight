@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,6 +90,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("screen_settings"),
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.settings_screen_title)) },
@@ -151,6 +153,7 @@ private fun BaseCurrencySection(
         // the same shape `ExchangeRatesRow` below already wears.
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("settings_base_currency")
             .clip(RoundedCornerShape(12.dp))
             .clickable {
                 modalManager.show(
@@ -178,6 +181,10 @@ private fun BaseCurrencySection(
                     ?: uiState.baseCurrencyCode,
                 style = MaterialTheme.typography.labelLarge,
                 color = colorScheme.onSurfaceVariant,
+                // On the line that renders the code, not on the row: the row also holds
+                // the section's title, and a tag there would let an assertion pass by
+                // reading the label instead of the currency in force.
+                modifier = Modifier.testTag("settings_base_currency_value"),
             )
         }
     }
@@ -234,6 +241,7 @@ private fun ExchangeRatesRow(onClick: () -> Unit) {
         // instead of running square to the edges of the content column.
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("settings_exchange_rates")
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),

@@ -4,7 +4,13 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-// 1.4.0-rc02
+/**
+ * Gives a recurrence one row per cycle: `recurring_occurrences` replaces
+ * `recurring.lastHandledYearMonth`, which becomes a single SKIPPED occurrence, and
+ * `recurring` gains `isActive`. `operations` gains the cycle it came from.
+ *
+ * Shipped in 1.4.0-rc02.
+ */
 object Migration3To4 : Migration(3, 4) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("PRAGMA foreign_keys=OFF")

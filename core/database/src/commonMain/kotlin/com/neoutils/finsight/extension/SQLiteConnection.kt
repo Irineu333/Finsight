@@ -5,11 +5,7 @@ import com.neoutils.finsight.domain.exception.MigrationAbortedException
 import com.neoutils.finsight.domain.exception.UnbalancedLedgerException
 import com.neoutils.finsight.domain.model.UnbalancedTransaction
 
-/**
- * Verifies `Σ entries = 0` for every `(transactionId, currency)` pair, the single
- * invariant that makes every figure in the app derivable from the ledger. Reads only
- * `entries`, so it holds before and after any rewrite of the chart of accounts.
- */
+/** Verifies `Σ entries = 0` for every `(transactionId, currency)` pair. */
 internal fun SQLiteConnection.verifyLedgerBalanced(stage: String) {
     val offenders = unbalancedTransactions()
     if (offenders.isNotEmpty()) throw UnbalancedLedgerException(stage, offenders)
@@ -56,8 +52,7 @@ internal fun SQLiteConnection.verifyNoOrphanDimensions(stage: String) {
 
 /**
  * `PRAGMA foreign_key_check` over the whole database. Enforcement is off during a
- * migration — it has to be, to rebuild a referenced table — so this is the only
- * moment the keys are actually verified.
+ * migration, so this is the only moment the keys are verified.
  */
 internal fun SQLiteConnection.verifyForeignKeys(stage: String) {
     val statement = prepare("PRAGMA foreign_key_check")

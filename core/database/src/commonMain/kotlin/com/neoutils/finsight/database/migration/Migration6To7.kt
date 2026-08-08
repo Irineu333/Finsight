@@ -4,7 +4,12 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-// 1.5.0-rc04
+/**
+ * Lets a budget be a percentage of a recurring income instead of a fixed amount:
+ * `limitType`, `percentage` and `recurringId`.
+ *
+ * Shipped in 1.5.0-rc04.
+ */
 object Migration6To7 : Migration(6, 7) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

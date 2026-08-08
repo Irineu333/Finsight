@@ -4,9 +4,7 @@ import com.neoutils.finsight.domain.model.UnbalancedTransaction
 
 /**
  * Raised when `entries` violates the double-entry invariant. Thrown from inside
- * `migrate()`, it makes Room roll back the whole migration transaction — which is
- * the point: a migration that rewrote accounting history must never commit half of
- * it. Also thrown from tests, over the same SQL.
+ * `migrate()`, it makes Room roll back the whole migration transaction.
  */
 class UnbalancedLedgerException(
     val stage: String,

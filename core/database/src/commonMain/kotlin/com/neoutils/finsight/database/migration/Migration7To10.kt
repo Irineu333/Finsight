@@ -7,7 +7,15 @@ import com.neoutils.finsight.extension.verifyForeignKeys
 import com.neoutils.finsight.extension.verifyLedgerBalanced
 import com.neoutils.finsight.extension.verifyNoOrphanDimensions
 
-// 1.9.0-rc01
+/**
+ * Rewrites the app around the double-entry ledger: accounts and cards become rows in
+ * the chart of accounts, a category becomes a dimension, and every legacy transaction
+ * becomes a balanced set of entries. The numbered steps below are order-dependent —
+ * the temp tables carry the id offsets across them — and the last one verifies what
+ * the rewrite promised, with foreign keys off until then.
+ *
+ * Shipped in 1.9.0-rc01.
+ */
 object Migration7To10 : Migration(7, 10) {
     override fun migrate(connection: SQLiteConnection) {
         val now = "CAST(strftime('%s','now') AS INTEGER) * 1000"

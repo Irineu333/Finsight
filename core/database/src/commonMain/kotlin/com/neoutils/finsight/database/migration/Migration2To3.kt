@@ -4,7 +4,11 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-// 1.4.0-rc01
+/**
+ * Creates `recurring`, tracking the last handled month on the recurrence itself.
+ *
+ * Shipped in 1.4.0-rc01.
+ */
 object Migration2To3 : Migration(2, 3) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

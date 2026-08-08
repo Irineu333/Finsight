@@ -4,6 +4,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteException
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration10To11
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -94,7 +95,7 @@ class Migration10To11Test {
 
     @Test
     fun `given database at version 10 when migrated to 11 then the two columns exist`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         assertTrue("yieldsInterest" in connection.getColumns("accounts"))
         assertTrue("systemKey" in connection.getColumns("categories"))
@@ -102,7 +103,7 @@ class Migration10To11Test {
 
     @Test
     fun `given existing accounts when migrated to 11 then none of them yields`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `accounts` WHERE `yieldsInterest` = 0")
         stmt.step()
@@ -112,7 +113,7 @@ class Migration10To11Test {
 
     @Test
     fun `given an existing account when migrated to 11 then its other data survives`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived` " +
@@ -131,7 +132,7 @@ class Migration10To11Test {
 
     @Test
     fun `given existing categories when migrated to 11 then none of them is a system category`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         val stmt = connection.prepare("SELECT `name`, `dimensionId`, `systemKey` FROM `categories` WHERE `id` = 1")
         assertTrue(stmt.step())
@@ -143,7 +144,7 @@ class Migration10To11Test {
 
     @Test
     fun `given an existing ledger when migrated to 11 then no transaction is rewritten`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         val transactions = connection.prepare("SELECT COUNT(*) FROM `transactions`")
         transactions.step()
@@ -163,7 +164,7 @@ class Migration10To11Test {
 
     @Test
     fun `given database at version 10 when migrated to 11 then systemKey is unique`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         assertTrue(connection.indexExists("index_categories_systemKey"))
 
@@ -184,7 +185,7 @@ class Migration10To11Test {
 
     @Test
     fun `given the unique key when many categories have none then they coexist`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         // NULLs are exempt from a unique index in SQLite — which is the whole reason
         // the user's own categories are untouched by it.
@@ -201,7 +202,7 @@ class Migration10To11Test {
 
     @Test
     fun `given database at version 11 when a yielding account is written then it reads back`() {
-        MIGRATION_10_11.migrate(connection)
+        Migration10To11.migrate(connection)
 
         connection.execSQL("UPDATE `accounts` SET `yieldsInterest` = 1 WHERE `id` = 1")
         connection.execSQL("UPDATE `categories` SET `systemKey` = 'yield' WHERE `id` = 1")

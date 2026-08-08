@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration6To7
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -39,14 +40,14 @@ class Migration6To7Test {
 
     @Test
     fun `given database at version 6 when migrated to 7 then budgets table still exists`() {
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         assertTrue(connection.tableExists("budgets"))
     }
 
     @Test
     fun `given database at version 6 when migrated to 7 then budgets has the three new columns`() {
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         val columns = connection.getColumns("budgets")
         assertTrue("limitType" in columns)
@@ -61,7 +62,7 @@ class Migration6To7Test {
                 "VALUES (1, 3, 3, 'food_icon', 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `id`, `categoryId`, `iconCategoryId`, `iconKey`, `title`, `amount`, `period`, `createdAt` FROM `budgets`"
@@ -85,7 +86,7 @@ class Migration6To7Test {
                 "VALUES (1, 1, 'default', 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         val stmt = connection.prepare("SELECT `limitType` FROM `budgets`")
         assertTrue(stmt.step())
@@ -100,7 +101,7 @@ class Migration6To7Test {
                 "VALUES (1, 1, 'default', 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         val stmt = connection.prepare("SELECT `percentage`, `recurringId` FROM `budgets`")
         assertTrue(stmt.step())
@@ -118,7 +119,7 @@ class Migration6To7Test {
                 "(3, 3, 'home', 'Home', 1200.0, 'YEARLY', 3000)"
         )
 
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `budgets` WHERE `limitType` = 'FIXED'")
         stmt.step()
@@ -128,7 +129,7 @@ class Migration6To7Test {
 
     @Test
     fun `given database at version 6 when migrated to 7 then a percentage budget can be written`() {
-        MIGRATION_6_7.migrate(connection)
+        Migration6To7.migrate(connection)
 
         connection.execSQL(
             "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `iconKey`, `title`, `amount`, `period`, `limitType`, `percentage`, `recurringId`, `createdAt`) " +

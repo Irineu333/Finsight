@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration4To5
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -59,14 +60,14 @@ class Migration4To5Test {
 
     @Test
     fun `given database at version 4 when migrated to 5 then budgets table still exists`() {
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         assertTrue(connection.tableExists("budgets"))
     }
 
     @Test
     fun `given database at version 4 when migrated to 5 then budgets has iconKey column`() {
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         assertTrue("iconKey" in connection.getColumns("budgets"))
     }
@@ -78,7 +79,7 @@ class Migration4To5Test {
                 "VALUES (1, 1, 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `budgets`")
         stmt.step()
@@ -97,7 +98,7 @@ class Migration4To5Test {
                 "VALUES (1, 1, 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         val stmt = connection.prepare("SELECT `iconKey` FROM `budgets`")
         assertTrue(stmt.step())
@@ -112,7 +113,7 @@ class Migration4To5Test {
                 "VALUES (99, 99, 'Unknown', 100.0, 'MONTHLY', 1000)"
         )
 
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         val stmt = connection.prepare("SELECT `iconKey` FROM `budgets`")
         assertTrue(stmt.step())
@@ -124,14 +125,14 @@ class Migration4To5Test {
 
     @Test
     fun `given database at version 4 when migrated to 5 then accounts table still exists`() {
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         assertTrue(connection.tableExists("accounts"))
     }
 
     @Test
     fun `given database at version 4 when migrated to 5 then accounts has iconKey column`() {
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         assertTrue("iconKey" in connection.getColumns("accounts"))
     }
@@ -142,7 +143,7 @@ class Migration4To5Test {
             "INSERT INTO `accounts` (`name`) VALUES ('Checking')"
         )
 
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `accounts`")
         stmt.step()
@@ -156,7 +157,7 @@ class Migration4To5Test {
             "INSERT INTO `accounts` (`name`) VALUES ('Savings')"
         )
 
-        MIGRATION_4_5.migrate(connection)
+        Migration4To5.migrate(connection)
 
         val stmt = connection.prepare("SELECT `iconKey` FROM `accounts`")
         assertTrue(stmt.step())

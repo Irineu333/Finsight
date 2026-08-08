@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration3To4
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -65,7 +66,7 @@ class Migration3To4Test {
                 ")"
         )
 
-        // v3 `recurring` table (columns before restructuring — added by MIGRATION_2_3)
+        // v3 `recurring` table (columns before restructuring — added by Migration2To3)
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `recurring` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
@@ -91,21 +92,21 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then operations table still exists`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue(connection.tableExists("operations"))
     }
 
     @Test
     fun `given database at version 3 when migrated to 4 then operations has recurringId column`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue("recurringId" in connection.getColumns("operations"))
     }
 
     @Test
     fun `given database at version 3 when migrated to 4 then operations has recurringCycle column`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue("recurringCycle" in connection.getColumns("operations"))
     }
@@ -116,7 +117,7 @@ class Migration3To4Test {
             "INSERT INTO `operations` (`kind`, `date`) VALUES ('EXPENSE', '2024-01-15')"
         )
 
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `operations`")
         stmt.step()
@@ -128,14 +129,14 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then recurring no longer has lastHandledYearMonth`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertFalse("lastHandledYearMonth" in connection.getColumns("recurring"))
     }
 
     @Test
     fun `given database at version 3 when migrated to 4 then recurring has isActive column`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue("isActive" in connection.getColumns("recurring"))
     }
@@ -147,7 +148,7 @@ class Migration3To4Test {
                 "VALUES ('EXPENSE', 100.0, 15, 1000)"
         )
 
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val stmt = connection.prepare("SELECT `isActive` FROM `recurring`")
         assertTrue(stmt.step())
@@ -162,7 +163,7 @@ class Migration3To4Test {
                 "VALUES ('INCOME', 200.0, 5, 1000)"
         )
 
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `recurring`")
         stmt.step()
@@ -174,14 +175,14 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then recurring_occurrences table is created`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue(connection.tableExists("recurring_occurrences"))
     }
 
     @Test
     fun `given database at version 3 when migrated to 4 then recurring_occurrences has all required columns`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val columns = connection.getColumns("recurring_occurrences")
         assertTrue("id" in columns)
@@ -202,7 +203,7 @@ class Migration3To4Test {
                 "VALUES ('EXPENSE', 100.0, 15, 1705320000000, '2024-01')"
         )
 
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val stmt = connection.prepare(
             "SELECT `status`, `operationId`, `yearMonth` FROM `recurring_occurrences`"
@@ -221,7 +222,7 @@ class Migration3To4Test {
                 "VALUES ('EXPENSE', 100.0, 15, 1000)"
         )
 
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `recurring_occurrences`")
         stmt.step()
@@ -233,7 +234,7 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then all operations indexes are created`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue(connection.indexExists("index_operations_categoryId"))
         assertTrue(connection.indexExists("index_operations_sourceAccountId"))
@@ -248,7 +249,7 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then all recurring indexes are created`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue(connection.indexExists("index_recurring_categoryId"))
         assertTrue(connection.indexExists("index_recurring_accountId"))
@@ -259,7 +260,7 @@ class Migration3To4Test {
 
     @Test
     fun `given database at version 3 when migrated to 4 then all recurring_occurrences indexes are created`() {
-        MIGRATION_3_4.migrate(connection)
+        Migration3To4.migrate(connection)
 
         assertTrue(connection.indexExists("index_recurring_occurrences_recurringId"))
         assertTrue(connection.indexExists("index_recurring_occurrences_operationId"))

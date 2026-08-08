@@ -3,6 +3,7 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration1To2
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,21 +35,21 @@ class Migration1To2Test {
 
     @Test
     fun `given database at version 1 when migrated to 2 then budgets table is created`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         assertTrue(connection.tableExists("budgets"))
     }
 
     @Test
     fun `given database at version 1 when migrated to 2 then budget_categories table is created`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         assertTrue(connection.tableExists("budget_categories"))
     }
 
     @Test
     fun `given database at version 1 when migrated to 2 then budgets has all required columns`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         val columns = connection.getColumns("budgets")
         assertTrue("id" in columns)
@@ -63,7 +64,7 @@ class Migration1To2Test {
 
     @Test
     fun `given database at version 1 when migrated to 2 then budget_categories has required columns`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         val columns = connection.getColumns("budget_categories")
         assertTrue("budgetId" in columns)
@@ -72,14 +73,14 @@ class Migration1To2Test {
 
     @Test
     fun `given database at version 1 when migrated to 2 then index on budgets categoryId is created`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         assertTrue(connection.indexExists("index_budgets_categoryId"))
     }
 
     @Test
     fun `given database at version 1 when migrated to 2 then indexes on budget_categories are created`() {
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         assertTrue(connection.indexExists("index_budget_categories_budgetId"))
         assertTrue(connection.indexExists("index_budget_categories_categoryId"))
@@ -92,7 +93,7 @@ class Migration1To2Test {
                 "VALUES ('Food', 'food_icon', 'EXPENSE', 1000)"
         )
 
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `categories`")
         stmt.step()

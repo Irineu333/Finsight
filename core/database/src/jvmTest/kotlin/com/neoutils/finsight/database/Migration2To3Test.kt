@@ -3,6 +3,8 @@ package com.neoutils.finsight.database
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration1To2
+import com.neoutils.finsight.database.migration.Migration2To3
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -25,7 +27,7 @@ class Migration2To3Test {
                 "`createdAt` INTEGER NOT NULL" +
                 ")"
         )
-        MIGRATION_1_2.migrate(connection)
+        Migration1To2.migrate(connection)
     }
 
     @AfterTest
@@ -35,14 +37,14 @@ class Migration2To3Test {
 
     @Test
     fun `given database at version 2 when migrated to 3 then recurring table is created`() {
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         assertTrue(connection.tableExists("recurring"))
     }
 
     @Test
     fun `given database at version 2 when migrated to 3 then recurring has all required columns`() {
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         val columns = connection.getColumns("recurring")
         assertTrue("id" in columns)
@@ -60,21 +62,21 @@ class Migration2To3Test {
 
     @Test
     fun `given database at version 2 when migrated to 3 then index on recurring categoryId is created`() {
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         assertTrue(connection.indexExists("index_recurring_categoryId"))
     }
 
     @Test
     fun `given database at version 2 when migrated to 3 then index on recurring accountId is created`() {
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         assertTrue(connection.indexExists("index_recurring_accountId"))
     }
 
     @Test
     fun `given database at version 2 when migrated to 3 then index on recurring creditCardId is created`() {
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         assertTrue(connection.indexExists("index_recurring_creditCardId"))
     }
@@ -86,7 +88,7 @@ class Migration2To3Test {
                 "VALUES ('Food', 'food_icon', 'EXPENSE', 1000)"
         )
 
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `categories`")
         stmt.step()
@@ -105,7 +107,7 @@ class Migration2To3Test {
                 "VALUES (1, 1, 'Food Budget', 500.0, '2024-01', 1000)"
         )
 
-        MIGRATION_2_3.migrate(connection)
+        Migration2To3.migrate(connection)
 
         val stmt = connection.prepare("SELECT COUNT(*) FROM `budgets`")
         stmt.step()

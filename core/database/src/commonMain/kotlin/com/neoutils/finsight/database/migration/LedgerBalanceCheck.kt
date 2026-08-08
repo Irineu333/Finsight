@@ -1,4 +1,4 @@
-package com.neoutils.finsight.database
+package com.neoutils.finsight.database.migration
 
 import androidx.sqlite.SQLiteConnection
 

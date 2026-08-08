@@ -4,6 +4,8 @@ import androidx.room.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import com.neoutils.finsight.database.migration.Migration10To11
+import com.neoutils.finsight.database.migration.Migration7To10
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import java.io.File
@@ -38,7 +40,7 @@ class MigrationSchemaEquivalenceTest {
         }
 
         val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-            .addMigrations(MIGRATION_7_10, MIGRATION_10_11)
+            .addMigrations(Migration7To10, Migration10To11)
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

@@ -236,6 +236,12 @@ env:
     env:
       NAME: ${SAVINGS_ACCOUNT}
 - back
+# Leaving a screen animates, and the tap below lands on the bar underneath it. Waiting for the
+# screen to be *gone* is the condition; without it the tap is a race the flow loses now and then.
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
 
 # --- I got the coffee wrong: it was $68.35, and I paid it from savings ---------------------------
 - tapOn:
@@ -370,6 +376,10 @@ env:
 
 # --- I undo the spend ----------------------------------------------------------------------------
 - back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
 - tapOn:
     id: "nav_item_transactions"
 - extendedWaitUntil:

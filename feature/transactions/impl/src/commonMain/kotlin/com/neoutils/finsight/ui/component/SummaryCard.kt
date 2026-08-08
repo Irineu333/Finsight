@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +28,7 @@ import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
 import com.neoutils.finsight.ui.theme.Adjustment
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
@@ -113,6 +115,9 @@ fun SummaryCard(
                 ConsolidationBadge(
                     figures = balanceOverview?.figures.orEmpty(),
                     onSeeRates = onSeeRates,
+                    // At the call site, as everywhere: the badge is one component drawn by
+                    // a dozen surfaces and owns no id of its own.
+                    modifier = Modifier.testTag("summary_badge"),
                 )
             }
 
@@ -161,7 +166,10 @@ private fun ColumnScope.AccountsBody(
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income
+        color = Income,
+        // The same id in both bodies: a scope composes one of them, never two, so the
+        // assertion binds to whichever the screen is showing.
+        amountTestTag = "summary_income_amount",
     )
 
     // Between money in and money out, because that is where it came from: the yield
@@ -177,7 +185,8 @@ private fun ColumnScope.AccountsBody(
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense
+        color = Expense,
+        amountTestTag = "summary_outgoing_amount",
     )
 
     overview.invoicePayment?.let { payment ->
@@ -260,7 +269,10 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income
+        color = Income,
+        // The same id in both bodies: a scope composes one of them, never two, so the
+        // assertion binds to whichever the screen is showing.
+        amountTestTag = "summary_income_amount",
     )
 
     // Between money in and money out, because that is where it came from: the yield
@@ -276,7 +288,8 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense
+        color = Expense,
+        amountTestTag = "summary_outgoing_amount",
     )
 
     overview.invoicePayment?.let { payment ->
@@ -301,6 +314,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         label = stringResource(Res.string.summary_card_net),
         amount = overview.finalNet,
         color = colorScheme.onSurface,
+        amountTestTag = "summary_net_amount",
         config = SummaryRowConfig.Total
     )
 }
@@ -416,6 +430,9 @@ private fun SummaryRow(
     amount: ConsolidatedAmount,
     color: Color,
     modifier: Modifier = Modifier,
+    // Named on the amount and not on the row: the row holds a label too, and a tag on it
+    // would let an assertion pass by reading the word instead of the figure.
+    amountTestTag: String? = null,
     config: SummaryRowConfig = SummaryRowConfig.Default,
 ) {
     Row(
@@ -433,7 +450,8 @@ private fun SummaryRow(
         // whole (design D22), never degraded to its base term.
         MoneyText(
             figure = amount,
-            style = config.amountStyle.copy(color = color)
+            style = config.amountStyle.copy(color = color),
+            modifier = Modifier.optionalTestTag(amountTestTag),
         )
     }
 }

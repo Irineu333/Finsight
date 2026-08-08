@@ -154,6 +154,29 @@ env:
 - assertVisible: ${EXPENSE_TITLE}
 - assertVisible: ${INCOME_TITLE}
 
+# The same two writes, summed by a second reader. The dashboard already said 500.00, 42.90 and
+# 457.10; this card reaches them down another path (`BalanceOverview`, scoped by month), so the two
+# agreeing is the claim — a single reader agreeing with itself would prove nothing. And the badge
+# stays away here for the reason it stays away there: one currency needs no rate to become a total.
+#
+# The signs are asserted because they are arithmetic, not decoration: this card is a column that
+# adds up on screen, so each line carries the operator that ties it to the total below
+# (`forcedPositive`/`forcedNegative`), and the total carries none because it is the result, not a
+# term. The dashboard shows the same figures without signs — there they stand alone and the label
+# gives the direction (`magnitude`). Asserting the sign here is asserting that the column reads as
+# a sum.
+- assertVisible:
+    id: "summary_income_amount"
+    text: "[+][$]500[.,]00"
+- assertVisible:
+    id: "summary_outgoing_amount"
+    text: "[-][$]42[.,]90"
+- assertVisible:
+    id: "summary_net_amount"
+    text: "[$]457[.,]10"
+- assertNotVisible:
+    id: "summary_badge"
+
 # --- The expense figure is a filter, not a caption -----------------------------------------------
 # Tapping it opens the list already cut to expenses (`TransactionsRoute.filterLabel`), and the two
 # assertions above are what make the cut readable: the same list, reached the other way, held both.

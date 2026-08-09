@@ -19,7 +19,7 @@ import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
  * No stored value changes: the back-fill is exact, since every existing row was measured
  * against the base in force, which until this schema had no way to change.
  *
- * Not published yet.
+ * Shipped in 1.10.0-rc01.
  *
  * @param baseCurrency the base in force, resolved outside this module — `core/database`
  * cannot reach `Settings` and receives a plain code.

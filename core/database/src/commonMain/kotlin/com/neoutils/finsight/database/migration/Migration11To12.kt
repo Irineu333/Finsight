@@ -25,7 +25,7 @@ import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
  * false positive: a user of the legacy currency whose device is set to a foreign region is
  * relabelled without being asked, and the app offers no way back.
  *
- * Not published yet.
+ * Shipped in 1.10.0-rc01.
  *
  * @param relabelCurrency the currency the legacy chart should be re-denominated to,
  * resolved and validated outside this module — `core/database` knows no locale and no

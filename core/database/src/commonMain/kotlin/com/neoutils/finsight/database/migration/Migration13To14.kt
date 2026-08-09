@@ -22,7 +22,7 @@ import com.neoutils.finsight.domain.model.CurrencySeeding
  * [Migration11To12] fit together without either knowing the other: the relabel writes that
  * column, this one reads it.
  *
- * Not published yet.
+ * Shipped in 1.10.0-rc01.
  *
  * @param seeding resolved outside this module: `core/database` may name neither a locale
  * nor the platform, and receives rows and a glyph rather than the means to derive them.

@@ -8,7 +8,7 @@ import androidx.sqlite.execSQL
  * Marks the accounts that earn interest and lets a category be identified by a
  * `systemKey`, unique across the table.
  *
- * Unpublished.
+ * Shipped in 1.10.0-rc01.
  */
 object Migration10To11 : Migration(10, 11) {
     override fun migrate(connection: SQLiteConnection) {

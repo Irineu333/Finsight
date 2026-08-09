@@ -19,14 +19,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.util.optionalTestTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OutlinedActionButton
 import com.neoutils.finsight.ui.model.RetireAction
@@ -93,7 +97,7 @@ class ViewCategoryModal(
         uiState: ViewCategoryUiState.Content,
         onAction: (ViewCategoryAction) -> Unit,
     ) {
-        val formatter = LocalCurrencyFormatter.current
+        val navController = LocalNavController.current
 
         val isIncome = uiState.category.type.isIncome
         val typeLabel = stringResource(
@@ -135,7 +139,7 @@ class ViewCategoryModal(
 
                 Spacer(Modifier.width(16.dp))
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = typeLabel,
                         style = MaterialTheme.typography.labelLarge,
@@ -150,13 +154,21 @@ class ViewCategoryModal(
                         color = colorScheme.onSurface
                     )
                 }
+
+                // A category is a dimension, not an account: its entries may sit in several
+                // currencies, so the month's total is a consolidated figure like any other
+                // (design D13). It read as one without ever being able to say so.
+                ConsolidationBadge(
+                    figures = listOf(uiState.totalAmount),
+                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
                 label = totalLabel,
-                value = formatter.format(uiState.totalAmount),
+                amount = uiState.totalAmount,
                 valueColor = uiState.category.displayColor,
                 valueTestTag = "view_category_total_amount",
             )
@@ -225,6 +237,34 @@ class ViewCategoryModal(
                 contentColor = Info,
                 onClick = { manager.show(CategoryFormModal(content.category)) },
                 modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    /**
+     * The money variant of [DetailRow]. A figure may have more than one term, so it
+     * goes through the single renderer rather than being turned into a string here.
+     */
+    @Composable
+    private fun DetailRow(
+        label: String,
+        amount: ConsolidatedAmount,
+        valueColor: Color = colorScheme.onSurface,
+        valueTestTag: String? = null,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant
+            )
+            MoneyText(
+                figure = amount,
+                style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
+                modifier = Modifier.optionalTestTag(valueTestTag),
             )
         }
     }

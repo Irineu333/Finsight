@@ -13,6 +13,8 @@ import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import androidx.navigation.NavController
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.NavRoute
 import org.koin.compose.koinInject
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,11 +61,12 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
 import com.neoutils.finsight.ui.component.BalanceCardConfig
@@ -74,6 +78,7 @@ import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.creditCardSharedElement
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -225,9 +230,11 @@ private fun DashboardPendingRecurringSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.recurringList.forEach { recurring ->
+        component.recurringList.forEach { item ->
+            val recurring = item.recurring
             PendingRecurringCard(
                 recurring = recurring,
+                amount = item.amount,
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
                         val currentDate = clock.today()
@@ -395,6 +402,7 @@ private fun DashboardOverallBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_overall_balance),
@@ -405,6 +413,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Income,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_income_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
@@ -417,6 +426,7 @@ private fun DashboardOverallBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.Expense,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_expenses_amount",
             onClick = {
                 if (variant is DashboardComponentVariant.OverallBalanceStats.Viewing) {
@@ -434,6 +444,7 @@ private fun DashboardConcreteBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_balance),
@@ -444,6 +455,7 @@ private fun DashboardConcreteBalanceSection(
             balance = component.income,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountIncome,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.INCOME, null)
@@ -455,6 +467,7 @@ private fun DashboardConcreteBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.AccountExpense,
+            onSeeRates = seeRates,
             onClick = {
                 if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
                     openTransactions(TransactionLabel.EXPENSE, null)
@@ -470,6 +483,7 @@ private fun DashboardPendingBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -481,6 +495,7 @@ private fun DashboardPendingBalanceSection(
             balance = component.pendingIncome,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingIncome,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_pending_income_amount",
         )
 
@@ -488,6 +503,7 @@ private fun DashboardPendingBalanceSection(
             balance = component.pendingExpense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.PendingExpense,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_pending_expense_amount",
         )
     }
@@ -499,6 +515,7 @@ private fun DashboardCreditCardBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.dashboard_credit_card_balance),
@@ -509,6 +526,7 @@ private fun DashboardCreditCardBalanceSection(
             balance = component.payment,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.InvoicePayment,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_credit_card_payment_amount",
         )
 
@@ -516,6 +534,7 @@ private fun DashboardCreditCardBalanceSection(
             balance = component.expense,
             modifier = Modifier.weight(1f),
             config = BalanceCardConfig.CreditCardExpense,
+            onSeeRates = seeRates,
             amountTestTag = "dashboard_credit_card_expenses_amount",
         )
     }
@@ -586,7 +605,7 @@ private fun DashboardCreditCardsSection(
                         name = creditCardUi.name,
                         closingDay = creditCardUi.closingDay,
                         dueDay = creditCardUi.dueDay,
-                        limit = creditCardUi.limit,
+                        limit = component.limits[page],
                         invoiceUi = creditCardUi.invoiceUi,
                         testTagPrefix = "dashboard_credit_card",
                         // Only the current page is promoted: a neighbour composed by the pager's
@@ -662,9 +681,11 @@ private fun DashboardSpendingByCategorySection(
     val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
+    val navController = LocalNavController.current
 
     CategorySpendingCard(
         categorySpending = component.categorySpending,
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -684,10 +705,12 @@ private fun DashboardIncomeByCategorySection(
     val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
+    val navController = LocalNavController.current
 
     CategorySpendingCard(
         categorySpending = component.categoryIncome,
         title = stringResource(Res.string.component_income_by_category),
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -706,16 +729,18 @@ private fun DashboardBudgetsSection(
 ) {
     val detailController = LocalDetailPaneController.current
     val budgetsEntry = koinInject<BudgetsEntry>()
+    val navController = LocalNavController.current
     val component = variant.component
 
     BudgetProgressCard(
         budgetProgress = component.budgetProgress,
+        onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id))
+                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id, component.targetMonth))
             }
         },
     )
@@ -783,10 +808,10 @@ private fun DashboardQuickActionCard(
 @Composable
 private fun PendingRecurringCard(
     recurring: Recurring,
+    amount: DisplayAmount,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     val typeColor = if (recurring.type.isIncome) Income else Expense
 
     Card(
@@ -844,24 +869,32 @@ private fun PendingRecurringCard(
                 }
             }
 
-            Text(
-                text = formatter.format(recurring.amount),
+            MoneyText(
+                amount = amount,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = typeColor,
+                ),
                 modifier = Modifier.testTag("dashboard_pending_recurring_amount"),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = typeColor,
             )
         }
     }
 }
 
+/**
+ * The dashboard's headline figure. It sums every account, so it is consolidated and may
+ * hold more than one term — which is why it is rendered by [MoneyText] and never
+ * juxtaposed in a line: at `headlineMedium` a second term has nowhere to go sideways
+ * (design D22).
+ */
 @Composable
 private fun TotalBalanceCard(
     variant: DashboardComponentVariant.TotalBalance,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
     val component = variant.component
+    val navController = LocalNavController.current
 
     Card(
         modifier = modifier
@@ -882,16 +915,40 @@ private fun TotalBalanceCard(
                     vertical = 22.dp
                 ),
         ) {
-            Text(
-                text = stringResource(Res.string.dashboard_total_balance),
-                style = MaterialTheme.typography.titleMedium,
-                color = colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = formatter.format(component.amount),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.onSurface,
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(Res.string.dashboard_total_balance),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colorScheme.onSurfaceVariant,
+                )
+
+                // The card's top-right corner, not under the figure: `≈` at headline size
+                // is not a touch target, and the explanation it needs is one tap for the
+                // user who wants it instead of a permanent line for everyone (D21/D25).
+                // Every badge in the app sits in this corner, so it is looked for once.
+                ConsolidationBadge(
+                    figures = listOf(component.amount),
+                    onSeeRates = navController.seeRates(),
+                    // Named here and not inside the badge: it is one component drawn by a
+                    // dozen surfaces, and a tag of its own would be ambiguous the moment
+                    // two of them share a screen. Same reason `BalanceCard` names the
+                    // amount from the outside.
+                    modifier = Modifier.testTag("dashboard_total_balance_badge"),
+                )
+            }
+
+            MoneyText(
+                figure = component.amount,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                ),
+                // This card reads from its left edge: the label above, the figure below.
+                align = TextAlign.Start,
                 modifier = Modifier.testTag("dashboard_total_balance_amount"),
             )
         }
@@ -1105,3 +1162,12 @@ private fun PageIndicator(
         )
     }
 }
+
+/**
+ * Where a consolidation badge leads, on a screen where every one of them leads to the same
+ * place — the rate archive, which is the only thing that resolves any of it (design D25).
+ *
+ * The dashboard draws nine consolidated figures across five widgets, so this is written
+ * once rather than nine times, and no widget gets to send the user somewhere else.
+ */
+private fun NavController.seeRates(): () -> Unit = { navigate(ExchangeRatesRoute) }

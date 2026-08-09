@@ -387,6 +387,11 @@ env:
     text: "[$]7[.,]000[.,]00"
 
 - back
+# The screen has to be gone before the tap, or the tap races the exit animation.
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_credit_cards"
+    timeout: 15000
 - tapOn:
     id: "nav_item_transactions"
 - extendedWaitUntil:

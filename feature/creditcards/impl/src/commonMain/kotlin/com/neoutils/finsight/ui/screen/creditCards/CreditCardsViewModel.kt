@@ -10,6 +10,8 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -17,6 +19,7 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
@@ -31,6 +34,7 @@ class CreditCardsViewModel(
     private val entryRepository: IEntryRepository,
     private val recurringRepository: IRecurringRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
@@ -138,6 +142,7 @@ class CreditCardsViewModel(
         val cards = creditCards.map { creditCard ->
             val cardInvoices = invoices[creditCard.id].orEmpty()
             val invoice = cardInvoices.currentUnpaid()
+            val currency = accountRepository.currencyOf(creditCard)
             val ui = CreditCardUi(
                 cardId = creditCard.id,
                 iconKey = creditCard.iconKey,
@@ -151,13 +156,23 @@ class CreditCardsViewModel(
                 mustPreserve = entryRepository.hasEntries(creditCard.accountId) ||
                     recurringRepository.hasRecurringForCreditCard(creditCard.id),
             )
-            Triple(creditCard, invoice, ui)
+            CardRow(
+                domain = creditCard,
+                invoice = invoice,
+                ui = ui,
+                limit = DisplayAmount.magnitude(
+                    creditCard.limit,
+                    currency,
+                    isApproximate = false,
+                ),
+            )
         }
 
         CreditCardsUiState.Content(
-            creditCards = cards.map { it.third },
-            domainCards = cards.map { it.first },
-            domainInvoices = cards.map { it.second },
+            creditCards = cards.map { it.ui },
+            domainCards = cards.map { it.domain },
+            domainInvoices = cards.map { it.invoice },
+            cardLimits = cards.map { it.limit },
             selectedCardIndex = index,
             listState = listState,
             // The filter offers only open categories.
@@ -216,6 +231,14 @@ class CreditCardsViewModel(
         }
     }
 }
+
+/** A card and everything the screen needs beside its flat [ui] — see [CreditCardsUiState.Content]. */
+private data class CardRow(
+    val domain: com.neoutils.finsight.domain.model.CreditCard,
+    val invoice: Invoice?,
+    val ui: CreditCardUi,
+    val limit: DisplayAmount,
+)
 
 private data class CreditCardsFilters(
     val category: Category?,

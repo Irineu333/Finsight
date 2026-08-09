@@ -51,7 +51,7 @@ class RecurringFormViewModelTest {
         name = "Checking",
         type = com.neoutils.finsight.domain.model.AccountType.ASSET,
         isDefault = true,
-    )
+    currency = "BRL",)
 
     private val categoryRepository = object : ICategoryRepository {
         override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
@@ -98,10 +98,11 @@ class RecurringFormViewModelTest {
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = flowOf(emptyList())
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = null
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = flowOf(null)
-        override suspend fun insert(creditCard: CreditCard): Long = 0L
+        override suspend fun insert(creditCard: CreditCard, currency: String): Long = 0L
         override suspend fun update(creditCard: CreditCard) = Unit
         override suspend fun delete(creditCard: CreditCard) = Unit
         override suspend fun unarchive(accountId: Long) = Unit
+        override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     }
 
     private val analytics = object : Analytics {

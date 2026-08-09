@@ -30,11 +30,16 @@ sealed interface ViewAdjustmentUiState {
          * already carries it — through the same item rule the list and the transaction
          * detail read through, so the three cannot disagree.
          */
-        val signedAmount = itemDisplayAmount(
-            label = transaction.label,
-            legAmountCents = transaction.primaryEntry?.amount ?: 0L,
-            hasPerspective = false,
-        )
+        val signedAmount = transaction.primaryEntry?.let { entry ->
+            itemDisplayAmount(
+                label = transaction.label,
+                legAmountCents = entry.amount,
+                // The account the adjustment corrected, never the base: an adjustment is
+                // a single entry on a single account (design D29).
+                currency = entry.currency,
+                hasPerspective = false,
+            )
+        }
 
         /**
          * Whether the ledger lets this adjustment be touched at all: false when it

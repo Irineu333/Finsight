@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -18,7 +18,15 @@ private val systemYearMonth
 
 data class TransactionsUiState(
     val listState: ListState = ListState.Loading,
-    val balanceOverview: BalanceOverview = BalanceOverview.Overall(),
+    /**
+     * `null` until the first read lands, for the same reason [ListState.Loading] exists:
+     * a summary is a *consolidated* figure, and consolidating is a suspend call, so
+     * there is no honest figure to show before it returns. The zeroes that used to sit
+     * here were figures in no currency at all — which, once money carries its
+     * denomination, can only be filled in by guessing one (design D29). The card's
+     * chrome survives regardless; only its body waits.
+     */
+    val balanceOverview: BalanceOverview? = null,
     val selectedScope: TransactionScope = TransactionScope.ALL,
     val selectedYearMonth: YearMonth = systemYearMonth,
     /**
@@ -82,8 +90,21 @@ data class TransactionsUiState(
      * one shape with fields that only apply in one mode. Which lines exist is decided
      * here, by the mapper; a `null` flow is a line the month does not have, so the card
      * never has to ask whether a number is worth showing.
+     *
+     * Every line is a [ConsolidatedAmount] and none has a default: each one aggregates
+     * across accounts, so each one is a figure the reducer produced — with its currency,
+     * its exactness and, where a rate is missing, a term of its own. There is no zero to
+     * fall back on that would not be a currency invented on the spot.
      */
     sealed interface BalanceOverview {
+
+        /**
+         * Every figure the card shows, in no particular order — what the approximation
+         * footer reads to decide whether it appears at all, and from which date. It is
+         * declared here rather than assembled by the card so that adding a line to a
+         * variant cannot silently leave it out of that decision.
+         */
+        val figures: List<ConsolidatedAmount>
 
         /**
          * The `ASSET` perimeter. An invoice payment *is* a flow here — its liability
@@ -100,14 +121,18 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance + income + yield − expense − invoicePayment + adjustment`
          */
         data class Accounts(
-            val openingBalance: DisplayAmount = DisplayAmount.natural(0.0),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
-            val yield: DisplayAmount? = null,
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
-            val invoicePayment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.natural(0.0),
-        ) : BalanceOverview
+            val openingBalance: ConsolidatedAmount,
+            val income: ConsolidatedAmount,
+            val yield: ConsolidatedAmount? = null,
+            val expense: ConsolidatedAmount,
+            val invoicePayment: ConsolidatedAmount? = null,
+            val adjustment: ConsolidatedAmount? = null,
+            val finalBalance: ConsolidatedAmount,
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingBalance, income, yield, expense, invoicePayment, adjustment, finalBalance,
+            )
+        }
 
         /**
          * The `LIABILITY` perimeter, in the ledger's own sign — a card you owe on has a
@@ -118,12 +143,16 @@ data class TransactionsUiState(
          * `finalBalance = openingBalance − expense + payment + adjustment`
          */
         data class Cards(
-            val openingBalance: DisplayAmount = DisplayAmount.owed(0.0),
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
-            val payment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalBalance: DisplayAmount = DisplayAmount.owed(0.0),
-        ) : BalanceOverview
+            val openingBalance: ConsolidatedAmount,
+            val expense: ConsolidatedAmount,
+            val payment: ConsolidatedAmount? = null,
+            val adjustment: ConsolidatedAmount? = null,
+            val finalBalance: ConsolidatedAmount,
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingBalance, expense, payment, adjustment, finalBalance,
+            )
+        }
 
         /**
          * Both perimeters at once. [expense] aggregates account and card spending — the
@@ -136,13 +165,17 @@ data class TransactionsUiState(
          * `finalNet = openingNet + income + yield − expense + adjustment`
          */
         data class Overall(
-            val openingNet: DisplayAmount = DisplayAmount.natural(0.0),
-            val income: DisplayAmount = DisplayAmount.forcedPositive(0.0),
-            val yield: DisplayAmount? = null,
-            val expense: DisplayAmount = DisplayAmount.forcedNegative(0.0),
-            val invoicePayment: DisplayAmount? = null,
-            val adjustment: DisplayAmount? = null,
-            val finalNet: DisplayAmount = DisplayAmount.natural(0.0),
-        ) : BalanceOverview
+            val openingNet: ConsolidatedAmount,
+            val income: ConsolidatedAmount,
+            val yield: ConsolidatedAmount? = null,
+            val expense: ConsolidatedAmount,
+            val invoicePayment: ConsolidatedAmount? = null,
+            val adjustment: ConsolidatedAmount? = null,
+            val finalNet: ConsolidatedAmount,
+        ) : BalanceOverview {
+            override val figures get() = listOfNotNull(
+                openingNet, income, yield, expense, invoicePayment, adjustment, finalNet,
+            )
+        }
     }
 }

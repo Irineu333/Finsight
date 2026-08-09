@@ -27,12 +27,15 @@ import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
@@ -53,12 +56,19 @@ class BudgetFormModal(
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
+        val currencyModalTitle = stringResource(Res.string.budget_form_currency_modal_title)
+        val currencyOptions = uiState.selectableCurrencies.map {
+            CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
+        }
         val categoriesEntry = koinInject<CategoriesEntry>()
         val recurringEntry = koinInject<RecurringEntry>()
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
-        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
+        // An existing limit is read back in the currency it was created with (design D13).
+        val amount = rememberTextFieldState(
+            budget?.let { formatter.format(it.amount, it.currency) } ?: ""
+        )
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -143,7 +153,12 @@ class BudgetFormModal(
                                 onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
                             )
                         },
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        // The limit is typed in the budget's own currency. Until the form
+                        // has one there is nothing to denominate the field with, and
+                        // `canSubmit` already refuses that state.
+                        inputTransformation = uiState.currency?.let {
+                            rememberMoneyInputTransformation(it, amount)
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
@@ -185,6 +200,48 @@ class BudgetFormModal(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Shown whenever there is more than one currency in the app, and only then
+            // (design D13): the user who holds one meets the form he always met, and the
+            // limit takes that currency because it is the only possible answer, not a
+            // silent default. Shown, not *offered*, is the distinction — editing a budget
+            // renders it locked, because a saved limit is never re-denominated and hiding
+            // it would leave "which currency is this number in?" unanswered.
+            //
+            // It sits **with the icon selector and not among the fields**, as in the card
+            // form: the two share the 52dp box that opens a picker, and a box of that
+            // shape between two fields reads as something that fell out of the form.
+            AnimatedVisibility(visible = uiState.hasCurrencyChoice) {
+                Column {
+                    CurrencyRow(
+                        currency = uiState.currency.orEmpty(),
+                        label = stringResource(
+                            Res.string.budget_form_currency_label,
+                            uiState.currency.orEmpty(),
+                        ),
+                        subtitle = if (uiState.canChangeCurrency) {
+                            stringResource(Res.string.budget_form_currency_state_new)
+                        } else {
+                            stringResource(Res.string.budget_form_currency_state_locked)
+                        },
+                        canChange = uiState.canChangeCurrency,
+                        onClick = {
+                            modalManager.show(
+                                CurrencyPickerModal(
+                                    title = currencyModalTitle,
+                                    currencies = currencyOptions,
+                                    selectedCode = uiState.currency,
+                                    onCurrencySelected = { option ->
+                                        viewModel.onAction(BudgetFormAction.CurrencySelected(option.code))
+                                    },
+                                )
+                            )
+                        },
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,

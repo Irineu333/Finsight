@@ -54,6 +54,10 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_form_default_label
 import com.neoutils.finsight.resources.account_form_default_state_disabled
 import com.neoutils.finsight.resources.account_form_default_state_off
+import com.neoutils.finsight.resources.account_form_currency_label
+import com.neoutils.finsight.resources.account_form_currency_modal_title
+import com.neoutils.finsight.resources.account_form_currency_state_locked
+import com.neoutils.finsight.resources.account_form_currency_state_new
 import com.neoutils.finsight.resources.account_form_default_state_on
 import com.neoutils.finsight.resources.account_form_edit_title
 import com.neoutils.finsight.resources.account_form_icon_helper
@@ -65,7 +69,10 @@ import com.neoutils.finsight.resources.account_form_save
 import com.neoutils.finsight.resources.account_form_yield_label
 import com.neoutils.finsight.resources.account_form_yield_state_off
 import com.neoutils.finsight.resources.account_form_yield_state_on
+import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.stringUiText
@@ -86,6 +93,10 @@ class AccountFormModal(
         val modalManager = LocalModalManager.current
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.account_form_icon_modal_title)
+        val currencyModalTitle = stringResource(Res.string.account_form_currency_modal_title)
+        val currencyOptions = uiState.selectableCurrencies.map {
+            CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
+        }
 
         val name = rememberTextFieldState(uiState.name)
 
@@ -162,6 +173,34 @@ class AccountFormModal(
                     onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            CurrencyRow(
+                currency = uiState.currency,
+                label = stringResource(Res.string.account_form_currency_label, uiState.currency),
+                subtitle = if (uiState.canChangeCurrency) {
+                    stringResource(Res.string.account_form_currency_state_new)
+                } else {
+                    stringResource(Res.string.account_form_currency_state_locked)
+                },
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = currencyOptions,
+                            selectedCode = uiState.currency,
+                            onCurrencySelected = { option ->
+                                viewModel.onAction(AccountFormAction.CurrencySelected(option.code))
+                            },
+                        )
+                    )
+                },
+                // The label states the currency, which is what a flow reads here — the
+                // choice is irreversible once the account exists.
+                labelTestTag = "account_form_currency",
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 

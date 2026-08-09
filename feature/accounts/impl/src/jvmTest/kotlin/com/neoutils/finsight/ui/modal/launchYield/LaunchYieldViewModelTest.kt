@@ -45,9 +45,9 @@ class LaunchYieldViewModelTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, yieldsInterest = true)
-    private val picpay = Account(id = 2, name = "PicPay", type = AccountType.ASSET, yieldsInterest = true)
-    private val wallet = Account(id = 3, name = "Carteira", type = AccountType.ASSET)
+    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL", yieldsInterest = true)
+    private val picpay = Account(id = 2, name = "PicPay", type = AccountType.ASSET, currency = "BRL", yieldsInterest = true)
+    private val wallet = Account(id = 3, name = "Carteira", type = AccountType.ASSET, currency = "BRL")
 
     private fun viewModel(
         transactions: ITransactionRepository,

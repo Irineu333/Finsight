@@ -44,10 +44,24 @@ data class Transaction(
     val monetaryEntries: List<Entry> get() = entries.filter { it.account.type.isMonetary }
 
     /**
-     * The leg a neutral list looks through: the outgoing one, which is how a
-     * transfer or a card payment reads when no perspective is given.
+     * The leg a neutral list looks through: the outgoing one — the monetary leg the
+     * money *left* — which is how a transfer or a card payment reads when no
+     * perspective is given.
+     *
+     * It says "negative" rather than `min`, and the difference is not a fix: a
+     * balanced transaction with two monetary legs has exactly one negative, so `min`
+     * already returned it, whatever the currencies. What goes away is a comparison
+     * that is only correct because of an invariant it does not state — `min` over
+     * `Long` of different currencies. The day two monetary legs share a sign, or
+     * someone reasons about this without rebuilding the argument, `min` becomes a
+     * silent defect.
+     *
+     * A transaction with no negative monetary leg (a card purchase, whose only
+     * monetary leg is the credited liability) keeps being read through the leg it is
+     * read through today.
      */
-    val primaryEntry: Entry? get() = monetaryEntries.minByOrNull { it.amount }
+    val primaryEntry: Entry? get() =
+        monetaryEntries.firstOrNull { it.amount < 0 } ?: monetaryEntries.minByOrNull { it.amount }
 
     /**
      * The transaction's amount as a magnitude. The sign is a display concern and is

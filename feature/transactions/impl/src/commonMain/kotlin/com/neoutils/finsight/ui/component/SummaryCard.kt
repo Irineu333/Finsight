@@ -17,18 +17,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
 import com.neoutils.finsight.ui.theme.Adjustment
+import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
@@ -66,11 +66,12 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun SummaryCard(
-    balanceOverview: BalanceOverview,
+    balanceOverview: BalanceOverview?,
     selectedScope: TransactionScope,
     selectedYearMonth: YearMonth,
     onScopeSelected: (TransactionScope) -> Unit,
     onMonthSelected: (YearMonth) -> Unit,
+    onSeeRates: () -> Unit,
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
 ) {
@@ -104,6 +105,20 @@ fun SummaryCard(
                     selectedScope = selectedScope,
                     onScopeSelected = onScopeSelected
                 )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Up to six lines of money live in this card, which is why the mark is a
+                // prefix on each and the thing that explains it is one button for the
+                // whole card — here, beside the chips, instead of a permanent line under
+                // the figures (design D21).
+                ConsolidationBadge(
+                    figures = balanceOverview?.figures.orEmpty(),
+                    onSeeRates = onSeeRates,
+                    // At the call site, as everywhere: the badge is one component drawn by
+                    // a dozen surfaces and owns no id of its own.
+                    modifier = Modifier.testTag("summary_badge"),
+                )
             }
 
             AnimatedContent(
@@ -117,6 +132,11 @@ fun SummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     when (overview) {
+                        // Nothing has been read yet. The chips above stay — they are how
+                        // the user gets out of any state — and the card asserts no figure
+                        // it does not have.
+                        null -> Unit
+
                         is BalanceOverview.Accounts -> AccountsBody(
                             overview = overview,
                             isCurrentMonth = isCurrentMonth,
@@ -146,7 +166,10 @@ private fun ColumnScope.AccountsBody(
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income
+        color = Income,
+        // The same id in both bodies: a scope composes one of them, never two, so the
+        // assertion binds to whichever the screen is showing.
+        amountTestTag = "summary_income_amount",
     )
 
     // Between money in and money out, because that is where it came from: the yield
@@ -162,7 +185,8 @@ private fun ColumnScope.AccountsBody(
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense
+        color = Expense,
+        amountTestTag = "summary_outgoing_amount",
     )
 
     overview.invoicePayment?.let { payment ->
@@ -245,7 +269,10 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_income),
         amount = overview.income,
-        color = Income
+        color = Income,
+        // The same id in both bodies: a scope composes one of them, never two, so the
+        // assertion binds to whichever the screen is showing.
+        amountTestTag = "summary_income_amount",
     )
 
     // Between money in and money out, because that is where it came from: the yield
@@ -261,7 +288,8 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_outgoing),
         amount = overview.expense,
-        color = Expense
+        color = Expense,
+        amountTestTag = "summary_outgoing_amount",
     )
 
     overview.invoicePayment?.let { payment ->
@@ -286,6 +314,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         label = stringResource(Res.string.summary_card_net),
         amount = overview.finalNet,
         color = colorScheme.onSurface,
+        amountTestTag = "summary_net_amount",
         config = SummaryRowConfig.Total
     )
 }
@@ -398,13 +427,14 @@ private val CHIP_INSET = 6.dp
 @Composable
 private fun SummaryRow(
     label: String,
-    amount: DisplayAmount,
+    amount: ConsolidatedAmount,
     color: Color,
     modifier: Modifier = Modifier,
+    // Named on the amount and not on the row: the row holds a label too, and a tag on it
+    // would let an assertion pass by reading the word instead of the figure.
+    amountTestTag: String? = null,
     config: SummaryRowConfig = SummaryRowConfig.Default,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -415,9 +445,13 @@ private fun SummaryRow(
             style = config.labelStyle
         )
 
-        Text(
-            text = formatter.format(amount),
-            style = config.amountStyle.copy(color = color)
+        // The card is a column of figures in `SpaceBetween`, so it holds a second line
+        // without fighting the layout: a figure that could not be fully reduced is shown
+        // whole (design D22), never degraded to its base term.
+        MoneyText(
+            figure = amount,
+            style = config.amountStyle.copy(color = color),
+            modifier = Modifier.optionalTestTag(amountTestTag),
         )
     }
 }

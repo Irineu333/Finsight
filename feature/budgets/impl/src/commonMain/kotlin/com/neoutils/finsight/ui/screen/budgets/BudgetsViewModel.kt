@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +23,7 @@ class BudgetsViewModel(
     private val transactionRepository: ITransactionRepository,
     private val recurringRepository: IRecurringRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
 ) : ViewModel() {
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -31,7 +33,11 @@ class BudgetsViewModel(
         transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
         selectedMonth,
-    ) { budgets, transactions, recurringList, selectedMonth ->
+        // The spending behind each bar is an SQL aggregate reduced to the limit's own
+        // currency, so it moves when the ledger moves *and* when a rate does — and a
+        // rate writes no entry. Without this the bar keeps whatever it last computed.
+        observeConsolidationChanges(),
+    ) { budgets, transactions, recurringList, selectedMonth, _ ->
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = budgets,
             recurringList = recurringList,

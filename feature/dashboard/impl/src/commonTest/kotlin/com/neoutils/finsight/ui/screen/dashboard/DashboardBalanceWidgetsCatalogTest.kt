@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -25,7 +26,9 @@ import kotlin.test.assertNotNull
 class DashboardBalanceWidgetsCatalogTest {
 
     private val previewFactory = DashboardPreviewFactory(
+        consolidateMoney = reducer(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
+        baseCurrencyRepository = FakeBaseCurrencyRepository(),
     )
 
     // The edit mode offers every type that is not already present and has a preview
@@ -44,18 +47,21 @@ class DashboardBalanceWidgetsCatalogTest {
 
         assertContains(availableKeys(savedBefore), DashboardComponentType.OVERALL_BALANCE_STATS.key)
         // No preview, no entry in the list — the other half of the filter.
-        assertNotNull(previewFactory.createPreview(DashboardComponentType.OVERALL_BALANCE_STATS.key))
+        assertNotNull(previewFactory.createPreview(
+            DashboardComponentType.OVERALL_BALANCE_STATS.key,
+            on = LocalDate(2026, 3, 31),
+        ))
     }
 
     @Test
-    fun `once present, the neutral widget is no longer offered`() = runTest {
+    fun `once present the neutral widget is no longer offered`() = runTest {
         val present = setOf(DashboardComponentType.OVERALL_BALANCE_STATS.key)
 
         assertFalse(DashboardComponentType.OVERALL_BALANCE_STATS.key in availableKeys(present))
     }
 
     @Test
-    fun `a fresh dashboard opens with the neutral perimeter, not the accounts one`() = runTest {
+    fun `a fresh dashboard opens with the neutral perimeter and not the accounts one`() = runTest {
         val defaults = GetDashboardPreferencesUseCase(
             repository = EmptyPreferencesRepository,
             navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },

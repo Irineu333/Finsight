@@ -5,7 +5,9 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 /**
- * Creates `budgets` and the `budget_categories` M2M table.
+ * Schema 1 → 2: budgets.
+ *
+ * Creates `budgets` and the `budget_categories` join table.
  *
  * Shipped in 1.2.0.
  */

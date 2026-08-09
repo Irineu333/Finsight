@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +28,10 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_form_closing_day_label
 import com.neoutils.finsight.resources.credit_card_form_due_day_label
+import com.neoutils.finsight.resources.credit_card_form_currency_label
+import com.neoutils.finsight.resources.credit_card_form_currency_modal_title
+import com.neoutils.finsight.resources.credit_card_form_currency_state_locked
+import com.neoutils.finsight.resources.credit_card_form_currency_state_new
 import com.neoutils.finsight.resources.credit_card_form_edit_title
 import com.neoutils.finsight.resources.credit_card_form_icon_helper
 import com.neoutils.finsight.resources.credit_card_form_icon_label
@@ -35,9 +40,12 @@ import com.neoutils.finsight.resources.credit_card_form_limit_label
 import com.neoutils.finsight.resources.credit_card_form_name_label
 import com.neoutils.finsight.resources.credit_card_form_new_title
 import com.neoutils.finsight.resources.credit_card_form_save
+import com.neoutils.finsight.ui.component.CurrencyRow
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
+import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.DayInputTransformation
 import com.neoutils.finsight.util.FeatureIconCatalog
@@ -60,6 +68,10 @@ class CreditCardFormModal(
         val modalManager = LocalModalManager.current
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.credit_card_form_icon_modal_title)
+        val currencyModalTitle = stringResource(Res.string.credit_card_form_currency_modal_title)
+        val currencyOptions = uiState.selectableCurrencies.map {
+            CurrencyOption(code = it.code, symbol = it.symbol, name = it.name ?: it.code)
+        }
 
         val name = rememberTextFieldState(uiState.form.name)
         val limit = rememberTextFieldState(uiState.form.limit)
@@ -80,6 +92,15 @@ class CreditCardFormModal(
                 .collect { value ->
                     viewModel.onAction(CreditCardFormAction.LimitChanged(value))
                 }
+        }
+
+        // An existing card's limit can only be written out once its currency is read, so
+        // it seeds the field when it arrives instead of at first composition. Anything
+        // already typed wins — the seed is what the field had nothing to show.
+        LaunchedEffect(uiState.form.limit) {
+            if (limit.text.isEmpty() && uiState.form.limit.isNotEmpty()) {
+                limit.setTextAndPlaceCursorAtEnd(uiState.form.limit)
+            }
         }
 
         LaunchedEffect(Unit) {
@@ -159,7 +180,11 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = rememberMoneyInputTransformation(),
+                // The limit is denominated by the card's account. Until that currency is
+                // read there is nothing to denominate the field with.
+                inputTransformation = uiState.currency?.let {
+                    rememberMoneyInputTransformation(it, limit)
+                },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
@@ -219,6 +244,43 @@ class CreditCardFormModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("credit_card_form_due_day"),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // The card is denominated by its `LIABILITY` account, and this is where that
+            // account's currency is chosen — the second and last production site where a
+            // currency is picked at all (design D23).
+            //
+            // It sits **with the icon selector and not among the text fields**: the two
+            // share a shape (the 52dp box that opens a picker), and a box of that shape
+            // between two `OutlinedTextField`s reads as something that fell out of the
+            // form. Grouping the pickers is what keeps the modal symmetrical — the
+            // account form already had it this way, next to its default-account row.
+            CurrencyRow(
+                currency = uiState.currency.orEmpty(),
+                label = stringResource(
+                    Res.string.credit_card_form_currency_label,
+                    uiState.currency.orEmpty(),
+                ),
+                subtitle = if (uiState.canChangeCurrency) {
+                    stringResource(Res.string.credit_card_form_currency_state_new)
+                } else {
+                    stringResource(Res.string.credit_card_form_currency_state_locked)
+                },
+                canChange = uiState.canChangeCurrency,
+                onClick = {
+                    modalManager.show(
+                        CurrencyPickerModal(
+                            title = currencyModalTitle,
+                            currencies = currencyOptions,
+                            selectedCode = uiState.currency,
+                            onCurrencySelected = { option ->
+                                viewModel.onAction(CreditCardFormAction.CurrencySelected(option.code))
+                            },
+                        )
+                    )
+                },
             )
 
             Spacer(modifier = Modifier.height(8.dp))

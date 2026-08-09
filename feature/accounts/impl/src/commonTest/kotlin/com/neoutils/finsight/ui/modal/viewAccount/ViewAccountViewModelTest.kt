@@ -64,7 +64,7 @@ class ViewAccountViewModelTest {
         name = "Wallet",
         type = AccountType.ASSET,
         isArchived = isArchived,
-    )
+    currency = "BRL",)
 
     private fun viewModel(repository: FakeAccountRepository) = ViewAccountViewModel(
         accountId = 1L,

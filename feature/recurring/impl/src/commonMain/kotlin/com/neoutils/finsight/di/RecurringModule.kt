@@ -66,6 +66,7 @@ val recurringModule = module {
     factory { ArchiveRecurringUseCase(repository = get()) }
     factory {
         ConfirmRecurringUseCase(
+            accountRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )
@@ -77,12 +78,14 @@ val recurringModule = module {
     viewModel {
         RecurringViewModel(
             recurringRepository = get(),
+            accountRepository = get(),
         )
     }
     viewModel {
         ViewRecurringViewModel(
             recurringId = it.get(),
             recurringRepository = get(),
+            accountRepository = get(),
             resolveRetirability = get(),
             crashlytics = get(),
         )

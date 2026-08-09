@@ -2,6 +2,7 @@ package com.neoutils.finsight.feature.creditcards.impl
 
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.ui.component.Modal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -13,9 +14,9 @@ import kotlinx.datetime.LocalDate
 
 internal class CreditCardsEntryImpl : CreditCardsEntry {
     override fun creditCardFormModal(creditCard: CreditCard?): Modal = CreditCardFormModal(creditCard)
-    override fun payInvoiceModal(invoice: Invoice, currentBillAmount: Double): Modal =
+    override fun payInvoiceModal(invoice: Invoice, currentBillAmount: DisplayAmount): Modal =
         PayInvoiceModal(invoice, currentBillAmount)
-    override fun advancePaymentModal(invoice: Invoice, currentBillAmount: Double): Modal =
+    override fun advancePaymentModal(invoice: Invoice, currentBillAmount: DisplayAmount): Modal =
         AdvancePaymentModal(invoice, currentBillAmount)
     override fun closeInvoiceModal(invoiceId: Long, closingDate: LocalDate): Modal =
         CloseInvoiceModal(invoiceId, closingDate)

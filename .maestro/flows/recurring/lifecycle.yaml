@@ -495,6 +495,13 @@ env:
 # And it asks again — once, for this month. Reactivating puts a recurring back in circulation; it
 # does not bill for the months it spent archived.
 - back
+# Back to the top first: `open_section` left the dashboard scrolled down to the quick-action grid,
+# and the pending row sits above it — scrolling DOWN from there would never reach it.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
 - scrollUntilVisible:
     element:
       id: "dashboard_component_pending_recurring"

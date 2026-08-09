@@ -5,6 +5,9 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
+import com.neoutils.finsight.testing.FakeCardAccountRepository
+import com.neoutils.finsight.testing.NoExchangeRates
 import com.neoutils.finsight.ui.screen.invoiceTransactions.FakeEntryRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -29,7 +32,7 @@ import kotlin.test.assertTrue
 class PayInvoicePaymentUseCaseTest {
 
     private val card = testCard()
-    private val account = Account(id = 42, name = "Wallet")
+    private val account = Account(id = 42, name = "Wallet", currency = "BRL")
     private val paymentDay = LocalDate(2026, 2, 10)
 
     private val closed = testInvoice(
@@ -47,6 +50,10 @@ class PayInvoicePaymentUseCaseTest {
         invoiceRepository = store,
         calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),
         payInvoiceUseCase = PayInvoiceUseCase(store, StoppedClock(LocalDate(2026, 2, 20))),
+        // Same-currency throughout, so there is no rate to learn and no second
+        // denomination to resolve.
+        harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
+        accountRepository = FakeCardAccountRepository(),
     )
 
     @Test

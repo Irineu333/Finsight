@@ -13,9 +13,13 @@ kotlin {
             // only this way: the ledger cannot see a facade (design D1).
             api(projects.core.ledger)
 
+            implementation(libs.koin.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.arrow.core)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
         }
     }
 }

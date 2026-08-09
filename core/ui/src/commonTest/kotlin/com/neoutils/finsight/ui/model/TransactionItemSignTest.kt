@@ -4,10 +4,8 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
-import com.neoutils.finsight.extension.format
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,14 +23,12 @@ import kotlin.test.assertEquals
  */
 class TransactionItemSignTest {
 
-    private val formatter = CurrencyFormatter()
-
-    private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET)
-    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
-    private val card = Account(id = 3L, name = "Card", type = AccountType.LIABILITY)
-    private val reconciliation = Account(id = 4L, name = "Reconciliation", type = AccountType.EQUITY)
-    private val expense = Account(id = 5L, name = "Expenses", type = AccountType.EXPENSE)
-    private val income = Account(id = 6L, name = "Income", type = AccountType.INCOME)
+    private val account = Account(id = 1L, name = "Account", type = AccountType.ASSET, currency = "BRL")
+    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET, currency = "BRL")
+    private val card = Account(id = 3L, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val reconciliation = Account(id = 4L, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val expense = Account(id = 5L, name = "Expenses", type = AccountType.EXPENSE, currency = "BRL")
+    private val income = Account(id = 6L, name = "Income", type = AccountType.INCOME, currency = "BRL")
 
     private fun transactionOf(vararg entries: Entry) = Transaction(
         id = 1L,
@@ -51,8 +47,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = card.id)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
-        assertEquals("-" + formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -62,8 +57,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = card.id)
 
-        assertEquals(DisplayAmount.explicitSign(100.0), ui?.amount)
-        assertEquals("+" + formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -73,7 +67,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = 10_000),
         ).toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(-100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -83,7 +77,7 @@ class TransactionItemSignTest {
             Entry(account = reconciliation, amount = -10_000),
         ).toTransactionUi(accountId = account.id)
 
-        assertEquals(DisplayAmount.explicitSign(100.0), ui?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), ui?.amount)
     }
 
     @Test
@@ -161,8 +155,8 @@ class TransactionItemSignTest {
         val outgoing = transfer.toTransactionUi(accountId = account.id)
         val incoming = transfer.toTransactionUi(accountId = destination.id)
 
-        assertEquals("-" + formatter.format(100.0), formatter.format(outgoing!!.amount))
-        assertEquals("+" + formatter.format(100.0), formatter.format(incoming!!.amount))
+        assertEquals(DisplayAmount.explicitSign(-100.0, "BRL", isApproximate = false), outgoing?.amount)
+        assertEquals(DisplayAmount.explicitSign(100.0, "BRL", isApproximate = false), incoming?.amount)
     }
 
     @Test
@@ -170,7 +164,29 @@ class TransactionItemSignTest {
         val ui = transfer.toTransactionUi()
 
         assertEquals(SignPolicy.MAGNITUDE, ui?.amount?.policy)
-        assertEquals(formatter.format(100.0), formatter.format(ui!!.amount))
+        assertEquals(100.0, ui?.amount?.value)
+    }
+
+    @Test
+    fun aTransferWithoutPerspectiveIsReadThroughItsOutgoingLeg() {
+        // The neutral read goes through `primaryEntry`, whose criterion is now named
+        // — the negative monetary leg — rather than implied by `min` (D16).
+        assertEquals(account.id, transfer.primaryEntry?.account?.id)
+    }
+
+    // endregion
+
+    // region the neutral leg's fallback: a form with no negative monetary leg
+
+    @Test
+    fun anIncomeWithoutPerspectiveIsReadThroughItsOnlyMonetaryLeg() {
+        val received = transactionOf(
+            Entry(account = account, amount = 10_000),
+            Entry(account = income, amount = -10_000),
+        )
+
+        assertEquals(account.id, received.primaryEntry?.account?.id)
+        assertEquals(100.0, received.toTransactionUi()?.amount?.value)
     }
 
     // endregion

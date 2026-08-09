@@ -15,14 +15,14 @@ import kotlin.test.assertTrue
  */
 class AccountUiYieldLineTest {
 
-    private val zero = DisplayAmount.natural(0.0)
+    private val zero = DisplayAmount.natural(0.0, "BRL", isApproximate = false)
 
     private fun accountUi(yieldsInterest: Boolean, yield: Double) = AccountUi(
         id = 1,
         openingBalance = zero,
         balance = zero,
         income = zero,
-        yield = DisplayAmount.forcedPositive(yield),
+        yield = DisplayAmount.forcedPositive(yield, "BRL", isApproximate = false),
         expense = zero,
         adjustment = zero,
         settlement = zero,

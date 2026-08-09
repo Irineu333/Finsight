@@ -21,7 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -85,13 +88,19 @@ class EditAccountBalanceModal(
             }
 
             is EditAccountBalanceUiState.Content -> {
+                // The balance being edited belongs to the selected account, so the field
+                // reads and writes in that account's currency (design D29).
+                val currency = state.selectedAccount.currency
+
                 val balanceState = rememberTextFieldState(
-                    formatMoney((state.currentBalance * 100).toLong(), currencyFormatter)
+                    currencyFormatter.format(
+                        DisplayAmount.natural(state.currentBalance, currency, isApproximate = false)
+                    )
                 )
 
                 val newBalance by remember {
                     derivedStateOf {
-                        parseMoneyToDouble(balanceState.text.toString())
+                        balanceState.text.toString().moneyToDouble()
                     }
                 }
 
@@ -101,9 +110,19 @@ class EditAccountBalanceModal(
                     }
                 }
 
-                LaunchedEffect(state.currentBalance) {
+                LaunchedEffect(state.currentBalance, currency) {
                     balanceState.edit {
-                        replace(0, length, formatMoney((state.currentBalance * 100).toLong(), currencyFormatter))
+                        replace(
+                            0,
+                            length,
+                            currencyFormatter.format(
+                                DisplayAmount.natural(
+                                    state.currentBalance,
+                                    currency,
+                                    isApproximate = false,
+                                )
+                            ),
+                        )
                     }
                 }
 
@@ -146,7 +165,7 @@ class EditAccountBalanceModal(
                     OutlinedTextField(
                         label = { Text(stringResource(Res.string.edit_account_balance_label)) },
                         state = balanceState,
-                        inputTransformation = rememberMoneyInputTransformation(),
+                        inputTransformation = rememberMoneyInputTransformation(currency, balanceState),
                         shape = RoundedCornerShape(12.dp),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions = KeyboardOptions(
@@ -168,6 +187,7 @@ class EditAccountBalanceModal(
                                     ) { currentAdjustment ->
                                         AdjustmentLabel(
                                             adjustment = currentAdjustment,
+                                            currency = currency,
                                             modifier = Modifier.padding(end = 16.dp),
                                         )
                                     }
@@ -204,6 +224,7 @@ class EditAccountBalanceModal(
     @Composable
     private fun AdjustmentLabel(
         adjustment: Double,
+        currency: String,
         modifier: Modifier = Modifier
     ) {
         val formatter = LocalCurrencyFormatter.current
@@ -223,25 +244,14 @@ class EditAccountBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatter.formatWithSign(adjustment),
+                text = formatter.format(
+                    DisplayAmount.explicitSign(adjustment, currency, isApproximate = false)
+                ),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
-        val isNegative = cents < 0
-        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
-        return if (isNegative) "-$formatted" else formatted
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val isNegative = formatted.startsWith("-")
-        val digits = formatted.filter { it.isDigit() }
-        val cents = digits.toLongOrNull() ?: return 0.0
-        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 
     enum class Type(val titleRes: StringResource) {

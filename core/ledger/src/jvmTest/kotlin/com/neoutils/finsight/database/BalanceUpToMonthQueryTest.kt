@@ -65,25 +65,64 @@ class BalanceUpToMonthQueryTest {
         seed()
 
         // 7500 on account 1 plus 700 on account 2; the EXPENSE leg is not an asset.
-        assertEquals(8_200L, entryDao.balanceUpToMonthByType("ASSET", "2026-02"))
+        assertEquals(8_200L, entryDao.balanceUpToMonthByType("ASSET", "2026-02").sole().total)
     }
 
     @Test
     fun `liabilities accumulate by the same mechanism, in credit`() = runTest {
         seed()
 
-        assertEquals(-3_000L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-02"))
-        assertEquals(-4_500L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-03"))
+        assertEquals(-3_000L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-02").sole().total)
+        assertEquals(-4_500L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-03").sole().total)
     }
 
     @Test
     fun `the consolidated figure is the sum of the two natures`() = runTest {
         seed()
 
-        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-03")
-        val liabilities = entryDao.balanceUpToMonthByType("LIABILITY", "2026-03")
+        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-03").sole().total
+        val liabilities = entryDao.balanceUpToMonthByType("LIABILITY", "2026-03").sole().total
 
         // 8100 held minus 4500 owed — no aggregate of its own and no sign rule of its own.
         assertEquals(3_600L, assets + liabilities)
+    }
+
+    // --- the accumulated balance by nature is per currency (task 4.5) ---
+
+    @Test
+    fun `the assets total keeps each currency apart`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET)
+            account(2, AccountEntity.Type.ASSET, currency = "USD")
+
+            transaction("2026-01-10", 1L posts 10_000)
+            transaction("2026-01-11", 2L posts 4_000 inCurrency "USD")
+        }
+
+        val totals = entryDao.balanceUpToMonthByType("ASSET", "2026-01")
+
+        assertEquals(10_000L, totals.forCurrency("BRL")?.total)
+        assertEquals(4_000L, totals.forCurrency("USD")?.total)
+        assertEquals(2, totals.size)
+    }
+
+    @Test
+    fun `a nature with no movement produces no row at all`() = runTest {
+        seed()
+
+        // Not a row of zeros: a grouped aggregate has no group to report. The empty
+        // list is what says "there is no movement", which is a different fact from a
+        // total of zero in some currency.
+        assertEquals(emptyList(), entryDao.balanceUpToMonthByType("INCOME", "2026-03"))
+    }
+
+    @Test
+    fun `a single account balance stays scalar, since one account is one currency`() = runTest {
+        LedgerFixture(database).apply {
+            account(2, AccountEntity.Type.ASSET, currency = "USD")
+            transaction("2026-01-11", 2L posts 4_000 inCurrency "USD")
+        }
+
+        assertEquals(4_000L, entryDao.balanceUpToMonth(2, "2026-01"))
     }
 }

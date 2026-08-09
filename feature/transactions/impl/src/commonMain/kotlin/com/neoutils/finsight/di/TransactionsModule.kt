@@ -61,6 +61,7 @@ val transactionsModule = module {
             transactionRepository = get(),
             facadeResolver = get(),
             crashlytics = get(),
+            baseCurrencyRepository = get(),
         )
     }
     viewModel {
@@ -72,6 +73,9 @@ val transactionsModule = module {
             categoryRepository = get(),
             installmentRepository = get(),
             entryRepository = get(),
+            consolidateMoney = get(),
+            observeConsolidationChanges = get(),
+            baseCurrencyRepository = get(),
             clock = get(),
         )
     }

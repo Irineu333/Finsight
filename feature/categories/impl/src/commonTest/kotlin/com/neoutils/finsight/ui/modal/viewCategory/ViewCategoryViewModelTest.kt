@@ -9,13 +9,20 @@ import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.AccountCurrencies
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.RetireAction
@@ -26,6 +33,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -41,6 +50,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
+import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 
 class ViewCategoryViewModelTest {
 
@@ -91,7 +105,11 @@ class ViewCategoryViewModelTest {
     ) : IEntryRepository {
         /** Stands in for Room's invalidation: emit after moving the ledger. */
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = balances[dimensionId] ?: 0.0
+        override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
+            balances[dimensionId]
+                ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }
+                ?: com.neoutils.finsight.domain.model.MoneyByCurrency.zero
+
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
@@ -100,25 +118,32 @@ class ViewCategoryViewModelTest {
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
         override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
-        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-        override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun totalsByDimension(
-            nominalType: AccountType,
-            startDate: LocalDate,
-            endDate: LocalDate,
-            siblingAccountIds: List<Long>,
-        ): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun totalsByDimensionInScope(
-            nominalType: AccountType,
-            scopeDimensionIds: List<Long>,
-        ): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
-    }
+
+    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
+    override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun totalsByDimensionByCurrency(
+        nominalType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScopeByCurrency(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun scopeStatsByCurrency(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ScopeStatsByCurrency = throw NotImplementedError()
+}
 
     private fun category(
         id: Long = 1L,
@@ -153,8 +178,35 @@ class ViewCategoryViewModelTest {
             accountRepository = com.neoutils.finsight.domain.usecase.FakeAccounts(hasYieldingAccount = false),
         ),
         unarchiveCategory = unarchiveCategory,
+        consolidateMoney = ConsolidateMoneyUseCase(
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            exchangeRateRepository = FakeExchangeRateRepository(),
+            getAccountCurrencies = FakeAccountCurrencies(),
+        ),
+        observeConsolidationChanges = ObserveConsolidationChangesUseCase(
+            entryRepository = entryRepository,
+            baseCurrencyRepository = FakeBaseCurrencyRepository(),
+            exchangeRateRepository = FakeExchangeRateRepository(),
+        ),
         crashlytics = crashlytics,
     )
+
+    private class FakeBaseCurrencyRepository(base: String = "BRL") : IBaseCurrencyRepository {
+        private val flow = MutableStateFlow(base)
+        override fun observe(): StateFlow<String> = flow
+        override suspend fun set(code: String) { flow.value = code }
+    }
+
+    private class FakeExchangeRateRepository : IExchangeRateRepository {
+        override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? = null
+        override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> = emptyMap()
+        override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
+        override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
+        override suspend fun save(rate: ExchangeRate) = Unit
+        override suspend fun remove(rate: ExchangeRate) = Unit
+        override suspend fun countNaming(currency: String) = 0
+        override suspend fun removeAllNaming(currency: String) = Unit
+    }
 
     private class FakeRecurringRepository(private val has: Boolean = false) : IRecurringRepository {
         override suspend fun hasRecurringForCategory(categoryId: Long) = has
@@ -202,7 +254,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(42.5, content.totalAmount)
+            assertEquals(42.5, content.totalAmount.terms.single().value)
             assertEquals(2, content.transactionCount)
         }
     }
@@ -292,14 +344,14 @@ class ViewCategoryViewModelTest {
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
-            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount)
+            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount.terms.single().value)
 
             entries.balances = mapOf(10L to 60.0)
             entries.counts = mapOf(10L to 3)
             entries.ledger.emit(Unit)
 
             val refreshed = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(60.0, refreshed.totalAmount)
+            assertEquals(60.0, refreshed.totalAmount.terms.single().value)
             assertEquals(3, refreshed.transactionCount)
         }
     }
@@ -313,7 +365,7 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, accountId = 11))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
-            assertEquals(0.0, content.totalAmount)
+            assertEquals(0.0, content.totalAmount.terms.single().value)
             assertEquals(0, content.transactionCount)
         }
     }
@@ -367,4 +419,10 @@ class ViewCategoryViewModelTest {
             events.cancel()
         }
     }
+}
+
+internal class FakeAccountCurrencies(
+    private val inUse: List<String> = listOf("BRL"),
+) : GetAccountCurrenciesUseCase {
+    override suspend fun invoke() = AccountCurrencies(inUse = inUse, ofDefaultAccount = inUse.firstOrNull())
 }

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
+import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.Validation
@@ -10,6 +11,11 @@ data class CreditCardFormUiState(
     val validation: Map<CreditCardField, Validation> = mapOf(),
     val isEditMode: Boolean = false,
     val canSubmit: Boolean = false,
+    // What the limit is typed and read back in. See `CreditCardFormViewModel.currency`.
+    val currency: String? = null,
+    /** Decided by the mode of the form, never by the state of the card (design D12). */
+    val canChangeCurrency: Boolean = true,
+    val selectableCurrencies: List<CurrencyInfo> = emptyList(),
 )
 
 enum class CreditCardField {

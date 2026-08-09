@@ -9,10 +9,13 @@ import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -35,8 +38,16 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
-    private val clock: Clock,
+    private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
+    baseCurrencyRepository: IBaseCurrencyRepository,
+    clock: Clock,
 ) : ViewModel() {
+
+    // Not a currency this list displays anything in: it only decides which of the two
+    // ends of a cross-currency operation states its figure (`Transaction.figureLegUnder`),
+    // so the card and the detail it opens cannot answer with different money.
+    private val baseCurrency = baseCurrencyRepository.observe()
 
     private val selectedYearMonth = MutableStateFlow(clock.currentYearMonth())
 
@@ -61,16 +72,26 @@ class TransactionsViewModel(
         // data, not a selector for a new transaction (which stays open-only).
         categoryRepository.observeAllCategoriesIncludingClosed(),
         installmentRepository.observeAllInstallments(),
-        combine(selectedYearMonth, selectedScope, ::Pair),
+        // The month, the scope, and the signal that something under a consolidated
+        // figure moved — folded together because this combine is already at five
+        // sources. A rate registered in settings writes no entry, so the ledger's own
+        // trigger would not carry it here.
+        combine(selectedYearMonth, selectedScope, observeConsolidationChanges()) { month, scope, _ ->
+            month to scope
+        },
         filters
     ) { transactions, categories, installments, (yearMonth, scope), filters ->
         // Every figure comes from the ledger, per scope — never summed over the loaded
         // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
         // re-runs this block on every ledger write, and on scope or month change.
-        // Translating the facade into a dimension belongs here, not in the ledger.
+        // Every line of it spans accounts, so every line is a consolidated figure: the
+        // reducer is what denominates them, and the base currency is never named here
+        // (design D29). Translating the facade into a dimension belongs here too, not
+        // in the ledger.
         val balanceOverview = entryRepository.balanceOverview(
             scope = scope,
             month = yearMonth,
+            consolidate = consolidateMoney,
             yieldDimensionId = categoryRepository
                 .getCategoryBySystemKey(SystemCategoryKey.YIELD)
                 ?.dimensionId,
@@ -121,7 +142,9 @@ class TransactionsViewModel(
                 // list declares no perspective — it spans every account and card.
                 visible.isNotEmpty() -> ListState.Content(
                     visible.mapValues { (_, ops) ->
-                        ops.mapNotNull { it.toTransactionUi(lookup = lookup) }
+                        ops.mapNotNull {
+                            it.toTransactionUi(lookup = lookup, baseCurrency = baseCurrency.value)
+                        }
                     }
                 )
                 transactions.isEmpty() -> ListState.EmptyLedger

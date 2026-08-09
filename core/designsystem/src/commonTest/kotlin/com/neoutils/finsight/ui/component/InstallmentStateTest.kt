@@ -19,21 +19,21 @@ class InstallmentStateTest {
 
     @Test
     fun `an amount that divides gives the same figure whichever way it is split`() {
-        assertEquals(480.0, InstallmentState(count = 2, total = 960.0).installment)
-        assertEquals(320.0, InstallmentState(count = 3, total = 960.0).installment)
-        assertEquals(240.0, InstallmentState(count = 4, total = 960.0).installment)
+        assertEquals(480.0, InstallmentState(count = 2, total = 960.0, currency = "BRL").installment)
+        assertEquals(320.0, InstallmentState(count = 3, total = 960.0, currency = "BRL").installment)
+        assertEquals(240.0, InstallmentState(count = 4, total = 960.0, currency = "BRL").installment)
     }
 
     @Test
     fun `one instalment is the whole amount`() {
-        assertEquals(1_000.0, InstallmentState(count = 1, total = 1_000.0).installment)
+        assertEquals(1_000.0, InstallmentState(count = 1, total = 1_000.0, currency = "BRL").installment)
     }
 
     @Test
     fun `an amount that does not divide is an estimate and says so by rounding`() {
         // $333.33… — the label reads $333.33, while the ledger writes 333.33, 333.33
         // and 333.34. The counter is not the source of what is charged.
-        val shown = InstallmentState(count = 3, total = 1_000.0).installment
+        val shown = InstallmentState(count = 3, total = 1_000.0, currency = "BRL").installment
 
         assertEquals(33_333L, (shown * 100).toLong())
     }

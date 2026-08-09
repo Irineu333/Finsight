@@ -78,9 +78,17 @@ fun List<Entry>.liabilityLeg(): Entry? = firstOrNull { it.account.type == Accoun
 
 fun List<Entry>.nominalLeg(): Entry? = firstOrNull { it.account.type.isNominal }
 
-/** The money-out `ASSET` leg — where a movement came from, when it came from one. */
+/**
+ * The money-out `ASSET` leg — where a movement came from, when it came from one.
+ *
+ * The criterion is named rather than implied: the `ASSET` leg of **negative** value.
+ * `min` returned the same leg (a balanced transaction has one negative monetary leg),
+ * but only because of an invariant it did not state — and `min` over `Long` of
+ * different currencies is a comparison that has no meaning of its own. When no
+ * `ASSET` leg is negative, the reading falls back to what it is today.
+ */
 fun List<Entry>.sourceLeg(): Entry? = filter { it.account.type == AccountType.ASSET }
-    .let { assets -> assets.minByOrNull { it.amount } }
+    .let { assets -> assets.firstOrNull { it.amount < 0 } ?: assets.minByOrNull { it.amount } }
 
 /** True when the entries balance to zero for every currency present. */
 fun List<Entry>.isBalanced(): Boolean =

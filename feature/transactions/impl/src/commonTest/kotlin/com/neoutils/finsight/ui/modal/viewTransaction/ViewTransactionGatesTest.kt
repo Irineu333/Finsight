@@ -24,7 +24,7 @@ class ViewTransactionGatesTest {
     private val date = LocalDate(2026, 1, 1)
 
     private fun account(type: AccountType, isArchived: Boolean = false) =
-        Account(name = type.name, type = type, isArchived = isArchived)
+        Account(name = type.name, type = type, isArchived = isArchived, currency = "BRL")
 
     private fun entry(type: AccountType, amount: Long, isArchived: Boolean = false) =
         Entry(account = account(type, isArchived), amount = amount)

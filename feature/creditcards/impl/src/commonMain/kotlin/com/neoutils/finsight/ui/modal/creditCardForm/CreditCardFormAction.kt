@@ -24,5 +24,10 @@ sealed class CreditCardFormAction {
         val icon: AppIcon
     ) : CreditCardFormAction()
 
+    /** Only ever sent while creating — see `CreditCardFormViewModel.currency`. */
+    data class CurrencySelected(
+        val code: String,
+    ) : CreditCardFormAction()
+
     data object Submit : CreditCardFormAction()
 }

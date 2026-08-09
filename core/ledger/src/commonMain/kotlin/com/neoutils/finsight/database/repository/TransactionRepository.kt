@@ -69,7 +69,7 @@ class TransactionRepository(
                     transactionId = entity.transactionId,
                     account = account,
                     amount = entity.amount,
-                    currency = entity.currency,
+                    // Derived from the account, which the chart map hydrates whole.
                     dimensionId = entity.dimensionId,
                 )
             }
@@ -215,8 +215,9 @@ class TransactionRepository(
     }
 
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
-        // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
-        ledgerEntryWriter.validate(intent.legs)
+        // No pre-check of the balance invariant here, and there must not be one:
+        // `writeEntries` verifies it *with* currency, at the one boundary the spec
+        // names, and writes nothing on failure (design D7).
         ensureDimensionsAccept(intent.legs)
 
         // The transaction row and its ledger legs are written in a single transaction,
@@ -236,10 +237,7 @@ class TransactionRepository(
     }
 
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> {
-        intents.forEach {
-            ledgerEntryWriter.validate(it.legs)
-            ensureDimensionsAccept(it.legs)
-        }
+        intents.forEach { ensureDimensionsAccept(it.legs) }
 
         val ids = database.useWriterConnection { connection ->
             connection.immediateTransaction {

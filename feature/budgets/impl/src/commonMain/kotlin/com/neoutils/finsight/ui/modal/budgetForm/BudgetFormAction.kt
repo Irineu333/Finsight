@@ -13,5 +13,8 @@ sealed class BudgetFormAction {
     data class LimitTypeChanged(val limitType: LimitType) : BudgetFormAction()
     data class PercentageChanged(val percentage: String) : BudgetFormAction()
     data class RecurringSelected(val recurring: Recurring) : BudgetFormAction()
+    /** Only sent when the form offered the choice — see `BudgetFormUiState`. */
+    data class CurrencySelected(val code: String) : BudgetFormAction()
+
     data object Submit : BudgetFormAction()
 }

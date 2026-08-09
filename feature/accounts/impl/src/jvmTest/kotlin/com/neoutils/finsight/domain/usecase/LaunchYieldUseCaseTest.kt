@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 class LaunchYieldUseCaseTest {
 
     private val date = LocalDate(2026, 7, 5)
-    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, yieldsInterest = true)
+    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL", yieldsInterest = true)
 
     private fun useCase(store: RecordingTransactions, categories: YieldCategoryStore = YieldCategoryStore()) =
         LaunchYieldUseCase(

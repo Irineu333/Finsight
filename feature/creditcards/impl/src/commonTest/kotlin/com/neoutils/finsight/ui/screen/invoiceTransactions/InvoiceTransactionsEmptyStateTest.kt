@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +20,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.time.Clock
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * The two emptinesses of the invoice list, and the loading state that used to look
@@ -48,8 +50,8 @@ class InvoiceTransactionsEmptyStateTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private fun purchase(id: Long, dimensionId: Long) = Transaction(
         id = id,
@@ -68,12 +70,13 @@ class InvoiceTransactionsEmptyStateTest {
         creditCardId = 1,
         creditCardRepository = FakeCreditCardRepository(card),
         invoiceRepository = FakeInvoiceRepository(invoices),
+        accountRepository = FakeCardAccountRepository(),
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = emptyMap(),
-            flowsByInvoiceId = invoices.associate { it.id to DimensionFlows(0.0, 0.0, 0.0) },
+            flowsByInvoiceId = invoices.associate { it.id to DimensionFlowsByCurrency.zero },
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),

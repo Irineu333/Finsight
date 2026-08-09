@@ -7,14 +7,19 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.CategoryRetirability
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.retireActionOf
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.displaySign
 import com.neoutils.finsight.extension.interceptAbsence
+import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +39,8 @@ class ViewCategoryViewModel(
     private val entryRepository: IEntryRepository,
     private val resolveRetirability: ResolveCategoryRetirabilityUseCase,
     private val unarchiveCategory: UnarchiveCategoryUseCase,
+    private val consolidateMoney: ConsolidateMoneyUseCase,
+    private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -49,16 +56,20 @@ class ViewCategoryViewModel(
                 onDisappeared = { _events.send(ViewCategoryEvent.Dismiss) },
             ),
         selectedYearMonth,
-        // Same reason as the accounts screen: the totals below are SQL aggregates,
-        // so the ledger has to say when it moved.
-        entryRepository.observeLedgerChanges(),
+        // Same reason as the accounts screen: the totals below are SQL aggregates, so
+        // the ledger has to say when it moved — and this figure is consolidated, so a
+        // rate registered in settings has to say so too. Neither writes an entry.
+        observeConsolidationChanges(),
     ) { category, yearMonth, _ ->
         category ?: return@combine ViewCategoryUiState.Error
         // Σ entries carrying the category's dimension in the month, read from the
         // ledger. The natural balance is debit-positive; the ledger's own display
         // convention turns it into the positive figure a category reads as.
         val displaySign = category.type.accountType.displaySign
-        val totalAmount = entryRepository.dimensionBalanceInMonth(yearMonth, category.dimensionId) * displaySign
+        val natural = entryRepository.dimensionBalanceInMonthByCurrency(yearMonth, category.dimensionId)
+        val totalAmount = MoneyByCurrency.of(
+            natural.toList().associate { it.currency to it.value * displaySign },
+        )
         val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
         // Whether deleting is refused (so the screen offers archiving instead) is one
         // rule with a single owner — the same one DeleteCategoryUseCase consumes.
@@ -67,7 +78,14 @@ class ViewCategoryViewModel(
             category = category,
             retireAction = retireActionOf(retirability !is CategoryRetirability.Deletable),
             selectedYearMonth = yearMonth,
-            totalAmount = totalAmount,
+            // The category spans whatever currencies its entries sit in, so the total
+            // is a figure the reducer denominates — the base never reaches the screen
+            // any other way (design D9, D13, D29).
+            totalAmount = consolidateMoney(
+                money = totalAmount,
+                on = yearMonth.safeOnDay(yearMonth.numberOfDays),
+                policy = DisplayAmount::magnitude,
+            ),
             transactionCount = transactionCount,
         )
     }.stateIn(

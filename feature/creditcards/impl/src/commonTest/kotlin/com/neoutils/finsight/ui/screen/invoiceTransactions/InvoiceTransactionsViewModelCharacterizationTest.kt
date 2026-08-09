@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -37,12 +37,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import kotlin.test.assertEquals
-import kotlin.time.Clock
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * Characterizes the per-invoice sums of [InvoiceTransactionsViewModel] (sites
@@ -64,8 +66,8 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         status = Invoice.Status.OPEN,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val contraAccount = Account(id = 20, name = "Contra", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val contraAccount = Account(id = 20, name = "Contra", type = AccountType.EXPENSE, currency = "BRL")
 
     /** The card's LIABILITY leg — the only one carrying the invoice — plus its contra leg. */
     private fun op(id: Long, type: TransactionType, amount: Double): Transaction {
@@ -93,6 +95,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         val vm = InvoiceTransactionsViewModel(
             creditCardId = 1,
             creditCardRepository = FakeCreditCardRepository(card),
+            accountRepository = FakeCardAccountRepository(),
             invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
@@ -100,7 +103,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             entryRepository = FakeEntryRepository(
                 owedByInvoiceId = mapOf(1L to 70.0),
                 flowsByInvoiceId = mapOf(
-                    1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
+                    1L to brlFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
                 ),
             ),
             recurringRepository = NoRecurring,

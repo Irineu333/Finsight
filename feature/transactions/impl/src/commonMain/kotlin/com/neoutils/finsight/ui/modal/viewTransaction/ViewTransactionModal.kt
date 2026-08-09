@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -47,6 +48,7 @@ import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.theme.*
+import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.dayMonthYear
 import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -106,6 +108,17 @@ class ViewTransactionModal(
         navController: androidx.navigation.NavController,
         viewModel: ViewTransactionViewModel,
     ) {
+        // `American · USD`, and only where two currencies are on the same screen —
+        // the doctrine `AccountSelector` established, asked of what this screen shows.
+        //
+        // The **code** and not the symbol, unlike the selectors: a selector names an
+        // account the user is about to type money into, and the glyph is what the field
+        // will wear. Here nothing is typed and the currency is being *identified*, which
+        // is the one job a symbol does badly — three of the offered currencies write
+        // `kr`. It is the grammar the rates screen already reads in (`Dólar · USD`).
+        fun accountLabel(name: String, currency: String?): String =
+            if (uiState.namesAccountCurrency && currency != null) "$name · $currency" else name
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -202,12 +215,39 @@ class ViewTransactionModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(
-                label = stringResource(Res.string.view_transaction_amount_label),
-                value = formatter.format(uiState.amount),
-                valueColor = uiState.transactionColor(),
-                valueTestTag = "view_transaction_amount"
-            )
+            uiState.amount?.let { amount ->
+                DetailRow(
+                    label = stringResource(Res.string.view_transaction_amount_label),
+                    value = formatter.format(amount),
+                    valueColor = uiState.transactionColor(),
+                    valueTestTag = "view_transaction_amount",
+                )
+            }
+
+            // Beside the amount, because it is what makes the amount readable: without
+            // it a transfer of R$ 550,00 into a dollar account says nothing about what
+            // arrived. The grammar is the write form's (`CounterpartAmountField`) — one
+            // unit of the source priced in the target — so the rate the user is shown
+            // afterwards is the one he was shown while typing.
+            uiState.appliedRate?.let { applied ->
+                DetailRow(
+                    label = stringResource(Res.string.view_transaction_applied_rate_label),
+                    value = stringResource(
+                        Res.string.exchange_rates_quote,
+                        LocalCurrencySymbols.current(applied.sourceCurrency),
+                        // As many places as the rate needs, not the currency's own two:
+                        // a quotient like `0,000691` reads `R$ 0,00` at two places, which
+                        // is a rate of zero — a different statement from a rounded one.
+                        formatter.format(
+                            amount = applied.rate,
+                            currency = applied.targetCurrency,
+                            minFractionDigits = 2,
+                            maxFractionDigits = RATE_SCALE,
+                        ),
+                    ),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -233,7 +273,7 @@ class ViewTransactionModal(
                 sourceAccount?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_source_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -249,7 +289,7 @@ class ViewTransactionModal(
                 destinationAccount?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_destination_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -267,7 +307,7 @@ class ViewTransactionModal(
                 uiState.account?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_transaction_account_label),
-                        value = account.name,
+                        value = accountLabel(account.name, account.currency),
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
@@ -286,7 +326,10 @@ class ViewTransactionModal(
             uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_card_label),
-                    value = creditCard.name,
+                    // A card states its currency because its `LIABILITY` account does,
+                    // hydrated on read; one that arrived unhydrated is left unmarked
+                    // rather than denominated by a guess (`CreditCardSelector`).
+                    value = accountLabel(creditCard.name, creditCard.currency),
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = if (creditCard.isArchived) null else {
                         {
@@ -318,7 +361,12 @@ class ViewTransactionModal(
             uiState.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_installment_label),
-                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
+                    // The total is denominated by the card the instalment sits on, and
+                    // the state resolves it; without a card leg there is no currency to
+                    // state it in, so the row says only which instalment this is.
+                    value = uiState.installmentTotal
+                        ?.let { "${installment.label} de ${formatter.format(it)}" }
+                        ?: installment.label,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         detailController.dismiss()

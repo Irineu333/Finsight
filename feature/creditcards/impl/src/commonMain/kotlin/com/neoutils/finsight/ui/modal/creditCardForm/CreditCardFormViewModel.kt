@@ -14,7 +14,13 @@ import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICurrencyRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.CreditCardPeriod
@@ -24,12 +30,20 @@ import com.neoutils.finsight.util.Validation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CreditCardFormViewModel(
+    // Injected rather than read from the composition local: this one formats the
+    // pre-filled limit outside any composition.
     private val formatter: CurrencyFormatter,
     private val creditCard: CreditCard?,
+    private val creditCardRepository: ICreditCardRepository,
+    private val accountRepository: IAccountRepository,
+    // The currencies a form may offer are stored data now, read from the single source
+    // that holds them — the archived ones excluded.
+    currencyRepository: ICurrencyRepository,
     private val addCreditCardUseCase: AddCreditCardUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
@@ -39,6 +53,37 @@ class CreditCardFormViewModel(
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
+
+    /**
+     * What the card is denominated in — the limit is typed and read back in it (design
+     * D17), and every figure of the card follows.
+     *
+     * An existing card has an account, and that account states it; a card being
+     * *created* does not — its `LIABILITY` account is only born on insert — so the
+     * repository that will denominate it says what it is **pre-selected** with, and the
+     * user is free to change it until the card exists. After that it never changes
+     * (design D12), which is why the row locks in edit mode.
+     *
+     * Either answer is a suspending read, so the form starts without a currency and the
+     * limit field simply does not format until it arrives.
+     */
+    private val currency = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            currency.value = creditCard
+                ?.let { accountRepository.currencyOf(it) }
+                ?: creditCardRepository.currencyForNewCard()
+        }
+    }
+
+    private fun prefilledLimit(currency: String?): String {
+        if (creditCard == null || currency == null) return ""
+
+        return formatter.format(
+            DisplayAmount.magnitude(creditCard.limit, currency, isApproximate = false)
+        )
+    }
 
     private val isEditMode = creditCard != null
 
@@ -51,9 +96,13 @@ class CreditCardFormViewModel(
         )
     )
 
-    private val limit = MutableStateFlow(
-        creditCard?.limit?.let { formatter.format(it) }.orEmpty()
-    )
+    private val typedLimit = MutableStateFlow<String?>(null)
+
+    // The stored limit of an existing card until the user types over it — pre-filling it
+    // has to wait for the currency it is read back in.
+    private val limit = combine(typedLimit, currency) { typed, currency ->
+        typed ?: prefilledLimit(currency)
+    }
 
     private val closingDay = MutableStateFlow(
         creditCard?.closingDay?.toString().orEmpty()
@@ -88,7 +137,7 @@ class CreditCardFormViewModel(
         initialValue = creditCard?.let {
             CreditCardForm(
                 name = it.name,
-                limit = formatter.format(it.limit),
+                limit = prefilledLimit(currency.value),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
                 iconKey = it.iconKey,
@@ -98,13 +147,23 @@ class CreditCardFormViewModel(
         )
     )
 
-    val uiState = combine(form, selectedIcon, validation) { form, selectedIcon, validation ->
+    private val offeredCurrencies = currencyRepository.observeOffered()
+
+    val uiState = combine(
+        form,
+        selectedIcon,
+        validation,
+        combine(currency, offeredCurrencies, ::Pair),
+    ) { form, selectedIcon, validation, (currency, selectableCurrencies) ->
         CreditCardFormUiState(
             form = form,
             selectedIcon = selectedIcon,
             validation = validation,
             isEditMode = isEditMode,
-            canSubmit = form.isValid(),
+            canSubmit = form.isValid() && currency != null,
+            currency = currency,
+            canChangeCurrency = !isEditMode,
+            selectableCurrencies = selectableCurrencies,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -125,7 +184,7 @@ class CreditCardFormViewModel(
             }
 
             is CreditCardFormAction.LimitChanged -> {
-                limit.value = action.limit
+                typedLimit.value = action.limit
             }
 
             is CreditCardFormAction.ClosingDayChanged -> {
@@ -138,6 +197,12 @@ class CreditCardFormViewModel(
 
             is CreditCardFormAction.IconSelected -> {
                 selectedIcon.value = action.icon
+            }
+
+            is CreditCardFormAction.CurrencySelected -> {
+                // Only while creating: an existing card's account already denominates
+                // every figure it ever produced.
+                if (!isEditMode) currency.value = action.code
             }
 
             is CreditCardFormAction.Submit -> submit()
@@ -190,6 +255,10 @@ class CreditCardFormViewModel(
 
         addCreditCardUseCase(
             form = form.value,
+            // The form cannot submit before the currency arrives, so this is a state
+            // that does not happen; returning is still the honest response to it,
+            // because inventing a currency here is exactly what D28 forbids.
+            currency = currency.value ?: return@launch,
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {

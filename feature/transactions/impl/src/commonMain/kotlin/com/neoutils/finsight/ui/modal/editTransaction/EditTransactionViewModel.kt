@@ -28,6 +28,7 @@ import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.combine
+import kotlin.math.roundToLong
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.today
@@ -81,7 +82,12 @@ class EditTransactionViewModel(
                 TransactionTarget.ACCOUNT
             },
             title = transaction.title.orEmpty(),
-            amount = formatter.format(transaction.amount),
+            // The seed reads in the currency the transaction was **recorded** in — its
+            // own money leg's account. A transaction with no money leg states no
+            // currency, so its digits stand undressed rather than borrowing one.
+            amount = transaction.primaryEntry
+                ?.let { formatter.format(transaction.amount, it.currency) }
+                ?: (transaction.amount * 100).roundToLong().toString(),
             date = dayMonthYear.format(transaction.date),
         )
     )
@@ -122,6 +128,15 @@ class EditTransactionViewModel(
         }
     }
 
+    /**
+     * The selected card's currency, read off the `LIABILITY` account it projects onto:
+     * the card facade names the account, and the account is the only place a currency is
+     * stated (design D17). Resolved here, beside the card, so the two cannot disagree.
+     */
+    private val creditCardCurrency = selectedCreditCard.map { card ->
+        card?.let { accountRepository.getAccountById(it.accountId)?.currency }
+    }
+
     private val categories = categoryRepository.observeAllCategories()
 
     private val creditCards = creditCardRepository
@@ -159,7 +174,8 @@ class EditTransactionViewModel(
         selectedDueMonth,
         selectedAccount,
         transactionCategory,
-    ) { input, categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category ->
+        creditCardCurrency,
+    ) { input, categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category, cardCurrency ->
 
         val effectiveAccount = account ?: accounts.firstOrNull { it.isDefault }
 
@@ -190,6 +206,7 @@ class EditTransactionViewModel(
             invoiceSelection = invoiceSelection,
             accounts = accounts,
             selectedAccount = effectiveAccount,
+            creditCardCurrency = cardCurrency,
         )
     }.stateIn(
         scope = viewModelScope,

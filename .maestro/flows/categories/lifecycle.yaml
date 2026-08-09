@@ -331,6 +331,11 @@ env:
 # Read on the field that renders the choice, not merely as the absence of the empty state's "+":
 # a selector that listed it but would not take the pick reads the same as one that never had it.
 - back
+# The screen has to be gone before the tap, or the tap races the exit animation.
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_categories"
+    timeout: 15000
 - tapOn:
     id: "add_transaction_fab"
 - extendedWaitUntil:

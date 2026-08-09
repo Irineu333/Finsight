@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
@@ -205,6 +206,7 @@ private fun CreditCardsContent(
                     ) {
                         CreditCardPager(
                             creditCards = uiState.creditCards,
+                            cardLimits = uiState.cardLimits,
                             selectedIndex = uiState.selectedCardIndex,
                             onSelectCard = { index ->
                                 onAction(CreditCardsAction.SelectCard(index))
@@ -416,6 +418,7 @@ private fun CreditCardTransactionsEmptyState(
 @Composable
 private fun CreditCardPager(
     creditCards: List<CreditCardUi>,
+    cardLimits: List<DisplayAmount>,
     selectedIndex: Int,
     onSelectCard: (Int) -> Unit,
     onCardClick: (CreditCardUi) -> Unit,
@@ -448,7 +451,7 @@ private fun CreditCardPager(
             name = creditCards[page].name,
             closingDay = creditCards[page].closingDay,
             dueDay = creditCards[page].dueDay,
-            limit = creditCards[page].limit,
+            limit = cardLimits[page],
             invoiceUi = creditCards[page].invoiceUi,
             // Only the selected page is promoted: a neighbour composed by the pager's
             // contentPadding would be lifted to the overlay and lose its clip.

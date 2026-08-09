@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
@@ -11,6 +12,7 @@ import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -38,6 +40,7 @@ import kotlinx.datetime.YearMonth
 
 class AddInstallmentViewModel(
     private val categoryRepository: ICategoryRepository,
+    private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val addInstallmentUseCase: AddInstallmentUseCase,
@@ -112,6 +115,7 @@ class AddInstallmentViewModel(
             categories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
+            currency = selectedCard?.let { accountRepository.currencyOf(it) },
             invoiceSelection = invoiceSelection,
         )
     }.stateIn(

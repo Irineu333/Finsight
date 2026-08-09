@@ -127,6 +127,11 @@ env:
 - assertVisible:
     id: "dashboard_total_balance_amount"
     text: "[$]457[.,]10"
+# And the figure says nothing about currency, because there is nothing to say. The badge marks a
+# total that needed a rate to become one number; this one is exact, and holding a single currency
+# is the case it must never appear in. The premise is the line above: the card was just read.
+- assertNotVisible:
+    id: "dashboard_total_balance_badge"
 - assertVisible:
     id: "dashboard_expenses_amount"
     text: "[$]42[.,]90"
@@ -148,6 +153,29 @@ env:
     timeout: 15000
 - assertVisible: ${EXPENSE_TITLE}
 - assertVisible: ${INCOME_TITLE}
+
+# The same two writes, summed by a second reader. The dashboard already said 500.00, 42.90 and
+# 457.10; this card reaches them down another path (`BalanceOverview`, scoped by month), so the two
+# agreeing is the claim — a single reader agreeing with itself would prove nothing. And the badge
+# stays away here for the reason it stays away there: one currency needs no rate to become a total.
+#
+# The signs are asserted because they are arithmetic, not decoration: this card is a column that
+# adds up on screen, so each line carries the operator that ties it to the total below
+# (`forcedPositive`/`forcedNegative`), and the total carries none because it is the result, not a
+# term. The dashboard shows the same figures without signs — there they stand alone and the label
+# gives the direction (`magnitude`). Asserting the sign here is asserting that the column reads as
+# a sum.
+- assertVisible:
+    id: "summary_income_amount"
+    text: "[+][$]500[.,]00"
+- assertVisible:
+    id: "summary_outgoing_amount"
+    text: "[-][$]42[.,]90"
+- assertVisible:
+    id: "summary_net_amount"
+    text: "[$]457[.,]10"
+- assertNotVisible:
+    id: "summary_badge"
 
 # --- The expense figure is a filter, not a caption -----------------------------------------------
 # Tapping it opens the list already cut to expenses (`TransactionsRoute.filterLabel`), and the two
@@ -208,6 +236,12 @@ env:
     env:
       NAME: ${SAVINGS_ACCOUNT}
 - back
+# Leaving a screen animates, and the tap below lands on the bar underneath it. Waiting for the
+# screen to be *gone* is the condition; without it the tap is a race the flow loses now and then.
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
 
 # --- I got the coffee wrong: it was $68.35, and I paid it from savings ---------------------------
 - tapOn:
@@ -342,6 +376,10 @@ env:
 
 # --- I undo the spend ----------------------------------------------------------------------------
 - back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
 - tapOn:
     id: "nav_item_transactions"
 - extendedWaitUntil:

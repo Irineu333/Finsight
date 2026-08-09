@@ -65,7 +65,7 @@ class AddTransactionSubmitTest {
     @BeforeTest fun setup() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, isDefault = true)
+    private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET, currency = "BRL", isDefault = true)
 
     @Test
     fun `an untouched form offers nothing to submit`() = runTest(dispatcher) {
@@ -209,7 +209,8 @@ private object FakeCreditCardRepository : ICreditCardRepository {
     override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
     override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
-    override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
+    override suspend fun currencyForNewCard(): String = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun unarchive(accountId: Long) = throw NotImplementedError()

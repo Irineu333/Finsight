@@ -1,0 +1,398 @@
+appId: com.neoutils.finsight
+name: currency_lifecycle
+tags:
+  - currency
+  - ledger
+env:
+  SALARY: "E2E Salary"
+  SALARY_DIGITS: "91860"
+  EUR_ACCOUNT: "E2E Euros"
+  RATE: "0.80"
+  SENT_DIGITS: "26775"
+  RECEIVED_DIGITS: "20440"
+---
+# Two currencies in one pocket: an account in euros, an amount that leaves in dollars and arrives in
+# euros with both ends stated, and a total that is only one number because a rate exists — and says
+# it is approximate the moment it becomes one.
+#
+# Nothing below this flow mounts the second amount field, which exists only while two selectors
+# disagree; nor reads one write on the two screens where it means different things — scalar on the
+# account, consolidated on the dashboard — under two different base currencies.
+#
+# The figures share no digits: 918.60 in, 267.75 out and 204.40 in leave 650.85 on the wallet, and
+# the totals are 906.35 in dollars and 725.08 in euros. The transfer's own rate (204.40 / 267.75 is
+# about 0.7634) is deliberately *not* the archived 0.80: were they equal the total would come back
+# to 918.60, and the consolidation assertion would pass without anything having happened.
+#
+# Every rate here is one this flow wrote. The debug build quotes nothing (`OfflineRateSource`), so
+# the archive holds what a test put in it and no figure depends on what a public API published this
+# morning.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- The app already has a base currency, and it came from the device -----------------------------
+# Everything below is denominated against this, so it is read before anything is written rather
+# than assumed.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- assertVisible:
+    id: "settings_base_currency_value"
+    text: "USD.*"
+- back
+
+# --- I am paid, in the currency I already had -----------------------------------------------------
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${SALARY}
+      AMOUNT: ${SALARY_DIGITS}
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+# One currency: an exact figure, and no badge — the single-currency promise (design D29), asserted
+# here so the same two nodes can say the opposite once a second currency exists.
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]918[.,]60"
+- assertNotVisible:
+    id: "dashboard_total_balance_badge"
+
+# --- I open an account in euros -------------------------------------------------------------------
+# Inline rather than a subflow: choosing the currency is this flow's subject, and a subflow carries
+# the arrangement, never the claim.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- tapOn:
+    id: "accounts_add"
+- extendedWaitUntil:
+    visible:
+      id: "account_form_name"
+    timeout: 15000
+- tapOn:
+    id: "account_form_name"
+- waitForAnimationToEnd
+- inputText: ${EUR_ACCOUNT}
+- assertVisible:
+    id: "account_form_name"
+    text: ${EUR_ACCOUNT}
+- hideKeyboard
+# The form opens on the base currency, and the picker is a sheet over it — its own composition root.
+- assertVisible:
+    id: "account_form_currency"
+    text: ".*USD.*"
+- tapOn:
+    id: "account_form_currency"
+- extendedWaitUntil:
+    visible:
+      id: "currency_picker_option_EUR"
+    timeout: 15000
+- tapOn:
+    id: "currency_picker_option_EUR"
+# Read the choice back before saving: the currency cannot be corrected afterwards, so a mis-tap here
+# is not a wrong field, it is a wrong account for good.
+- extendedWaitUntil:
+    visible:
+      id: "account_form_currency"
+    timeout: 15000
+- assertVisible:
+    id: "account_form_currency"
+    text: ".*EUR.*"
+- tapOn:
+    id: "account_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "account_form_name"
+    timeout: 15000
+
+# The account denominates itself: zero, but zero in euros. Saving leaves the pager on the account it
+# was already showing, so the new one is one page over — and its name is the premise for reading a
+# figure by an id two cards now share.
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- assertVisible: ${EUR_ACCOUNT}
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[€]0[.,]00"
+
+# --- And its currency is now beyond changing ------------------------------------------------------
+# The one act of this app that has no undo (design D12). Asserted as what the form *offers*: the row
+# still states the currency, and the picker no longer opens on it.
+- tapOn:
+    id: "account_edit"
+- extendedWaitUntil:
+    visible:
+      id: "account_form_name"
+    timeout: 15000
+- assertVisible:
+    id: "account_form_currency"
+    text: ".*EUR.*"
+- tapOn:
+    id: "account_form_currency"
+# The premise for the absence is the form itself: it is still open, so the sheet did not merely fail
+# to compose — the picker was not offered.
+- assertVisible:
+    id: "account_form_name"
+- assertNotVisible:
+    id: "currency_picker_option_USD"
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "account_form_name"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
+
+# --- I tell the app what a dollar is worth --------------------------------------------------------
+# By hand, which is the only door that does not depend on a network: the debug build's source quotes
+# nothing, and answering "not covered" is what the screen tells the user to resolve this way.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- tapOn:
+    id: "settings_exchange_rates"
+- extendedWaitUntil:
+    visible:
+      id: "screen_exchange_rates"
+    timeout: 15000
+- tapOn:
+    id: "exchange_rates_add"
+- extendedWaitUntil:
+    visible:
+      id: "exchange_rate_form_from"
+    timeout: 15000
+# Written as USD → EUR on purpose: the resolver tries the direct pair before the inverse, and the
+# transfer below leaves a derived row on this very pair. A rate the user wrote outranks a derived
+# one of the same date, so this is the one that answers.
+- tapOn:
+    id: "exchange_rate_form_from"
+- extendedWaitUntil:
+    visible:
+      id: "exchange_rate_option_USD"
+    timeout: 15000
+- tapOn:
+    id: "exchange_rate_option_USD"
+- tapOn:
+    id: "exchange_rate_form_to"
+- extendedWaitUntil:
+    visible:
+      id: "exchange_rate_option_EUR"
+    timeout: 15000
+- tapOn:
+    id: "exchange_rate_option_EUR"
+- tapOn:
+    id: "exchange_rate_form_rate"
+- waitForAnimationToEnd
+# A decimal point, not a comma: this field is not the money input, and it reads the separator of the
+# device's locale — which §2.2 fixes to en-US.
+- inputText: ${RATE}
+- assertVisible:
+    id: "exchange_rate_form_rate"
+    text: ".*0[.]80.*"
+- hideKeyboard
+- tapOn:
+    id: "exchange_rate_form_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "exchange_rate_form_save"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_exchange_rates"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_settings"
+    timeout: 15000
+
+# --- I move money across the currency line --------------------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+# The pager opens on the seeded account, which is the one holding dollars and therefore the source.
+- assertVisible: "Wallet"
+- tapOn:
+    id: "account_transfer"
+- extendedWaitUntil:
+    visible:
+      id: "transfer_save"
+    timeout: 15000
+# The field states the account *and* its currency — "Wallet · $" — which is what makes the
+# disagreement below legible to the user before the second field appears.
+- assertVisible:
+    id: "transfer_source_account"
+    text: ".*Wallet.*"
+# Until a destination is picked there is one amount to state, because there is one currency.
+- assertNotVisible:
+    id: "transfer_destination_amount"
+- tapOn:
+    id: "transfer_destination_account"
+# The option carries the currency beside the name — "E2E Euros · €" — so it is matched loosely; the
+# tight assertion is on the field below, after the pick.
+- extendedWaitUntil:
+    visible: ".*${EUR_ACCOUNT}.*"
+    timeout: 10000
+- tapOn: ".*${EUR_ACCOUNT}.*"
+- assertVisible:
+    id: "transfer_destination_account"
+    text: ".*${EUR_ACCOUNT}.*"
+# The second field is born of the disagreement: two accounts, two currencies, and a statement that
+# cannot be written with one number. This is the assertion no layer below can make.
+- extendedWaitUntil:
+    visible:
+      id: "transfer_destination_amount"
+    timeout: 15000
+- tapOn:
+    id: "transfer_amount"
+- waitForAnimationToEnd
+- inputText: ${SENT_DIGITS}
+- assertVisible:
+    id: "transfer_amount"
+    text: ".*267[.,]75.*"
+- hideKeyboard
+# The archive fills the other end in: 267.75 at the rate written above is 214.20, offered rather
+# than imposed.
+- assertVisible:
+    id: "transfer_destination_amount"
+    text: ".*214[.,]20.*"
+# And typing over it withdraws the offer — the bank gave a different rate, and what the statement
+# says is what the user states.
+- tapOn:
+    id: "transfer_destination_amount"
+- waitForAnimationToEnd
+- eraseText
+- inputText: ${RECEIVED_DIGITS}
+- assertVisible:
+    id: "transfer_destination_amount"
+    text: ".*204[.,]40.*"
+- hideKeyboard
+- tapOn:
+    id: "transfer_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "transfer_save"
+    timeout: 15000
+
+# --- Each account still speaks its own currency ---------------------------------------------------
+# The ledger never consolidates: a balance scoped to one account is exact and denominated by that
+# account. The name above each figure is the premise — the pager holds two now, so the id alone
+# would be ambiguous.
+- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]650[.,]85"
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- assertVisible: ${EUR_ACCOUNT}
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[€]204[.,]40"
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_accounts"
+    timeout: 15000
+
+# --- The total becomes one number, and admits it is approximate -----------------------------------
+# 650.85 + 204.40 converted at the archived 0.80 (255.50) = 906.35. This is the other half of the
+# day-zero assertion: the same two nodes that said "exact, no badge" now say the opposite, and only
+# because a rate exists to say it with.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: ".*906[.,]35.*"
+- assertVisible:
+    id: "dashboard_total_balance_badge"
+
+# --- I read the same money in euros ---------------------------------------------------------------
+# The base currency is a display preference: switching it changes what the total is expressed in and
+# moves no stored row. 650.85 at 0.80 is 520.68, plus 204.40 already in euros = 725.08.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- tapOn:
+    id: "settings_base_currency"
+- extendedWaitUntil:
+    visible:
+      id: "currency_picker_option_EUR"
+    timeout: 15000
+- tapOn:
+    id: "currency_picker_option_EUR"
+- extendedWaitUntil:
+    visible:
+      id: "settings_base_currency_value"
+    timeout: 15000
+- assertVisible:
+    id: "settings_base_currency_value"
+    text: "EUR.*"
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: ".*725[.,]08.*"
+
+# ...and the accounts did not move, because nothing about them changed.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: accounts
+- extendedWaitUntil:
+    visible:
+      id: "screen_accounts"
+    timeout: 15000
+- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]650[.,]85"

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupportAgent
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
@@ -21,6 +22,7 @@ import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.report.api.ReportGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.resources.Res
@@ -33,6 +35,7 @@ import com.neoutils.finsight.resources.dashboard_support
 import com.neoutils.finsight.resources.nav_credit_cards
 import com.neoutils.finsight.resources.nav_dashboard
 import com.neoutils.finsight.resources.nav_installments
+import com.neoutils.finsight.resources.nav_settings
 import com.neoutils.finsight.resources.nav_transactions
 
 /**
@@ -88,6 +91,15 @@ internal object AppNavCatalog : NavCatalog {
             icon = Icons.Default.CalendarMonth,
             labelRes = Res.string.nav_installments,
             route = InstallmentsRoute,
+        ),
+        // Settings sits immediately before Support, whose KDoc records being last on
+        // purpose: the two are both "about the app". The catalog is the secondary
+        // door, though — the designed one is the footer of any card holding an
+        // approximate figure, which appears exactly where a rate matters (design D25).
+        NavDestination(
+            icon = Icons.Default.Settings,
+            labelRes = Res.string.nav_settings,
+            route = SettingsGraph,
         ),
         NavDestination(
             icon = Icons.Default.SupportAgent,

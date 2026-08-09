@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
  */
 class YieldDeclarationTest {
 
-    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET)
+    private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
     private val date = LocalDate(2026, 7, 5)
 
     private fun updateUseCase(accounts: AccountStore) = UpdateAccountUseCase(

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
@@ -195,12 +196,26 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // The arrangement sits on the card this expense targets, so it reads in the
+            // card's currency (design D17) — and until the card answers with one, there
+            // is no figure to break the total into.
+            val cardCurrency = uiState.currencyOf(TransactionTarget.CREDIT_CARD)
+
             OutlinedTextField(
                 state = amount,
                 label = {
                     Text(text = stringResource(Res.string.add_transaction_amount_label))
                 },
-                inputTransformation = rememberMoneyInputTransformation(),
+                // Keyed by the currency of what the form writes to, so a field already
+                // filled changes symbol when the target does (design D10). Without a
+                // target there is nothing to denominate it with, and it does not format.
+                inputTransformation = uiState.currencyOf(
+                    if (uiState.form.type.isExpense) {
+                        uiState.selectedTarget
+                    } else {
+                        TransactionTarget.ACCOUNT
+                    }
+                )?.let { rememberMoneyInputTransformation(it, amount) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -208,13 +223,15 @@ class AddTransactionModal : ModalBottomSheet() {
                 trailingIcon = if (
                     uiState.form.type.isExpense &&
                     uiState.selectedTarget.isCreditCard &&
-                    uiState.invoiceSelection != null
+                    uiState.invoiceSelection != null &&
+                    cardCurrency != null
                 ) {
                     {
                         InstallmentCounter(
                             state = InstallmentState(
                                 count = uiState.form.installments,
                                 total = uiState.form.amount.moneyToDouble(),
+                                currency = cardCurrency,
                             ),
                             onInstallmentsChange = {
                                 viewModel.onAction(AddTransactionAction.ChangeInstallments(it))

@@ -3,7 +3,9 @@ package com.neoutils.finsight.ui.mapper
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.installments.InstallmentTransactionUi
@@ -28,6 +30,13 @@ class InstallmentUiMapper {
         val sortedTransactions = transactions.sortedBy { it.installmentNumber ?: Int.MAX_VALUE }
 
         if (sortedTransactions.isEmpty()) return null
+
+        // An instalment is charged to a card, and the card's own leg is what states the
+        // currency of every figure below (design D17). Without it there is nothing to
+        // denominate, and the row is omitted rather than guessed at.
+        val currency = sortedTransactions
+            .firstNotNullOfOrNull { it.entries.liabilityLeg()?.currency }
+            ?: return null
 
         val firstTransaction = sortedTransactions.first()
         val category = lookup.categoryOf(firstTransaction)
@@ -54,9 +63,21 @@ class InstallmentUiMapper {
             isActive = isActive,
             currentNumber = currentNumber,
             totalCount = installment.count,
-            totalAmount = installment.totalAmount,
-            installmentAmount = installmentAmount,
-            remainingAmount = (installment.count - paidCount) * installmentAmount,
+            totalAmount = DisplayAmount.magnitude(
+                installment.totalAmount,
+                currency,
+                isApproximate = false,
+            ),
+            installmentAmount = DisplayAmount.magnitude(
+                installmentAmount,
+                currency,
+                isApproximate = false,
+            ),
+            remainingAmount = DisplayAmount.magnitude(
+                (installment.count - paidCount) * installmentAmount,
+                currency,
+                isApproximate = false,
+            ),
             progress = currentNumber.toFloat() / installment.count,
             // Deleting an installment erases every one of its transactions, so each
             // invoice must still accept edits (`Invoice.Status.isEditable` — not

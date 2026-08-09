@@ -38,7 +38,7 @@ class ValidateTransactionFormUseCaseTest {
 
     private val validate = ValidateTransactionFormUseCaseImpl(clock = FixedClock(today))
 
-    private val account = Account(id = 1, name = "Bank", type = AccountType.ASSET)
+    private val account = Account(id = 1, name = "Bank", type = AccountType.ASSET, currency = "BRL")
 
     private val card = CreditCard(
         id = 1,

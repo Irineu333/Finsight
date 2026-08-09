@@ -17,7 +17,9 @@ persistido, não existe uma segunda forma de calcular um número.
 
 Três frases resumem o módulo inteiro:
 
-1. **Toda escrita é um conjunto de lançamentos que soma zero**, por moeda.
+1. **Toda escrita é um conjunto de lançamentos que soma zero**, por moeda — **sem
+   exceção**, a transação que atravessa moedas inclusive: ela não desbalanceia o razão,
+   chega *incompleta* à fronteira e é completada lá.
 2. **Toda leitura é `Σ lançamentos`** — saldo, saldo inicial, devido de fatura, gasto por
    categoria e patrimônio compartilham um só mecanismo.
 3. **O razão não conhece nenhuma fachada.** Ele não sabe o que é uma fatura, um cartão,
@@ -34,24 +36,40 @@ serialization e Koin.
 ### `Account` + `AccountType` — o plano de contas
 
 Toda conta e todo cartão do usuário é uma `Account` com um `type` do conjunto **fechado**
-`{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}`. Um cartão é uma fachada ligada à sua
-`Account` por `accountId`, e lê o próprio encerramento de lá — não há cópia.
+`{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY, CONVERSION}`. Um cartão é uma fachada ligada
+à sua `Account` por `accountId`, e lê o próprio encerramento de lá — não há cópia.
+
+Toda `Account` declara **uma** moeda, sem default e imutável: uma conta sem moeda é
+inexprimível, e trocá-la depois reescreveria em silêncio o significado de toda perna já
+gravada. O razão sabe que moeda existe e nada sobre qual — a opinião sobre quais o app
+oferece vive na camada de consolidação.
+
+`CONVERSION` é a conta que absorve o resíduo de uma transação que atravessa moedas, e tem
+**tipo próprio** justamente para não ser `EQUITY`: aqui `EQUITY` já significa "o usuário
+reconciliou algo à mão", e emprestá-lo à conversão faria toda transferência cruzada ser
+lida como ajuste — na derivação de rótulo, nos predicados `eq` da `EntryDao` e na
+idempotência de `AdjustBalanceUseCase`. Ela é de natureza credora, não é monetária (não
+aparece em formulário algum), não é nominal e é permanente vacuamente — nunca é
+arquivada. O seu saldo é o **resultado cambial realizado**, com o sinal invertido por ser
+credora.
 
 Os predicados do tipo são o que os consumidores usam, nunca um `when` próprio:
 
 | Predicado | Verdadeiro para | Serve para |
 |---|---|---|
 | `isDebitNatured` | `ASSET`, `EXPENSE` | aumenta com valor positivo (débito) |
-| `isCreditNatured` | `LIABILITY`, `INCOME`, `EQUITY` | aumenta com valor negativo (crédito) |
+| `isCreditNatured` | `LIABILITY`, `INCOME`, `EQUITY`, `CONVERSION` | aumenta com valor negativo (crédito) |
 | `isMonetary` | `ASSET`, `LIABILITY` | onde o dinheiro fisicamente está; é o que o usuário escolhe no formulário |
-| `isPermanent` | `ASSET`, `LIABILITY`, `EQUITY` | saldo que atravessa períodos — pode ficar *encalhado* |
+| `isPermanent` | `ASSET`, `LIABILITY`, `EQUITY`, `CONVERSION` | saldo que atravessa períodos — pode ficar *encalhado* |
 | `isNominal` | `INCOME`, `EXPENSE` | contas de resultado; as únicas onde uma dimensão de categoria pousa |
 
-Além das contas e cartões do usuário, o plano guarda **apenas três linhas de sistema**
-(`SystemAccount`): as duas nominais em que toda despesa e toda receita pousam, e a de
-reconciliação. Elas são criadas sob demanda pela fronteira de escrita, seus nomes são
-chaves de busca e **nunca são renderizados** — são invisíveis por construção, porque todo
-seletor e toda listagem filtra por `ASSET`/`isMonetary`.
+Além das contas e cartões do usuário, o plano guarda quatro linhas de sistema
+(`SystemAccount`) **por moeda em uso**: as duas nominais em que toda despesa e toda
+receita pousam, a de reconciliação e a de conversão. Elas são resolvidas por
+`(type, name, currency)` — a natureza deixou de ser chave desde que `EQUITY` passou a ter
+duas —, criadas sob demanda pela fronteira de escrita; os seus nomes são chaves de busca e
+**nunca são renderizados** — são invisíveis por construção, porque todo seletor e toda
+listagem filtra por `ASSET`/`isMonetary`.
 
 ### `Entry` — a perna
 
@@ -61,10 +79,17 @@ data class Entry(
     val transactionId: Long? = null,
     val account: Account,
     val amount: Long,          // centavos, com sinal, débito-positivo
-    val currency: String = BASE_CURRENCY,
     val dimensionId: Long? = null,
-)
+) {
+    // Derivada, não declarada: a moeda de uma perna é a da conta em que ela posta, e
+    // "poste 100 USD numa conta BRL" não tem como ser dito.
+    val currency: String get() = account.currency
+}
 ```
+
+A **coluna** `entries.currency` continua existindo, e não por inércia: `LedgerBalanceCheck`
+verifica a invariante agrupando por `(transactionId, currency)` sem tocar em `accounts`, e
+a spec exige que ela seja verificável lendo apenas as entries.
 
 `amount` é **signed `Long` em centavos**, convenção débito-positivo: positivo debita a
 conta, negativo credita. Para toda moeda presente numa transação, a soma das pernas é
@@ -135,43 +160,116 @@ Duas portas deixam uma fachada participar sem o razão saber que ela existe — 
 Toda leitura passa por `IEntryRepository`. Não existe segunda via: somar pernas já
 carregadas em memória, na feature, é violação de spec.
 
+**Toda leitura capaz de atravessar contas devolve `MoneyByCurrency`** — um valor por
+moeda, nunca um número só. Só as leituras escopadas a **uma conta** permanecem
+escalares, porque ali a moeda é atributo da conta e o chamador já a conhece. Reduzir
+uma figura multimoeda a um número é **conversão**, e conversão mora acima do razão.
+
 ```kotlin
-class MinhaViewModel(private val entryRepository: IEntryRepository) {
+class MinhaViewModel(
+    private val entryRepository: IEntryRepository,
+    private val consolidateMoney: ConsolidateMoneyUseCase,
+) {
 
     suspend fun carregar(mes: YearMonth, contaId: Long) {
-        val saldo = entryRepository.balanceUpTo(target = mes, accountId = contaId)
-        val fluxos = entryRepository.accountFlows(month = mes, accountId = contaId)
-        val patrimonio = entryRepository.netWorth()
+        // Escopada a uma conta → escalar. A moeda é `conta.currency`.
+        val saldoDaConta = entryRepository.accountBalanceUpTo(contaId, mes)
+
+        // Atravessa contas → por moeda.
+        val saldoDeTodas = entryRepository.balanceUpToByCurrency(mes)
     }
 }
 ```
 
-Os agregados são `suspend`, não `Flow`. Uma tela cujos números vêm deles **precisa**
-observar `observeLedgerChanges()`, ou os saldos congelam enquanto o razão se move:
+### Como uma feature obtém a figura de uma leitura por moeda
+
+Uma `MoneyByCurrency` não é exibível: é o que o razão sabe. Quem a transforma em
+figura é **o redutor**, `ConsolidateMoneyUseCase` (`:core:model`), e ele é o único:
 
 ```kotlin
-entryRepository.observeLedgerChanges()
-    .map { entryRepository.netWorth() }
+val figura = consolidateMoney(
+    money = entryRepository.balanceUpToByCurrency(mes),
+    on = hoje,
+    policy = DisplayAmount::natural,   // a política de sinal é do chamador
+)
 ```
 
-Superfície de leitura, agrupada pelo que responde:
+A moeda e a exatidão **não** são do chamador — o redutor as deriva. A `policy` é, porque
+só o chamador sabe se aquilo é saldo, magnitude ou dívida.
+
+### Quando a feature sabe que o mapa tem uma chave só
+
+Fatura, parcela e saldo de conta são monomoeda — mas **por garantia da fachada**, não
+por construção do razão. Nada no razão amarra uma dimensão a uma única conta, e presumir
+o contrário exigiria que ele consultasse `DimensionKind` na leitura, que é justamente o
+conhecimento de fachada que ele não pode ter. A redução acontece **na feature**, onde a
+garantia está escrita:
+
+```kotlin
+// A fachada de cartão garante que a dimensão de uma fatura cai numa conta só.
+val devido = entryRepository.dimensionOwedByCurrency(faturaId).singleOrNull()
+```
+
+`singleOrNull()` devolve `CurrencyAmount` — o valor **e** a moeda —, para que a
+denominação não precise ser buscada em outro lugar e não possa divergir.
+
+### Somar dois resultados por moeda é do razão
+
+`asset.expense + liability.expense` é aritmética sobre saldos, não conversão. O dono é
+`MoneyByCurrency.plus`, e é a única implementação:
+
+```kotlin
+val total = assetFlows.expense + liabilityFlows.expense   // cada moeda com a sua
+```
+
+**Nunca** em linha na feature, e nunca na camada de consolidação, que responde só por
+conversão entre moedas.
+
+### Reatividade
+
+Os agregados são `suspend`, não `Flow`. Uma tela cujos números vêm deles **precisa**
+observar `observeLedgerChanges()`, ou os saldos congelam enquanto o razão se move — e,
+se a figura for consolidada, `ObserveConsolidationChangesUseCase`, que funde aquele
+gatilho com a moeda base e o acervo de taxas (cadastrar uma taxa não escreve em
+`entries`, então sozinho ele não bastaria):
+
+```kotlin
+observeConsolidationChanges()
+    .map { consolidateMoney(entryRepository.balanceUpToByCurrency(mes), hoje, DisplayAmount::natural) }
+```
+
+### Superfície de leitura
+
+Escalares — escopadas a **uma conta**, onde a moeda é atributo dela:
 
 | Pergunta | Chamada |
 |---|---|
-| Saldo de uma conta (ou de todas as `ASSET`) até um mês | `balanceUpTo(target, accountId?)` |
+| Saldo de uma conta até um mês | `accountBalanceUpTo(accountId, target)` |
 | Saldo de sempre de uma conta | `balance(accountId)` |
-| Patrimônio (`Σ ASSET − Σ LIABILITY`) | `netWorth()` |
-| Fluxos do mês de uma conta (receita/despesa/ajuste/pagamento) | `accountFlows(month, accountId)` |
-| Fluxos do mês de todos os cartões | `liabilityMonthFlows(month)` |
-| Devido de um sub-razão (fatura) | `dimensionOwed(dimensionId)` |
-| Composição de um sub-razão (despesa/antecipação/ajuste) | `dimensionFlows(dimensionId)` |
-| Gasto de uma dimensão no mês (categoria) | `dimensionBalanceInMonth(month, dimensionId)` |
-| O mesmo, para várias dimensões | `dimensionBalancesInMonth(month, ids)` |
-| Totais por dimensão num período, vistos de um conjunto de contas | `totalsByDimension(nominalType, start, end, siblingAccountIds)` |
-| Os mesmos totais, escopados a sub-razões | `totalsByDimensionInScope(nominalType, scopeDimensionIds)` |
-| Receita/despesa/saldo/saldo inicial de um escopo (relatório) | `scopeStats(scopeAccountIds, start, end)` |
+| Fluxos do mês de uma conta (receita/despesa/ajuste/pagamento) | `accountFlows(month, accountId)` — carrega a moeda da conta |
 | Tem movimento? (apagar vs. encerrar) | `hasEntries(accountId)` / `hasEntriesForDimension(dimensionId)` |
 | As pernas de uma transação | `getEntriesByTransaction(id)` / `observeEntriesByTransaction(id)` |
+
+Por moeda — **toda** leitura que atravessa contas, e **toda** leitura por dimensão:
+
+| Pergunta | Chamada |
+|---|---|
+| Saldo de todas as `ASSET` até um mês | `balanceUpToByCurrency(target)` |
+| Saldo de todas as contas de uma natureza até um mês | `naturalBalanceUpToByCurrency(target, type)` |
+| Fluxos do mês de todos os cartões | `liabilityMonthFlowsByCurrency(month)` |
+| Fluxos do mês de todas as contas | `assetMonthFlowsByCurrency(month)` |
+| Devido de um sub-razão (fatura) | `dimensionOwedByCurrency(dimensionId)` |
+| O mesmo, para vários sub-razões, numa consulta | `owedByDimensionByCurrency(ids)` |
+| Composição de um sub-razão (despesa/antecipação/ajuste) | `dimensionFlowsByCurrency(dimensionId)` |
+| O mesmo, para vários | `flowsByDimensionByCurrency(ids)` |
+| Gasto de uma dimensão no mês (categoria) | `dimensionBalanceInMonthByCurrency(month, dimensionId)` |
+| O mesmo, para várias dimensões | `dimensionBalancesInMonthByCurrency(month, ids)` |
+| Totais por dimensão num período, vistos de um conjunto de contas | `totalsByDimensionByCurrency(nominalType, start, end, siblingAccountIds)` |
+| Os mesmos totais, escopados a sub-razões | `totalsByDimensionInScopeByCurrency(nominalType, scopeDimensionIds)` |
+| Receita/despesa/saldo/saldo inicial de um escopo (relatório) | `scopeStatsByCurrency(scopeAccountIds, start, end)` |
+
+O patrimônio (`Σ ASSET − Σ LIABILITY`, por moeda, sem as contas de conversão) **não** é
+membro desta interface: vive em `EntryDao.netWorthCents()`, que é onde ele tem chamador.
 
 Valores voltam na **unidade maior** (reais), não em centavos. `adjustment` é signed; os
 demais são magnitudes positivas.
@@ -274,13 +372,23 @@ Num ponto só, para toda escrita do app:
 
 1. Recusa um conjunto **vazio** de pernas (uma partida dobrada tem duas, por definição).
 2. Traduz o `TransactionType` em sinal contábil — **o único lugar** onde isso acontece.
-3. Completa a intenção unilateral, criando a conta de sistema da natureza pedida sob
-   demanda.
-4. Recusa uma perna cuja conta esteja **encerrada** (`ClosedAccountException`).
-5. Valida **`Σ = 0` por moeda** (`UnbalancedTransactionException`).
-6. Valida a **regra de pouso**: `account.type in kind.landsOn` — uniforme, sem `when` por
+3. Lê a **moeda de cada perna da conta em que ela posta** — `TransactionLeg` não tem campo
+   de moeda, e a conta já está carregada para a verificação de encerramento.
+4. Completa a intenção unilateral, criando a conta de sistema da natureza **e da moeda**
+   pedidas sob demanda.
+5. Completa a intenção **cruzada**: agrupa as pernas por moeda e lança o oposto do resíduo
+   de cada uma na conta `CONVERSION` daquela moeda, **por diferença e sempre por último**
+   (é onde todo o arredondamento do sistema se concentra) e **sem dimensão**. Recusa
+   quando os resíduos são todos do mesmo sinal — isso não é câmbio, é dinheiro criado do
+   nada.
+6. Recusa uma perna cuja conta esteja **encerrada** (`ClosedAccountException`).
+7. Valida **`Σ = 0` por moeda** (`UnbalancedTransactionException`), aqui e **em nenhum
+   outro ponto**: o pré-cheque plano que existia antes da fronteira foi removido, porque
+   somar pernas cruas sem moeda recusaria toda intenção cruzada antes de ela poder ser
+   completada.
+8. Valida a **regra de pouso**: `account.type in kind.landsOn` — uniforme, sem `when` por
    kind (`LedgerError.MisplacedDimension`).
-7. Consulta o `DimensionWriteGuard` registrado.
+9. Consulta o `DimensionWriteGuard` registrado.
 
 Falhou qualquer uma, nada é escrito.
 
@@ -435,6 +543,14 @@ cenário.
 ```
 
 Os testes de migração ficam em `:core:database`.
+
+**Os fakes de `IEntryRepository` continuam sendo 21 stubs completos, um por suíte que
+precisa deles, e isso é decisão e não inércia.** Extrair uma base compartilhada exigiria
+um módulo novo só de testes — `commonTest` de um módulo não é visível de outro em KMP —,
+e o ganho seria menor que o custo: cada fake sobrescrever **explicitamente** todo membro
+abstrato é o que torna a migração para as leituras por moeda mecanicamente verificável.
+Uma base com corpos padrão esconderia exatamente o que a remoção dos corpos que lançam
+(13.1) existe para provar.
 
 ---
 

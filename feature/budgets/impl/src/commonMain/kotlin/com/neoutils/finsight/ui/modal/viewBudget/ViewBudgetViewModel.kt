@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,17 +16,21 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
+import kotlinx.datetime.YearMonth
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
+    /**
+     * The month the screen that opened this was showing. Not "today": a budget's progress
+     * is a fact about a month, and reading the current one while the list reads another
+     * shows a number that belongs to a different period.
+     */
+    private val month: YearMonth,
     budgetRepository: IBudgetRepository,
     transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
+    observeConsolidationChanges: ObserveConsolidationChangesUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -36,8 +41,13 @@ class ViewBudgetViewModel(
         budgetRepository.observeAllBudgets(),
         transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
-    ) { budgets, transactions, recurringList ->
-        val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
+        // This screen shows the spending **in parts** when a rate is missing, so it is
+        // the one place a rate arriving is most visible — and a rate writes no entry,
+        // which is the ledger's only trigger. It reached this view model last of the
+        // five because it names the reducer only indirectly, through the progress use
+        // case, and the guard that pairs the two was looking for the reducer by name.
+        observeConsolidationChanges(),
+    ) { budgets, transactions, recurringList, _ ->
         calculateBudgetProgressUseCase(
             budgets = budgets,
             recurringList = recurringList,

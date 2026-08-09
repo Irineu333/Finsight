@@ -9,18 +9,38 @@ import com.neoutils.finsight.domain.model.TransactionInstallment
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.usecase.impliedRate
+import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
+import com.neoutils.finsight.ui.model.figureLegUnder
 import com.neoutils.finsight.ui.model.itemDisplayAmount
 import com.neoutils.finsight.ui.model.legUnder
+import kotlin.math.abs
 
 sealed interface ViewTransactionUiState {
 
     data object Loading : ViewTransactionUiState
 
     data object Error : ViewTransactionUiState
+
+    /**
+     * The rate an operation applied, read off its own two ends.
+     *
+     * It is a quotient, never a field: no leg, intent or contra carries a rate anywhere
+     * on the write path (design D6), so the detail derives it exactly as the write form
+     * derived it while the user was typing — the same [impliedRate], in the same
+     * direction, so the number read afterwards is the number that was shown.
+     */
+    data class AppliedRate(
+        val sourceCurrency: String,
+        val targetCurrency: String,
+        /** Units of [targetCurrency] per one unit of [sourceCurrency]. */
+        val rate: Double,
+    )
 
     /**
      * The transaction plus the facades this screen renders around it.
@@ -38,6 +58,11 @@ sealed interface ViewTransactionUiState {
         val invoice: Invoice? = null,
         val installment: TransactionInstallment? = null,
         val recurring: TransactionRecurring? = null,
+        /**
+         * Only ever a tie-break between the two ends of a cross-currency operation, and
+         * never a currency this screen displays anything in — see [figureLegUnder].
+         */
+        val baseCurrency: String? = null,
     ) : ViewTransactionUiState {
 
         // The entry seen through the current perspective, from the one definition of it,
@@ -63,11 +88,78 @@ sealed interface ViewTransactionUiState {
         val isCardTarget = transaction.hasLiabilityLeg
         // The same item-surface rule the list reads through, not a second copy of it:
         // a detail that disagreed with the card it was opened from would be a defect.
-        val amount = itemDisplayAmount(
-            label = label,
-            legAmountCents = perspectiveEntry?.amount ?: 0L,
-            hasPerspective = perspective != null,
-        )
+        //
+        // Denominated by the leg's **own** account, never converted and never the base as
+        // a resort: the line of a statement is a single entry and reads in the currency it
+        // was recorded in (design D29). Which of the two ends of a cross-currency operation
+        // states it is the one thing the base decides, and it decides it in `figureLegUnder`
+        // — the same owner the list consumes. With no leg there is no currency either, so
+        // there is no amount to state: a transaction the ledger cannot produce.
+        val amount: DisplayAmount? = (
+            transaction.figureLegUnder(perspective?.accountId, baseCurrency) ?: perspectiveEntry
+            )?.let { entry ->
+            itemDisplayAmount(
+                label = label,
+                legAmountCents = entry.amount,
+                currency = entry.currency,
+                hasPerspective = perspective != null,
+            )
+        }
+
+        /**
+         * The instalment's total, denominated by the **card** it sits on — read off the
+         * liability leg's account, which is the one account an instalment names (design
+         * D17). Absent when this transaction is no instalment, or carries no card leg to
+         * take the currency from.
+         */
+        val installmentTotal: DisplayAmount? = installment?.let { arrangement ->
+            transaction.entries.liabilityLeg()?.let { leg ->
+                DisplayAmount.magnitude(
+                    value = arrangement.instance.totalAmount,
+                    currency = leg.currency,
+                    isApproximate = false,
+                )
+            }
+        }
+
+        /**
+         * The rate this operation applied, when it crossed currencies — and `null`
+         * whenever it did not, which is every single-currency operation and every one
+         * with a single monetary leg (a card purchase has nothing to divide by).
+         *
+         * The two ends are the ledger's own: the leg money left ([Transaction.primaryEntry],
+         * the one owner of "outgoing") and the monetary leg it entered. The conversion legs
+         * take no part — they are not monetary, and they hold the rounding residue, not the
+         * rate. The direction is the write form's, source → target ([impliedRate]).
+         */
+        val appliedRate: AppliedRate? = run {
+            val out = transaction.primaryEntry?.takeIf { it.amount < 0 } ?: return@run null
+            val into = transaction.monetaryEntries.firstOrNull { it.amount > 0 } ?: return@run null
+            if (out.currency == into.currency) return@run null
+
+            impliedRate(
+                sourceAmount = abs(out.amount) / 100.0,
+                targetAmount = abs(into.amount) / 100.0,
+            )?.let { rate ->
+                AppliedRate(
+                    sourceCurrency = out.currency,
+                    targetCurrency = into.currency,
+                    rate = rate,
+                )
+            }
+        }
+
+        /**
+         * Whether the accounts this detail names have to be told apart by currency.
+         *
+         * The same question the selectors ask (`AccountSelector`), asked of the set this
+         * screen renders: the operation's own monetary accounts. It says "more than one
+         * currency here", never "the user has more than one" — a single-currency
+         * operation reads identically for everyone, and an app-wide answer would mark
+         * every row of every operation of anyone who once opened a second account.
+         */
+        val namesAccountCurrency: Boolean =
+            transaction.monetaryEntries.map { it.account.currency }.distinct().size > 1
 
         private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }
 

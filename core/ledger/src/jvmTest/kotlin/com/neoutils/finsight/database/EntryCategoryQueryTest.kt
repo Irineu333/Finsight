@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database
 
-import com.neoutils.finsight.database.dao.DimensionTotal
+import com.neoutils.finsight.database.dao.DimensionCurrencyTotal
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.DimensionKind
 import kotlinx.coroutines.test.runTest
@@ -46,7 +46,7 @@ class EntryCategoryQueryTest {
         seed()
 
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 5_000)),
+            listOf(DimensionCurrencyTotal(dimensionId = 10, currency = "BRL", total = 5_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1)),
         )
     }
@@ -56,7 +56,7 @@ class EntryCategoryQueryTest {
         seed()
 
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            listOf(DimensionCurrencyTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(2)),
         )
     }
@@ -68,7 +68,7 @@ class EntryCategoryQueryTest {
         // Both asset accounts as siblings — still only the first, since the card
         // purchase has no asset leg at all.
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 5_000)),
+            listOf(DimensionCurrencyTotal(dimensionId = 10, currency = "BRL", total = 5_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1, 3)),
         )
     }
@@ -81,7 +81,10 @@ class EntryCategoryQueryTest {
 
         val totals = entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1))
 
-        assertEquals(setOf(DimensionTotal(null, 1_500), DimensionTotal(10, 5_000)), totals.toSet())
+        assertEquals(setOf(
+                DimensionCurrencyTotal(null, "BRL", 1_500),
+                DimensionCurrencyTotal(10, "BRL", 5_000),
+            ), totals.toSet())
     }
 
     @Test
@@ -91,9 +94,13 @@ class EntryCategoryQueryTest {
         // asserted it, and every fixture until now was debits only.
         seed().transaction("2026-01-25", (10L posts -2_000).taggedWith(10), 1L posts 2_000)
 
-        assertEquals(6_000L, entryDao.dimensionBalanceInMonth(10, "2026-01"), "8000 spent less 2000 refunded")
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            6_000L,
+            entryDao.dimensionBalanceInMonth(10, "2026-01").sole().total,
+            "8000 spent less 2000 refunded",
+        )
+        assertEquals(
+            listOf(DimensionCurrencyTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1)),
             "and the perspective total nets the refund against the purchase it reverses",
         )
@@ -103,8 +110,64 @@ class EntryCategoryQueryTest {
     fun `month total sums the legs carrying a dimension within the month`() = runTest {
         seed()
 
-        assertEquals(8_000L, entryDao.dimensionBalanceInMonth(10, "2026-01"))
-        assertEquals(0L, entryDao.dimensionBalanceInMonth(10, "2026-02"))
+        assertEquals(8_000L, entryDao.dimensionBalanceInMonth(10, "2026-01").sole().total)
+        // No legs in February: no group, so no row — not a row of zeros.
+        assertEquals(emptyList(), entryDao.dimensionBalanceInMonth(10, "2026-02"))
+    }
+
+    // --- a dimension is not tied to a currency (task 4.6) ---
+
+    @Test
+    fun `a category with legs in two currencies reports the total of each`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET, "Nubank")
+            account(2, AccountEntity.Type.ASSET, "Chase", currency = "USD")
+            account(10, AccountEntity.Type.EXPENSE, "Despesas")
+            account(11, AccountEntity.Type.EXPENSE, "Expenses", currency = "USD")
+            dimension(10, DimensionKind.CATEGORY) // Food
+
+            transaction("2026-01-10", (10L posts 5_000).taggedWith(10), 1L posts -5_000)
+            transaction(
+                "2026-01-12",
+                (11L posts 1_200).taggedWith(10) inCurrency "USD",
+                2L posts -1_200 inCurrency "USD",
+            )
+        }
+
+        val totals = entryDao.dimensionBalanceInMonth(10, "2026-01")
+
+        assertEquals(5_000L, totals.forCurrency("BRL")?.total)
+        assertEquals(1_200L, totals.forCurrency("USD")?.total)
+        assertEquals(2, totals.size, "each currency stands on its own; nothing is summed")
+    }
+
+    @Test
+    fun `the perspective totals of a category are per currency too`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET, "Nubank")
+            account(2, AccountEntity.Type.ASSET, "Chase", currency = "USD")
+            account(10, AccountEntity.Type.EXPENSE, "Despesas")
+            account(11, AccountEntity.Type.EXPENSE, "Expenses", currency = "USD")
+            dimension(10, DimensionKind.CATEGORY)
+
+            transaction("2026-01-10", (10L posts 5_000).taggedWith(10), 1L posts -5_000)
+            transaction(
+                "2026-01-12",
+                (11L posts 1_200).taggedWith(10) inCurrency "USD",
+                2L posts -1_200 inCurrency "USD",
+            )
+        }
+
+        val totals = entryDao
+            .totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1, 2))
+
+        assertEquals(
+            setOf(
+                DimensionCurrencyTotal(10, "BRL", 5_000),
+                DimensionCurrencyTotal(10, "USD", 1_200),
+            ),
+            totals.toSet(),
+        )
     }
 
     @Test
@@ -113,7 +176,7 @@ class EntryCategoryQueryTest {
 
         // Invoice 1 is carried by the card leg of the second transaction only.
         assertEquals(
-            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            listOf(DimensionCurrencyTotal(dimensionId = 10, currency = "BRL", total = 3_000)),
             entryDao.totalsByDimensionInScope("EXPENSE", listOf(1)),
         )
     }

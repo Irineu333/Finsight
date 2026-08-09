@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.model
 
 import androidx.compose.ui.graphics.Color
+import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 
@@ -12,9 +13,12 @@ import org.jetbrains.compose.resources.StringResource
  */
 data class InvoiceUi(
     val id: Long,
-    val amount: Double,
-    val totalUnpaidAmount: Double,
-    val availableLimit: Double,
+    // Denominated by the card, and mono-currency by construction: a card's currency is
+    // fixed at creation and never changes (design D12/D17), so an invoice figure is a
+    // single exact term and never wears the base currency (design D29).
+    val amount: DisplayAmount,
+    val totalUnpaidAmount: DisplayAmount,
+    val availableLimit: DisplayAmount,
     val usagePercentage: Double,
     val showProgress: Boolean,
     val closingDate: LocalDate,

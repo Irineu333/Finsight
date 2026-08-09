@@ -54,7 +54,7 @@ class ArchivedAccountsViewModelTest {
         name = "Account $id",
         type = AccountType.ASSET,
         isArchived = isArchived,
-    )
+    currency = "BRL",)
 
     @Test
     fun `lists only archived accounts`() = runTest(dispatcher) {

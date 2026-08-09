@@ -37,6 +37,7 @@ import com.neoutils.finsight.resources.recurring_form_day_label
 import com.neoutils.finsight.resources.recurring_form_save
 import com.neoutils.finsight.resources.recurring_form_title_label
 import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.ui.component.ReformatOnCurrencyChange
 import com.neoutils.finsight.ui.component.CategorySelector
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -52,6 +53,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToLong
 
 class RecurringFormModal(
     private val recurring: Recurring? = null
@@ -84,15 +86,24 @@ class RecurringFormModal(
 
         val title = rememberTextFieldState(recurring?.title.orEmpty())
 
+        // Seeded in the currency the template is denominated in — the account or card
+        // it names (design D17), which is what the state opens on. Until that account
+        // answers, the digits are seeded undressed and `ReformatOnCurrencyChange` below
+        // dresses them the moment the currency arrives.
         val amount = rememberTextFieldState(
             recurring?.let {
-                currencyFormatter.format(recurring.amount)
+                uiState.currencyOf(initialCreditCard)
+                    ?.let { currency -> currencyFormatter.format(it.amount, currency) }
+                    ?: (it.amount * 100).roundToLong().toString()
             }.orEmpty()
         )
 
         val dayOfMonth = rememberTextFieldState(recurring?.dayOfMonth?.toString().orEmpty())
 
         var target by remember { mutableStateOf(initialCreditCard) }
+
+        // …and re-rendered when the user points the template somewhere else.
+        ReformatOnCurrencyChange(state = amount, currency = uiState.currencyOf(target))
 
         var selectedCategory by remember { mutableStateOf(recurring?.category) }
 
@@ -209,7 +220,12 @@ class RecurringFormModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_form_amount_label)) },
-                inputTransformation = rememberMoneyInputTransformation(),
+                // Keyed by the currency of what the template posts to, so a field
+                // already filled changes symbol when the target does (design D10).
+                // Without a target there is nothing to denominate it with.
+                inputTransformation = uiState.currencyOf(target)?.let {
+                    rememberMoneyInputTransformation(it, amount)
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next,

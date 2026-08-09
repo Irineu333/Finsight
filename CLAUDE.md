@@ -22,6 +22,7 @@ maestro test .maestro                                      # Maestro E2E suite (
 - **Recurring**: recurring transactions (confirm/skip/stop/reactivate)
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
+- **Settings**: base currency and the local exchange-rate archive
 
 ## Module structure (feature api/impl + core + app)
 
@@ -34,7 +35,9 @@ enforced mechanically by convention plugins in `build-logic`
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `ledger` (the double-entry
   ledger: models, entities/DAOs, repositories and the write boundary — depends on no app
   module and **cannot name a facade**), `model` (facade models — category, card, invoice,
-  installment, recurring, budget — their forms, errors and exceptions; depends on `ledger`),
+  installment, recurring, budget — their forms, errors and exceptions, plus the
+  **consolidation layer**: the currency catalog, the base-currency and exchange-rate
+  contracts and the single reducer of a per-currency figure; depends on `ledger`),
   `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
@@ -62,7 +65,7 @@ enforced mechanically by convention plugins in `build-logic`
 
 Features: home (tab chrome: `HomeGraph`, `NavigationItem`, `HomeChromeHost`, FAB), support,
 categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceTransactions),
-recurring, transactions, report, dashboard.
+recurring, transactions, report, dashboard, settings.
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
 
@@ -95,7 +98,7 @@ markers live in `:core:navigation`, making every route findable by its implement
 
 **Error Handling:** Arrow library (Either/flatMap/catch)
 
-> More details in the architecture skill.
+> More details in `feature/README.md`.
 > The iOS project uses **XcodeGen** (`iosApp/project.yml`).
 
 ## Strings & Internationalization
@@ -104,9 +107,12 @@ markers live in `:core:navigation`, making every route findable by its implement
 - `UiText.asString()` — suspend, for non-Composable contexts
 - `stringUiText(error: UiText): String` — `@Composable`, for UI display
 
-**String resources:** `core/resources/src/commonMain/composeResources/values/strings.xml`
+**String resources:** the app ships in **Portuguese and English**, and every key exists in both:
+- `core/resources/src/commonMain/composeResources/values/strings.xml` — **pt**, the default
+- `core/resources/src/commonMain/composeResources/values-en/strings.xml` — **en**
 
 > Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
+> A new key is added to **both** files in the same change — a key present in only one is a bug.
 
 ## Error Types (`core/model` — `domain/error/`; the ledger's own in `core/ledger`)
 `enum class` or `sealed class` with:
@@ -118,9 +124,9 @@ markers live in `:core:navigation`, making every route findable by its implement
 Money is modeled as a **balanced double-entry ledger**, and that is the only model. It lives
 in **`:core:ledger`**, which depends on no app module — the separation is enforced by the
 compiler, not by discipline (see below).
-- **Chart of accounts:** every account and card is an `Account` with a `type` from the **closed** set `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/ledger`). A card is a facade linked to its `Account` by `accountId`, and reads closure from it — no copy. A **category is not in the chart**: it is a dimension (see below), so it owns its own `isArchived`. Beyond the user's accounts and cards the chart holds only three system rows: the two nominals every expense and income lands on, and reconciliation.
-- **Entries:** a `Transaction` is a set of `Entry` (signed `Long` cents, debit-positive, `currency`). `Σ = 0` per currency is validated at the single write boundary (`LedgerEntryWriter`), alongside the dimension landing rule and whatever the registered `DimensionWriteGuard` refuses.
-- **Reads:** every figure — balance, opening balance, invoice owed, category spending, net worth — is `Σ entries`, via `IEntryRepository`. There is no per-type sign rule and no second way to compute a number.
+- **Chart of accounts:** every account and card is an `Account` with a `type` from the **closed** set `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY, CONVERSION}` (`core/ledger`). A card is a facade linked to its `Account` by `accountId`, and reads closure from it — no copy. A **category is not in the chart**: it is a dimension (see below), so it owns its own `isArchived`. Every `Account` declares one currency, without default and immutable. Beyond the user's accounts and cards the chart holds four system rows **per currency in use**: the two nominals every expense and income lands on, reconciliation, and conversion — resolved by `(type, name, currency)`, created on demand by the write boundary and never rendered. `CONVERSION` has a type of its own precisely so that `EQUITY` keeps meaning "adjustment".
+- **Entries:** a `Transaction` is a set of `Entry` (signed `Long` cents, debit-positive; the currency is **derived from the account** the leg posts to). `Σ = 0` per currency is validated at the single write boundary (`LedgerEntryWriter`) and nowhere else, alongside the dimension landing rule and whatever the registered `DimensionWriteGuard` refuses. A transaction that crosses currencies takes no exception: it arrives incomplete and the boundary completes it, posting each currency's residue to that currency's `CONVERSION` account, by difference and without a dimension.
+- **Reads:** every figure — balance, opening balance, invoice owed, category spending, net worth — is `Σ entries`, via `IEntryRepository`. There is no per-type sign rule and no second way to compute a number. **The ledger never consolidates:** every read that can span accounts (and every read by dimension) answers `MoneyByCurrency`; only reads scoped to a single account stay scalar. Reducing a per-currency figure to one number is conversion, and conversion lives above the ledger, in the consolidation layer of `:core:model` (base currency as a display preference, a local dated rate archive, and the single reducer). `:core:ledger` knows no rate and no base currency.
 - **Derivation:** what a transaction *is* comes from the account types of its entries (`deriveTransactionLabel`), and the display sign from `AccountType.displaySign`. Neither is persisted.
 - **Writes:** callers express **intent** by identity — `TransactionLeg(type, amount, accountId, dimensionId?)` plus a `ContraLeg(nature, dimensionId?)` for a one-sided intent. Resolving a facade to an id is the caller's job; completing and balancing the intent is the writer's, because it creates the system account on demand.
 - **Dimensions:** a leg may carry one `dimensionId` — the analytic axis it is classified by. An invoice's dimension lands on the `LIABILITY` leg, a category's on the nominal one; `DimensionKind.landsOn` is the rule and the writer enforces it beside `Σ = 0`. "Uncategorized" is the *absence* of a dimension, never a bucket account.
@@ -152,6 +158,9 @@ and needs its own call.
 > Normative reference: **`.maestro/README.md`** — how to run, the device, the suite map, writing a flow.
 
 ## Code Style
+- **English** is the language of the codebase: names, comments, commit messages, KDoc and
+  documentation. Portuguese exists only as a translation of user-facing strings, and only in
+  `values/strings.xml`.
 - Write clear code; comments are the exception, not a crutch.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:
     1. Do not duplicate logic

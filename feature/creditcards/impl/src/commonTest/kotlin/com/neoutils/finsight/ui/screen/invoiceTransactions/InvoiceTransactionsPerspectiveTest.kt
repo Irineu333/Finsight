@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
@@ -22,12 +22,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.time.Clock
+import com.neoutils.finsight.testing.FakeCardAccountRepository
 
 /**
  * This screen shows one card, so it reads a transaction through the card's own leg.
@@ -53,9 +55,9 @@ class InvoiceTransactionsPerspectiveTest {
         id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15, accountId = 10,
     )
 
-    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
-    private val checking = Account(id = 30, name = "Checking", type = AccountType.ASSET)
-    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE)
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+    private val checking = Account(id = 30, name = "Checking", type = AccountType.ASSET, currency = "BRL")
+    private val expenseAccount = Account(id = 20, name = "Expense", type = AccountType.EXPENSE, currency = "BRL")
 
     private val invoice = Invoice(
         id = 1, creditCard = card, dimensionId = 1,
@@ -85,13 +87,14 @@ class InvoiceTransactionsPerspectiveTest {
     private fun viewModel() = InvoiceTransactionsViewModel(
         creditCardId = 1,
         creditCardRepository = FakeCreditCardRepository(card),
+        accountRepository = FakeCardAccountRepository(),
         invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
         transactionRepository = FakeTransactionRepository(listOf(purchase, payment)),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
         entryRepository = FakeEntryRepository(
             owedByInvoiceId = mapOf(1L to 0.0),
-            flowsByInvoiceId = mapOf(1L to DimensionFlows(0.0, 0.0, 0.0)),
+            flowsByInvoiceId = mapOf(1L to DimensionFlowsByCurrency.zero),
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
@@ -145,7 +148,7 @@ class InvoiceTransactionsPerspectiveTest {
     }
 
     @Test
-    fun `a purchase is unaffected, having a single monetary leg`() = runTest(dispatcher) {
+    fun `a purchase is unaffected having a single monetary leg`() = runTest(dispatcher) {
         val listed = listedUnder(TransactionType.EXPENSE)
 
         assertEquals(listOf(purchase.id), listed.map { it.id })

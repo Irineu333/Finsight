@@ -12,10 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.ui.component.ConsolidationBadge
+import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_summary_advance_payment
 import com.neoutils.finsight.resources.report_viewer_summary_balance
@@ -39,6 +43,7 @@ internal fun ReportContextCard(
     perspectiveIconKey: String,
     stats: ReportViewerUiState.Stats,
     modifier: Modifier = Modifier,
+    onSeeRates: (() -> Unit)? = null,
 ) {
     val dateFormats = LocalDateFormats.current
     val formatter = LocalCurrencyFormatter.current
@@ -112,6 +117,26 @@ internal fun ReportContextCard(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
+
+                // Four consolidated figures live below — balance, opening balance, income,
+                // expense — and the card had no way to say a rate reached any of them. One
+                // badge for the card, beside the perspective pill: the same shape
+                // `SummaryCard` has for its six lines of money, and the same corner.
+                //
+                // Only the account perspective needs it. An invoice report is one card, and
+                // one card is one currency (design D17), so its figures are plain amounts
+                // that never went through a rate.
+                if (onSeeRates != null && stats is ReportViewerUiState.Stats.Account) {
+                    ConsolidationBadge(
+                        figures = listOf(
+                            stats.balance,
+                            stats.openingBalance,
+                            stats.income,
+                            stats.expense,
+                        ),
+                        onSeeRates = onSeeRates,
+                    )
+                }
             }
 
             HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -124,12 +149,18 @@ internal fun ReportContextCard(
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onSurfaceVariant,
                         )
-                        Text(
-                            text = formatter.format(stats.balance),
+                        MoneyText(
+                            figure = stats.balance,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                // The tone reads the term the figure was reduced into,
+                                // which is the one a narrow surface would keep.
+                                color = if (stats.balance.degradedTerm().value >= 0) Income else Expense,
+                            ),
+                            // This card reads from its left edge: each label above its
+                            // own figure.
+                            align = TextAlign.Start,
                             modifier = Modifier.testTag("report_balance_amount"),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (stats.balance.value >= 0) Income else Expense,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -144,12 +175,13 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.openingBalance),
+                            MoneyText(
+                                figure = stats.openingBalance,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (stats.openingBalance.degradedTerm().value >= 0) Income else Expense,
+                                ),
                                 modifier = Modifier.testTag("report_opening_balance_amount"),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (stats.openingBalance.value >= 0) Income else Expense,
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
@@ -165,12 +197,13 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.income),
+                            MoneyText(
+                                figure = stats.income,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Income,
+                                ),
                                 modifier = Modifier.testTag("report_income_amount"),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Income,
                             )
                         }
                         Row(
@@ -183,12 +216,13 @@ internal fun ReportContextCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
-                            Text(
-                                text = formatter.format(stats.expense),
+                            MoneyText(
+                                figure = stats.expense,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Expense,
+                                ),
                                 modifier = Modifier.testTag("report_expenses_amount"),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Expense,
                             )
                         }
                     }

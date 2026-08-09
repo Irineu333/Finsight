@@ -3,6 +3,19 @@
 ## Project
 Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatform.
 
+## Behaviors
+- **Do not trust, verify.** No claim is accepted because of who made it — the user, a
+  subagent, a README, a code comment, a previous session's summary or your own memory. Check
+  it against the code that is on disk right now, and cite the file and line you checked.
+- What is written *about* the code is evidence, not truth: docs and comments go stale, and
+  the compiler never read them. Where documentation and code disagree, the code wins — and
+  the divergence is itself a finding to report.
+- Report only what you verified. "The tests pass" means you ran them and read the output;
+  "it works" means you exercised it. If you did not check something, say so plainly instead
+  of implying coverage you do not have.
+- Verification is part of the task, not an optional extra step. Finish it before reporting
+  the work as done.
+
 ## Commands
 ```bash
 ./gradlew allTests                                          # All tests
@@ -162,6 +175,9 @@ and needs its own call.
   documentation. Portuguese exists only as a translation of user-facing strings, and only in
   `values/strings.xml`.
 - Write clear code; comments are the exception, not a crutch.
+- **KDoc is objective and describes the current state**, never the change that produced it:
+  no "now also…", "previously…", "new in this version", no diff narration. Someone reading it
+  without knowing the history must get the same meaning as someone who lived through it.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:
     1. Do not duplicate logic
     2. Do not increase complexity

@@ -859,6 +859,8 @@
 
     <string name="nav_settings">Configurações</string>
     <string name="settings_screen_title">Configurações</string>
+    <string name="settings_group_preferences">Preferências</string>
+    <string name="settings_group_currency_data">Moedas e taxas</string>
     <string name="settings_base_currency_title">Moeda base</string>
     <string name="settings_base_currency_picker_title">Moeda base</string>
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>

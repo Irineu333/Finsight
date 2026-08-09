@@ -858,6 +858,8 @@
 
     <string name="nav_settings">Settings</string>
     <string name="settings_screen_title">Settings</string>
+    <string name="settings_group_preferences">Preferences</string>
+    <string name="settings_group_currency_data">Currencies and rates</string>
     <string name="settings_base_currency_title">Base currency</string>
     <string name="settings_base_currency_picker_title">Base currency</string>
     <string name="settings_exchange_rates_title">Exchange rates</string>

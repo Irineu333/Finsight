@@ -21,6 +21,12 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)
 
+            // The settings tiles live here and in no other module, for the same reason
+            // Ktor does: a settings screen is the only place that renders a preference,
+            // and a component in `:core:designsystem` would offer every feature a second
+            // vocabulary of rows next to the one this app already speaks.
+            implementation(libs.compose.settings.ui.tiles)
+
             // Ktor lives here and in no other module. A `:core:network` would invite any
             // feature to reach the network, which is the opposite of what currency
             // consolidation wants: the remote source is a writer of the archive and never

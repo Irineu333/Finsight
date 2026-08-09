@@ -23,6 +23,8 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
+(cd iosApp && ./generate-project.sh)                       # Regenerate iosApp.xcodeproj (XcodeGen)
+./gradlew :app:ios:linkDebugFrameworkIosSimulatorArm64     # Build the iOS framework alone
 maestro test .maestro                                      # Maestro E2E suite (see .maestro/README.md first)
 ```
 

@@ -5,6 +5,8 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.arrow.core)
+
             api(projects.core.analytics)
             api(projects.core.auth)
             api(projects.core.common)

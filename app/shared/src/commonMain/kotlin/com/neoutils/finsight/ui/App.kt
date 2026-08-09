@@ -30,11 +30,18 @@ fun App() {
     val authService = koinInject<AuthService>()
     val syncExchangeRates = koinInject<SyncExchangeRatesUseCase>()
 
-    // The app's cross-cutting, fired and forgotten.
+    // The app's cross-cutting, fired and forgotten — and forgotten means the app opens
+    // whether or not it succeeds. Resolving the id fails for reasons that have nothing to
+    // do with finance, so the failure is a value here and the only thing to do with it is
+    // record it: an anonymous id labels telemetry, and losing it costs telemetry.
     LaunchedEffect(Unit) {
-        val userId = authService.getUserId()
-        analytics.setUserId(userId)
-        crashlytics.setUserId(userId)
+        authService.getUserId().fold(
+            ifLeft = { crashlytics.recordException(it.cause) },
+            ifRight = { userId ->
+                analytics.setUserId(userId)
+                crashlytics.setUserId(userId)
+            },
+        )
     }
 
     // **The app's first real initialisation step**, and it is born harmless by

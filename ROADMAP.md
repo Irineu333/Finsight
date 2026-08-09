@@ -2,8 +2,8 @@
 
 App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multiplatform.
 
-Produção atual: **1.8.0**. 
-Em preparação: **1.9.0-rc01**.
+Produção atual: **1.9.0**. 
+Em preparação: **1.10.0-rc01**.
 
 | Nome                            | Descrição                                                                            | Tipo           | Versão        |
 |---------------------------------|--------------------------------------------------------------------------------------|----------------|---------------|
@@ -33,3 +33,10 @@ Em preparação: **1.9.0-rc01**.
 | **Perímetro de saldo**          | Escopo contas/cartões/tudo no resumo de transações e nos widgets do dashboard        | Funcionalidade | 1.9.0         |
 | **Estados vazios**              | Transações, contas, cartões e faturas dizem o que está vazio                         | Funcionalidade | 1.9.0         |
 | **Política de sinal**           | `DisplayAmount` como dono único do sinal exibido, em item e em resumo                | Arquitetura    | 1.9.0         |
+| **E2E com Maestro**             | Suíte de fluxos em `.maestro/`, com dispositivo fixado e alcance por `testTag`       | Arquitetura    | 1.9.0         |
+| **Multimoeda**                  | Moeda por conta/cartão, intenção entre moedas completada no razão e leitura por moeda | Funcionalidade | 1.10.0        |
+| **Consolidação e moeda base**   | Moeda base como preferência de exibição, redutor único e marca de aproximação        | Arquitetura    | 1.10.0        |
+| **Arquivo de taxas de câmbio**  | Taxas datadas por par, editáveis nos ajustes e agrupadas por data                    | Funcionalidade | 1.10.0        |
+| **Sincronização de taxas**      | Fonte remota alimentando o arquivo local, limitada por par                           | Funcionalidade | 1.10.0        |
+| **Registro de moedas**          | O usuário registra e arquiva as moedas, em vez de receber uma lista pronta           | Funcionalidade | 1.10.0        |
+| **Rendimento de conta**         | Lançamento do que o dinheiro rendeu sozinho, separado das demais receitas            | Funcionalidade | 1.10.0        |

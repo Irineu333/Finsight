@@ -255,8 +255,9 @@ class CreditCardFormModal(
             // It sits **with the icon selector and not among the text fields**: the two
             // share a shape (the 52dp box that opens a picker), and a box of that shape
             // between two `OutlinedTextField`s reads as something that fell out of the
-            // form. Grouping the pickers is what keeps the modal symmetrical — the
-            // account form already had it this way, next to its default-account row.
+            // form. Grouping the pickers is what keeps the modal symmetrical — the same
+            // grouping the account form makes, where the two picker rows also stand
+            // together.
             CurrencyRow(
                 currency = uiState.currency.orEmpty(),
                 label = stringResource(

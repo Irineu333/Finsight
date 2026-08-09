@@ -164,15 +164,32 @@ class AccountFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                DefaultAccountSelector(
-                    checked = uiState.isDefault,
-                    canChange = uiState.canChangeDefault,
-                    onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
-                )
-            }
+            // The rows are grouped by what they *are* and not by what they mean: the two
+            // that open a picker first, the two that flip a switch after. Interleaved,
+            // every row asked the user to work out its affordance again; grouped, the
+            // chevron column and the switch column each read as one thing.
+            IconPickerSelector(
+                selectedIcon = uiState.selectedIcon,
+                accentColor = accentColor,
+                title = stringResource(Res.string.account_form_icon_label),
+                helperText = stringResource(Res.string.account_form_icon_helper),
+                onClick = {
+                    modalManager.show(
+                        IconPickerModal(
+                            title = iconModalTitle,
+                            selectedIcon = uiState.selectedIcon,
+                            accentColor = accentColor,
+                            icons = FeatureIconCatalog.withGeneral(
+                                featureIcons = FeatureIconCatalog.accounts,
+                                selectedIcon = uiState.selectedIcon,
+                            ),
+                            onIconSelected = { icon ->
+                                viewModel.onAction(AccountFormAction.IconSelected(icon))
+                            },
+                        )
+                    )
+                },
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -207,36 +224,23 @@ class AccountFormModal(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                YieldsInterestSelector(
-                    checked = uiState.yieldsInterest,
-                    onCheckedChange = { viewModel.onAction(AccountFormAction.YieldsInterestChanged(it)) },
+                DefaultAccountSelector(
+                    checked = uiState.isDefault,
+                    canChange = uiState.canChangeDefault,
+                    onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            IconPickerSelector(
-                selectedIcon = uiState.selectedIcon,
-                accentColor = accentColor,
-                title = stringResource(Res.string.account_form_icon_label),
-                helperText = stringResource(Res.string.account_form_icon_helper),
-                onClick = {
-                    modalManager.show(
-                        IconPickerModal(
-                            title = iconModalTitle,
-                            selectedIcon = uiState.selectedIcon,
-                            accentColor = accentColor,
-                            icons = FeatureIconCatalog.withGeneral(
-                                featureIcons = FeatureIconCatalog.accounts,
-                                selectedIcon = uiState.selectedIcon,
-                            ),
-                            onIconSelected = { icon ->
-                                viewModel.onAction(AccountFormAction.IconSelected(icon))
-                            },
-                        )
-                    )
-                },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                YieldsInterestSelector(
+                    checked = uiState.yieldsInterest,
+                    onCheckedChange = { viewModel.onAction(AccountFormAction.YieldsInterestChanged(it)) },
+                )
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp)

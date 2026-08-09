@@ -21,7 +21,7 @@ class AppNavCatalogTest {
     private val List<NavDestination>.names get() = map { it.name }
 
     @Test
-    fun `bottom bar takes the first two, in this order`() {
+    fun `bottom bar takes the first two in this order`() {
         assertEquals(
             listOf("dashboard", "transactions"),
             destinations.filter { it.primaryTab }.names
@@ -34,7 +34,7 @@ class AppNavCatalogTest {
     }
 
     @Test
-    fun `the grid is the rest of the catalog, in this order`() {
+    fun `the grid is the rest of the catalog in this order`() {
         assertEquals(
             listOf(
                 "budgets",
@@ -62,7 +62,7 @@ class AppNavCatalogTest {
     }
 
     @Test
-    fun `a name is the route's, with no suffix and no restatement`() {
+    fun `a name is the route's with no suffix and no restatement`() {
         assertEquals(
             listOf(
                 "dashboard",

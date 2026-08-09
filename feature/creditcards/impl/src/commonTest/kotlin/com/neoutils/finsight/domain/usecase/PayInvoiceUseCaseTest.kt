@@ -33,7 +33,7 @@ class PayInvoiceUseCaseTest {
     ) = PayInvoiceUseCase(store, StoppedClock(today))
 
     @Test
-    fun `paying between closing and due settles it, and records when`() = runTest {
+    fun `paying between closing and due settles it and records when`() = runTest {
         val store = RecordingInvoiceStore(invoice)
 
         val paid = useCase(store = store)(invoice.id, LocalDate(2026, 2, 10)).getOrNull()

@@ -102,7 +102,7 @@ class CloseInvoiceUseCaseTest {
     }
 
     @Test
-    fun `a retroactive invoice owing nothing is settled, not merely closed`() = runTest {
+    fun `a retroactive invoice owing nothing is settled not merely closed`() = runTest {
         val past = testInvoice(id = 1, openingMonth = january, status = Invoice.Status.RETROACTIVE, card = card)
         val current = testInvoice(id = 2, openingMonth = YearMonth(2026, 2), card = card)
         val store = RecordingInvoiceStore(past, current)
@@ -146,7 +146,7 @@ class CloseInvoiceUseCaseTest {
     }
 
     @Test
-    fun `a future invoice is not closable, though the status checks above admit it`() = runTest {
+    fun `a future invoice is not closable though the status checks above admit it`() = runTest {
         // The two `!=` guards let FUTURE through; `isClosable` is what stops it. The
         // comment in the use case says so, and this is the case that holds it there.
         val invoice = testInvoice(openingMonth = january, status = Invoice.Status.FUTURE, card = card)

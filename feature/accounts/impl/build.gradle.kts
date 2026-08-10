@@ -13,8 +13,8 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.ui)
             implementation(projects.core.resources)
-            implementation(projects.core.analytics.api)
-            implementation(projects.core.crashlytics.api)
+            implementation(projects.library.analytics.api)
+            implementation(projects.library.crashlytics.api)
 
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)

@@ -5,14 +5,15 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.arrow.core)
+            implementation(projects.library.crashlytics.api)
+
             implementation(libs.koin.core)
         }
         androidMain.dependencies {
-            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
         iosMain.dependencies {
-            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
     }
 }

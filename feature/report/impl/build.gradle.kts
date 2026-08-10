@@ -12,7 +12,7 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.ui)
             implementation(projects.core.resources)
-            implementation(projects.core.analytics.api)
+            implementation(projects.library.analytics.api)
 
             implementation(projects.feature.report.api)
             implementation(projects.feature.accounts.api)

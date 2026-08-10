@@ -8,7 +8,7 @@ kotlin {
             implementation(projects.core.navigation)
             implementation(projects.core.designsystem)
             implementation(projects.core.resources)
-            implementation(projects.core.analytics.api)
+            implementation(projects.library.analytics.api)
 
             implementation(projects.feature.shell.api)
             implementation(projects.feature.dashboard.api)

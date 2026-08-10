@@ -40,11 +40,12 @@ maestro test .maestro                                      # Maestro E2E suite (
 - **Budgets**: budget progress per category
 - **Settings**: base currency and the local exchange-rate archive
 
-## Module structure (feature api/impl + core + app)
+## Module structure (feature api/impl + core + library + app)
 
 The app is modularized by **feature** in the **api/impl** pattern, on top of a set of
-**core** modules, with the app split into single-responsibility `app/` modules. The build
-setup each kind of module gets comes from convention plugins in `build-logic`
+**core** modules and a set of **library** adapters, with the app split into
+single-responsibility `app/` modules. The build setup each kind of module gets comes from
+convention plugins in `build-logic`
 (`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`);
 the dependency rules below are written, not compiled — they hold by review.
 
@@ -59,17 +60,23 @@ the dependency rules below are written, not compiled — they hold by review.
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models — never names a feature), `database` (the facade entities/DAOs,
-  `AppDatabase` and every migration + shared mappers), `auth` (Firebase/no-op service).
-  `analytics` and `crashlytics` are split **api/impl** like a feature: the `api` is the
-  contract a feature consumes (`Analytics`, the `Event` catalog, `Crashlytics`) and names
-  no vendor; the `impl` holds one provider per platform — Firebase on Android and iOS, and
-  the no-op the Desktop runs because neither service exists there. Only `:app:shared`
-  depends on an `impl`, which is what keeps the Firebase `cinterop` out of every feature.
+  `AppDatabase` and every migration + shared mappers).
+- **`library/<name>/{api,impl}`** — an adapter over an external library that has no
+  official Kotlin Multiplatform support, so that the rest of the app can consume it as if
+  it did. `analytics`, `crashlytics` and `auth` live here: each wraps the GitLive bindings
+  over the Firebase SDKs, which are Android and iOS libraries with a community port, not a
+  multiplatform product. The pattern is the feature's, for the same reason — the `api` is
+  the contract (`Analytics`, the `Event` catalog, `Crashlytics`, `AuthService`) and names
+  no vendor; the `impl` holds one provider per platform: Firebase on Android and iOS, and
+  the no-op the Desktop runs because none of these services exists there. Only
+  `:app:shared` depends on an `impl`, which is what keeps the Firebase `cinterop` out of
+  every feature — and is why a feature's iOS test suite can be linked at all.
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
-  use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
+  use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`
+  and `:library:*:api`.
 - **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,
   mappers, the feature's Koin module and `NavGraphBuilder.<name>Graph()`. May depend on
-  any `feature:*:api` and `:core:*`.
+  any `feature:*:api`, `:core:*` and `:library:*:api`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
     `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `HomeChromeHost`),
@@ -79,7 +86,7 @@ the dependency rules below are written, not compiled — they hold by review.
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
   - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
   - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
-    (exports `:core:*` + `feature:*:api`).
+    (exports `:core:*` + `:library:*:api` + `feature:*:api`).
   - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
     `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
     `:core:designsystem`); `:app:shared` only aggregates.
@@ -89,13 +96,16 @@ categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceT
 recurring, transactions, report, dashboard, settings.
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
+> For the adapters: **`library/README.md`** (what belongs there, the per-platform provider
+> pattern, why the no-op is not a test double).
 
 ## Conventions
 
 **Architecture:** Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Dependency Rule (modules):** (1) api ⊄ api, (2) impl ⊄ impl, (3) api ⊄ impl,
-(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s. Cycles between features
+(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s — of a feature or of a
+`library` adapter alike, since the rule is about the pair, not about the group. Cycles between features
 are impossible by construction (star topology). **Layer rule (within a module):**
 Domain <- Database, Domain <- UI.
 

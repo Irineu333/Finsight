@@ -20,6 +20,22 @@ internal val Project.libs: VersionCatalog
 private val Project.derivedNamespace: String
     get() = "com.neoutils.finsight." + path.removePrefix(":").replace(":", ".").replace("-", "")
 
+/**
+ * The group every Firebase binding in this build comes from. On iOS those bindings are
+ * `cinterop`s over frameworks only Xcode can resolve, so a link that reaches one fails.
+ */
+private const val FIREBASE_GROUP = "dev.gitlive"
+
+/**
+ * Whether the given compile classpath is free of Firebase, and so can be linked into an
+ * executable here. Resolved on demand, at execution time.
+ */
+private fun Project.linksWithoutFirebase(configurationName: String) = provider {
+    configurations.getByName(configurationName)
+        .incoming.resolutionResult.allComponents
+        .none { it.moduleVersion?.group == FIREBASE_GROUP }
+}
+
 internal fun Project.configureKotlinMultiplatform() {
     with(pluginManager) {
         apply("org.jetbrains.kotlin.multiplatform")
@@ -38,28 +54,32 @@ internal fun Project.configureKotlinMultiplatform() {
                 freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             }
         }
-        // The common suite is compiled for iOS but no executable is produced from it.
+        // A module whose iOS test binary would pull Firebase in produces no executable.
         //
-        // The compilation is worth keeping: it is what proves the shared code and its
-        // tests stay Kotlin/Native-legal — a test named with a comma, say, compiles on the
-        // JVM and does not compile here. Linking is a different matter. The Firebase
+        // The compilation is always worth keeping: it is what proves the shared code and
+        // its tests stay Kotlin/Native-legal — a test named with a comma, say, compiles on
+        // the JVM and does not compile here. Linking is a different matter. The Firebase
         // services this app is built on reach iOS as Objective-C frameworks that only
         // Xcode resolves, through SPM; Gradle has no copy of them and no way to obtain
         // one, so `ld` fails with `framework 'FirebaseCore' not found` the moment it has
         // to produce a real binary. The app itself is spared because a static framework
         // never links — a test executable does.
         //
-        // So the link is off and so is the run task that would need its output. `allTests`
-        // then reports on the suites that can actually run here, JVM and Android, instead
-        // of failing on one that cannot run anywhere.
+        // The reach of that is the module's own link classpath, not the whole build: a
+        // module that never sees Firebase links and runs its iOS suite like any other.
+        // So the link is skipped, and with it the run task that would need its output,
+        // exactly where the classpath says it cannot succeed.
         listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
             iosTarget.compilerOptions {
                 freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             }
-            iosTarget.binaries.getTest(NativeBuildType.DEBUG)
-                .linkTaskProvider.configure { enabled = false }
+            val testBinary = iosTarget.binaries.getTest(NativeBuildType.DEBUG)
+            val linkable = linksWithoutFirebase(testBinary.compilation.compileDependencyConfigurationName)
+            testBinary.linkTaskProvider.configure { onlyIf { linkable.get() } }
+            tasks.withType(KotlinNativeTest::class.java)
+                .matching { it.name == "${iosTarget.targetName}Test" }
+                .configureEach { onlyIf { linkable.get() } }
         }
-        tasks.withType(KotlinNativeTest::class.java).configureEach { enabled = false }
 
         with(sourceSets) {
             all {

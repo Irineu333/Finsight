@@ -31,7 +31,6 @@ class RoomLibraryConventionPlugin : Plugin<Project> {
                 "kspAndroid",
                 "kspJvm",
                 "kspIosSimulatorArm64",
-                "kspIosX64",
                 "kspIosArm64",
             ).forEach { add(it, roomCompiler) }
         }

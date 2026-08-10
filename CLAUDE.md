@@ -19,6 +19,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ## Commands
 ```bash
 ./gradlew allTests                                          # JVM + Android + the iOS suites that link here (see build-logic)
+./gradlew iosSimulatorArm64Test                             # The iOS suites alone
 ./gradlew :app:shared:testDebugUnitTest --tests "*.XxxTest" # Single test class
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
@@ -117,6 +118,17 @@ markers live in `:core:navigation`, making every route findable by its implement
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 
 **Error Handling:** Arrow library (Either/flatMap/catch)
+
+**iOS targets and their tests:** every module declares `iosArm64` (device) and
+`iosSimulatorArm64`; `iosX64`, the Intel simulator, is deliberately absent. The common
+suite is compiled for both targets — that compilation is what proves the shared code stays
+Kotlin/Native-legal — but a test *executable* is linked only where it can be started:
+the simulator, on an Apple Silicon host. A module whose link classpath reaches Firebase
+gets no executable either, because those bindings are `cinterop`s over frameworks only
+Xcode resolves through SPM, and `ld` fails with `framework 'FirebaseCore' not found`.
+That last exception is a limitation of Kotlin 2.3, not a design: KGP 2.4 imports Swift
+packages through `swiftPMDependencies {}`, which makes Kotlin/Native tests link against
+them with no extra configuration. Both rules live in `build-logic` (`Extensions.kt`).
 
 > More details in `feature/README.md`.
 > The iOS project uses **XcodeGen** (`iosApp/project.yml`).

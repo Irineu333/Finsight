@@ -263,6 +263,10 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
 - No framework iOS (configurado no `:app:ios`), apenas `:core:*` e `feature:*:api`
   são exportados (`export()`); os `impl` são linkados via `:app:shared`, mas invisíveis ao Swift.
+- Os targets iOS são `iosArm64` e `iosSimulatorArm64` — o simulador Intel (`iosX64`) não é
+  declarado. A suíte comum compila para os dois, mas só vira executável de teste onde pode
+  ser iniciada: o simulador, num host Apple Silicon. Ver `CLAUDE.md` para a regra completa,
+  incluindo a exceção do Firebase.
 
 ---
 

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
@@ -24,6 +26,14 @@ private val Project.derivedNamespace: String
  * `cinterop`s over frameworks only Xcode can resolve, so a link that reaches one fails.
  */
 private const val FIREBASE_GROUP = "dev.gitlive"
+
+/**
+ * The one iOS target whose test executable this machine can run: the Apple Silicon
+ * simulator, on an Apple Silicon host. The device binary runs on no host at all, so
+ * linking it yields an executable nothing would ever start.
+ */
+private val runnableIosTarget = KonanTarget.IOS_SIMULATOR_ARM64
+    .takeIf { HostManager.host == KonanTarget.MACOS_ARM64 }
 
 /**
  * Whether the given compile classpath is free of Firebase, and so can be linked into an
@@ -68,16 +78,20 @@ internal fun Project.configureKotlinMultiplatform() {
         // module that never sees Firebase links and runs its iOS suite like any other.
         // So the link is skipped, and with it the run task that would need its output,
         // exactly where the classpath says it cannot succeed.
-        listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+        //
+        // The device target is skipped for a plainer reason: its test binary is runnable
+        // on no host, and linking it costs the same time and memory as the one that is.
+        listOf(iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
             iosTarget.compilerOptions {
                 freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             }
             val testBinary = iosTarget.binaries.getTest(NativeBuildType.DEBUG)
+            val runnable = iosTarget.konanTarget == runnableIosTarget
             val linkable = linksWithoutFirebase(testBinary.compilation.compileDependencyConfigurationName)
-            testBinary.linkTaskProvider.configure { onlyIf { linkable.get() } }
+            testBinary.linkTaskProvider.configure { onlyIf { runnable && linkable.get() } }
             tasks.withType(KotlinNativeTest::class.java)
                 .matching { it.name == "${iosTarget.targetName}Test" }
-                .configureEach { onlyIf { linkable.get() } }
+                .configureEach { onlyIf { runnable && linkable.get() } }
         }
 
         with(sourceSets) {

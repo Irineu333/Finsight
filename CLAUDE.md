@@ -42,9 +42,10 @@ maestro test .maestro                                      # Maestro E2E suite (
 ## Module structure (feature api/impl + core + app)
 
 The app is modularized by **feature** in the **api/impl** pattern, on top of a set of
-**core** modules, with the app split into single-responsibility `app/` modules. Rules are
-enforced mechanically by convention plugins in `build-logic`
-(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`).
+**core** modules, with the app split into single-responsibility `app/` modules. The build
+setup each kind of module gets comes from convention plugins in `build-logic`
+(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`);
+the dependency rules below are written, not compiled — they hold by review.
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `ledger` (the double-entry

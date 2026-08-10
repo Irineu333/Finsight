@@ -2,7 +2,8 @@
 
 > Este diretório abriga os módulos de feature do projeto, organizados no padrão **api/impl**.
 > Este documento define a estrutura, as regras de dependência e o padrão de entry point.
-> Toda nova feature deve seguir estas regras — elas são impostas pelos convention plugins do `build-logic`.
+> Toda nova feature deve seguir estas regras. Elas não são verificadas pelo build: valem por revisão,
+> e este documento é a referência normativa.
 
 ---
 

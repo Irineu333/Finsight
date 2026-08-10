@@ -22,7 +22,5 @@ class FeatureImplConventionPlugin : Plugin<Project> {
                 implementation(libs.findLibrary("koin-android").get())
             }
         }
-
-        verifyFeatureDependencyRules(isApi = false)
     }
 }

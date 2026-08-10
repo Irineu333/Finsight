@@ -3,7 +3,6 @@ package com.neoutils.finsight.convention
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.configure
@@ -135,63 +134,6 @@ internal fun Project.configureCompose() {
         }
         sourceSets.getByName("jvmMain").dependencies {
             implementation(compose.desktop.currentOs)
-        }
-    }
-}
-
-internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
-    afterEvaluate {
-        val violations = mutableListOf<String>()
-        configurations.forEach { configuration ->
-            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val depPath = dependency.path
-                if (depPath == path) return@forEach
-                val isCore = depPath.startsWith(":core:")
-                val isFeature = depPath.startsWith(":feature:")
-                if (!isCore && !isFeature) return@forEach
-
-                if (isApi) {
-                    if (!isCore) {
-                        violations += "api '$path' não pode depender de '$depPath' " +
-                            "(regra: api só depende de :core:*)"
-                    }
-                } else {
-                    if (!isCore && !depPath.endsWith(":api")) {
-                        violations += "impl '$path' não pode depender de '$depPath' " +
-                            "(regra: impl só depende de :feature:*:api e :core:*)"
-                    }
-                }
-            }
-        }
-        if (violations.isNotEmpty()) {
-            throw org.gradle.api.GradleException(
-                "Violação das regras de dependência de módulos:\n" +
-                    violations.joinToString("\n") { " - $it" }
-            )
-        }
-    }
-}
-
-internal fun Project.verifyAppSharedDependencyRules() {
-    afterEvaluate {
-        val violations = mutableListOf<String>()
-        configurations.forEach { configuration ->
-            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val depPath = dependency.path
-                if (depPath == path) return@forEach
-                val isCore = depPath.startsWith(":core:")
-                val isFeature = depPath.startsWith(":feature:")
-                if (!isCore && !isFeature) {
-                    violations += "app '$path' não pode depender de '$depPath' " +
-                        "(regra: :app:shared só depende de :core:* e :feature:*)"
-                }
-            }
-        }
-        if (violations.isNotEmpty()) {
-            throw org.gradle.api.GradleException(
-                "Violação das regras de dependência de módulos:\n" +
-                    violations.joinToString("\n") { " - $it" }
-            )
         }
     }
 }

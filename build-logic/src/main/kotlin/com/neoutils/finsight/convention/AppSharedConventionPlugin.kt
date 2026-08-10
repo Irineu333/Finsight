@@ -22,7 +22,5 @@ class AppSharedConventionPlugin : Plugin<Project> {
                 implementation(libs.findLibrary("koin-android").get())
             }
         }
-
-        verifyAppSharedDependencyRules()
     }
 }

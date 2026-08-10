@@ -72,6 +72,11 @@ coexistem sem ciclo, porque as apis não se enxergam.
 O `:app:shared` é o único módulo que enxerga os `impl` — é ele quem faz o wiring do Koin
 (`appModules`) e registra os grafos de navegação. O framework iOS vive em `:app:ios`.
 
+O par api/impl não é exclusivo das features: um módulo de core cujo provedor varia por
+plataforma se parte da mesma forma (`:core:analytics`, `:core:crashlytics`). Onde isso
+acontece, a coluna `:core:*` da tabela vale para o `api`; o `impl` segue a coluna dos
+`impl` — só o `:app:shared` o declara.
+
 ---
 
 ## Domínio compartilhado

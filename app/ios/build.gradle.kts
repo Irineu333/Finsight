@@ -18,10 +18,10 @@ kotlin {
 
             // Export seletivo: apenas :core:* e :feature:*:api ficam visíveis ao Swift.
             // Os :feature:*:impl são linkados via :app:shared e permanecem invisíveis.
-            export(projects.core.analytics)
+            export(projects.core.analytics.api)
             export(projects.core.auth)
             export(projects.core.common)
-            export(projects.core.crashlytics)
+            export(projects.core.crashlytics.api)
             export(projects.core.database)
             export(projects.core.designsystem)
             export(projects.core.ledger)
@@ -50,10 +50,10 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.app.shared)
 
-            api(projects.core.analytics)
+            api(projects.core.analytics.api)
             api(projects.core.auth)
             api(projects.core.common)
-            api(projects.core.crashlytics)
+            api(projects.core.crashlytics.api)
             api(projects.core.database)
             api(projects.core.designsystem)
             api(projects.core.model)

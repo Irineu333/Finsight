@@ -58,8 +58,12 @@ the dependency rules below are written, not compiled — they hold by review.
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models — never names a feature), `database` (the facade entities/DAOs,
-  `AppDatabase` and every migration + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
-  no-op services).
+  `AppDatabase` and every migration + shared mappers), `auth` (Firebase/no-op service).
+  `analytics` and `crashlytics` are split **api/impl** like a feature: the `api` is the
+  contract a feature consumes (`Analytics`, the `Event` catalog, `Crashlytics`) and names
+  no vendor; the `impl` holds one provider per platform — Firebase on Android and iOS, and
+  the no-op the Desktop runs because neither service exists there. Only `:app:shared`
+  depends on an `impl`, which is what keeps the Firebase `cinterop` out of every feature.
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
   use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
 - **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,

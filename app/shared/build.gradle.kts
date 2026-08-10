@@ -7,10 +7,12 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.arrow.core)
 
-            api(projects.core.analytics)
+            api(projects.core.analytics.api)
+            implementation(projects.core.analytics.impl)
             api(projects.core.auth)
             api(projects.core.common)
-            api(projects.core.crashlytics)
+            api(projects.core.crashlytics.api)
+            implementation(projects.core.crashlytics.impl)
             api(projects.core.database)
             api(projects.core.designsystem)
             api(projects.core.model)

@@ -1,4 +1,4 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.debug
 
 import kotlin.concurrent.Volatile
 import kotlin.time.Clock
@@ -18,9 +18,11 @@ import kotlin.time.Instant
  * The shift is relative, never an absolute date: what a test needs is *later than the state it
  * just created*, and only a relative move keeps that relation whatever day the suite runs on.
  *
- * It lives in this source set, and not in the module that declares the binding, so that the
- * release APK does not contain a movable clock at all — not merely a movable clock that nothing
- * happens to move. `:core:common` binds `Clock.System` and knows nothing of this.
+ * It lives in this module, and not in the one that declares the binding, so that a release build
+ * does not contain a movable clock at all — not merely a movable clock that nothing happens to
+ * move. `:core:common` binds `Clock.System` and knows nothing of this. Both apps keep it out the
+ * same way: Android by depending on `:app:debug` from `debugImplementation` alone, iOS by
+ * compiling the source set that names it only when Xcode's Debug configuration asks Gradle for it.
  */
 class ShiftableClock(
     private val source: Clock = Clock.System,

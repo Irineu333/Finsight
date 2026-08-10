@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// Kotlin/Native has no build types, so the Debug/Release split Android gets for free is made here:
+// `iosApp/project.yml` passes this property from Xcode's Debug configuration and from nowhere
+// else, and it decides which `DebugTools.kt` is compiled — the one that binds `:app:debug`, or the
+// one that binds nothing. A release framework therefore does not contain the debug tooling at all.
+val debugTools = providers.gradleProperty("finsight.debugTools")
+    .map(String::toBooleanStrict)
+    .getOrElse(false)
+
 kotlin {
     listOf(
         iosArm64(),
@@ -90,9 +98,17 @@ kotlin {
 
             implementation(libs.koin.core)
         }
-        iosMain.dependencies {
-            implementation(libs.gitlive.firebase.analytics)
-            implementation(libs.gitlive.firebase.crashlytics)
+        iosMain {
+            kotlin.srcDir(if (debugTools) "src/iosDebug/kotlin" else "src/iosRelease/kotlin")
+
+            dependencies {
+                implementation(libs.gitlive.firebase.analytics)
+                implementation(libs.gitlive.firebase.crashlytics)
+
+                if (debugTools) {
+                    implementation(projects.app.debug)
+                }
+            }
         }
         all {
             languageSettings.enableLanguageFeature("ContextParameters")

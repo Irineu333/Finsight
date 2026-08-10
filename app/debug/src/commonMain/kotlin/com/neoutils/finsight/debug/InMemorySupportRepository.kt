@@ -1,8 +1,7 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalAtomicApi::class)
 
-package com.neoutils.finsight
+package com.neoutils.finsight.debug
 
-import android.util.Log
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
@@ -11,7 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -40,13 +41,13 @@ class InMemorySupportRepository(
 
     // Firestore hands out an id per document; here a counter does, and being sequential is worth
     // more than being opaque — a failure log names "issue 1", not a random string.
-    private val ids = AtomicLong()
+    private val ids = AtomicLong(0)
 
     init {
         // Logged for the same reason the clock shift is: a substitution that did not take looks
         // exactly like a screen that is slow, and this line is the only place that says which
         // repository answered.
-        Log.i(TAG, "support answered in memory; nothing reaches Firestore from this build")
+        println("$TAG: support answered in memory; nothing reaches Firestore from this build")
     }
 
     /** Newest conversation first, which is the order the backend query asks for. */
@@ -67,7 +68,7 @@ class InMemorySupportRepository(
         val now = clock.now()
 
         val issue = SupportIssue(
-            id = ids.incrementAndGet().toString(),
+            id = ids.incrementAndFetch().toString(),
             type = draft.type,
             title = draft.title.trim(),
             description = draft.description.trim(),
@@ -88,7 +89,7 @@ class InMemorySupportRepository(
 
         messages.update { byIssue ->
             val reply = SupportMessage(
-                id = ids.incrementAndGet().toString(),
+                id = ids.incrementAndFetch().toString(),
                 author = SupportMessage.Author.USER,
                 body = message.trim(),
                 createdAt = now,

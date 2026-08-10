@@ -109,7 +109,14 @@ targets:
             exit 0
           fi
           cd "$SRCROOT/.."
-          ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode
+          # The debug tooling — the movable clock, support answered in memory, a rate source that
+          # quotes nothing — is compiled into the framework only here. Kotlin/Native has no build
+          # types, so the configuration has to be told to Gradle, and Release never tells it.
+          if [ "$CONFIGURATION" = "Debug" ]; then
+            ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode -Pfinsight.debugTools=true
+          else
+            ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode
+          fi
         showEnvVarsInLog: false
 
 packages:

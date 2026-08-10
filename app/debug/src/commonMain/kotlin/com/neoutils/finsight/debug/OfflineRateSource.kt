@@ -1,4 +1,4 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.debug
 
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.repository.RemoteQuote

@@ -38,6 +38,7 @@ include(":app:shared")
 include(":app:android")
 include(":app:desktop")
 include(":app:ios")
+include(":app:debug")
 
 // Core
 include(":core:common")

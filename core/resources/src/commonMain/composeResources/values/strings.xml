@@ -606,6 +606,7 @@
     <string name="multi_category_selector_none">Nenhuma</string>
     <string name="multi_category_selector_and">e</string>
     <string name="multi_category_selector_label">Categorias</string>
+    <string name="multi_category_selector_done">Concluído</string>
 
     <string name="credit_card_ui_current_invoice">Fatura Atual</string>
     <string name="credit_card_ui_available_limit">Limite Disponível</string>

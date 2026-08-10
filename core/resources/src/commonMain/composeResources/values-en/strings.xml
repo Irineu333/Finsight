@@ -605,6 +605,7 @@
     <string name="multi_category_selector_none">None</string>
     <string name="multi_category_selector_and">and</string>
     <string name="multi_category_selector_label">Categories</string>
+    <string name="multi_category_selector_done">Done</string>
 
     <string name="credit_card_ui_current_invoice">Current Invoice</string>
     <string name="credit_card_ui_available_limit">Available Limit</string>

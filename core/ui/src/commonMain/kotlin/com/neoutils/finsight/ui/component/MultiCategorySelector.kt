@@ -11,13 +11,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.multi_category_selector_and
+import com.neoutils.finsight.resources.multi_category_selector_done
 import com.neoutils.finsight.resources.multi_category_selector_label
 import com.neoutils.finsight.resources.multi_category_selector_none
+import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.ui.util.optionalTestTag
 import org.jetbrains.compose.resources.stringResource
 
@@ -79,6 +82,9 @@ fun MultiCategorySelector(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            // A menu opens its own window, so the app window's opt-in does not reach it: without
+            // this, the command below has a test tag that no driver can see on Android.
+            modifier = Modifier.exposeTestTags(),
         ) {
             categories.forEach { category ->
                 val isSelected = selectedCategories.any { it.id == category.id }
@@ -112,6 +118,23 @@ fun MultiCategorySelector(
                     onClick = { onCategoryToggled(category) },
                 )
             }
+
+            // A multi-select menu does not close when something is picked, so it has to say how it
+            // *is* closed. Tapping outside works and always did, but nothing on screen offered it,
+            // and on iOS it is not even reachable: while a menu is up the system hides the rest of
+            // the accessibility tree, so "outside" is a place with no name.
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = stringResource(Res.string.multi_category_selector_done),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                },
+                onClick = { expanded = false },
+                modifier = Modifier.testTag("multi_category_selector_done"),
+            )
         }
     }
 }

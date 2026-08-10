@@ -9,6 +9,7 @@ import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.navigation.ArchivedCreditCardsRoute
 
 import androidx.compose.animation.animateContentSize
@@ -21,7 +22,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.FilterAltOff
@@ -109,12 +109,7 @@ private fun CreditCardsContent(
                 },
                 navigationIcon = {
                     if (!isWideWindow()) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                            )
-                        }
+                        BackButton(onClick = onNavigateBack)
                     }
                 },
                 actions = {

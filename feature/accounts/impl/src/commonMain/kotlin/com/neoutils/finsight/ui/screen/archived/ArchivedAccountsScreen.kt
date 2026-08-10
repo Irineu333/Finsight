@@ -12,12 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
@@ -34,7 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.accounts_archived_empty
 import com.neoutils.finsight.resources.accounts_archived_title
-import com.neoutils.finsight.resources.accounts_navigate_back_content_description
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.modal.viewAccount.ViewAccountModal
 import org.jetbrains.compose.resources.stringResource
@@ -66,12 +62,7 @@ private fun ArchivedAccountsContent(
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.accounts_archived_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.accounts_navigate_back_content_description),
-                        )
-                    }
+                    BackButton(onClick = onNavigateBack)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorScheme.background,

@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,6 +33,7 @@ import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
@@ -101,9 +101,7 @@ private fun ReportConfigContent(
                 title = { Text(stringResource(Res.string.report_config_title)) },
                 navigationIcon = {
                     if (!isWideWindow()) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                        }
+                        BackButton(onClick = onNavigateBack)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

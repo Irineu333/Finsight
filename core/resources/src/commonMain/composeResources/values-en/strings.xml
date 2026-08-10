@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shared chrome -->
+    <string name="navigate_back_content_description">Back</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>
@@ -254,7 +257,6 @@
     <string name="account_unarchive">Unarchive</string>
     <string name="account_archived">Archived</string>
     <string name="accounts_more_options_content_description">More options</string>
-    <string name="accounts_navigate_back_content_description">Back</string>
     <string name="accounts_filter_category">Category</string>
     <string name="accounts_filter_category_all">All</string>
     <string name="accounts_filter_type">Type</string>

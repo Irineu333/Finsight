@@ -108,7 +108,7 @@ env:
     text: ${CATEGORY}
 
 # --- I spend $63.40 on it ------------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_categorized_expense.yaml
     env:
@@ -169,7 +169,7 @@ env:
 - assertVisible:
     id: "view_category_total_amount"
     text: "[$]63[.,]40"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # --- It leaves the active view without leaving the database --------------------------------------
 # Three states the screen must keep apart: empty database, empty filter, and content. This is the
@@ -206,7 +206,7 @@ env:
 # includes it, so the breakdown must agree. The transaction sheet, meanwhile, has nothing left to
 # offer: asserted by the "+" the selector only renders when it is empty, which is evidence the
 # category is absent rather than merely out of view inside a popup.
-- back
+- runFlow: ../../subflows/go_back.yaml
 # `back` returns the dashboard wherever the last scroll left it — which is already past the
 # component below — so this climbs to the top before descending, or the search runs away from it.
 - extendedWaitUntil:
@@ -245,7 +245,7 @@ env:
     timeout: 15000
 - assertVisible:
     id: "category_selector_empty_add"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # --- I unarchive it, and it comes back whole -----------------------------------------------------
 # `back` leaves the dashboard wherever the last scroll put it, which is below the quick-action grid
@@ -300,7 +300,7 @@ env:
     text: "Archive"
 - assertNotVisible:
     id: "category_unarchive"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # The exact inverse of the reading three acts ago: it is the archived view that has nothing now.
 - extendedWaitUntil:
@@ -330,7 +330,7 @@ env:
 # --- And the selector offers it again ------------------------------------------------------------
 # Read on the field that renders the choice, not merely as the absence of the empty state's "+":
 # a selector that listed it but would not take the pick reads the same as one that never had it.
-- back
+- runFlow: ../../subflows/go_back.yaml
 # The screen has to be gone before the tap, or the tap races the exit animation.
 - extendedWaitUntil:
     notVisible:
@@ -350,6 +350,7 @@ env:
       id: "add_transaction_category"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_category"
 - extendedWaitUntil:

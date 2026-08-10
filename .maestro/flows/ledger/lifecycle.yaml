@@ -45,7 +45,7 @@ env:
     text: "[$]0[.,]00"
 
 # --- I am paid $500.00 ---------------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_transaction.yaml
     env:
@@ -109,7 +109,7 @@ env:
     text: "[$]500[.,]00"
 
 # --- I spend $42.90 ------------------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_transaction.yaml
     env:
@@ -191,8 +191,10 @@ env:
       id: "dashboard_expenses_amount"
     direction: UP
     timeout: 25000
+- waitForAnimationToEnd
 - tapOn:
     id: "dashboard_expenses_amount"
+    waitToSettleTimeoutMs: 2000
 - extendedWaitUntil:
     visible:
       id: "screen_transactions"
@@ -205,7 +207,23 @@ env:
 - assertNotVisible:
     id: "transaction_card_title"
     text: ${INCOME_TITLE}
-- back
+# The one place in the suite where the two platforms genuinely leave a screen differently, and so
+# the one place that says `platform` out loud. Transactions is a *tab*: it has no top bar and no
+# back button, and reaching it by tapping a dashboard figure pushes it with a filter. Android pops
+# that with the system gesture — which is the only way out there, and the only place this suite
+# still covers it, so it stays. iOS has no such gesture reaching Compose, and no button to offer:
+# the way back is the tab the user came from, which is exactly what a person would tap.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: "nav_item_dashboard"
 
 - extendedWaitUntil:
     visible:
@@ -235,7 +253,7 @@ env:
     file: ../../subflows/create_account.yaml
     env:
       NAME: ${SAVINGS_ACCOUNT}
-- back
+- runFlow: ../../subflows/go_back.yaml
 # Leaving a screen animates, and the tap below lands on the bar underneath it. Waiting for the
 # screen to be *gone* is the condition; without it the tap is a race the flow loses now and then.
 - extendedWaitUntil:
@@ -281,7 +299,7 @@ env:
 - assertVisible:
     id: "edit_transaction_amount"
     text: ".*68[.,]35.*"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 # The other half of "the form reopens over what is stored": the amount above came back as the
 # ledger holds it, and so does the account. A form that defaulted to the default account would
@@ -307,6 +325,7 @@ env:
       id: "edit_transaction_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "edit_transaction_save"
 - extendedWaitUntil:
@@ -325,7 +344,7 @@ env:
     text: "[-]?[$]68[.,]35"
 # The sheet is its own composition root: while it is up, it is the whole hierarchy Maestro sees, so
 # the list underneath cannot be asserted until it is dismissed.
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 - extendedWaitUntil:
     visible:
       id: "screen_transactions"
@@ -362,11 +381,7 @@ env:
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]500[.,]00"
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
+- runFlow: ../../subflows/next_account.yaml
 - extendedWaitUntil:
     visible: ${SAVINGS_ACCOUNT}
     timeout: 15000
@@ -375,7 +390,7 @@ env:
     text: "[-][$]68[.,]35"
 
 # --- I undo the spend ----------------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_accounts"

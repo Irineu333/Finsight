@@ -17,7 +17,7 @@ env:
 # no coverage at all — support was the last feature with no traversal.
 #
 # It is reachable at all because a debug build answers support from memory
-# (`InMemorySupportRepository`, in the app's debug source set) instead of from Firestore, which
+# (`InMemorySupportRepository`, in `:app:debug`) instead of from Firestore, which
 # would need network, credentials and a real project, and would leave rows behind in one. Two
 # things follow. The suite already installs the debug APK, so nothing changes there. And that store
 # is memory, not storage: this flow must never relaunch the app, or the issue it is about would be
@@ -69,7 +69,7 @@ env:
 - assertVisible:
     id: "support_form_title"
     text: ${ISSUE_TITLE}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 - tapOn:
     id: "support_form_description"
@@ -78,7 +78,7 @@ env:
 - assertVisible:
     id: "support_form_description"
     text: ${ISSUE_BODY}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 - assertVisible:
     id: "support_form_submit"
@@ -124,7 +124,9 @@ env:
 - assertVisible:
     id: "support_reply_input"
     text: ${REPLY}
-- hideKeyboard
+# No keyboard to put away first: this is the one text field in the suite that is not inside a modal
+# sheet, so it has no handle to release the focus by — and it needs none. Send sits beside the input
+# in the chat row, which the keyboard pushes up rather than covers.
 - tapOn:
     id: "support_reply_send"
 
@@ -138,7 +140,7 @@ env:
 # Leaving the chat and coming back is what separates a message the composer echoed from one the
 # repository stored: the screen is composed again, from scratch, and asks for the conversation
 # afresh.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "screen_support"

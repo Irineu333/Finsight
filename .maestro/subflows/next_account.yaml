@@ -1,0 +1,17 @@
+appId: com.neoutils.finsight
+name: next_account
+---
+# Turns the accounts pager to the next account.
+#
+# By coordinates, not `from: id: account_card`, and for two reasons that are really one. The card
+# spans the width, so an element-anchored swipe starts at its centre and travels half a card — far
+# enough for Android's pager to settle onto the next page, not far enough for iOS's, which snaps
+# back and leaves the flow reading the account it was already on. And a swipe that ends where the
+# card began is the same gesture on both, which is the point of naming it once here.
+- swipe:
+    start: "85%, 30%"
+    end: "10%, 30%"
+    duration: 300
+# The pager glides after the finger lifts; an assertion made before it settles reads the page in
+# transit. Nothing turns that off — `disableAnimations` is a Maestro Cloud feature.
+- waitForAnimationToEnd

@@ -21,9 +21,10 @@ name: record_transaction
 # loses the text silently, and the form then refuses to submit for a reason nothing on screen names.
 - waitForAnimationToEnd
 
-# The keyboard is dismissed between fields, not just at the end. Whatever the device puts up while
+# The keyboard is put away between fields, not just at the end. Whatever the device raises while
 # typing — the soft IME, or the hardware-keyboard toolbar newer Android versions show instead —
-# overlays the sheet, and the next field can end up underneath it.
+# overlays the sheet, and the next field can end up underneath it. `dismiss_keyboard`, never
+# `hideKeyboard`: that one is Android's, and on iOS it fails the flow (README §2.5).
 - tapOn:
     id: "add_transaction_title"
 - waitForAnimationToEnd
@@ -33,24 +34,26 @@ name: record_transaction
 - assertVisible:
     id: "add_transaction_title"
     text: ${TITLE}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "add_transaction_amount"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_amount"
 - waitForAnimationToEnd
 - inputText: ${AMOUNT}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "add_transaction_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_save"
 - extendedWaitUntil:

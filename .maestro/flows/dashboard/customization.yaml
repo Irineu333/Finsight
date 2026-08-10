@@ -52,6 +52,13 @@ tags:
 # The swipe is slow on purpose: the reorder follows the pointer, and a flick delivers too few moves
 # for it to settle on a new index. It travels several positions rather than one — how far is the
 # gesture's business, and the claim is only that the two ends swapped.
+#
+# 1500 ms is not a number to tune. It was measured on both platforms, and moving it makes things
+# worse in both directions: at 2500 the drag carries the item four positions and the list
+# autoscrolls under it; at 900 it lands short. On iOS this gesture is flaky even at 1500 — the only
+# step in the suite that is — because Maestro synthesises the drag as a stream of touch events and
+# the reorder's autoscroll answers that stream differently there. That is a driver limit, not a bug
+# in the screen: on Android the same flow is green, and no other flow depends on a drag.
 - swipe:
     from:
       id: "dashboard_edit_drag_total_balance"
@@ -114,6 +121,7 @@ tags:
     direction: DOWN
     centerElement: true
     timeout: 25000
+- waitForAnimationToEnd
 - tapOn:
     id: "dashboard_edit_remove_all"
 - extendedWaitUntil:
@@ -153,8 +161,13 @@ tags:
     direction: DOWN
     centerElement: true
     timeout: 25000
+- waitForAnimationToEnd
 - tapOn:
     id: "dashboard_edit_remove_all"
+# Emptying the list collapses it, and the confirm button rides up with it. Tapping against the
+# position it held a moment ago hits whatever slid into place — which on iOS is what happens every
+# time without this line.
+- waitForAnimationToEnd
 - tapOn:
     id: "dashboard_edit_confirm"
 - extendedWaitUntil:
@@ -282,11 +295,13 @@ tags:
     direction: DOWN
     centerElement: true
     timeout: 25000
+- waitForAnimationToEnd
 
 # The card's whole body opens the sheet; the drag handle sits in its top-right corner, away from
 # the centre a tap lands on.
 - tapOn:
     id: "dashboard_edit_item_accounts_overview"
+    waitToSettleTimeoutMs: 2000
 - extendedWaitUntil:
     visible:
       id: "dashboard_component_options"

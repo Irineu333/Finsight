@@ -1,16 +1,25 @@
 # Testes E2E (Maestro)
 
+Os mesmos 13 fluxos rodam no **Android** e no **iOS**, sem uma linha de diferença entre as duas
+execuções — o que o app tem de plataforma-específico foi resolvido *no app*, não no YAML (§2.5).
+
 ```bash
-./gradlew :app:android:installDebug              # instala o APK de debug (o de release não serve)
-maestro test .maestro                            # roda tudo (~28 min)
-maestro test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
+# Android
+./gradlew :app:android:installDebug                       # instala o APK de debug (o de release não serve)
+maestro --device emulator-5554 test .maestro              # roda tudo
+
+# iOS
+xcrun simctl install <UDID> iosApp/build/DerivedData/Build/Products/Debug-iphonesimulator/Finsight.app
+maestro --device <UDID> test .maestro                     # roda tudo
+
+maestro --device <alvo> test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
 ```
 
 A suíte roda **à mão**: hoje não há script que a prepare nem CI que a rode (§2.1). Ela exige um
-emulador **API 36, perfil `pixel_6`, em inglês, com teclado de tela e sem
-teclado físico** — pré-condição de quem executa, que nada verifica nem conserta, e que na maior
-parte não tem conserto depois do boot da AVD. Confira as sete linhas da **§2.2** antes de rodar: num
-aparelho divergente, vermelho ou verde não conta.
+aparelho fixado por plataforma — um emulador **API 36, perfil `pixel_6`** (§2.2) e um simulador
+**iPhone 16 / iOS 18.5** (§2.2.2), os dois **em inglês, com teclado de tela**. É pré-condição de
+quem executa, que nada verifica nem conserta, e que em boa parte não tem conserto depois do boot.
+Confira as linhas da **§2.2** antes de rodar: num aparelho divergente, vermelho ou verde não conta.
 
 Artefatos de falha (log, captura, hierarquia) vão para `.maestro/report/` e `~/.maestro/tests/`.
 
@@ -44,21 +53,32 @@ suíte sobe para mais de 30 minutos — um número que não descreve a suíte e 
 ## 2. Rodar a suíte
 
 ```bash
-./gradlew :app:android:installDebug        # instala o APK de debug; refaça sempre que mexer no app
-maestro test .maestro                      # roda tudo
-maestro test --include-tags smoke .maestro # só os fluxos com a tag `smoke`
+maestro --device <alvo> test .maestro                      # roda tudo
+maestro --device <alvo> test --include-tags smoke .maestro # só os fluxos com a tag `smoke`
 ```
 
-O caminho é `.maestro`, o **workspace**. Apontar para dentro dele muda o que roda e o que vale — e
-o modo mais barato de perder um run é apontar para `.maestro/flows`, que não acha fluxo nenhum e
-sai com código 0. A tabela da §2.3 diz o que cada caminho faz.
+`<alvo>` é o serial do emulador (`emulator-5554`) ou o UDID do simulador, e **a flag vem antes do
+`test`**. Reinstale o build de debug sempre que mexer no app: `./gradlew :app:android:installDebug`
+no Android, reconstruir e `xcrun simctl install` no iOS (§2.2.2).
 
-Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e do emulador da §2.2
-ligado. Rode com o APK de debug — o de release não serve, e por dois motivos:
-o relógio móvel de que dois fluxos dependem (§5.2, padrão 9) só existe em debug, e o suporte só é
-testável porque o build de debug o responde da memória em vez do Firestore
-(`InMemorySupportRepository`, no source set de debug do app). Esse armazenamento morre com o
-processo, então `support/lifecycle` é o único fluxo que **não pode** relançar o app.
+O caminho é `.maestro`, o **workspace**. Apontar para dentro dele muda o que roda — e o modo mais
+barato de perder um run é apontar para `.maestro/flows`, que não acha fluxo nenhum e sai com
+código 0. A tabela da §2.3 diz o que cada caminho faz.
+
+Precisa da CLI do Maestro (`curl -Ls https://get.maestro.mobile.dev | bash`) e do aparelho da §2.2
+ligado. No iOS não é preciso mais nada: o `idb` deixou de ser dependência no Maestro 1.18, e o
+driver XCUITest de hoje só pede as ferramentas de linha de comando do Xcode.
+
+Rode com o build de **debug** — o de release não serve, e por três motivos, todos do mesmo lugar.
+O ferramental que um aparelho não pode oferecer vive em **`:app:debug`**, um módulo KMP que os dois
+apps agregam: o relógio móvel de que três fluxos dependem (§5.2, padrão 9), o suporte respondido da
+memória em vez do Firestore (`InMemorySupportRepository`) e a fonte de câmbio que não cota nada
+(`OfflineRateSource`). O Android o traz por `debugImplementation`; o iOS, pela configuração Debug
+do Xcode, que passa `-Pfinsight.debugTools=true` ao Gradle — Kotlin/Native não tem build types, e
+essa flag é o que faz as vezes deles. Num build de release o módulo não é compilado.
+
+O armazenamento do suporte morre com o processo, então `support/lifecycle` é o único fluxo que
+**não pode** relançar o app.
 
 Duas ferramentas de inspeção: `maestro studio` abre um inspetor sobre o app em execução, e
 `maestro hierarchy` despeja a árvore de acessibilidade — o jeito mais rápido de descobrir o que uma
@@ -71,14 +91,16 @@ acertar os dois ficou fora do escopo de quando a suíte entrou, e ninguém volto
 proibição — é o estado atual, e enquanto ele durar **o aparelho não tem outro dono senão quem
 executa**. Metade das linhas da §2.2 é lida no boot da AVD e a outra metade exige que ela tenha sido
 criada em inglês, então nada as conserta com o emulador ligado, e nenhum comando avisa quando estão
-erradas: sobra conferir antes. Quem muda uma tela é quem responde se a travessia continua de pé.
+erradas: sobra conferir antes. No iOS é o oposto e igualmente traiçoeiro: o CoreSimulator
+**reinjeta o idioma do Mac a cada boot**, então as chaves da §2.2.2 têm de ser reescritas *depois*
+de ligar, todas as vezes. Quem muda uma tela é quem responde se a travessia continua de pé.
 
 Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
 
-1. **Montar o aparelho é parte da tarefa.** Se não há AVD que sirva, crie-a (§2.2). Não rode "no que
-   estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
-2. **Conferir as sete linhas da §2.2 à mão, antes do run**, e **reinstalar o APK de debug**. Menos
-   de um minuto, contra 28 de resultado que não vale nada.
+1. **Montar o aparelho é parte da tarefa.** Se não há AVD ou simulador que sirva, crie-o (§2.2,
+   §2.2.2). Não rode "no que estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
+2. **Conferir as linhas da §2.2 à mão, antes do run**, e **reinstalar o build de debug**. Menos
+   de um minuto, contra meia hora de resultado que não vale nada.
 3. **Reportar em que aparelho rodou.** Um "13/13 verde" sem o aparelho ao lado não é um resultado,
    é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
 4. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
@@ -102,10 +124,15 @@ Deixá-la livre é aceitar entrada aleatória.
 | `hw.keyboard.lid` | `no` (lido no boot) | — (escrito no `config.ini` antes do boot) | A tampa aberta é a outra metade do que convida a barra flutuante |
 | `show_ime_with_hard_keyboard` | `0` | `settings get secure show_ime_with_hard_keyboard` | Ligar *parece* pedir um teclado e faz o oposto. Só tem efeito onde há teclado físico — que a linha acima já exclui — então é reforço, não a garantia |
 
-Falta uma oitava entrada, e ela **não é do aparelho**: as animações, que o `config.yaml` desliga em
-tempo de execução (§2.3) porque transição em curso é a causa nº 1 de toque perdido. Não a confira
-por `adb` — num aparelho correto `settings get global window_animation_scale` responde `1.0`, e
-isso não é reprovação. O que garante essa entrada é rodar pelo workspace.
+**Não há oitava entrada, e onde havia era uma crença errada.** O `disableAnimations` do
+`config.yaml` é um recurso do **Maestro Cloud**: ele não toca em aparelho local, nem no emulador nem
+no simulador ([docs](https://docs.maestro.dev/reference/workspace-configuration)). Este documento
+já afirmou o contrário, e quem lesse aquilo procuraria no lugar errado quando um toque se perdesse.
+A chave continua declarada, porque o dia em que a suíte rodar na cloud ela passa a valer — mas
+**localmente as animações estão ligadas nos dois aparelhos, sempre**, e é por isso que a defesa
+contra toque perdido é o `waitForAnimationToEnd` escrito nos fluxos (§5.2, padrão 3), não uma
+configuração. Não adianta conferir por `adb`: num aparelho correto
+`settings get global window_animation_scale` responde `1.0`, e isso está certo.
 
 **Um perfil divergente não é "meu ambiente", é um resultado inválido** — vermelho ou verde nele não
 conta, e um tablet em inglês na API 36 bateria em tudo o mais e ainda assim não contaria. Nada
@@ -182,22 +209,100 @@ maestro test --device emulator-5554 .maestro      # o Maestro tem a sua própria
 dois são necessários — e não conferir o aparelho **por serial** é conferir outro aparelho. Desligar
 o que não é o da §2.2 continua sendo o caminho mais curto.
 
+No iOS a regra é a mesma e o remédio é mais simples, porque tudo passa por um UDID:
+
+```bash
+xcrun simctl list devices booted                  # quem está ligado
+maestro --device <UDID> test .maestro             # a flag vem ANTES do `test`
+```
+
+**Um simulador ligado por vez.** Dois `maestro` no mesmo simulador se derrubam, e dois simuladores
+ligados dividem CPU com o que está sendo medido. Isto não é zelo: dois drivers XCUITest no mesmo
+aparelho terminam um ao outro no meio do run, e o sintoma — `Device became unreachable`,
+`Connection refused` na porta do driver — não se parece com um conflito.
+
+### 2.2.2 O simulador de referência (iOS)
+
+O irmão da §2.2, e existe pelo mesmo motivo: cada linha é uma **entrada do teste**.
+
+| Fixado | Valor | Como conferir | Por que é fixo |
+|---|---|---|---|
+| Modelo | iPhone 16 — 393×852 pt | `xcrun simctl list devices` | O análogo do `pixel_6`: telefone de tamanho padrão. Os fluxos rolam para alcançar o que está abaixo da dobra, e a altura decide se o `scrollUntilVisible` acha o campo |
+| iOS | 18.5 | idem | Gestos e diálogos de sistema mudam entre versões |
+| Idioma e região | `en-US` | `defaults read -g AppleLocale` e `AppleLanguages` | As asserções leem figuras e rótulos renderizados |
+| Teclados | só `en_US` + emoji | `defaults read -g AppleKeyboards` | Um teclado pt-BR ativo traz autocorreção em outro idioma sobre o texto digitado — e a tecla de retorno muda de nome |
+| Tutorial do teclado | desligado | `defaults read com.apple.keyboard.preferences DidShowContinuousPathIntroduction` | Num simulador novo ele cobre o teclado inteiro no primeiro campo, e nada no fluxo o dispensa |
+| Autocorreção e previsão | desligadas | `defaults read com.apple.Preferences KeyboardAutocorrection` | O que o teste digita tem de ser o que o campo recebe |
+
+**O CoreSimulator reinjeta o idioma e os teclados do Mac a cada boot.** Escrever no
+`.GlobalPreferences.plist` com o simulador desligado não adianta: depois de ligar, `pt-BR` está de
+volta na lista. As três primeiras chaves têm de ser reescritas **com o simulador já ligado**, e a
+cada boot. É o oposto do Android, onde nada se conserta depois — e é igualmente fácil de esquecer.
+
+```bash
+UDID=$(xcrun simctl create finsight_e2e \
+  com.apple.CoreSimulator.SimDeviceType.iPhone-16 \
+  com.apple.CoreSimulator.SimRuntime.iOS-18-5)
+xcrun simctl boot "$UDID"
+
+# depois de CADA boot — o CoreSimulator repõe o idioma do Mac:
+xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array "en-US"
+xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string en_US
+xcrun simctl spawn "$UDID" defaults write -g AppleKeyboards -array "en_US@sw=QWERTY;hw=Automatic" "emoji@sw=Emoji"
+
+# uma vez só:
+xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocorrection -bool false
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardPrediction -bool false
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardCapitalization -bool false
+```
+
+Confira olhando: abra qualquer campo e veja o teclado. Em inglês ele diz `space` e `next`, e **não
+tem a tecla do globo** — o globo só aparece com mais de um teclado instalado, então a sua ausência
+é a prova de que a lista foi fixada.
+
+O app é instalado pelo `xcrun simctl install` (o Maestro não instala nada, nas duas plataformas), e
+o `.app` sai do build de debug:
+
+```bash
+(cd iosApp && xcodebuild -project iosApp.xcodeproj -scheme Finsight -configuration Debug \
+   -sdk iphonesimulator -derivedDataPath build/DerivedData \
+   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build)
+xcrun simctl install "$UDID" iosApp/build/DerivedData/Build/Products/Debug-iphonesimulator/Finsight.app
+```
+
+`clearState: true` custa mais aqui do que no Android: o Maestro o implementa **reinstalando o app**
+(copiar o bundle, desinstalar, instalar), não como o `pm clear`. É o motivo de o `launch_fresh` do
+iOS ser visivelmente mais lento.
+
 ### 2.3 Rodar menos que a suíte inteira
 
-O `config.yaml` é do **workspace**, e o workspace é a pasta que o `maestro test` recebe. Duas coisas
-saem dele — o glob `flows/**` e `disableAnimations` —, e as duas se perdem juntas quando o caminho
-aponta para dentro:
+O `config.yaml` é do **workspace**, e o workspace é a pasta que o `maestro test` recebe. O que sai
+dele é o glob `flows/**`, o `testOutputDir` e a ordem de execução — e tudo isso se perde quando o
+caminho aponta para dentro:
 
 | Comando | O que acontece |
 |---|---|
-| `maestro test .maestro` | Workspace: os 13 fluxos, com as animações desligadas pelo `config.yaml` |
-| `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
-| `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
-| `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
+| `maestro --device <alvo> test .maestro` | Workspace: os 13 fluxos |
+| `maestro --device <alvo> test --include-tags smoke .maestro` | Workspace, filtrado por tag |
+| `maestro --device <alvo> test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, sem o `config.yaml` |
+| `maestro --device <alvo> test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
 
-Apontar um `.yaml` direto é o laço de iteração legítimo enquanto se escreve um fluxo. Só não é o
-run que conta: com animação ligada, um toque perdido vira um vermelho que não é do app. Antes do
-veredito, rode pelo workspace.
+Apontar um `.yaml` direto é o laço de iteração legítimo enquanto se escreve um fluxo, **e o
+resultado dele conta**: o que o `config.yaml` deixaria de fora não muda comportamento nenhum de
+aparelho (§2.2 — o `disableAnimations` é da cloud). O que o workspace ainda decide é *quais* fluxos
+rodam e onde vai o relatório.
+
+**Rodar fluxo a fluxo, em processos separados, é a forma recomendada no iOS.** O driver XCUITest
+tem um bug conhecido em modo de pasta: a partir do segundo ou terceiro fluxo a porta do driver para
+de responder e a suíte trava ou morre no meio
+([#3254](https://github.com/mobile-dev-inc/maestro/issues/3254),
+[#3318](https://github.com/mobile-dev-inc/maestro/issues/3318)). Um `maestro` por fluxo dá a cada
+um a sua sessão, e a queda de um não leva os outros:
+
+```bash
+for f in .maestro/flows/*/*.yaml; do maestro --device "$UDID" test "$f"; done
+```
 
 ### 2.4 Quando nada roda
 
@@ -208,9 +313,36 @@ veredito, rode pelo workspace.
 | Falhas espalhadas sem padrão | Aparelho fora de uma das linhas da §2.2 | Rode os sete comandos da §2.2; nenhum resultado num aparelho divergente conta |
 | Texto some por baixo de uma barra flutuante | AVD com `hw.keyboard = yes` | Desligue o emulador, corrija o `config.ini` (§2.2) e suba de novo; não existe conserto por `adb` com ele ligado |
 | Texto digitado some | Campo recebeu digitação antes do foco | Não é ambiente: é o fluxo. Veja §5.2, padrão 4 |
-| Tudo vermelho depois de mexer no app | APK velho instalado | `./gradlew :app:android:installDebug` antes de rodar |
-| O run não reflete o que você instalou, ou `adb` diz `more than one device` | Dois aparelhos ligados; o run caiu no outro | Fixe o alvo por serial (§2.2.1) |
-| Toques perdidos só quando se roda um fluxo isolado | Animações ligadas: o `config.yaml` ficou de fora | Confirme pelo workspace antes de culpar o app (§2.3) |
+| Tudo vermelho depois de mexer no app | Build velho instalado | `./gradlew :app:android:installDebug`, ou reconstruir e `xcrun simctl install` (§2.2.2) |
+| O run não reflete o que você instalou, ou `adb` diz `more than one device` | Dois aparelhos ligados; o run caiu no outro | Fixe o alvo por serial ou UDID (§2.2.1) |
+| **iOS:** `Device became unreachable`, `Connection refused` numa porta 6xxxx | O driver XCUITest morreu — dois `maestro` no mesmo simulador, ou o bug de modo-pasta | Um simulador e um `maestro` por vez; rode fluxo a fluxo (§2.3); `rm ~/.maestro/sessions` |
+| **iOS:** um toque "COMPLETED" que não faz nada | Toque emitido contra a posição de antes de a tela assentar | É o fluxo: falta `waitForAnimationToEnd` (§5.2, padrão 3). Nada desliga animação em aparelho local |
+| **iOS:** teclado em português, ou tutorial cobrindo o teclado | O CoreSimulator repôs o idioma do Mac no boot | Reescreva as chaves da §2.2.2 **com o simulador ligado** |
+
+### 2.5 O que difere entre as plataformas, e onde a diferença mora
+
+Um fluxo é um só para as duas plataformas, e isso não saiu de graça: quatro comandos do Maestro têm
+comportamento diferente ou nenhum no iOS. A regra que se seguiu foi **resolver no app, não no
+YAML** — um `when: platform:` espalhado pelos fluxos seria uma segunda suíte disfarçada de uma.
+
+| O que o Android faz sozinho | No iOS | Onde ficou resolvido |
+|---|---|---|
+| `- back` sai da tela | **Não faz nada.** `IOSDriver.backPress()` é vazio, e o swipe de borda não chega ao Compose deste app (testado com três geometrias) | Toda tela renderiza o mesmo `BackButton` (`core/designsystem`), com a tag `top_bar_back`; os fluxos chamam `go_back` |
+| `- back` fecha uma folha modal | Não faz nada | `dismiss_modal` arrasta a folha para baixo pela alça — o gesto que a folha já tem |
+| `hideKeyboard` guarda o teclado | **Falha o fluxo.** O Maestro dá dois micro-swipes no centro da tela; numa folha rolável isso rola a folha, e o comando reprova | A alça da folha libera o foco (`ModalManager`), com a tag `modal_release_keyboard`; os fluxos chamam `dismiss_keyboard` |
+| Toque logo depois de um scroll acerta | **Erra.** A lista segue deslizando e o toque cai no que escorregou para a posição | `waitForAnimationToEnd` entre rolar e tocar (§5.2, padrão 3) |
+| `checked: true` lê um switch | Lê `selected`, nunca `checked` | Nenhum fluxo lê o controle: lê a legenda que a linha renderiza (`account_form_yield_state`) |
+| Pager vira a página com swipe ancorado no elemento | Volta atrás: meia largura não passa do limiar | `next_account`/`previous_account`, por coordenadas |
+
+Sobra **um** `when: platform:` na suíte inteira, em `ledger/lifecycle`, e ele está lá porque a
+diferença é real e não tem conserto no app: a tela de Transações é uma *aba*, sem barra superior e
+sem botão de voltar. Chegar nela tocando uma figura do dashboard a empilha com um filtro; o Android
+desempilha com o gesto de sistema — que é a única saída lá, e o único lugar onde esta suíte ainda
+cobre esse gesto —, e o iOS volta pela aba de onde veio, que é o que uma pessoa faria.
+
+O `appId` é o mesmo nos dois (`com.neoutils.finsight`), então nenhum fluxo precisa de variável para
+saber quem lançar. Isso é sorte estrutural, e vale mantê-la: mudar o bundle id de um dos dois faria
+cada fluxo precisar de `--env`.
 
 ## 3. Mapa da suíte
 
@@ -222,10 +354,17 @@ veredito, rode pelo workspace.
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são oito: `launch_fresh` (estado inicial), `open_section`
-(chegar a uma seção pela grade de ações rápidas), `record_transaction`, `record_categorized_expense`
-e `record_card_expense` (lançar), `create_account`, `create_credit_card` e `create_category` (abrir
-uma conta, abrir um cartão, criar uma categoria).
+ser executado como teste próprio. Hoje são treze, em três famílias:
+
+- **Estado e arranjo:** `launch_fresh` (estado inicial), `open_section` (chegar a uma seção pela
+  grade de ações rápidas), `record_transaction`, `record_categorized_expense` e `record_card_expense`
+  (lançar), `create_account`, `create_credit_card` e `create_category`.
+- **Gestos que as duas plataformas fazem diferente:** `go_back` (sair de uma tela pelo botão da
+  barra superior), `dismiss_modal` (fechar uma folha arrastando-a pela alça) e `dismiss_keyboard`
+  (guardar o teclado pela mesma alça). Cada um existe porque o comando "óbvio" do Maestro —
+  `- back`, `hideKeyboard` — é de Android e não faz nada, ou faz outra coisa, no iOS (§2.5).
+- **Geometria que precisa ser dita uma vez:** `next_account` e `previous_account`, que viram a
+  página do pager de contas por coordenadas.
 
 Um subflow carrega o **arranjo**, nunca a afirmação: quem chama é que diz o que o estado criado
 deve mostrar. É por isso que `create_credit_card` não assere o limite disponível do cartão que
@@ -266,16 +405,23 @@ invisíveis sem nenhum erro que explique o porquê.
 
 Perguntas em ordem fixa, da mais barata para a mais cara:
 
-1. **O aparelho bate com a §2.2?** Os sete comandos de lá, com a saída colada na resposta. Perfil
-   divergente é resultado inválido, não pista — e "acho que bate" não responde a pergunta.
-2. **O fluxo falha sozinho?** `maestro test .maestro/flows/<área>/lifecycle.yaml` responde em dois
-   minutos. Falha sozinho e passa na suíte (ou o contrário) é dependência de ordem — que nesta suíte
-   não deveria existir, porque todo fluxo começa de `launch_fresh`. Lembre que aí o `config.yaml`
-   fica de fora (§2.3): confirme o vermelho pelo workspace antes de abrir bug.
-3. **É determinístico?** Rode duas vezes. Intermitente é quase sempre sincronização (§5.2, padrão 3).
-4. **O passo que falhou é o assunto do fluxo ou um passo de preparo?** Falha no preparo raramente é
+1. **O aparelho bate com a §2.2?** Os comandos de lá — os sete do Android, os da §2.2.2 no iOS —
+   com a saída colada na resposta. Perfil divergente é resultado inválido, não pista, e "acho que
+   bate" não responde a pergunta.
+2. **Falha na outra plataforma também?** É a pergunta mais barata que existe agora, e ela separa
+   duas coisas que se parecem: um vermelho nos **dois** aparelhos não é do driver nem do sistema —
+   é do app ou do fluxo. Foi assim que se descobriu que o salto de 45 dias do `creditcards` era um
+   bug de data e não uma diferença de iOS: ele falhava igual no Android, no dia 10 de um mês cujo
+   cartão fecha no dia 10.
+3. **O fluxo falha sozinho?** `maestro --device <alvo> test .maestro/flows/<área>/lifecycle.yaml`
+   responde em dois minutos. Falha sozinho e passa na suíte (ou o contrário) é dependência de
+   ordem — que nesta suíte não deveria existir, porque todo fluxo começa de `launch_fresh`.
+4. **É determinístico?** Rode duas vezes. Intermitente é quase sempre sincronização (§5.2, padrão 3),
+   e no iOS quase sempre um toque emitido contra uma lista que ainda desliza: o comando "sucede" e
+   o alvo não recebe nada.
+5. **O passo que falhou é o assunto do fluxo ou um passo de preparo?** Falha no preparo raramente é
    bug do app; é a UI que mudou de forma debaixo do fluxo.
-5. **Reproduz noutra máquina?** Se só na sua, volte à pergunta 1 — a diferença está no aparelho.
+6. **Reproduz noutra máquina?** Se só na sua, volte à pergunta 1 — a diferença está no aparelho.
 
 **"Elemento não encontrado" quase nunca significa que o elemento não existe.** Significa: fora da
 viewport; ainda não composto (o dashboard é uma `LazyColumn` — o que não foi rolado **não existe** na
@@ -366,16 +512,39 @@ precisão.
 ### 5.2 Padrões
 
 1. **Alcance elementos por `id`, nunca pelo texto da interface.** Rótulo é copy: muda numa revisão
-   de UX e quebra um teste que não tinha nada com o assunto.
+   de UX e quebra um teste que não tinha nada com o assunto. Vale também contra o *outro* nó que
+   renderiza a mesma palavra: a lista de recentes e a linha de recorrentes pendentes dividem o
+   mesmo título, e qual dos dois um `tapOn: <texto>` encontra não é o mesmo nas duas plataformas —
+   por isso os dois se alcançam por `id` **mais** texto.
+1b. **Quando o centro do nó não é o alvo, diga onde tocar — no fluxo, nunca na tela.** O Maestro
+   toca no centro geométrico do elemento, e um campo com conteúdo à direita (o contador de parcelas
+   é o caso do app) publica **um nó só**, cujo centro cai no conteúdo e não na área de digitação.
+   `point` ao lado de um seletor é relativo aos bounds *daquele elemento*, e resolve isso sem que a
+   tela mude nada:
+
+   ```yaml
+   - tapOn:
+       id: "add_installment_amount"
+       point: "20%, 50%"      # um quinto da largura do campo, não o meio
+   ```
+
+   O Android atravessa esse toque por acaso — o botão sob o centro está desabilitado e não o
+   consome; o iOS não atravessa. Um alvo que só funciona por acaso numa plataforma é o fluxo que
+   está errado, não a interface: **não redesenhe uma tela para acomodar o ponto de toque padrão de
+   uma ferramenta.**
 2. **Asserte a figura renderizada, não a existência do elemento.** `assertVisible: id=balance` passa
    com o saldo errado. `457.10` no nó que o renderiza prova que duas escritas foram persistidas,
    somadas e lidas de volta — a única coisa que o E2E prova melhor que qualquer camada. Prefira o
    número sem o símbolo (`457.10`), para sobreviver a uma troca de símbolo mas não de valor.
-3. **Sincronize por condição, nunca por tempo.** `extendedWaitUntil` depois de qualquer ação que
-   anime ou carregue; nunca uma espera fixa.
+3. **Sincronize por condição, nunca por tempo — e conte o assentar como uma condição.**
+   `extendedWaitUntil` depois de qualquer ação que anime ou carregue; nunca uma espera fixa. E
+   `waitForAnimationToEnd` entre **rolar e tocar**: o scroll para, a lista não, e o toque é emitido
+   contra a posição que o scroll reportou. No iOS isso não é raro, é a regra — reproduzido e
+   isolado: sem essa linha o `open_section` toca e a seção não abre; com ela, abre sempre. Nada
+   desliga animação num aparelho local (§2.2).
 4. **Releia cada campo depois de digitar.** Uma tecla perdida falha ali, e não três telas adiante,
-   como um botão que não envia. E `hideKeyboard` entre campos: o que o aparelho põe na tela se
-   sobrepõe à folha, e o próximo campo pode ficar por baixo.
+   como um botão que não envia. E guarde o teclado entre campos, com `dismiss_keyboard` — nunca com
+   `hideKeyboard`, que é de Android e reprova o fluxo no iOS (§2.5).
 5. **Escreva o valor esperado literal; nunca o calcule no fluxo.** Um valor calculado reimplementa a
    regra do app, e quando os dois erram juntos o teste fica verde para sempre.
 6. **Escolha figuras que não compartilhem dígitos.** `500.00` e `42.90` deixando `457.10`: nenhuma
@@ -388,6 +557,10 @@ precisão.
    `clockOffsetMonths` (só em debug, e somáveis) são o que permite fechar uma fatura ou virar o mês.
    Toda tela lê o `Clock` injetado; qualquer código que leia `Clock.System` direto discorda do resto
    do app no instante em que esse argumento é passado — isso é bug, e se conserta, não se contorna.
+   O mesmo argumento serve às duas plataformas: o Maestro o entrega como extra de intent no Android
+   e como argumento de processo (`-clockOffsetDays 45`, o domínio de argumentos do `NSUserDefaults`)
+   no iOS, e cada app o lê à sua maneira antes de entregá-lo ao mesmo `applyTimeTravel` de
+   `:app:debug`.
 
    Para virar o mês, use `clockOffsetMonths`, não trinta e um dias. `+31` a partir do dia 30 de um
    mês de 31 dias cai **dois** meses adiante, e o fluxo fica vermelho num punhado de dias por ano
@@ -415,6 +588,7 @@ precisão.
 | **Espelhar a pirâmide** | Um fluxo para cada regra de validação; a suíte passa de meia hora e ninguém lê o relatório | Combinatória desce de camada (§5.1) |
 | **Ramificação defensiva** | `if` no fluxo ("se aparecer o modal, feche"); ele passa em cenários que ninguém projetou | Estado inicial determinístico |
 | **Screenshot como asserção** | Toda troca de tema gera dezenas de diffs e o time aprova baselines em massa | Captura é artefato de diagnóstico; comparação visual é outra suíte |
+| **Redesenhar a tela para o teste passar** | Uma proposta de mudar layout, mover um controle ou trocar um componente aparece numa investigação de fluxo vermelho | A suíte serve o app, não o contrário. Um toque que erra o alvo se conserta com `point` (§5.2, 1b); um estado que o driver lê diferente se assere por outro nó (`account_form_yield_state`). Só se muda a tela quando a mudança se sustenta **sozinha**, sem o teste como argumento |
 
 **Sobre "a grande turnê", que já foi contada em passos.** Três fluxos passam de 120 e os três são
 uma história só — a decisão está tomada e não é para ser reaberta a cada leitura:
@@ -453,6 +627,16 @@ tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto mud
 **Instabilidade é bug.** Um fluxo que fica vermelho sem mudança de código entra em investigação no
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
+
+**A exceção, nomeada e medida: `dashboard/customization` no iOS.** O arrasto de reordenação — o
+único gesto do app sem botão por trás, e o único ponto da suíte que depende de arrastar — é instável
+lá, e só lá. O Maestro sintetiza o arrasto como um fluxo de eventos de toque, e a rolagem automática
+da lista responde a esse fluxo de outro jeito no iOS: com `duration: 2500` o item viaja quatro
+posições, com `900` ele fica aquém, e com os `1500` que estão no fluxo ele acerta na maioria das
+vezes e não em todas (medido: 3 verdes em 5 execuções). No Android o mesmo fluxo é verde.
+Isso é **limite de ferramenta**, não bug de tela — e a diferença importa, porque a resposta a um
+limite de ferramenta nunca é mexer na tela. Enquanto durar, o fluxo conta como verde pelo Android e
+o seu vermelho no iOS não autoriza nenhuma mudança de app.
 
 **O precedente.** O teto subiu quatro vezes, e cada uma fica registrada porque é ela que autoriza a
 próxima recusa. Nenhuma tirou um fluxo em troca; todas entraram pelo mesmo argumento — cobrir uma

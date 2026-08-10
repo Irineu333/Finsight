@@ -53,7 +53,7 @@ env:
     id: "installments_add"
 
 # --- I have a card to pay with -------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -81,7 +81,7 @@ env:
     text: "[$]7[.,]000[.,]00"
 
 # --- I buy a sofa in three -----------------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -114,21 +114,28 @@ env:
 - assertVisible:
     id: "add_installment_title"
     text: ${SPEND_TITLE}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "add_installment_amount"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
+# Tapped at a fifth of the way in, not in the middle. `point` next to a selector is relative to the
+# element's own bounds, and this field needs that: the instalment stepper is its trailing content,
+# so the node spans field *and* stepper, and the centre Maestro would tap by default falls on the
+# stepper's minus button. Android happens to let that tap through to the field underneath; iOS does
+# not, and the typing goes nowhere. Nothing is wrong with the screen — the default tap point is.
 - tapOn:
     id: "add_installment_amount"
+    point: "20%, 50%"
 - waitForAnimationToEnd
 - inputText: ${SPEND_DIGITS}
 - assertVisible:
     id: "add_installment_amount"
     text: "[$]960[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 # Three, and what three is worth — the one reading this flow needs, because every figure it
 # asserts from here on follows from it. That the division itself is right for two, for four, and
@@ -148,6 +155,7 @@ env:
       id: "add_installment_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_installment_save"
 - extendedWaitUntil:
@@ -200,7 +208,7 @@ env:
     timeout: 25000
 
 # --- The claim: one instalment owed, the whole purchase committed --------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -249,8 +257,8 @@ env:
     text: "[$]320[.,]00"
 
 # --- The dashboard: debt, not cash, and only this month's part of it -----------------------------
-- back
-- back
+- runFlow: ../../subflows/go_back.yaml
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -370,7 +378,7 @@ env:
     id: "installment_card"
 
 # ...and nothing of it is left: the invoice owes nothing and the whole limit is back.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -386,7 +394,7 @@ env:
     id: "credit_card_available_limit"
     text: "[$]7[.,]000[.,]00"
 
-- back
+- runFlow: ../../subflows/go_back.yaml
 # The screen has to be gone before the tap, or the tap races the exit animation.
 - extendedWaitUntil:
     notVisible:

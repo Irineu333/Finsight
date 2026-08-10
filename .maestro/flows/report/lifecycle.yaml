@@ -80,7 +80,7 @@ env:
     id: "transfer_amount"
 - waitForAnimationToEnd
 - inputText: ${TRANSFER_DIGITS}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "transfer_save"
 - extendedWaitUntil:
@@ -89,7 +89,7 @@ env:
     timeout: 15000
 
 # --- I spend $64.40 on a card, and pay $20.00 of it early ----------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -105,7 +105,7 @@ env:
       LIMIT: ${CARD_LIMIT_DIGITS}
       CLOSING_DAY: ${CARD_CLOSING_DAY}
       DUE_DAY: ${CARD_DUE_DAY}
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_card_expense.yaml
     env:
@@ -131,6 +131,7 @@ env:
     direction: DOWN
     centerElement: true
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: "credit_card_advance_payment"
 - extendedWaitUntil:
@@ -144,7 +145,7 @@ env:
     id: "advance_payment_amount"
 - waitForAnimationToEnd
 - inputText: ${ADVANCE_DIGITS}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "advance_payment_confirm"
 - extendedWaitUntil:
@@ -155,7 +156,7 @@ env:
 # --- The Wallet: what it earned, and everything that left it -------------------------------------
 # It opens selected, so this needs no selection. Both outgoings are here and neither was ever a
 # purchase: $180.25 moved to the other account, $20.00 went to the card. 500.00 − 200.25 = 299.75.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -188,7 +189,7 @@ env:
 # The new account is selected first and the seeded one dropped after, because a report with no
 # account selected cannot be generated at all. Here the transfer is income — money that arrived
 # without being earned — and it is the whole of this account's balance.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "report_generate"
@@ -198,6 +199,7 @@ env:
       text: ${RESERVE_ACCOUNT}
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn: ${RESERVE_ACCOUNT}
 - tapOn: "Wallet"
 - tapOn:
@@ -225,7 +227,7 @@ env:
 # The perspective is the report's own axis — same period, same ledger, a different question. The
 # $20.00 that was an expense on the Wallet report is a payment into the invoice here, and what is
 # owed is the difference. 64.40 − 20.00 = 44.40.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "report_generate"

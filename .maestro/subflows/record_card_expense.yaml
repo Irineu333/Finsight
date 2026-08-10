@@ -28,7 +28,7 @@ name: record_card_expense
 - assertVisible:
     id: "add_transaction_title"
     text: ${TITLE}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 # The target's options are copy, so they are reached by tag; the card is reached by the name the
 # calling flow typed itself.
@@ -55,17 +55,19 @@ name: record_card_expense
       id: "add_transaction_amount"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_amount"
 - waitForAnimationToEnd
 - inputText: ${AMOUNT}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "add_transaction_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_save"
 - extendedWaitUntil:

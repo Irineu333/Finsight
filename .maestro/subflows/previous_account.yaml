@@ -1,0 +1,14 @@
+appId: com.neoutils.finsight
+name: previous_account
+---
+# Turns the accounts pager back to the previous account.
+#
+# By coordinates for the same reason [next_account] is, and for one more of its own: the card spans
+# the width, so a RIGHT swipe anchored on it starts at the left edge, which Android reads as the
+# system back gesture — the screen leaves instead of the page turning. Starting at 30% of the width
+# is past that strip, so the pager gets the gesture.
+- swipe:
+    start: "30%, 30%"
+    end: "90%, 30%"
+    duration: 300
+- waitForAnimationToEnd

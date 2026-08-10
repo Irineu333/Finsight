@@ -86,7 +86,15 @@ the dependency rules below are written, not compiled — they hold by review.
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
   - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
   - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
-    (exports `:core:*` + `:library:*:api` + `feature:*:api`).
+    (exports `:core:*` + `:library:*:api` + `feature:*:api`). Two extra source sets,
+    `src/iosDebug` and `src/iosRelease`, stand in for the build types Kotlin/Native does not
+    have: `iosApp/project.yml` passes `-Pfinsight.debugTools=true` from Xcode's Debug
+    configuration and from nowhere else, and that flag decides which one is compiled.
+  - **`:app:debug`** — KMP, what a debug build substitutes for what a device cannot be asked
+    for: the movable clock (`ShiftableClock`, `applyTimeTravel`), support answered in memory
+    and a rate source that quotes nothing. It names ports only (`ISupportRepository`,
+    `IRemoteRateSource`), never a provider. Android depends on it from `debugImplementation`,
+    iOS from `src/iosDebug`; a release build of either does not compile it.
   - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
     `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
     `:core:designsystem`); `:app:shared` only aggregates.
@@ -180,22 +188,29 @@ compiler, not by discipline (see below).
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
 
 ## E2E (Maestro)
-Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour.
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. **The
+same 13 flows run on Android and on iOS**, from one file each — what the two platforms do
+differently was settled in the app, not in the YAML (`.maestro/README.md` §2.5).
 
 **There is no setup script and no CI job today.** The suite is run by hand, and whoever runs it — human or
 AI agent, no distinction — owns building and checking the device it needs: an **API 36 `pixel_6`
-AVD, in English, with an on-screen keyboard and no hardware keyboard**. Nothing verifies that for
-you and most of it cannot be fixed once the AVD has booted, so a divergent device makes the run
-*invalid*. **Read `.maestro/README.md` §2 before running** — the seven `adb` checks, how to create
-the AVD, and how to pin the target when more than one device is connected. Reinstall the debug APK
-first (`./gradlew :app:android:installDebug`); the release build does not work. Report which device
-the run happened on — a bare "12/12 green" is a claim with nothing behind it.
+AVD** and an **iPhone 16 / iOS 18.5 simulator**, both **in English with an on-screen keyboard**.
+Nothing verifies that for you; on Android most of it cannot be fixed once the AVD has booted, and on
+iOS the opposite trap applies — CoreSimulator re-injects the Mac's language on every boot, so the
+locale and keyboard keys have to be rewritten *after* booting, every time. A divergent device makes
+the run *invalid*. **Read `.maestro/README.md` §2 before running** — the checks per platform, how to
+create each device, and how to pin the target. Reinstall the debug build first
+(`./gradlew :app:android:installDebug`, or rebuild and `xcrun simctl install`); the release build
+does not work, because the substitutions the suite depends on live in `:app:debug`. Report which
+device the run happened on — a bare "13/13 green" is a claim with nothing behind it.
 
-Two conventions reach into the app's code, not just the flows: elements are reached by **`id:`**,
-never by label (copy gets reworded), and an `id` is a Compose `Modifier.testTag` that only reaches
-Maestro because its composition root published it with `Modifier.exposeTestTags()`
+Three conventions reach into the app's code, not just the flows: elements are reached by **`id:`**,
+never by label (copy gets reworded); an `id` is a Compose `Modifier.testTag` that only reaches
+Maestro on Android because its composition root published it with `Modifier.exposeTestTags()`
 (`core/designsystem` — `ui/util/ExposeTestTags`) — a modal sheet, dialog or popup is its own root
-and needs its own call.
+and needs its own call, while iOS maps a test tag onto the accessibility identifier by itself; and
+**the suite never asks the app to change shape for it** — a tap that misses is fixed with a
+tap point relative to the element, not by moving the control it missed.
 
 > Normative reference: **`.maestro/README.md`** — how to run, the device, the suite map, writing a flow.
 

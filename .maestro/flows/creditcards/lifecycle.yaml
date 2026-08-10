@@ -5,9 +5,13 @@ tags:
   - ledger
 env:
   CARD_NAME: "E2E Card"
-  # Past the invoice's closing date from any day the suite runs on: a card created today closes
-  # between 1 and ~40 days out, depending on where in the month "today" falls.
-  JUMP_DAYS: 45
+  # Two closing dates ahead, from any day the suite runs on. Counted in months rather than in
+  # days, because "the invoice after the one that closed" is a calendar fact and 45 days is not:
+  # on a day that happens to *be* the closing day, forty-five days clear one closing date and not
+  # two, and the second invoice then legitimately does not offer closing. That failed on both
+  # platforms, on the 10th of a month whose card closes on the 10th, and nothing in the message
+  # said so.
+  JUMP_MONTHS: 2
   CARD_LIMIT_DIGITS: "200000"
   CARD_CLOSING_DAY: "10"
   CARD_DUE_DAY: "20"
@@ -29,7 +33,7 @@ env:
 # when the card is spent on, and it does move — by exactly what was paid — both when the invoice is
 # paid down early and when it is settled.
 #
-# Halfway through, the app is relaunched forty-five days ahead (`clockOffsetDays`, the debug-only
+# Halfway through, the app is relaunched two months ahead (`clockOffsetMonths`, the debug-only
 # clock shift) with the database untouched, because an invoice cannot be closed before its closing
 # date and no card created today has one in the past. Nothing after that point could be reached
 # otherwise.
@@ -106,7 +110,7 @@ env:
     text: "[$]2[.,]000[.,]00"
 
 # ...and the dashboard's cards widget now carries the card instead of its empty state.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_component_credit_cards_pager"
@@ -208,7 +212,7 @@ env:
     id: "advance_payment_amount"
 - waitForAnimationToEnd
 - inputText: ${ADVANCE_DIGITS}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "advance_payment_confirm"
 - extendedWaitUntil:
@@ -233,7 +237,7 @@ env:
     text: "[$]70[.,]00"
 
 # --- The cards screen agrees, and so does the dashboard ------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "screen_credit_cards"
@@ -248,7 +252,7 @@ env:
 # Now the cash did move: $500.00 earned less $50.00 paid to the card. The expense figure stays the
 # income's counterpart — a card payment is not a category expense — so it is the balance that
 # carries it.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -286,14 +290,14 @@ env:
 # the report the invoice lifecycle earns and nothing else can: the one below, spanning a settled
 # invoice and an open one.
 
-# --- Forty-five days later -----------------------------------------------------------------------
+# --- Two months later ----------------------------------------------------------------------------
 # The clock moves; the database does not. `clearState: false` is the whole point — the card and its
 # invoice were created before the jump, and it is those rows that have to age. A full relaunch is
 # what makes it take: the process is new, so every screen composes against the moved clock.
 - launchApp:
     clearState: false
     arguments:
-      clockOffsetDays: ${JUMP_DAYS}
+      clockOffsetMonths: ${JUMP_MONTHS}
 - extendedWaitUntil:
     visible:
       id: "bottom_navigation_bar"
@@ -390,7 +394,7 @@ env:
 
 # --- And the account paid for it -----------------------------------------------------------------
 # $500.00 earned, less $50.00 advanced and $70.00 settled.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -483,15 +487,15 @@ env:
     id: "view_transaction_edit"
 - assertNotVisible:
     id: "view_transaction_delete"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # --- The dashboard, in the month the jump landed on ----------------------------------------------
 # The month turned, so the card row speaks of this month alone: the $33.00 just spent, and nothing
 # paid. The settlement is not missing — it is dated at the invoice's due date, the month before,
 # because that is the date the payment modal offers and the only one the invoice accepts. What the
 # jump moved was the day the *user* is on, not the day a bill falls due.
-- back
-- back
+- runFlow: ../../subflows/go_back.yaml
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -569,7 +573,7 @@ env:
 
 # With the settled invoice added, the report spans the whole cycle: everything ever spent on this
 # card, everything ever paid into it, and the one invoice still open as the difference.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "report_generate"
@@ -580,6 +584,7 @@ env:
     direction: DOWN
     centerElement: true
     timeout: 20000
+- waitForAnimationToEnd
 # The open invoice is already selected, so this adds the settled one beside it rather than
 # replacing it — the cards are laid out oldest first, and tapping the selected one would clear it.
 - tapOn:
@@ -605,8 +610,8 @@ env:
 # The end of the same story, and it could not be reached any earlier: a card is retired by archiving
 # only because it has movement, and it is *allowed* to retire only because it owes nothing. This
 # flow is the one place where both are true of the same card — everything above is what made it so.
-- back
-- back
+- runFlow: ../../subflows/go_back.yaml
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "bottom_navigation_bar"
@@ -639,7 +644,7 @@ env:
 - assertVisible:
     id: "archive_credit_card_confirm"
     enabled: false
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 - extendedWaitUntil:
     notVisible:
       id: "archive_credit_card_confirm"
@@ -655,6 +660,7 @@ env:
     direction: DOWN
     centerElement: true
     timeout: 25000
+- waitForAnimationToEnd
 - tapOn:
     id: "transaction_card_title"
     text: ${NEXT_SPEND_TITLE}
@@ -741,8 +747,8 @@ env:
 # The pager returns to the empty state day zero found it in — the premise for that absence is the
 # pager itself, which renders either the figure or the offer to create a card, never both. The money
 # is untouched: archiving retires a card, it does not undo what was paid through it.
-- back
-- back
+- runFlow: ../../subflows/go_back.yaml
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "bottom_navigation_bar"

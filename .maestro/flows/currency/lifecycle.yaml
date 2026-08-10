@@ -44,7 +44,7 @@ env:
 - assertVisible:
     id: "settings_base_currency_value"
     text: "USD.*"
-- back
+- runFlow: ../../subflows/go_back.yaml
 
 # --- I am paid, in the currency I already had -----------------------------------------------------
 - runFlow:
@@ -90,7 +90,7 @@ env:
 - assertVisible:
     id: "account_form_name"
     text: ${EUR_ACCOUNT}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 # The form opens on the base currency, and the picker is a sheet over it — its own composition root.
 - assertVisible:
     id: "account_form_currency"
@@ -122,11 +122,7 @@ env:
 # The account denominates itself: zero, but zero in euros. Saving leaves the pager on the account it
 # was already showing, so the new one is one page over — and its name is the premise for reading a
 # figure by an id two cards now share.
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
+- runFlow: ../../subflows/next_account.yaml
 - assertVisible: ${EUR_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
@@ -152,12 +148,12 @@ env:
     id: "account_form_name"
 - assertNotVisible:
     id: "currency_picker_option_USD"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 - extendedWaitUntil:
     notVisible:
       id: "account_form_name"
     timeout: 15000
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_accounts"
@@ -214,19 +210,19 @@ env:
 - assertVisible:
     id: "exchange_rate_form_rate"
     text: ".*0[.]80.*"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "exchange_rate_form_save"
 - extendedWaitUntil:
     notVisible:
       id: "exchange_rate_form_save"
     timeout: 15000
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_exchange_rates"
     timeout: 15000
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_settings"
@@ -281,7 +277,7 @@ env:
 - assertVisible:
     id: "transfer_amount"
     text: ".*267[.,]75.*"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 # The archive fills the other end in: 267.75 at the rate written above is 214.20, offered rather
 # than imposed.
 - assertVisible:
@@ -297,7 +293,7 @@ env:
 - assertVisible:
     id: "transfer_destination_amount"
     text: ".*204[.,]40.*"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "transfer_save"
 - extendedWaitUntil:
@@ -313,16 +309,12 @@ env:
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]650[.,]85"
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
+- runFlow: ../../subflows/next_account.yaml
 - assertVisible: ${EUR_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
     text: "[€]204[.,]40"
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_accounts"
@@ -369,7 +361,7 @@ env:
 - assertVisible:
     id: "settings_base_currency_value"
     text: "EUR.*"
-- back
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     notVisible:
       id: "screen_settings"

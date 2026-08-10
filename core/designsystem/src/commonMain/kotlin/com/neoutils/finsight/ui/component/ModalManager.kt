@@ -2,7 +2,9 @@
 
 package com.neoutils.finsight.ui.component
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -12,9 +14,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -113,6 +118,43 @@ internal fun DismissKeyboardWhenCovered(covered: Boolean) {
     }
 }
 
+/**
+ * The sheet's drag handle, which is also how the keyboard is put away.
+ *
+ * A sheet that asks for text has to offer a way to stop asking, and tapping the chrome above the
+ * fields is the gesture people already try. It is also the only spot on a sheet guaranteed to be
+ * neither a control nor under the keyboard, whatever the sheet holds — which is what makes it the
+ * one handle an E2E flow can reach. `hideKeyboard` is not that handle: on iOS Maestro implements it
+ * as two small swipes in the middle of the screen, which on a scrollable sheet scrolls the sheet
+ * instead of dismissing anything, and the command fails.
+ *
+ * Both sheet presentations render it — this one, and the phone presentation of an `AdaptiveModal`
+ * in `DetailSheetHost` — so "the handle" means the same thing wherever a sheet came from.
+ */
+@Composable
+internal fun ReleaseFocusDragHandle() {
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(RELEASE_FOCUS_TEST_TAG)
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus(force = true)
+                    keyboardController?.hide()
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        BottomSheetDefaults.DragHandle()
+    }
+}
+
+private const val RELEASE_FOCUS_TEST_TAG = "modal_release_keyboard"
+
 abstract class Modal {
 
     val key = Uuid.random().toString()
@@ -145,6 +187,7 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
+            dragHandle = { ReleaseFocusDragHandle() },
             content = {
 
                 // Called from inside the sheet: the field that gives up the focus is the one this

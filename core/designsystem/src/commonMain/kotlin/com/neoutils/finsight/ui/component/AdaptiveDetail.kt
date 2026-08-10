@@ -203,6 +203,9 @@ private fun DetailSheetHost(
             // The phone presentation of every AdaptiveModal, and a composition root of its own —
             // without this, no test tag inside any detail sheet reaches the accessibility tree.
             modifier = Modifier.exposeTestTags(),
+            // The same handle every other sheet has: it releases the focus, and it is the one
+            // grip both platforms answer for dragging a sheet closed.
+            dragHandle = { ReleaseFocusDragHandle() },
             content = {
                 DismissKeyboardWhenCovered(covered = LocalModalManager.current.top != null)
 

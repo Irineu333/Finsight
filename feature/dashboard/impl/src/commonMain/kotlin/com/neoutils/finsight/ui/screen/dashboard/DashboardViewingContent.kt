@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.extension.interceptLongPress
+import com.neoutils.finsight.ui.util.windowMode
 import com.neoutils.finsight.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -38,6 +39,14 @@ internal fun DashboardViewingContent(
     state: DashboardUiState.Viewing,
     onAction: (DashboardAction) -> Unit,
 ) {
+    val mode = windowMode()
+    val items = state.items.filter { mode in it.modes }
+
+    if (items.isEmpty()) {
+        DashboardEmptyContent(onAction = onAction)
+        return
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
@@ -58,7 +67,7 @@ internal fun DashboardViewingContent(
             }
         }
 
-        state.items.forEach { variant ->
+        items.forEach { variant ->
             val config = variant.config
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
 

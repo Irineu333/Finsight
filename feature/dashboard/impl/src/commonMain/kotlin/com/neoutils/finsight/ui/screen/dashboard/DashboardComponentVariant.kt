@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.util.WindowMode
 import com.neoutils.finsight.util.UiText
 
 sealed interface DashboardComponentVariant {
@@ -8,6 +9,8 @@ sealed interface DashboardComponentVariant {
     val config: Map<String, String>
     val title: UiText
     val key: String get() = component.key
+
+    val modes: Set<WindowMode> get() = DashboardComponentType.fromKey(key)?.modes ?: WindowMode.ALL
 
     sealed interface TotalBalance : DashboardComponentVariant {
         override val component: DashboardComponent.TotalBalance

@@ -22,7 +22,6 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
-import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
@@ -509,11 +508,7 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions? {
-        // On desktop the persistent rail already exposes every feature, so the quick-actions grid is
-        // redundant — omit the whole section (rather than render an empty, header-only gap).
-        if (isDesktop) return null
-
+    private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions {
         val hiddenActions = parseHiddenActionKeys(config)
 
         val allActions = navCatalog.destinations.filter { !it.primaryTab }

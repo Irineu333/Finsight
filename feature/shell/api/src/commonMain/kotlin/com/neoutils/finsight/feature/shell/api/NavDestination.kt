@@ -7,9 +7,10 @@ import org.jetbrains.compose.resources.StringResource
 
 /**
  * Single source of truth for a navigable section of the app. The adaptive shell projects the
- * catalog into each affordance: the desktop rail (`!mobileOnly`), the mobile bottom bar
- * (`primaryTab`) and the mobile quick-actions grid (`!primaryTab`). The `mobileOnly` flag marks a
- * destination whose feature is not supported on desktop, excluding it from the desktop rail.
+ * catalog into each affordance: the navigation rail of a wide window (`!mobileOnly`), the bottom
+ * bar of a narrow one (`primaryTab`) and the dashboard's quick-actions grid (`!primaryTab`), which
+ * accompanies the bottom bar and steps aside when the rail takes over. The `mobileOnly` flag marks
+ * a destination whose feature is not supported on desktop, excluding it from the rail.
  */
 data class NavDestination(
     override val icon: ImageVector,

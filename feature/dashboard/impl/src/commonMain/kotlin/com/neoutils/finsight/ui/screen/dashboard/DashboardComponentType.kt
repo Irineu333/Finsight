@@ -1,8 +1,16 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.ui.util.WindowMode
+
+/**
+ * @property modes the window modes this component is shown in. A component is offered in every
+ * mode unless it says otherwise — what a narrower list says is that another affordance of that
+ * layout already does the component's job.
+ */
 enum class DashboardComponentType(
     val key: String,
     val defaultConfig: Map<String, String> = emptyMap(),
+    val modes: Set<WindowMode> = WindowMode.ALL,
 ) {
     TOTAL_BALANCE(
         key = "total_balance",
@@ -102,6 +110,7 @@ enum class DashboardComponentType(
             DashboardComponentConfig.SHOW_HEADER to "true",
             QuickActionsConfig.HIDDEN_ACTIONS to "",
         ),
+        modes = setOf(WindowMode.COMPACT),
     );
 
     companion object {

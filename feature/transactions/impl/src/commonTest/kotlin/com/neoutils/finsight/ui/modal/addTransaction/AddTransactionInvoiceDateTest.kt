@@ -40,6 +40,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -208,6 +210,27 @@ class AddTransactionInvoiceDateTest {
                 YearMonth(2026, 4),
                 state.invoiceSelection?.dueMonth,
                 "and it did not drag the invoice with it",
+            )
+            assertTrue(state.isDateOutsideInvoice, "the sheet says so, and stops there")
+        }
+    }
+
+    @Test
+    fun `a date the invoice admits is not flagged`() = runTest(dispatcher) {
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            viewModel.onAction(AddTransactionAction.ChangeTarget(TransactionTarget.CREDIT_CARD))
+            advanceUntilIdle()
+
+            assertFalse(expectMostRecentItem().isDateOutsideInvoice, "today opened inside it")
+
+            viewModel.onAction(AddTransactionAction.SelectInvoiceMonth(YearMonth(2026, 1)))
+            advanceUntilIdle()
+
+            assertFalse(
+                expectMostRecentItem().isDateOutsideInvoice,
+                "and the projection put it inside the new one",
             )
         }
     }

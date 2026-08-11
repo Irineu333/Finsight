@@ -272,6 +272,11 @@ class EditTransactionModal(
                             )
                         }
                     },
+                    // Said, not corrected — and here least of all: on an existing transaction
+                    // the date is what the user wrote and the ledger kept.
+                    supportingText = if (uiState.isDateOutsideInvoice) {
+                        { Text(text = stringResource(Res.string.transaction_date_outside_invoice)) }
+                    } else null,
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier.fillMaxWidth()

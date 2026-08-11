@@ -382,6 +382,7 @@
     <string name="add_transaction_title_label">Title</string>
     <string name="add_transaction_amount_label">Amount</string>
     <string name="add_transaction_date_label">Date</string>
+    <string name="transaction_date_outside_invoice">Outside this invoice's period</string>
     <string name="add_transaction_save">Save</string>
     <string name="add_transaction_expense">Expense</string>
     <string name="add_transaction_income">Income</string>

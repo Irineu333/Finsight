@@ -51,6 +51,14 @@ data class AddTransactionUiState(
 
     val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
 
+    /**
+     * Whether the date sits outside the period the selected invoice admits — something the
+     * sheet says and never corrects. Decided here rather than in the composable, for the
+     * same reason [canSubmit] is: a decision reachable only through a device is a decision
+     * no test can reach.
+     */
+    val isDateOutsideInvoice = invoiceSelection?.diverges(form.date) == true
+
     val categories = when {
         form.type.isIncome -> incomeCategories
         form.type.isExpense -> expenseCategories

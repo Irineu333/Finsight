@@ -292,6 +292,11 @@ class AddTransactionModal : ModalBottomSheet() {
                         )
                     }
                 },
+                // Said, not corrected: a date the user moved out of the invoice's period is
+                // still theirs, and the invoice is what the expense lands on either way.
+                supportingText = if (uiState.isDateOutsideInvoice) {
+                    { Text(text = stringResource(Res.string.transaction_date_outside_invoice)) }
+                } else null,
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth()

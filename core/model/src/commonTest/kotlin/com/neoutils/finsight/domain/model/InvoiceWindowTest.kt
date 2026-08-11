@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -122,6 +123,34 @@ class InvoiceWindowTest {
 
         assertTrue(inside in window)
         assertEquals(inside, window.dateOn(inside.day))
+    }
+
+    @Test
+    fun `a selection reports a date its window does not admit`() {
+        val card = card(closingDay = 10, dueDay = 20)
+        val selection = InvoiceMonthSelection(
+            creditCard = card,
+            dueMonth = YearMonth(2026, 4),
+            existingInvoice = null,
+        )
+
+        // The invoice due in April admits 10/03 up to (but not including) 10/04.
+        assertFalse(selection.diverges("15/03/2026"), "just past the opening day")
+        assertFalse(selection.diverges("05/04/2026"), "just before the closing day")
+        assertTrue(selection.diverges("05/03/2026"), "before the cycle opened")
+        assertTrue(selection.diverges("20/04/2026"), "after it closed")
+    }
+
+    @Test
+    fun `a date still being typed states no divergence`() {
+        val selection = InvoiceMonthSelection(
+            creditCard = card(closingDay = 10, dueDay = 20),
+            dueMonth = YearMonth(2026, 4),
+            existingInvoice = null,
+        )
+
+        assertFalse(selection.diverges("05/0"))
+        assertFalse(selection.diverges(""))
     }
 
     @Test

@@ -82,4 +82,29 @@ não editam arquivo algum.
 
 - [x] 7.1 Rodar a suíte e ler a saída; reportar o resultado real, não a expectativa. **Desvio registrado:** `./gradlew allTests` não fecha nesta máquina — `:app:shared:linkDebugTestIosSimulatorArm64` e `:app:shared:linkDebugTestIosX64` falham com `ld: framework 'FirebaseCore' not found`, e a árvore limpa (`git stash -u`) falha igual, então é o ambiente e não a mudança. Rodado `./gradlew jvmTest testDebugUnitTest --rerun-tasks` (37 tarefas de teste, BUILD SUCCESSFUL) mais `:core:model:compileTestKotlinIosSimulatorArm64` e `:feature:creditcards:impl:compileKotlinIosSimulatorArm64` para cobrir a compilação Kotlin/Native.
 - [x] 7.2 Conferir no diff que o escopo declarado foi respeitado: nenhuma string nova em `core/resources/.../values/strings.xml` nem em `values-en/strings.xml`; nenhuma alteração em `:core:ledger`, no banco, nas migrações, no `TransactionForm` ou no boundary de escrita; o modal de editar transação tocado apenas pelo campo novo de `InvoiceMonthSelection`.
+> **Nota sobre 7.2:** o grupo 8, pedido depois desta verificação, invalidou duas de suas
+> conferências — há **uma** string nova (nos dois idiomas) e o modal de editar transação passou
+> a ser tocado também pelo aviso. As demais continuam valendo: nada em `:core:ledger`, no banco,
+> nas migrações, no `TransactionForm` ou no boundary de escrita.
+
 - [ ] 7.3 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os dois modais de criação com alvo cartão: abrir e confirmar que a data é hoje; navegar uma fatura para trás e ver a data recolocada; navegar para uma fatura futura e ver a trava em hoje; digitar uma data fora da janela e confirmar que a fatura não se move e o texto não é sobrescrito.
+
+## 8. Aviso discreto de data fora da janela (não previsto)
+
+*Pedido depois de os grupos 1–7 estarem prontos e verificados, e por isso registrado como
+acréscimo e não como correção do plano.* Os artefatos originais afirmam que a divergência entre
+data e fatura é **aceita e silenciosa** (`invoice-governs-date`, "Editar a data não move a fatura":
+a data "SHALL ser preservada exatamente como escrita"). Isso continua verdadeiro — o aviso
+**diz**, não corrige, e nada na hierarquia muda. O que muda é que a divergência deixa de ser
+invisível.
+
+*Barreira de entrada:* grupo 5 concluído — sem a janela na seleção não há o que comparar.
+*Barreira de saída:* `./gradlew jvmTest testDebugUnitTest` verde, a chave existe nos dois
+idiomas, e nenhum `*Modal.kt` decide se o aviso aparece.
+
+- [x] 8.1 Em `core/model/.../InvoiceMonthSelection.kt`, acrescentar `fun diverges(date: String): Boolean` — dona única da pergunta "esta data está fora do que a fatura admite". Uma data ainda sendo digitada não é interpretável e por isso **não** diverge, em vez de acusar.
+- [x] 8.2 Acrescentar `transaction_date_outside_invoice` a `values/strings.xml` e `values-en/strings.xml`, na mesma mudança — uma chave presente em só um dos dois é bug.
+- [x] 8.3 Expor `val isDateOutsideInvoice = invoiceSelection?.diverges(form.date) == true` nos três UiStates (`AddTransactionUiState`, `AddInstallmentUiState`, `EditTransactionUiState`), ao lado de `isInvoiceBlocked`, que já é o precedente. `val` derivado e não campo de construtor: os dois insumos já estão no próprio estado, então derivar torna impossível ficar defasado.
+- [x] 8.4 Consumir nos três modais como `supportingText` do campo de data, gated apenas por `uiState.isDateOutsideInvoice`. Deliberadamente **sem** cor de erro: divergir não é errar. Nenhuma decisão fica na composable.
+- [x] 8.5 O modal de **editar** transação também recebe o aviso, sem que isso contradiga a D6: um aviso não altera nada, e é ali que a divergência é mais provável — a data é dado antigo e a cascata não roda.
+- [x] 8.6 Testes: seis casos de `diverges` em `InvoiceWindowTest` (dentro nas duas bordas, antes da abertura, depois do fechamento, data incompleta, data vazia) e duas asserções de `isDateOutsideInvoice` em `AddTransactionInvoiceDateTest` — acusa quando o usuário escreve fora, e **não** acusa depois de uma projeção, que é o que prova que aviso e cascata concordam.

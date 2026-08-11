@@ -45,6 +45,13 @@ data class EditTransactionUiState(
 
     val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
 
+    /**
+     * Whether the date sits outside the period the selected invoice admits — something the
+     * sheet says and never corrects. It is likeliest here of all: on an existing transaction
+     * the date is what the user wrote and the ledger kept, and no invoice may move it.
+     */
+    val isDateOutsideInvoice = invoiceSelection?.diverges(form.date) == true
+
     val categories = when {
         form.type.isIncome -> incomeCategories
         form.type.isExpense -> expenseCategories

@@ -23,4 +23,11 @@ data class AddInstallmentUiState(
     val currency: String? = null,
 ) {
     val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
+
+    /**
+     * Whether the date sits outside the period the selected invoice admits — something the
+     * sheet says and never corrects. The instalments are laid out one month apart from this
+     * date, so a first one outside its own invoice carries the whole arrangement with it.
+     */
+    val isDateOutsideInvoice = invoiceSelection?.diverges(form.date) == true
 }

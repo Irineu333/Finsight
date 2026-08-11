@@ -20,51 +20,55 @@ import com.neoutils.finsight.ui.model.CreditCardUi
  * denominated by the account that originated it.
  */
 sealed interface DashboardComponent {
-    val key: String
+    /** What this component is, and everything the catalog declares about it. */
+    val type: DashboardComponentType
+
+    /** How the component is named in the saved layout — the type's own key. */
+    val key: String get() = type.key
 
     data class TotalBalance(
         val amount: ConsolidatedAmount,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.TOTAL_BALANCE.key
+        override val type = DashboardComponentType.TOTAL_BALANCE
     }
 
     data class OverallBalanceStats(
         val income: ConsolidatedAmount,
         val expense: ConsolidatedAmount,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.OVERALL_BALANCE_STATS.key
+        override val type = DashboardComponentType.OVERALL_BALANCE_STATS
     }
 
     data class ConcreteBalanceStats(
         val income: ConsolidatedAmount,
         val expense: ConsolidatedAmount,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.CONCRETE_BALANCE_STATS.key
+        override val type = DashboardComponentType.CONCRETE_BALANCE_STATS
     }
 
     data class PendingBalanceStats(
         val pendingIncome: ConsolidatedAmount,
         val pendingExpense: ConsolidatedAmount,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.PENDING_BALANCE_STATS.key
+        override val type = DashboardComponentType.PENDING_BALANCE_STATS
     }
 
     data class CreditCardBalanceStats(
         val payment: ConsolidatedAmount,
         val expense: ConsolidatedAmount,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key
+        override val type = DashboardComponentType.CREDIT_CARD_BALANCE_STATS
     }
 
     data class AccountsOverview(
         val accounts: List<DashboardAccountUi>,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.ACCOUNTS_OVERVIEW.key
+        override val type = DashboardComponentType.ACCOUNTS_OVERVIEW
     }
 
     sealed interface CreditCardsPager : DashboardComponent {
-        override val key: String
-            get() = DashboardComponentType.CREDIT_CARDS_PAGER.key
+        override val type: DashboardComponentType
+            get() = DashboardComponentType.CREDIT_CARDS_PAGER
 
         data class Content(
             val creditCards: List<CreditCardUi>,
@@ -83,13 +87,13 @@ sealed interface DashboardComponent {
     data class SpendingByCategory(
         val categorySpending: List<CategorySpending>,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.SPENDING_BY_CATEGORY.key
+        override val type = DashboardComponentType.SPENDING_BY_CATEGORY
     }
 
     data class IncomeByCategory(
         val categoryIncome: List<CategorySpending>,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.INCOME_BY_CATEGORY.key
+        override val type = DashboardComponentType.INCOME_BY_CATEGORY
     }
 
     data class Budgets(
@@ -101,13 +105,13 @@ sealed interface DashboardComponent {
          */
         val targetMonth: YearMonth,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.BUDGETS.key
+        override val type = DashboardComponentType.BUDGETS
     }
 
     data class PendingRecurring(
         val recurringList: List<PendingRecurringUi>,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.PENDING_RECURRING.key
+        override val type = DashboardComponentType.PENDING_RECURRING
     }
 
     data class Recents(
@@ -117,13 +121,13 @@ sealed interface DashboardComponent {
         val transactions: List<TransactionUi>,
         val hasMore: Boolean,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.RECENTS.key
+        override val type = DashboardComponentType.RECENTS
     }
 
     data class QuickActions(
         val actions: List<NavDestination>,
     ) : DashboardComponent {
-        override val key = DashboardComponentType.QUICK_ACTIONS.key
+        override val type = DashboardComponentType.QUICK_ACTIONS
     }
 }
 

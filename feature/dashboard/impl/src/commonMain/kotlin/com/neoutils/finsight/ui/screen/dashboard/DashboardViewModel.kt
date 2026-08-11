@@ -78,8 +78,8 @@ class DashboardViewModel(
     /**
      * The transactions plus what the ledger cannot name for them: the category
      * behind a leg's dimension and the installment behind its id (design D6).
-     * Combined into one flow because the dashboard's own combine is already at the
-     * arity ceiling — and because they always travel together anyway.
+     * Combined into one flow because they always travel together: nothing below
+     * ever reads one of them without the others.
      */
     private val transactionsWithFacades = combine(
         transactionRepository.observeAllTransactions(),
@@ -88,8 +88,8 @@ class DashboardViewModel(
         // The total balance of this screen is the app's most consolidated figure, and a
         // rate is what turns two currencies into it — but registering a rate writes no
         // entry, so the ledger's own trigger never reaches here. Fused into this flow
-        // rather than added below for the same reason the facades are: that combine is
-        // at the arity ceiling.
+        // rather than added below because it is a reason to recompute the very same
+        // figures, and not a source of its own.
         observeConsolidationChanges(),
     ) { transactions, categories, installments, _ ->
         transactions to TransactionFacadeLookup.of(categories, installments)

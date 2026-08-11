@@ -10,7 +10,8 @@ sealed interface DashboardComponentVariant {
     val title: UiText
     val key: String get() = component.key
 
-    val modes: Set<WindowMode> get() = DashboardComponentType.fromKey(key)?.modes ?: WindowMode.ALL
+    /** The window modes this component is shown in, as its type declares them. */
+    val modes: Set<WindowMode> get() = component.type.modes
 
     sealed interface TotalBalance : DashboardComponentVariant {
         override val component: DashboardComponent.TotalBalance

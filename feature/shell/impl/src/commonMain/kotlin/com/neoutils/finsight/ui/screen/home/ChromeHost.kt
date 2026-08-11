@@ -31,7 +31,6 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +44,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.window.core.layout.WindowSizeClass
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.LocalChromeController
@@ -62,6 +60,7 @@ import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.ui.component.NavigationRailBar
 import com.neoutils.finsight.ui.component.OverlayPriority
 import com.neoutils.finsight.ui.util.isExtraWideWindow
+import com.neoutils.finsight.ui.util.isWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -112,8 +111,9 @@ fun ChromeHost(
         }
     }
 
-    val isWideWindow = currentWindowAdaptiveInfo().windowSizeClass
-        .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    // The one breakpoint, read from where it is declared: a screen that adapts to the rail being
+    // up must be reading the very same fact the shell decided it by, and not a number that agrees.
+    val isWideWindow = isWideWindow()
 
     // Note: the back affordance is owned by each screen (a feature's main screen hides it in wide
     // windows via `isWideWindow()`; pushed sub-destinations always show it), not propagated from here.

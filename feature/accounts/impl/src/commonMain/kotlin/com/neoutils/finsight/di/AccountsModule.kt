@@ -19,6 +19,8 @@ import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
 import com.neoutils.finsight.domain.usecase.LaunchYieldUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCase
+import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCaseImpl
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
@@ -82,6 +84,9 @@ val accountsModule = module {
             recurringRepository = get(),
         )
     }
+    factory<SuggestAccountIconUseCase> {
+        SuggestAccountIconUseCaseImpl(accountRepository = get())
+    }
     factory { UnarchiveAccountUseCase(repository = get()) }
     factory { EnsureYieldCategoryUseCase(categoryRepository = get()) }
     factory {
@@ -122,6 +127,7 @@ val accountsModule = module {
         AccountFormViewModel(
             account = it.getOrNull(),
             validateAccountName = get(),
+            suggestAccountIcon = get(),
             baseCurrencyRepository = get(),
             currencyRepository = get(),
             createAccountUseCase = get(),

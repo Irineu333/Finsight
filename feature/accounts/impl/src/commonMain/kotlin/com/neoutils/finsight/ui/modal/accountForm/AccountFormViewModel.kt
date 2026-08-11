@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.EditAccount
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
+import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -29,6 +30,10 @@ import kotlinx.coroutines.launch
 class AccountFormViewModel(
     private val account: Account?,
     private val validateAccountName: ValidateAccountNameUseCase,
+    // Which icon a new account opens on is a derivation over the icons already in
+    // use, and it has a single owner in the domain — the form consumes it and
+    // reimplements neither the criterion nor the order of preference.
+    private val suggestAccountIcon: SuggestAccountIconUseCase,
     // The base currency is a **pre-selection** here and denominates nothing: it answers
     // "which currency is this new account most likely in", exactly as it does for the
     // account a fresh install starts with. What the account is actually denominated in
@@ -51,6 +56,11 @@ class AccountFormViewModel(
 
     private val name = MutableStateFlow(account?.name.orEmpty())
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(account?.iconKey ?: AppIcon.WALLET.key))
+
+    // The suggestion needs a database read, so it lands after the form is already on
+    // screen. This says whether the user got there first — if they did, their choice
+    // stands and the suggestion is dropped.
+    private var hasPickedIcon = false
 
     private val validation = ObservableMutableMap(
         map = mutableMapOf(
@@ -119,6 +129,17 @@ class AccountFormViewModel(
         )
     )
 
+    init {
+        // Only a new account is suggested one: an existing account opens on the icon
+        // it already has, even if another account uses the same.
+        if (!isEditMode) {
+            viewModelScope.launch {
+                val suggestion = suggestAccountIcon()
+                if (!hasPickedIcon) selectedIcon.value = suggestion
+            }
+        }
+    }
+
     fun onAction(action: AccountFormAction) {
         when (action) {
             is AccountFormAction.NameChanged -> {
@@ -134,6 +155,7 @@ class AccountFormViewModel(
             }
 
             is AccountFormAction.IconSelected -> {
+                hasPickedIcon = true
                 selectedIcon.value = action.icon
             }
 

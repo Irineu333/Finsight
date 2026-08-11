@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
 import com.neoutils.finsight.ui.screen.accounts.FakeCategoryRepository
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -59,6 +60,7 @@ class AccountFormCurrencyRowTest {
         return AccountFormViewModel(
             account = account,
             validateAccountName = ValidateAccountNameUseCase(repository),
+            suggestAccountIcon = SuggestAccountIconUseCaseImpl(repository),
             baseCurrencyRepository = StubBaseCurrency(base),
             currencyRepository = StubCurrencies(),
             createAccountUseCase = CreateAccountUseCase(
@@ -130,35 +132,42 @@ class AccountFormCurrencyRowTest {
     }
 }
 
-private class StubBaseCurrency(base: String) : IBaseCurrencyRepository {
+internal class StubBaseCurrency(base: String) : IBaseCurrencyRepository {
     private val flow = MutableStateFlow(base)
     override fun observe(): StateFlow<String> = flow
     override suspend fun set(code: String) { flow.value = code }
 }
 
-private class StubAnalytics : Analytics {
+internal class StubAnalytics : Analytics {
     override fun logScreenView(screenName: String) = Unit
     override fun logEvent(event: Event) = Unit
     override fun setUserId(id: String?) = Unit
 }
 
-private class StubCrashlytics : Crashlytics {
+internal class StubCrashlytics : Crashlytics {
     override fun setUserId(id: String?) = Unit
     override fun recordException(e: Throwable) = Unit
 }
 
-private class StubAccounts : IAccountRepository {
+/**
+ * The account facade as the form reads it: `getAllAccounts` answers with the open
+ * ones only, exactly as the query behind it does — the archived ones reach nothing
+ * but the listing that asks for them by name.
+ */
+internal class StubAccounts(
+    private val accounts: List<Account> = emptyList(),
+) : IAccountRepository {
     override suspend fun hasYieldingAccount(): Boolean = false
-    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
-    override suspend fun getAllAccounts(): List<Account> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
+    override suspend fun getAllAccounts(): List<Account> = accounts.filterNot { it.isArchived }
     override suspend fun getAccountById(accountId: Long): Account? = null
     override suspend fun update(account: Account) = Unit
     override suspend fun delete(account: Account) = Unit
     override suspend fun reopen(accountId: Long) = Unit
-    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
-    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
-    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts.filterNot { it.isArchived })
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts)
+    override suspend fun getAllLedgerAccounts(): List<Account> = accounts
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
     override fun observeAccountById(accountId: Long): Flow<Account?> = flowOf(null)
     override suspend fun getDefaultAccount(): Account? = null
     override fun observeDefaultAccount(): Flow<Account?> = flowOf(null)
@@ -171,7 +180,7 @@ private class StubAccounts : IAccountRepository {
  * not matter here — what the form does with the currency is the subject, and the set is
  * stored data with an owner of its own.
  */
-private class StubCurrencies : ICurrencyRepository {
+internal class StubCurrencies : ICurrencyRepository {
     private val rows = listOf(
         CurrencyInfo("BRL", "R$", "Real brasileiro"),
         CurrencyInfo("USD", "US$", "Dólar americano"),

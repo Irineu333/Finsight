@@ -18,11 +18,14 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 
 ## Commands
 ```bash
-./gradlew allTests                                          # All tests
+./gradlew allTests                                          # JVM + Android + the iOS suites that link here (see build-logic)
+./gradlew iosSimulatorArm64Test                             # The iOS suites alone
 ./gradlew :app:shared:testDebugUnitTest --tests "*.XxxTest" # Single test class
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK
 ./gradlew :app:desktop:run                                 # Run Desktop app
+(cd iosApp && ./generate-project.sh)                       # Regenerate iosApp.xcodeproj (XcodeGen)
+./gradlew :app:ios:linkDebugFrameworkIosSimulatorArm64     # Build the iOS framework alone
 maestro test .maestro                                      # Maestro E2E suite (see .maestro/README.md first)
 ```
 
@@ -37,12 +40,14 @@ maestro test .maestro                                      # Maestro E2E suite (
 - **Budgets**: budget progress per category
 - **Settings**: base currency and the local exchange-rate archive
 
-## Module structure (feature api/impl + core + app)
+## Module structure (feature api/impl + core + library + app)
 
 The app is modularized by **feature** in the **api/impl** pattern, on top of a set of
-**core** modules, with the app split into single-responsibility `app/` modules. Rules are
-enforced mechanically by convention plugins in `build-logic`
-(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`).
+**core** modules and a set of **library** adapters, with the app split into
+single-responsibility `app/` modules. The build setup each kind of module gets comes from
+convention plugins in `build-logic`
+(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`);
+the dependency rules below are written, not compiled — they hold by review.
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `ledger` (the double-entry
@@ -55,13 +60,23 @@ enforced mechanically by convention plugins in `build-logic`
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models — never names a feature), `database` (the facade entities/DAOs,
-  `AppDatabase` and every migration + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
-  no-op services).
+  `AppDatabase` and every migration + shared mappers).
+- **`library/<name>/{api,impl}`** — an adapter over an external library that has no
+  official Kotlin Multiplatform support, so that the rest of the app can consume it as if
+  it did. `analytics`, `crashlytics` and `auth` live here: each wraps the GitLive bindings
+  over the Firebase SDKs, which are Android and iOS libraries with a community port, not a
+  multiplatform product. The pattern is the feature's, for the same reason — the `api` is
+  the contract (`Analytics`, the `Event` catalog, `Crashlytics`, `AuthService`) and names
+  no vendor; the `impl` holds one provider per platform: Firebase on Android and iOS, and
+  the no-op the Desktop runs because none of these services exists there. Only
+  `:app:shared` depends on an `impl`, which is what keeps the Firebase `cinterop` out of
+  every feature — and is why a feature's iOS test suite can be linked at all.
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
-  use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
+  use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`
+  and `:library:*:api`.
 - **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,
   mappers, the feature's Koin module and `NavGraphBuilder.<name>Graph()`. May depend on
-  any `feature:*:api` and `:core:*`.
+  any `feature:*:api`, `:core:*` and `:library:*:api`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
     `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `HomeChromeHost`),
@@ -71,7 +86,15 @@ enforced mechanically by convention plugins in `build-logic`
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
   - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
   - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
-    (exports `:core:*` + `feature:*:api`).
+    (exports `:core:*` + `:library:*:api` + `feature:*:api`). Two extra source sets,
+    `src/iosDebug` and `src/iosRelease`, stand in for the build types Kotlin/Native does not
+    have: `iosApp/project.yml` passes `-Pfinsight.debugTools=true` from Xcode's Debug
+    configuration and from nowhere else, and that flag decides which one is compiled.
+  - **`:app:debug`** — KMP, what a debug build substitutes for what a device cannot be asked
+    for: the movable clock (`ShiftableClock`, `applyTimeTravel`), support answered in memory
+    and a rate source that quotes nothing. It names ports only (`ISupportRepository`,
+    `IRemoteRateSource`), never a provider. Android depends on it from `debugImplementation`,
+    iOS from `src/iosDebug`; a release build of either does not compile it.
   - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
     `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
     `:core:designsystem`); `:app:shared` only aggregates.
@@ -81,13 +104,16 @@ categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceT
 recurring, transactions, report, dashboard, settings.
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
+> For the adapters: **`library/README.md`** (what belongs there, the per-platform provider
+> pattern, why the no-op is not a test double).
 
 ## Conventions
 
 **Architecture:** Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Dependency Rule (modules):** (1) api ⊄ api, (2) impl ⊄ impl, (3) api ⊄ impl,
-(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s. Cycles between features
+(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s — of a feature or of a
+`library` adapter alike, since the rule is about the pair, not about the group. Cycles between features
 are impossible by construction (star topology). **Layer rule (within a module):**
 Domain <- Database, Domain <- UI.
 
@@ -110,6 +136,17 @@ markers live in `:core:navigation`, making every route findable by its implement
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 
 **Error Handling:** Arrow library (Either/flatMap/catch)
+
+**iOS targets and their tests:** every module declares `iosArm64` (device) and
+`iosSimulatorArm64`; `iosX64`, the Intel simulator, is deliberately absent. The common
+suite is compiled for both targets — that compilation is what proves the shared code stays
+Kotlin/Native-legal — but a test *executable* is linked only where it can be started:
+the simulator, on an Apple Silicon host. A module whose link classpath reaches Firebase
+gets no executable either, because those bindings are `cinterop`s over frameworks only
+Xcode resolves through SPM, and `ld` fails with `framework 'FirebaseCore' not found`.
+That last exception is a limitation of Kotlin 2.3, not a design: KGP 2.4 imports Swift
+packages through `swiftPMDependencies {}`, which makes Kotlin/Native tests link against
+them with no extra configuration. Both rules live in `build-logic` (`Extensions.kt`).
 
 > More details in `feature/README.md`.
 > The iOS project uses **XcodeGen** (`iosApp/project.yml`).
@@ -151,22 +188,29 @@ compiler, not by discipline (see below).
 > write surfaces with examples, the two ports, and what is derived rather than persisted.
 
 ## E2E (Maestro)
-Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour.
+Flows live in **`.maestro/`** and drive the real app; the unit suite still owns behaviour. **The
+same 13 flows run on Android and on iOS**, from one file each — what the two platforms do
+differently was settled in the app, not in the YAML (`.maestro/README.md` §2.5).
 
 **There is no setup script and no CI job today.** The suite is run by hand, and whoever runs it — human or
 AI agent, no distinction — owns building and checking the device it needs: an **API 36 `pixel_6`
-AVD, in English, with an on-screen keyboard and no hardware keyboard**. Nothing verifies that for
-you and most of it cannot be fixed once the AVD has booted, so a divergent device makes the run
-*invalid*. **Read `.maestro/README.md` §2 before running** — the seven `adb` checks, how to create
-the AVD, and how to pin the target when more than one device is connected. Reinstall the debug APK
-first (`./gradlew :app:android:installDebug`); the release build does not work. Report which device
-the run happened on — a bare "12/12 green" is a claim with nothing behind it.
+AVD** and an **iPhone 16 / iOS 18.5 simulator**, both **in English with an on-screen keyboard**.
+Nothing verifies that for you; on Android most of it cannot be fixed once the AVD has booted, and on
+iOS the opposite trap applies — CoreSimulator re-injects the Mac's language on every boot, so the
+locale and keyboard keys have to be rewritten *after* booting, every time. A divergent device makes
+the run *invalid*. **Read `.maestro/README.md` §2 before running** — the checks per platform, how to
+create each device, and how to pin the target. Reinstall the debug build first
+(`./gradlew :app:android:installDebug`, or rebuild and `xcrun simctl install`); the release build
+does not work, because the substitutions the suite depends on live in `:app:debug`. Report which
+device the run happened on — a bare "13/13 green" is a claim with nothing behind it.
 
-Two conventions reach into the app's code, not just the flows: elements are reached by **`id:`**,
-never by label (copy gets reworded), and an `id` is a Compose `Modifier.testTag` that only reaches
-Maestro because its composition root published it with `Modifier.exposeTestTags()`
+Three conventions reach into the app's code, not just the flows: elements are reached by **`id:`**,
+never by label (copy gets reworded); an `id` is a Compose `Modifier.testTag` that only reaches
+Maestro on Android because its composition root published it with `Modifier.exposeTestTags()`
 (`core/designsystem` — `ui/util/ExposeTestTags`) — a modal sheet, dialog or popup is its own root
-and needs its own call.
+and needs its own call, while iOS maps a test tag onto the accessibility identifier by itself; and
+**the suite never asks the app to change shape for it** — a tap that misses is fixed with a
+tap point relative to the element, not by moving the control it missed.
 
 > Normative reference: **`.maestro/README.md`** — how to run, the device, the suite map, writing a flow.
 

@@ -27,7 +27,7 @@ name: record_categorized_expense
 - assertVisible:
     id: "add_transaction_title"
     text: ${TITLE}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 # The category is picked by the name the calling flow created itself, so selecting it is selecting
 # the thing under test. This selector closes on choice — unlike the budget form's, which does not.
@@ -36,6 +36,7 @@ name: record_categorized_expense
       id: "add_transaction_category"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_category"
 - extendedWaitUntil:
@@ -49,17 +50,19 @@ name: record_categorized_expense
       id: "add_transaction_amount"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_amount"
 - waitForAnimationToEnd
 - inputText: ${AMOUNT}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "add_transaction_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_save"
 - extendedWaitUntil:

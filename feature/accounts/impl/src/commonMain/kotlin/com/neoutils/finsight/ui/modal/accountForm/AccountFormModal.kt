@@ -416,6 +416,12 @@ private fun YieldsInterestSelector(
                     fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    // The switch's state, in words the user reads and a flow can assert. The
+                    // control itself cannot answer for it across platforms: Android publishes a
+                    // toggle as `checked` and iOS as `selected`, so `checked: true` is an
+                    // Android-only reading. This caption is one string on both, and it proves
+                    // more — that the row rendered the new state, not merely that a flag flipped.
+                    modifier = Modifier.testTag("account_form_yield_state"),
                 )
             }
 

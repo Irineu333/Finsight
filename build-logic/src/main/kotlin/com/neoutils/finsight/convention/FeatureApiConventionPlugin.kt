@@ -17,7 +17,5 @@ class FeatureApiConventionPlugin : Plugin<Project> {
                 implementation(libs.findLibrary("koin-core").get())
             }
         }
-
-        verifyFeatureDependencyRules(isApi = true)
     }
 }

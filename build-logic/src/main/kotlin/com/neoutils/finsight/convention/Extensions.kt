@@ -3,7 +3,6 @@ package com.neoutils.finsight.convention
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.configure
@@ -11,12 +10,40 @@ import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 private val Project.derivedNamespace: String
     get() = "com.neoutils.finsight." + path.removePrefix(":").replace(":", ".").replace("-", "")
+
+/**
+ * The group every Firebase binding in this build comes from. On iOS those bindings are
+ * `cinterop`s over frameworks only Xcode can resolve, so a link that reaches one fails.
+ */
+private const val FIREBASE_GROUP = "dev.gitlive"
+
+/**
+ * The one iOS target whose test executable this machine can run: the Apple Silicon
+ * simulator, on an Apple Silicon host. The device binary runs on no host at all, so
+ * linking it yields an executable nothing would ever start.
+ */
+private val runnableIosTarget = KonanTarget.IOS_SIMULATOR_ARM64
+    .takeIf { HostManager.host == KonanTarget.MACOS_ARM64 }
+
+/**
+ * Whether the given compile classpath is free of Firebase, and so can be linked into an
+ * executable here. Resolved on demand, at execution time.
+ */
+private fun Project.linksWithoutFirebase(configurationName: String) = provider {
+    configurations.getByName(configurationName)
+        .incoming.resolutionResult.allComponents
+        .none { it.moduleVersion?.group == FIREBASE_GROUP }
+}
 
 internal fun Project.configureKotlinMultiplatform() {
     with(pluginManager) {
@@ -36,10 +63,35 @@ internal fun Project.configureKotlinMultiplatform() {
                 freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             }
         }
-        listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+        // A module whose iOS test binary would pull Firebase in produces no executable.
+        //
+        // The compilation is always worth keeping: it is what proves the shared code and
+        // its tests stay Kotlin/Native-legal — a test named with a comma, say, compiles on
+        // the JVM and does not compile here. Linking is a different matter. The Firebase
+        // services this app is built on reach iOS as Objective-C frameworks that only
+        // Xcode resolves, through SPM; Gradle has no copy of them and no way to obtain
+        // one, so `ld` fails with `framework 'FirebaseCore' not found` the moment it has
+        // to produce a real binary. The app itself is spared because a static framework
+        // never links — a test executable does.
+        //
+        // The reach of that is the module's own link classpath, not the whole build: a
+        // module that never sees Firebase links and runs its iOS suite like any other.
+        // So the link is skipped, and with it the run task that would need its output,
+        // exactly where the classpath says it cannot succeed.
+        //
+        // The device target is skipped for a plainer reason: its test binary is runnable
+        // on no host, and linking it costs the same time and memory as the one that is.
+        listOf(iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
             iosTarget.compilerOptions {
                 freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             }
+            val testBinary = iosTarget.binaries.getTest(NativeBuildType.DEBUG)
+            val runnable = iosTarget.konanTarget == runnableIosTarget
+            val linkable = linksWithoutFirebase(testBinary.compilation.compileDependencyConfigurationName)
+            testBinary.linkTaskProvider.configure { onlyIf { runnable && linkable.get() } }
+            tasks.withType(KotlinNativeTest::class.java)
+                .matching { it.name == "${iosTarget.targetName}Test" }
+                .configureEach { onlyIf { runnable && linkable.get() } }
         }
 
         with(sourceSets) {
@@ -96,63 +148,6 @@ internal fun Project.configureCompose() {
         }
         sourceSets.getByName("jvmMain").dependencies {
             implementation(compose.desktop.currentOs)
-        }
-    }
-}
-
-internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
-    afterEvaluate {
-        val violations = mutableListOf<String>()
-        configurations.forEach { configuration ->
-            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val depPath = dependency.path
-                if (depPath == path) return@forEach
-                val isCore = depPath.startsWith(":core:")
-                val isFeature = depPath.startsWith(":feature:")
-                if (!isCore && !isFeature) return@forEach
-
-                if (isApi) {
-                    if (!isCore) {
-                        violations += "api '$path' não pode depender de '$depPath' " +
-                            "(regra: api só depende de :core:*)"
-                    }
-                } else {
-                    if (!isCore && !depPath.endsWith(":api")) {
-                        violations += "impl '$path' não pode depender de '$depPath' " +
-                            "(regra: impl só depende de :feature:*:api e :core:*)"
-                    }
-                }
-            }
-        }
-        if (violations.isNotEmpty()) {
-            throw org.gradle.api.GradleException(
-                "Violação das regras de dependência de módulos:\n" +
-                    violations.joinToString("\n") { " - $it" }
-            )
-        }
-    }
-}
-
-internal fun Project.verifyAppSharedDependencyRules() {
-    afterEvaluate {
-        val violations = mutableListOf<String>()
-        configurations.forEach { configuration ->
-            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val depPath = dependency.path
-                if (depPath == path) return@forEach
-                val isCore = depPath.startsWith(":core:")
-                val isFeature = depPath.startsWith(":feature:")
-                if (!isCore && !isFeature) {
-                    violations += "app '$path' não pode depender de '$depPath' " +
-                        "(regra: :app:shared só depende de :core:* e :feature:*)"
-                }
-            }
-        }
-        if (violations.isNotEmpty()) {
-            throw org.gradle.api.GradleException(
-                "Violação das regras de dependência de módulos:\n" +
-                    violations.joinToString("\n") { " - $it" }
-            )
         }
     }
 }

@@ -1,0 +1,17 @@
+appId: com.neoutils.finsight
+name: go_back
+---
+# Leaves the screen the flow is standing on, the way a person does: by the back button in its top
+# bar. Not by `- back`, which is Android's system gesture and nothing else — `IOSDriver.backPress()`
+# is empty, and the iOS edge swipe does not reach Compose here, so on iOS the command completes and
+# the screen does not move. Tapping the button is the one gesture both platforms have.
+#
+# Every screen that can be left publishes the same tag, because every one of them renders the same
+# `BackButton` (`core/designsystem`). A screen without it is a tab, not a destination, and a flow
+# leaves a tab by tapping another tab.
+- tapOn:
+    id: "top_bar_back"
+# Leaving a screen animates, and whatever the caller taps next would land on the screen sliding out
+# from under it. iOS needs this said out loud: `disableAnimations` in the workspace config is a
+# Maestro Cloud feature and does nothing to a local device, on either platform.
+- waitForAnimationToEnd

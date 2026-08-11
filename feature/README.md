@@ -2,7 +2,8 @@
 
 > Este diretório abriga os módulos de feature do projeto, organizados no padrão **api/impl**.
 > Este documento define a estrutura, as regras de dependência e o padrão de entry point.
-> Toda nova feature deve seguir estas regras — elas são impostas pelos convention plugins do `build-logic`.
+> Toda nova feature deve seguir estas regras. Elas não são verificadas pelo build: valem por revisão,
+> e este documento é a referência normativa.
 
 ---
 
@@ -62,14 +63,24 @@ coexistem sem ciclo, porque as apis não se enxergam.
 
 ### Dependências permitidas por tipo de módulo
 
-| De \ Para | `:core:*` | `feature:*:api` | `feature:*:impl` |
-|---|---|---|---|
-| **feature:\*:api** | ✅ | ❌ | ❌ |
-| **feature:\*:impl** | ✅ | ✅ (qualquer) | ❌ |
-| **:app:shared** (shell) | ✅ | ✅ | ✅ (é o agregador) |
+| De \ Para               | `:core:*` | `:library:*:api` | `:library:*:impl` | `feature:*:api` | `feature:*:impl`  |
+|-------------------------|-----------|------------------|-------------------|-----------------|-------------------|
+| **feature:\*:api**      | ✅         | ✅                | ❌                 | ❌               | ❌                 |
+| **feature:\*:impl**     | ✅         | ✅                | ❌                 | ✅ (qualquer)    | ❌                 |
+| **:app:shared** (shell) | ✅         | ✅                | ✅                 | ✅               | ✅ (é o agregador) |
 
 O `:app:shared` é o único módulo que enxerga os `impl` — é ele quem faz o wiring do Koin
 (`appModules`) e registra os grafos de navegação. O framework iOS vive em `:app:ios`.
+
+O par api/impl não é exclusivo das features. O grupo **`library/`** o usa pelo mesmo
+motivo: cada módulo ali adapta uma biblioteca externa **sem suporte oficial a Kotlin
+Multiplatform** (hoje `analytics`, `crashlytics` e `auth`, sobre os bindings GitLive do
+Firebase), e o `impl` é onde o fornecedor específico de cada plataforma vive. Manter o
+`impl` longe das features não é estética: é o que impede o `cinterop` do Firebase de
+entrar no classpath delas — sem isso, a suíte de testes iOS de cada feature não linka.
+
+> Referência normativa dos adaptadores: **`library/README.md`** — o que entra ali, o
+> padrão de fornecedor por plataforma e como adicionar um.
 
 ---
 
@@ -257,6 +268,10 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
 - No framework iOS (configurado no `:app:ios`), apenas `:core:*` e `feature:*:api`
   são exportados (`export()`); os `impl` são linkados via `:app:shared`, mas invisíveis ao Swift.
+- Os targets iOS são `iosArm64` e `iosSimulatorArm64` — o simulador Intel (`iosX64`) não é
+  declarado. A suíte comum compila para os dois, mas só vira executável de teste onde pode
+  ser iniciada: o simulador, num host Apple Silicon. Ver `CLAUDE.md` para a regra completa,
+  incluindo a exceção do Firebase.
 
 ---
 

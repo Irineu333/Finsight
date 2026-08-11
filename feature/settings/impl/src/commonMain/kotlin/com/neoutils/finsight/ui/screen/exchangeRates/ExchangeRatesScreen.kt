@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CurrencyExchange
@@ -51,6 +50,7 @@ import com.neoutils.finsight.resources.exchange_rates_empty
 import com.neoutils.finsight.resources.exchange_rates_group_header
 import com.neoutils.finsight.resources.exchange_rates_open_history
 import com.neoutils.finsight.resources.exchange_rates_screen_title
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.component.ExchangeRateRow
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormModal
@@ -111,12 +111,7 @@ fun ExchangeRatesScreen(
                 // between the two breakpoints — the rail is shown from 600dp, but the pane that
                 // would host it instead only exists from 840dp.
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
+                    BackButton(onClick = onNavigateBack)
                 },
                 actions = {
                     IconButton(onClick = { onOpenHistory(null) }) {

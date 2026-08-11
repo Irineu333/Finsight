@@ -5,6 +5,7 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -16,7 +17,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -157,12 +157,7 @@ private fun InvoiceTransactionsContent(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
+                    BackButton(onClick = onNavigateBack)
                 },
                 actions = {
                     val creditCard = uiState.invoices.firstOrNull()?.invoice?.creditCard

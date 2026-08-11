@@ -57,7 +57,7 @@ class PayInvoicePaymentUseCaseTest {
     )
 
     @Test
-    fun `the payment moves what is owed, and only the card's leg is dimensioned`() = runTest {
+    fun `the payment moves what is owed and only the card's leg is dimensioned`() = runTest {
         val store = RecordingInvoiceStore(closed)
         val writer = RecordingTransactionWriter()
 
@@ -95,7 +95,7 @@ class PayInvoicePaymentUseCaseTest {
     }
 
     @Test
-    fun `a write refused by the ledger comes back as a Left, not as a crash`() = runTest {
+    fun `a write refused by the ledger comes back as a Left not as a crash`() = runTest {
         // `either {}` intercepts a Raise, never a thrown exception. Before the write was
         // wrapped in `catch {}`, an archived paying account threw straight past the
         // Either and out of the ViewModel.

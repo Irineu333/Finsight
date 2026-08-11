@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,7 +23,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
@@ -58,6 +56,7 @@ import com.neoutils.finsight.resources.exchange_rate_history_title
 import com.neoutils.finsight.resources.exchange_rates_source_derived
 import com.neoutils.finsight.resources.exchange_rates_source_remote
 import com.neoutils.finsight.resources.exchange_rates_source_user
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.component.ExchangeRateRow
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.date.DateRangePickerModal
@@ -106,12 +105,7 @@ fun ExchangeRateHistoryScreen(
                     navigationIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
+                    BackButton(onClick = onNavigateBack)
                 },
             )
         },

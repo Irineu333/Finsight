@@ -1,0 +1,13 @@
+appId: com.neoutils.finsight
+name: dismiss_modal
+---
+# Closes the modal sheet on top, by dragging it down from its handle — the gesture the sheet is
+# built around, and the only one both platforms answer. `- back` closes a sheet on Android and does
+# nothing on iOS; tapping the scrim is not reachable by id, because the scrim is Material3's and
+# carries no tag of ours.
+- swipe:
+    from:
+      id: "modal_release_keyboard"
+    direction: DOWN
+    duration: 500
+- waitForAnimationToEnd

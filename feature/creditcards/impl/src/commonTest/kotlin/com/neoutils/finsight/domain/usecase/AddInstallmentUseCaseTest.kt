@@ -111,7 +111,7 @@ class AddInstallmentUseCaseTest {
     }
 
     @Test
-    fun `the remainder rides on the last instalment, however many cents it is`() = runTest {
+    fun `the remainder rides on the last instalment however many cents it is`() = runTest {
         val writer = FakeTransactionWriter()
 
         useCase(transactions = writer, total = 999.99).invoke(form("999,99"), installments = 7)
@@ -143,7 +143,7 @@ class AddInstallmentUseCaseTest {
     }
 
     @Test
-    fun `the installment row records the whole purchase, not a share of it`() = runTest {
+    fun `the installment row records the whole purchase not a share of it`() = runTest {
         val store = FakeInstallmentStore()
 
         useCase(installments = store, total = 1_000.0).invoke(form("1000,00"), installments = 3)
@@ -155,7 +155,7 @@ class AddInstallmentUseCaseTest {
     // --- One instalment per invoice, one invoice per month ------------------------------------
 
     @Test
-    fun `each instalment is a month later, and numbered in order`() = runTest {
+    fun `each instalment is a month later and numbered in order`() = runTest {
         val writer = FakeTransactionWriter()
 
         useCase(transactions = writer, total = 960.0).invoke(form("960,00"), installments = 3)
@@ -195,7 +195,7 @@ class AddInstallmentUseCaseTest {
     }
 
     @Test
-    fun `a closed invoice in the middle blocks the purchase, and says which instalment`() = runTest {
+    fun `a closed invoice in the middle blocks the purchase and says which instalment`() = runTest {
         // The second of three months is already closed. E2E cannot reach this: its flow
         // creates the card precisely so that all three invoices are open.
         val blocked = invoice(firstDueMonth.plus(1, DateTimeUnit.MONTH), Invoice.Status.CLOSED)

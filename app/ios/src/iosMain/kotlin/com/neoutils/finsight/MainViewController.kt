@@ -9,8 +9,13 @@ import platform.UIKit.UIViewController
 fun MainViewController(): UIViewController = ComposeUIViewController(
     configure = {
         startKoin {
-            modules(appModules)
+            // Aggregated last: a debug build replaces a shipped definition by declaring it again.
+            modules(appModules + debugModules)
         }
+
+        // Before anything composes: whatever reads the clock must read the shifted one from the
+        // start. A no-op outside a debug build.
+        applyTimeTravel()
     }
 ) {
     App()

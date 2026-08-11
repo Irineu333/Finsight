@@ -24,7 +24,7 @@ name: create_category
 - assertVisible:
     id: "category_form_name"
     text: ${NAME}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 # Save waits to be offered — the name is validated on a debounce, so tapping it the instant it is
 # rendered would tap a disabled button and fail later, as a form that will not submit.

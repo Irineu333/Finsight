@@ -61,7 +61,7 @@ env:
 - assertVisible:
     id: "recurring_form_title"
     text: ${INCOME_TITLE}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "recurring_form_amount"
 - waitForAnimationToEnd
@@ -69,18 +69,19 @@ env:
 - assertVisible:
     id: "recurring_form_amount"
     text: "[$]940[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "recurring_form_day"
 - waitForAnimationToEnd
 - inputText: ${DAY}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 # The account is never selected: the form opens on the default one, which is the only one there is.
 - scrollUntilVisible:
     element:
       id: "recurring_form_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "recurring_form_save"
 - extendedWaitUntil:
@@ -103,7 +104,7 @@ env:
 - assertVisible:
     id: "recurring_form_title"
     text: ${EXPENSE_TITLE}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "recurring_form_amount"
 - waitForAnimationToEnd
@@ -111,17 +112,18 @@ env:
 - assertVisible:
     id: "recurring_form_amount"
     text: "[$]77[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "recurring_form_day"
 - waitForAnimationToEnd
 - inputText: ${DAY}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - scrollUntilVisible:
     element:
       id: "recurring_form_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "recurring_form_save"
 - extendedWaitUntil:
@@ -142,7 +144,7 @@ env:
 # Two things are due and the balance is still zero: what the app knows it will ask for has not been
 # asked for yet. The pending row appears to say exactly that — the day-zero story asserts its
 # absence, and this is the other half.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -179,7 +181,14 @@ env:
 # The sheet opens on the recurring's own day, not on today, and holds the model's figure ready to be
 # corrected. Erased before retyping: the money field appends digits, so typing over $940.00 would
 # read as $94,086,500.
-- tapOn: ${INCOME_TITLE}
+# By id, not by the bare label: the recents list on this same dashboard renders the same
+# words, and which node a text-only match lands on is not the same on both platforms.
+# The list is still gliding when the assertions above finish reading it, and a tap issued
+# against a row in transit lands beside it — silently, because the tap itself succeeds.
+- waitForAnimationToEnd
+- tapOn:
+    id: "dashboard_pending_recurring_title"
+    text: ${INCOME_TITLE}
 - extendedWaitUntil:
     visible:
       id: "confirm_recurring_amount"
@@ -200,12 +209,13 @@ env:
 - assertVisible:
     id: "confirm_recurring_amount"
     text: "[$]865[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - scrollUntilVisible:
     element:
       id: "confirm_recurring_confirm"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "confirm_recurring_confirm"
 - extendedWaitUntil:
@@ -247,7 +257,14 @@ env:
 - assertVisible:
     id: "dashboard_pending_recurring_amount"
     text: "[$]77[.,]00"
-- tapOn: ${EXPENSE_TITLE}
+# By id, not by the bare label: the recents list on this same dashboard renders the same
+# words, and which node a text-only match lands on is not the same on both platforms.
+# The list is still gliding when the assertions above finish reading it, and a tap issued
+# against a row in transit lands beside it — silently, because the tap itself succeeds.
+- waitForAnimationToEnd
+- tapOn:
+    id: "dashboard_pending_recurring_title"
+    text: ${EXPENSE_TITLE}
 - extendedWaitUntil:
     visible:
       id: "confirm_recurring_skip"
@@ -341,7 +358,7 @@ env:
     text: "Archive"
 - assertNotVisible:
     id: "view_recurring_unarchive"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 - tapOn: ${EXPENSE_TITLE}
 - extendedWaitUntil:
@@ -351,7 +368,7 @@ env:
 - assertVisible:
     id: "view_recurring_retire_label"
     text: "Delete"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # --- I archive the salary ------------------------------------------------------------------------
 # The detail sheet stays open through it, and states the new answer itself: archived, and offering
@@ -378,7 +395,7 @@ env:
     text: "Archived"
 - assertNotVisible:
     id: "view_recurring_retire"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # It left the active list without leaving the app — the filter is where it went, not oblivion.
 - extendedWaitUntil:
@@ -490,11 +507,11 @@ env:
 - assertVisible:
     id: "view_recurring_status"
     text: "Active"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # And it asks again — once, for this month. Reactivating puts a recurring back in circulation; it
 # does not bill for the months it spent archived.
-- back
+- runFlow: ../../subflows/go_back.yaml
 # Back to the top first: `open_section` left the dashboard scrolled down to the quick-action grid,
 # and the pending row sits above it — scrolling DOWN from there would never reach it.
 - scrollUntilVisible:
@@ -520,7 +537,14 @@ env:
 # rent stops being asked for, and the salary — reactivated a moment ago — is all that is left
 # pending. A confirmation dated by the system clock would file the occurrence in the real month and
 # leave this one still owing, which is what these two assertions exist to catch.
-- tapOn: ${EXPENSE_TITLE}
+# By id, not by the bare label: the recents list on this same dashboard renders the same
+# words, and which node a text-only match lands on is not the same on both platforms.
+# The list is still gliding when the assertions above finish reading it, and a tap issued
+# against a row in transit lands beside it — silently, because the tap itself succeeds.
+- waitForAnimationToEnd
+- tapOn:
+    id: "dashboard_pending_recurring_title"
+    text: ${EXPENSE_TITLE}
 - extendedWaitUntil:
     visible:
       id: "confirm_recurring_confirm"

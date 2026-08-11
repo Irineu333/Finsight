@@ -38,12 +38,10 @@ include(":app:shared")
 include(":app:android")
 include(":app:desktop")
 include(":app:ios")
+include(":app:debug")
 
 // Core
-include(":core:analytics")
-include(":core:auth")
 include(":core:common")
-include(":core:crashlytics")
 include(":core:database")
 include(":core:ledger")
 include(":core:designsystem")
@@ -51,6 +49,14 @@ include(":core:model")
 include(":core:navigation")
 include(":core:resources")
 include(":core:ui")
+
+// Library — adapters over external libraries without official KMP support
+include(":library:analytics:api")
+include(":library:analytics:impl")
+include(":library:auth:api")
+include(":library:auth:impl")
+include(":library:crashlytics:api")
+include(":library:crashlytics:impl")
 
 // Features
 include(":feature:shell:api")

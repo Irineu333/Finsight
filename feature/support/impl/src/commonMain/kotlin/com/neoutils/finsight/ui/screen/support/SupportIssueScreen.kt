@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
@@ -71,12 +71,7 @@ fun SupportIssueScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
+                    BackButton(onClick = onNavigateBack)
                 },
             )
         },

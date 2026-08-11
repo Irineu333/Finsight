@@ -66,7 +66,7 @@ env:
 - assertVisible: ${CATEGORY}
 
 # --- I am paid, so there is money to spend -------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_transaction.yaml
     env:
@@ -99,7 +99,7 @@ env:
 - assertVisible:
     id: "budget_form_title"
     text: ${BUDGET}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 # This selector takes more than one category, so it does not close when one is chosen — it waits to
 # be told. Left open, it would cover the fields below and take their taps.
@@ -110,8 +110,11 @@ env:
     timeout: 10000
 - tapOn: ${CATEGORY}
 - waitForAnimationToEnd
+# Closed by the menu's own command, not by tapping the field behind it: while a menu is open iOS
+# hides everything outside it, so the anchor is not there to be tapped, and a tap on the scrim
+# above the sheet takes the sheet down with it.
 - tapOn:
-    id: "budget_form_categories"
+    id: "multi_category_selector_done"
 - waitForAnimationToEnd
 - assertVisible: ${CATEGORY}
 
@@ -122,7 +125,7 @@ env:
 - assertVisible:
     id: "budget_form_limit"
     text: "[$]240[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
@@ -161,7 +164,7 @@ env:
     text: "[$]240[.,]00"
 
 # ...and the dashboard has a budget to show, where day zero had none.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_component_budgets"
@@ -252,10 +255,10 @@ env:
     text: "[$]152[.,]70"
 - assertNotVisible:
     id: "view_budget_exceeded_amount"
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 
 # --- I spend $176.45 more, and go over ------------------------------------------------------------
-- back
+- runFlow: ../../subflows/go_back.yaml
 - runFlow:
     file: ../../subflows/record_categorized_expense.yaml
     env:
@@ -314,6 +317,7 @@ env:
       id: "view_budget_delete"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "view_budget_delete"
 - extendedWaitUntil:
@@ -335,7 +339,7 @@ env:
 
 # `back` returns the dashboard wherever the last scroll left it, which is below what follows — so
 # this climbs to the top before descending again, or the search would run away from its target.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"

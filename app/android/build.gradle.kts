@@ -69,7 +69,8 @@ dependencies {
     implementation(libs.koin.android)
 
     debugImplementation(compose.uiTooling)
-    // Debug only: `TimeTravel` converts a calendar month shift into the days the clock understands,
-    // and asking a calendar is the whole point — adding 31 days is not adding a month.
-    debugImplementation(libs.kotlinx.datetime)
+    // Debug only: what a debug build substitutes for what a device cannot be asked for — the
+    // movable clock, support answered in memory, a rate source that quotes nothing. Shared with
+    // the iOS app, which needs the same three for the same flows.
+    debugImplementation(projects.app.debug)
 }

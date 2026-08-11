@@ -21,13 +21,13 @@ name: create_credit_card
 - assertVisible:
     id: "credit_card_form_name"
     text: ${NAME}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - tapOn:
     id: "credit_card_form_limit"
 - waitForAnimationToEnd
 - inputText: ${LIMIT}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 # Both days are typed, though either alone would do — the form derives the missing one. Typing both
 # keeps the invoice period a fact of the calling flow rather than of a rule it does not assert.
@@ -35,19 +35,20 @@ name: create_credit_card
     id: "credit_card_form_closing_day"
 - waitForAnimationToEnd
 - inputText: ${CLOSING_DAY}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - tapOn:
     id: "credit_card_form_due_day"
 - waitForAnimationToEnd
 - inputText: ${DUE_DAY}
-- hideKeyboard
+- runFlow: dismiss_keyboard.yaml
 
 - scrollUntilVisible:
     element:
       id: "credit_card_form_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "credit_card_form_save"
 - extendedWaitUntil:

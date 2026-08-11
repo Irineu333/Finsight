@@ -50,19 +50,14 @@ env:
 # ...and I can reach it. The accounts screen is a pager: one account at a time, swiped horizontally,
 # and the summary figures on screen always belong to the one in view.
 # Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
-# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
-# after it lets the settle finish before anything is read off the page.
+# while the pager is still composing is swallowed, and the page never turns. The settle after it is
+# the subflow's business (`next_account`), so nothing is read off a page still in transit.
 - extendedWaitUntil:
     visible:
       id: "account_name"
       text: "Wallet"
     timeout: 15000
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
-- waitForAnimationToEnd
+- runFlow: ../../subflows/next_account.yaml
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -82,12 +77,13 @@ env:
 # ...and the dashboard now has something to say about accounts. Reaching the section scrolled the
 # dashboard down, so this scrolls back before asserting — otherwise the row would be missing only
 # because the viewport moved.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_component_accounts_overview"
     direction: UP
     timeout: 25000
+- waitForAnimationToEnd
 
 # --- I put money in it ---------------------------------------------------------------------------
 # The account picker is a dropdown, and its options are account names — here, the name this flow
@@ -109,7 +105,7 @@ env:
 - assertVisible:
     id: "add_transaction_title"
     text: ${INCOME_TITLE}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 
 - tapOn:
     id: "add_transaction_account"
@@ -129,16 +125,18 @@ env:
       id: "add_transaction_amount"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_amount"
 - waitForAnimationToEnd
 - inputText: ${INCOME_DIGITS}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - scrollUntilVisible:
     element:
       id: "add_transaction_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "add_transaction_save"
 - extendedWaitUntil:
@@ -156,19 +154,14 @@ env:
       id: "screen_accounts"
     timeout: 15000
 # Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
-# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
-# after it lets the settle finish before anything is read off the page.
+# while the pager is still composing is swallowed, and the page never turns. The settle after it is
+# the subflow's business (`next_account`), so nothing is read off a page still in transit.
 - extendedWaitUntil:
     visible:
       id: "account_name"
       text: "Wallet"
     timeout: 15000
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
-- waitForAnimationToEnd
+- runFlow: ../../subflows/next_account.yaml
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -213,7 +206,7 @@ env:
     id: "transfer_amount"
 - waitForAnimationToEnd
 - inputText: ${TRANSFER_DIGITS}
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "transfer_save"
 - extendedWaitUntil:
@@ -229,15 +222,7 @@ env:
     id: "account_balance_amount"
     text: "[$]249[.,]50"
 
-# Turned back by coordinates rather than `from: account_card`, which is the one swipe on this screen
-# that cannot be issued by element: the card spans the width, so a RIGHT swipe anchored on it starts
-# at the left edge and Android reads it as the back gesture, leaving the screen instead of turning
-# the page. Starting at 30% of the width is past that strip, so the pager gets the gesture.
-- swipe:
-    start: 30%, 30%
-    end: 85%, 30%
-    duration: 400
-- waitForAnimationToEnd
+- runFlow: ../../subflows/previous_account.yaml
 - extendedWaitUntil:
     visible:
       id: "account_name"
@@ -256,7 +241,7 @@ env:
 # --- And the whole is unchanged ------------------------------------------------------------------
 # Nothing entered or left the ledger, so net worth is exactly the income. A transfer that moved the
 # total would be a transfer that leaked.
-- back
+- runFlow: ../../subflows/go_back.yaml
 - scrollUntilVisible:
     element:
       id: "dashboard_total_balance_amount"
@@ -303,19 +288,14 @@ env:
       id: "screen_accounts"
     timeout: 15000
 # Anchored on the first account being rendered, not merely on the screen existing: a swipe issued
-# while the pager is still composing is swallowed, and the page never turns. `waitForAnimationToEnd`
-# after it lets the settle finish before anything is read off the page.
+# while the pager is still composing is swallowed, and the page never turns. The settle after it is
+# the subflow's business (`next_account`), so nothing is read off a page still in transit.
 - extendedWaitUntil:
     visible:
       id: "account_name"
       text: "Wallet"
     timeout: 15000
-- swipe:
-    from:
-      id: "account_card"
-    direction: LEFT
-    duration: 400
-- waitForAnimationToEnd
+- runFlow: ../../subflows/next_account.yaml
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000
@@ -335,6 +315,7 @@ env:
       id: "account_edit"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "account_edit"
 - extendedWaitUntil:
@@ -344,15 +325,18 @@ env:
 - tapOn:
     id: "account_form_yield"
 # Read the switch back: a tap that landed beside it has to fail here, not three screens later as a
-# line that never appears.
+# line that never appears. Read on the caption the row renders, not on the control's own state:
+# Android publishes a toggle as `checked` and iOS as `selected`, so no single attribute of the
+# switch answers on both — and the caption is what the user actually reads anyway.
 - assertVisible:
-    id: "account_form_yield"
-    checked: true
+    id: "account_form_yield_state"
+    text: "Shows the yield line"
 - scrollUntilVisible:
     element:
       id: "account_form_save"
     direction: DOWN
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: "account_form_save"
 - extendedWaitUntil:
@@ -393,7 +377,7 @@ env:
 - assertVisible:
     id: "launch_yield_amount"
     text: "[$]40[.,]75"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "launch_yield_save"
 - extendedWaitUntil:
@@ -436,6 +420,7 @@ env:
       id: "account_retire"
     direction: UP
     timeout: 25000
+- waitForAnimationToEnd
 
 # The refusal, stated before the attempt: an account still holding money cannot be archived, and the
 # sheet says so with the command disabled rather than by failing after the tap. This is the `false`
@@ -449,7 +434,7 @@ env:
 - assertVisible:
     id: "archive_account_confirm"
     enabled: false
-- back
+- runFlow: ../../subflows/dismiss_modal.yaml
 - extendedWaitUntil:
     notVisible:
       id: "archive_account_confirm"
@@ -473,7 +458,7 @@ env:
 - assertVisible:
     id: "edit_account_balance_amount"
     text: "[$]0[.,]00"
-- hideKeyboard
+- runFlow: ../../subflows/dismiss_keyboard.yaml
 - tapOn:
     id: "edit_account_balance_save"
 - extendedWaitUntil:
@@ -579,8 +564,8 @@ env:
 # same rule (HIDE_SINGLE_ACCOUNT) that withheld it on day zero. The premise for the absence is the
 # component that follows it: the cards pager sits at position 5 and the accounts row at position 4,
 # so a visible pager means the row was laid out and is genuinely missing rather than below the fold.
-- back
-- back
+- runFlow: ../../subflows/go_back.yaml
+- runFlow: ../../subflows/go_back.yaml
 - extendedWaitUntil:
     visible:
       id: "bottom_navigation_bar"

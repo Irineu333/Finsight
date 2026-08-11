@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Payments
@@ -22,7 +21,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +45,7 @@ import com.neoutils.finsight.resources.settings_exchange_rates_title
 import com.neoutils.finsight.resources.settings_group_currency_data
 import com.neoutils.finsight.resources.settings_group_preferences
 import com.neoutils.finsight.resources.settings_screen_title
+import com.neoutils.finsight.ui.component.BackButton
 import com.neoutils.finsight.ui.component.CurrencyGlyph
 import com.neoutils.finsight.ui.component.CurrencyGlyphIcon
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -99,12 +98,7 @@ fun SettingsScreen(
                 ),
                 navigationIcon = {
                     if (!isWideWindow()) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                            )
-                        }
+                        BackButton(onClick = onNavigateBack)
                     }
                 },
             )

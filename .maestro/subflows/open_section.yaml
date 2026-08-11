@@ -15,5 +15,11 @@ name: open_section
     direction: DOWN
     centerElement: true
     timeout: 25000
+# The scroll stops, the list does not: it glides on, and a tap issued against the position the
+# scroll reported lands on whatever slid into it. Nothing disables that — `disableAnimations` in the
+# workspace config is a Maestro Cloud feature and reaches no local device, on either platform — so
+# the settle has to be waited for. Reproduced on iOS: without this line the tap completes and the
+# section never opens; with it, it opens every time.
+- waitForAnimationToEnd
 - tapOn:
     id: "nav_item_${SECTION}"

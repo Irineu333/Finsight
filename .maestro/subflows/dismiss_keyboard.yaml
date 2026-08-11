@@ -1,0 +1,15 @@
+appId: com.neoutils.finsight
+name: dismiss_keyboard
+---
+# Puts the keyboard away, from inside a modal sheet.
+#
+# Not `hideKeyboard`: on iOS Maestro implements it as two small swipes in the middle of the screen,
+# which on a scrollable sheet scrolls the sheet and leaves the keyboard up — and the command then
+# fails the flow. The sheet's own handle releases the focus instead (`ModalManager`), which is one
+# gesture, one meaning, and the same on both platforms.
+#
+# The handle is the one spot on a sheet guaranteed to be neither a control nor under the keyboard,
+# whatever the sheet holds. A caller outside a sheet has no such spot and none is offered here.
+- tapOn:
+    id: "modal_release_keyboard"
+- waitForAnimationToEnd

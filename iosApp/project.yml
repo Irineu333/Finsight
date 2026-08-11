@@ -3,17 +3,13 @@ name: iosApp
 options:
   bundleIdPrefix: com.neoutils.finsight
   deploymentTarget:
-    iOS: "18.2"
+    iOS: "15.0"
   minimizedProjectReferenceProxies: true
   generateEmptyDirectories: true
 
 configs:
   Debug: debug
   Release: release
-
-configFiles:
-  Debug: Configuration/Config.xcconfig
-  Release: Configuration/Config.xcconfig
 
 settings:
   base:
@@ -49,6 +45,8 @@ targets:
         CADisableMinimumFrameDurationOnPhone: true
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
 
     scheme:
       testTargets: []
@@ -75,7 +73,6 @@ targets:
         INFOPLIST_FILE: iosApp/Info.plist
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
 
@@ -112,7 +109,14 @@ targets:
             exit 0
           fi
           cd "$SRCROOT/.."
-          ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode
+          # The debug tooling — the movable clock, support answered in memory, a rate source that
+          # quotes nothing — is compiled into the framework only here. Kotlin/Native has no build
+          # types, so the configuration has to be told to Gradle, and Release never tells it.
+          if [ "$CONFIGURATION" = "Debug" ]; then
+            ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode -Pfinsight.debugTools=true
+          else
+            ./gradlew :app:ios:embedAndSignAppleFrameworkForXcode
+          fi
         showEnvVarsInLog: false
 
 packages:

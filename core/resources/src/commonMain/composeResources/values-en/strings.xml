@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shared chrome -->
+    <string name="navigate_back_content_description">Back</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>
@@ -254,7 +257,6 @@
     <string name="account_unarchive">Unarchive</string>
     <string name="account_archived">Archived</string>
     <string name="accounts_more_options_content_description">More options</string>
-    <string name="accounts_navigate_back_content_description">Back</string>
     <string name="accounts_filter_category">Category</string>
     <string name="accounts_filter_category_all">All</string>
     <string name="accounts_filter_type">Type</string>
@@ -604,6 +606,7 @@
     <string name="multi_category_selector_none">None</string>
     <string name="multi_category_selector_and">and</string>
     <string name="multi_category_selector_label">Categories</string>
+    <string name="multi_category_selector_done">Done</string>
 
     <string name="credit_card_ui_current_invoice">Current Invoice</string>
     <string name="credit_card_ui_available_limit">Available Limit</string>

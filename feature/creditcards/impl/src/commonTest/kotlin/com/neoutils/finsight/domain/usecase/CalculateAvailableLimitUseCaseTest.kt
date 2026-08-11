@@ -31,7 +31,7 @@ class CalculateAvailableLimitUseCaseTest {
     )
 
     @Test
-    fun `every unpaid invoice commits limit, not just the open one`() = runTest {
+    fun `every unpaid invoice commits limit not just the open one`() = runTest {
         // This is what an installment does: the purchase is spread over invoices, and
         // the whole of it is committed from the moment it is made. The E2E flow asserts
         // the consequence; the rule is here.
@@ -77,7 +77,7 @@ class CalculateAvailableLimitUseCaseTest {
     }
 
     @Test
-    fun `owing more than the limit reports no limit left, never a negative one`() = runTest {
+    fun `owing more than the limit reports no limit left never a negative one`() = runTest {
         val invoices = listOf(invoiceOn(1, id = 1))
         val owed = mapOf(100L to 1_500.0)
 

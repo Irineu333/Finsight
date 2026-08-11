@@ -865,6 +865,11 @@ private fun PendingRecurringCard(
                         fontWeight = FontWeight.Medium,
                         color = colorScheme.onSurface,
                         maxLines = 1,
+                        // Named so a flow can pick *this* pending row by its label rather than by
+                        // the first node on screen carrying that text — the recents list renders
+                        // the same words, and which of the two a bare text match finds is not the
+                        // same on both platforms.
+                        modifier = Modifier.testTag("dashboard_pending_recurring_title"),
                     )
                 }
             }

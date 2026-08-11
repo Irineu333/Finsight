@@ -249,7 +249,7 @@ deste grupo edita arquivo algum.
   `.maestro/flows/accounts/lifecycle.yaml`. O risco é de layout: o campo de data novo pode deslocar
   `edit_account_balance_amount`/`edit_account_balance_save` sob teclado aberto. Reportar em qual
   dispositivo a execução aconteceu.
-- [ ] 7.3 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`): abrir os
+- [x] 7.3 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`): abrir os
   dois atalhos de saldo num mês passado e no mês corrente e conferir a data e o valor pré-preenchido;
   mover a data e ver o valor de referência e a diferença acompanharem; confirmar que o seletor não
   oferece data futura em nenhum dos dois modais; ajustar hoje uma fatura antiga e ver o aviso

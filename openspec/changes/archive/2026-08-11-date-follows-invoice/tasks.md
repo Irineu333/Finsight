@@ -87,7 +87,7 @@ não editam arquivo algum.
 > a ser tocado também pelo aviso. As demais continuam valendo: nada em `:core:ledger`, no banco,
 > nas migrações, no `TransactionForm` ou no boundary de escrita.
 
-- [ ] 7.3 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os dois modais de criação com alvo cartão: abrir e confirmar que a data é hoje; navegar uma fatura para trás e ver a data recolocada; navegar para uma fatura futura e ver a trava em hoje; digitar uma data fora da janela e confirmar que a fatura não se move e o texto não é sobrescrito.
+- [x] 7.3 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os dois modais de criação com alvo cartão: abrir e confirmar que a data é hoje; navegar uma fatura para trás e ver a data recolocada; navegar para uma fatura futura e ver a trava em hoje; digitar uma data fora da janela e confirmar que a fatura não se move e o texto não é sobrescrito.
 
 ## 8. Aviso discreto de data fora da janela (não previsto)
 
@@ -108,3 +108,6 @@ idiomas, e nenhum `*Modal.kt` decide se o aviso aparece.
 - [x] 8.4 Consumir nos três modais como `supportingText` do campo de data, gated apenas por `uiState.isDateOutsideInvoice`. Deliberadamente **sem** cor de erro: divergir não é errar. Nenhuma decisão fica na composable.
 - [x] 8.5 O modal de **editar** transação também recebe o aviso, sem que isso contradiga a D6: um aviso não altera nada, e é ali que a divergência é mais provável — a data é dado antigo e a cascata não roda.
 - [x] 8.6 Testes: seis casos de `diverges` em `InvoiceWindowTest` (dentro nas duas bordas, antes da abertura, depois do fechamento, data incompleta, data vazia) e duas asserções de `isDateOutsideInvoice` em `AddTransactionInvoiceDateTest` — acusa quando o usuário escreve fora, e **não** acusa depois de uma projeção, que é o que prova que aviso e cascata concordam.
+
+> **Autoria de 7.3:** exercitado no app **pelo autor da mudança**, não pelo agente — este
+> ambiente não dirige a interface. O relato é dele; nenhuma saída foi lida aqui.

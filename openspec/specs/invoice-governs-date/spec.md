@@ -1,4 +1,14 @@
-## ADDED Requirements
+# invoice-governs-date Specification
+
+## Purpose
+
+A hierarquia de preenchimento dos formulários de lançamento em cartão: **cartão governa fatura,
+fatura governa data**, e nada governa na direção contrária. Cobre a recolocação da data na janela
+da fatura escolhida (`invoice-purchase-window`), a trava em hoje — uma fatura futura é gasto no
+presente que se paga depois —, a preservação da edição manual do usuário, o aviso que apenas diz
+quando data e fatura divergem, e o limite do escopo: a recolocação vale na criação, não na edição.
+
+## Requirements
 
 ### Requirement: A fatura governa a data; a data não governa a fatura
 
@@ -95,6 +105,41 @@ MUST NOT impedir a recolocação; nesse caso o dia preservado SHALL ser o de hoj
 #### Scenario: Data incompleta no momento da troca de fatura
 - **WHEN** o campo contém um valor incompleto e o usuário troca a fatura
 - **THEN** a data é recolocada usando o dia de hoje como dia preservado
+
+### Requirement: A divergência é dita, nunca corrigida
+
+Quando a data não pertence à janela da fatura selecionada, o formulário SHALL dizê-lo, de forma
+discreta e junto ao campo de data.
+
+O aviso MUST NOT alterar a data, a fatura, ou a possibilidade de gravar: divergir não é errar, e
+nada do lançamento é decidido pela data — a fatura é. Por isso ele MUST NOT ser apresentado como
+erro, nem impedir o envio.
+
+A pergunta "esta data está fora do que a fatura admite" SHALL ter um dono único no domínio; as
+telas a consomem e MUST NOT reimplementá-la. Uma data ainda em digitação, não interpretável como
+data, MUST NOT ser acusada de divergir — ela não afirma nada.
+
+A decisão de exibir o aviso SHALL pertencer ao estado da tela, não ao seu desenho, de modo que
+seja verificável sem um dispositivo.
+
+Diferentemente da recolocação, o aviso SHALL valer também no formulário de **edição**: ele não
+altera nada, e é ali que a divergência é mais provável.
+
+#### Scenario: Data escrita fora da janela
+- **WHEN** o usuário escreve uma data que a fatura selecionada não admite
+- **THEN** o formulário sinaliza a divergência sem alterar a data, a fatura, nem a possibilidade de gravar
+
+#### Scenario: Data recolocada pela projeção
+- **WHEN** a data acaba de ser recolocada por uma troca de fatura
+- **THEN** nenhuma divergência é sinalizada, porque a projeção a colocou dentro da janela
+
+#### Scenario: Data em digitação
+- **WHEN** o campo contém um valor incompleto
+- **THEN** nenhuma divergência é sinalizada
+
+#### Scenario: Divergência numa transação existente
+- **WHEN** a data de uma transação em edição está fora da janela da fatura dela
+- **THEN** o formulário sinaliza a divergência e não move nem a data nem a fatura
 
 ### Requirement: O escopo da hierarquia é o lançamento novo
 

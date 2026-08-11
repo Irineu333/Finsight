@@ -24,8 +24,8 @@ data class Invoice(
     val closedAt: LocalDate? = null,
     val paidAt: LocalDate? = null
 ) {
-    val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)
-    val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
+    val openingDate get() = window.openingDate
+    val closingDate get() = window.closingDate
     val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
 
     val isClosable get() = when(status) {

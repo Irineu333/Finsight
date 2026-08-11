@@ -179,11 +179,14 @@ class EditTransactionViewModel(
 
         val effectiveAccount = account ?: accounts.firstOrNull { it.isDefault }
 
-        val invoiceSelection = dueMonth?.let { month ->
-            InvoiceMonthSelection(
-                dueMonth = month,
-                existingInvoice = invoices.find { it.dueMonth == month }
-            )
+        val invoiceSelection = selectedCard?.let { card ->
+            dueMonth?.let { month ->
+                InvoiceMonthSelection(
+                    creditCard = card,
+                    dueMonth = month,
+                    existingInvoice = invoices.find { it.dueMonth == month }
+                )
+            }
         }
 
         val form = input.toForm(

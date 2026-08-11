@@ -8,12 +8,13 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.dueMonthFor
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.extension.currentYearMonth
-import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.plusMonth
 
 class CreateInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
@@ -46,11 +47,7 @@ class CreateInvoiceUseCase(
 
         val closingMonth = nextMonth
 
-        val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
-            closingMonth.plusMonth()
-        } else {
-            closingMonth
-        }
+        val dueMonth = creditCard.dueMonthFor(closingMonth)
 
         val newInvoice = Invoice(
             creditCard = creditCard,

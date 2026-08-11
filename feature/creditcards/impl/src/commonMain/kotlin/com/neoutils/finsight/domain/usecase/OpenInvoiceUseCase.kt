@@ -10,13 +10,14 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.dueMonthFor
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.extension.today
-import kotlinx.datetime.YearMonth
-import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.plusMonth
 
 class OpenInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
@@ -46,11 +47,7 @@ class OpenInvoiceUseCase(
 
         val closingMonth = openingMonth.plusMonth()
 
-        val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
-            closingMonth.plusMonth()
-        } else {
-            closingMonth
-        }
+        val dueMonth = creditCard.dueMonthFor(closingMonth)
 
         val existingInvoices = invoiceRepository.getInvoicesByCreditCard(creditCard.id)
 

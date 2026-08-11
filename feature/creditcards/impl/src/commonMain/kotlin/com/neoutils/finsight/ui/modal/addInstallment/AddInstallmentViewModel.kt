@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.domain.model.invoiceWindowFor
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
@@ -31,6 +32,7 @@ import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -90,11 +92,14 @@ class AddInstallmentViewModel(
         selectedDueMonth,
     ) { input, categories, creditCards, invoices, selectedCard, dueMonth ->
 
-        val invoiceSelection = dueMonth?.let { month ->
-            InvoiceMonthSelection(
-                dueMonth = month,
-                existingInvoice = invoices.find { it.dueMonth == month },
-            )
+        val invoiceSelection = selectedCard?.let { card ->
+            dueMonth?.let { month ->
+                InvoiceMonthSelection(
+                    creditCard = card,
+                    dueMonth = month,
+                    existingInvoice = invoices.find { it.dueMonth == month },
+                )
+            }
         }
 
         val form = input.toForm(
@@ -145,6 +150,42 @@ class AddInstallmentViewModel(
 
     init {
         initialCreditCard()
+
+        // The invoice governs the date. This reads the card and the invoice and never the
+        // date itself, which is what makes the reverse direction impossible rather than
+        // merely avoided: editing the date has no path back to the invoice.
+        viewModelScope.launch {
+            combine(selectedCreditCard, selectedDueMonth, ::Pair)
+                .collect { (creditCard, dueMonth) ->
+                    if (creditCard == null || dueMonth == null) return@collect
+                    placeDateInInvoiceWindow(creditCard, dueMonth)
+                }
+        }
+    }
+
+    /**
+     * Moves the date into the window the selected invoice admits purchases in, keeping the
+     * day and letting the window decide the month. The instalments are then laid out one
+     * month apart from it, so the first one starts where its own invoice does.
+     *
+     * Never later than today: a future invoice is not a purchase in the future, it is one in
+     * the present that falls due later. A date already inside the window comes back
+     * unchanged, so the invoice selected on open leaves today alone.
+     *
+     * A date still being typed parses to nothing, and today's day stands in for it.
+     */
+    private fun placeDateInInvoiceWindow(creditCard: CreditCard, dueMonth: YearMonth) {
+        val today = clock.today()
+
+        val day = runCatching { dayMonthYear.parse(input.value.date) }
+            .getOrNull()?.day ?: today.day
+
+        val date = creditCard
+            .invoiceWindowFor(dueMonth)
+            .dateOn(day)
+            .coerceAtMost(today)
+
+        input.update { it.copy(date = dayMonthYear.format(date)) }
     }
 
     private fun initialCreditCard() {
@@ -176,6 +217,10 @@ class AddInstallmentViewModel(
     }
 
     private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+        // Cleared first so that no pair of the new card with the old card's invoice is ever
+        // observed: that pair names a window neither selection stands for, and the date
+        // would be placed in it before being placed again in the right one.
+        selectedDueMonth.value = null
         selectedCreditCard.update { creditCard }
 
         selectedDueMonth.value = creditCard?.let {

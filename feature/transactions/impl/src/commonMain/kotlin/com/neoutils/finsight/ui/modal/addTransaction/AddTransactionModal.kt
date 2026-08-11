@@ -81,6 +81,16 @@ class AddTransactionModal : ModalBottomSheet() {
                 .collect { viewModel.onAction(AddTransactionAction.ChangeDate(it)) }
         }
 
+        // The buffer above only ever reports to the ViewModel; this brings back what the
+        // ViewModel decides — the date the selected invoice places. The equality guard is
+        // what closes the loop: a value that came from typing arrives back identical and
+        // is not rewritten, so nothing fights the text being typed.
+        LaunchedEffect(uiState.form.date) {
+            if (uiState.form.date != date.text.toString()) {
+                date.edit { replace(0, length, uiState.form.date) }
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()

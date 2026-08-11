@@ -8,11 +8,9 @@ import arrow.core.raise.either
 import com.neoutils.finsight.domain.exception.CreditCardException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
+import com.neoutils.finsight.domain.model.invoiceWindowOn
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.today
-import kotlinx.datetime.minusMonth
-import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -48,17 +46,10 @@ class AddCreditCardUseCase(
                 )
             }.bind()
         }.onRight { creditCard ->
-            val closingDay = currentDate.yearMonth.effectiveDay(creditCard.closingDay)
-
-            val openingMonth = if (currentDate.day < closingDay) {
-                currentDate.yearMonth.minusMonth()
-            } else {
-                currentDate.yearMonth
-            }
-
             openInvoiceUseCase(
                 creditCardId = creditCard.id,
-                openingMonth = openingMonth
+                // The card opens on the cycle it is already in today.
+                openingMonth = creditCard.invoiceWindowOn(currentDate).openingMonth
             )
         }
     }

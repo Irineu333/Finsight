@@ -57,14 +57,17 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
         groupBy { it.currency }.mapValues { (_, legs) -> legs.sumOf { it.amount } / 100.0 },
     )
 
-    override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType) =
-        transactions.filter { it.date.yearMonth <= target }
-            .flatMap { it.entries }
-            .filter { it.account.type == type }
-            .byCurrency()
+    override suspend fun naturalBalanceUpToByCurrency(
+        target: YearMonth,
+        type: AccountType,
+        excludedAccountIds: Set<Long>,
+    ) = transactions.filter { it.date.yearMonth <= target }
+        .flatMap { it.entries }
+        .filter { it.account.type == type && it.account.id !in excludedAccountIds }
+        .byCurrency()
 
-    override suspend fun balanceUpToByCurrency(target: YearMonth) =
-        naturalBalanceUpToByCurrency(target, AccountType.ASSET)
+    override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>) =
+        naturalBalanceUpToByCurrency(target, AccountType.ASSET, excludedAccountIds)
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
         transactions.filter { it.date.yearMonth <= target }

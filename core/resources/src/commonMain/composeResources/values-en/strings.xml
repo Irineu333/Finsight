@@ -805,6 +805,7 @@
     <string name="component_config_show_header">Show header</string>
     <string name="component_config_top_spacing">Top spacing</string>
     <string name="component_config_hide_single_account">Hide single account</string>
+    <string name="component_config_accounts_in_total">Accounts included in the total</string>
     <string name="component_config_hide_when_empty">Hide when empty</string>
     <string name="component_config_show_empty_state">Show empty state</string>
     <string name="component_config_max_categories">Max categories</string>

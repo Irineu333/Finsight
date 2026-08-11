@@ -7,6 +7,10 @@ object DashboardComponentConfig {
     const val HIDE_WHEN_EMPTY = "hide_when_empty"
 }
 
+object TotalBalanceConfig {
+    const val EXCLUDED_ACCOUNT_IDS = "excluded_account_ids"
+}
+
 object AccountsOverviewConfig {
     const val EXCLUDED_ACCOUNT_IDS = "excluded_account_ids"
     const val HIDE_SINGLE_ACCOUNT = "hide_single_account"
@@ -39,6 +43,15 @@ object RecentsConfig {
 object QuickActionsConfig {
     const val HIDDEN_ACTIONS = "hidden_actions"
 }
+
+/**
+ * The set of facade ids a widget was told to leave out, under [key] — comma-separated
+ * `Long`s, the format every exclusion preference is written in. Absent, blank or
+ * unparsable means nothing is excluded: a preference is not a place to fail from, and an
+ * id matching no row excludes nothing anyway.
+ */
+fun Map<String, String>.excludedIds(key: String): Set<Long> =
+    get(key)?.split(",")?.mapNotNullTo(mutableSetOf()) { it.toLongOrNull() } ?: emptySet()
 
 fun Map<String, String>.hideWhenEmpty(defaultValue: Boolean): Boolean =
     get(DashboardComponentConfig.HIDE_WHEN_EMPTY)?.toBoolean() ?: defaultValue

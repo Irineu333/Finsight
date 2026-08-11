@@ -77,8 +77,11 @@ private class FakeReadEntryDao(
     )
 
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = balanceUpTo
-    override suspend fun balanceUpToMonthByType(type: String, yearMonth: String): List<CurrencyTotal> =
-        rows(byType.getValue(type), byTypeUsd)
+    override suspend fun balanceUpToMonthByType(
+        type: String,
+        yearMonth: String,
+        excludedAccountIds: Collection<Long>,
+    ): List<CurrencyTotal> = rows(byType.getValue(type), byTypeUsd)
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<CurrencyTotal> = rows(inMonth)
     override suspend fun dimensionNaturalBalance(dimensionId: Long): List<CurrencyTotal> = rows(invoice)
     override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> =

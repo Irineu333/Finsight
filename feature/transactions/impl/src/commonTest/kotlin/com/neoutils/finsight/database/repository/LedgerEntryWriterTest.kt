@@ -479,8 +479,12 @@ private class FakeEntryDao : EntryDao {
     ): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> = throw NotImplementedError()
     override suspend fun scopeStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): List<com.neoutils.finsight.database.dao.ScopeStatsTotals> = throw NotImplementedError()
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
-    override suspend fun balanceUpToMonthByType(type: String, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
-        inserted.groupedByCurrency()
+    override suspend fun balanceUpToMonthByType(
+        type: String,
+        yearMonth: String,
+        excludedAccountIds: Collection<Long>,
+    ): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
+        inserted.filterNot { it.accountId in excludedAccountIds }.groupedByCurrency()
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
         inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
     override suspend fun dimensionNaturalBalance(dimensionId: Long): List<com.neoutils.finsight.database.dao.CurrencyTotal> =

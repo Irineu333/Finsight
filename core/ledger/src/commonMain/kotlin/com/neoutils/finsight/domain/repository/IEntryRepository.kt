@@ -140,7 +140,10 @@ interface IEntryRepository {
      * currency — the read the dashboard's total balance comes through, and therefore
      * the door multi-currency enters the app by.
      */
-    suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency
+    suspend fun balanceUpToByCurrency(
+        target: YearMonth,
+        excludedAccountIds: Set<Long> = emptySet(),
+    ): MoneyByCurrency
 
     /**
      * Natural balance of every account of [type] up to and including [target], per
@@ -148,10 +151,17 @@ interface IEntryRepository {
      * than with one nature fixed in its own text. The consolidated figure of two
      * natures is their **sum** (`MoneyByCurrency.plus`), since liabilities are stored
      * in credit; there is no second aggregate for it and no sign rule of its own.
+     *
+     * [excludedAccountIds] leaves those accounts out of the sum. They are **identities
+     * of accounts in the chart** — entities of the ledger — and nothing else: why a
+     * caller wants a narrower perimeter is not expressible here and is not the ledger's
+     * business. The empty set is the default and means the whole nature. An id matching
+     * no account excludes nothing, which needs no code of its own.
      */
     suspend fun naturalBalanceUpToByCurrency(
         target: YearMonth,
         type: AccountType,
+        excludedAccountIds: Set<Long> = emptySet(),
     ): MoneyByCurrency
 
     /**

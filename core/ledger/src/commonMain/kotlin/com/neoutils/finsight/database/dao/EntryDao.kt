@@ -221,15 +221,27 @@ interface EntryDao {
      * month, **per currency**. The nature is a parameter, not a literal, so the same
      * aggregate serves ASSET and LIABILITY — and their consolidated figure is the sum
      * of two calls, since liabilities are stored in credit.
+     *
+     * [excludedAccountIds] narrows the nature to a subset of its accounts, inside this
+     * same query — there is no second path to the accumulated balance and no subtraction
+     * of individual balances from a total. An empty set excludes nothing (`NOT IN ()` is
+     * true for every row in SQLite), so it is the read as it always was. The filter reads
+     * `e.accountId` rather than `a.id`: the same value through the join, without asking
+     * the joined table for what the entry already carries.
      */
     @Query(
         "SELECT e.currency AS currency, COALESCE(SUM(e.amount), 0) AS total FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
             "JOIN accounts a ON a.id = e.accountId " +
             "WHERE a.type = :type AND substr(o.date, 1, 7) <= :yearMonth " +
+            "AND e.accountId NOT IN (:excludedAccountIds) " +
             "GROUP BY e.currency"
     )
-    suspend fun balanceUpToMonthByType(type: String, yearMonth: String): List<CurrencyTotal>
+    suspend fun balanceUpToMonthByType(
+        type: String,
+        yearMonth: String,
+        excludedAccountIds: Collection<Long>,
+    ): List<CurrencyTotal>
 
     /**
      * Natural balance of a dimension within a single month (yyyy-MM), per currency.

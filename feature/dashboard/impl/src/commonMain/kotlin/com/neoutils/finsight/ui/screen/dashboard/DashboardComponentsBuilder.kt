@@ -119,7 +119,7 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent? {
         return when (key) {
-            DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input)
+            DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input, config)
             DashboardComponentType.OVERALL_BALANCE_STATS.key -> overallBalanceStats(input, config)
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
@@ -174,13 +174,22 @@ class DashboardComponentsBuilder(
 
     private suspend fun totalBalance(
         input: DashboardComponentsInput,
+        config: Map<String, String>,
     ): DashboardComponent.TotalBalance {
-        // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
-        // It spans every account, so it is a balance and it is consolidated: only the
-        // negative is information.
+        // Σ entries of the ASSET accounts up to the target month, from the ledger (task 4.3).
+        // It spans accounts, so it is a balance and it is consolidated: only the negative
+        // is information.
+        //
+        // The perimeter the user authored travels as ids into the read itself — never a
+        // sum account by account here, which would lose the ledger's grouping by currency.
+        // Every account excluded is a figure with no terms, and that is a zero like any
+        // other: `ConsolidateMoneyUseCase` denominates it, and this widget still returns.
         return DashboardComponent.TotalBalance(
             amount = input.figure(
-                calculateBalanceUseCase(target = input.targetMonth),
+                calculateBalanceUseCase(
+                    target = input.targetMonth,
+                    excludedAccountIds = config.excludedIds(TotalBalanceConfig.EXCLUDED_ACCOUNT_IDS),
+                ),
                 DisplayAmount::natural,
             ),
         )
@@ -282,11 +291,7 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent.AccountsOverview? {
         val hideSingleAccount = config[AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT] != "false"
-        val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
-            ?.split(",")
-            ?.filter { it.isNotEmpty() }
-            ?.mapNotNull { it.toLongOrNull() }
-            ?.toSet() ?: emptySet()
+        val excludedIds = config.excludedIds(AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS)
 
         val accountsUi = input.accounts
             .filter { it.id !in excludedIds }
@@ -321,11 +326,7 @@ class DashboardComponentsBuilder(
         val showEmptyState = config[DashboardComponentConfig.SHOW_EMPTY_STATE] == "true"
         if (input.creditCards.isEmpty() && !showEmptyState) return null
 
-        val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
-            ?.split(",")
-            ?.filter { it.isNotEmpty() }
-            ?.mapNotNull { it.toLongOrNull() }
-            ?.toSet() ?: emptySet()
+        val excludedIds = config.excludedIds(CreditCardsPagerConfig.EXCLUDED_CARD_IDS)
 
         val creditCardsWithBills = input.creditCards
             .filter { it.id !in excludedIds }

@@ -67,14 +67,18 @@ class EntryRepository(
 
     // No account named means "every ASSET account" — the same read by nature, so the
     // accumulated balance has one path, not two.
-    override suspend fun balanceUpToByCurrency(target: YearMonth): MoneyByCurrency =
-        naturalBalanceUpToByCurrency(target, AccountType.ASSET)
+    override suspend fun balanceUpToByCurrency(
+        target: YearMonth,
+        excludedAccountIds: Set<Long>,
+    ): MoneyByCurrency =
+        naturalBalanceUpToByCurrency(target, AccountType.ASSET, excludedAccountIds)
 
     override suspend fun naturalBalanceUpToByCurrency(
         target: YearMonth,
         type: AccountType,
+        excludedAccountIds: Set<Long>,
     ): MoneyByCurrency = entryDao
-        .balanceUpToMonthByType(type.name, target.toString())
+        .balanceUpToMonthByType(type.name, target.toString(), excludedAccountIds)
         .toMoney { it.total }
 
     override suspend fun balance(accountId: Long): Double {

@@ -16,6 +16,7 @@ enum class DashboardComponentType(
         key = "total_balance",
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
+            TotalBalanceConfig.EXCLUDED_ACCOUNT_IDS to "",
         ),
     ),
     OVERALL_BALANCE_STATS(

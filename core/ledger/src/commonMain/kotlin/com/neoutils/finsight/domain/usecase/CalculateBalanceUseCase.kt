@@ -20,9 +20,21 @@ import kotlinx.datetime.YearMonth
 class CalculateBalanceUseCase(
     private val entryRepository: IEntryRepository,
 ) {
-    /** Every `ASSET` account up to [target], per currency. Nothing here is converted. */
-    suspend operator fun invoke(target: YearMonth): MoneyByCurrency {
-        return entryRepository.balanceUpToByCurrency(target = target)
+    /**
+     * Every `ASSET` account up to [target], per currency. Nothing here is converted.
+     *
+     * [excludedAccountIds] narrows the perimeter to a subset of those accounts, by
+     * identity. Whose decision that is, and on what grounds, stays with the caller —
+     * this use case carries the ids down and nothing more.
+     */
+    suspend operator fun invoke(
+        target: YearMonth,
+        excludedAccountIds: Set<Long> = emptySet(),
+    ): MoneyByCurrency {
+        return entryRepository.balanceUpToByCurrency(
+            target = target,
+            excludedAccountIds = excludedAccountIds,
+        )
     }
 
     /** One account up to [target] — scalar, denominated by the account itself. */

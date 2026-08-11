@@ -117,6 +117,21 @@ class DashboardComponentOptionsModal(
             }
 
             when (item.key) {
+                DashboardComponentType.TOTAL_BALANCE.key -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_accounts_in_total),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    TotalBalanceConfigContent(
+                        accounts = accounts,
+                        config = config,
+                        onConfigChange = {
+                            config = it
+                        },
+                    )
+                }
+
                 DashboardComponentType.OVERALL_BALANCE_STATS.key,
                 DashboardComponentType.CONCRETE_BALANCE_STATS.key -> {
                     DashboardConfigSectionLabel(
@@ -539,6 +554,37 @@ private fun BalanceStatsConfigContent(
     }
 }
 
+/**
+ * Which accounts make up the total. The perimeter is the user's own, so unchecking one
+ * changes the figure and nothing else — not the account, not its balance elsewhere, and
+ * not the accounts card below, whose exclusion is a preference of its own.
+ */
+@Composable
+private fun TotalBalanceConfigContent(
+    accounts: List<Account>,
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val excludedIds = config.excludedIds(TotalBalanceConfig.EXCLUDED_ACCOUNT_IDS)
+
+    DashboardConfigCard {
+        accounts.forEach { account ->
+            val included = account.id !in excludedIds
+            DashboardConfigToggleRow(
+                title = account.name,
+                modifier = Modifier.testTag("dashboard_component_options_total_balance_account_${account.id}"),
+                checked = included,
+                onCheckedChange = { checked ->
+                    val newExcluded = if (checked) excludedIds - account.id else excludedIds + account.id
+                    onConfigChange(config.toMutableMap().apply {
+                        put(TotalBalanceConfig.EXCLUDED_ACCOUNT_IDS, newExcluded.joinToString(","))
+                    })
+                },
+            )
+        }
+    }
+}
+
 @Composable
 private fun AccountsOverviewConfigContent(
     accounts: List<Account>,
@@ -546,9 +592,7 @@ private fun AccountsOverviewConfigContent(
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
     val hideSingleAccount = config[AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT] != "false"
-    val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
-        ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
-        ?: emptySet()
+    val excludedIds = config.excludedIds(AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS)
 
     DashboardConfigCard {
         DashboardConfigToggleRow(
@@ -588,9 +632,7 @@ private fun CreditCardsPagerConfigContent(
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
     val showEmptyState = config[DashboardComponentConfig.SHOW_EMPTY_STATE] == "true"
-    val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
-        ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
-        ?: emptySet()
+    val excludedIds = config.excludedIds(CreditCardsPagerConfig.EXCLUDED_CARD_IDS)
 
     DashboardConfigCard {
         DashboardConfigToggleRow(

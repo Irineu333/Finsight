@@ -6,8 +6,6 @@ import com.neoutils.finsight.database.mapper.AccountMapper
 import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
@@ -101,8 +99,6 @@ val accountsModule = module {
             calculateBalanceUseCase = get(),
         )
     }
-    factory { AdjustFinalBalanceUseCase(adjustBalanceUseCase = get()) }
-    factory { AdjustOpeningBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
             harvestExchangeRate = get(),
@@ -120,6 +116,7 @@ val accountsModule = module {
             transactionRepository = get(),
             categoryRepository = get(),
             entryRepository = get(),
+            clock = get(),
             initialAccountId = it.getOrNull(),
         )
     }
@@ -161,17 +158,15 @@ val accountsModule = module {
     }
     viewModel {
         EditAccountBalanceViewModel(
-            type = it.get(),
+            initialDate = it.get(),
             account = it.get(),
-            targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
             adjustBalanceUseCase = get(),
-            adjustFinalBalanceUseCase = get(),
-            adjustOpeningBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {

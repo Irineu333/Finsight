@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.MoneyByCurrency
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +18,7 @@ class EntryRepositoryTest {
     @Test
     fun `given account entries when balanceUpTo then cents are converted to reais`() = runTest {
         val repository = EntryRepository(FakeReadEntryDao(balanceUpTo = -12000))
-        assertEquals(-120.0, repository.accountBalanceUpTo(accountId = 1, target = YearMonth(2026, 1)))
+        assertEquals(-120.0, repository.accountBalanceUpTo(accountId = 1, target = LocalDate(2026, 1, 31)))
     }
 
     @Test
@@ -76,7 +77,7 @@ private class FakeReadEntryDao(
         usd?.let { CurrencyTotal("USD", it) },
     )
 
-    override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = balanceUpTo
+    override suspend fun balanceUpToDate(accountId: Long, date: String): Long = balanceUpTo
     override suspend fun balanceUpToMonthByType(
         type: String,
         yearMonth: String,

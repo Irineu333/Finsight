@@ -87,6 +87,7 @@ class AccountsEmptyStateTest {
         categoryRepository = FakeCategoryRepository(listOf(food)),
         installmentRepository = NoInstallments,
         entryRepository = FlatEntryRepository,
+        clock = Clock.System,
     )
 
     @Test
@@ -232,7 +233,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = emptyList()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = flowOf(emptyList())
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = 0.0
+    override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = 0.0
     override suspend fun balance(accountId: Long): Double = 0.0
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false

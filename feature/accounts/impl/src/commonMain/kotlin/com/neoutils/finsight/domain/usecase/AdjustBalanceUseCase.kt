@@ -15,7 +15,6 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.naturalBalanceOf
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.yearMonth
 
 class AdjustBalanceUseCase(
     private val transactionRepository: ITransactionRepository,
@@ -30,7 +29,7 @@ class AdjustBalanceUseCase(
             // Scoped to one account, so scalar — and the currency is the account's own.
             calculateBalanceUseCase.forAccount(
                 accountId = account.id,
-                target = adjustmentDate.yearMonth,
+                target = adjustmentDate,
             )
         }.bind()
 

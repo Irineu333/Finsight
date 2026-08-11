@@ -69,8 +69,8 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>) =
         naturalBalanceUpToByCurrency(target, AccountType.ASSET, excludedAccountIds)
 
-    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
-        transactions.filter { it.date.yearMonth <= target }
+    override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double =
+        transactions.filter { it.date <= target }
             .flatMap { it.entries }
             .filter { it.account.id == accountId }
             .sumOf { it.amount } / 100.0

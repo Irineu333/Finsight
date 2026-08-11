@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.window
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -17,15 +18,17 @@ import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.ledger_action_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -60,6 +63,9 @@ class EditInvoiceBalanceViewModel(
 
     private val selectedInvoice = MutableStateFlow(initialInvoice)
 
+    // The date as the form holds it: text, because that is what the field edits.
+    private val date = MutableStateFlow(dayMonthYear.format(dateInWindowOf(initialInvoice)))
+
     private val currentBalance = selectedInvoice.map { invoice ->
         calculateInvoiceUseCase(invoice)
     }.stateIn(
@@ -68,13 +74,38 @@ class EditInvoiceBalanceViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
     )
 
+    init {
+        // The invoice governs the date. This collector reads the selected invoice and
+        // never the date itself, which is what makes the reverse direction impossible
+        // rather than merely avoided.
+        viewModelScope.launch {
+            selectedInvoice.drop(1).collect { invoice ->
+                date.value = dayMonthYear.format(dateInWindowOf(invoice, date.value))
+            }
+        }
+    }
+
+    /**
+     * Today's day placed in [invoice]'s window, capped at today.
+     *
+     * The day is what is preserved and the window decides the month, exactly as the other
+     * card forms do. An adjustment is not a purchase, so the invoice's closing is no
+     * ceiling here — only today is (design D3).
+     */
+    private fun dateInWindowOf(invoice: Invoice, from: String? = null): LocalDate {
+        val today = currentDate
+        val day = from?.let { runCatching { dayMonthYear.parse(it) }.getOrNull()?.day } ?: today.day
+        return invoice.window.dateOn(day).coerceAtMost(today)
+    }
+
     val uiState = combine(
         creditCards,
         selectedCreditCard,
         editableInvoices,
         selectedInvoice,
-        currentBalance
-    ) { cards, selectedCard, invoices, selectedInvoice, balance ->
+        currentBalance,
+        date,
+    ) { cards, selectedCard, invoices, selectedInvoice, balance, date ->
         if (balance == null) {
             EditInvoiceBalanceUiState.Loading
         } else {
@@ -85,6 +116,8 @@ class EditInvoiceBalanceViewModel(
                 selectedInvoice = selectedInvoice,
                 currentBalance = balance,
                 currency = accountRepository.currencyOf(selectedCard),
+                date = date,
+                today = currentDate,
             )
         }
     }.stateIn(
@@ -106,6 +139,10 @@ class EditInvoiceBalanceViewModel(
                 selectedInvoice.value = action.invoice
             }
 
+            is EditInvoiceBalanceAction.ChangeDate -> {
+                date.value = action.date
+            }
+
             is EditInvoiceBalanceAction.Submit -> {
                 submit(action.targetBalance)
             }
@@ -113,10 +150,12 @@ class EditInvoiceBalanceViewModel(
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
+        val on = runCatching { dayMonthYear.parse(date.value) }.getOrNull() ?: return@launch
+
         adjustInvoiceUseCase(
             invoice = selectedInvoice.value,
             target = targetBalance,
-            adjustmentDate = currentDate
+            adjustmentDate = on
         ).onLeft {
             when (it) {
                 // No change to make: the target equals the current balance. Close

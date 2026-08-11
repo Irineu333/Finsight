@@ -74,9 +74,9 @@ class MigrationLedgerReadParityTest {
         assertEquals(2, nominals.size, "the whole chart holds exactly two nominal accounts")
 
         // Temporal cut, read through the production query: nothing before A's first
-        // movement, everything by the month of its last.
-        assertEquals(0L, entryDao.balanceUpToMonth(aId, "2023-12"))
-        assertEquals(78000L, entryDao.balanceUpToMonth(aId, "2024-01"))
+        // movement, everything by the end of the month of its last.
+        assertEquals(0L, entryDao.balanceUpToDate(aId, "2023-12-31"))
+        assertEquals(78000L, entryDao.balanceUpToDate(aId, "2024-01-31"))
 
         database.close()
     }

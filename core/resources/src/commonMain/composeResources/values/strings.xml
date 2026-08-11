@@ -479,9 +479,7 @@
     <string name="cross_currency_implied_by_rate">pela taxa de %1$s: %2$s</string>
 
     <!-- Edit Account Balance Modal -->
-    <string name="edit_account_balance_current_title">Editar Saldo Atual</string>
-    <string name="edit_account_balance_final_title">Editar Saldo Final</string>
-    <string name="edit_account_balance_initial_title">Editar Saldo Inicial</string>
+    <string name="edit_account_balance_title">Ajustar Saldo</string>
     <string name="edit_account_balance_label">Saldo</string>
     <string name="edit_account_balance_save">Salvar</string>
 

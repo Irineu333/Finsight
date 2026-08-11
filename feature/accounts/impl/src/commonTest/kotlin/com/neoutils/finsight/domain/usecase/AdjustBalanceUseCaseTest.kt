@@ -81,6 +81,67 @@ class AdjustBalanceUseCaseTest {
     }
 
     /**
+     * Each adjustment is an event of its own date: reopening a date edits that event,
+     * another date creates another.
+     */
+    @Test
+    fun `adjusting on two dates produces one adjustment on each`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+        val later = LocalDate(2026, 2, 10)
+
+        useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
+        useCase(targetBalance = 150.0, adjustmentDate = later, account = account).getOrNull()
+
+        // 100 on the first date, then 50 more to reach 150 on the second: two events,
+        // each a delta of its own day.
+        assertEquals(mapOf(date to 100.0, later to 50.0), ledger.adjustmentsByDate())
+        assertEquals(100.0, ledger.accountBalance(upTo = date))
+        assertEquals(150.0, ledger.accountBalance())
+    }
+
+    @Test
+    fun `re-adjusting back to the original value removes that date's adjustment`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
+        useCase(targetBalance = 0.0, adjustmentDate = date, account = account).getOrNull()
+
+        // Not a transaction worth zero: no transaction at all.
+        assertEquals(emptyMap(), ledger.adjustmentsByDate())
+        assertEquals(0.0, ledger.accountBalance())
+    }
+
+    /**
+     * An adjustment is a **delta**, not a target the ledger keeps re-reaching. Moving the
+     * past moves the present, and the adjustment already written stays as it was.
+     */
+    @Test
+    fun `altering the past propagates to the present without rewriting the adjustment`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        useCase(targetBalance = 200.0, adjustmentDate = date, account = account).getOrNull()
+        assertEquals(mapOf(date to 200.0), ledger.adjustmentsByDate())
+
+        // A movement earlier than the adjustment, written after it.
+        ledger.seedMovement(date = LocalDate(2026, 1, 5), cents = 5_000)
+
+        assertEquals(mapOf(date to 200.0), ledger.adjustmentsByDate())
+        assertEquals(250.0, ledger.accountBalance())
+    }
+
+    /**
      * And the editability gate refuses the crossing without a gate of its own: it
      * counts **monetary** legs, and a conversion leg is not one (design D19).
      */
@@ -106,6 +167,7 @@ class AdjustBalanceUseCaseTest {
  */
 class LedgerStore(private val account: Account) {
     private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL")
+    private val expense = Account(id = 998, name = "Expenses", type = AccountType.EXPENSE, currency = "BRL")
     private val foreignAccount = Account(id = 2, name = "Chase", type = AccountType.ASSET, currency = "USD")
     private val conversionLocal =
         Account(id = 900, name = "Conversão", type = AccountType.CONVERSION, currency = "BRL")
@@ -145,8 +207,30 @@ class LedgerStore(private val account: Account) {
         return transactionId
     }
 
-    fun accountBalance(): Double =
-        entriesByTransaction.values.flatten().naturalBalanceOf(account.id) / 100.0
+    /** Every entry on the account, or only those up to [upTo] — the dated read. */
+    fun accountBalance(upTo: LocalDate? = null): Double = entriesByTransaction
+        .filterKeys { upTo == null || dateByTransaction.getValue(it) <= upTo }
+        .values.flatten()
+        .naturalBalanceOf(account.id) / 100.0
+
+    /** A plain movement on the account, with no EQUITY counter-leg — not an adjustment. */
+    fun seedMovement(date: LocalDate, cents: Long): Long {
+        val transactionId = ++nextTransactionId
+        dateByTransaction[transactionId] = date
+        entriesByTransaction[transactionId] = listOf(
+            Entry(transactionId = transactionId, account = account, amount = cents),
+            Entry(transactionId = transactionId, account = expense, amount = -cents),
+        )
+        return transactionId
+    }
+
+    /** The adjustment legs on the account, by the date they were written on. */
+    fun adjustmentsByDate(): Map<LocalDate, Double> = entriesByTransaction
+        .filterValues { entries -> entries.any { it.account.type == AccountType.EQUITY } }
+        .map { (id, entries) ->
+            dateByTransaction.getValue(id) to entries.naturalBalanceOf(account.id) / 100.0
+        }
+        .toMap()
 }
 
 class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionRepository {
@@ -196,7 +280,8 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
 }
 
 class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
-    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = ledger.accountBalance()
+    override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double =
+        ledger.accountBalance(upTo = target)
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

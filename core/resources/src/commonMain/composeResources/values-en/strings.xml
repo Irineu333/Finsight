@@ -478,9 +478,7 @@
     <string name="cross_currency_implied_by_rate">at the rate of %1$s: %2$s</string>
 
     <!-- Edit Account Balance Modal -->
-    <string name="edit_account_balance_current_title">Edit Current Balance</string>
-    <string name="edit_account_balance_final_title">Edit Final Balance</string>
-    <string name="edit_account_balance_initial_title">Edit Initial Balance</string>
+    <string name="edit_account_balance_title">Adjust Balance</string>
     <string name="edit_account_balance_label">Balance</string>
     <string name="edit_account_balance_save">Save</string>
 

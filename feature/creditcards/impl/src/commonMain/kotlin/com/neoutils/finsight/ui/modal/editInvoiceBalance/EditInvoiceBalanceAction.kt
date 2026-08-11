@@ -6,5 +6,6 @@ import com.neoutils.finsight.domain.model.Invoice
 sealed class EditInvoiceBalanceAction {
     data class SelectCreditCard(val creditCard: CreditCard) : EditInvoiceBalanceAction()
     data class SelectInvoice(val invoice: Invoice) : EditInvoiceBalanceAction()
+    data class ChangeDate(val date: String) : EditInvoiceBalanceAction()
     data class Submit(val targetBalance: Double) : EditInvoiceBalanceAction()
 }

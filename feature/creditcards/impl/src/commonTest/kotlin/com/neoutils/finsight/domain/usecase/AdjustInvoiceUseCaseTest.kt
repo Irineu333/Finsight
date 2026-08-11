@@ -163,6 +163,16 @@ class InvoiceLedgerStore(card: CreditCard) {
         .flatten()
         .filter { it.dimensionId == dimensionId }
         .sumOf { it.amount } / 100.0
+
+    /** The adjustment legs carrying [dimensionId], by the date they were written on. */
+    fun adjustmentsByDate(dimensionId: Long): Map<LocalDate, Double> = entriesByTransaction
+        .filterValues { entries -> entries.any { it.account.type == AccountType.EQUITY } }
+        .filterValues { entries -> entries.any { it.dimensionId == dimensionId } }
+        .map { (id, entries) ->
+            dateByTransaction.getValue(id) to
+                -entries.filter { it.dimensionId == dimensionId }.sumOf { it.amount } / 100.0
+        }
+        .toMap()
 }
 
 class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITransactionRepository {
@@ -224,7 +234,7 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
-    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double = throw NotImplementedError()
+    override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()

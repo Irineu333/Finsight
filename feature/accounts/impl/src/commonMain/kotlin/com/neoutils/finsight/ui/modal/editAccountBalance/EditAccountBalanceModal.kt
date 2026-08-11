@@ -33,32 +33,39 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.DateInputTransformation
+import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.edit_account_balance_current_title
-import com.neoutils.finsight.resources.edit_account_balance_final_title
-import com.neoutils.finsight.resources.edit_account_balance_initial_title
+import com.neoutils.finsight.resources.add_transaction_date_label
 import com.neoutils.finsight.resources.edit_account_balance_label
 import com.neoutils.finsight.resources.edit_account_balance_save
-import kotlinx.datetime.YearMonth
-import org.jetbrains.compose.resources.StringResource
+import com.neoutils.finsight.resources.edit_account_balance_title
+import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.modal.date.DatePickerModal
+import androidx.compose.material.icons.twotone.CalendarToday
+import kotlinx.coroutines.flow.drop
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/**
+ * One adjustment, opened on [initialDate]. The entry point chooses which date to open on;
+ * it never chooses a kind of adjustment, because there is none.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 class EditAccountBalanceModal(
-    private val type: Type,
-    private val targetMonth: YearMonth? = null,
+    private val initialDate: LocalDate,
     private val account: Account,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditAccountBalanceViewModel> {
-            parametersOf(type, targetMonth, account)
+            parametersOf(initialDate, account)
         }
+        val manager = LocalModalManager.current
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val currencyFormatter = LocalCurrencyFormatter.current
         when (val state = uiState) {
@@ -71,18 +78,9 @@ class EditAccountBalanceModal(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(type.titleRes),
+                        text = stringResource(Res.string.edit_account_balance_title),
                         style = MaterialTheme.typography.titleLarge,
                     )
-
-                    if (targetMonth != null) {
-                        Text(
-                            text = LocalDateFormats.current.yearMonth.format(targetMonth),
-                            fontSize = 14.sp,
-                            color = TextLight1,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
                     CircularProgressIndicator()
@@ -93,6 +91,16 @@ class EditAccountBalanceModal(
                 // The balance being edited belongs to the selected account, so the field
                 // reads and writes in that account's currency (design D29).
                 val currency = state.selectedAccount.currency
+
+                // Compose edits text through a `TextFieldState`, and that is an editing
+                // buffer, not the form: it reports to the ViewModel, which owns the date.
+                val dateState = rememberTextFieldState(state.date)
+
+                LaunchedEffect(Unit) {
+                    snapshotFlow { dateState.text.toString() }
+                        .drop(1)
+                        .collect { viewModel.onAction(EditAccountBalanceAction.ChangeDate(it)) }
+                }
 
                 val balanceState = rememberTextFieldState(
                     currencyFormatter.format(
@@ -137,18 +145,9 @@ class EditAccountBalanceModal(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(type.titleRes),
+                        text = stringResource(Res.string.edit_account_balance_title),
                         style = MaterialTheme.typography.titleLarge,
                     )
-
-                    if (targetMonth != null) {
-                        Text(
-                            text = LocalDateFormats.current.yearMonth.format(targetMonth),
-                            fontSize = 14.sp,
-                            color = TextLight1,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -160,6 +159,50 @@ class EditAccountBalanceModal(
                                 viewModel.onAction(EditAccountBalanceAction.SelectAccount(it))
                             }
                         },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        state = dateState,
+                        label = { Text(stringResource(Res.string.add_transaction_date_label)) },
+                        inputTransformation = DateInputTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    manager.show(
+                                        DatePickerModal(
+                                            initialDate = runCatching {
+                                                dayMonthYear.parse(dateState.text.toString())
+                                            }.getOrNull(),
+                                            // An adjustment is never dated in the future,
+                                            // and the calendar is where that is settled —
+                                            // not an error raised after the submit.
+                                            maxDate = state.today,
+                                            onDateSelected = { selectedDate ->
+                                                dateState.edit {
+                                                    replace(0, length, dayMonthYear.format(selectedDate))
+                                                }
+                                            }
+                                        )
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.TwoTone.CalendarToday,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        lineLimits = TextFieldLineLimits.SingleLine,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -257,9 +300,4 @@ class EditAccountBalanceModal(
         }
     }
 
-    enum class Type(val titleRes: StringResource) {
-        CURRENT(Res.string.edit_account_balance_current_title),
-        FINAL(Res.string.edit_account_balance_final_title),
-        INITIAL(Res.string.edit_account_balance_initial_title)
-    }
 }

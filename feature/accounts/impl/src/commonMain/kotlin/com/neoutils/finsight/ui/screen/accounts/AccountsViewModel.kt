@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
@@ -36,8 +37,11 @@ class AccountsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
+    private val clock: Clock,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
+
+    private val today = clock.today()
 
     private val accounts = accountRepository.observeAllAccounts()
 
@@ -79,7 +83,7 @@ class AccountsViewModel(
         }
     }
 
-    private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
+    private val selectedMonth = MutableStateFlow(today.yearMonth)
 
     private val accountsWithDomain = combine(
         accounts,
@@ -206,12 +210,14 @@ class AccountsViewModel(
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
+            today = today,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = AccountsUiState.Loading(
             selectedMonth = selectedMonth.value,
+            today = today,
         )
     )
 

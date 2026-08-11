@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.closingBalanceDateOf
+import com.neoutils.finsight.domain.openingBalanceDateOf
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionType
@@ -253,11 +255,16 @@ private fun AccountsContent(
                             onSelectAccount = { index ->
                                 onAction(AccountsAction.SelectAccount(index))
                             },
+                            // Two shortcuts into the same adjustment, differing only by
+                            // the date they open on — which the domain projects, never
+                            // the screen.
                             onEditBalance = { account ->
                                 modalManager.show(
                                     EditAccountBalanceModal(
-                                        type = EditAccountBalanceModal.Type.FINAL,
-                                        targetMonth = uiState.selectedMonth,
+                                        initialDate = closingBalanceDateOf(
+                                            month = uiState.selectedMonth,
+                                            today = uiState.today,
+                                        ),
                                         account = account,
                                     )
                                 )
@@ -265,8 +272,10 @@ private fun AccountsContent(
                             onEditOpeningBalance = { account ->
                                 modalManager.show(
                                     EditAccountBalanceModal(
-                                        type = EditAccountBalanceModal.Type.INITIAL,
-                                        targetMonth = uiState.selectedMonth,
+                                        initialDate = openingBalanceDateOf(
+                                            month = uiState.selectedMonth,
+                                            today = uiState.today,
+                                        ),
                                         account = account,
                                     )
                                 )

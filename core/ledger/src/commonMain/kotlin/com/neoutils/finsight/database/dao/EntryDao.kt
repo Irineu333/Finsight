@@ -208,13 +208,22 @@ interface EntryDao {
 
     // --- Ledger reads (natural, debit-positive cents). All derive from Σ amount. ---
 
-    /** Natural balance of an account up to and including the given month (yyyy-MM). */
+    /**
+     * Natural balance of an account up to and including the given date (yyyy-MM-dd).
+     *
+     * The cut is by day because the transaction date already has that resolution. The
+     * accumulated balance up to a month is this same read asked at the month's last day,
+     * not a second query with a coarser cut.
+     *
+     * The per-currency reads below keep their monthly cut: no consumer of theirs asks by
+     * day, and the asymmetry is deliberate.
+     */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
-            "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) <= :yearMonth"
+            "WHERE e.accountId = :accountId AND o.date <= :date"
     )
-    suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long
+    suspend fun balanceUpToDate(accountId: Long, date: String): Long
 
     /**
      * Combined natural balance of every account of one nature up to and including the

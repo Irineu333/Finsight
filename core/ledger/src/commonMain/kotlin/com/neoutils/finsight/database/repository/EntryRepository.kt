@@ -62,8 +62,8 @@ class EntryRepository(
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean =
         entryDao.hasEntriesForDimension(dimensionId)
 
-    override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
-        entryDao.balanceUpToMonth(accountId, target.toString()) / CENTS_PER_UNIT
+    override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double =
+        entryDao.balanceUpToDate(accountId, target.toString()) / CENTS_PER_UNIT
 
     // No account named means "every ASSET account" — the same read by nature, so the
     // accumulated balance has one path, not two.

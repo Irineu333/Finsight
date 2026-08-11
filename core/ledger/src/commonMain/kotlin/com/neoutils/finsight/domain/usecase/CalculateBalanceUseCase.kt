@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 /**
@@ -37,7 +38,15 @@ class CalculateBalanceUseCase(
         )
     }
 
-    /** One account up to [target] — scalar, denominated by the account itself. */
+    /**
+     * One account up to [target] — scalar, denominated by the account itself, and cut
+     * by day, the resolution the transaction date already has.
+     */
+    suspend fun forAccount(accountId: Long, target: LocalDate): Double {
+        return entryRepository.accountBalanceUpTo(accountId = accountId, target = target)
+    }
+
+    /** The same read asked by month: the balance up to that month's last day. */
     suspend fun forAccount(accountId: Long, target: YearMonth): Double {
         return entryRepository.accountBalanceUpTo(accountId = accountId, target = target)
     }

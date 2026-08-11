@@ -29,8 +29,13 @@ class CalculateBalanceUseCaseTest {
         private val byAccount: Map<Long, Double> = emptyMap(),
         private val spanning: Map<String, Double> = emptyMap(),
     ) : IEntryRepository {
-        override suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
-            byAccount.getValue(accountId)
+        var askedFor: LocalDate? = null
+            private set
+
+        override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double {
+            askedFor = target
+            return byAccount.getValue(accountId)
+        }
 
         override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>) =
             com.neoutils.finsight.domain.model.MoneyByCurrency.of(spanning)
@@ -73,7 +78,24 @@ class CalculateBalanceUseCaseTest {
     fun `one account answers a number`() = runTest {
         val useCase = CalculateBalanceUseCase(FakeEntryRepository(byAccount = mapOf(1L to 110.0)))
 
-        assertEquals(110.0, useCase.forAccount(accountId = 1, target = YearMonth(2026, 3)))
+        assertEquals(110.0, useCase.forAccount(accountId = 1, target = LocalDate(2026, 3, 12)))
+    }
+
+    /**
+     * The monthly form is the dated one asked with less precision — not another read.
+     */
+    @Test
+    fun `by month is by the last day of that month`() = runTest {
+        val repository = FakeEntryRepository(byAccount = mapOf(1L to 110.0))
+        val useCase = CalculateBalanceUseCase(repository)
+
+        val byMonth = useCase.forAccount(accountId = 1, target = YearMonth(2026, 2))
+        val askedMonth = repository.askedFor
+
+        val byDate = useCase.forAccount(accountId = 1, target = LocalDate(2026, 2, 28))
+
+        assertEquals(byDate, byMonth)
+        assertEquals(LocalDate(2026, 2, 28), askedMonth)
     }
 
     @Test

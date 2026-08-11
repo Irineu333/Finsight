@@ -4,5 +4,6 @@ import com.neoutils.finsight.domain.model.Account
 
 sealed class EditAccountBalanceAction {
     data class SelectAccount(val account: Account) : EditAccountBalanceAction()
+    data class ChangeDate(val date: String) : EditAccountBalanceAction()
     data class Submit(val targetBalance: Double) : EditAccountBalanceAction()
 }

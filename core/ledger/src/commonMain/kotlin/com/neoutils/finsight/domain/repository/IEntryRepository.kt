@@ -132,8 +132,21 @@ interface IEntryRepository {
     /**
      * Natural balance of [accountId] up to and including [target]. Scalar, and it
      * stays scalar: one account is one currency, which the caller already knows.
+     *
+     * The cut is by **day**, the resolution the transaction date already carries. This
+     * is the real read; the monthly form below derives from it.
+     *
+     * The per-currency reads that follow keep their monthly cut — the asymmetry is
+     * deliberate, and stays until a consumer of theirs asks by day.
      */
-    suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double
+    suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double
+
+    /**
+     * The same balance asked with less precision: up to the last day of [target].
+     * Not another number, so not another implementation.
+     */
+    suspend fun accountBalanceUpTo(accountId: Long, target: YearMonth): Double =
+        accountBalanceUpTo(accountId = accountId, target = target.lastDay)
 
     /**
      * Natural balance of every ASSET account up to and including [target], per

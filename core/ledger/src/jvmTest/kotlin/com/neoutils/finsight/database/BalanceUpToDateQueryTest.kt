@@ -2,18 +2,22 @@ package com.neoutils.finsight.database
 
 import com.neoutils.finsight.database.entity.AccountEntity
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The month-cutoff behind both balance figures the app shows — the running balance
- * and the period's opening balance. Neither had a test at any level: the repository
- * test feeds a fake DAO a hardcoded number and the use case is thin delegation, so
- * the boundary itself (is the target month included? the previous one?) was
- * unverified in a change whose declared risk is a number changing in silence.
+ * The date cutoff behind every balance figure the app shows — the running balance, the
+ * period's opening balance and the reference value of an adjustment. The boundary itself
+ * (is the target day included? the next one?) is what this fixes, since a number changing
+ * in silence is the risk the read carries.
+ *
+ * The per-currency aggregates below still cut by month, and are exercised here as such:
+ * the day resolution stays with the scalar read by account.
  */
-class BalanceUpToMonthQueryTest {
+class BalanceUpToDateQueryTest {
 
     private val database = ledgerDatabase()
     private val entryDao = database.entryDao()
@@ -37,27 +41,75 @@ class BalanceUpToMonthQueryTest {
     }
 
     @Test
-    fun `the target month is included and later months are not`() = runTest {
+    fun `the target day is included and later days are not`() = runTest {
         seed()
 
-        assertEquals(10_000L, entryDao.balanceUpToMonth(1, "2026-01"))
+        assertEquals(10_000L, entryDao.balanceUpToDate(1, "2026-01-31"))
         // February's last day counts; March does not.
-        assertEquals(7_500L, entryDao.balanceUpToMonth(1, "2026-02"))
-        assertEquals(7_400L, entryDao.balanceUpToMonth(1, "2026-03"))
+        assertEquals(7_500L, entryDao.balanceUpToDate(1, "2026-02-28"))
+        assertEquals(7_400L, entryDao.balanceUpToDate(1, "2026-03-31"))
+    }
+
+    /**
+     * The resolution the cut gained: a day inside the month, not the month itself.
+     */
+    @Test
+    fun `a balance up to a day inside the month splits that month`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET)
+
+            transaction("2026-04-05", 1L posts 5_000)
+            transaction("2026-04-20", 1L posts 3_000)
+        }
+
+        assertEquals(5_000L, entryDao.balanceUpToDate(1, "2026-04-10"))
+        assertEquals(8_000L, entryDao.balanceUpToDate(1, "2026-04-30"))
+    }
+
+    /**
+     * The accumulated balance up to a month is this same query at the month's last day —
+     * the same number asked with less precision, not a second read.
+     */
+    @Test
+    fun `the accumulated balance up to a month is the balance up to its last day`() = runTest {
+        seed()
+
+        assertEquals(
+            entryDao.balanceUpToDate(1, "2026-02-28"),
+            entryDao.balanceUpToDate(1, LocalDate(2026, 2, 28).toString()),
+        )
+        assertEquals(7_500L, entryDao.balanceUpToDate(1, YearMonth(2026, 2).lastDay.toString()))
     }
 
     @Test
-    fun `a month before any movement reads zero`() = runTest {
+    fun `a date before any movement reads zero`() = runTest {
         seed()
 
-        assertEquals(0L, entryDao.balanceUpToMonth(1, "2025-12"))
+        assertEquals(0L, entryDao.balanceUpToDate(1, "2025-12-31"))
     }
 
     @Test
     fun `an account with no entries reads zero rather than null`() = runTest {
         seed()
 
-        assertEquals(0L, entryDao.balanceUpToMonth(99, "2026-03"))
+        assertEquals(0L, entryDao.balanceUpToDate(99, "2026-03-31"))
+    }
+
+    /**
+     * The transaction date is the only reference of the cut: an entry has no date of its
+     * own to diverge from it.
+     */
+    @Test
+    fun `the cut follows the transaction date and nothing else`() = runTest {
+        LedgerFixture(database).apply {
+            account(1, AccountEntity.Type.ASSET)
+            account(3, AccountEntity.Type.EXPENSE)
+
+            transaction("2026-05-15", 1L posts -2_000, 3L posts 2_000)
+        }
+
+        assertEquals(0L, entryDao.balanceUpToDate(1, "2026-05-14"))
+        assertEquals(-2_000L, entryDao.balanceUpToDate(1, "2026-05-15"))
     }
 
     @Test
@@ -203,6 +255,6 @@ class BalanceUpToMonthQueryTest {
             transaction("2026-01-11", 2L posts 4_000 inCurrency "USD")
         }
 
-        assertEquals(4_000L, entryDao.balanceUpToMonth(2, "2026-01"))
+        assertEquals(4_000L, entryDao.balanceUpToDate(2, "2026-01-31"))
     }
 }

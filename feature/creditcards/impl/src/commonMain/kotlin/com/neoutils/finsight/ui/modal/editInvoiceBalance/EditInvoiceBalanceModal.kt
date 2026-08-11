@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,15 +32,22 @@ import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.InvoiceSelector
+import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.util.DateInputTransformation
+import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.add_transaction_date_label
 import com.neoutils.finsight.resources.edit_invoice_balance_label
 import com.neoutils.finsight.resources.edit_invoice_balance_save
 import com.neoutils.finsight.resources.edit_invoice_balance_title
+import com.neoutils.finsight.resources.transaction_date_outside_invoice
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -56,6 +64,7 @@ class EditInvoiceBalanceModal(
         }
 
         val uiState by viewModel.uiState.collectAsState()
+        val manager = LocalModalManager.current
 
         val currencyFormatter = LocalCurrencyFormatter.current
         when (val state = uiState) {
@@ -77,6 +86,23 @@ class EditInvoiceBalanceModal(
             }
 
             is EditInvoiceBalanceUiState.Content -> {
+                // An editing buffer, not the form: it reports to the ViewModel, which owns
+                // the date, and takes back what the ViewModel decides when the invoice
+                // reprojects it.
+                val dateState = rememberTextFieldState(state.date)
+
+                LaunchedEffect(Unit) {
+                    snapshotFlow { dateState.text.toString() }
+                        .drop(1)
+                        .collect { viewModel.onAction(EditInvoiceBalanceAction.ChangeDate(it)) }
+                }
+
+                LaunchedEffect(state.date) {
+                    if (state.date != dateState.text.toString()) {
+                        dateState.edit { replace(0, length, state.date) }
+                    }
+                }
+
                 val balanceState = rememberTextFieldState(
                     currencyFormatter.format(state.balanceAmount)
                 )
@@ -131,6 +157,57 @@ class EditInvoiceBalanceModal(
                         onInvoiceSelected = { invoice ->
                             viewModel.onAction(EditInvoiceBalanceAction.SelectInvoice(invoice))
                         },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        state = dateState,
+                        label = { Text(stringResource(Res.string.add_transaction_date_label)) },
+                        inputTransformation = DateInputTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    manager.show(
+                                        DatePickerModal(
+                                            initialDate = runCatching {
+                                                dayMonthYear.parse(dateState.text.toString())
+                                            }.getOrNull(),
+                                            // Today and nothing else: a correction happens
+                                            // over the cycle, not inside it, so the
+                                            // invoice's window bounds it in neither
+                                            // direction (design D3).
+                                            maxDate = state.today,
+                                            onDateSelected = { selectedDate ->
+                                                dateState.edit {
+                                                    replace(0, length, dayMonthYear.format(selectedDate))
+                                                }
+                                            }
+                                        )
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.TwoTone.CalendarToday,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        },
+                        // Said, not corrected: the value reaches this invoice through the
+                        // dimension either way, so a date outside its period changes
+                        // nothing and blocks nothing.
+                        supportingText = if (state.isDateOutsideInvoice) {
+                            { Text(text = stringResource(Res.string.transaction_date_outside_invoice)) }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                        lineLimits = TextFieldLineLimits.SingleLine,
                         modifier = Modifier.fillMaxWidth()
                     )
 

@@ -11,8 +11,12 @@ import kotlinx.datetime.YearMonth
 sealed class AccountsUiState {
     abstract val selectedMonth: YearMonth
 
+    /** The clock the screen reasons with — where a balance adjustment's ceiling comes from. */
+    abstract val today: LocalDate
+
     data class Loading(
         override val selectedMonth: YearMonth,
+        override val today: LocalDate,
     ) : AccountsUiState()
 
     data class Content(
@@ -29,6 +33,7 @@ sealed class AccountsUiState {
         val selectedType: TransactionType? = null,
         val showRecurringOnly: Boolean = false,
         override val selectedMonth: YearMonth,
+        override val today: LocalDate,
     ) : AccountsUiState()
 
     /**

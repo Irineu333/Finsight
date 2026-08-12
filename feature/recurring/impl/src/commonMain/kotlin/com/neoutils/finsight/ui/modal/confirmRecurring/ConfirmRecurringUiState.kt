@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.confirmRecurring
 
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
@@ -10,6 +11,14 @@ import kotlinx.datetime.LocalDate
 data class ConfirmRecurringUiState(
     val recurring: Recurring,
     val confirmDate: LocalDate,
+    /**
+     * The categories the confirmation may be classified under: the open ones the
+     * recurring's type accepts, plus the one already chosen — see
+     * `ConfirmRecurringViewModel.offeredCategories`.
+     */
+    val categories: List<Category> = emptyList(),
+    /** The classification of *this* cycle, seeded from the template and free to differ. */
+    val selectedCategory: Category? = null,
     val selectedTarget: TransactionTarget = TransactionTarget.ACCOUNT,
     val accounts: List<Account> = emptyList(),
     val selectedAccount: Account? = null,

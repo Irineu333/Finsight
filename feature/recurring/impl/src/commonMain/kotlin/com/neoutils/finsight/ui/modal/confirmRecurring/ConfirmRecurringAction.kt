@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.confirmRecurring
 
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -12,6 +13,8 @@ sealed class ConfirmRecurringAction {
     data class CreditCardSelected(val creditCard: CreditCard) : ConfirmRecurringAction()
     data class DateChanged(val date: LocalDate) : ConfirmRecurringAction()
     data class InvoiceSelected(val invoice: Invoice) : ConfirmRecurringAction()
-    data class Confirm(val amount: String) : ConfirmRecurringAction()
+    /** `null` clears the classification: no dimension is a state of its own, not an error. */
+    data class CategorySelected(val category: Category?) : ConfirmRecurringAction()
+    data class Confirm(val amount: String, val title: String) : ConfirmRecurringAction()
     data object Skip : ConfirmRecurringAction()
 }

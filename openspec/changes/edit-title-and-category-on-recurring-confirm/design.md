@@ -46,11 +46,13 @@ O view model observa `ICategoryRepository.observeAllCategories()` e oferece as q
 
 *Alternativa considerada:* `observeCategoriesByType(...)`, que filtra no SQL. Rejeitada: obrigaria o view model a traduzir `TransactionType` → `Category.Type` na mão, que é justamente a regra que `isAccept` possui.
 
-### D3 — Título vazio bloqueia o botão, não é substituído em silêncio
+### D3 — Título vazio não volta ao do template; o que o botão exige é a regra do domínio
 
-A habilitação do botão `Confirmar` ganha `title.text.isNotBlank()`, junto das condições de valor e destino que já existem (`ConfirmRecurringModal.kt:286-291`).
+A habilitação do botão `Confirmar` ganha `title.text.isNotBlank() || uiState.selectedCategory != null`, junto das condições de valor e destino que já existem. Um título em branco é enviado ao caso de uso como `null`, não como o título do template.
 
-*Por quê:* o *default* do caso de uso ainda é o título do template, mas ele existe para quem **não informa** o parâmetro — não para quem apagou o campo. Cair no título do template nesse caso entregaria ao usuário uma transação com um nome que ele acabou de remover. Bloquear é o que `RecurringForm.isValid()` já faz no formulário, e mantém a interface com uma única linguagem para "falta preencher".
+*Por quê:* `Recurring.title` é `String?` e `RecurringForm.isValid()` exige **título ou categoria**, não título (`RecurringForm.kt:23`) — o nome exibido de um lançamento vem do título e, na falta dele, da categoria (`displayTitleOf`, `core/model` — `extension/DisplayTitle.kt:32-34`). Exigir título aqui inventaria nesta tela uma regra mais restritiva que a do domínio, que é exatamente o que a regra de derivação proíbe: o consumidor decide *se* aplica, nunca *qual* é.
+
+O que continua valendo é a metade que motivou a decisão: um campo apagado **não** é lido como "sem alteração". O *default* do caso de uso existe para quem **não informa** o parâmetro; quem apagou o campo grava uma transação sem título, exibida pela categoria — como qualquer outra transação sem título no app.
 
 ### D4 — A continuidade da categoria arquivada é resolvida localmente, com a mesma forma de `budgets`
 

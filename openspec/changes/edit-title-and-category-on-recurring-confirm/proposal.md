@@ -9,7 +9,7 @@ A recorrência é um **modelo do ciclo**, não uma sentença sobre ele. O que o 
 - O modal de confirmação passa a oferecer **título editável**, pré-preenchido com o título da recorrência.
 - O modal passa a oferecer **seletor de categoria**, pré-selecionado com a categoria da recorrência, no lugar do campo desabilitado atual. O seletor oferece as categorias do **tipo** da recorrência (receita ou despesa) e permite **remover** a categoria, já que "sem categoria" é a ausência de dimensão e um estado legítimo do domínio.
 - A edição vale **apenas para o ciclo confirmado**: a transação gerada leva o título e a categoria escolhidos, e o template da recorrência permanece intacto — a próxima confirmação volta a sugerir os valores originais. Não há propagação, nem opção de propagar.
-- **Título vazio desabilita Confirmar**, na mesma exigência que o formulário da recorrência já faz. O botão nunca cai em silêncio no título do template.
+- **Um campo de título apagado nunca volta em silêncio ao título do template**: a transação é gravada sem título e passa a ser exibida pela categoria, como qualquer outra sem título. `Confirmar` só é desabilitado quando título e categoria estão ambos vazios — a exigência que `RecurringForm.isValid()` já faz do template.
 - `ConfirmRecurringUseCase` passa a aceitar `title` e `category` como parâmetros com *default* nos valores da recorrência — o comportamento atual continua sendo o de quem não os informa, e nenhum chamador existente quebra.
 - Continuidade de categoria arquivada: uma categoria arquivada **depois** de ter sido escolhida pela recorrência continua sendo oferecida (marcada) para que o usuário possa mantê-la ou trocá-la; ela não volta a ser oferecida como escolha nova.
 

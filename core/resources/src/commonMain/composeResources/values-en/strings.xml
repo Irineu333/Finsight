@@ -715,6 +715,7 @@
     <string name="recurring_form_save">Save</string>
 
     <!-- Confirm Recurring Modal -->
+    <string name="recurring_confirm_title_label">Title</string>
     <string name="recurring_confirm_amount_label">Amount</string>
     <string name="recurring_confirm_date_label">Date</string>
     <string name="recurring_confirm_button">Confirm</string>

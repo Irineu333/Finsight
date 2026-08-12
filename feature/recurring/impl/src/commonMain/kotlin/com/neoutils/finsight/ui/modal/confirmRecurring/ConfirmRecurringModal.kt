@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -75,6 +76,9 @@ class ConfirmRecurringModal(
 
         ReformatOnCurrencyChange(state = amount, currency = uiState.currency)
         val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
+        // The title of *this* cycle, seeded from the template. Editing it never writes
+        // back to the recurring — the heading above keeps showing what the template is.
+        val title = rememberTextFieldState(recurring.title.orEmpty())
 
         val typeLabel = if (recurring.type.isIncome) {
             stringResource(Res.string.recurring_income)
@@ -119,20 +123,34 @@ class ConfirmRecurringModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            recurring.category?.let { category ->
-                OutlinedTextField(
-                    value = category.name,
-                    onValueChange = {},
-                    label = { Text(text = stringResource(Res.string.view_recurring_category_label)) },
-                    readOnly = true,
-                    enabled = false,
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
-            }
+            OutlinedTextField(
+                state = title,
+                label = { Text(text = stringResource(Res.string.recurring_confirm_title_label)) },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("confirm_recurring_title"),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            CategorySelector(
+                selectedCategory = uiState.selectedCategory,
+                categories = uiState.categories,
+                onCategorySelected = { category ->
+                    viewModel.onAction(ConfirmRecurringAction.CategorySelected(category))
+                },
+                valueTestTag = "confirm_recurring_category",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+            )
 
             AnimatedVisibility(recurring.type.isExpense) {
                 TargetSelector(
@@ -281,9 +299,19 @@ class ConfirmRecurringModal(
 
                 Button(
                     onClick = {
-                        viewModel.onAction(ConfirmRecurringAction.Confirm(amount.text.toString()))
+                        viewModel.onAction(
+                            ConfirmRecurringAction.Confirm(
+                                amount = amount.text.toString(),
+                                title = title.text.toString(),
+                            )
+                        )
                     },
+                    // A transaction has to be nameable: by its own title, or by the
+                    // category that names it in its place. It is `RecurringForm`'s rule,
+                    // consumed rather than re-stated — erasing both is what it refuses,
+                    // not erasing the title.
                     enabled = amount.text.toString().moneyToDouble() > 0.0 &&
+                            (title.text.isNotBlank() || uiState.selectedCategory != null) &&
                             if (uiState.selectedTarget.isCreditCard) {
                                 uiState.selectedCreditCard != null
                             } else {

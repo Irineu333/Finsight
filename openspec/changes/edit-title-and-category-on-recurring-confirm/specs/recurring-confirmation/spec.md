@@ -49,25 +49,25 @@ A confirmação seguinte SHALL voltar a sugerir os valores do template. O sistem
 - **WHEN** o usuário edita título ou categoria na confirmação
 - **THEN** nenhuma opção de aplicar a alteração aos próximos ciclos é apresentada
 
-### Requirement: Título em branco impede a confirmação
+### Requirement: A transação confirmada tem de ser nomeável
 
-O botão de confirmar SHALL permanecer desabilitado enquanto o campo de título estiver vazio ou contiver apenas espaços, na mesma exigência que o formulário da recorrência já faz.
+O botão de confirmar SHALL permanecer desabilitado quando o título estiver vazio (ou só com espaços) **e** nenhuma categoria estiver selecionada — a mesma exigência que `RecurringForm.isValid()` faz do template, consumida e não reescrita.
 
-Um campo vazio MUST NOT ser tratado como "sem alteração": cair em silêncio no título do template daria ao usuário uma transação que ele não pediu, com um nome que ele acabou de apagar.
+Um título vazio com categoria escolhida é um estado válido: no domínio, o nome exibido de um lançamento é o seu título ou, na falta dele, o da sua categoria. A transação SHALL então ser gravada **sem título**, e MUST NOT receber de volta o título do template — cair em silêncio no nome que o usuário acabou de apagar entregaria uma transação que ele não pediu.
 
-#### Scenario: Apagar o título desabilita Confirmar
+#### Scenario: Apagar o título de um ciclo com categoria é permitido
 
-- **WHEN** o usuário apaga todo o conteúdo do campo de título
+- **WHEN** o usuário apaga o título mas mantém uma categoria selecionada
+- **THEN** o botão de confirmar continua habilitado e a transação é lançada sem título, exibida pelo nome da categoria
+
+#### Scenario: Sem título e sem categoria, Confirmar fica desabilitado
+
+- **WHEN** o campo de título está vazio (ou só com espaços) e nenhuma categoria está selecionada
 - **THEN** o botão de confirmar fica desabilitado
 
-#### Scenario: Só espaços não valem como título
+#### Scenario: Repor um dos dois reabilita Confirmar
 
-- **WHEN** o campo de título contém apenas espaços
-- **THEN** o botão de confirmar fica desabilitado
-
-#### Scenario: Repor o título reabilita Confirmar
-
-- **WHEN** o usuário volta a digitar um título e as demais condições de confirmação estão satisfeitas
+- **WHEN** o usuário volta a digitar um título, ou escolhe uma categoria, e as demais condições de confirmação estão satisfeitas
 - **THEN** o botão de confirmar volta a ficar habilitado
 
 ### Requirement: O seletor de categoria da confirmação oferece as categorias do tipo do ciclo

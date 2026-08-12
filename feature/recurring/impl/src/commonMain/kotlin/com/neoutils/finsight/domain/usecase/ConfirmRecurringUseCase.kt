@@ -7,6 +7,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -33,7 +34,12 @@ import kotlin.time.Instant
 
 /**
  * Confirms one cycle of a recurring, optionally redirecting it to another account or
- * card.
+ * card and overriding what that cycle is called and how it is classified.
+ *
+ * **Every override applies to the confirmed cycle alone.** The template is read, never
+ * written: a cycle that was in fact something else — another title, another category —
+ * is a fact about that month, not a correction of the model. Whoever wants to change
+ * the model edits the recurring.
  *
  * **A redirection to a different currency is refused, never converted** (design D17).
  * This is the one place a facade value could be written down as if it were another
@@ -62,6 +68,8 @@ class ConfirmRecurringUseCase(
         account: Account? = recurring.account,
         creditCard: CreditCard? = recurring.creditCard,
         invoice: Invoice? = null,
+        title: String? = recurring.title,
+        category: Category? = recurring.category,
     ): Either<Throwable, Transaction> {
         val yearMonth = date.yearMonth
         val cycleNumber = Instant
@@ -92,7 +100,7 @@ class ConfirmRecurringUseCase(
                         .getOrElse { throw it }
 
                 TransactionIntent(
-                    title = recurring.title,
+                    title = title,
                     date = date,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
@@ -104,7 +112,7 @@ class ConfirmRecurringUseCase(
                             dimensionId = invoice.dimensionId,
                         )
                     ),
-                    contra = contraLegFor(recurring.type, recurring.category),
+                    contra = contraLegFor(recurring.type, category),
                 )
             } else {
                 val sourceAccount = account ?: recurring.account
@@ -115,7 +123,7 @@ class ConfirmRecurringUseCase(
                 )
 
                 TransactionIntent(
-                    title = recurring.title,
+                    title = title,
                     date = date,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
@@ -128,7 +136,7 @@ class ConfirmRecurringUseCase(
                             }.id,
                         )
                     ),
-                    contra = contraLegFor(recurring.type, recurring.category),
+                    contra = contraLegFor(recurring.type, category),
                 )
             }
 

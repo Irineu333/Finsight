@@ -107,6 +107,7 @@ val recurringModule = module {
             recurring = it.get(),
             targetDate = it.get(),
             accountRepository = get(),
+            categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             confirmRecurringUseCase = get(),

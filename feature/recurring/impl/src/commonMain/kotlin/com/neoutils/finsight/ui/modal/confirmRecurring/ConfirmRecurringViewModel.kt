@@ -2,11 +2,14 @@ package com.neoutils.finsight.ui.modal.confirmRecurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -16,6 +19,7 @@ import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.retire_action_error_generic
@@ -24,6 +28,7 @@ import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -36,6 +41,7 @@ class ConfirmRecurringViewModel(
     val recurring: Recurring,
     private val targetDate: LocalDate,
     private val accountRepository: IAccountRepository,
+    private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val confirmRecurringUseCase: ConfirmRecurringUseCase,
@@ -75,6 +81,10 @@ class ConfirmRecurringViewModel(
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
     private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
 
+    // Seeded from the template and free to differ: how this cycle is classified is a
+    // fact about this month, and confirming it never writes back to the recurring.
+    private val selectedCategory = MutableStateFlow(recurring.category)
+
     init {
         viewModelScope.launch {
             selectedCreditCard.collectLatest { creditCard ->
@@ -99,6 +109,20 @@ class ConfirmRecurringViewModel(
         card?.let { accountRepository.currencyOf(it) }
     }
 
+    /**
+     * What the category selector offers and what it shows selected, resolved together
+     * because the offered list has to account for the selection (see [offeredCategories]).
+     */
+    private val categorySelection = combine(
+        categoryRepository.observeAllCategories(),
+        selectedCategory,
+    ) { open, selected ->
+        CategorySelection(
+            offered = offeredCategories(open, recurring.type, selected),
+            selected = selected,
+        )
+    }
+
     val uiState = combine(
         confirmDate,
         selectedTarget,
@@ -109,7 +133,8 @@ class ConfirmRecurringViewModel(
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
         creditCardCurrency,
-    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards, cardCurrency ->
+        categorySelection,
+    ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards, cardCurrency, category ->
         // No fallback to the default account: substituting where the money moves
         // through is not a detail the app gets to decide in silence. With nothing
         // selected the modal keeps Confirm disabled until the user says where.
@@ -119,6 +144,8 @@ class ConfirmRecurringViewModel(
         ConfirmRecurringUiState(
             recurring = recurring,
             confirmDate = date,
+            categories = category.offered,
+            selectedCategory = category.selected,
             selectedTarget = target,
             accounts = offeredAccounts,
             // A silently shorter list is a lie by omission, so the modal says why —
@@ -142,6 +169,8 @@ class ConfirmRecurringViewModel(
             selectedTarget = initialTarget,
             selectedAccount = initialAccount,
             selectedCreditCard = initialCreditCard,
+            selectedCategory = recurring.category,
+            categories = listOfNotNull(recurring.category),
         ),
     )
 
@@ -161,12 +190,13 @@ class ConfirmRecurringViewModel(
             }
 
             is ConfirmRecurringAction.InvoiceSelected -> selectedInvoice.value = action.invoice
-            is ConfirmRecurringAction.Confirm -> confirm(action.amount)
+            is ConfirmRecurringAction.CategorySelected -> selectedCategory.value = action.category
+            is ConfirmRecurringAction.Confirm -> confirm(action.amount, action.title)
             is ConfirmRecurringAction.Skip -> skip()
         }
     }
 
-    private fun confirm(amount: String) = viewModelScope.launch {
+    private fun confirm(amount: String, title: String) = viewModelScope.launch {
         val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
 
         val parsedAmount = amount.filter { it.isDigit() }
@@ -183,6 +213,12 @@ class ConfirmRecurringViewModel(
             account = if (uiState.value.selectedTarget.isAccount) uiState.value.selectedAccount else null,
             creditCard = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedCreditCard else null,
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
+            // Blank is an absence, not the template's title: a transaction with no title
+            // of its own is displayed by its category, which is the rule the whole app
+            // reads titles by (`displayTitleOf`). Falling back to the template here would
+            // hand the user a name they had just erased.
+            title = title.trim().takeIf { it.isNotBlank() },
+            category = selectedCategory.value,
         ).onLeft {
             crashlytics.recordException(it)
             modalManager.showError(UiText.Res(Res.string.retire_action_error_generic))
@@ -204,6 +240,36 @@ class ConfirmRecurringViewModel(
             analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
         }
+    }
+}
+
+/** What the category selector offers, and which of those is chosen. */
+private data class CategorySelection(
+    val offered: List<Category>,
+    val selected: Category?,
+)
+
+/**
+ * The categories a confirmation may be classified under.
+ *
+ * Two rules, both borrowed rather than invented here. Coherence between the transaction
+ * type and the category's own is `isAccept`'s, the same function the recurring form
+ * consumes — a selector decides *whether* it filters, never *which* rule it filters by.
+ * And continuity of a facade already chosen: [open] carries no archived category, so a
+ * category archived *after* the template elected it would vanish from the selector and
+ * silently unclassify the cycle. It is added back because it is already chosen, never
+ * offered fresh — dropped once, it is gone while it stays archived.
+ */
+internal fun offeredCategories(
+    open: List<Category>,
+    type: TransactionType,
+    selected: Category?,
+): List<Category> {
+    val offered = open.filter { it.type.isAccept(type) }
+    return when {
+        selected == null -> offered
+        offered.any { it.id == selected.id } -> offered
+        else -> offered + selected
     }
 }
 

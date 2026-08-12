@@ -201,3 +201,11 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   o que uma ponta comprou da outra, não o que uma delas vale numa terceira que não participou.
   Cenários: o da moeda única passa a exigir a seta, um novo guarda a taxa contra a base, e o
   de uma perna só passa a falar de conector em vez de taxa.
+- [x] 11.12 Pôr uma seta de movimento ao lado do verbo — deitada: para frente no que saiu,
+  para trás no que entrou, `Tune` no ajuste, que corrigiu uma figura em vez de mover dinheiro
+  — e tirar do card o ícone `OpenInNew`. Horizontal e não vertical porque a vertical já é do
+  conector, onde significa outra coisa (o percurso entre os dois cards, não a direção de um);
+  as duas usam `AutoMirrored`, então viram junto com a leitura em RTL. A seta é a terceira renderização de `tone`, ao lado da cor e do
+  verbo, e vem do mesmo campo: o card continua sem derivar direção. O atalho **permanece** —
+  o card inteiro segue clicável quando a fachada está ativa, e o requisito nunca exigiu um
+  glifo —, mas perde a sua única marca visível, que é o que se paga pela linha mais limpa.

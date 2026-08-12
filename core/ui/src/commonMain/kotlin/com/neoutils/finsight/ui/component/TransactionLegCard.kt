@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,20 +80,21 @@ fun TransactionLegCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                // The verb again, as movement: down for money that left, up for money
+                // that arrived. It reads before the words do, which is the whole point
+                // of putting it beside them.
+                Icon(
+                    imageVector = leg.tone.icon(),
+                    contentDescription = null,
+                    tint = tone,
+                    modifier = Modifier.size(14.dp),
+                )
                 Text(
                     text = stringUiText(leg.verb),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = tone,
                 )
-                if (onClick != null) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = null,
-                        tint = tone,
-                        modifier = Modifier.size(12.dp),
-                    )
-                }
             }
 
             Row(
@@ -190,4 +193,14 @@ private fun LegTone.color(): Color = when (this) {
     LegTone.OUTGOING -> Expense
     LegTone.INCOMING -> Income
     LegTone.ADJUSTMENT -> Adjustment
+}
+
+/**
+ * The movement of a direction. An adjustment has none to draw — it corrected a figure
+ * rather than moved money — so it keeps the glyph the app gives adjustments elsewhere.
+ */
+private fun LegTone.icon(): ImageVector = when (this) {
+    LegTone.OUTGOING -> Icons.Default.ArrowDownward
+    LegTone.INCOMING -> Icons.Default.ArrowUpward
+    LegTone.ADJUSTMENT -> Icons.Default.Tune
 }

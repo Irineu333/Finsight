@@ -188,3 +188,16 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   junto: as duas linhas são lidas como uma frase — *transferência / entre contas* —, então a
   segunda deve dizer o que a primeira não disse. É a mesma regra que 11.5 aplicou ao
   pagamento, agora levada até o fim: lá o rótulo encurtou, aqui foi o título.
+- [x] 11.10 Centralizar o conector e desenhar a **seta sempre** que houver dois cards, não só
+  em operação entre moedas: `TransactionLegConnector` volta a receber `rate: String?` e a
+  modal deixa de alternar entre conector e `Spacer`. O que a seta afirma — estes são os dois
+  extremos de um mesmo movimento — é verdade de toda transferência e todo pagamento, e é ela
+  que dá à operação a forma de uma travessia em vez de dois cards empilhados. A taxa continua
+  sendo o que só a operação cruzada tem.
+- [x] 11.11 Reescrever o requisito *A taxa praticada é o conector entre os dois cards* como
+  *O conector entre dois cards é a seta, e a taxa quando há uma*, que é o que 11.10 tornou
+  verdade. Acrescentar à taxa o que era prática e não estava dito: ela é a relação entre as
+  **duas moedas da operação** e MUST NOT ser expressa contra a moeda base — quem lê quer saber
+  o que uma ponta comprou da outra, não o que uma delas vale numa terceira que não participou.
+  Cenários: o da moeda única passa a exigir a seta, um novo guarda a taxa contra a base, e o
+  de uma perna só passa a falar de conector em vez de taxa.

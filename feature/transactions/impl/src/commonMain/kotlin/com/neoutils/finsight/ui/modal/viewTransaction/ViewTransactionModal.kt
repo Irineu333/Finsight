@@ -223,14 +223,19 @@ class ViewTransactionModal(
 
             legs.forEachIndexed { index, leg ->
                 if (index > 0) {
-                    // The rate is a relation between the two legs, so it is drawn
-                    // where it is one. The grammar is the write form's
-                    // (`CounterpartAmountField`) — one unit of the source priced in
-                    // the target — so the rate read afterwards is the one that was
-                    // shown while typing.
-                    uiState.appliedRate?.let { applied ->
-                        TransactionLegConnector(
-                            rate = stringResource(
+                    // Always between two cards: the arrow states that these are the
+                    // two ends of one movement, which is as true of a transfer in one
+                    // currency as of one that crossed two.
+                    //
+                    // The rate is the part only a cross-currency operation has, and it
+                    // is a relation between the two legs, so it is drawn where it is
+                    // one. The grammar is the write form's (`CounterpartAmountField`)
+                    // — one unit of the source priced in the target, never either of
+                    // them priced in the base — so the rate read afterwards is the one
+                    // that was shown while typing.
+                    TransactionLegConnector(
+                        rate = uiState.appliedRate?.let { applied ->
+                            stringResource(
                                 Res.string.exchange_rates_quote,
                                 LocalCurrencySymbols.current(applied.sourceCurrency),
                                 // As many places as the rate needs, not the currency's
@@ -243,10 +248,10 @@ class ViewTransactionModal(
                                     minFractionDigits = 2,
                                     maxFractionDigits = RATE_SCALE,
                                 ),
-                            ),
-                            modifier = Modifier.padding(vertical = 4.dp),
-                        )
-                    } ?: Spacer(modifier = Modifier.height(8.dp))
+                            )
+                        },
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
                 }
 
                 TransactionLegCard(

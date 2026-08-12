@@ -103,30 +103,43 @@ Uma transação sem perna de passivo MUST NOT exibir nem uma nem outra.
 - **WHEN** o detalhe de um gasto em conta é aberto
 - **THEN** nenhuma fatura é exibida, porque não há perna de passivo
 
-### Requirement: A taxa praticada é o conector entre os dois cards
+### Requirement: O conector entre dois cards é a seta, e a taxa quando há uma
 
-Quando uma operação atravessa moedas, a taxa que ela praticou SHALL ser exibida **entre** os
-dois cards, e MUST NOT ser exibida como uma linha de contexto da operação. A taxa é uma
-relação entre as duas pernas, e exibi-la onde ela é uma relação é o que a torna legível.
+Havendo dois cards, o detalhe SHALL exibir **entre** eles um conector com uma seta, e SHALL
+centralizá-lo. A seta afirma que aqueles são os dois extremos de um mesmo movimento — o que
+vale para toda transferência e todo pagamento, em moeda única ou não —, e é dela que a
+operação recebe a forma de uma travessia em vez de uma lista de dois cards.
+
+Quando a operação atravessa moedas, a taxa que ela praticou SHALL ser exibida **no conector**,
+e MUST NOT ser exibida como uma linha de contexto da operação. A taxa é uma relação entre as
+duas pernas, e exibi-la onde ela é uma relação é o que a torna legível. Ela SHALL ser a
+relação entre as **duas moedas da operação**, e MUST NOT ser expressa contra a moeda base:
+quem lê quer saber o que uma ponta comprou da outra, não o que qualquer uma delas vale numa
+terceira que não participou.
 
 A ordem dos cards SHALL ser a perna primária primeiro — a perna monetária de valor negativo,
 aquela que o dinheiro deixou —, que é a mesma direção em que a taxa é derivada. O sentido do
 conector e o sentido do quociente SHALL concordar por construção, e MUST NOT ser afirmados
 separadamente.
 
-Uma operação em moeda única MUST NOT exibir taxa alguma entre os cards.
+Uma operação em moeda única MUST NOT exibir taxa alguma — não há segunda moeda por que
+dividir —, e o seu conector é a seta sozinha.
 
 #### Scenario: A seta e a taxa concordam
 - **WHEN** o detalhe de uma transferência de R$ 550,00 para US$ 100,00 é aberto
 - **THEN** o primeiro card é o da conta em reais, a taxa exibida entre eles é a de uma unidade de real expressa em dólar, e o segundo card é o da conta em dólar
 
-#### Scenario: Operação em moeda única não exibe taxa
-- **WHEN** o detalhe de uma transferência entre duas contas em reais é aberto
-- **THEN** nenhuma taxa aparece entre os dois cards
+#### Scenario: A taxa não é expressa contra a moeda base
+- **WHEN** o detalhe da mesma transferência é aberto por alguém cuja moeda base é o euro
+- **THEN** a taxa continua sendo a de real em dólar, porque é a relação entre as duas pontas da operação
 
-#### Scenario: Operação de uma perna não exibe taxa
+#### Scenario: Operação em moeda única exibe a seta e nenhuma taxa
+- **WHEN** o detalhe de uma transferência entre duas contas em reais é aberto
+- **THEN** a seta aparece entre os dois cards e nenhuma taxa aparece com ela
+
+#### Scenario: Operação de uma perna não exibe conector
 - **WHEN** o detalhe de um gasto em conta é aberto
-- **THEN** nenhuma taxa é exibida, porque não há segunda ponta por que dividir
+- **THEN** nenhum conector é exibido, porque não há segundo card a que ligar
 
 ### Requirement: O cabeçalho do detalhe exibe a natureza da operação
 

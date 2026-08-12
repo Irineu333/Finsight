@@ -141,25 +141,29 @@ fun TransactionLegCard(
 }
 
 /**
- * What sits between two leg cards: the rate the operation applied, and the arrow
- * that says which way it was applied.
+ * What sits between two leg cards: the arrow that says the money went from the one
+ * above to the one below, and — when the operation crossed currencies — the rate it
+ * applied.
  *
- * The rate *is* a relation between the two legs, so it is drawn where it is one. The
- * quotient arrives formatted — the grammar of a rate belongs to whoever states rates
- * — and the arrow needs no separate assertion of direction: the first card is the
- * leg money left, by the same definition the rate divides in.
+ * The arrow is drawn whenever there are two cards, single currency included: what it
+ * states is that these are the two ends of one movement, which is true of every
+ * transfer and every payment. The rate is the part that only a cross-currency
+ * operation has, and it *is* a relation between the two legs, so it is drawn where it
+ * is one. It arrives formatted — the grammar of a rate belongs to whoever states
+ * rates — and needs no separate assertion of direction: the first card is the leg
+ * money left, by the same definition the rate divides in.
  *
- * An operation in a single currency has nothing to divide by, and draws no
- * connector at all.
+ * @param rate `null` for an operation in a single currency, which has nothing to
+ * divide by. The connector then draws the arrow alone.
  */
 @Composable
 fun TransactionLegConnector(
-    rate: String,
+    rate: String?,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(start = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -168,11 +172,13 @@ fun TransactionLegConnector(
             tint = colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp),
         )
-        Text(
-            text = rate,
-            fontSize = 13.sp,
-            color = colorScheme.onSurfaceVariant,
-        )
+        rate?.let {
+            Text(
+                text = it,
+                fontSize = 13.sp,
+                color = colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

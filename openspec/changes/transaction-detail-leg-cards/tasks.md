@@ -119,3 +119,29 @@ parte da tarefa). As tarefas 10.1, 10.2 e 10.4 não editam arquivo algum.
 - [ ] 10.2 Reinstalar o APK de debug (`./gradlew :app:android:installDebug`) e rodar `maestro test .maestro` **de verdade**, depois de cumprir os sete `adb` de `.maestro/README.md` §2 (AVD `pixel_6` API 36, em inglês, teclado on-screen, sem teclado de hardware). O design diz explicitamente que a validade das asserções migradas em 8.1 e 8.2 "precisa ser verificada numa execução real, não presumida". Reportar **em qual device** a execução aconteceu; um "12/12 verde" sem isso é uma afirmação sem lastro.
 - [x] 10.3 Conferir no diff que o escopo declarado foi respeitado — nenhum toque em `:core:ledger`, nos repositórios ou no caminho de escrita; `itemDisplayAmount` (`core/ui/.../ui/model/model/ItemDisplayAmount.kt`) e `toTransactionUi` (`.../TransactionUiMapper.kt`) inalterados, inclusive as suas regras de sinal; `isEditable`/`isRemovable`/`isChangeable` e as mensagens de bloqueio inalterados; nenhuma ênfase visual de perspectiva introduzida (D4 a recusa como hipótese); toda chave nova presente **nos dois** `strings.xml` e nenhuma chave removida que ainda tenha leitor.
 - [ ] 10.4 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os casos que só a interface responde: transferência entre moedas — duas figuras exatas, taxa no conector, primeiro card o da perna de saída; pagamento de fatura aberto **pelo extrato daquela fatura** — cabeçalho dizendo *pagamento*, concordando com a lista, e nenhuma linha dizendo que a origem foi o cartão; transferência sem título nem categoria — cabeçalho de uma linha, sem `"Untitled"`; ajuste de saldo e ajuste de fatura — verbo de ajuste e sinal explícito, com a fatura dentro do card; conta arquivada — card sem atalho.
+
+## 11. Ajustes após review
+
+*Barreira de entrada:* grupos 1 a 10 concluídos e o comportamento visto por quem revisou.
+*Barreira de saída:* cada ajuste tem a sua evidência no mesmo lugar que a regra original — a
+derivação no mapper, a cobertura no teste do mapper —, e a suíte unitária continua verde.
+
+Este grupo não estava no plano: ele registra o que o review do resultado pediu, e existe para
+que o motivo de cada ajuste sobreviva ao commit que o aplicou.
+
+- [x] 11.1 O card era `colorScheme.surfaceContainer`, que é a **mesma cor da folha** que o
+  contém: sobre o modal ele não se lia como card algum. Tingi-lo pela direção da perna —
+  vermelho para o que saiu, verde para o que entrou, âmbar para o ajuste, as mesmas três cores
+  que a superfície de item já lê. Fundo com a cor em 12% de alpha; verbo, ícone de atalho e
+  valor na cor cheia. Isso resolve, junto, o que o módulo sozinho não distinguia: num
+  pagamento de fatura os dois cards passam a ter cores opostas.
+- [x] 11.2 A cor **não** é escolhida no componente. `TransactionLegUi` ganha `tone: LegTone`
+  (`OUTGOING`/`INCOMING`/`ADJUSTMENT`), resolvido pelo mapper a partir da mesma evidência do
+  verbo — o sinal da perna, com o override de `EQUITY` —, porque escolhê-la no card seria um
+  `when` sobre um `UiText` e uma segunda derivação da direção (`presentation-mapping`
+  §*Mappers como única fronteira*, e o requisito de que o componente não derive nada). A
+  consequência a registrar: uma compra em cartão lê vermelha **pela perna**, já que o razão
+  creditou o passivo, e não por ser despesa — um estorno no mesmo cartão leria verde.
+- [x] 11.3 Cobrir a tabela nova em `TransactionLegMapperTest`
+  (`theToneRepeatsTheVerbsOwnEvidence`): pagamento produzindo `OUTGOING` e `INCOMING`, e o
+  ajuste produzindo `ADJUSTMENT` — o mesmo par de casos que fixa o verbo, sobre o outro eixo.

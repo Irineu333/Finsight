@@ -258,6 +258,24 @@ class TransactionLegMapperTest {
         assertEquals(100.0, accountAdjustment.amount.value)
     }
 
+    @Test
+    fun theToneRepeatsTheVerbsOwnEvidence() {
+        // The colour axis is the sign of the leg, with the same adjustment override —
+        // never the transaction's nature, or a card purchase would read as an expense
+        // on a leg the ledger credited.
+        val payment = transaction(
+            entry(AccountType.ASSET, -10_000),
+            entry(AccountType.LIABILITY, 10_000),
+        ).toTransactionLegs()
+        assertEquals(listOf(LegTone.OUTGOING, LegTone.INCOMING), payment.map { it.tone })
+
+        val adjustment = transaction(
+            entry(AccountType.ASSET, -10_000),
+            entry(AccountType.EQUITY, 10_000),
+        ).toTransactionLegs()
+        assertEquals(LegTone.ADJUSTMENT, adjustment.single().tone)
+    }
+
     // --- The shortcut ---
 
     @Test

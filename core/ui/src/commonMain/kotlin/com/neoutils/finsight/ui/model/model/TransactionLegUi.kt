@@ -30,6 +30,8 @@ import kotlinx.datetime.YearMonth
 data class TransactionLegUi(
     /** What happened to this money, derived from the ledger — see [toTransactionLegs]. */
     val verb: UiText,
+    /** The same fact the verb states, in the axis a colour can carry. */
+    val tone: LegTone,
     /** The account's or the card's own name — a card's `LIABILITY` account mirrors it. */
     val name: String,
     /** Stated only where the operation touches two currencies and they must be told apart. */
@@ -41,6 +43,22 @@ data class TransactionLegUi(
     /** Absent when the facade is archived: the screen it would open no longer lists it. */
     val onClick: (() -> Unit)? = null,
 )
+
+/**
+ * Which way the money of a leg went, as the axis the palette reads.
+ *
+ * It is the verb's own evidence — the sign of the leg, with the adjustment override —
+ * resolved here rather than at render time, so a component never branches on a
+ * [UiText] to decide a colour. Money leaving a card is not [OUTGOING] because a card
+ * purchase is an expense: it is outgoing because the ledger credited that account.
+ */
+enum class LegTone {
+    OUTGOING,
+    INCOMING,
+
+    /** The one leg whose direction its verb withholds, and which reads amber. */
+    ADJUSTMENT,
+}
 
 /**
  * The invoice a liability leg belongs to, as the two facts a card states about it.
@@ -139,6 +157,7 @@ fun Transaction.toTransactionLegs(
         val isLiability = entry.account.type == AccountType.LIABILITY
         TransactionLegUi(
             verb = entry.verb(isAdjustment),
+            tone = entry.tone(isAdjustment),
             name = entry.account.name,
             currencyCode = entry.account.currency.takeIf { namesCurrency },
             amount = entry.legAmount(isAdjustment),
@@ -179,6 +198,12 @@ private fun Entry.verb(isAdjustment: Boolean): UiText = UiText.Res(
             }
     }
 )
+
+private fun Entry.tone(isAdjustment: Boolean): LegTone = when {
+    isAdjustment -> LegTone.ADJUSTMENT
+    amount < 0 -> LegTone.OUTGOING
+    else -> LegTone.INCOMING
+}
 
 private fun Entry.legAmount(isAdjustment: Boolean): DisplayAmount {
     val value = amount / 100.0

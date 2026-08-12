@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +28,11 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.invoiceLabel
 import com.neoutils.finsight.ui.extension.color
+import com.neoutils.finsight.ui.model.LegTone
 import com.neoutils.finsight.ui.model.TransactionLegUi
+import com.neoutils.finsight.ui.theme.Adjustment
+import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.stringUiText
 
 /**
@@ -53,9 +58,13 @@ fun TransactionLegCard(
 ) {
     val formatter = LocalCurrencyFormatter.current
     val onClick = leg.onClick
+    // The direction, in the axis a glance reads. It repeats the verb on purpose: the
+    // figure carries no sign here, so colour is what tells two cards of the same
+    // operation apart before either is read.
+    val tone = leg.tone.color()
 
     Surface(
-        color = colorScheme.surfaceContainer,
+        color = tone.copy(alpha = 0.12f),
         shape = RoundedCornerShape(12.dp),
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -72,13 +81,14 @@ fun TransactionLegCard(
                 Text(
                     text = stringUiText(leg.verb),
                     fontSize = 12.sp,
-                    color = colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    color = tone,
                 )
                 if (onClick != null) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
+                        tint = tone,
                         modifier = Modifier.size(12.dp),
                     )
                 }
@@ -106,6 +116,7 @@ fun TransactionLegCard(
                     modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
+                    color = tone,
                 )
             }
 
@@ -163,4 +174,14 @@ fun TransactionLegConnector(
             color = colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * The palette of a direction: the same three colours the item surface reads, because
+ * "money left here" is the same statement whether a row or a card makes it.
+ */
+private fun LegTone.color(): Color = when (this) {
+    LegTone.OUTGOING -> Expense
+    LegTone.INCOMING -> Income
+    LegTone.ADJUSTMENT -> Adjustment
 }

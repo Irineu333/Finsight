@@ -78,8 +78,6 @@ O seletor SHALL permitir **remover** a categoria, deixando a transação sem cla
 
 Uma categoria arquivada **depois** de ter sido escolhida pela recorrência SHALL continuar aparecendo, selecionada, para que o usuário possa mantê-la ou trocá-la; desfeita a escolha, ela MUST NOT voltar a ser oferecida enquanto permanecer arquivada. É a mesma regra de continuidade que a fachada arquivada já tem em outros seletores, e não SHALL ser reimplementada aqui com outra forma.
 
-Quando não há categoria alguma a oferecer, o seletor MUST NOT ficar bloqueado: SHALL oferecer o cadastro de uma categoria nova, já no tipo que esta recorrência aceita — é o que os demais seletores do app fazem com a lista vazia, e um controle inerte seria lido como defeito.
-
 #### Scenario: Apenas categorias do tipo da recorrência são oferecidas
 
 - **WHEN** o usuário abre o seletor de categoria ao confirmar uma recorrência de despesa
@@ -95,12 +93,30 @@ Quando não há categoria alguma a oferecer, o seletor MUST NOT ficar bloqueado:
 - **WHEN** o usuário abre a confirmação de uma recorrência cuja categoria foi arquivada depois de escolhida
 - **THEN** ela aparece selecionada no seletor e pode ser mantida ou trocada
 
+#### Scenario: A categoria pode ser removida
+
+- **WHEN** o usuário limpa a seleção de categoria e confirma o ciclo
+- **THEN** a transação é lançada sem categoria, e a confirmação não é recusada por isso
+
+### Requirement: Um seletor sem nada a oferecer leva ao cadastro, não ao bloqueio
+
+Os seletores da confirmação cujo item o usuário pode criar — categoria e cartão de crédito — MUST NOT ficar desabilitados quando a lista chega vazia: SHALL oferecer a criação do item, abrindo o formulário correspondente. É o que esses mesmos seletores fazem no formulário da recorrência, e um controle inerte é lido como defeito, não como regra.
+
+O seletor de categoria SHALL abrir o formulário já no tipo que a recorrência aceita, para que o usuário não possa criar uma categoria que o seletor recusaria em seguida.
+
+Isso não substitui a explicação de uma lista **encurtada** por moeda, que continua sendo dada onde já é: uma lista vazia porque o usuário não tem cartão e uma lista vazia porque nenhum cartão é da moeda da recorrência são coisas diferentes, e o usuário SHALL poder distinguir as duas.
+
 #### Scenario: Sem categoria cadastrada, o seletor leva ao cadastro
 
 - **WHEN** o usuário abre a confirmação e não existe categoria alguma do tipo da recorrência
 - **THEN** o seletor apresenta a ação de criar uma categoria, que abre o formulário já no tipo aceito, em vez de ficar desabilitado
 
-#### Scenario: A categoria pode ser removida
+#### Scenario: Sem cartão a oferecer, o seletor leva ao cadastro
 
-- **WHEN** o usuário limpa a seleção de categoria e confirma o ciclo
-- **THEN** a transação é lançada sem categoria, e a confirmação não é recusada por isso
+- **WHEN** o usuário aponta a confirmação para cartão e o seletor não tem nenhum a oferecer
+- **THEN** o seletor apresenta a ação de criar um cartão, que abre o formulário de cartão, em vez de ficar desabilitado
+
+#### Scenario: Lista vazia por moeda continua sendo explicada
+
+- **WHEN** o usuário tem cartões, mas nenhum na moeda da recorrência
+- **THEN** além da ação de criar um cartão, a nota que explica o filtro por moeda continua visível

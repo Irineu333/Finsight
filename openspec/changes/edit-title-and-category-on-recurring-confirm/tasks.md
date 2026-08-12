@@ -38,6 +38,7 @@
 
 - [x] 5.1 Remover o cabeçalho com o `label` da recorrência: com o título editável logo abaixo, ele repetia a mesma informação
 - [x] 5.2 Passar `onEmpty` ao `CategorySelector`, abrindo `categoriesEntry.categoryFormModal(initialType = ...)` — sem ele o controle ficava desabilitado quando não havia categoria, contra o padrão do app. O tipo inicial sai de `isAccept`, sem mapa novo entre `TransactionType` e `Category.Type`
+- [x] 5.3 Passar `onEmpty` ao `CreditCardSelector` da mesma modal, abrindo `creditCardsEntry.creditCardFormModal()` — a mesma lacuna, no outro seletor que oferece cadastro. `AccountSelector` não expõe `onEmpty`, então a conta segue sem essa ação
 
 ## 6. Verificação
 

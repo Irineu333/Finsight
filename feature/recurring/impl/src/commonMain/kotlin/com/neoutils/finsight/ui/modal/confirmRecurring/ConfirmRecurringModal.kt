@@ -32,6 +32,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -58,6 +59,7 @@ class ConfirmRecurringModal(
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
         val categoriesEntry = koinInject<CategoriesEntry>()
+        val creditCardsEntry = koinInject<CreditCardsEntry>()
         // The same clock the ViewModel confirms against — the picker must not offer a date the
         // confirmation would then clamp.
         val currentDate = koinInject<Clock>().today()
@@ -201,6 +203,11 @@ class ConfirmRecurringModal(
                         onCreditCardSelected = { card ->
                             viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
                         },
+                        // Same reason as the category selector: an empty list is a
+                        // starting point, not a wall. The note below still says when the
+                        // list is empty because of the currency rather than because the
+                        // user holds no card.
+                        onEmpty = { modalManager.show(creditCardsEntry.creditCardFormModal()) },
                         modifier = Modifier.fillMaxWidth(),
                     )
 

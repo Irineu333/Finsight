@@ -45,4 +45,4 @@
 - [x] 6.1 Rodar `./gradlew :feature:recurring:impl:jvmTest --tests "*ConfirmRecurring*" --tests "*OfferedCategories*"` — 15 testes, verde
 - [x] 6.2 Rodar `./gradlew jvmTest` — 1159 testes, `BUILD SUCCESSFUL`, nenhuma falha
 - [x] 6.3 Conferir que a chave nova de string existe nos dois arquivos (pt e en)
-- [ ] 6.4 Exercitar o fluxo no app (`./gradlew :app:desktop:run`): editar título e categoria, confirmar, ver a transação lançada com os valores editados e a recorrência inalterada — **não executado**
+- [x] 6.4 Fluxo exercitado no app pelo usuário: título e categoria editados, ciclo confirmado, recorrência inalterada

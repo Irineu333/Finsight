@@ -110,7 +110,16 @@ class ViewTransactionModal(
         val legs = uiState.legs { target ->
             detailController.dismiss()
             if (target.isLiability) {
-                uiState.creditCard?.let { navController.navigate(InvoiceTransactionsRoute(it.id)) }
+                uiState.creditCard?.let {
+                    navController.navigate(
+                        InvoiceTransactionsRoute(
+                            creditCardId = it.id,
+                            // The invoice this leg landed on, not the card's current
+                            // one: the statement has to open on what was just read.
+                            invoiceId = uiState.invoice?.id,
+                        )
+                    )
+                }
             } else {
                 navController.navigate(AccountsRoute(target.accountId))
             }

@@ -261,6 +261,7 @@ val creditCardsModule = module {
         InvoiceTransactionsViewModel(
             installmentRepository = get(),
             creditCardId = it.get(),
+            initialInvoiceId = it.getOrNull(),
             creditCardRepository = get(),
             accountRepository = get(),
             invoiceRepository = get(),

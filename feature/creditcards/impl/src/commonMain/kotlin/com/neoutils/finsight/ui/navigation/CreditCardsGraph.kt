@@ -47,6 +47,7 @@ fun NavGraphBuilder.creditCardsGraph() {
 
             InvoiceTransactionsScreen(
                 creditCardId = route.creditCardId,
+                invoiceId = route.invoiceId,
                 onNavigateBack = { navController.navigateUp() },
             )
         }

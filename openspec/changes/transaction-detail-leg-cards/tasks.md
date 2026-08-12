@@ -228,3 +228,12 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   linhas, `Cartão` e `Fatura`, com destinos distintos; ao fundir tudo num card só, o destino
   do cadastro foi escolhido por inércia. Ajustado o requisito junto, que dizia "a tela daquela
   fachada", com cenário próprio.
+- [x] 11.16 O extrato aberto pelo card do cartão caía sempre na fatura de índice 0 —
+  `InvoiceTransactionsRoute` só levava `creditCardId`, e a tela escolhe sozinha por onde
+  começar. Numa compra de fatura antiga isso não é uma resposta pouco útil, é a errada: a
+  fatura aberta não contém a compra que acabou de ser lida. `InvoiceTransactionsRoute` ganha
+  `invoiceId: Long?` (opcional, para a lista de cartões, que não tem fatura em mente), a tela
+  e o `InvoiceTransactionsViewModel` o recebem, e a seleção inicial passa a resolvê-lo sobre a
+  primeira lista de faturas que chegar — uma vez só, porque depois disso a escolha é do
+  usuário. Fatura que não resolve mais deixa o padrão como está em vez de falhar. Requisito e
+  cenário acrescentados.

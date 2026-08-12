@@ -22,6 +22,11 @@ daquele cartão, e não o cadastro do cartão. A perna do passivo é a fatura �
 ela carrega, e o card já a nomeia dentro de si —, então quem toca nela quer ver o que mais
 entrou naquela fatura, não os dados do cartão.
 
+O extrato SHALL abrir **na fatura que o card nomeia**, e MUST NOT abrir na fatura corrente do
+cartão. O detalhe sabe exatamente em qual fatura aquela perna caiu, e abrir noutra é responder
+errado — não apenas responder pouco: quem vinha de uma compra de março passa a olhar uma
+fatura que não a contém e conclui que ela sumiu.
+
 Um card de fachada arquivada MUST NOT oferecer atalho, porque a tela de destino não a lista
 mais.
 
@@ -52,6 +57,10 @@ mais.
 #### Scenario: O card do cartão abre a fatura
 - **WHEN** o card do cartão de uma compra é tocado
 - **THEN** o extrato da fatura daquele cartão é aberto, e não a tela de cadastro do cartão
+
+#### Scenario: O extrato abre na fatura da operação
+- **WHEN** o card do cartão de uma compra lançada numa fatura antiga é tocado
+- **THEN** o extrato abre naquela fatura, com a compra entre as suas transações, e não na fatura corrente do cartão
 
 #### Scenario: Conta arquivada não oferece atalho
 - **WHEN** o detalhe exibe o card de uma conta arquivada

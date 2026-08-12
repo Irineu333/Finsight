@@ -42,6 +42,7 @@ import kotlin.time.ExperimentalTime
 
 class InvoiceTransactionsViewModel(
     private val creditCardId: Long,
+    private val initialInvoiceId: Long? = null,
     private val creditCardRepository: ICreditCardRepository,
     private val accountRepository: IAccountRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -58,6 +59,11 @@ class InvoiceTransactionsViewModel(
     private val currentDate get() = clock.today()
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
+
+    // Whether the caller's invoice has already been honoured. It is a one-shot: after
+    // the first list of invoices arrives the user owns the selection, and re-applying
+    // it on every emission would drag him back here every time an invoice changed.
+    private var initialInvoiceApplied = false
 
     private val filters = MutableStateFlow(
         InvoiceTransactionsFilters(
@@ -78,6 +84,19 @@ class InvoiceTransactionsViewModel(
 
     private val invoicesFlow = invoiceRepository
         .observeInvoicesByCreditCard(creditCardId = creditCardId)
+        // Open on the invoice the caller named, when it named one. A transaction's
+        // detail knows exactly which invoice its liability leg landed on, and opening
+        // on a different one answers a question nobody asked. An invoice that no longer
+        // resolves leaves the default selection alone rather than failing.
+        .onEach { invoices ->
+            if (initialInvoiceApplied || initialInvoiceId == null || invoices.isEmpty()) {
+                return@onEach
+            }
+            initialInvoiceApplied = true
+            invoices.indexOfFirst { it.id == initialInvoiceId }
+                .takeIf { it >= 0 }
+                ?.let { selectedInvoiceIndex.value = it }
+        }
 
     // A transaction of this card is one with a leg on the card's LIABILITY account.
     private val transactionsFlow = creditCardFlow

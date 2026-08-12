@@ -109,9 +109,10 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun InvoiceTransactionsScreen(
     creditCardId: Long,
+    invoiceId: Long? = null,
     onNavigateBack: () -> Unit = {},
     viewModel: InvoiceTransactionsViewModel = koinViewModel {
-        parametersOf(creditCardId)
+        parametersOf(creditCardId, invoiceId)
     },
 ) {
     val analytics = koinInject<Analytics>()

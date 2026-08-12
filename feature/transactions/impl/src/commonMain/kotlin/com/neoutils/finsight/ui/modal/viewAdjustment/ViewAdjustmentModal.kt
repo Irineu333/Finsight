@@ -126,7 +126,16 @@ class ViewAdjustmentModal(
             uiState.legs { target ->
                 detailController.dismiss()
                 if (target.isLiability) {
-                    uiState.creditCard?.let { navController.navigate(InvoiceTransactionsRoute(it.id)) }
+                    uiState.creditCard?.let {
+                        navController.navigate(
+                            InvoiceTransactionsRoute(
+                                creditCardId = it.id,
+                                // The invoice this leg landed on, not the card's
+                                // current one: the statement opens on what was read.
+                                invoiceId = uiState.invoice?.id,
+                            )
+                        )
+                    }
                 } else {
                     navController.navigate(AccountsRoute(target.accountId))
                 }

@@ -5,9 +5,7 @@
 Como um valor monetário se lê, e como se chama a linha que o nomeia. O sinal exibido expressa o efeito daquele valor sobre o patrimônio da perspectiva em que é lido — e por isso é omitido onde o rótulo já entrega a direção, omitido onde não há perspectiva sobre a qual produzir efeito, e exibido onde o valor participa de uma soma que ele explica. A política de sinal viaja com o valor, em um tipo de exibição que responde apenas *como* uma figura se lê; *quanto* ela vale é do razão.
 
 O rótulo é a mesma pergunta um passo antes do sinal: numa decomposição fixa de um total, o par de rótulos declara *o que está dentro do número* — entrada/saída onde o rendimento tem linha própria, receita/despesa onde ele está contido na linha de entrada. A regra mora aqui, e não na tela, porque atravessa superfícies de donos distintos que de outro modo a reimplementariam.
-
 ## Requirements
-
 ### Requirement: O sinal exibido expressa efeito sobre a perspectiva
 
 O sinal de um valor monetário exibido SHALL expressar o efeito daquele valor sobre o patrimônio da perspectiva em que é lido. Deste princípio decorrem as duas omissões e a inclusão que o sistema SHALL respeitar:
@@ -104,7 +102,9 @@ O **glifo** dessa moeda SHALL vir do símbolo gravado no cadastro (`currency-reg
 
 ### Requirement: Item exibe sinal apenas onde o rótulo não entrega a direção
 
-Na superfície de **item** — o card de uma transação, a sua modal, a sua linha no relatório exportado — o valor SHALL ser exibido sem sinal para gasto, receita e pagamento de fatura, cujos rótulos entregam a direção.
+Na superfície de **item** — o card de uma transação numa lista, a sua linha no relatório exportado — o valor SHALL ser exibido sem sinal para gasto, receita e pagamento de fatura, cujos rótulos entregam a direção.
+
+A superfície de item é aquela em que **uma linha é uma perna**: ela exibe uma única figura e por isso depende do rótulo para dizer o sentido do movimento. O detalhe de uma operação não é mais uma superfície de item — ele exibe todas as pernas monetárias, cada uma com o seu verbo — e é governado pela superfície de **operação**, adiante.
 
 O **ajuste** SHALL exibir sinal sempre, positivo quando aumenta o patrimônio líquido da perspectiva e negativo quando o reduz — inclusive quando a perspectiva é um cartão, onde aumentar a dívida reduz o patrimônio. É a única transação cuja direção o rótulo não entrega.
 
@@ -141,6 +141,10 @@ A **transferência** SHALL exibir sinal explícito nas duas pontas quando lida s
 #### Scenario: Transferência sem perspectiva
 - **WHEN** uma transferência é exibida em uma lista que não declara perspectiva
 - **THEN** o valor é exibido sem sinal, porque a transação contém as duas pontas
+
+#### Scenario: O detalhe não é superfície de item
+- **WHEN** a mesma transferência é exibida numa lista e aberta no seu detalhe
+- **THEN** a lista aplica a regra de item sobre a perna que exibe, e o detalhe aplica a regra da superfície de operação sobre cada um dos seus cards
 
 ### Requirement: Resumo exibe o efeito sobre a perspectiva que soma
 
@@ -325,6 +329,7 @@ A ausência MUST NOT ser expressa como zero, e MUST NOT ser omitida deixando a l
 #### Scenario: Um valor que não é soma de parcelas não tem partes a exibir
 - **WHEN** o quanto resta de um limite é exibido e o gasto tem parcela não precificada
 - **THEN** ele exibe a ausência, porque não existe em moeda alguma, e MUST NOT exibir zero
+
 ### Requirement: O rótulo de uma linha de fluxo declara o que está dentro do número
 
 Numa **decomposição fixa de um total** — um conjunto de linhas de fluxo nomeadas pelo app, exibidas sobre um resultado que elas explicam —, o par de rótulos das linhas de entrada e de saída SHALL declarar se o rendimento está segregado:
@@ -366,3 +371,32 @@ Dois usos ficam **fora** do alcance da regra, e MUST NOT ser renomeados por ela:
 #### Scenario: A regra segue o número, não a tela
 - **WHEN** uma superfície que hoje não segrega rendimento passa a exibi-lo em linha própria
 - **THEN** os seus rótulos de fluxo passam a ser entrada e saída, sem que a decisão seja tomada tela a tela
+
+### Requirement: A superfície de operação exibe módulo, porque o verbo entrega a direção
+
+Na superfície de **operação** — aquela que apresenta a transação inteira, uma perna por card, em vez de uma perna por linha — o valor de cada card SHALL ser exibido em módulo. O verbo do card já diz o que aconteceu com aquele dinheiro, e um sinal ao lado dele é redundância que o leitor tenta interpretar.
+
+O **ajuste** SHALL exibir sinal explícito também aqui, pela mesma razão de sempre: é a única operação cuja direção o seu verbo retém. O sinal SHALL ser o do razão, debit-positive, exatamente como a perna foi registrada, e MUST NOT ser invertido por tipo de conta.
+
+Sinal em módulo aqui MUST NOT ser lido como abandono do princípio de que o sinal expressa efeito sobre a perspectiva: é a mesma omissão que a superfície de item aplica quando o rótulo entrega a direção, aplicada a uma evidência diferente — o verbo em vez do rótulo. Um pagamento de fatura, cujas duas pernas são benignas, exibiria `−` seguido de `+` e sugeriria que algo se perdeu entre as duas.
+
+#### Scenario: Pagamento de fatura não exibe sinal em nenhum card
+- **WHEN** o detalhe de um pagamento de fatura é aberto
+- **THEN** os dois cards exibem o valor em módulo, e o sentido de cada um vem do seu verbo
+
+#### Scenario: Transferência não exibe sinal em nenhum card
+- **WHEN** o detalhe de uma transferência é aberto
+- **THEN** os dois cards exibem o valor em módulo, porque "saiu de" e "entrou em" já os distinguem
+
+#### Scenario: Ajuste exibe sinal explícito
+- **WHEN** o detalhe de um ajuste que reduz o saldo de uma conta é aberto
+- **THEN** o card exibe o valor com sinal negativo
+
+#### Scenario: Ajuste de fatura mantém o sinal do razão
+- **WHEN** o detalhe de um ajuste que aumenta a dívida de uma fatura é aberto
+- **THEN** o card exibe o valor como negativo, porque a dívida maior reduz o patrimônio, e o sinal não é invertido pelo tipo de conta
+
+#### Scenario: O ajuste lê igual na lista e no detalhe
+- **WHEN** o mesmo ajuste é exibido como item de lista e aberto no seu detalhe
+- **THEN** os dois exibem o mesmo sinal, por derivarem do mesmo valor do razão
+

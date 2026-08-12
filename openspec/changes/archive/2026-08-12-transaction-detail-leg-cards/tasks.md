@@ -116,9 +116,20 @@ comportamento foi exercido no app real — não apenas em teste (CLAUDE.md §Beh
 parte da tarefa). As tarefas 10.1, 10.2 e 10.4 não editam arquivo algum.
 
 - [x] 10.1 Rodar `./gradlew jvmTest` e **ler a saída**; reportar o resultado real e qualquer desvio de ambiente, não a expectativa. Acrescentar os `compileKotlinIosSimulatorArm64` dos módulos tocados, porque `jvmTest` não compila Kotlin/Native e uma quebra de `expect`/`actual` ou de API indisponível no alvo iOS passaria despercebida.
-- [ ] 10.2 Reinstalar o APK de debug (`./gradlew :app:android:installDebug`) e rodar `maestro test .maestro` **de verdade**, depois de cumprir os sete `adb` de `.maestro/README.md` §2 (AVD `pixel_6` API 36, em inglês, teclado on-screen, sem teclado de hardware). O design diz explicitamente que a validade das asserções migradas em 8.1 e 8.2 "precisa ser verificada numa execução real, não presumida". Reportar **em qual device** a execução aconteceu; um "12/12 verde" sem isso é uma afirmação sem lastro.
+- [x] 10.2 Reinstalar o APK de debug (`./gradlew :app:android:installDebug`) e rodar `maestro test .maestro` **de verdade**, depois de cumprir os sete `adb` de `.maestro/README.md` §2 (AVD `pixel_6` API 36, em inglês, teclado on-screen, sem teclado de hardware). O design diz explicitamente que a validade das asserções migradas em 8.1 e 8.2 "precisa ser verificada numa execução real, não presumida". Reportar **em qual device** a execução aconteceu; um "12/12 verde" sem isso é uma afirmação sem lastro.
+
+  *Execução:* AVD `finsight_e2e` (`emulator-5556`), API 36, 1080x2400, 420dpi, `en-US`,
+  `-nokeys-`, IME LatinIME, `show_ime_with_hard_keyboard=0` — os sete `adb` conferidos antes do
+  run, APK de debug reinstalado nele. Resultado: **11 de 13 verdes**. `ledger_lifecycle` caiu por
+  interferência externa — o logcat registra `Force stopping … from pid 4226` seguido de
+  `installPackageLI`, uma reinstalação do APK no meio do fluxo — e passou ao ser reexecutado
+  isolado. `creditcards_lifecycle` falha no `assertVisible: credit_card_close_invoice` posterior ao
+  pagamento por um defeito latente do próprio fluxo, anterior a esta change (`c714b4090`, 06/08) e
+  fora do caminho que ela toca: com `JUMP_DAYS: 45` o relógio deslocado não alcança a segunda data
+  de fechamento (a fatura seguinte fecha em 10/10), então `Invoice.isClosableOn` recusa o comando —
+  corretamente. Com `JUMP_DAYS: 75` a mesma asserção passa.
 - [x] 10.3 Conferir no diff que o escopo declarado foi respeitado — nenhum toque em `:core:ledger`, nos repositórios ou no caminho de escrita; `itemDisplayAmount` (`core/ui/.../ui/model/model/ItemDisplayAmount.kt`) e `toTransactionUi` (`.../TransactionUiMapper.kt`) inalterados, inclusive as suas regras de sinal; `isEditable`/`isRemovable`/`isChangeable` e as mensagens de bloqueio inalterados; nenhuma ênfase visual de perspectiva introduzida (D4 a recusa como hipótese); toda chave nova presente **nos dois** `strings.xml` e nenhuma chave removida que ainda tenha leitor.
-- [ ] 10.4 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os casos que só a interface responde: transferência entre moedas — duas figuras exatas, taxa no conector, primeiro card o da perna de saída; pagamento de fatura aberto **pelo extrato daquela fatura** — cabeçalho dizendo *pagamento*, concordando com a lista, e nenhuma linha dizendo que a origem foi o cartão; transferência sem título nem categoria — cabeçalho de uma linha, sem `"Untitled"`; ajuste de saldo e ajuste de fatura — verbo de ajuste e sinal explícito, com a fatura dentro do card; conta arquivada — card sem atalho.
+- [x] 10.4 Exercitar no app (`./gradlew :app:desktop:run` ou `:app:android:installDebug`) os casos que só a interface responde: transferência entre moedas — duas figuras exatas, taxa no conector, primeiro card o da perna de saída; pagamento de fatura aberto **pelo extrato daquela fatura** — cabeçalho dizendo *pagamento*, concordando com a lista, e nenhuma linha dizendo que a origem foi o cartão; transferência sem título nem categoria — cabeçalho de uma linha, sem `"Untitled"`; ajuste de saldo e ajuste de fatura — verbo de ajuste e sinal explícito, com a fatura dentro do card; conta arquivada — card sem atalho.
 
 ## 11. Ajustes após review
 

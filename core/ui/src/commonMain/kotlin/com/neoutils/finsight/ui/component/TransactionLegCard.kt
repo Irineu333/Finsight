@@ -39,9 +39,9 @@ import com.neoutils.finsight.util.stringUiText
 
 /**
  * One monetary leg of an operation, as the three answers it owes at once: **what
- * happened** to that money (the verb, above), **whose** money it is (the account or
- * the card) and **how much** (on the same line as the name, so a one-leg operation
- * costs one line more than the row it replaced).
+ * happened** to that money (the verb, with its movement), **whose** money it is (the
+ * account or the card) and **how much** (beside them, centred against the card, so it
+ * stays level with the block it states the total of however that block grows).
  *
  * The invoice and the instalment live here, and not beside the operation's context
  * lines, because they are attributes of *this* leg: the invoice is the dimension the
@@ -70,75 +70,79 @@ fun TransactionLegCard(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(
+        Row(
             modifier = (if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            // The figure is centred against the card and not against the name: the
+            // left column grows with what the leg carries — an invoice, an instalment
+            // — and an amount pinned to the first line would drift off the block it
+            // states the total of.
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                // The verb again, as movement: down for money that left, up for money
-                // that arrived. It reads before the words do, which is the whole point
-                // of putting it beside them.
-                Icon(
-                    imageVector = leg.tone.icon(),
-                    contentDescription = null,
-                    tint = tone,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    text = stringUiText(leg.verb),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = tone,
-                )
-            }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    // The verb again, as movement: down for money that left, up for
+                    // money that arrived. It reads before the words do, which is the
+                    // whole point of putting it beside them.
+                    Icon(
+                        imageVector = leg.tone.icon(),
+                        contentDescription = null,
+                        tint = tone,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = stringUiText(leg.verb),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = tone,
+                    )
+                }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 Text(
                     // `American · USD`, and only where two currencies are on the same
                     // screen — the doctrine `AccountSelector` established. The code and
                     // not the symbol: here the currency is being identified, which is
                     // the one job a symbol does badly (three of them write `kr`).
                     text = leg.currencyCode?.let { "${leg.name} · $it" } ?: leg.name,
-                    modifier = Modifier.weight(1f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = formatter.format(leg.amount),
-                    modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = tone,
-                )
+
+                leg.invoice?.let { invoice ->
+                    Text(
+                        text = invoiceLabel(invoice.dueMonth, invoice.status),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = invoice.status.color,
+                    )
+                }
+
+                leg.installment?.let { installment ->
+                    Text(
+                        text = "${installment.label} • ${formatter.format(installment.total)}",
+                        fontSize = 13.sp,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
-            leg.invoice?.let { invoice ->
-                Text(
-                    text = invoiceLabel(invoice.dueMonth, invoice.status),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = invoice.status.color,
-                )
-            }
-
-            leg.installment?.let { installment ->
-                Text(
-                    text = "${installment.label} • ${formatter.format(installment.total)}",
-                    fontSize = 13.sp,
-                    color = colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = formatter.format(leg.amount),
+                modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = tone,
+            )
         }
     }
 }

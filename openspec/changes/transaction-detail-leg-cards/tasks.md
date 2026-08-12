@@ -209,3 +209,9 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   verbo, e vem do mesmo campo: o card continua sem derivar direção. O atalho **permanece** —
   o card inteiro segue clicável quando a fachada está ativa, e o requisito nunca exigiu um
   glifo —, mas perde a sua única marca visível, que é o que se paga pela linha mais limpa.
+- [x] 11.13 Valor de 16sp para 18sp e centralizado verticalmente contra o **card**, não
+  contra o nome: o card vira uma `Row` de duas colunas — verbo, nome, fatura e parcela à
+  esquerda; a figura à direita, alinhada ao centro. Antes ela era o segundo item da linha do
+  nome e ficava presa à primeira linha, subindo para longe do bloco de que é o total assim
+  que a perna carregava fatura ou parcela. Não custa altura: as duas colunas são lado a lado,
+  e a mitigação registrada em *Risks* continua valendo.

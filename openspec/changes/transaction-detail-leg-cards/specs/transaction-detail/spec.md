@@ -238,8 +238,13 @@ mesma coisa são o modo pelo qual as duas telas passam a divergir sem que nada f
 ### Requirement: Restam como contexto apenas os fatos que não pertencem a nenhuma perna
 
 Abaixo dos cards, o detalhe SHALL exibir como linha de contexto apenas o que é fato da
-transação inteira e não de uma das suas pernas — a data e a recorrência. O que pertence a
-uma perna MUST NOT ser repetido como linha de contexto.
+transação inteira e não de uma das suas pernas — a categoria, a data e a recorrência. O que
+pertence a uma perna MUST NOT ser repetido como linha de contexto.
+
+Uma linha de contexto que nomeia uma fachada SHALL oferecer o atalho para ela. Diferentemente
+do card de uma perna, o atalho da categoria SHALL ser oferecido mesmo quando ela está
+arquivada: o destino é um detalhe resolvido por identidade, e não uma tela que deixou de
+listá-la.
 
 O detalhe MUST NOT exibir linha que declare se a origem de um gasto foi conta ou cartão: o
 card já nomeia a conta ou o cartão de onde o dinheiro saiu, e uma linha que responda isso a
@@ -253,6 +258,10 @@ fatura, cujo dinheiro sai da conta.
 #### Scenario: A conta não aparece duas vezes
 - **WHEN** o detalhe de um gasto em conta é aberto
 - **THEN** a conta aparece apenas no seu card, e não também como linha de contexto
+
+#### Scenario: A categoria abre o seu próprio detalhe
+- **WHEN** a linha de categoria de um gasto é tocada
+- **THEN** o detalhe daquela categoria é aberto, inclusive quando ela está arquivada, porque o destino é resolvido por identidade e não por uma tela que deixou de listá-la
 
 #### Scenario: Data e recorrência permanecem como contexto
 - **WHEN** o detalhe de um gasto recorrente é aberto

@@ -30,6 +30,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
@@ -70,6 +71,7 @@ class ViewTransactionModal(
 
         val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
+        val categoriesEntry = koinInject<CategoriesEntry>()
         val navController = LocalNavController.current
 
         LaunchedEffect(viewModel) {
@@ -90,6 +92,7 @@ class ViewTransactionModal(
                 uiState = state,
                 formatter = formatter,
                 detailController = detailController,
+                categoriesEntry = categoriesEntry,
                 navController = navController,
                 viewModel = viewModel,
             )
@@ -101,6 +104,7 @@ class ViewTransactionModal(
         uiState: ViewTransactionUiState.Content,
         formatter: com.neoutils.finsight.extension.CurrencyFormatter,
         detailController: com.neoutils.finsight.ui.component.DetailPaneController,
+        categoriesEntry: CategoriesEntry,
         navController: androidx.navigation.NavController,
         viewModel: ViewTransactionViewModel,
     ) {
@@ -295,6 +299,12 @@ class ViewTransactionModal(
                         colorScheme.onSurface
                     },
                     modifier = Modifier.padding(bottom = 8.dp),
+                    // Offered for an archived category too, unlike a leg's shortcut: the
+                    // destination is a modal resolved by id, not a screen that stopped
+                    // listing it, so there is somewhere to go.
+                    onClick = {
+                        detailController.show(categoriesEntry.viewCategoryModal(category.id))
+                    },
                 )
             }
 

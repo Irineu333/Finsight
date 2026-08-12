@@ -237,3 +237,10 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   primeira lista de faturas que chegar — uma vez só, porque depois disso a escolha é do
   usuário. Fatura que não resolve mais deixa o padrão como está em vez de falhar. Requisito e
   cenário acrescentados.
+- [x] 11.17 Dar atalho à linha de categoria, abrindo `CategoriesEntry.viewCategoryModal` pelo
+  `detailController` — a mesma porta que a recorrência já usava, e a `api` de categories já
+  era dependência do módulo. Oferecido **também** para categoria arquivada, ao contrário do
+  card de uma perna: o motivo de negá-lo lá é a tela de destino ter deixado de listar a
+  fachada, e aqui o destino é um detalhe resolvido por identidade. Requisito das linhas de
+  contexto atualizado (a categoria entrou na lista em 11.4 e o atalho não estava dito) e
+  cenário acrescentado.

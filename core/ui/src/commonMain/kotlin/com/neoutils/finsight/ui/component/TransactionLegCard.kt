@@ -35,6 +35,7 @@ import com.neoutils.finsight.ui.model.TransactionLegUi
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.stringUiText
 
 /**
@@ -106,17 +107,33 @@ fun TransactionLegCard(
                     )
                 }
 
-                Text(
-                    // `American · USD`, and only where two currencies are on the same
-                    // screen — the doctrine `AccountSelector` established. The code and
-                    // not the symbol: here the currency is being identified, which is
-                    // the one job a symbol does badly (three of them write `kr`).
-                    text = leg.currencyCode?.let { "${leg.name} · $it" } ?: leg.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    // The facade's own icon, the one it is recognised by everywhere
+                    // else. It reads on the identity axis, not the direction one, so it
+                    // does not take the tone: the colour here would say a second time
+                    // what the arrow beside the verb already says.
+                    Icon(
+                        imageVector = AppIcon.fromKey(leg.iconKey).icon,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        // `American · USD`, and only where two currencies are on the
+                        // same screen — the doctrine `AccountSelector` established. The
+                        // code and not the symbol: here the currency is being
+                        // identified, which is the one job a symbol does badly (three
+                        // of them write `kr`).
+                        text = leg.currencyCode?.let { "${leg.name} · $it" } ?: leg.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
                 leg.invoice?.let { invoice ->
                     Text(

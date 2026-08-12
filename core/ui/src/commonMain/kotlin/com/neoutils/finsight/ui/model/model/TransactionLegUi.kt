@@ -34,6 +34,8 @@ data class TransactionLegUi(
     val tone: LegTone,
     /** The account's or the card's own name — a card's `LIABILITY` account mirrors it. */
     val name: String,
+    /** Its icon, by the same mirroring: the key the facade chose for itself. */
+    val iconKey: String,
     /** Stated only where the operation touches two currencies and they must be told apart. */
     val currencyCode: String?,
     val amount: DisplayAmount,
@@ -159,6 +161,7 @@ fun Transaction.toTransactionLegs(
             verb = entry.verb(isAdjustment),
             tone = entry.tone(isAdjustment),
             name = entry.account.name,
+            iconKey = entry.account.iconKey,
             currencyCode = entry.account.currency.takeIf { namesCurrency },
             amount = entry.legAmount(isAdjustment),
             invoice = invoice?.takeIf { isLiability }

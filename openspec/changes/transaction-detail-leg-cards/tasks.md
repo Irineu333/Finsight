@@ -244,3 +244,10 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   fachada, e aqui o destino é um detalhe resolvido por identidade. Requisito das linhas de
   contexto atualizado (a categoria entrou na lista em 11.4 e o atalho não estava dito) e
   cenário acrescentado.
+- [x] 11.18 Pôr o ícone da conta ou do cartão à frente do nome, com `iconKey` como campo novo
+  do DTO — lido de `entry.account.iconKey`, que serve às duas fachadas porque a conta
+  `LIABILITY` de um cartão espelha o ícone dele como espelha o nome (`CreditCardRepository`).
+  Renderizado por `AppIcon.fromKey`, o mesmo dono que `AccountCard` e `CreditCardCard`
+  consomem, então o card lê igual à lista de onde a fachada é conhecida. Tingido de
+  `onSurfaceVariant` e **não** de `tone`: o ícone responde *qual* fachada é, e a cor deste
+  card é o eixo da direção — pintá-lo diria uma segunda vez o que a seta do verbo já diz.

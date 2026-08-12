@@ -71,5 +71,5 @@
 - [x] 7.3 Rodar a suíte e reportar o resultado lido — `./gradlew jvmTest` (o alvo `allTests` está
   quebrado no repositório por motivo alheio a esta mudança): BUILD SUCCESSFUL, 1132 testes,
   0 falhas
-- [ ] 7.4 Exercitar o fluxo no app (criar fatura retroativa → ajustar → fechar → pagar) e reportar
-  em qual plataforma foi exercitado
+- [x] 7.4 Exercitar o fluxo no app (criar fatura retroativa → ajustar → fechar → pagar) e reportar
+  em qual plataforma foi exercitado — percorrido pelo autor da mudança no **Android**, sem falha

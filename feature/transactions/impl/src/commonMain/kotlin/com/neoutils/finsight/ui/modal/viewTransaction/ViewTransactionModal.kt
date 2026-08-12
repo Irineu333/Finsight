@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.TransactionLabel
@@ -134,8 +135,8 @@ class ViewTransactionModal(
                     }
                     Surface(
                         color = iconColor.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.size(64.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.size(52.dp),
                     ) {
                         uiState.category?.let { category ->
                             Icon(
@@ -144,7 +145,7 @@ class ViewTransactionModal(
                                 tint = iconColor,
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(16.dp)
+                                    .padding(13.dp)
                             )
                         } ?: run {
                             Icon(
@@ -153,7 +154,7 @@ class ViewTransactionModal(
                                 tint = uiState.label.color(),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(16.dp)
+                                    .padding(13.dp)
                             )
                         }
                     }
@@ -163,7 +164,7 @@ class ViewTransactionModal(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
                             modifier = Modifier
-                                .size(22.dp)
+                                .size(20.dp)
                                 .align(Alignment.BottomEnd)
                         ) {
                             Icon(
@@ -189,15 +190,30 @@ class ViewTransactionModal(
                         color = uiState.label.color()
                     )
 
-                    // Omitted, rather than filled with a reserve literal, when the
-                    // transaction has neither a title nor a category — the ordinary
-                    // case of a transfer and of a payment.
-                    uiState.displayTitle?.let { title ->
+                    // A transfer and a payment ordinarily carry neither title nor
+                    // category, and are named by what they *are* — which is a fact of
+                    // their form, not a reserve literal standing in for an absence.
+                    // The name says what the nature above it does not: the two lines
+                    // are read together, so "transferência / entre contas" is the whole
+                    // sentence and repeating the first word in the second would waste
+                    // the line.
+                    //
+                    // An expense, an income or an adjustment with neither has no such
+                    // name, and the line is omitted rather than invented.
+                    val fallbackTitle = when (uiState.label) {
+                        TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
+                        TransactionLabel.TRANSFER -> stringResource(Res.string.view_transaction_title_transfer)
+                        else -> null
+                    }
+
+                    (uiState.displayTitle ?: fallbackTitle)?.let { title ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = colorScheme.onSurface
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }

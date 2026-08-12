@@ -135,10 +135,18 @@ transferência, pagamento de fatura ou ajuste —, e MUST NOT exibir a direção
 cor e o ícone do cabeçalho SHALL ser função da natureza, total sobre os seus cinco valores.
 
 A segunda linha do cabeçalho SHALL exibir o título que a transação tem: o seu próprio, ou o
-nome da sua categoria quando ela não tem título. Quando a transação não tem nem um nem outro
-— o caso ordinário de uma transferência e de um pagamento —, a linha SHALL ser **omitida**, e
-MUST NOT recair num literal de reserva. O cabeçalho de uma linha só é a resposta certa para
-uma operação que não tem mais nada a dizer sobre si.
+nome da sua categoria quando ela não tem título.
+
+Uma transferência e um pagamento de fatura ordinariamente não têm nem um nem outro, e SHALL
+ser nomeados pela **forma** que têm — "entre contas", "pagamento de fatura". Isso não é um
+literal de reserva: é um fato da operação, tão derivado do razão quanto a natureza acima dele,
+e localizado como qualquer outro texto. As duas linhas SHALL ser lidas como uma frase só —
+"transferência / entre contas" —, e por isso o nome SHALL dizer o que a natureza não disse:
+uma segunda linha que repete a primeira gasta a linha sem informar.
+
+Uma operação cuja forma **não** tem nome próprio além da natureza — um gasto, uma receita ou
+um ajuste sem título e sem categoria — MUST NOT recair num literal de reserva: a linha SHALL
+ser **omitida**. Nomear uma ausência é a única coisa que o cabeçalho não faz.
 
 #### Scenario: Transferência se anuncia como transferência
 - **WHEN** o detalhe de uma transferência é aberto a partir de qualquer tela
@@ -146,10 +154,14 @@ uma operação que não tem mais nada a dizer sobre si.
 
 #### Scenario: Pagamento se anuncia como pagamento
 - **WHEN** o detalhe de um pagamento de fatura é aberto a partir do extrato daquela fatura
-- **THEN** o cabeçalho diz "pagamento de fatura", concordando com a lista de onde foi aberto
+- **THEN** o cabeçalho diz "pagamento", concordando com a lista de onde foi aberto, e a sua segunda linha diz "pagamento de fatura"
 
-#### Scenario: Transferência sem título tem cabeçalho de uma linha
+#### Scenario: Transferência sem título é nomeada pela sua forma
 - **WHEN** o detalhe de uma transferência sem título e sem categoria é aberto
+- **THEN** a segunda linha diz "entre contas", completando a natureza da primeira em vez de repeti-la, e não é um literal de reserva
+
+#### Scenario: Gasto sem título nem categoria tem cabeçalho de uma linha
+- **WHEN** o detalhe de um gasto sem título e sem categoria é aberto
 - **THEN** o cabeçalho exibe apenas a natureza, sem segunda linha e sem literal de reserva
 
 #### Scenario: Gasto com categoria e sem título usa o nome da categoria

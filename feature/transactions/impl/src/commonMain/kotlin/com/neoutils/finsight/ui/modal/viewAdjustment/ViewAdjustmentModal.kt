@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -108,8 +109,10 @@ class ViewAdjustmentModal(
                     val invoiceAdjust = stringResource(Res.string.view_adjustment_invoice_adjust)
                     Text(
                         text = uiState.title ?: if (uiState.isCardTarget) invoiceAdjust else balanceAdjust,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = colorScheme.onSurface
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -205,8 +208,8 @@ class ViewAdjustmentModal(
         Box {
             Surface(
                 color = Adjustment.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.size(64.dp)
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.size(52.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -216,7 +219,7 @@ class ViewAdjustmentModal(
                         imageVector = Icons.Default.Tune,
                         contentDescription = null,
                         tint = Adjustment,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -226,7 +229,7 @@ class ViewAdjustmentModal(
                     color = colorScheme.surfaceVariant,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(20.dp)
                         .align(Alignment.BottomEnd)
                 ) {
                     Icon(

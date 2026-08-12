@@ -154,3 +154,37 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   Registrada a redundância que isso cria: numa transação sem título próprio a segunda linha do
   cabeçalho já é o nome da categoria, que passa a aparecer duas vezes — deliberado, porque as
   duas respondem perguntas distintas.
+- [x] 11.5 Ajustar o cabeçalho: caixa do ícone de 64dp para 52dp (raio 14dp, padding interno
+  13dp) e o selo de cartão de 22dp para 20dp — o cabeçalho pesava sobre os cards, que são o
+  assunto da tela. O rótulo de natureza de `PAYMENT` passa de *Pagamento de Fatura* para
+  *Pagamento*, e a segunda linha passa a nomear as duas formas que ordinariamente não têm
+  título nem categoria: *Pagamento de Fatura* (reaproveitando `transaction_card_payment`, o
+  mesmo nome que a lista dá) e *Transferência entre Contas* (chave nova
+  `view_transaction_title_transfer`, nos dois arquivos). O nome tem de dizer mais que a
+  natureza acima dele, e é por isso que o rótulo encurtou: *pagamento* / *pagamento de fatura*
+  informa, *pagamento de fatura* duas vezes não.
+- [x] 11.6 Reescrever o requisito *O cabeçalho do detalhe exibe a natureza da operação* em
+  `specs/transaction-detail/spec.md`, que mandava **omitir** a segunda linha "no caso ordinário
+  de uma transferência e de um pagamento" — 11.5 a contradiz e a spec do change ainda não foi
+  arquivada, então quem muda é ela. A linha que a substitui distingue os dois casos: uma
+  operação cuja **forma** tem nome (transferência, pagamento) é nomeada por ele, que é fato do
+  razão e não literal de reserva; uma que não tem (gasto, receita, ajuste sem título e sem
+  categoria) continua omitindo a linha, porque nomear uma ausência é o que o cabeçalho não faz.
+  O cenário *Transferência sem título tem cabeçalho de uma linha* vira *…é nomeada pela sua
+  forma*, e um cenário novo guarda a omissão onde ela continua valendo.
+- [x] 11.7 Título do cabeçalho de `headlineSmall` (24sp) para `titleMedium` (16sp), com
+  `maxLines = 2` e reticências. Com o ícone menor de 11.5 e os nomes de forma de 11.5 — que
+  são mais longos que um título comum —, 24sp empurrava o cabeçalho para fora do lugar em vez
+  de ceder espaço aos cards.
+- [x] 11.8 Aplicar 11.5 e 11.7 ao cabeçalho de `ViewAdjustmentModal`, que 11.5 esqueceu:
+  caixa de 64dp para 52dp (raio 14dp, ícone de 32dp para 26dp), selo de cartão de 22dp para
+  20dp e o título de `headlineSmall` para `titleMedium` com `maxLines = 2`. D7 diz que o
+  ajuste usa a **mesma** composição, e dois cabeçalhos com métricas diferentes são a maneira
+  pela qual as duas telas voltam a divergir. O par natureza/título do ajuste já seguia o
+  arranjo de 11.5 — *Ajuste* acima, *Ajuste de Saldo* / *Ajuste de Fatura* abaixo — e por isso
+  não muda.
+- [x] 11.9 Encurtar o nome de forma da transferência de *Transferência entre Contas* para
+  *Entre Contas* (`Between Accounts`), nos dois arquivos, e ajustar o requisito do cabeçalho
+  junto: as duas linhas são lidas como uma frase — *transferência / entre contas* —, então a
+  segunda deve dizer o que a primeira não disse. É a mesma regra que 11.5 aplicou ao
+  pagamento, agora levada até o fim: lá o rótulo encurtou, aqui foi o título.

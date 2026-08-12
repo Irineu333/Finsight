@@ -511,8 +511,9 @@
     <string name="view_transaction_nature_expense">Expense</string>
     <string name="view_transaction_nature_income">Income</string>
     <string name="view_transaction_nature_transfer">Transfer</string>
-    <string name="view_transaction_nature_payment">Invoice Payment</string>
+    <string name="view_transaction_nature_payment">Payment</string>
     <string name="view_transaction_nature_adjustment">Adjustment</string>
+    <string name="view_transaction_title_transfer">Between Accounts</string>
     <string name="view_transaction_leg_verb_adjusted">Adjusted</string>
     <string name="view_transaction_leg_verb_left">Left</string>
     <string name="view_transaction_leg_verb_entered">Entered</string>

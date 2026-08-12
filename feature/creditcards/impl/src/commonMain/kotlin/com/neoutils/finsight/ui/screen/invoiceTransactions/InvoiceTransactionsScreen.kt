@@ -17,6 +17,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -59,6 +60,7 @@ import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveCreditCard.ArchiveCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
+import com.neoutils.finsight.ui.modal.createInvoice.CreateInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
@@ -78,6 +80,7 @@ import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.resources.invoice_transactions_adjustments
 import com.neoutils.finsight.resources.invoice_transactions_close_invoice
+import com.neoutils.finsight.resources.invoice_transactions_create_invoice
 import com.neoutils.finsight.resources.invoice_transactions_delete_invoice
 import com.neoutils.finsight.resources.invoice_transactions_edit_card
 import com.neoutils.finsight.resources.invoice_transactions_empty_body
@@ -194,6 +197,46 @@ private fun InvoiceTransactionsContent(
                                         modalManager.show(CreditCardFormModal(creditCard))
                                     }
                                 )
+                                // A write like the others, so an archived card is not
+                                // offered it. The month it opens on is where the user
+                                // already is in the calendar.
+                                if (!uiState.isArchived) {
+                                    val initialDueMonth = uiState.invoices
+                                        .getOrNull(uiState.selectedInvoiceIndex)
+                                        ?.dueMonth
+
+                                    if (initialDueMonth != null) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(Res.string.invoice_transactions_create_invoice)) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Add,
+                                                    contentDescription = null,
+                                                )
+                                            },
+                                            modifier = Modifier.testTag("invoice_transactions_create_invoice"),
+                                            onClick = {
+                                                menuExpanded = false
+                                                modalManager.show(
+                                                    CreateInvoiceModal(
+                                                        creditCard = creditCard,
+                                                        initialDueMonth = initialDueMonth,
+                                                        // Nothing else follows: the screen
+                                                        // goes to the new invoice, and
+                                                        // declaring its value stays the
+                                                        // user's next gesture (design D6).
+                                                        onCreated = { invoice ->
+                                                            onAction(
+                                                                InvoiceTransactionsAction
+                                                                    .SelectInvoiceForDueMonth(invoice.dueMonth)
+                                                            )
+                                                        }
+                                                    )
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
                                 // An archived card is already retired: offering to archive
                                 // it again is a dead end, so the entry becomes unarchive —
                                 // reversible and innocuous, no confirmation (design D8).

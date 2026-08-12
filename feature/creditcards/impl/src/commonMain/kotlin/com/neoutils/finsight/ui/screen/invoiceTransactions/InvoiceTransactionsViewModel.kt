@@ -257,6 +257,18 @@ class InvoiceTransactionsViewModel(
                 selectedInvoiceIndex.value = action.index.coerceAtLeast(0)
             }
 
+            // Resolved against the same ordered query the pager renders, so the index
+            // found here is the page the invoice occupies.
+            is InvoiceTransactionsAction.SelectInvoiceForDueMonth -> {
+                val index = invoiceRepository
+                    .getInvoicesByCreditCard(creditCardId)
+                    .indexOfFirst { it.dueMonth == action.dueMonth }
+
+                if (index >= 0) {
+                    selectedInvoiceIndex.value = index
+                }
+            }
+
             is InvoiceTransactionsAction.SelectCategory -> {
                 filters.value = filters.value.copy(category = action.category)
             }

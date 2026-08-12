@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
@@ -11,21 +9,26 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.datetime.YearMonth
-import kotlin.time.ExperimentalTime
 
+/**
+ * Finds the invoice a target month already has, or has [CreateInvoiceUseCase] make it.
+ *
+ * What is its own is the lookup and the refusal of an invoice closed to new spending.
+ * Classifying the created invoice is not: that rule has a single owner, in the creation
+ * itself, which is what makes an invoice born from a transaction indistinguishable from
+ * one born from the user's gesture.
+ */
 class GetOrCreateInvoiceForMonthUseCaseImpl(
     private val invoiceRepository: IInvoiceRepository,
-    private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
-    private val createRetroactiveInvoiceUseCase: CreateRetroactiveInvoiceUseCase
+    private val createInvoiceUseCase: CreateInvoiceUseCase,
 ) : GetOrCreateInvoiceForMonthUseCase {
     override suspend operator fun invoke(
         creditCard: CreditCard,
         targetDueMonth: YearMonth
     ): Either<Throwable, Invoice> = either {
-        val invoices = invoiceRepository
+        val existingInvoice = invoiceRepository
             .getInvoicesByCreditCard(creditCard.id)
-
-        val existingInvoice = invoices.find { it.dueMonth == targetDueMonth }
+            .find { it.dueMonth == targetDueMonth }
 
         if (existingInvoice != null) {
             ensure(!existingInvoice.status.isClosedToNewExpenses) {
@@ -38,13 +41,6 @@ class GetOrCreateInvoiceForMonthUseCaseImpl(
             return@either existingInvoice
         }
 
-        val openInvoice = invoices.find { it.status.isOpen }
-            ?: raise(InvoiceException(InvoiceError.NoOpenInvoice))
-
-        if (targetDueMonth < openInvoice.dueMonth) {
-            createRetroactiveInvoiceUseCase(creditCard, targetDueMonth).bind()
-        } else {
-            createFutureInvoiceUseCase(creditCard, targetDueMonth).bind()
-        }
+        createInvoiceUseCase(creditCard, targetDueMonth).bind()
     }
 }

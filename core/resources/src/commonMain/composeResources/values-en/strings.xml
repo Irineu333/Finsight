@@ -299,6 +299,7 @@
     <string name="invoice_transactions_advance_payment">Advance Payment</string>
     <string name="invoice_transactions_close_invoice">Close Invoice</string>
     <string name="invoice_transactions_delete_invoice">Delete Invoice</string>
+    <string name="invoice_transactions_create_invoice">Create Invoice</string>
     <string name="invoice_transactions_reopen_invoice">Reopen Invoice</string>
     <string name="invoice_transactions_pay_invoice">Pay Invoice</string>
     <string name="invoice_transactions_filter_category">Category</string>
@@ -431,6 +432,14 @@
     <string name="delete_installment_title">Delete Installment</string>
     <string name="delete_installment_message">Are you sure you want to delete this installment? All %1$d installments will be removed. This action cannot be undone.</string>
     <string name="delete_installment_confirm">Delete</string>
+
+    <!-- Create Invoice Modal -->
+    <string name="create_invoice_title">Create Invoice</string>
+    <string name="create_invoice_message">State that this cycle existed. The invoice is born empty; you declare what it is worth later.</string>
+    <string name="create_invoice_month_label">Due month</string>
+    <string name="create_invoice_month_taken">This month already has an invoice. Pick another one.</string>
+    <string name="create_invoice_window">Opens on %1$s • Closes on %2$s</string>
+    <string name="create_invoice_confirm">Create</string>
 
     <string name="delete_future_invoice_title">Delete Invoice</string>
     <string name="delete_future_invoice_message">Are you sure you want to delete this future invoice? This action cannot be undone.</string>

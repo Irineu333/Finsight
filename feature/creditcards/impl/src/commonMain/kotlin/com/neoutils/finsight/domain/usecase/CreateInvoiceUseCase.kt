@@ -1,63 +1,64 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
+import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
-import arrow.core.raise.ensureNotNull
+import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.dueMonthFor
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.model.invoiceWindowFor
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.extension.currentYearMonth
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlinx.datetime.plusMonth
+import kotlinx.datetime.YearMonth
 
+/**
+ * Brings an invoice into existence for a target due month.
+ *
+ * The single way an invoice is born from a month: the user's explicit gesture and the
+ * on-demand creation of a transaction both come through here, so the two cannot produce
+ * invoices that differ. What is declared is the *cycle*, never its value — the window and
+ * the due month derive from the card, and what the invoice is worth comes later, from
+ * entries or from a balance adjustment.
+ *
+ * The status is derived, never chosen: a month falling due before the open invoice's due
+ * month is [Invoice.Status.RETROACTIVE], from it onwards [Invoice.Status.FUTURE]. The
+ * reference is the open invoice and not today, so a card whose open invoice fell behind
+ * keeps the same criterion without a special case. Opening remains exclusive to
+ * `OpenInvoiceUseCase`: this operation never produces [Invoice.Status.OPEN].
+ */
 class CreateInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val creditCardRepository: ICreditCardRepository,
-    private val clock: Clock,
 ) {
-
-    private val currentMonth get() = clock.currentYearMonth()
-    private val nextMonth get() = currentMonth.plusMonth()
-
-
     suspend operator fun invoke(
-        creditCardId: Long
-    ): Either<InvoiceException, Invoice> = either {
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
+        creditCard: CreditCard,
+        dueMonth: YearMonth
+    ): Either<Throwable, Invoice> = either {
+        val invoices = invoiceRepository.getInvoicesByCreditCard(creditCard.id)
 
-        ensureNotNull(creditCard) {
-            InvoiceException(InvoiceError.CreditCardNotFound)
+        ensure(invoices.none { it.dueMonth == dueMonth }) {
+            InvoiceException(InvoiceError.AlreadyExists)
         }
 
-        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(creditCardId)
+        val openInvoice = invoices.find { it.status.isOpen }
+            ?: raise(InvoiceException(InvoiceError.NoOpenInvoice))
 
-        val overlappingInvoice = existingInvoices.find { existing ->
-            currentMonth < existing.closingMonth && nextMonth > existing.openingMonth
-        }
+        val window = creditCard.invoiceWindowFor(dueMonth)
 
-        if (overlappingInvoice != null) {
-            return@either overlappingInvoice
-        }
-
-        val closingMonth = nextMonth
-
-        val dueMonth = creditCard.dueMonthFor(closingMonth)
-
-        val newInvoice = Invoice(
+        val invoice = Invoice(
             creditCard = creditCard,
-            openingMonth = currentMonth,
-            closingMonth = closingMonth,
+            openingMonth = window.openingMonth,
+            closingMonth = window.closingMonth,
             dueMonth = dueMonth,
-            status = Invoice.Status.OPEN,
+            status = if (dueMonth < openInvoice.dueMonth) {
+                Invoice.Status.RETROACTIVE
+            } else {
+                Invoice.Status.FUTURE
+            }
         )
 
-        invoiceRepository.insert(newInvoice)
+        catch {
+            invoiceRepository.insert(invoice)
+        }.bind()
     }
 }
-

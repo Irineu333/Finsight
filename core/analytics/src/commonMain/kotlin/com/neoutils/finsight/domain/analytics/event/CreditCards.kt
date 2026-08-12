@@ -14,6 +14,8 @@ object PayInvoice : Event("pay_invoice")
 
 object ReopenInvoice : Event("reopen_invoice")
 
+object CreateInvoice : Event("create_invoice")
+
 object DeleteFutureInvoice : Event("delete_future_invoice")
 
 object AdvanceInvoicePayment : Event("advance_invoice_payment")

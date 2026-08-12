@@ -300,6 +300,7 @@
     <string name="invoice_transactions_advance_payment">Antecipar Pagamento</string>
     <string name="invoice_transactions_close_invoice">Fechar Fatura</string>
     <string name="invoice_transactions_delete_invoice">Excluir Fatura</string>
+    <string name="invoice_transactions_create_invoice">Criar Fatura</string>
     <string name="invoice_transactions_reopen_invoice">Reabrir Fatura</string>
     <string name="invoice_transactions_pay_invoice">Pagar Fatura</string>
     <string name="invoice_transactions_filter_category">Categoria</string>
@@ -432,6 +433,14 @@
     <string name="delete_installment_title">Excluir Parcelamento</string>
     <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
     <string name="delete_installment_confirm">Excluir</string>
+
+    <!-- Create Invoice Modal -->
+    <string name="create_invoice_title">Criar Fatura</string>
+    <string name="create_invoice_message">Declare que este ciclo existiu. A fatura nasce vazia; o valor dela você informa depois.</string>
+    <string name="create_invoice_month_label">Mês de vencimento</string>
+    <string name="create_invoice_month_taken">Este mês já tem fatura. Escolha outro.</string>
+    <string name="create_invoice_window">Abre em %1$s • Fecha em %2$s</string>
+    <string name="create_invoice_confirm">Criar</string>
 
     <string name="delete_future_invoice_title">Excluir Fatura</string>
     <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>

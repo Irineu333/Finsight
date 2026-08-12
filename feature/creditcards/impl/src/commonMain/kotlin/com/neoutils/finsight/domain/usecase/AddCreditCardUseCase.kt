@@ -24,6 +24,11 @@ class AddCreditCardUseCase(
     private val currentDate get() = clock.today()
 
     /**
+     * A card is born with its first invoice open, on the cycle it is already in today.
+     * Opening it is part of the creation and not a follow-up to it: a card whose invoice
+     * failed to open would accept no expense at all, so the failure fails the creation
+     * rather than being reported as success.
+     *
      * @param currency what the card's `LIABILITY` account is denominated in — chosen in
      * the form, carried explicitly, and fixed from the moment the card exists (D12).
      */
@@ -40,17 +45,19 @@ class AddCreditCardUseCase(
 
             val creditCard = form.build().bind()
 
-             catch {
+            val persisted = catch {
                 creditCard.copy(
                     id = repository.insert(creditCard, currency)
                 )
             }.bind()
-        }.onRight { creditCard ->
+
             openInvoiceUseCase(
-                creditCardId = creditCard.id,
+                creditCard = persisted,
                 // The card opens on the cycle it is already in today.
-                openingMonth = creditCard.invoiceWindowOn(currentDate).openingMonth
-            )
+                openingMonth = persisted.invoiceWindowOn(currentDate).openingMonth
+            ).bind()
+
+            persisted
         }
     }
 }

@@ -47,6 +47,15 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
+ * The room the badge takes when it appears. It is published because the badge is
+ * *conditional*: a surface that draws two cards side by side, one of them consolidated and
+ * the other not, would otherwise have one card grow by the difference — the badge's own
+ * height — and the pair would stop lining up for a reason the user cannot see. Whoever
+ * reserves the space reserves exactly this.
+ */
+val ConsolidationBadgeSize = 24.dp
+
+/**
  * The way out of the `≈` mark — design D21, as a button rather than as a line of text, and
  * at **three levels of severity** rather than one.
  *
@@ -106,7 +115,7 @@ fun ConsolidationBadge(
                 )
             )
         },
-        modifier = modifier.size(24.dp),
+        modifier = modifier.size(ConsolidationBadgeSize),
     ) {
         Icon(
             imageVector = notice.icon,

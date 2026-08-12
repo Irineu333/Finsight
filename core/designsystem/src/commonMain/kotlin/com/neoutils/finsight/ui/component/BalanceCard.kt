@@ -156,7 +156,13 @@ private fun BalanceCard(
             .padding(config.padding),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            // The badge is conditional and taller than the title line, so the space it
+            // would take is held whether or not it shows. Two of these cards sit side by
+            // side in every dashboard pair, and only one of them may need to explain
+            // itself — without this the explained one is the taller one.
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = ConsolidationBadgeSize),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

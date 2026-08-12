@@ -215,3 +215,9 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   nome e ficava presa à primeira linha, subindo para longe do bloco de que é o total assim
   que a perna carregava fatura ou parcela. Não custa altura: as duas colunas são lado a lado,
   e a mitigação registrada em *Risks* continua valendo.
+- [x] 11.14 Trocar o glifo de movimento do ajuste de `Tune` para `SwapVert` — duas flechas
+  contrárias, no mesmo eixo vertical das outras duas. É a leitura certa do caso: o ajuste é a
+  única perna que poderia ter ido para qualquer lado, que é exatamente a direção que o verbo
+  *Ajustou* retém, e as duas flechas juntas dizem isso. `Tune` diz *isto é um ajuste*, que é
+  natureza e assunto do cabeçalho; esta linha fala de movimento. O `Tune` do cabeçalho das
+  duas modais e o da lista continuam como estão.

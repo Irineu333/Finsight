@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
@@ -200,11 +200,14 @@ private fun LegTone.color(): Color = when (this) {
 }
 
 /**
- * The movement of a direction. An adjustment has none to draw — it corrected a figure
- * rather than moved money — so it keeps the glyph the app gives adjustments elsewhere.
+ * The movement of a direction, on the axis the other two glyphs read on: an adjustment
+ * gets both arrows at once, because it is the one leg that could have gone either way
+ * — the direction its verb withholds. It is deliberately not `Tune`, the glyph that
+ * says *this is an adjustment*: the nature is the header's to state, and this line
+ * states movement.
  */
 private fun LegTone.icon(): ImageVector = when (this) {
     LegTone.OUTGOING -> Icons.Default.ArrowDownward
     LegTone.INCOMING -> Icons.Default.ArrowUpward
-    LegTone.ADJUSTMENT -> Icons.Default.Tune
+    LegTone.ADJUSTMENT -> Icons.Default.SwapVert
 }

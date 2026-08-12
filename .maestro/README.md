@@ -29,7 +29,7 @@ some); e o que só existe no aparelho — relógio do sistema, teclado, gesto de
 **Não é dono de:** correção de regra de negócio; formatação; validação de campo; combinatória de
 estados; layout e pixels; performance.
 
-Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew allTests`) é dona do comportamento,
+Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) é dona do comportamento,
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 

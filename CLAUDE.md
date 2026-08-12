@@ -18,7 +18,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 
 ## Commands
 ```bash
-./gradlew allTests                                          # All tests
+./gradlew jvmTest                                           # All tests
 ./gradlew :app:shared:testDebugUnitTest --tests "*.XxxTest" # Single test class
 ./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
 ./gradlew :app:android:assembleDebug                       # Build Android APK

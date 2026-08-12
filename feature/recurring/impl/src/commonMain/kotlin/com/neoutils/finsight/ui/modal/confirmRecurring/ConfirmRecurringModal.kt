@@ -24,12 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -55,6 +57,7 @@ class ConfirmRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
+        val categoriesEntry = koinInject<CategoriesEntry>()
         // The same clock the ViewModel confirms against — the picker must not offer a date the
         // confirmation would then clamp.
         val currentDate = koinInject<Clock>().today()
@@ -76,8 +79,8 @@ class ConfirmRecurringModal(
 
         ReformatOnCurrencyChange(state = amount, currency = uiState.currency)
         val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
-        // The title of *this* cycle, seeded from the template. Editing it never writes
-        // back to the recurring — the heading above keeps showing what the template is.
+        // The title of *this* cycle, seeded from the template and free to differ.
+        // Editing it never writes back to the recurring.
         val title = rememberTextFieldState(recurring.title.orEmpty())
 
         val typeLabel = if (recurring.type.isIncome) {
@@ -100,16 +103,6 @@ class ConfirmRecurringModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
         ) {
-            Text(
-                text = recurring.label,
-                style = MaterialTheme.typography.headlineSmall,
-                color = colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedTextField(
                 value = typeLabel,
                 onValueChange = {},
@@ -145,6 +138,18 @@ class ConfirmRecurringModal(
                 categories = uiState.categories,
                 onCategorySelected = { category ->
                     viewModel.onAction(ConfirmRecurringAction.CategorySelected(category))
+                },
+                // Nothing to offer is not a dead end anywhere else in the app, and it is
+                // not one here: the selector opens the category form, already on the type
+                // this recurring accepts.
+                onEmpty = {
+                    modalManager.show(
+                        categoriesEntry.categoryFormModal(
+                            initialType = Category.Type.entries.firstOrNull {
+                                it.isAccept(recurring.type)
+                            },
+                        )
+                    )
                 },
                 valueTestTag = "confirm_recurring_category",
                 modifier = Modifier

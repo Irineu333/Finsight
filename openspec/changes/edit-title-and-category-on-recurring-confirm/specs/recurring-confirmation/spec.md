@@ -78,6 +78,8 @@ O seletor SHALL permitir **remover** a categoria, deixando a transação sem cla
 
 Uma categoria arquivada **depois** de ter sido escolhida pela recorrência SHALL continuar aparecendo, selecionada, para que o usuário possa mantê-la ou trocá-la; desfeita a escolha, ela MUST NOT voltar a ser oferecida enquanto permanecer arquivada. É a mesma regra de continuidade que a fachada arquivada já tem em outros seletores, e não SHALL ser reimplementada aqui com outra forma.
 
+Quando não há categoria alguma a oferecer, o seletor MUST NOT ficar bloqueado: SHALL oferecer o cadastro de uma categoria nova, já no tipo que esta recorrência aceita — é o que os demais seletores do app fazem com a lista vazia, e um controle inerte seria lido como defeito.
+
 #### Scenario: Apenas categorias do tipo da recorrência são oferecidas
 
 - **WHEN** o usuário abre o seletor de categoria ao confirmar uma recorrência de despesa
@@ -92,6 +94,11 @@ Uma categoria arquivada **depois** de ter sido escolhida pela recorrência SHALL
 
 - **WHEN** o usuário abre a confirmação de uma recorrência cuja categoria foi arquivada depois de escolhida
 - **THEN** ela aparece selecionada no seletor e pode ser mantida ou trocada
+
+#### Scenario: Sem categoria cadastrada, o seletor leva ao cadastro
+
+- **WHEN** o usuário abre a confirmação e não existe categoria alguma do tipo da recorrência
+- **THEN** o seletor apresenta a ação de criar uma categoria, que abre o formulário já no tipo aceito, em vez de ficar desabilitado
 
 #### Scenario: A categoria pode ser removida
 

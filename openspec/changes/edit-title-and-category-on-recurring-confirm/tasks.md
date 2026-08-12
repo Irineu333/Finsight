@@ -18,7 +18,7 @@
 ## 3. Modal — campo de título e seletor de categoria
 
 - [x] 3.1 Adicionar as chaves `recurring_confirm_title_label` em `values/strings.xml` (pt) e `values-en/strings.xml` (en)
-- [x] 3.2 Adicionar um `OutlinedTextField` editável com `rememberTextFieldState(recurring.title.orEmpty())`, `KeyboardCapitalization.Sentences`, `imeAction = ImeAction.Next` e `testTag("confirm_recurring_title")`; o cabeçalho continua mostrando o `label` do template, que a edição não altera
+- [x] 3.2 Adicionar um `OutlinedTextField` editável com `rememberTextFieldState(recurring.title.orEmpty())`, `KeyboardCapitalization.Sentences`, `imeAction = ImeAction.Next` e `testTag("confirm_recurring_title")`, no topo do formulário
 - [x] 3.3 Substituir o campo desabilitado de categoria pelo `CategorySelector` (`core/ui`), alimentado por `uiState.categories` / `uiState.selectedCategory`, despachando `ConfirmRecurringAction.CategorySelected`, com `valueTestTag = "confirm_recurring_category"`
 - [x] 3.4 Renderizar o seletor de categoria também quando a recorrência não tem categoria (antes o bloco só existia dentro de `recurring.category?.let { ... }`)
 - [x] 3.5 Exigir `title.text.isNotBlank() || uiState.selectedCategory != null` no `enabled` do botão `Confirmar` (D3) e passar o título no `ConfirmRecurringAction.Confirm`
@@ -34,9 +34,14 @@
 - [x] 4.7 `offeredCategories`: categoria arquivada nomeada pelo template aparece na lista; desmarcada, deixa de ser oferecida; a já aberta não é oferecida duas vezes
 - [x] 4.8 Conferir que `ConfirmRecurringCurrencyTest` e `OfferedForCurrencyTest` continuam válidos (moeda não é afetada) — ambos passam sem alteração
 
-## 5. Verificação
+## 5. Ajustes do teste manual
 
-- [x] 5.1 Rodar `./gradlew :feature:recurring:impl:jvmTest --tests "*ConfirmRecurring*" --tests "*OfferedCategories*"` — 15 testes, verde
-- [x] 5.2 Rodar `./gradlew jvmTest` — 1159 testes, `BUILD SUCCESSFUL`, nenhuma falha
-- [x] 5.3 Conferir que a chave nova de string existe nos dois arquivos (pt e en)
-- [ ] 5.4 Exercitar o fluxo no app (`./gradlew :app:desktop:run`): editar título e categoria, confirmar, ver a transação lançada com os valores editados e a recorrência inalterada — **não executado**
+- [x] 5.1 Remover o cabeçalho com o `label` da recorrência: com o título editável logo abaixo, ele repetia a mesma informação
+- [x] 5.2 Passar `onEmpty` ao `CategorySelector`, abrindo `categoriesEntry.categoryFormModal(initialType = ...)` — sem ele o controle ficava desabilitado quando não havia categoria, contra o padrão do app. O tipo inicial sai de `isAccept`, sem mapa novo entre `TransactionType` e `Category.Type`
+
+## 6. Verificação
+
+- [x] 6.1 Rodar `./gradlew :feature:recurring:impl:jvmTest --tests "*ConfirmRecurring*" --tests "*OfferedCategories*"` — 15 testes, verde
+- [x] 6.2 Rodar `./gradlew jvmTest` — 1159 testes, `BUILD SUCCESSFUL`, nenhuma falha
+- [x] 6.3 Conferir que a chave nova de string existe nos dois arquivos (pt e en)
+- [ ] 6.4 Exercitar o fluxo no app (`./gradlew :app:desktop:run`): editar título e categoria, confirmar, ver a transação lançada com os valores editados e a recorrência inalterada — **não executado**

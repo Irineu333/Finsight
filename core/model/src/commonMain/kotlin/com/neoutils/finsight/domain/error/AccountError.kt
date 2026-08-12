@@ -6,7 +6,6 @@ import com.neoutils.finsight.resources.account_error_cannot_archive_default
 import com.neoutils.finsight.resources.account_error_currency_immutable
 import com.neoutils.finsight.resources.account_error_empty_name
 import com.neoutils.finsight.resources.account_error_has_balance
-import com.neoutils.finsight.resources.account_error_has_budget
 import com.neoutils.finsight.resources.account_error_has_recurring
 import com.neoutils.finsight.resources.account_error_has_transactions
 import com.neoutils.finsight.resources.account_error_not_found
@@ -40,12 +39,6 @@ enum class AccountError(val message: String) {
     HAS_RECURRING(message = "Cannot delete an account a recurring transaction still uses"),
 
     /**
-     * `budget_categories.categoryId` is CASCADE: deleting a budgeted category would
-     * strip it from the budget silently. Refused so the loss is never created.
-     */
-    HAS_BUDGET(message = "Cannot delete a category a budget still uses"),
-
-    /**
      * The currency is fixed when the account is created and never changes — not "until
      * the first entry", but from the instant the account exists (design D12).
      *
@@ -68,6 +61,5 @@ fun AccountError.toUiText() = when (this) {
     AccountError.HAS_TRANSACTIONS -> UiText.Res(Res.string.account_error_has_transactions)
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
     AccountError.HAS_RECURRING -> UiText.Res(Res.string.account_error_has_recurring)
-    AccountError.HAS_BUDGET -> UiText.Res(Res.string.account_error_has_budget)
     AccountError.CURRENCY_IS_IMMUTABLE -> UiText.Res(Res.string.account_error_currency_immutable)
 }

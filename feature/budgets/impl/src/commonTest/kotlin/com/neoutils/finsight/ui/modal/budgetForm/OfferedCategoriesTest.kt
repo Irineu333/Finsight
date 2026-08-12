@@ -6,8 +6,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The dropdown must let an archived category be removed from the budget it is already
- * in, without ever offering it for a new one.
+ * The selector applies a single rule: continuity of an already-made choice. An archived
+ * category can be removed from the budget it is already in, and is never offered for a
+ * new one. Belonging to another budget takes nothing off the list.
  */
 class OfferedCategoriesTest {
 
@@ -21,13 +22,14 @@ class OfferedCategoriesTest {
     private val archived = category(3, isArchived = true)
 
     @Test
-    fun `open categories are offered minus those held by other budgets`() {
+    fun `a category held by another budget is still offered`() {
+        // A budget is a lens, not a slice: `transport` being watched by another budget
+        // is no reason to keep it out of this one.
         val offered = offeredCategories(
             open = listOf(food, transport),
             selected = emptyList(),
-            otherBudgetCategoryIds = setOf(transport.id),
         )
-        assertEquals(listOf(food), offered)
+        assertEquals(listOf(food, transport), offered)
     }
 
     @Test
@@ -37,7 +39,6 @@ class OfferedCategoriesTest {
         val offered = offeredCategories(
             open = listOf(food),
             selected = listOf(food, archived),
-            otherBudgetCategoryIds = emptySet(),
         )
         assertEquals(listOf(food, archived), offered)
     }
@@ -49,7 +50,6 @@ class OfferedCategoriesTest {
         val offered = offeredCategories(
             open = listOf(food),
             selected = listOf(food),
-            otherBudgetCategoryIds = emptySet(),
         )
         assertEquals(listOf(food), offered)
     }
@@ -59,7 +59,6 @@ class OfferedCategoriesTest {
         val offered = offeredCategories(
             open = emptyList(),
             selected = listOf(archived),
-            otherBudgetCategoryIds = emptySet(),
         )
         assertEquals(listOf(archived), offered)
     }

@@ -150,18 +150,11 @@ class BudgetFormViewModel(
 
     val uiState = combine(
         categoryRepository.observeCategoriesByType(Category.Type.EXPENSE),
-        budgetRepository.observeAllBudgets(),
         combine(recurringRepository.observeAllRecurring(), formFields, validation) { rec, fields, v ->
             Triple(rec, fields, v)
         },
         currencyState,
-    ) { categories, budgets, (allRecurrings, fields, validation), limitCurrency ->
-        val budgetedCategoryIds = budgets
-            .filter { it.id != budget?.id }
-            .flatMap { it.categories }
-            .map { it.id }
-            .toSet()
-
+    ) { categories, (allRecurrings, fields, validation), limitCurrency ->
         val incomeRecurrings = allRecurrings.filter { it.type == TransactionType.INCOME }
 
         // Resolved against every income recurring, archived included: the budget's own
@@ -175,7 +168,6 @@ class BudgetFormViewModel(
             availableCategories = offeredCategories(
                 open = categories,
                 selected = fields.selectedCategories,
-                otherBudgetCategoryIds = budgetedCategoryIds,
             ),
             selectedCategories = fields.selectedCategories,
             selectedIcon = fields.selectedIcon,
@@ -339,16 +331,19 @@ private fun <T> withAlreadyChosen(
 ): List<T> = offered + chosen.filterNot { c -> offered.any { id(it) == id(c) } }
 
 /**
- * The categories the form offers in its dropdown: the open ones, minus any already
- * claimed by another budget (a category belongs to at most one), kept continuous by
- * [withAlreadyChosen].
+ * The categories the form offers in its dropdown: the open expense ones, kept continuous
+ * by [withAlreadyChosen] so a category archived after it was added still shows — and can
+ * be removed.
+ *
+ * A budget is a lens over spending, not a slice of it: a category another budget already
+ * watches is offered exactly like any other, because two budgets may legitimately measure
+ * the same expense against limits of their own.
  */
 internal fun offeredCategories(
     open: List<Category>,
     selected: List<Category>,
-    otherBudgetCategoryIds: Set<Long>,
 ): List<Category> = withAlreadyChosen(
-    offered = open.filterNot { it.id in otherBudgetCategoryIds },
+    offered = open,
     chosen = selected,
     id = Category::id,
 )

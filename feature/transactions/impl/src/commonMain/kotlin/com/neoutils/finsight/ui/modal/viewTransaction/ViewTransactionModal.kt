@@ -30,7 +30,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
-import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
@@ -110,7 +110,7 @@ class ViewTransactionModal(
         val legs = uiState.legs { target ->
             detailController.dismiss()
             if (target.isLiability) {
-                uiState.creditCard?.let { navController.navigate(CreditCardsRoute(it.id)) }
+                uiState.creditCard?.let { navController.navigate(InvoiceTransactionsRoute(it.id)) }
             } else {
                 navController.navigate(AccountsRoute(target.accountId))
             }

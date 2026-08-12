@@ -221,3 +221,10 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
   *Ajustou* retém, e as duas flechas juntas dizem isso. `Tune` diz *isto é um ajuste*, que é
   natureza e assunto do cabeçalho; esta linha fala de movimento. O `Tune` do cabeçalho das
   duas modais e o da lista continuam como estão.
+- [x] 11.15 O card do cartão passa a abrir o **extrato da fatura** (`InvoiceTransactionsRoute`)
+  em vez do cadastro do cartão (`CreditCardsRoute`), nas duas modais. A perna do passivo *é* a
+  fatura — é a dimensão que ela carrega, e o card já a nomeia dentro de si —, então quem toca
+  nela quer ver o que mais entrou naquela fatura. Antes do grupo 6 a modal tinha as duas
+  linhas, `Cartão` e `Fatura`, com destinos distintos; ao fundir tudo num card só, o destino
+  do cadastro foi escolhido por inércia. Ajustado o requisito junto, que dizia "a tela daquela
+  fachada", com cenário próprio.

@@ -16,8 +16,14 @@ Cada card SHALL responder, de uma vez, três perguntas: **qual** conta ou cartã
 e **o que aconteceu** com aquele dinheiro. O valor de um card SHALL ser denominado pela
 moeda da conta daquela perna, sem conversão e sem recair na moeda base.
 
-Um card cuja conta ou cartão ainda esteja ativo SHALL oferecer o atalho para a tela daquela
-fachada; um arquivado MUST NOT oferecê-lo, porque a tela de destino não o lista mais.
+Um card cuja conta ou cartão ainda esteja ativo SHALL oferecer um atalho para **onde aquele
+dinheiro está**: o card de uma conta abre a conta; o de um cartão abre o **extrato da fatura**
+daquele cartão, e não o cadastro do cartão. A perna do passivo é a fatura — é a dimensão que
+ela carrega, e o card já a nomeia dentro de si —, então quem toca nela quer ver o que mais
+entrou naquela fatura, não os dados do cartão.
+
+Um card de fachada arquivada MUST NOT oferecer atalho, porque a tela de destino não a lista
+mais.
 
 #### Scenario: Transferência entre moedas exibe as duas figuras
 - **WHEN** o detalhe de uma transferência de R$ 550,00 para US$ 100,00 é aberto
@@ -42,6 +48,10 @@ fachada; um arquivado MUST NOT oferecê-lo, porque a tela de destino não o list
 #### Scenario: Perna de categoria não vira card
 - **WHEN** o detalhe de um gasto categorizado é aberto
 - **THEN** a perna nominal da categoria não produz card algum
+
+#### Scenario: O card do cartão abre a fatura
+- **WHEN** o card do cartão de uma compra é tocado
+- **THEN** o extrato da fatura daquele cartão é aberto, e não a tela de cadastro do cartão
 
 #### Scenario: Conta arquivada não oferece atalho
 - **WHEN** o detalhe exibe o card de uma conta arquivada

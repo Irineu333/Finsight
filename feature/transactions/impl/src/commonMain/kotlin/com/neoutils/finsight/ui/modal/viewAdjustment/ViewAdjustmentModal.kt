@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
-import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
@@ -126,7 +126,7 @@ class ViewAdjustmentModal(
             uiState.legs { target ->
                 detailController.dismiss()
                 if (target.isLiability) {
-                    uiState.creditCard?.let { navController.navigate(CreditCardsRoute(it.id)) }
+                    uiState.creditCard?.let { navController.navigate(InvoiceTransactionsRoute(it.id)) }
                 } else {
                     navController.navigate(AccountsRoute(target.accountId))
                 }

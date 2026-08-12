@@ -15,9 +15,7 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ConfirmRecurring
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
-import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.today
@@ -25,6 +23,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.retire_action_error_generic
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.modal.skipRecurring.SkipRecurringModal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -45,7 +44,6 @@ class ConfirmRecurringViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val confirmRecurringUseCase: ConfirmRecurringUseCase,
-    private val skipRecurringUseCase: SkipRecurringUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -192,7 +190,7 @@ class ConfirmRecurringViewModel(
             is ConfirmRecurringAction.InvoiceSelected -> selectedInvoice.value = action.invoice
             is ConfirmRecurringAction.CategorySelected -> selectedCategory.value = action.category
             is ConfirmRecurringAction.Confirm -> confirm(action.amount, action.title)
-            is ConfirmRecurringAction.Skip -> skip()
+            is ConfirmRecurringAction.Skip -> askToSkip()
         }
     }
 
@@ -228,18 +226,21 @@ class ConfirmRecurringViewModel(
         }
     }
 
-    private fun skip() = viewModelScope.launch {
-        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
-        skipRecurringUseCase(
-            recurring = recurring,
-            date = date,
-        ).onLeft {
-            crashlytics.recordException(it)
-            modalManager.showError(UiText.Res(Res.string.retire_action_error_generic))
-        }.onRight {
-            analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
-            modalManager.dismiss()
-        }
+    /**
+     * Asks before skipping, instead of skipping.
+     *
+     * The sheet it opens carries the date this confirmation is standing on: the month
+     * the occurrence is filed under is the content of the decision, and re-deriving it
+     * from the clock there would file a different one.
+     */
+    private fun askToSkip() {
+        modalManager.show(
+            SkipRecurringModal(
+                recurring = recurring,
+                date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate,
+                target = uiState.value.selectedTarget,
+            )
+        )
     }
 }
 

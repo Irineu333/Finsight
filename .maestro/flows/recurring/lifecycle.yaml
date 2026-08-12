@@ -254,6 +254,14 @@ env:
     timeout: 15000
 - tapOn:
     id: "confirm_recurring_skip"
+# Skipping asks first: the sheet that opens is what actually files the occurrence, so the flow
+# has to answer it. Tapping Skip alone leaves the cycle pending.
+- extendedWaitUntil:
+    visible:
+      id: "skip_recurring_confirm"
+    timeout: 15000
+- tapOn:
+    id: "skip_recurring_confirm"
 - extendedWaitUntil:
     notVisible:
       id: "confirm_recurring_skip"

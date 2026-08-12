@@ -18,6 +18,7 @@ import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.impl.RecurringEntryImpl
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
+import com.neoutils.finsight.ui.modal.skipRecurring.SkipRecurringViewModel
 import com.neoutils.finsight.ui.modal.unarchiveRecurring.UnarchiveRecurringViewModel
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.modal.archiveRecurring.ArchiveRecurringViewModel
@@ -111,11 +112,21 @@ val recurringModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             confirmRecurringUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+            clock = get(),
+        )
+    }
+    viewModel {
+        SkipRecurringViewModel(
+            recurring = it.get(),
+            date = it.get(),
+            target = it.get(),
             skipRecurringUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
-    clock = get(),
         )
     }
     viewModel {

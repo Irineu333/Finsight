@@ -4,7 +4,9 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.closedLegBlockingChange
-import com.neoutils.finsight.ui.model.itemDisplayAmount
+import com.neoutils.finsight.ui.model.TransactionLegTarget
+import com.neoutils.finsight.ui.model.TransactionLegUi
+import com.neoutils.finsight.ui.model.toTransactionLegs
 
 sealed interface ViewAdjustmentUiState {
 
@@ -22,24 +24,18 @@ sealed interface ViewAdjustmentUiState {
         val isCardTarget = transaction.hasLiabilityLeg
         val title = transaction.title
         val date = transaction.date
-        val account = transaction.sourceAccount
 
         /**
-         * An adjustment is the one transaction whose sign the user must see: it says
-         * which way the balance was corrected. Read off the money leg, where the ledger
-         * already carries it — through the same item rule the list and the transaction
-         * detail read through, so the three cannot disagree.
+         * The same leg card the transaction detail is composed of, from the same
+         * mapper: an adjustment differs only in what the ledger makes it differ in —
+         * the verb, which comes from the `EQUITY` override, and the explicit sign,
+         * which comes from the operation surface's rule. Neither is restated here.
+         *
+         * A card adjustment carries its invoice inside the liability card, as any
+         * other liability leg does.
          */
-        val signedAmount = transaction.primaryEntry?.let { entry ->
-            itemDisplayAmount(
-                label = transaction.label,
-                legAmountCents = entry.amount,
-                // The account the adjustment corrected, never the base: an adjustment is
-                // a single entry on a single account (design D29).
-                currency = entry.currency,
-                hasPerspective = false,
-            )
-        }
+        fun legs(onOpen: ((TransactionLegTarget) -> Unit)? = null): List<TransactionLegUi> =
+            transaction.toTransactionLegs(invoice = invoice, onOpen = onOpen)
 
         /**
          * Whether the ledger lets this adjustment be touched at all: false when it

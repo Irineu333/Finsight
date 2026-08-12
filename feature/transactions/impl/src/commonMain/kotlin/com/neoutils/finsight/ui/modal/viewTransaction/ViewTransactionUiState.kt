@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.modal.viewTransaction
 
-import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -8,17 +7,12 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionInstallment
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionLabel
-import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.usecase.impliedRate
-import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.closedLegBlockingChange
-import com.neoutils.finsight.extension.displayTitleOf
-import com.neoutils.finsight.extension.liabilityLeg
-import com.neoutils.finsight.extension.deriveTransactionType
-import com.neoutils.finsight.ui.model.TransactionPerspective
-import com.neoutils.finsight.ui.model.figureLegUnder
-import com.neoutils.finsight.ui.model.itemDisplayAmount
-import com.neoutils.finsight.ui.model.legUnder
+import com.neoutils.finsight.extension.displayTitleOrNull
+import com.neoutils.finsight.ui.model.TransactionLegTarget
+import com.neoutils.finsight.ui.model.TransactionLegUi
+import com.neoutils.finsight.ui.model.toTransactionLegs
 import kotlin.math.abs
 
 sealed interface ViewTransactionUiState {
@@ -49,78 +43,49 @@ sealed interface ViewTransactionUiState {
      * ids and dimensions, and turning those into a card, an invoice or a category is
      * the owning feature's job (design D6). Hydrating them here — in the view model —
      * is what keeps the ledger unable to name any of them.
+     *
+     * It declares **no perspective**: showing every monetary leg, this surface reads
+     * none of them, so the question a perspective answers — which leg to read by —
+     * does not arise. Nor does it name the base currency: the tie-break between the
+     * two ends of a cross-currency operation exists for surfaces that must state one
+     * figure, and this one states both.
      */
     data class Content(
         val transaction: Transaction,
-        val perspective: TransactionPerspective? = null,
         val category: Category? = null,
         val creditCard: CreditCard? = null,
         val invoice: Invoice? = null,
         val installment: TransactionInstallment? = null,
         val recurring: TransactionRecurring? = null,
-        /**
-         * Only ever a tie-break between the two ends of a cross-currency operation, and
-         * never a currency this screen displays anything in — see [figureLegUnder].
-         */
-        val baseCurrency: String? = null,
     ) : ViewTransactionUiState {
 
-        // The entry seen through the current perspective, from the one definition of it,
-        // so the detail cannot read a different leg than the list it was opened from.
-        //
-        // A list drops an item whose perspective has no leg; a detail has nothing to drop
-        // to, so it falls back to the transaction's own leg rather than render nothing.
-        private val perspectiveEntry = transaction.legUnder(perspective?.accountId)
-            ?: transaction.primaryEntry
-
-        /** Axis 2 — the transaction's nature (title/colour), derived from the entries. */
+        /** The transaction's nature (title/colour/icon), derived from the entries. */
         val label: TransactionLabel = transaction.label
 
-        /** Axis 1 — the leg's direction under the perspective (the type text). */
-        val direction: TransactionType = perspectiveEntry
-            ?.let { deriveTransactionType(it.amount, transaction.entries) }
-            ?: TransactionType.EXPENSE
-
-        val displayTitle: String = displayTitleOf(transaction.title, category)
+        /**
+         * The title the transaction has — its own, or its category's — and `null` when
+         * it has neither, which is the ordinary case of a transfer and of a payment.
+         * The header then says only what the operation *is*.
+         */
+        val displayTitle: String? = displayTitleOrNull(transaction.title, category)
 
         val date = transaction.date
-        val account = transaction.sourceAccount
         val isCardTarget = transaction.hasLiabilityLeg
-        // The same item-surface rule the list reads through, not a second copy of it:
-        // a detail that disagreed with the card it was opened from would be a defect.
-        //
-        // Denominated by the leg's **own** account, never converted and never the base as
-        // a resort: the line of a statement is a single entry and reads in the currency it
-        // was recorded in (design D29). Which of the two ends of a cross-currency operation
-        // states it is the one thing the base decides, and it decides it in `figureLegUnder`
-        // — the same owner the list consumes. With no leg there is no currency either, so
-        // there is no amount to state: a transaction the ledger cannot produce.
-        val amount: DisplayAmount? = (
-            transaction.figureLegUnder(perspective?.accountId, baseCurrency) ?: perspectiveEntry
-            )?.let { entry ->
-            itemDisplayAmount(
-                label = label,
-                legAmountCents = entry.amount,
-                currency = entry.currency,
-                hasPerspective = perspective != null,
-            )
-        }
 
         /**
-         * The instalment's total, denominated by the **card** it sits on — read off the
-         * liability leg's account, which is the one account an instalment names (design
-         * D17). Absent when this transaction is no instalment, or carries no card leg to
-         * take the currency from.
+         * One card per monetary leg, from the one owner of that mapping — the verb,
+         * the sign policy and the order are all resolved there, off the ledger.
+         *
+         * [onOpen] is the caller's, because a shortcut is a route and `:core:ui` names
+         * none; whether a leg has one at all is the mapper's, and an archived facade
+         * has none.
          */
-        val installmentTotal: DisplayAmount? = installment?.let { arrangement ->
-            transaction.entries.liabilityLeg()?.let { leg ->
-                DisplayAmount.magnitude(
-                    value = arrangement.instance.totalAmount,
-                    currency = leg.currency,
-                    isApproximate = false,
-                )
-            }
-        }
+        fun legs(onOpen: ((TransactionLegTarget) -> Unit)? = null): List<TransactionLegUi> =
+            transaction.toTransactionLegs(
+                invoice = invoice,
+                installment = installment,
+                onOpen = onOpen,
+            )
 
         /**
          * The rate this operation applied, when it crossed currencies — and `null`
@@ -130,7 +95,9 @@ sealed interface ViewTransactionUiState {
          * The two ends are the ledger's own: the leg money left ([Transaction.primaryEntry],
          * the one owner of "outgoing") and the monetary leg it entered. The conversion legs
          * take no part — they are not monetary, and they hold the rounding residue, not the
-         * rate. The direction is the write form's, source → target ([impliedRate]).
+         * rate. The direction is the write form's, source → target ([impliedRate]), and it
+         * is the direction [legs] orders in, so the arrow between two cards and the
+         * quotient agree by construction.
          */
         val appliedRate: AppliedRate? = run {
             val out = transaction.primaryEntry?.takeIf { it.amount < 0 } ?: return@run null
@@ -148,24 +115,6 @@ sealed interface ViewTransactionUiState {
                 )
             }
         }
-
-        /**
-         * Whether the accounts this detail names have to be told apart by currency.
-         *
-         * The same question the selectors ask (`AccountSelector`), asked of the set this
-         * screen renders: the operation's own monetary accounts. It says "more than one
-         * currency here", never "the user has more than one" — a single-currency
-         * operation reads identically for everyone, and an app-wide answer would mark
-         * every row of every operation of anyone who once opened a second account.
-         */
-        val namesAccountCurrency: Boolean =
-            transaction.monetaryEntries.map { it.account.currency }.distinct().size > 1
-
-        private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }
-
-        /** A transfer's two sides: money leaves one asset account and enters another. */
-        val sourceAccount = assetEntries.firstOrNull { it.amount < 0 }?.account
-        val destinationAccount = assetEntries.firstOrNull { it.amount > 0 }?.account
 
         /**
          * Whether the ledger lets this transaction be touched at all.

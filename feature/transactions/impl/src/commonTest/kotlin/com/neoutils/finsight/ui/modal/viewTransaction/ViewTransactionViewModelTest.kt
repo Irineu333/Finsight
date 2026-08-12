@@ -9,7 +9,6 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.ui.model.TransactionFacades
 import com.neoutils.finsight.ui.model.toTransactionUi
-import com.neoutils.finsight.ui.screen.transactions.FakeBaseCurrency
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
 import com.neoutils.finsight.ui.modal.transaction
@@ -41,12 +40,10 @@ class ViewTransactionViewModelTest {
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = ViewTransactionViewModel(
         transactionId = 1L,
-        perspective = null,
         transactionRepository = repository,
         // The screen's subject here is loading/absence, not the facades.
         facadeResolver = { TransactionFacades() },
         crashlytics = crashlytics,
-        baseCurrencyRepository = FakeBaseCurrency(),
     )
 
     @Test
@@ -58,7 +55,7 @@ class ViewTransactionViewModelTest {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
             val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
-            assertEquals(100.0, content.amount?.value)
+            assertEquals(100.0, content.legs().single().amount.value)
         }
     }
 
@@ -74,9 +71,11 @@ class ViewTransactionViewModelTest {
             val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
 
             // Same figure, same rule — the detail must not contradict the card it was
-            // opened from.
-            assertEquals(adjustment.toTransactionUi()?.amount, content.amount)
-            assertEquals(SignPolicy.EXPLICIT_SIGN, content.amount?.policy)
+            // opened from. Two producers of the sign policy, one answer: the item rule
+            // reads it off the label, the leg card off the verb, and an adjustment is
+            // the one case where both spell the sign out.
+            assertEquals(adjustment.toTransactionUi()?.amount, content.legs().single().amount)
+            assertEquals(SignPolicy.EXPLICIT_SIGN, content.legs().single().amount.policy)
         }
     }
 
@@ -88,9 +87,9 @@ class ViewTransactionViewModelTest {
         vm.uiState.test {
             assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(transaction(id = 1L, amount = 100.0))
-            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount?.value)
+            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).legs().single().amount.value)
             repository.emit(transaction(id = 1L, amount = 250.0))
-            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount?.value)
+            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).legs().single().amount.value)
         }
     }
 

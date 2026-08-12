@@ -3,14 +3,13 @@ package com.neoutils.finsight.feature.transactions.impl
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.Modal
-import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
 
 internal class TransactionsEntryImpl : TransactionsEntry {
     override fun addTransactionModal(): Modal = AddTransactionModal()
-    override fun viewTransactionModal(transactionId: Long, perspective: TransactionPerspective?): AdaptiveModal =
-        ViewTransactionModal(transactionId, perspective)
+    override fun viewTransactionModal(transactionId: Long): AdaptiveModal =
+        ViewTransactionModal(transactionId)
     override fun viewAdjustmentModal(transactionId: Long): AdaptiveModal = ViewAdjustmentModal(transactionId)
 }

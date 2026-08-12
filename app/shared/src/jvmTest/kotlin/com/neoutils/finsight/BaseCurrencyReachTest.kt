@@ -82,21 +82,23 @@ class BaseCurrencyReachTest {
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardPreviewFactory.kt",
         // --- The tie-break between the two ends of a cross-currency operation ---
         //
-        // These four are the surfaces that show an operation with **no perspective**, and
-        // they name the base for a reason that is the opposite of what this list hunts.
-        // The failure mode above is a figure the ledger answered in one currency being
-        // *denominated* by the base. Here nothing is denominated by the base and nothing
-        // is converted: an operation that crossed currencies has **two** figures, both
-        // exact and both the ledger's own — US$ 550,00 left and R$ 500,00 of an invoice
-        // was paid — and the base only decides which of the two is stated
-        // (`Transaction.figureLegUnder`). Where neither end is in the base, the reading
-        // is unchanged; the base is never a fallback and never a resort.
+        // These three are the surfaces that show an operation with **no perspective**
+        // *in a single figure*, and they name the base for a reason that is the opposite
+        // of what this list hunts. The failure mode above is a figure the ledger answered
+        // in one currency being *denominated* by the base. Here nothing is denominated by
+        // the base and nothing is converted: an operation that crossed currencies has
+        // **two** figures, both exact and both the ledger's own — US$ 550,00 left and
+        // R$ 500,00 of an invoice was paid — and the base only decides which of the two
+        // is stated (`Transaction.figureLegUnder`). Where neither end is in the base, the
+        // reading is unchanged; the base is never a fallback and never a resort.
         //
-        // They are four rather than one because a card and the detail it opens MUST NOT
+        // They are three rather than one because a card and the detail it opens MUST NOT
         // answer with different money (`presentation-mapping`), so every neutral surface
-        // consumes the same owner. A surface that names an account is absent from this
-        // list on purpose: its figure is that account's line, whatever the base.
-        "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/viewTransaction/ViewTransactionViewModel.kt",
+        // that states one figure consumes the same owner. Two kinds of surface are absent
+        // on purpose: one that names an account — its figure is that account's line,
+        // whatever the base — and the **operation** detail, which shows every monetary
+        // leg and therefore has nothing to tie-break. A surface that stops tie-breaking
+        // stops naming the preference, and this list is where that is declared.
         "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/transactions/TransactionsViewModel.kt",
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardViewModel.kt",
         "feature/report/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/report/viewer/ReportViewerViewModel.kt",

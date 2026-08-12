@@ -508,21 +508,17 @@
     <string name="edit_transaction_income">Income</string>
 
     <!-- View Transaction Modal -->
-    <string name="view_transaction_type_income">Income</string>
-    <string name="view_transaction_type_expense">Expense</string>
-    <string name="view_transaction_type_adjustment">Adjustment</string>
-    <string name="view_transaction_amount_label">Amount</string>
-    <string name="view_transaction_applied_rate_label">Applied rate</string>
+    <string name="view_transaction_nature_expense">Expense</string>
+    <string name="view_transaction_nature_income">Income</string>
+    <string name="view_transaction_nature_transfer">Transfer</string>
+    <string name="view_transaction_nature_payment">Invoice Payment</string>
+    <string name="view_transaction_nature_adjustment">Adjustment</string>
+    <string name="view_transaction_leg_verb_adjusted">Adjusted</string>
+    <string name="view_transaction_leg_verb_left">Left</string>
+    <string name="view_transaction_leg_verb_entered">Entered</string>
+    <string name="view_transaction_leg_verb_charged">Charged to</string>
+    <string name="view_transaction_leg_verb_settled">Settled from</string>
     <string name="view_transaction_date_label">Date</string>
-    <string name="view_transaction_origin_label">Origin</string>
-    <string name="view_transaction_origin_account">Account</string>
-    <string name="view_transaction_origin_credit_card">Credit Card</string>
-    <string name="view_transaction_source_account_label">Source account</string>
-    <string name="view_transaction_destination_account_label">Destination account</string>
-    <string name="view_transaction_account_label">Account</string>
-    <string name="view_transaction_card_label">Card</string>
-    <string name="view_transaction_invoice_label">Invoice</string>
-    <string name="view_transaction_installment_label">Installment</string>
     <string name="view_transaction_recurring_label">Recurring</string>
     <string name="view_transaction_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
     <string name="view_transaction_archived_message">This transaction belongs to an archived account or card and cannot be edited or deleted.</string>
@@ -533,12 +529,7 @@
     <string name="view_adjustment_type_label">Adjustment</string>
     <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
     <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
-    <string name="view_adjustment_adjusted_value_label">Adjusted Value</string>
     <string name="view_adjustment_date_label">Date</string>
-    <string name="view_adjustment_type_row_label">Type</string>
-    <string name="view_adjustment_account_label">Account</string>
-    <string name="view_adjustment_card_label">Card</string>
-    <string name="view_adjustment_credit_card_label">Credit Card</string>
     <string name="view_adjustment_delete_label">Delete Adjustment</string>
 
     <!-- View Category Modal -->

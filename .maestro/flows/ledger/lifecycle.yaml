@@ -260,7 +260,7 @@ env:
 # The detail sheet shows what the ledger holds, not what was typed into the form an hour ago.
 - assertVisible:
     id: "view_transaction_amount"
-    text: "[-]?[$]42[.,]90"
+    text: "[$]42[.,]90"
 - tapOn:
     id: "view_transaction_edit"
 - extendedWaitUntil:
@@ -322,7 +322,7 @@ env:
     timeout: 15000
 - assertVisible:
     id: "view_transaction_amount"
-    text: "[-]?[$]68[.,]35"
+    text: "[$]68[.,]35"
 # The sheet is its own composition root: while it is up, it is the whole hierarchy Maestro sees, so
 # the list underneath cannot be asserted until it is dismissed.
 - back

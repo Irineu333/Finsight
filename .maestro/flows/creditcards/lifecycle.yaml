@@ -478,7 +478,7 @@ env:
     timeout: 15000
 - assertVisible:
     id: "view_transaction_amount"
-    text: "[-]?[$]120[.,]00"
+    text: "[$]120[.,]00"
 - assertNotVisible:
     id: "view_transaction_edit"
 - assertNotVisible:

@@ -5,6 +5,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.LocalDateFormats
+import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -16,12 +17,22 @@ fun Invoice.Status.toUiText(): StringResource = when (this) {
     Invoice.Status.RETROACTIVE -> Res.string.invoice_status_retroactive
 }
 
+/**
+ * How an invoice names itself: the month it is due in, and what state it is in.
+ *
+ * Takes the two facts rather than the invoice, so a surface that carries them flat —
+ * a leg card, whose model holds no domain graph — reads the same label as one that
+ * holds the whole facade.
+ */
 @Composable
-fun Invoice.toLabel(): String {
+fun invoiceLabel(dueMonth: YearMonth, status: Invoice.Status): String {
     val formats = LocalDateFormats.current
     val statusLabel = stringResource(status.toUiText())
     return "${formats.yearMonth.format(dueMonth)} • $statusLabel"
 }
+
+@Composable
+fun Invoice.toLabel(): String = invoiceLabel(dueMonth, status)
 
 @Composable
 fun InvoiceMonthSelection.toLabel(): String {

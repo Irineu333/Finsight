@@ -7,15 +7,14 @@ import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 /**
  * The rate the detail shows is derived from the operation's own two ends, and from
  * nothing else — no rate is persisted anywhere on the write path (design D6), and the
- * archive is not consulted: what this row states is what *this* operation applied, which
- * may legitimately differ from the rate on file for that day.
+ * archive is not consulted: what the connector between the two cards states is what
+ * *this* operation applied, which may legitimately differ from the rate on file for
+ * that day.
  */
 class ViewTransactionAppliedRateTest {
 
@@ -26,10 +25,9 @@ class ViewTransactionAppliedRateTest {
         amount = amount,
     )
 
-    private fun content(entries: List<Entry>, baseCurrency: String? = null) =
+    private fun content(entries: List<Entry>) =
         ViewTransactionUiState.Content(
             transaction = Transaction(id = 1L, title = "Op", date = date, entries = entries),
-            baseCurrency = baseCurrency,
         )
 
     /** A dollar account paying off a real card. */
@@ -41,23 +39,18 @@ class ViewTransactionAppliedRateTest {
     )
 
     @Test
-    fun theFigureIsStatedByTheEndAlreadyInTheBase() {
-        // The detail consumes the same owner the list does (`figureLegUnder`), so the
-        // card the user tapped and the detail it opened cannot answer with different
-        // money. Nothing is converted: R$ 500,00 is the ledger's own figure.
-        val content = content(crossCurrencyPayment(), baseCurrency = "BRL")
+    fun aCrossCurrencyPaymentStatesBothFiguresAndConvertsNeither() {
+        // There is nothing to tie-break: the detail states what left the account and
+        // what was settled off the invoice, each in the currency of its own account.
+        // Both are the ledger's own, and neither is the base's business.
+        val legs = content(crossCurrencyPayment()).legs()
 
-        assertEquals("BRL", content.amount?.currency)
-        assertEquals(500.0, content.amount?.value)
-        assertEquals(false, content.amount?.isApproximate)
-    }
-
-    @Test
-    fun withNeitherEndInTheBaseTheAccountStatesTheFigure() {
-        val content = content(crossCurrencyPayment(), baseCurrency = "EUR")
-
-        assertEquals("USD", content.amount?.currency)
-        assertEquals(550.0, content.amount?.value)
+        assertEquals(2, legs.size)
+        assertEquals("USD", legs[0].amount.currency)
+        assertEquals(550.0, legs[0].amount.value)
+        assertEquals("BRL", legs[1].amount.currency)
+        assertEquals(500.0, legs[1].amount.value)
+        assertEquals(listOf(false, false), legs.map { it.amount.isApproximate })
     }
 
     @Test
@@ -78,6 +71,9 @@ class ViewTransactionAppliedRateTest {
         assertEquals("USD", applied.targetCurrency)
         // One real buys 0,181818… dollars — the full quotient, never a rounded form.
         assertEquals(10_000.0 / 55_000.0, applied.rate)
+        // The arrow and the quotient agree by construction: the first card is the leg
+        // money left, which is the end the rate divides from.
+        assertEquals("BRL", content.legs().first().amount.currency)
     }
 
     @Test
@@ -118,7 +114,7 @@ class ViewTransactionAppliedRateTest {
                 entry(AccountType.CONVERSION, -10_000, "USD"),
             )
         )
-        assertTrue(crossCurrency.namesAccountCurrency)
+        assertEquals(listOf("BRL", "USD"), crossCurrency.legs().map { it.currencyCode })
 
         // The question is about this operation, never about the app: a dollar-only
         // operation reads the same for someone who also keeps accounts in reais, and
@@ -129,7 +125,7 @@ class ViewTransactionAppliedRateTest {
                 entry(AccountType.EXPENSE, 5_000, "USD"),
             )
         )
-        assertFalse(singleCurrency.namesAccountCurrency)
+        assertNull(singleCurrency.legs().single().currencyCode)
     }
 
     @Test

@@ -57,7 +57,6 @@ import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.model.AccountRetireOffer
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.navigation.ArchivedAccountsRoute
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -373,10 +372,7 @@ private fun AccountsContent(
 
                                             else -> {
                                                 detailController.show(
-                                                    transactionsEntry.viewTransactionModal(
-                                                        transactionUi.id,
-                                                        uiState.selectedAccountId?.let { TransactionPerspective(it) },
-                                                    )
+                                                    transactionsEntry.viewTransactionModal(transactionUi.id)
                                                 )
                                             }
                                         }

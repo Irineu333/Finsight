@@ -2,14 +2,11 @@
 
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
-import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Tune
@@ -20,28 +17,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.extension.CurrencyFormatter
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
-import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.DetailPaneController
+import com.neoutils.finsight.ui.component.DetailRow
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.TransactionLegCard
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.util.dayMonthYear
@@ -57,7 +49,6 @@ class ViewAdjustmentModal(
     @Composable
     override fun DetailContent() {
 
-        val formatter = LocalCurrencyFormatter.current
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
         val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(transactionId) }
@@ -76,7 +67,6 @@ class ViewAdjustmentModal(
             ViewAdjustmentUiState.Error -> DetailErrorState()
             is ViewAdjustmentUiState.Content -> ContentBody(
                 uiState = state,
-                formatter = formatter,
                 detailController = detailController,
                 navController = navController,
             )
@@ -86,7 +76,6 @@ class ViewAdjustmentModal(
     @Composable
     private fun ContentBody(
         uiState: ViewAdjustmentUiState.Content,
-        formatter: CurrencyFormatter,
         detailController: DetailPaneController,
         navController: NavController,
     ) {
@@ -127,11 +116,21 @@ class ViewAdjustmentModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            uiState.signedAmount?.let { signedAmount ->
-                DetailRow(
-                    label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                    value = formatter.format(signedAmount),
-                    valueColor = Adjustment
+            // The same leg card the transaction detail is composed of: what differs is
+            // what the ledger makes differ — the verb and the explicit sign — and the
+            // invoice of a card adjustment sits inside the liability card, as it does
+            // for any other liability leg.
+            uiState.legs { target ->
+                detailController.dismiss()
+                if (target.isLiability) {
+                    uiState.creditCard?.let { navController.navigate(CreditCardsRoute(it.id)) }
+                } else {
+                    navController.navigate(AccountsRoute(target.accountId))
+                }
+            }.forEach { leg ->
+                TransactionLegCard(
+                    leg = leg,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
 
@@ -141,69 +140,6 @@ class ViewAdjustmentModal(
                 label = stringResource(Res.string.view_adjustment_date_label),
                 value = dayMonthYear.format(uiState.date)
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val creditCardLabel = stringResource(Res.string.view_adjustment_credit_card_label)
-            val accountTypeLabel = stringResource(Res.string.view_adjustment_account_label)
-            DetailRow(
-                label = stringResource(Res.string.view_adjustment_type_row_label),
-                value = if (uiState.isCardTarget) creditCardLabel else accountTypeLabel
-            )
-
-            uiState.account?.let { account ->
-                DetailRow(
-                    label = stringResource(Res.string.view_adjustment_account_label),
-                    value = account.name,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth(),
-                    // Closed: the name stays in history, the shortcut goes — the
-                    // accounts screen no longer lists it.
-                    onClick = if (account.isArchived) null else {
-                        {
-                            detailController.dismiss()
-                            navController.navigate(AccountsRoute(account.id))
-                        }
-                    }
-                )
-            }
-
-            uiState.creditCard?.let { creditCard ->
-                DetailRow(
-                    label = stringResource(Res.string.view_adjustment_card_label),
-                    value = creditCard.name,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth(),
-                    onClick = if (creditCard.isArchived) null else {
-                        {
-                            detailController.dismiss()
-                            navController.navigate(CreditCardsRoute(creditCard.id))
-                        }
-                    }
-                )
-            }
-
-            uiState.invoice?.let { invoice ->
-                val creditCardId = uiState.creditCard?.id
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_invoice_label),
-                    value = invoice.toLabel(),
-                    valueColor = invoice.status.color,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth(),
-                    onClick = creditCardId?.let {
-                        {
-                            detailController.dismiss()
-                            navController.navigate(
-                                InvoiceTransactionsRoute(it)
-                            )
-                        }
-                    }
-                )
-            }
         }
     }
 
@@ -300,47 +236,6 @@ class ViewAdjustmentModal(
                         modifier = Modifier.padding(3.dp)
                     )
                 }
-            }
-        }
-    }
-
-    @Composable
-    private fun DetailRow(
-        label: String,
-        value: String,
-        modifier: Modifier = Modifier,
-        valueColor: Color = colorScheme.onSurface,
-        onClick: (() -> Unit)? = null,
-    ) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = label,
-                fontSize = 16.sp,
-                color = colorScheme.onSurfaceVariant
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-            ) {
-                if (onClick != null) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-                Text(
-                    text = value,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = valueColor
-                )
             }
         }
     }

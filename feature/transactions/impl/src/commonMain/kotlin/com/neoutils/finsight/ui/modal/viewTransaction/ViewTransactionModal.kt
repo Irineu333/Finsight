@@ -2,9 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewTransaction
 
-import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,33 +18,31 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.domain.model.TransactionLabel
-import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
-import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
-import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
+import com.neoutils.finsight.ui.component.DetailRow
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.TransactionLegCard
+import com.neoutils.finsight.ui.component.TransactionLegConnector
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.dayMonthYear
@@ -59,7 +55,6 @@ import org.koin.core.parameter.parametersOf
 
 class ViewTransactionModal(
     private val transactionId: Long,
-    private val perspective: TransactionPerspective? = null,
 ) : AdaptiveModal() {
 
     @Composable
@@ -67,7 +62,7 @@ class ViewTransactionModal(
 
         val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<ViewTransactionViewModel> {
-            parametersOf(transactionId, perspective)
+            parametersOf(transactionId)
         }
 
         val uiState by viewModel.uiState.collectAsState()
@@ -108,16 +103,17 @@ class ViewTransactionModal(
         navController: androidx.navigation.NavController,
         viewModel: ViewTransactionViewModel,
     ) {
-        // `American · USD`, and only where two currencies are on the same screen —
-        // the doctrine `AccountSelector` established, asked of what this screen shows.
-        //
-        // The **code** and not the symbol, unlike the selectors: a selector names an
-        // account the user is about to type money into, and the glyph is what the field
-        // will wear. Here nothing is typed and the currency is being *identified*, which
-        // is the one job a symbol does badly — three of the offered currencies write
-        // `kr`. It is the grammar the rates screen already reads in (`Dólar · USD`).
-        fun accountLabel(name: String, currency: String?): String =
-            if (uiState.namesAccountCurrency && currency != null) "$name · $currency" else name
+        // One card per monetary leg. The route a card opens is this feature's to name;
+        // whether there is one to open at all was decided by the mapper, which offers
+        // none for an archived facade.
+        val legs = uiState.legs { target ->
+            detailController.dismiss()
+            if (target.isLiability) {
+                uiState.creditCard?.let { navController.navigate(CreditCardsRoute(it.id)) }
+            } else {
+                navController.navigate(AccountsRoute(target.accountId))
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -134,7 +130,7 @@ class ViewTransactionModal(
                     val iconColor = if (uiState.category?.isArchived == true) {
                         colorScheme.onSurfaceVariant
                     } else {
-                        uiState.transactionColor()
+                        uiState.label.color()
                     }
                     Surface(
                         color = iconColor.copy(alpha = 0.2f),
@@ -152,15 +148,9 @@ class ViewTransactionModal(
                             )
                         } ?: run {
                             Icon(
-                                imageVector = when {
-                                    uiState.label == TransactionLabel.PAYMENT -> Icons.Default.Payment
-                                    uiState.label == TransactionLabel.TRANSFER -> Icons.Default.SwapHoriz
-                                    uiState.direction == TransactionType.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                    uiState.direction == TransactionType.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                    else -> Icons.Default.Tune
-                                },
+                                imageVector = uiState.label.icon(),
                                 contentDescription = null,
-                                tint = uiState.transactionColor(),
+                                tint = uiState.label.color(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -168,7 +158,7 @@ class ViewTransactionModal(
                         }
                     }
 
-                    if (uiState.isCardTarget || uiState.label == TransactionLabel.PAYMENT) {
+                    if (uiState.isCardTarget) {
                         Surface(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
@@ -189,191 +179,80 @@ class ViewTransactionModal(
                 Spacer(Modifier.width(16.dp))
 
                 Column {
+                    // The nature, and never the direction of a leg: this surface reads
+                    // no leg, so a direction here would be a property of an arbitrary
+                    // choice rather than of the transaction.
                     Text(
-                        text = when (uiState.direction) {
-                            TransactionType.INCOME -> stringResource(Res.string.view_transaction_type_income)
-                            TransactionType.EXPENSE -> stringResource(Res.string.view_transaction_type_expense)
-                            TransactionType.ADJUSTMENT -> stringResource(Res.string.view_transaction_type_adjustment)
-                        },
+                        text = stringResource(uiState.label.natureLabel()),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = uiState.transactionColor()
+                        color = uiState.label.color()
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = when (uiState.label) {
-                            TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
-                            TransactionLabel.TRANSFER -> stringResource(Res.string.transaction_card_transfer)
-                            else -> uiState.displayTitle
-                        },
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = colorScheme.onSurface
-                    )
+                    // Omitted, rather than filled with a reserve literal, when the
+                    // transaction has neither a title nor a category — the ordinary
+                    // case of a transfer and of a payment.
+                    uiState.displayTitle?.let { title ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = colorScheme.onSurface
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            uiState.amount?.let { amount ->
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_amount_label),
-                    value = formatter.format(amount),
-                    valueColor = uiState.transactionColor(),
-                    valueTestTag = "view_transaction_amount",
+            legs.forEachIndexed { index, leg ->
+                if (index > 0) {
+                    // The rate is a relation between the two legs, so it is drawn
+                    // where it is one. The grammar is the write form's
+                    // (`CounterpartAmountField`) — one unit of the source priced in
+                    // the target — so the rate read afterwards is the one that was
+                    // shown while typing.
+                    uiState.appliedRate?.let { applied ->
+                        TransactionLegConnector(
+                            rate = stringResource(
+                                Res.string.exchange_rates_quote,
+                                LocalCurrencySymbols.current(applied.sourceCurrency),
+                                // As many places as the rate needs, not the currency's
+                                // own two: a quotient like `0,000691` reads `R$ 0,00`
+                                // at two places, which is a rate of zero — a different
+                                // statement from a rounded one.
+                                formatter.format(
+                                    amount = applied.rate,
+                                    currency = applied.targetCurrency,
+                                    minFractionDigits = 2,
+                                    maxFractionDigits = RATE_SCALE,
+                                ),
+                            ),
+                            modifier = Modifier.padding(vertical = 4.dp),
+                        )
+                    } ?: Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                TransactionLegCard(
+                    leg = leg,
+                    // The first card is the primary leg, which in every single-currency
+                    // operation is the figure the amount row used to state.
+                    valueTestTag = if (index == 0) {
+                        "view_transaction_amount"
+                    } else {
+                        "view_transaction_secondary_amount"
+                    },
                 )
             }
 
-            // Beside the amount, because it is what makes the amount readable: without
-            // it a transfer of R$ 550,00 into a dollar account says nothing about what
-            // arrived. The grammar is the write form's (`CounterpartAmountField`) — one
-            // unit of the source priced in the target — so the rate the user is shown
-            // afterwards is the one he was shown while typing.
-            uiState.appliedRate?.let { applied ->
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_applied_rate_label),
-                    value = stringResource(
-                        Res.string.exchange_rates_quote,
-                        LocalCurrencySymbols.current(applied.sourceCurrency),
-                        // As many places as the rate needs, not the currency's own two:
-                        // a quotient like `0,000691` reads `R$ 0,00` at two places, which
-                        // is a rate of zero — a different statement from a rounded one.
-                        formatter.format(
-                            amount = applied.rate,
-                            currency = applied.targetCurrency,
-                            minFractionDigits = 2,
-                            maxFractionDigits = RATE_SCALE,
-                        ),
-                    ),
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // What is left as context is what belongs to the transaction and to no leg
+            // of it. Everything a leg owns now lives in that leg's card.
             DetailRow(
                 label = stringResource(Res.string.view_transaction_date_label),
                 value = dayMonthYear.format(uiState.date)
             )
-
-            val originAccountLabel = stringResource(Res.string.view_transaction_origin_account)
-            val originCreditCardLabel = stringResource(Res.string.view_transaction_origin_credit_card)
-            if (uiState.direction.isExpense) {
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_origin_label),
-                    value = if (uiState.isCardTarget) originCreditCardLabel else originAccountLabel,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            if (uiState.label == TransactionLabel.TRANSFER) {
-                val sourceAccount = uiState.sourceAccount
-                val destinationAccount = uiState.destinationAccount
-
-                sourceAccount?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_transaction_source_account_label),
-                        value = accountLabel(account.name, account.currency),
-                        modifier = Modifier.padding(top = 8.dp),
-                        // A closed account keeps its name in history but is gone from
-                        // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isArchived) null else {
-                            {
-                                detailController.dismiss()
-                                navController.navigate(AccountsRoute(account.id))
-                            }
-                        }
-                    )
-                }
-
-                destinationAccount?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_transaction_destination_account_label),
-                        value = accountLabel(account.name, account.currency),
-                        modifier = Modifier.padding(top = 8.dp),
-                        // A closed account keeps its name in history but is gone from
-                        // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isArchived) null else {
-                            {
-                                detailController.dismiss()
-                                navController.navigate(AccountsRoute(account.id))
-                            }
-                        }
-                    )
-                }
-            }
-
-            if (uiState.label != TransactionLabel.TRANSFER) {
-                uiState.account?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_transaction_account_label),
-                        value = accountLabel(account.name, account.currency),
-                        modifier = Modifier.padding(top = 8.dp),
-                        // A closed account keeps its name in history but is gone from
-                        // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isArchived) null else {
-                            {
-                                detailController.dismiss()
-                                navController.navigate(AccountsRoute(account.id))
-                            }
-                        }
-                    )
-                }
-            }
-
-            // A closed card still resolves, so history shows its name — same as an
-            // account. Only the shortcut goes, since the cards screen no longer lists it.
-            uiState.creditCard?.let { creditCard ->
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_card_label),
-                    // A card states its currency because its `LIABILITY` account does,
-                    // hydrated on read; one that arrived unhydrated is left unmarked
-                    // rather than denominated by a guess (`CreditCardSelector`).
-                    value = accountLabel(creditCard.name, creditCard.currency),
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = if (creditCard.isArchived) null else {
-                        {
-                            detailController.dismiss()
-                            navController.navigate(CreditCardsRoute(creditCard.id))
-                        }
-                    }
-                )
-            }
-
-            uiState.invoice?.let { invoice ->
-                val creditCardId = uiState.creditCard?.id
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_invoice_label),
-                    value = invoice.toLabel(),
-                    valueColor = invoice.status.color,
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = creditCardId?.let {
-                        {
-                            detailController.dismiss()
-                            navController.navigate(
-                                InvoiceTransactionsRoute(it)
-                            )
-                        }
-                    }
-                )
-            }
-
-            uiState.installment?.let { installment ->
-                DetailRow(
-                    label = stringResource(Res.string.view_transaction_installment_label),
-                    // The total is denominated by the card the instalment sits on, and
-                    // the state resolves it; without a card leg there is no currency to
-                    // state it in, so the row says only which instalment this is.
-                    value = uiState.installmentTotal
-                        ?.let { "${installment.label} de ${formatter.format(it)}" }
-                        ?: installment.label,
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(InstallmentsRoute)
-                    }
-                )
-            }
 
             uiState.recurring?.let { recurring ->
                 DetailRow(
@@ -394,7 +273,7 @@ class ViewTransactionModal(
     @Composable
     override fun DetailActions() {
         val viewModel = koinViewModel<ViewTransactionViewModel> {
-            parametersOf(transactionId, perspective)
+            parametersOf(transactionId)
         }
         val uiState by viewModel.uiState.collectAsState()
 
@@ -505,55 +384,31 @@ class ViewTransactionModal(
                 }
             }
         }
+}
 
-    @Composable
-    private fun DetailRow(
-        label: String,
-        value: String,
-        modifier: Modifier = Modifier,
-        valueColor: Color = colorScheme.onSurface,
-        valueTestTag: String? = null,
-        onClick: (() -> Unit)? = null,
-    ) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = label,
-                fontSize = 16.sp,
-                color = colorScheme.onSurfaceVariant
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-            ) {
-                if (onClick != null) {
-                    Icon(
-                        imageVector = Icons.Default.OpenInNew,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-                Text(
-                    text = value,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = valueColor,
-                    modifier = valueTestTag?.let { Modifier.testTag(it) } ?: Modifier
-                )
-            }
-        }
-    }
+// Colour, icon and label are total functions of the nature — five values, no branch
+// on a leg's direction, so a surface that reads no leg has nothing left to choose.
 
-    private fun ViewTransactionUiState.Content.transactionColor() = when {
-        label == TransactionLabel.PAYMENT -> InvoicePayment
-        label == TransactionLabel.TRANSFER -> Info
-        direction == TransactionType.INCOME -> Income
-        direction == TransactionType.EXPENSE -> Expense
-        else -> Adjustment
-    }
+private fun TransactionLabel.color(): Color = when (this) {
+    TransactionLabel.PAYMENT -> InvoicePayment
+    TransactionLabel.TRANSFER -> Info
+    TransactionLabel.INCOME -> Income
+    TransactionLabel.EXPENSE -> Expense
+    TransactionLabel.ADJUSTMENT -> Adjustment
+}
+
+private fun TransactionLabel.icon(): ImageVector = when (this) {
+    TransactionLabel.PAYMENT -> Icons.Default.Payment
+    TransactionLabel.TRANSFER -> Icons.Default.SwapHoriz
+    TransactionLabel.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+    TransactionLabel.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+    TransactionLabel.ADJUSTMENT -> Icons.Default.Tune
+}
+
+private fun TransactionLabel.natureLabel() = when (this) {
+    TransactionLabel.PAYMENT -> Res.string.view_transaction_nature_payment
+    TransactionLabel.TRANSFER -> Res.string.view_transaction_nature_transfer
+    TransactionLabel.INCOME -> Res.string.view_transaction_nature_income
+    TransactionLabel.EXPENSE -> Res.string.view_transaction_nature_expense
+    TransactionLabel.ADJUSTMENT -> Res.string.view_transaction_nature_adjustment
 }

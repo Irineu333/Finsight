@@ -57,11 +57,9 @@ val transactionsModule = module {
     viewModel {
         ViewTransactionViewModel(
             transactionId = it.get(),
-            perspective = it.getOrNull(),
             transactionRepository = get(),
             facadeResolver = get(),
             crashlytics = get(),
-            baseCurrencyRepository = get(),
         )
     }
     viewModel {

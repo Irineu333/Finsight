@@ -96,8 +96,8 @@ fun CategorySpendingCard(
                 CategorySpendingItem(
                     spending = spending,
                     modifier = Modifier
-                        .clickable { onCategoryClick(spending.category) }
                         .padding(horizontal = 16.dp)
+                        .clickable { onCategoryClick(spending.category) }
                 )
             }
         }

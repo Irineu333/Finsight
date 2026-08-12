@@ -249,6 +249,25 @@ class ViewTransactionModal(
 
             // What is left as context is what belongs to the transaction and to no leg
             // of it. Everything a leg owns now lives in that leg's card.
+            //
+            // The category qualifies: it is the dimension of the nominal leg, which
+            // carries no money and therefore produces no card. Absent when there is
+            // none — "uncategorized" is the absence of a dimension, not a bucket, so
+            // there is nothing to name. An archived one reads muted, keeping its place
+            // in the history it labelled, as its icon does above.
+            uiState.category?.let { category ->
+                DetailRow(
+                    label = stringResource(Res.string.view_transaction_category_label),
+                    value = category.name,
+                    valueColor = if (category.isArchived) {
+                        colorScheme.onSurfaceVariant
+                    } else {
+                        colorScheme.onSurface
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+
             DetailRow(
                 label = stringResource(Res.string.view_transaction_date_label),
                 value = dayMonthYear.format(uiState.date)

@@ -145,3 +145,12 @@ que o motivo de cada ajuste sobreviva ao commit que o aplicou.
 - [x] 11.3 Cobrir a tabela nova em `TransactionLegMapperTest`
   (`theToneRepeatsTheVerbsOwnEvidence`): pagamento produzindo `OUTGOING` e `INCOMING`, e o
   ajuste produzindo `ADJUSTMENT` — o mesmo par de casos que fixa o verbo, sobre o outro eixo.
+- [x] 11.4 Acrescentar `Categoria` como linha de contexto, acima de `Data`, com a chave nova
+  `view_transaction_category_label` nos dois `strings.xml`. Ela cabe entre as linhas de
+  contexto pelo mesmo critério que as define: a categoria é a dimensão da perna **nominal**,
+  que não carrega dinheiro e por isso não produz card — é fato da transação e de nenhuma
+  perna. Omitida quando não há categoria, porque "sem categoria" é a ausência de dimensão e
+  não um balde a nomear; apagada quando arquivada, a mesma regra do ícone do cabeçalho.
+  Registrada a redundância que isso cria: numa transação sem título próprio a segunda linha do
+  cabeçalho já é o nome da categoria, que passa a aparecer duas vezes — deliberado, porque as
+  duas respondem perguntas distintas.

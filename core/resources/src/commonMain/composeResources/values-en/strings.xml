@@ -518,6 +518,7 @@
     <string name="view_transaction_leg_verb_entered">Entered</string>
     <string name="view_transaction_leg_verb_charged">Charged to</string>
     <string name="view_transaction_leg_verb_settled">Settled from</string>
+    <string name="view_transaction_category_label">Category</string>
     <string name="view_transaction_date_label">Date</string>
     <string name="view_transaction_recurring_label">Recurring</string>
     <string name="view_transaction_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>

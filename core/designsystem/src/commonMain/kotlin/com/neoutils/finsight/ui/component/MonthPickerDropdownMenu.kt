@@ -86,7 +86,7 @@ fun MonthPickerDropdownMenu(
 
             MonthGrid(
                 selectedYear = selectedYear,
-                selectedMonth = selectedYearMonth.month,
+                selectedYearMonth = selectedYearMonth,
                 onMonthSelected = { month ->
                     onMonthSelected(YearMonth(selectedYear, month))
                     onDismissRequest()
@@ -146,7 +146,7 @@ private fun YearSelector(
 @Composable
 private fun MonthGrid(
     selectedYear: Int,
-    selectedMonth: Month,
+    selectedYearMonth: YearMonth,
     onMonthSelected: (Month) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -174,7 +174,8 @@ private fun MonthGrid(
 
                     MonthChip(
                         label = dateFormats.monthName(month).take(3).uppercase(),
-                        isSelected = month == selectedMonth,
+                        isSelected = selectedYear == selectedYearMonth.year &&
+                            month == selectedYearMonth.month,
                         isCurrentMonth = isCurrentMonth,
                         onClick = { onMonthSelected(month) },
                         modifier = Modifier.weight(1f)

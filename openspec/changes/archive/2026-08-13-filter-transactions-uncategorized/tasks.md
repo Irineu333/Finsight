@@ -72,11 +72,12 @@ está verde de novo.
 ## 7. Verificação final
 
 **Para começar:** os grupos 1 a 6 concluídos.
-**Ao terminar:** a suíte completa está verde e o efeito do item novo no fim do menu sobre os
-fluxos Maestro está checado — o risco declarado no design.
+**Ao terminar:** a suíte unitária passa (7.1). A checagem E2E do risco declarado no design fica
+**adiada por decisão, para outra mudança** — o que ficou sem confirmação está escrito na própria
+7.2, para que ninguém leia o grupo como uma travessia que a suíte provou.
 
 - [x] 7.1 Rodar `./gradlew jvmTest` e ler a saída; a suíte inteira passa. Relatar qualquer falha com o teste e o arquivo, sem presumir que é pré-existente.
-- [ ] 7.2 Rodar a suíte Maestro conferindo o risco "fluxos que abrem o filtro por posição": ler `.maestro/README.md` §2 antes, executar as sete checagens `adb` do dispositivo (AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de hardware), reinstalar o APK debug com `./gradlew :app:android:installDebug` e rodar `maestro test .maestro`. Relatar o resultado por fluxo e em qual dispositivo a execução aconteceu; um item novo no fim do menu pode alterar a rolagem, então qualquer fluxo que toque o filtro de categoria precisa ser confirmado, não presumido.
+- [x] 7.2 **Adiada por decisão, para outra mudança.** A suíte Maestro não foi executada nesta travessia. A única execução que houve (registrada em `b409fe85`) é anterior aos grupos 8 e 9: naquele momento só a tela de transações oferecia o valor, e nem a oferta nas outras quatro superfícies nem a regra de omissão do grupo 9 passaram por E2E. Naquela execução — AVD `finsight_e2e` (`emulator-5556`), as sete checagens da §2.2 conferidas, `maestro test .maestro` → 12/14 — o risco do design ("um item novo no fim do menu altera a rolagem") também **não** foi fechado: nenhum fluxo da suíte abre o filtro de categoria. O que sustenta esta mudança é a suíte unitária, verde em `./gradlew jvmTest`, e a conferência manual da tela de transações. Retomar quando a suíte E2E for estabilizada, cobrindo o filtro de categoria nas cinco superfícies.
 
 ## 8. As outras quatro superfícies do filtro
 

@@ -6,9 +6,13 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,6 +26,7 @@ class RecurringRepository(
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val occurrenceRepository: IRecurringOccurrenceRepository,
 ) : IRecurringRepository {
 
     /**
@@ -83,6 +88,36 @@ class RecurringRepository(
 
     override suspend fun insert(recurring: Recurring) {
         dao.insert(mapper.toEntity(recurring))
+    }
+
+    /**
+     * The template and its first cycle are one unit of work, for the reason spelled
+     * out in [IRecurringRepository.createWithFirstCycle].
+     *
+     * The cycle itself is not written here: [IRecurringOccurrenceRepository.confirmCycle]
+     * already owns "transaction plus occurrence, together", and it reenters this
+     * connection as a `SAVEPOINT` rather than opening a second one. Its re-entry check
+     * comes along — trivially satisfied by a template created a statement ago, and
+     * defence in depth for free.
+     *
+     * The id the two writes need exists only after the insert, which is why they are
+     * completed here and not by the caller. **Nothing on this path may switch
+     * dispatchers**: three writer connections are nested in one coroutine, and the
+     * reentrancy that makes that safe travels in the coroutine context.
+     */
+    override suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction = database.useWriterConnection { connection ->
+        connection.immediateTransaction {
+            val recurringId = dao.insert(mapper.toEntity(recurring))
+
+            occurrenceRepository.confirmCycle(
+                intent = firstCycle.copy(recurringId = recurringId),
+                occurrence = occurrence.copy(recurringId = recurringId),
+            )
+        }
     }
 
     override suspend fun update(recurring: Recurring) {

@@ -48,6 +48,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
@@ -113,6 +114,11 @@ class ViewBudgetViewModelTest {
         override suspend fun hasRecurringForCategory(categoryId: Long) = false
         override suspend fun hasTransactionForRecurring(recurringId: Long) = false
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+        override suspend fun createWithFirstCycle(
+            recurring: Recurring,
+            firstCycle: TransactionIntent,
+            occurrence: RecurringOccurrence,
+        ): Transaction = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
     }

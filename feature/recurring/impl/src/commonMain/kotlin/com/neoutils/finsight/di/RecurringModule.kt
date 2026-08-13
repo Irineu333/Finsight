@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
+import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveRecurringUseCase
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.impl.RecurringEntryImpl
@@ -36,6 +37,7 @@ val recurringModule = module {
             categoryRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
+            occurrenceRepository = get(),
         )
     }
     single<IRecurringOccurrenceRepository> {
@@ -63,6 +65,12 @@ val recurringModule = module {
         )
     }
     factory { SaveRecurringUseCase(repository = get()) }
+    factory {
+        StartRecurringFromTransactionUseCase(
+            repository = get(),
+            clock = get(),
+        )
+    }
     factory { UnarchiveRecurringUseCase(repository = get()) }
     factory { ArchiveRecurringUseCase(repository = get()) }
     factory {

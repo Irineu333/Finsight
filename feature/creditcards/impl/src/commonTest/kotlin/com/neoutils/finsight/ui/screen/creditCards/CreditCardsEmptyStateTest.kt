@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -246,6 +247,11 @@ private object NoRecurring : IRecurringRepository {
     override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
     override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = false
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction = throw NotImplementedError()
     override suspend fun update(recurring: Recurring) = throw NotImplementedError()
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }

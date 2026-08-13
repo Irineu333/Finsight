@@ -23,6 +23,8 @@ import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
+import com.neoutils.finsight.ui.modal.RecordingRecurringRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -283,6 +285,10 @@ class AddTransactionInvoiceDateTest {
         modalManager = ModalManager(),
         analytics = MuteAnalytics,
         crashlytics = FakeCrashlytics(),
+        startRecurringFromTransaction = StartRecurringFromTransactionUseCase(
+            repository = RecordingRecurringRepository(),
+            clock = ClockOn(today),
+        ),
         validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = ClockOn(today)),
         clock = ClockOn(today),
     )

@@ -1,6 +1,9 @@
 package com.neoutils.finsight.domain.repository
 
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import kotlinx.coroutines.flow.Flow
 
 interface IRecurringRepository {
@@ -29,6 +32,32 @@ interface IRecurringRepository {
      */
     suspend fun hasTransactionForRecurring(recurringId: Long): Boolean
     suspend fun insert(recurring: Recurring)
+
+    /**
+     * Creates a template and posts [firstCycle] as its cycle 1 — the template, the
+     * transaction and the occurrence that records it as **one unit of work**.
+     *
+     * A template left behind by a refused transaction is a model the user never asked
+     * for, and the pending list would offer its first cycle for confirmation moments
+     * after the screen told them the write failed.
+     *
+     * [recurring] arrives with `id = 0`, and [firstCycle] and [occurrence] without the
+     * `recurringId`, for the same reason
+     * [IRecurringOccurrenceRepository.confirmCycle] takes an occurrence without a
+     * `transactionId`: the identity only exists once the row is written, and this is
+     * the only place that learns it.
+     *
+     * **No dispatcher switch may happen anywhere along this path.** Room's reentrancy
+     * travels in a coroutine context element, and this call nests three writer
+     * connections in one coroutine — the template's, the confirmation's and the
+     * transaction's. A switch would take a second connection and deadlock instead of
+     * emitting a `SAVEPOINT`.
+     */
+    suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction
     suspend fun update(recurring: Recurring)
     suspend fun delete(recurring: Recurring)
 }

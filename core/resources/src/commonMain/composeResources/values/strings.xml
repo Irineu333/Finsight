@@ -384,6 +384,8 @@
     <string name="add_transaction_amount_label">Valor</string>
     <string name="add_transaction_date_label">Data</string>
     <string name="transaction_date_outside_invoice">Fora do período desta fatura</string>
+    <string name="add_transaction_repeat_monthly">Repetir todo mês</string>
+    <string name="add_transaction_repeats_on_day">Repete todo dia %1$d</string>
     <string name="add_transaction_save">Salvar</string>
     <string name="add_transaction_expense">Despesa</string>
     <string name="add_transaction_income">Receita</string>

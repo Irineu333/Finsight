@@ -1,0 +1,103 @@
+appId: com.neoutils.finsight
+name: recurring_from_transaction
+tags:
+  - recurring
+  - transactions
+env:
+  TITLE: "E2E Streaming"
+  DIGITS: "3990"
+---
+# A transaction that opens the recurring it is the first cycle of.
+#
+# The whole point is what does *not* happen afterwards: the month the expense was written in must
+# not come back asking to be confirmed. A template born with the day of its own transaction is due
+# the moment it exists, so without the occurrence the app would offer the very expense that was
+# just paid — and confirming it would put it in the ledger twice. The two assertions on the
+# dashboard's pending components are that, and they are the reason this flow exists.
+#
+# The date is left untouched: today is what the sheet opens on, and the recurring day is the day of
+# whatever date the field holds. That keeps the flow indifferent to when it runs.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- I record an expense and tell the app it repeats ---------------------------------------------
+- tapOn:
+    id: "add_transaction_fab"
+- extendedWaitUntil:
+    visible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+- tapOn:
+    id: "add_transaction_type_expense"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "add_transaction_title"
+- waitForAnimationToEnd
+- inputText: ${TITLE}
+- assertVisible:
+    id: "add_transaction_title"
+    text: ${TITLE}
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_amount"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_amount"
+- waitForAnimationToEnd
+- inputText: ${DIGITS}
+- hideKeyboard
+
+# The mark sits beside the date because the date is what decides the day it repeats on.
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_repeat"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_repeat"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "add_transaction_save"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "add_transaction_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000
+
+# --- The recurring is there, and it is an ordinary one --------------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: recurring
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
+- assertVisible: ${TITLE}
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]39[.,]90"
+
+# --- And this month is settled, not owed ----------------------------------------------------------
+# The expense was paid at the same moment the template was created, so nothing about this month is
+# outstanding: neither the pending figures nor the list of recurring waiting to be confirmed.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertNotVisible:
+    id: "dashboard_component_balance_stats_pending"
+- assertNotVisible:
+    id: "dashboard_component_pending_recurring"

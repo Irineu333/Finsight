@@ -4,11 +4,14 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +29,9 @@ class FakeTransactionRepository : ITransactionRepository {
 
     private val byId = MutableSharedFlow<Transaction?>(replay = 1)
 
+    /** What was written straight through this repository, rather than by a cycle. */
+    val created = mutableListOf<TransactionIntent>()
+
     fun emit(transaction: Transaction?) {
         byId.tryEmit(transaction)
     }
@@ -40,12 +46,57 @@ class FakeTransactionRepository : ITransactionRepository {
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
-    override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
+    override suspend fun createTransaction(intent: TransactionIntent): Transaction {
+        created += intent
+        return transaction(id = created.size.toLong())
+    }
+
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
+}
+
+/**
+ * Records what a recurring would be born as, without a database.
+ *
+ * [created] holds the three pieces the unit of work receives — the template, the intent
+ * of its first cycle and the occurrence that records it — so a test can assert on the
+ * anchoring and the cycle without reaching for Room.
+ */
+class RecordingRecurringRepository(
+    private val failure: Throwable? = null,
+) : IRecurringRepository {
+
+    data class Created(
+        val recurring: Recurring,
+        val firstCycle: TransactionIntent,
+        val occurrence: RecurringOccurrence,
+    )
+
+    val created = mutableListOf<Created>()
+
+    override suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction {
+        failure?.let { throw it }
+        created += Created(recurring, firstCycle, occurrence)
+        return transaction(id = 99L)
+    }
+
+    override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
+    override fun observeRecurringById(id: Long): Flow<Recurring?> = throw NotImplementedError()
+    override suspend fun getRecurringById(id: Long): Recurring? = throw NotImplementedError()
+    override suspend fun hasRecurringForAccount(accountId: Long): Boolean = throw NotImplementedError()
+    override suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean = throw NotImplementedError()
+    override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = throw NotImplementedError()
+    override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = throw NotImplementedError()
+    override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun update(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }
 
 /**

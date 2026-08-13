@@ -383,6 +383,8 @@
     <string name="add_transaction_amount_label">Amount</string>
     <string name="add_transaction_date_label">Date</string>
     <string name="transaction_date_outside_invoice">Outside this invoice's period</string>
+    <string name="add_transaction_repeat_monthly">Repeat every month</string>
+    <string name="add_transaction_repeats_on_day">Repeats every month on day %1$d</string>
     <string name="add_transaction_save">Save</string>
     <string name="add_transaction_expense">Expense</string>
     <string name="add_transaction_income">Income</string>

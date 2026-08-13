@@ -6,7 +6,25 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
+
+/** What the date field explains about itself, when it has anything to explain. */
+sealed interface DateSupport {
+    /** The date sits outside the period the selected invoice admits purchases in. */
+    data object OutsideInvoice : DateSupport
+
+    /** The day of the month this transaction will repeat on. */
+    data class RepeatsOnDay(val day: Int) : DateSupport
+}
+
+/**
+ * The day a date being typed would repeat on, or `null` while it is not a date yet.
+ * The field is edited character by character, so half of what passes through here
+ * parses to nothing.
+ */
+private fun repeatDay(date: String): Int? =
+    runCatching { dayMonthYear.parse(date) }.getOrNull()?.day
 
 data class AddTransactionUiState(
     /**
@@ -46,6 +64,11 @@ data class AddTransactionUiState(
      * currency (design D17).
      */
     val creditCardCurrency: String? = null,
+    /**
+     * Whether this transaction is to become the first cycle of a recurring. Form state
+     * only — nothing exists until it is saved.
+     */
+    val isRecurring: Boolean = false,
 ) {
     val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 
@@ -58,6 +81,29 @@ data class AddTransactionUiState(
      * no test can reach.
      */
     val isDateOutsideInvoice = invoiceSelection?.diverges(form.date) == true
+
+    /**
+     * Whether the transaction may be marked as recurring at all.
+     *
+     * Instalments are the only thing in the way: paying in instalments is already a
+     * repetition, and the two together would describe two of them over one purchase.
+     * Nothing else is checked here — every valid, unsplit form yields a valid template,
+     * so [canSubmit] already answers the rest.
+     */
+    val canRepeat = form.installments == 1
+
+    /**
+     * What the date field says beneath itself, decided here for the same reason
+     * [canSubmit] is.
+     *
+     * The invoice warning wins: it tells the user something they may not want, while
+     * the repetition note only echoes what they just chose.
+     */
+    val dateSupport: DateSupport? = when {
+        isDateOutsideInvoice -> DateSupport.OutsideInvoice
+        isRecurring -> repeatDay(form.date)?.let(DateSupport::RepeatsOnDay)
+        else -> null
+    }
 
     val categories = when {
         form.type.isIncome -> incomeCategories

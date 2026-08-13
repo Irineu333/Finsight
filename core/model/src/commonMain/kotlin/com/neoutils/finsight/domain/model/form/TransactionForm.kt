@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.isAccept
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 data class TransactionForm(
@@ -38,6 +39,29 @@ data class TransactionForm(
             if (account?.isArchived == true) add(ClosedFacade.ACCOUNT)
             if (creditCard?.isArchived == true) add(ClosedFacade.CREDIT_CARD)
         }
+
+    /**
+     * The template this transaction would repeat as, month after month, on the day of
+     * [date] — the single translation between the two forms.
+     *
+     * [date] is the parsed date, not [TransactionForm.date]: what the form holds is
+     * text still being typed, and the day of the repetition has to come from a date
+     * someone already validated.
+     *
+     * Only what a recurring has is carried over. The invoice is deliberately left
+     * behind: it is where *this* purchase landed, and the invoice of a future cycle is
+     * the one open when that cycle is confirmed.
+     */
+    fun asRecurringOn(date: LocalDate): RecurringForm = RecurringForm.from(
+        type = type,
+        amount = amount,
+        title = title.orEmpty(),
+        dayOfMonth = date.day.toString(),
+        category = category,
+        target = target,
+        account = account,
+        creditCard = creditCard,
+    )
 
     companion object {
         fun from(

@@ -10,6 +10,9 @@ import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
@@ -58,6 +61,11 @@ class ViewRecurringViewModelTest {
         override suspend fun hasTransactionForRecurring(recurringId: Long) = hasTransaction
         override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+        override suspend fun createWithFirstCycle(
+            recurring: Recurring,
+            firstCycle: TransactionIntent,
+            occurrence: RecurringOccurrence,
+        ): Transaction = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
     }

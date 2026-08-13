@@ -90,6 +90,7 @@ val transactionsModule = module {
             analytics = get(),
             crashlytics = get(),
             validateTransactionForm = get(),
+            startRecurringFromTransaction = get(),
             clock = get(),
         )
     }

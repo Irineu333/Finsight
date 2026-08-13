@@ -19,6 +19,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
@@ -100,6 +103,11 @@ private class FakeRecurringRepository(private val hasRecurring: Boolean) : IRecu
     override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
     override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = false
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction = throw NotImplementedError()
     override suspend fun update(recurring: Recurring) = throw NotImplementedError()
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }

@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
@@ -28,6 +29,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.isAccept
@@ -53,6 +55,7 @@ class AddTransactionViewModel(
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
     private val validateTransactionForm: ValidateTransactionFormUseCase,
+    private val startRecurringFromTransaction: StartRecurringFromTransactionUseCase,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -70,6 +73,7 @@ class AddTransactionViewModel(
         val amount: String = "",
         val category: Category? = null,
         val installments: Int = 1,
+        val isRecurring: Boolean = false,
     )
 
     private val input = MutableStateFlow(Input(date = dayMonthYear.format(clock.today())))
@@ -205,6 +209,7 @@ class AddTransactionViewModel(
             accounts = accounts,
             selectedAccount = effectiveAccount,
             creditCardCurrency = cardCurrency,
+            isRecurring = input.isRecurring,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -222,8 +227,9 @@ class AddTransactionViewModel(
             is AddTransactionAction.ChangeTitle -> input.update { it.copy(title = action.title) }
             is AddTransactionAction.ChangeAmount -> input.update { it.copy(amount = action.amount) }
             is AddTransactionAction.ChangeDate -> input.update { it.copy(date = action.date) }
-            is AddTransactionAction.ChangeInstallments -> {
-                input.update { it.copy(installments = action.installments) }
+            is AddTransactionAction.ChangeInstallments -> changeInstallments(action.installments)
+            is AddTransactionAction.ChangeRecurring -> {
+                input.update { it.copy(isRecurring = action.isRecurring) }
             }
 
             is AddTransactionAction.SelectCategory -> input.update { it.copy(category = action.category) }
@@ -239,6 +245,19 @@ class AddTransactionViewModel(
      * category cannot describe an income, and keeping it would have the selector showing
      * one thing while the form carries another.
      */
+    /**
+     * Splitting into instalments drops the recurring mark rather than hiding it: paying
+     * in instalments is already a repetition, and a mark the sheet no longer shows must
+     * not survive to the submit — the same reason [changeType] discards a category the
+     * new type does not accept.
+     */
+    private fun changeInstallments(installments: Int) = input.update {
+        it.copy(
+            installments = installments,
+            isRecurring = it.isRecurring && installments == 1,
+        )
+    }
+
     private fun changeType(type: TransactionType) = input.update {
         it.copy(
             type = type,
@@ -294,10 +313,24 @@ class AddTransactionViewModel(
             return@launch
         }
 
+        // Read off the input rather than the state: the state is derived and lands a
+        // frame later, and a submit right after the toggle would read the old answer.
+        val isRecurring = input.value.isRecurring
+
         buildTransactionUseCase(form)
-            .flatMap {
-                catch {
-                    transactionRepository.createTransaction(it)
+            .flatMap { intent ->
+                if (isRecurring) {
+                    // The intent is completed, never rebuilt: it already carries the
+                    // invoice the user picked, and how a recurring is born is the
+                    // recurring feature's rule, consumed here.
+                    startRecurringFromTransaction(
+                        form = form.asRecurringOn(intent.date),
+                        firstCycle = intent,
+                    )
+                } else {
+                    catch {
+                        transactionRepository.createTransaction(intent)
+                    }
                 }
             }.onLeft {
                 crashlytics.recordException(it)
@@ -316,6 +349,7 @@ class AddTransactionViewModel(
         is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
+        is RecurringException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

@@ -14,10 +14,12 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -269,34 +271,78 @@ class AddTransactionModal : ModalBottomSheet() {
                     imeAction = ImeAction.Done
                 ),
                 trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            manager.show(
-                                DatePickerModal(
-                                    initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
-                                    maxDate = uiState.today,
-                                    onDateSelected = { selectedDate ->
-                                        date.edit {
-                                            replace(0, length, dayMonthYear.format(selectedDate))
-                                        }
-                                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Beside the date because the date is what decides the day of the
+                        // repetition — which is why marking it asks for no field of its own.
+                        if (uiState.canRepeat) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.onAction(
+                                        AddTransactionAction.ChangeRecurring(!uiState.isRecurring)
+                                    )
+                                },
+                                modifier = Modifier.testTag("add_transaction_repeat"),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Autorenew,
+                                    contentDescription = stringResource(
+                                        Res.string.add_transaction_repeat_monthly
+                                    ),
+                                    tint = if (uiState.isRecurring) {
+                                        colorScheme.primary
+                                    } else {
+                                        colorScheme.onSurfaceVariant
+                                    },
+                                    modifier = Modifier.size(20.dp),
                                 )
+                            }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                manager.show(
+                                    DatePickerModal(
+                                        initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
+                                        maxDate = uiState.today,
+                                        onDateSelected = { selectedDate ->
+                                            date.edit {
+                                                replace(0, length, dayMonthYear.format(selectedDate))
+                                            }
+                                        }
+                                    )
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.TwoTone.CalendarToday,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.TwoTone.CalendarToday,
-                            contentDescription = null,
-                            tint = colorScheme.primary,
-                            modifier = Modifier.size(20.dp),
-                        )
                     }
                 },
                 // Said, not corrected: a date the user moved out of the invoice's period is
                 // still theirs, and the invoice is what the expense lands on either way.
-                supportingText = if (uiState.isDateOutsideInvoice) {
-                    { Text(text = stringResource(Res.string.transaction_date_outside_invoice)) }
-                } else null,
+                // Which of the two notes is shown was decided by the state, not here.
+                supportingText = uiState.dateSupport?.let { support ->
+                    {
+                        Text(
+                            text = when (support) {
+                                DateSupport.OutsideInvoice -> {
+                                    stringResource(Res.string.transaction_date_outside_invoice)
+                                }
+
+                                is DateSupport.RepeatsOnDay -> {
+                                    stringResource(
+                                        Res.string.add_transaction_repeats_on_day,
+                                        support.day,
+                                    )
+                                }
+                            }
+                        )
+                    }
+                },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth()

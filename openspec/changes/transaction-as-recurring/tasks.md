@@ -17,7 +17,7 @@ precede a UI que o chama (D5), e os testes precedem o encerramento.
 **Barreira de saída:** o projeto compila e `./gradlew jvmTest` continua verde. Nada de
 comportamento mudou ainda — só existem construções novas, sem chamador.
 
-- [ ] 1.1 Em `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/form/RecurringForm.kt`,
+- [x] 1.1 Em `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/form/RecurringForm.kt`,
       adicionar `fun RecurringForm.toRecurring(createdAt: Long): Either<RecurringError, Recurring>` (D6):
       a construção validada do template, com as mesmas exigências que `SaveRecurringUseCase`
       escreve hoje à mão (`SaveRecurringUseCase.kt:37-67`) e na mesma ordem — `AMOUNT_REQUIRED`,
@@ -25,11 +25,11 @@ comportamento mudou ainda — só existem construções novas, sem chamador.
       `ACCOUNT_REQUIRED` (conta para receita; conta **ou** cartão para despesa) — devolvendo
       `RecurringError` cru, não a exceção. `creditCard` é descartado quando o tipo é receita.
       `isValid()` permanece como a leitura barata da UI, sobre a mesma base.
-- [ ] 1.2 Em `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/form/TransactionForm.kt`,
+- [x] 1.2 Em `core/model/src/commonMain/kotlin/com/neoutils/finsight/domain/model/form/TransactionForm.kt`,
       adicionar `fun TransactionForm.asRecurringOn(date: LocalDate): RecurringForm` (D6): a
       tradução única entre os dois forms, com `dayOfMonth` = dia de `date`, e título, valor,
       categoria, conta e cartão vindos do lançamento. Nenhum modelo novo.
-- [ ] 1.3 Adicionar as chaves novas em **`core/resources/src/commonMain/composeResources/values/strings.xml` (pt)
+- [x] 1.3 Adicionar as chaves novas em **`core/resources/src/commonMain/composeResources/values/strings.xml` (pt)
       e `values-en/strings.xml` (en)**, no mesmo passo (uma chave presente em só um dos arquivos
       é um bug): o rótulo de acessibilidade do botão de recorrência no campo de data e o texto
       de apoio "repete todo dia N" (D8), este com o dia como parâmetro.
@@ -43,7 +43,7 @@ comportamento mudou ainda — só existem construções novas, sem chamador.
 método abstrato novo deixa todos os implementadores incompletos, e é exatamente isso que o
 grupo 3 fecha. Um único item, para que nenhuma tarefa dependa da saída de uma irmã.
 
-- [ ] 2.1 Em `feature/recurring/api/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRecurringRepository.kt`,
+- [x] 2.1 Em `feature/recurring/api/src/commonMain/kotlin/com/neoutils/finsight/domain/repository/IRecurringRepository.kt`,
       declarar (D3):
       `suspend fun createWithFirstCycle(recurring: Recurring, firstCycle: TransactionIntent, occurrence: RecurringOccurrence): Transaction`.
       KDoc obrigatório: as três escritas são **uma unidade de trabalho**, e a restrição já
@@ -61,7 +61,7 @@ satisfaz sem depender de nenhuma irmã.
 **Barreira de saída:** o projeto volta a compilar em todos os alvos e `./gradlew jvmTest`
 está verde, com o comportamento existente inalterado.
 
-- [ ] 3.1 Implementar `createWithFirstCycle` em
+- [x] 3.1 Implementar `createWithFirstCycle` em
       `feature/recurring/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/RecurringRepository.kt`
       e ligar a dependência nova em `feature/recurring/impl/src/commonMain/kotlin/com/neoutils/finsight/di/RecurringModule.kt`
       (os dois arquivos na mesma tarefa, porque o parâmetro novo do construtor e o `single { … }`
@@ -73,20 +73,20 @@ está verde, com o comportamento existente inalterado.
       reentra como `SAVEPOINT` e continua fazendo o seu *re-entry check* — que aqui é
       trivialmente satisfeito e vale como defesa em profundidade (D3). `confirmCycle` **não é
       tocado**. Repetir no KDoc do método a restrição de dispatcher.
-- [ ] 3.2 Atualizar os fakes de `IRecurringRepository` em `feature/creditcards`:
+- [x] 3.2 Atualizar os fakes de `IRecurringRepository` em `feature/creditcards`:
       `src/commonTest/.../ui/screen/creditCards/CreditCardsEmptyStateTest.kt:240`,
       `src/commonTest/.../ui/screen/invoiceTransactions/InvoiceTransactionsFakes.kt:183` e
       `src/commonTest/.../domain/usecase/DeleteCreditCardUseCaseTest.kt:94` — o método novo é
       irrelevante para esses testes, então `throw NotImplementedError()`, como os fakes já
       fazem com o que não exercitam.
-- [ ] 3.3 Atualizar o fake de `IRecurringRepository` em
+- [x] 3.3 Atualizar o fake de `IRecurringRepository` em
       `feature/accounts/impl/src/commonTest/kotlin/com/neoutils/finsight/domain/usecase/RetireAccountGuardsTest.kt:171`.
-- [ ] 3.4 Atualizar o fake de `IRecurringRepository` em
+- [x] 3.4 Atualizar o fake de `IRecurringRepository` em
       `feature/budgets/impl/src/commonTest/kotlin/com/neoutils/finsight/ui/modal/viewBudget/ViewBudgetViewModelTest.kt:107`.
-- [ ] 3.5 Atualizar os fakes de `IRecurringRepository` em `feature/categories`:
+- [x] 3.5 Atualizar os fakes de `IRecurringRepository` em `feature/categories`:
       `src/commonTest/.../ui/modal/viewCategory/ViewCategoryViewModelTest.kt:211` e
       `src/commonTest/.../domain/usecase/DeleteCategoryGuardsTest.kt:148`.
-- [ ] 3.6 Atualizar os fakes de `IRecurringRepository` em `feature/recurring`:
+- [x] 3.6 Atualizar os fakes de `IRecurringRepository` em `feature/recurring`:
       `src/commonTest/kotlin/com/neoutils/finsight/RecurringFakes.kt:44` e
       `src/commonTest/.../ui/modal/viewRecurring/ViewRecurringViewModelTest.kt:50`.
 
@@ -101,13 +101,13 @@ sequência que o design impõe: o método do repositório antes do caso de uso (
 recorrência a partir de um `TransactionIntent` está disponível — ainda sem nenhuma tela que a
 acione.
 
-- [ ] 4.1 Em `feature/recurring/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SaveRecurringUseCase.kt`,
+- [x] 4.1 Em `feature/recurring/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/SaveRecurringUseCase.kt`,
       montar o `RecurringForm` e delegar a `toRecurring(createdAt)`, no lugar das validações
       escritas à mão (`:37-67`), mapeando o `RecurringError` devolvido para
       `RecurringException` (D6). O comportamento observável não muda: os mesmos erros, na
       mesma ordem, cobertos pelos testes que já existem. `createdAt` continua caindo no
       relógio quando o chamador não informa.
-- [ ] 4.2 Criar `StartRecurringFromTransactionUseCase` em
+- [x] 4.2 Criar `StartRecurringFromTransactionUseCase` em
       `feature/recurring/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/StartRecurringFromTransactionUseCase.kt`
       e registrá-lo em `feature/recurring/impl/src/commonMain/kotlin/com/neoutils/finsight/di/RecurringModule.kt`
       (os dois arquivos na mesma tarefa: a classe e o `factory { … }` que a constrói são a
@@ -134,10 +134,10 @@ o caso de uso existe.
 **Barreira de saída:** o projeto compila e `./gradlew jvmTest` verde. O estado sabe descrever
 a opção; ninguém ainda a liga nem a renderiza.
 
-- [ ] 5.1 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionAction.kt`,
+- [x] 5.1 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionAction.kt`,
       adicionar a ação que marca/desmarca a recorrência (por exemplo
       `data class ToggleRecurring(val enabled: Boolean)`), no estilo das demais.
-- [ ] 5.2 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionUiState.kt`,
+- [x] 5.2 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionUiState.kt`,
       expor `isRecurring: Boolean` (a marca) e decidir aqui — nunca no composable — `canRepeat`
       (= `form.installments == 1`, D7) e a **precedência do texto de apoio** do campo de data
       (D8): o aviso de data fora da janela da fatura tem precedência sobre a confirmação
@@ -154,7 +154,7 @@ duas tarefas abaixo os consomem sem depender uma da outra (o modal lê `UiState`
 o view model).
 **Barreira de saída:** o projeto compila, `./gradlew jvmTest` verde e o fluxo funciona no app.
 
-- [ ] 6.1 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionViewModel.kt`
+- [x] 6.1 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionViewModel.kt`
       (+ o `viewModel { AddTransactionViewModel(…) }` em
       `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/di/TransactionsModule.kt`,
       mesma mudança): injetar `StartRecurringFromTransactionUseCase` (a dependência de
@@ -168,7 +168,7 @@ o view model).
       recusou, nunca uma falha genérica), sucesso com `analytics`/`modalManager.dismiss()`.
       **O caminho de quem não usa a opção fica byte a byte o de hoje**, inclusive o ramo de
       parcelamento.
-- [ ] 6.2 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionModal.kt`,
+- [x] 6.2 Em `feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionModal.kt`,
       transformar o `trailingIcon` do campo de data num `Row` de dois botões (D8):
       `Icons.Outlined.Autorenew` **à esquerda** do `CalendarToday` já existente, `tint =
       colorScheme.primary` quando ligado e `onSurfaceVariant` quando não,
@@ -187,7 +187,7 @@ o view model).
 **Barreira de saída:** todos os arquivos novos passam, e `./gradlew jvmTest` está verde.
 Arquivos disjuntos, portanto todas as tarefas correm em paralelo.
 
-- [ ] 7.1 **Atomicidade contra banco real**, em
+- [x] 7.1 **Atomicidade contra banco real**, em
       `feature/recurring/impl/src/jvmTest/kotlin/com/neoutils/finsight/database/repository/CreateWithFirstCycleAtomicityTest.kt`,
       espelhando `ConfirmCycleAtomicityTest` (mesmo `Room.inMemoryDatabaseBuilder` e o mesmo
       `RecordingTransactionRepository`): (a) template, transação e ocorrência persistem juntos,
@@ -196,7 +196,7 @@ Arquivos disjuntos, portanto todas as tarefas correm em paralelo.
       (spec — "Transação recusada não deixa recorrência"); (c) os três `useWriterConnection`
       aninhados numa só corrotina não travam. É o único teste que pega a armadilha do
       dispatcher.
-- [ ] 7.2 **Unidade do caso de uso**, em
+- [x] 7.2 **Unidade do caso de uso**, em
       `feature/recurring/impl/src/commonTest/kotlin/com/neoutils/finsight/domain/usecase/StartRecurringFromTransactionUseCaseTest.kt`
       (onde `GetPendingRecurringUseCaseTest` já vive, porque o `api` não tem source set de
       teste): `createdAt` ancorado na data da transação e `dayOfMonth` igual ao dia dela; ciclo
@@ -206,7 +206,7 @@ Arquivos disjuntos, portanto todas as tarefas correm em paralelo.
       o mês da transação **não** volta como pendente, enquanto o mês corrente **volta** no caso
       retroativo com o dia já passado (spec — "O mês da transação não volta a ser cobrado" e
       "Data retroativa deixa o mês corrente pendente").
-- [ ] 7.3 **Unidade do view model**, em
+- [x] 7.3 **Unidade do view model**, em
       `feature/transactions/impl/src/commonTest/kotlin/com/neoutils/finsight/ui/modal/addTransaction/AddTransactionRecurringTest.kt`
       (ao lado de `AddTransactionSubmitTest`): ligar a marca não escreve nada e não muda
       `canSubmit`; ligar e desligar antes de salvar lança a transação como qualquer outra, sem
@@ -215,14 +215,14 @@ Arquivos disjuntos, portanto todas as tarefas correm em paralelo.
       com o intent construído por `buildTransactionUseCase` (a fatura escolhida preservada,
       D4); e uma recusa mostra a mensagem do erro correspondente, não a genérica, sem fechar o
       modal.
-- [ ] 7.4 **O teorema, em `core/model`**, em
+- [x] 7.4 **O teorema, em `core/model`**, em
       `core/model/src/commonTest/kotlin/com/neoutils/finsight/domain/model/form/TransactionFormAsRecurringTest.kt`
       (ao lado de `TransactionFormCoherenceTest`): todo `TransactionForm` válido e **não
       parcelado** produz, via `asRecurringOn(date)`, um `RecurringForm` válido — cobrindo
       receita com conta, despesa com conta, despesa com cartão, título sem categoria e
       categoria sem título. É o que dispensa qualquer condição de habilitação além da exclusão
       com o parcelamento (Context, D7); se ele cair, `canRepeat` deixou de bastar.
-- [ ] 7.5 **Fluxo E2E**, em `.maestro/flows/recurring/transaction_as_recurring.yaml`,
+- [x] 7.5 **Fluxo E2E**, em `.maestro/flows/recurring/transaction_as_recurring.yaml`,
       reaproveitando os subflows existentes (`launch_fresh`, `create_account`,
       `record_transaction`, `open_section`): lançar uma despesa com
       `id: add_transaction_repeat` ligado, conferir que a recorrência aparece na lista de
@@ -239,14 +239,14 @@ Arquivos disjuntos, portanto todas as tarefas correm em paralelo.
 **Barreira de saída:** a mudança está verificada — cada item abaixo foi executado e a saída,
 lida.
 
-- [ ] 8.1 `./gradlew :feature:recurring:impl:jvmTest --tests "*StartRecurringFromTransaction*" --tests "*CreateWithFirstCycle*"` — verde
-- [ ] 8.2 `./gradlew :app:shared:testDebugUnitTest --tests "*AddTransactionRecurring*"` — verde
-- [ ] 8.3 `./gradlew jvmTest` — a suíte inteira verde, sem regressão em `SaveRecurringUseCase`
+- [x] 8.1 `./gradlew :feature:recurring:impl:jvmTest --tests "*StartRecurringFromTransaction*" --tests "*CreateWithFirstCycle*"` — verde
+- [x] 8.2 `./gradlew :app:shared:testDebugUnitTest --tests "*AddTransactionRecurring*"` — verde
+- [x] 8.3 `./gradlew jvmTest` — a suíte inteira verde, sem regressão em `SaveRecurringUseCase`
       nem nos testes de recorrência já existentes (o comportamento observável de 4.1 não muda)
-- [ ] 8.4 `./gradlew :app:android:assembleDebug` — compila
-- [ ] 8.5 Conferir que **cada chave nova de string existe nos dois arquivos** (`values/strings.xml`
+- [x] 8.4 `./gradlew :app:android:assembleDebug` — compila
+- [x] 8.5 Conferir que **cada chave nova de string existe nos dois arquivos** (`values/strings.xml`
       e `values-en/strings.xml`)
-- [ ] 8.6 Conferir que a restrição de dispatcher está registrada em KDoc no método novo do `api`
+- [x] 8.6 Conferir que a restrição de dispatcher está registrada em KDoc no método novo do `api`
       (2.1) e na implementação (3.1) — é ela que sustenta os três `useWriterConnection` aninhados
 - [ ] 8.7 Rodar o fluxo `.maestro` novo: reinstalar o debug (`./gradlew :app:android:installDebug`)
       e executar num AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de

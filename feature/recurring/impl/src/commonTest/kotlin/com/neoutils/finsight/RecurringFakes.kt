@@ -5,6 +5,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -59,6 +62,11 @@ class FakeRecurringRepository(
     override suspend fun hasRecurringForCategory(categoryId: Long) = false
     override suspend fun hasTransactionForRecurring(recurringId: Long) = hasTransaction
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun createWithFirstCycle(
+        recurring: Recurring,
+        firstCycle: TransactionIntent,
+        occurrence: RecurringOccurrence,
+    ): Transaction = throw NotImplementedError()
     override suspend fun update(recurring: Recurring) {
         updateFailure?.let { throw it }
         updated += recurring

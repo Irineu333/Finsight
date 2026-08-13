@@ -5,17 +5,13 @@ package com.neoutils.finsight.domain.usecase
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
-import arrow.core.raise.ensure
-import arrow.core.raise.ensureNotNull
-import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.extension.moneyToDouble
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -34,48 +30,24 @@ class SaveRecurringUseCase(
         createdAt: Long? = null,
         isArchived: Boolean = false,
     ): Either<Throwable, Unit> = either {
-        ensure(amount.isNotEmpty()) {
-            RecurringException(RecurringError.AMOUNT_REQUIRED)
-        }
 
-        ensure(amount.moneyToDouble() != 0.0) {
-            RecurringException(RecurringError.AMOUNT_ZERO)
-        }
-
-        ensure(!title.isNullOrEmpty() || category != null) {
-            RecurringException(RecurringError.TITLE_OR_CATEGORY_REQUIRED)
-        }
-
-        val day = dayOfMonth.toIntOrNull()
-
-        ensureNotNull(day) {
-            RecurringException(RecurringError.INVALID_DAY)
-        }
-
-        ensure(day in 1..31) {
-            RecurringException(RecurringError.INVALID_DAY)
-        }
-
-        if (type.isIncome) {
-            ensureNotNull(account) {
-                RecurringException(RecurringError.ACCOUNT_REQUIRED)
-            }
-        } else {
-            ensure(account != null || creditCard != null) {
-                RecurringException(RecurringError.ACCOUNT_REQUIRED)
-            }
-        }
-
-        val recurring = Recurring(
-            id = id,
+        // The rules a template has to satisfy live with the form (one owner); what is
+        // decided here is only what the form has no way to know — the identity of an
+        // edit and the archived flag it carries over.
+        val recurring = RecurringForm(
             type = type,
-            amount = amount.moneyToDouble(),
-            title = title,
-            dayOfMonth = day,
-            category = category,
+            amount = amount,
+            title = title.orEmpty(),
+            dayOfMonth = dayOfMonth,
             account = account,
-            creditCard = if (type.isIncome) null else creditCard,
+            creditCard = creditCard,
+            category = category,
+        ).toRecurring(
             createdAt = createdAt ?: Clock.System.now().toEpochMilliseconds(),
+        ).mapLeft {
+            RecurringException(it)
+        }.bind().copy(
+            id = id,
             isArchived = isArchived,
         )
 

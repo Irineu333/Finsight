@@ -10,9 +10,14 @@ import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
@@ -100,6 +105,35 @@ class RecurringRepositoryTest {
         .setDriver(BundledSQLiteDriver())
         .build()
 
+    // Only reached by `createWithFirstCycle`, which this test never exercises — the
+    // unit of work it takes part in is covered against a real database, in
+    // `CreateWithFirstCycleAtomicityTest`.
+    private val occurrenceRepository = object : IRecurringOccurrenceRepository {
+        override fun observeAllOccurrences(): Flow<List<RecurringOccurrence>> =
+            throw NotImplementedError()
+
+        override suspend fun getAllOccurrences(): List<RecurringOccurrence> =
+            throw NotImplementedError()
+
+        override suspend fun getOccurrenceBy(
+            recurringId: Long,
+            yearMonth: YearMonth,
+        ): RecurringOccurrence? = throw NotImplementedError()
+
+        override suspend fun getOccurrenceBy(
+            recurringId: Long,
+            cycleNumber: Int,
+        ): RecurringOccurrence? = throw NotImplementedError()
+
+        override suspend fun save(occurrence: RecurringOccurrence): Long =
+            throw NotImplementedError()
+
+        override suspend fun confirmCycle(
+            intent: TransactionIntent,
+            occurrence: RecurringOccurrence,
+        ): Transaction = throw NotImplementedError()
+    }
+
     private val repository = RecurringRepository(
         database = database,
         dao = dao,
@@ -107,7 +141,9 @@ class RecurringRepositoryTest {
         categoryRepository = categoryRepository,
         accountRepository = accountRepository,
         creditCardRepository = creditCardRepository,
+        occurrenceRepository = occurrenceRepository,
     )
+
 
     private fun entity(id: Long, amount: Double) = RecurringEntity(
         id = id,

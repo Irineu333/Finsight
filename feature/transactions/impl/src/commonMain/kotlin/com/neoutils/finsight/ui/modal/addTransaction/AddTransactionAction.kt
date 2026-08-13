@@ -20,6 +20,12 @@ sealed class AddTransactionAction {
     data class SelectAccount(val account: Account?) : AddTransactionAction()
 
     /**
+     * Marks the transaction being written as one that repeats every month. Nothing is
+     * written until [Submit]: this is form state, undone by unmarking or by leaving.
+     */
+    data class ChangeRecurring(val isRecurring: Boolean) : AddTransactionAction()
+
+    /**
      * Carries no form: the ViewModel holds it, so there is nothing for the sheet to
      * hand back and no chance of submitting a form the state does not agree with.
      */

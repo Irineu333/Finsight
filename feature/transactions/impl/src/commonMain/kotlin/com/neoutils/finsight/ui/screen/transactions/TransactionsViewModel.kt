@@ -4,9 +4,10 @@ package com.neoutils.finsight.ui.screen.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
@@ -32,7 +33,6 @@ import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
     private val filterLabel: TransactionLabel?,
-    private val category: Category?,
     private val filterTarget: TransactionTarget?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
@@ -59,7 +59,6 @@ class TransactionsViewModel(
 
     private val filters = MutableStateFlow(
         TransactionsFilters(
-            category = category,
             label = filterLabel,
             target = filterTarget,
         )
@@ -112,7 +111,7 @@ class TransactionsViewModel(
         val visible = transactions
             .filter(filters.recurringOnly)
             .filterInstallment(installmentOnly)
-            .filter(filters.category)
+            .filter(filters.subject)
             .filter(filters.label)
             .filter(target)
             // The scope narrows the list to the transactions touching its perimeter,
@@ -128,7 +127,7 @@ class TransactionsViewModel(
             selectedYearMonth = yearMonth,
             currentYearMonth = clock.currentYearMonth(),
             categories = categories,
-            selectedCategory = filters.category,
+            selectedSubject = filters.subject,
             selectedLabel = filters.label,
             selectedTarget = target,
             showRecurringOnly = filters.recurringOnly,
@@ -152,7 +151,7 @@ class TransactionsViewModel(
                     // The effective filters, not the stored ones: a filter the scope has
                     // already neutralised is absent from the row and narrows nothing, so
                     // clearing it would change neither the chips nor the list.
-                    canClearFilters = filters.category != null ||
+                    canClearFilters = filters.subject != null ||
                         filters.label != null ||
                         target != null ||
                         filters.recurringOnly ||
@@ -176,8 +175,8 @@ class TransactionsViewModel(
                 selectedScope.value = action.scope
             }
 
-            is TransactionsAction.SelectCategory -> {
-                filters.value = filters.value.copy(category = action.category)
+            is TransactionsAction.SelectSubject -> {
+                filters.value = filters.value.copy(subject = action.subject)
             }
 
             is TransactionsAction.SelectLabel -> {
@@ -217,9 +216,15 @@ private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<
     return filter { transaction -> transaction.installmentId != null }
 }
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
-    if (category == null) return this
-    return filter { it.nominalDimensionId == category.dimensionId }
+/**
+ * The cut by the analytic axis. What each of its values contains is decided by
+ * `Transaction.matches` in `core/model` and nowhere else — in particular, "unclassified"
+ * is not `nominalDimensionId == null` here, or the cut would answer with transfers to a
+ * question asked about the unclassified total.
+ */
+private fun List<Transaction>.filter(subject: SpendingSubject?): List<Transaction> {
+    if (subject == null) return this
+    return filter { it.matches(subject) }
 }
 
 private fun List<Transaction>.filter(label: TransactionLabel?): List<Transaction> {

@@ -87,4 +87,10 @@ data class Transaction(
 
     /** The same fact for the other monetary nature — whether money moved in an account. */
     val hasAssetLeg: Boolean get() = entries.any { it.account.type == AccountType.ASSET }
+
+    /**
+     * Whether any leg posts to a nominal account — what separates a transaction that has an
+     * analytic axis at all from a transfer, a card payment or an adjustment, which have none.
+     */
+    val hasNominalLeg: Boolean get() = entries.any { it.account.type.isNominal }
 }

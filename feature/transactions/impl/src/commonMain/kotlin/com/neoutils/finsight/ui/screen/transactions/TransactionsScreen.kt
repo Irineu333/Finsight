@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.resources.*
@@ -53,7 +54,7 @@ fun TransactionsScreen(
     categoryLabel: TransactionLabel? = null,
     target: TransactionTarget? = null,
     viewModel: TransactionsViewModel = koinViewModel {
-        parametersOf(categoryLabel, null, target)
+        parametersOf(categoryLabel, target)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -256,7 +257,7 @@ private fun FiltersRow(
         ) {
             Box {
                 CategoryFilterChip(
-                    selectedCategory = uiState.selectedCategory,
+                    selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
                     onAction = onAction
                 )
@@ -318,24 +319,34 @@ private fun FiltersRow(
 
 @Composable
 private fun CategoryFilterChip(
-    selectedCategory: Category?,
+    selectedSubject: SpendingSubject?,
     categories: List<Category>,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor =
-        selectedCategory?.let { category ->
-            when (category.type) {
-                Category.Type.INCOME -> IncomeColor
-                Category.Type.EXPENSE -> ExpenseColor
-            }
+    // Only a category has a declared nature. Lending one to the unclassified value would
+    // be inventing state it does not have, so it wears the plain selected colours.
+    val chipColor = when (selectedSubject) {
+        is SpendingSubject.Categorized -> when (selectedSubject.category.type) {
+            Category.Type.INCOME -> IncomeColor
+            Category.Type.EXPENSE -> ExpenseColor
         }
 
+        SpendingSubject.Uncategorized, null -> null
+    }
+
+    val label = when (selectedSubject) {
+        is SpendingSubject.Categorized -> selectedSubject.category.name
+        // The same key the breakdown names this value with: one concept, one word.
+        SpendingSubject.Uncategorized -> stringResource(Res.string.category_spending_uncategorized)
+        null -> stringResource(Res.string.transactions_filter_category)
+    }
+
     FilterChip(
-        selected = selectedCategory != null,
+        selected = selectedSubject != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: stringResource(Res.string.transactions_filter_category)) },
+        label = { Text(label) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -357,7 +368,7 @@ private fun CategoryFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.transactions_filter_category_all)) },
             onClick = {
-                onAction(TransactionsAction.SelectCategory(null))
+                onAction(TransactionsAction.SelectSubject(null))
                 expanded = false
             }
         )
@@ -366,11 +377,23 @@ private fun CategoryFilterChip(
             DropdownMenuItem(
                 text = { Text(category.name) },
                 onClick = {
-                    onAction(TransactionsAction.SelectCategory(category))
+                    onAction(TransactionsAction.SelectSubject(SpendingSubject.Categorized(category)))
                     expanded = false
                 }
             )
         }
+
+        // Last and set apart, as in the breakdown: whoever reads the list of categories
+        // must not run into something that is not one in the middle of it.
+        HorizontalDivider()
+
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+            onClick = {
+                onAction(TransactionsAction.SelectSubject(SpendingSubject.Uncategorized))
+                expanded = false
+            }
+        )
     }
 }
 

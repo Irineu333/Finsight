@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -79,10 +80,9 @@ class TransactionsEmptyStateTest {
     private fun viewModel(
         transactions: List<Transaction>,
         filterLabel: com.neoutils.finsight.domain.model.TransactionLabel? = null,
-        category: Category? = null,
         filterTarget: TransactionTarget? = null,
     ) = TransactionsViewModel(
-        filterLabel = filterLabel, category = category, filterTarget = filterTarget,
+        filterLabel = filterLabel, filterTarget = filterTarget,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
@@ -154,8 +154,8 @@ class TransactionsEmptyStateTest {
     fun `a filter that cuts everything offers to clear`() = runTest(dispatcher) {
         val state = stateAfter(
             transactions = listOf(salary),
-            actions = listOf(TransactionsAction.SelectCategory(groceries)),
-            settled = { it.selectedCategory == groceries },
+            actions = listOf(TransactionsAction.SelectSubject(SpendingSubject.Categorized(groceries))),
+            settled = { it.selectedSubject == SpendingSubject.Categorized(groceries) },
         )
 
         val listState = assertIs<ListState.EmptyScope>(state.listState)
@@ -208,10 +208,10 @@ class TransactionsEmptyStateTest {
             transactions = listOf(salary, cardPurchase),
             actions = listOf(
                 TransactionsAction.SelectScope(TransactionScope.ACCOUNTS),
-                TransactionsAction.SelectCategory(groceries),
+                TransactionsAction.SelectSubject(SpendingSubject.Categorized(groceries)),
                 TransactionsAction.ToggleRecurring(true),
             ),
-            settled = { it.selectedCategory == groceries && it.showRecurringOnly },
+            settled = { it.selectedSubject == SpendingSubject.Categorized(groceries) && it.showRecurringOnly },
             vm = vm,
         )
         assertIs<ListState.EmptyScope>(filtered.listState)
@@ -220,12 +220,12 @@ class TransactionsEmptyStateTest {
         vm.uiState.test {
             var state = awaitItem()
             vm.onAction(TransactionsAction.ClearFilters)
-            while (state.selectedCategory != null || state.showRecurringOnly) state = awaitItem()
+            while (state.selectedSubject != null || state.showRecurringOnly) state = awaitItem()
             cleared = state
             cancelAndIgnoreRemainingEvents()
         }
 
-        assertEquals(null, cleared.selectedCategory)
+        assertEquals(null, cleared.selectedSubject)
         assertEquals(null, cleared.selectedLabel)
         assertEquals(null, cleared.selectedTarget)
         assertEquals(false, cleared.showRecurringOnly)

@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -36,7 +37,13 @@ data class TransactionsUiState(
      * caller that says nothing gets "this is the current month" instead of a second clock.
      */
     val currentYearMonth: YearMonth = selectedYearMonth,
-    val selectedCategory: Category? = null,
+    /**
+     * The value of the analytic axis the list is cut by, `null` when nothing is cut. The
+     * chip resolves its own label from it — the unclassified one carries no text of its
+     * own, by the rule that names it in the presentation layer.
+     */
+    val selectedSubject: SpendingSubject? = null,
+    /** The categories the menu offers. The unclassified value is not one of them. */
     val categories: List<Category> = listOf(),
     val selectedLabel: TransactionLabel? = null,
     val selectedTarget: TransactionTarget? = null,

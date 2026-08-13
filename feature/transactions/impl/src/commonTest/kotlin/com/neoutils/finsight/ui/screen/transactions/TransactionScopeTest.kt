@@ -7,6 +7,7 @@ import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -117,7 +118,7 @@ class TransactionScopeTest {
         }
 
     private fun viewModel(transactions: List<Transaction> = everything) = TransactionsViewModel(
-        filterLabel = null, category = null, filterTarget = null,
+        filterLabel = null, filterTarget = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,
@@ -288,8 +289,8 @@ class TransactionScopeTest {
         val unfiltered = stateUnder(TransactionScope.ACCOUNTS)
         val filtered = stateUnder(
             TransactionScope.ACCOUNTS,
-            actions = listOf(TransactionsAction.SelectCategory(groceries)),
-            settled = { it.selectedScope == TransactionScope.ACCOUNTS && it.selectedCategory == groceries },
+            actions = listOf(TransactionsAction.SelectSubject(SpendingSubject.Categorized(groceries))),
+            settled = { it.selectedScope == TransactionScope.ACCOUNTS && it.selectedSubject == SpendingSubject.Categorized(groceries) },
         )
 
         assertEquals(listOf(groceriesExpense.id), filtered.listed)

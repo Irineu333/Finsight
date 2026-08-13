@@ -38,6 +38,12 @@ sealed class InstallmentsUiState {
         val selectedDomainInstallment: Installment?,
         val selectedDomainTransactions: List<Transaction>,
         val selectedSubject: SpendingSubject?,
+        /**
+         * Whether anything the other controls left standing is unclassified. The value is
+         * offered only then — a command that could answer nothing but an empty list is not
+         * an offer — and stays while selected, so the cut is always undoable.
+         */
+        val hasUncategorized: Boolean = false,
         val selectedType: TransactionType?,
         override val selectedFilter: InstallmentFilter,
         val categories: List<Category>,
@@ -45,6 +51,10 @@ sealed class InstallmentsUiState {
 
         val selectedInstallment: InstallmentUi?
             get() = installments.getOrNull(selectedInstallmentIndex)
+
+        /** Whether the menu offers the unclassified value (see [hasUncategorized]). */
+        val mustShowUncategorizedFilter =
+            hasUncategorized || selectedSubject == SpendingSubject.Uncategorized
     }
 }
 

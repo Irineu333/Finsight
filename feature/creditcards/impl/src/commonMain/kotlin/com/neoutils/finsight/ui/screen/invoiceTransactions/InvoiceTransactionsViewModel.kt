@@ -147,11 +147,15 @@ class InvoiceTransactionsViewModel(
 
         val invoiceTransactions = transactions
             .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
-        val filteredTransactions = invoiceTransactions
-            .filter(currentFilters.subject)
+        // Everything the other controls leave standing — the universe the axis cuts, and
+        // the one the unclassified value is offered against.
+        val cuttable = invoiceTransactions
             .filter(currentFilters.type, creditCard.accountId)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
+
+        val filteredTransactions = cuttable
+            .filter(currentFilters.subject)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -242,6 +246,7 @@ class InvoiceTransactionsViewModel(
             // The filter offers only open categories.
             categories = categories.filterNot { it.isArchived },
             selectedSubject = currentFilters.subject,
+            hasUncategorized = cuttable.any { it.matches(SpendingSubject.Uncategorized) },
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
             showInstallmentOnly = currentFilters.installmentOnly,

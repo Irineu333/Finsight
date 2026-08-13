@@ -259,6 +259,7 @@ private fun FiltersRow(
                 CategoryFilterChip(
                     selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
+                    offersUncategorized = uiState.mustShowUncategorizedFilter,
                     onAction = onAction
                 )
             }
@@ -321,6 +322,7 @@ private fun FiltersRow(
 private fun CategoryFilterChip(
     selectedSubject: SpendingSubject?,
     categories: List<Category>,
+    offersUncategorized: Boolean,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -383,17 +385,17 @@ private fun CategoryFilterChip(
             )
         }
 
-        // Last and set apart, as in the breakdown: whoever reads the list of categories
-        // must not run into something that is not one in the middle of it.
-        HorizontalDivider()
-
-        DropdownMenuItem(
-            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
-            onClick = {
-                onAction(TransactionsAction.SelectSubject(SpendingSubject.Uncategorized))
-                expanded = false
-            }
-        )
+        // Last, as in the breakdown — and only when the cut has something to find: a value
+        // that could answer nothing but an empty list is not an offer.
+        if (offersUncategorized) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+                onClick = {
+                    onAction(TransactionsAction.SelectSubject(SpendingSubject.Uncategorized))
+                    expanded = false
+                }
+            )
+        }
     }
 }
 

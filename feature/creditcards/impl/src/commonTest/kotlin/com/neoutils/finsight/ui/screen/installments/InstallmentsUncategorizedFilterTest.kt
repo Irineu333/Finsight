@@ -63,9 +63,9 @@ class InstallmentsUncategorizedFilterTest {
     private val classified = charge(id = 1, number = 1, nominalDimensionId = 77)
     private val loose = charge(id = 2, number = 2, nominalDimensionId = null)
 
-    private fun viewModel() = InstallmentsViewModel(
+    private fun viewModel(charges: List<Transaction> = listOf(classified, loose)) = InstallmentsViewModel(
         installmentRepository = SingleInstallment(installment),
-        transactionRepository = ChargeStore(listOf(classified, loose)),
+        transactionRepository = ChargeStore(charges),
         categoryRepository = FakeCategoryRepository(),
         invoiceRepository = NoInvoices,
         installmentUiMapper = InstallmentUiMapper(),
@@ -97,6 +97,18 @@ class InstallmentsUncategorizedFilterTest {
             assertEquals(listOf(loose.id), cut.transactions.map { it.transaction.id })
         }
     }
+
+    @Test
+    fun `the value is offered only when a charge of this installment is unclassified`() =
+        runTest(dispatcher) {
+            viewModel().uiState.test {
+                assertEquals(true, awaitContent().mustShowUncategorizedFilter)
+            }
+
+            viewModel(charges = listOf(classified)).uiState.test {
+                assertEquals(false, awaitContent().mustShowUncategorizedFilter)
+            }
+        }
 
     @Test
     fun `selecting another installment returns the axis to neutral`() = runTest(dispatcher) {

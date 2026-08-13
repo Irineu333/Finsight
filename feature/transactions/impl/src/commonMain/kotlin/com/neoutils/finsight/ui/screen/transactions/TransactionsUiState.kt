@@ -45,6 +45,13 @@ data class TransactionsUiState(
     val selectedSubject: SpendingSubject? = null,
     /** The categories the menu offers. The unclassified value is not one of them. */
     val categories: List<Category> = listOf(),
+    /**
+     * Whether anything the other controls left standing is unclassified. The value is
+     * offered only then: a command that could only answer with an empty list is not an
+     * offer, and its absence is the same silence the breakdown keeps in a period with
+     * nothing unclassified in it.
+     */
+    val hasUncategorized: Boolean = false,
     val selectedLabel: TransactionLabel? = null,
     val selectedTarget: TransactionTarget? = null,
     val showRecurringOnly: Boolean = false,
@@ -59,6 +66,13 @@ data class TransactionsUiState(
      * the same decision in a second control, able to contradict the first.
      */
     val mustShowTargetFilter = selectedScope == TransactionScope.ALL
+
+    /**
+     * Whether the menu offers the unclassified value. It stays while selected even when
+     * nothing survives it, or the cut would go on narrowing from a control the user can no
+     * longer reach to undo.
+     */
+    val mustShowUncategorizedFilter = hasUncategorized || selectedSubject == SpendingSubject.Uncategorized
 
     /** An instalment is a card arrangement, so the filter has nothing to narrow without one. */
     val mustShowInstallmentFilter = selectedScope != TransactionScope.ACCOUNTS

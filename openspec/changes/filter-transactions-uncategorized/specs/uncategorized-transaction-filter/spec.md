@@ -12,7 +12,8 @@ Um segundo controle poderia assumir estado contraditório com o primeiro ("categ
 Mercado" e "sem categoria" ao mesmo tempo), e o eixo é uma decisão só.
 
 #### Scenario: Três estados no mesmo controle
-- **WHEN** o controle de categoria é aberto
+- **WHEN** o controle de categoria é aberto sobre uma lista que contém lançamento sem
+  categoria
 - **THEN** ele oferece o estado neutro ("todas"), cada categoria existente e um valor "sem
   categoria", e selecionar qualquer um deles desfaz o anterior
 
@@ -104,12 +105,44 @@ natureza declarada.
 - **WHEN** o valor "sem categoria" está selecionado
 - **THEN** o controle é exibido no estado selecionado sem a cor de receita nem a de despesa
 
+### Requirement: O valor é oferecido apenas quando há o que recortar
+
+O valor não classificado SHALL ser oferecido apenas quando a lista que o controle recorta
+contiver ao menos um lançamento sem classificação — a lista **já recortada pelos demais
+controles**, que é a que a pessoa tem diante de si. Um comando que só pode responder com uma
+lista vazia não é uma oferta, e é a mesma regra pela qual o detalhamento omite a linha num
+período sem nada por classificar.
+
+O valor SHALL continuar oferecido enquanto for o recorte ativo, ainda que nada sobreviva a
+ele: um item que sumisse com o recorte em vigor deixaria a lista recortada por um controle
+que a pessoa já não alcança para desfazer — o que a regra de "filtro suprimido para de
+recortar" existe para impedir.
+
+#### Scenario: Mês sem nada por classificar não oferece o valor
+- **WHEN** todos os lançamentos do período têm categoria, ou estão fora do eixo
+- **THEN** o controle não oferece o valor "sem categoria"
+
+#### Scenario: Outro filtro pode retirar a oferta
+- **WHEN** o único lançamento sem categoria do período é uma despesa e o recorte de natureza
+  está em "receita"
+- **THEN** o controle não oferece o valor, porque não há o que ele encontrasse na lista
+
+#### Scenario: O valor selecionado permanece oferecido
+- **WHEN** o valor está selecionado e nada na lista sobrevive a ele
+- **THEN** ele continua no controle, de modo que o recorte possa ser desfeito por onde foi
+  aplicado
+
+#### Scenario: Dimensão órfã não faz a oferta aparecer
+- **WHEN** o único lançamento sem categoria resolvida do período carrega dimensão órfã
+- **THEN** o controle não oferece o valor, pela mesma regra que o mantém fora do recorte
+
 ### Requirement: A regra vale em toda superfície que oferece o filtro
 
 Toda superfície que oferece o filtro de categoria sobre uma lista de lançamentos SHALL
-oferecer também o valor não classificado, com o mesmo critério de recorte, o mesmo rótulo e
-a mesma posição no controle. MUST NOT existir superfície em que o filtro de categoria seja
-oferecido e o não classificado não.
+oferecer também o valor não classificado, com o mesmo critério de recorte, o mesmo rótulo, a
+mesma posição no controle e a mesma regra de omissão. MUST NOT existir superfície em que o
+filtro de categoria seja oferecido, haja o que recortar, e o não classificado não seja
+oferecido.
 
 Uma superfície a menos não é uma lacuna cosmética: quem procura o que ficou por classificar
 não sabe de cor em que tela o comando existe, e a ausência do valor lê-se como "aqui não há
@@ -126,7 +159,8 @@ ausência de escolha, e um item selecionável criaria duas formas de dizer a mes
 
 #### Scenario: As cinco superfícies oferecem o valor
 - **WHEN** o filtro de categoria é aberto na tela de transações, na de contas, na de cartões,
-  na de transações de fatura e na de parcelamentos
+  na de transações de fatura e na de parcelamentos, cada uma sobre uma lista que contém
+  lançamento sem categoria
 - **THEN** todas oferecem o valor "sem categoria", com o mesmo rótulo e na mesma posição
 
 #### Scenario: O recorte concorda entre superfícies

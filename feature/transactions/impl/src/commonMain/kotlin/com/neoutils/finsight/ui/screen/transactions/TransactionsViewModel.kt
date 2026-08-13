@@ -108,16 +108,21 @@ class TransactionsViewModel(
         // hands out the identities behind them (design D6).
         val lookup = TransactionFacadeLookup.of(categories, installments)
 
-        val visible = transactions
+        // Everything the other controls leave standing — the universe the axis cuts, and
+        // the one the unclassified value is offered against: a value that promised nothing
+        // to find would be a command that answers with an empty list.
+        val cuttable = transactions
             .filter(filters.recurringOnly)
             .filterInstallment(installmentOnly)
-            .filter(filters.subject)
             .filter(filters.label)
             .filter(target)
             // The scope narrows the list to the transactions touching its perimeter,
             // so summary and list always answer for the same set of accounts.
             .filter { scope.contains(it) }
             .filter { it.date.yearMonth == yearMonth }
+
+        val visible = cuttable
+            .filter(filters.subject)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -128,6 +133,7 @@ class TransactionsViewModel(
             currentYearMonth = clock.currentYearMonth(),
             categories = categories,
             selectedSubject = filters.subject,
+            hasUncategorized = cuttable.any { it.matches(SpendingSubject.Uncategorized) },
             selectedLabel = filters.label,
             selectedTarget = target,
             showRecurringOnly = filters.recurringOnly,

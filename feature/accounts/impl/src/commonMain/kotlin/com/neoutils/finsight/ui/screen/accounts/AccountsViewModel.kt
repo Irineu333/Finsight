@@ -178,10 +178,14 @@ class AccountsViewModel(
             transaction.date.yearMonth == month
         }
 
-        val filteredTransactions = monthTransactions
-            .filter(currentFilters.subject)
+        // Everything the other controls leave standing — the universe the axis cuts, and
+        // the one the unclassified value is offered against.
+        val cuttable = monthTransactions
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
+
+        val filteredTransactions = cuttable
+            .filter(currentFilters.subject)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -209,6 +213,7 @@ class AccountsViewModel(
             listState = listState,
             categories = categories,
             selectedSubject = currentFilters.subject,
+            hasUncategorized = cuttable.any { it.isUncategorized },
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
             today = today,

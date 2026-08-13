@@ -131,16 +131,20 @@ class InstallmentsViewModel(
 
         // Filtering lives here, as it does on every sibling screen — the state is
         // handed the finished list instead of deriving it on read.
-        val rows = selectedTransactions
-            // The cut by the analytic axis, decided by `Transaction.matches` in `core/model`
-            // and nowhere else — "unclassified" is a nominal leg with no dimension, not the
-            // absence of one.
-            .filter { transaction -> subject == null || transaction.matches(subject) }
+        // Everything the other control leaves standing — the universe the axis cuts, and
+        // the one the unclassified value is offered against.
+        val cuttable = selectedTransactions
             .filter { transaction ->
                 type == null || transaction.primaryEntry?.let {
                     deriveTransactionType(it.amount, transaction.entries)
                 } == type
             }
+
+        val rows = cuttable
+            // The cut by the analytic axis, decided by `Transaction.matches` in `core/model`
+            // and nowhere else — "unclassified" is a nominal leg with no dimension, not the
+            // absence of one.
+            .filter { transaction -> subject == null || transaction.matches(subject) }
             .mapNotNull { installmentUiMapper.toRowUi(it, facades.lookup, facades.invoicesByDimension) }
 
         InstallmentsUiState.Content(
@@ -150,6 +154,7 @@ class InstallmentsViewModel(
             selectedDomainInstallment = selected?.installment,
             selectedDomainTransactions = selectedTransactions,
             selectedSubject = subject,
+            hasUncategorized = cuttable.any { it.matches(SpendingSubject.Uncategorized) },
             selectedType = type,
             selectedFilter = filter,
             categories = categories,

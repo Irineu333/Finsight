@@ -93,13 +93,25 @@ conta e de nada mais. Deixá-la implícita em `core/model` (por exemplo testando
 `entries.any { ... }` de lá) espalharia conhecimento do plano de contas para fora de quem o
 define.
 
-### D4 — O valor entra no fim do menu, separado das categorias
+### D4 — O valor entra no fim do menu, e só quando há o que recortar
 
-O item "sem categoria" é o último do menu suspenso, depois das categorias, com um separador.
-É a mesma posição que o detalhamento fixa para a linha equivalente
-(`uncategorized-spending-breakdown`), pela mesma razão: quem lê a lista de categorias não
-deve encontrar no meio dela algo que não é uma. Pô-lo logo abaixo de "Todas" o aproximaria
-visualmente do estado neutro, com o qual ele não tem parentesco — um recorta, o outro não.
+O item "sem categoria" é o último do menu suspenso, depois das categorias — a mesma posição
+que o detalhamento fixa para a linha equivalente (`uncategorized-spending-breakdown`), pela
+mesma razão: quem lê a lista de categorias não deve encontrar no meio dela algo que não é
+uma. Pô-lo logo abaixo de "Todas" o aproximaria visualmente do estado neutro, com o qual ele
+não tem parentesco — um recorta, o outro não. Sem separador: a posição já diz o que há para
+dizer, e uma régua num menu de uma coluna só acrescenta ruído.
+
+Ele é oferecido **apenas quando a lista já recortada pelos demais controles contém algo sem
+classificação**, pela mesma regra de omissão do detalhamento — um comando que só pode
+responder vazio não é uma oferta. A pergunta é feita sobre a lista que a pessoa tem diante de
+si, e não sobre o razão inteiro: é ela que o comando promete recortar.
+
+A exceção é o próprio recorte ativo, que mantém o item no lugar mesmo sem nada sobrevivendo:
+o estado o carrega como `mustShowUncategorizedFilter = hasUncategorized || selecionado`.
+Sem isso, o item sumiria com o recorte em vigor e a lista continuaria estreitada por um
+controle que já não se alcança — exatamente o que `transaction-scope` proíbe quando diz que
+um filtro que não é oferecido para de recortar.
 
 O chip selecionado usa `FilterChipDefaults.filterChipColors()` sem cor de natureza, ao
 contrário de uma categoria selecionada, que herda `IncomeColor`/`ExpenseColor` do

@@ -39,7 +39,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -651,6 +650,7 @@ private fun FiltersRow(
                 CategoryFilterChip(
                     selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
+                    offersUncategorized = uiState.mustShowUncategorizedFilter,
                     onAction = onAction,
                 )
             }
@@ -671,6 +671,7 @@ private fun FiltersRow(
 private fun CategoryFilterChip(
     selectedSubject: SpendingSubject?,
     categories: List<Category>,
+    offersUncategorized: Boolean,
     onAction: (InstallmentsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -737,17 +738,17 @@ private fun CategoryFilterChip(
             )
         }
 
-        // Last and set apart, as in the breakdown: the list of categories must not hold
-        // something that is not one in its middle.
-        HorizontalDivider()
-
-        DropdownMenuItem(
-            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
-            onClick = {
-                onAction(InstallmentsAction.SelectSubject(SpendingSubject.Uncategorized))
-                expanded = false
-            },
-        )
+        // Last, and only when the cut has something to find: a value that could answer
+        // nothing but an empty list is not an offer.
+        if (offersUncategorized) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+                onClick = {
+                    onAction(InstallmentsAction.SelectSubject(SpendingSubject.Uncategorized))
+                    expanded = false
+                },
+            )
+        }
     }
 }
 

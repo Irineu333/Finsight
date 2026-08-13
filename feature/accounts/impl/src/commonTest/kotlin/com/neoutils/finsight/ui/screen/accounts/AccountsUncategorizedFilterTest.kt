@@ -139,6 +139,39 @@ class AccountsUncategorizedFilterTest {
     }
 
     @Test
+    fun `the value is offered only when the cut has something to find`() = runTest(dispatcher) {
+        viewModel().uiState.test {
+            assertEquals(true, awaitContent().mustShowUncategorizedFilter)
+        }
+
+        viewModel(listOf(classifiedExpense, transfer, invoicePayment, adjustment, orphanExpense))
+            .uiState.test {
+                assertEquals(
+                    false,
+                    awaitContent().mustShowUncategorizedFilter,
+                    "nothing here is unclassified — the others are outside the axis, and the " +
+                        "orphan is an integrity failure",
+                )
+            }
+    }
+
+    @Test
+    fun `the value stays offered while it is the active cut`() = runTest(dispatcher) {
+        val vm = viewModel(listOf(classifiedExpense))
+
+        vm.uiState.test {
+            awaitContent()
+            vm.onAction(AccountsAction.SelectSubject(SpendingSubject.Uncategorized))
+
+            var content = awaitContent()
+            while (content.selectedSubject == null) content = awaitContent()
+
+            assertEquals(false, content.hasUncategorized)
+            assertEquals(true, content.mustShowUncategorizedFilter)
+        }
+    }
+
+    @Test
     fun `clearing returns the axis to neutral`() = runTest(dispatcher) {
         val vm = viewModel()
 

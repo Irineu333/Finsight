@@ -100,3 +100,21 @@ mesmo critério.
 - [x] 8.7 `./gradlew jvmTest` — 1246 testes, 10 falhas, todas as 10 pré-existentes
   (`:app:shared`, testes de arquitetura que enxergam a cópia do repositório em
   `.claude/worktrees/main-limpo`).
+
+## 9. Ajustes pedidos na revisão
+
+**Para começar:** o grupo 8 concluído — as cinco superfícies já oferecem o valor.
+**Ao terminar:** `./gradlew jvmTest` sem falha nova; o menu não tem separador e o valor só
+aparece quando há o que ele encontre.
+
+- [x] 9.1 Remover o `HorizontalDivider` dos cinco menus (e o import que ele trouxe).
+- [x] 9.2 Oferecer o valor apenas quando a lista **já recortada pelos demais controles**
+  contém algo sem classificação: `hasUncategorized` no estado das cinco telas, derivado do
+  mesmo `matches` (`isUncategorized` na tela de contas, que recorta modelo de exibição).
+- [x] 9.3 Manter o valor no menu enquanto for o recorte ativo
+  (`mustShowUncategorizedFilter = hasUncategorized || selecionado`), para que um recorte em
+  vigor nunca fique sem como ser desfeito.
+- [x] 9.4 Testes da regra nova em transações, contas e parcelamentos.
+- [x] 9.5 `spec.md` e `design.md` (D4) alinhados: a omissão virou requisito, com os cenários
+  do mês sem nada por classificar, do filtro que retira a oferta, do valor selecionado que
+  permanece e da dimensão órfã.

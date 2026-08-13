@@ -216,6 +216,49 @@ class TransactionsUncategorizedFilterTest {
     }
 
     @Test
+    fun `the value is offered only when the cut has something to find`() = runTest(dispatcher) {
+        val withLoose = stateAfter(actions = emptyList(), settled = { it.listState !is ListState.Loading })
+        assertEquals(true, withLoose.mustShowUncategorizedFilter)
+
+        val withoutLoose = stateAfter(
+            actions = emptyList(),
+            transactions = listOf(groceriesExpense, transfer, invoicePayment, adjustment),
+            settled = { it.listState !is ListState.Loading },
+        )
+        assertEquals(
+            false,
+            withoutLoose.mustShowUncategorizedFilter,
+            "nothing here is unclassified — a transfer and a payment are outside the axis",
+        )
+    }
+
+    @Test
+    fun `the value stays offered while it is the active cut`() = runTest(dispatcher) {
+        // Otherwise the menu entry would vanish under a cut that keeps narrowing, leaving
+        // no way to undo it from the control that applied it.
+        val state = uncategorized(
+            transactions = listOf(groceriesExpense),
+            settled = { it.selectedSubject == SpendingSubject.Uncategorized },
+        )
+
+        assertEquals(false, state.hasUncategorized)
+        assertEquals(true, state.mustShowUncategorizedFilter)
+    }
+
+    @Test
+    fun `another filter can take the offer away`() = runTest(dispatcher) {
+        // The offer answers for the list in front of the user: with income only, the loose
+        // expense is not in it, and a command promising it would answer with nothing.
+        val state = stateAfter(
+            actions = listOf(TransactionsAction.SelectLabel(TransactionLabel.INCOME)),
+            transactions = listOf(looseExpense, groceriesExpense),
+            settled = { it.selectedLabel == TransactionLabel.INCOME },
+        )
+
+        assertEquals(false, state.mustShowUncategorizedFilter)
+    }
+
+    @Test
     fun `clearing the filters returns the axis to neutral`() = runTest(dispatcher) {
         val state = uncategorized(
             extra = listOf(TransactionsAction.ClearFilters),

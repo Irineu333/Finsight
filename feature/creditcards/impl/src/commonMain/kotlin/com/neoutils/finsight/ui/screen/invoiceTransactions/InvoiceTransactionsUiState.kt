@@ -33,10 +33,21 @@ data class InvoiceTransactionsUiState(
     val listState: ListState = ListState.Loading,
     val categories: List<Category> = emptyList(),
     val selectedSubject: SpendingSubject? = null,
+        /**
+     * Whether anything the other controls left standing is unclassified. The value is
+     * offered only then — a command that could answer nothing but an empty list is not
+     * an offer — and stays while selected, so the cut is always undoable.
+     */
+    val hasUncategorized: Boolean = false,
     val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
 ) {
+
+    /** Whether the menu offers the unclassified value (see [hasUncategorized]). */
+    val mustShowUncategorizedFilter =
+        hasUncategorized || selectedSubject == SpendingSubject.Uncategorized
+
 
     /**
      * What stands where the list goes. The transactions live *inside* [ListState.Content]

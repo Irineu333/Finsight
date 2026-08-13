@@ -63,15 +63,16 @@ data class RecurringForm(
         )
     }
 
-    fun isValid(): Boolean {
-        if (amount.isEmpty()) return false
-        if (amount.moneyToDouble() == 0.0) return false
-        if (title.isEmpty() && category == null) return false
-        if (dayOfMonth.toIntOrNull()?.let { it in 1..31 } != true) return false
-        if (type.isIncome && account == null) return false
-        if (type.isExpense && account == null && creditCard == null) return false
-        return true
-    }
+    /**
+     * Whether this form describes a template that could exist — the cheap reading the
+     * UI needs to decide whether to offer the save.
+     *
+     * Read off [toRecurring] rather than restated: two hand-written copies of the same
+     * rules is one of them drifting from the other, silently, in whichever direction
+     * nobody is looking. The anchor is irrelevant here — a template is no more or less
+     * valid for when it was created.
+     */
+    fun isValid(): Boolean = toRecurring(createdAt = 0L).isRight()
 
     companion object {
         fun from(

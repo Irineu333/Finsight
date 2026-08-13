@@ -1,0 +1,119 @@
+## ADDED Requirements
+
+### Requirement: O filtro de categoria seleciona sobre o eixo, não sobre a categoria
+
+O controle que recorta uma lista de lançamentos por categoria SHALL selecionar um valor do
+**eixo analítico** — o mesmo tipo-soma que o detalhamento usa (`uncategorized-spending-breakdown`):
+uma categoria, ou a ausência de classificação —, além do estado neutro que não recorta nada.
+
+O não classificado MUST NOT ser representado no filtro como uma categoria sintética, como um
+item da lista de categorias, nem como um segundo controle booleano ao lado do de categoria.
+Um segundo controle poderia assumir estado contraditório com o primeiro ("categoria =
+Mercado" e "sem categoria" ao mesmo tempo), e o eixo é uma decisão só.
+
+#### Scenario: Três estados no mesmo controle
+- **WHEN** o controle de categoria é aberto
+- **THEN** ele oferece o estado neutro ("todas"), cada categoria existente e um valor "sem
+  categoria", e selecionar qualquer um deles desfaz o anterior
+
+#### Scenario: O não classificado não vira categoria
+- **WHEN** o valor "sem categoria" está selecionado
+- **THEN** nenhuma categoria com esse nome existe no sistema, e nada permite renomeá-la,
+  arquivá-la ou removê-la
+
+### Requirement: O recorte sem classificação é a ausência de dimensão na perna nominal
+
+Com o não classificado selecionado, a lista SHALL exibir exatamente os lançamentos que
+**possuem perna nominal** (`INCOME` ou `EXPENSE`) e cuja perna nominal **não carrega
+dimensão**.
+
+Um lançamento **sem perna nominal** — transferência entre contas, pagamento de fatura,
+ajuste — MUST NOT ser exibido por esse recorte. Ele não está fora de classificação: está
+fora do eixo, e não compõe total sem classificação algum. Exibi-lo faria o recorte discordar
+do número que ele existe para explicar.
+
+O critério SHALL ser o mesmo que o razão usa para compor o total sem classificação; MUST NOT
+existir uma segunda definição de "sem categoria" nesta tela.
+
+#### Scenario: Despesa sem categoria entra
+- **WHEN** existe uma despesa lançada sem categoria no período e o valor "sem categoria"
+  está selecionado
+- **THEN** ela é exibida na lista
+
+#### Scenario: Receita sem categoria entra
+- **WHEN** existe uma receita lançada sem categoria no período e o valor "sem categoria"
+  está selecionado
+- **THEN** ela é exibida na lista, pelo mesmo critério da despesa
+
+#### Scenario: Transferência não é não classificado
+- **WHEN** existe uma transferência entre contas no período e o valor "sem categoria" está
+  selecionado
+- **THEN** ela não é exibida, porque não tem perna nominal
+
+#### Scenario: Pagamento de fatura e ajuste também não
+- **WHEN** existem um pagamento de fatura e um ajuste de saldo no período e o valor "sem
+  categoria" está selecionado
+- **THEN** nenhum dos dois é exibido
+
+#### Scenario: Lançamento categorizado sai
+- **WHEN** uma despesa carrega categoria e o valor "sem categoria" está selecionado
+- **THEN** ela não é exibida
+
+#### Scenario: Dimensão órfã não é lavada no recorte
+- **WHEN** uma perna nominal carrega uma dimensão que não resolve para categoria alguma
+- **THEN** o lançamento MUST NOT ser exibido pelo recorte sem classificação, porque isso é
+  falha de integridade e não ausência de classificação
+
+### Requirement: O recorte sem classificação governa apenas a lista
+
+Selecionar o não classificado MUST NOT alterar nenhuma linha do resumo, exatamente como já
+vale para qualquer categoria (`transaction-scope`, "Alcance dos controles é posicional"). O
+controle SHALL permanecer abaixo do card de resumo e SHALL compor com os demais recortes —
+escopo, período, natureza, recorrência, parcelamento — por conjunção.
+
+#### Scenario: O resumo não se move
+- **WHEN** o usuário seleciona "sem categoria"
+- **THEN** a lista é recortada e todas as linhas do resumo permanecem as do mês completo
+  daquele escopo
+
+#### Scenario: Composição com outro recorte
+- **WHEN** "sem categoria" e o recorte de natureza "despesa" estão ativos ao mesmo tempo
+- **THEN** a lista exibe apenas despesas sem categoria
+
+#### Scenario: O escopo continua recortando
+- **WHEN** "sem categoria" está ativo e o escopo é "cartões"
+- **THEN** a lista exibe apenas lançamentos sem categoria que tocam o perímetro de cartões
+
+### Requirement: O controle diz que está no não classificado, sem se passar por categoria
+
+Com o não classificado selecionado, o controle SHALL exibir o rótulo traduzido do não
+classificado, resolvido na apresentação a partir do valor do eixo — o modelo do filtro MUST
+NOT carregar texto voltado ao usuário. A chave de string SHALL existir em português e em
+inglês.
+
+O controle SHALL ser visualmente distinguível de uma categoria selecionada: MUST NOT assumir
+a cor de natureza que uma categoria selecionada assume, porque o não classificado não tem
+natureza declarada.
+
+#### Scenario: Rótulo nos dois idiomas
+- **WHEN** o app roda em português e em inglês com o valor selecionado
+- **THEN** o controle é nomeado por uma chave de string presente nos dois arquivos de
+  recursos
+
+#### Scenario: Sem cor de natureza
+- **WHEN** o valor "sem categoria" está selecionado
+- **THEN** o controle é exibido no estado selecionado sem a cor de receita nem a de despesa
+
+### Requirement: O não classificado é limpo como qualquer outro recorte
+
+O valor não classificado SHALL contar como filtro ativo: enquanto ele estiver selecionado, o
+vazio de recorte SHALL oferecer limpar os filtros (`transaction-list-empty-states`), e
+limpar os filtros SHALL devolver o eixo ao estado neutro.
+
+#### Scenario: Vazio de recorte oferece limpar
+- **WHEN** o mês não tem nenhum lançamento sem categoria e o valor está selecionado
+- **THEN** a lista exibe o vazio de recorte com a ação de limpar os filtros
+
+#### Scenario: Limpar devolve ao neutro
+- **WHEN** o usuário limpa os filtros com "sem categoria" selecionado
+- **THEN** o controle volta ao estado neutro e a lista deixa de ser recortada pelo eixo

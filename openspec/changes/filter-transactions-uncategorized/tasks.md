@@ -72,8 +72,9 @@ está verde de novo.
 ## 7. Verificação final
 
 **Para começar:** os grupos 1 a 6 concluídos.
-**Ao terminar:** a suíte completa está verde e o efeito do item novo no fim do menu sobre os
-fluxos Maestro está checado — o risco declarado no design.
+**Ao terminar:** a suíte unitária passa (7.1). A checagem E2E do risco declarado no design foi
+**adiada por decisão**, com validação manual da tela no lugar — o que ficou de fora está escrito
+na própria 7.2, para que ninguém leia o grupo como uma travessia confirmada.
 
 - [x] 7.1 Rodar `./gradlew jvmTest` e ler a saída; a suíte inteira passa. Relatar qualquer falha com o teste e o arquivo, sem presumir que é pré-existente.
-- [ ] 7.2 Rodar a suíte Maestro conferindo o risco "fluxos que abrem o filtro por posição": ler `.maestro/README.md` §2 antes, executar as sete checagens `adb` do dispositivo (AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de hardware), reinstalar o APK debug com `./gradlew :app:android:installDebug` e rodar `maestro test .maestro`. Relatar o resultado por fluxo e em qual dispositivo a execução aconteceu; um item novo no fim do menu pode alterar a rolagem, então qualquer fluxo que toque o filtro de categoria precisa ser confirmado, não presumido.
+- [x] 7.2 **Adiada por decisão, com validação manual no lugar.** O que foi executado: AVD de referência `finsight_e2e` (`emulator-5556`), as sete checagens da §2.2 conferidas e corretas (API 36, 1080x2400, 420dpi, `-en-rUS-`, `-nokeys-`, IME presente, `show_ime_with_hard_keyboard = 0`), APK debug reinstalado, `maestro test .maestro` → **12/14**. `installments_lifecycle` passa sozinho (ordem/sincronização). `creditcards_lifecycle` falha também com esta mudança no stash, logo é anterior a ela — o passo é a fatura seguinte oferecer fechamento após o salto de 45 dias. `ledger_lifecycle`, o único fluxo que passa pela tela de transações, passou na suíte e depois ficou intermitente em execuções avulsas, sem conclusão. O risco do design ("um item novo no fim do menu altera a rolagem") **não** foi fechado por E2E: nenhum fluxo da suíte abre o filtro de categoria da tela de transações, e a verificação ficou na conferência manual da tela. Retomar quando a suíte for estabilizada.

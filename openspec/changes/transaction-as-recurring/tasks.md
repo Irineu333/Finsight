@@ -252,3 +252,28 @@ lida.
       e executar num AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de
       hardware — conferindo antes as verificações `adb` de `.maestro/README.md` §2 e **relatando
       em qual dispositivo a execução aconteceu**
+
+---
+
+## 9. Ajustes de UX após o primeiro uso
+
+Levantados testando o app no dispositivo, depois de o grupo 6 estar de pé. Não mudam o que a
+mudança faz — mudam como ela se comporta na mão de quem usa, e é por isso que só apareceram aqui.
+
+**Barreira de entrada:** grupo 6 concluído e o fluxo exercitado à mão no aparelho.
+**Barreira de saída:** o app compila (`./gradlew :app:android:assembleDebug`), o fluxo `.maestro`
+continua alcançando `id: add_transaction_repeat`, e nenhum teste de `AddTransactionRecurringTest`
+muda — nada aqui toca estado ou decisão, só a forma.
+
+- [x] 9.1 **Aproximar os dois ícones do campo de data.** Dois `IconButton` no `trailingIcon` ficam
+      com 48dp de alvo cada, e o par lê como dois controles separados com um vão entre eles. Ambos
+      passam a 40dp, num `Row` com `Arrangement.spacedBy((-4).dp)`: um par de affordances de um
+      campo só, que é o que eles são. O alvo de toque continua confortável e o `testTag` não muda.
+- [x] 9.2 **Tirar o solavanco ao marcar a recorrência.** O `supportingText` entra e sai com a nota,
+      e a altura do campo mudava num quadro só, empurrando tudo abaixo dele. O campo de data ganha
+      `Modifier.animateContentSize()`, que carrega a mudança de altura, e a nota troca dentro de um
+      `AnimatedContent` com `fadeIn`/`fadeOut` — o aviso de fatura e a nota de repetição se
+      substituem no lugar em vez de piscarem.
+- [x] 9.3 **Animar o estado do ícone.** O `tint` do `Autorenew` passa por `animateColorAsState`, e o
+      botão entra e sai por `AnimatedVisibility` quando o parcelamento o retira — ligar a marca
+      passa a ser uma transição, e não uma troca de cor seca.

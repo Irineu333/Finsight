@@ -5,7 +5,13 @@ package com.neoutils.finsight.ui.modal.addTransaction
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import org.koin.compose.koinInject
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -271,34 +277,49 @@ class AddTransactionModal : ModalBottomSheet() {
                     imeAction = ImeAction.Done
                 ),
                 trailingIcon = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Two icons in a slot sized for one: at their default 48dp each they
+                    // read as two separate controls with a gap between them, so they are
+                    // brought to 40dp and overlapped slightly — one pair of affordances
+                    // for one field, which is what they are.
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-4).dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         // Beside the date because the date is what decides the day of the
                         // repetition — which is why marking it asks for no field of its own.
-                        if (uiState.canRepeat) {
+                        AnimatedVisibility(uiState.canRepeat) {
+                            val tint by animateColorAsState(
+                                targetValue = if (uiState.isRecurring) {
+                                    colorScheme.primary
+                                } else {
+                                    colorScheme.onSurfaceVariant
+                                },
+                                label = "repeat_tint",
+                            )
+
                             IconButton(
                                 onClick = {
                                     viewModel.onAction(
                                         AddTransactionAction.ChangeRecurring(!uiState.isRecurring)
                                     )
                                 },
-                                modifier = Modifier.testTag("add_transaction_repeat"),
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .testTag("add_transaction_repeat"),
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Autorenew,
                                     contentDescription = stringResource(
                                         Res.string.add_transaction_repeat_monthly
                                     ),
-                                    tint = if (uiState.isRecurring) {
-                                        colorScheme.primary
-                                    } else {
-                                        colorScheme.onSurfaceVariant
-                                    },
+                                    tint = tint,
                                     modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
 
                         IconButton(
+                            modifier = Modifier.size(40.dp),
                             onClick = {
                                 manager.show(
                                     DatePickerModal(
@@ -327,25 +348,37 @@ class AddTransactionModal : ModalBottomSheet() {
                 // Which of the two notes is shown was decided by the state, not here.
                 supportingText = uiState.dateSupport?.let { support ->
                     {
-                        Text(
-                            text = when (support) {
-                                DateSupport.OutsideInvoice -> {
-                                    stringResource(Res.string.transaction_date_outside_invoice)
-                                }
+                        // The slot appears and disappears with the note, which changes the
+                        // field's height in one frame and shoves everything below it. The
+                        // text fades in place while `animateContentSize` below carries the
+                        // height, so the fields glide instead of jumping.
+                        AnimatedContent(
+                            targetState = support,
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            label = "date_support",
+                        ) { current ->
+                            Text(
+                                text = when (current) {
+                                    DateSupport.OutsideInvoice -> {
+                                        stringResource(Res.string.transaction_date_outside_invoice)
+                                    }
 
-                                is DateSupport.RepeatsOnDay -> {
-                                    stringResource(
-                                        Res.string.add_transaction_repeats_on_day,
-                                        support.day,
-                                    )
+                                    is DateSupport.RepeatsOnDay -> {
+                                        stringResource(
+                                            Res.string.add_transaction_repeats_on_day,
+                                            current.day,
+                                        )
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
             )
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -40,3 +40,8 @@ Em preparação: **1.10.0-rc01**.
 | **Sincronização de taxas**      | Fonte remota alimentando o arquivo local, limitada por par                           | Funcionalidade | 1.10.0        |
 | **Registro de moedas**          | O usuário registra e arquiva as moedas, em vez de receber uma lista pronta           | Funcionalidade | 1.10.0        |
 | **Rendimento de conta**         | Lançamento do que o dinheiro rendeu sozinho, separado das demais receitas            | Funcionalidade | 1.10.0        |
+| **Faturas retroativas**         | Criar a fatura de qualquer mês e deixar a fatura escolhida posicionar a data         | Funcionalidade | 1.10.0        |
+| **Ajuste de saldo datado**      | Um único ajuste, alvo numa data, no lugar de saldo atual/final/inicial               | Funcionalidade | 1.10.0        |
+| **Detalhe por pernas**          | Detalhe da transação como um card por perna monetária, sem escolher uma ponta        | Funcionalidade | 1.10.0        |
+| **Orçamentos sobrepostos**      | Uma categoria medida por quantos orçamentos o usuário quiser                         | Funcionalidade | 1.10.0        |
+| **Recorrentes sem redigitar**   | Nascer recorrente no próprio lançamento e confirmar o ciclo com título e categoria   | Funcionalidade | 1.10.0        |

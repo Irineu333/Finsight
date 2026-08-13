@@ -241,11 +241,6 @@ class AddTransactionViewModel(
     }
 
     /**
-     * A category the new type does not accept is dropped rather than hidden: an expense
-     * category cannot describe an income, and keeping it would have the selector showing
-     * one thing while the form carries another.
-     */
-    /**
      * Splitting into instalments drops the recurring mark rather than hiding it: paying
      * in instalments is already a repetition, and a mark the sheet no longer shows must
      * not survive to the submit — the same reason [changeType] discards a category the
@@ -258,6 +253,11 @@ class AddTransactionViewModel(
         )
     }
 
+    /**
+     * A category the new type does not accept is dropped rather than hidden: an expense
+     * category cannot describe an income, and keeping it would have the selector showing
+     * one thing while the form carries another.
+     */
     private fun changeType(type: TransactionType) = input.update {
         it.copy(
             type = type,

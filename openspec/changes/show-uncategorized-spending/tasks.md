@@ -243,14 +243,13 @@ grupo é dado por feito sem a saída do comando lida.
 
 - [x] 8.1 Rodar `./gradlew jvmTest` e ler a saída inteira; rodar `./gradlew :app:android:assembleDebug`.
       Ambos verdes.
-- [ ] 8.2 **Conferido nas telas pelo dono do produto; falta a exportação HTML.** O passeio manual
-      cobriu o dashboard e o relatório, com a despesa e a receita sem categoria, e ambos estão
-      corretos — inclusive o par cor/glifo por natureza que o ajuste de Q1 introduziu. O que ainda
-      não foi olhado é a **exportação HTML** do relatório, que monta a sua própria lista
-      (`ReportExportLayout`) e por isso é o ponto onde tela e documento poderiam divergir; o teste
-      `ReportExportFootnoteTest` afirma a ordem e o rótulo, mas nada substitui abrir o arquivo.
-      Do lado do agente, `./gradlew :app:desktop:run` sobe e roda sem exceção (90s observados, log
-      só com avisos de SLF4J) — a GUI em si está fora do que ele alcança. Exercitar o caminho no app (`./gradlew :app:desktop:run`): um mês com despesa e receita sem
+- [x] 8.2 **Conferido à mão pelo dono do produto, nas três superfícies.** O passeio cobriu o
+      dashboard, a tela de relatório e a **exportação HTML** — que monta a sua própria lista
+      (`ReportExportLayout`) e por isso era o ponto onde documento e tela poderiam divergir —, com a
+      despesa e a receita sem categoria, e todas leem corretamente, o par cor/glifo por natureza do
+      ajuste de Q1 incluso. Do lado do agente, `./gradlew :app:desktop:run` sobe e roda sem exceção
+      (90s observados, log só com avisos de SLF4J); a GUI em si está fora do que ele alcança, e é por
+      isso que esta linha registra a conferência de quem a fez. Exercitar o caminho no app (`./gradlew :app:desktop:run`): um mês com despesa e receita sem
       categoria mostra as duas linhas, cada uma no seu detalhamento, por último e visualmente distinta;
       um mês inteiramente classificado mostra exatamente o que mostrava antes. Conferir também a
       exportação HTML do relatório, que monta a sua própria lista.

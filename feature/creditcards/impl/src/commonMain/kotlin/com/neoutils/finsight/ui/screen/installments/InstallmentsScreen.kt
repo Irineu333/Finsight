@@ -39,6 +39,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
@@ -92,6 +94,7 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.category_spending_uncategorized
 import com.neoutils.finsight.resources.installments_create
 import com.neoutils.finsight.resources.installments_current_installment
 import com.neoutils.finsight.resources.installments_delete
@@ -646,7 +649,7 @@ private fun FiltersRow(
         item(key = "category_filter") {
             Box {
                 CategoryFilterChip(
-                    selectedCategory = uiState.selectedCategory,
+                    selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
                     onAction = onAction,
                 )
@@ -666,23 +669,37 @@ private fun FiltersRow(
 
 @Composable
 private fun CategoryFilterChip(
-    selectedCategory: Category?,
+    selectedSubject: SpendingSubject?,
     categories: List<Category>,
     onAction: (InstallmentsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor = selectedCategory?.let { category ->
-        when (category.type) {
+    // Only a category has a declared nature; the unclassified value borrows none.
+    val chipColor = when (selectedSubject) {
+        is SpendingSubject.Categorized -> when (selectedSubject.category.type) {
             Category.Type.INCOME -> IncomeColor
             Category.Type.EXPENSE -> ExpenseColor
         }
+
+        SpendingSubject.Uncategorized, null -> null
     }
 
     FilterChip(
-        selected = selectedCategory != null,
+        selected = selectedSubject != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: stringResource(Res.string.installments_filter_category)) },
+        label = {
+            Text(
+                when (selectedSubject) {
+                    is SpendingSubject.Categorized -> selectedSubject.category.name
+                    // The same key the breakdown names this value with: one concept, one word.
+                    SpendingSubject.Uncategorized ->
+                        stringResource(Res.string.category_spending_uncategorized)
+
+                    null -> stringResource(Res.string.installments_filter_category)
+                }
+            )
+        },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -705,7 +722,7 @@ private fun CategoryFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.installments_filter_category_all)) },
             onClick = {
-                onAction(InstallmentsAction.SelectCategory(null))
+                onAction(InstallmentsAction.SelectSubject(null))
                 expanded = false
             },
         )
@@ -714,11 +731,23 @@ private fun CategoryFilterChip(
             DropdownMenuItem(
                 text = { Text(category.name) },
                 onClick = {
-                    onAction(InstallmentsAction.SelectCategory(category))
+                    onAction(InstallmentsAction.SelectSubject(SpendingSubject.Categorized(category)))
                     expanded = false
                 },
             )
         }
+
+        // Last and set apart, as in the breakdown: the list of categories must not hold
+        // something that is not one in its middle.
+        HorizontalDivider()
+
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+            onClick = {
+                onAction(InstallmentsAction.SelectSubject(SpendingSubject.Uncategorized))
+                expanded = false
+            },
+        )
     }
 }
 

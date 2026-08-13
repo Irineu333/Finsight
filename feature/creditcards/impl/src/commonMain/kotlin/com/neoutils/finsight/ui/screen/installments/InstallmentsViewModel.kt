@@ -3,6 +3,8 @@ package com.neoutils.finsight.ui.screen.installments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
+import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -57,7 +59,7 @@ class InstallmentsViewModel(
     }
 
     private val selectedInstallmentIndex = MutableStateFlow(0)
-    private val selectedCategory = MutableStateFlow<Category?>(null)
+    private val selectedSubject = MutableStateFlow<SpendingSubject?>(null)
     private val selectedType = MutableStateFlow<TransactionType?>(null)
     private val selectedFilter = MutableStateFlow(InstallmentFilter.ACTIVE)
 
@@ -101,11 +103,11 @@ class InstallmentsViewModel(
     val uiState = combine(
         allInstallmentsUi,
         selectedInstallmentIndex,
-        selectedCategory,
+        selectedSubject,
         selectedType,
         selectedFilter,
         facades,
-    ) { installmentsAll, selectedIndex, category, type, filter, facades ->
+    ) { installmentsAll, selectedIndex, subject, type, filter, facades ->
         val filtered = when (filter) {
             InstallmentFilter.ACTIVE -> installmentsAll.filter { it.ui.isActive }
             InstallmentFilter.COMPLETED -> installmentsAll.filter { !it.ui.isActive }
@@ -130,9 +132,10 @@ class InstallmentsViewModel(
         // Filtering lives here, as it does on every sibling screen — the state is
         // handed the finished list instead of deriving it on read.
         val rows = selectedTransactions
-            .filter { transaction ->
-                category == null || transaction.nominalDimensionId == category.dimensionId
-            }
+            // The cut by the analytic axis, decided by `Transaction.matches` in `core/model`
+            // and nowhere else — "unclassified" is a nominal leg with no dimension, not the
+            // absence of one.
+            .filter { transaction -> subject == null || transaction.matches(subject) }
             .filter { transaction ->
                 type == null || transaction.primaryEntry?.let {
                     deriveTransactionType(it.amount, transaction.entries)
@@ -146,7 +149,7 @@ class InstallmentsViewModel(
             transactions = rows,
             selectedDomainInstallment = selected?.installment,
             selectedDomainTransactions = selectedTransactions,
-            selectedCategory = category,
+            selectedSubject = subject,
             selectedType = type,
             selectedFilter = filter,
             categories = categories,
@@ -161,12 +164,12 @@ class InstallmentsViewModel(
         when (action) {
             is InstallmentsAction.SelectInstallment -> {
                 selectedInstallmentIndex.update { action.index.coerceAtLeast(0) }
-                selectedCategory.value = null
+                selectedSubject.value = null
                 selectedType.value = null
             }
 
-            is InstallmentsAction.SelectCategory -> {
-                selectedCategory.value = action.category
+            is InstallmentsAction.SelectSubject -> {
+                selectedSubject.value = action.subject
             }
 
             is InstallmentsAction.SelectType -> {
@@ -176,7 +179,7 @@ class InstallmentsViewModel(
             is InstallmentsAction.SelectFilter -> {
                 selectedFilter.value = action.filter
                 selectedInstallmentIndex.value = 0
-                selectedCategory.value = null
+                selectedSubject.value = null
                 selectedType.value = null
             }
         }

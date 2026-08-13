@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
@@ -87,6 +88,17 @@ class CreditCardsEmptyStateTest {
         ),
     )
 
+    /** The same purchase with nothing on its nominal leg — the unclassified case. */
+    private fun loosePurchase(id: Long) = Transaction(
+        id = id,
+        title = "Loose purchase",
+        date = LocalDate(2026, 3, 11),
+        entries = listOf(
+            Entry(transactionId = id, account = cardAccount, amount = -3_000, dimensionId = invoice.dimensionId),
+            Entry(transactionId = id, account = expenseAccount, amount = 3_000),
+        ),
+    )
+
     private fun viewModel(
         cards: List<CreditCard>,
         transactions: List<Transaction>,
@@ -131,6 +143,29 @@ class CreditCardsEmptyStateTest {
             assertEquals(ListState.EmptyInvoice, awaitListState())
         }
     }
+
+    @Test
+    fun `the unclassified cut keeps the purchase whose nominal leg carries no dimension`() =
+        runTest(dispatcher) {
+            val vm = viewModel(
+                cards = listOf(card),
+                transactions = listOf(purchase(id = 1), loosePurchase(id = 2)),
+            )
+
+            vm.uiState.test {
+                assertIs<ListState.Content>(awaitListState())
+
+                vm.onAction(CreditCardsAction.SelectSubject(SpendingSubject.Uncategorized))
+
+                val listState = assertIs<ListState.Content>(
+                    awaitListState { it is ListState.Content && it.transactions.values.flatten().size == 1 }
+                )
+                assertEquals(
+                    listOf(2L),
+                    listState.transactions.values.flatten().map { it.id },
+                )
+            }
+        }
 
     @Test
     fun `a filter that cuts everything offers to clear and clearing brings the list back`() = runTest(dispatcher) {

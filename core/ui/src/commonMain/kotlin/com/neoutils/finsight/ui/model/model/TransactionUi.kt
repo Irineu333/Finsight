@@ -25,6 +25,17 @@ data class TransactionUi(
     val amount: DisplayAmount,
     val date: LocalDate,
     val categoryId: Long?,
+    /**
+     * Whether this item is *unclassified* — the answer the domain gave, not a fact to be
+     * rebuilt from [categoryId].
+     *
+     * A null [categoryId] cannot stand in for it: it is also null for a transfer, an
+     * invoice payment and an adjustment, which have no analytic axis at all, and for a
+     * dimension that resolves to no category, which is an integrity failure rather than an
+     * absence of classification. Carried flat for the same reason as [isCardTarget] — the
+     * DTO has no domain to ask.
+     */
+    val isUncategorized: Boolean = false,
     val categoryIcon: CategoryLazyIcon?,
     // An archived category still labels its history, but its icon reads muted — the
     // same rule as `Category.displayColor`. Carried flat because the DTO has no domain.

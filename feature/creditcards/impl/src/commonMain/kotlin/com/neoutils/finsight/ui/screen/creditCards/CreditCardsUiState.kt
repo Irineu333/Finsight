@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.creditCards
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
@@ -30,7 +31,7 @@ sealed class CreditCardsUiState {
         val selectedCardIndex: Int,
         val listState: ListState,
         val categories: List<Category>,
-        val selectedCategory: Category?,
+        val selectedSubject: SpendingSubject?,
         val selectedType: TransactionType?,
         val showRecurringOnly: Boolean,
         val showInstallmentOnly: Boolean,

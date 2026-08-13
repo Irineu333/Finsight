@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.SystemCategoryKey
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -159,7 +160,7 @@ class AccountsViewModel(
 
     private val filters = MutableStateFlow(
         AccountsFilters(
-            category = null,
+            subject = null,
             type = null,
             recurringOnly = false,
         )
@@ -178,7 +179,7 @@ class AccountsViewModel(
         }
 
         val filteredTransactions = monthTransactions
-            .filter(currentFilters.category)
+            .filter(currentFilters.subject)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
             .sortedByDescending { it.date }
@@ -207,7 +208,7 @@ class AccountsViewModel(
             selectedMonth = month,
             listState = listState,
             categories = categories,
-            selectedCategory = currentFilters.category,
+            selectedSubject = currentFilters.subject,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
             today = today,
@@ -228,8 +229,8 @@ class AccountsViewModel(
                     .getAllAccounts()[action.index.coerceAtLeast(0)].id
             }
 
-            is AccountsAction.SelectCategory -> {
-                filters.value = filters.value.copy(category = action.category)
+            is AccountsAction.SelectSubject -> {
+                filters.value = filters.value.copy(subject = action.subject)
             }
 
             is AccountsAction.SelectType -> {
@@ -245,7 +246,7 @@ class AccountsViewModel(
             // figures would do more than it says.
             is AccountsAction.ClearFilters -> {
                 filters.value = AccountsFilters(
-                    category = null,
+                    subject = null,
                     type = null,
                     recurringOnly = false,
                 )
@@ -267,19 +268,23 @@ class AccountsViewModel(
 }
 
 private data class AccountsFilters(
-    val category: Category?,
+    val subject: SpendingSubject?,
     val type: TransactionType?,
     val recurringOnly: Boolean,
 ) {
     /** Whether there is anything for [AccountsAction.ClearFilters] to clear. */
-    val isNotNeutral = category != null || type != null || recurringOnly
+    val isNotNeutral = subject != null || type != null || recurringOnly
 }
 
-private fun List<TransactionUi>.filter(category: Category?): List<TransactionUi> {
-    if (category == null) return this
-    return filter { transaction ->
-        transaction.categoryId == category.id
-    }
+/**
+ * The cut by the analytic axis, over display models. The unclassified case reads the answer
+ * the mapper already carried across ([TransactionUi.isUncategorized]) rather than testing
+ * `categoryId == null`, which is also true of a transfer and of an orphan dimension.
+ */
+private fun List<TransactionUi>.filter(subject: SpendingSubject?): List<TransactionUi> = when (subject) {
+    null -> this
+    is SpendingSubject.Categorized -> filter { it.categoryId == subject.category.id }
+    SpendingSubject.Uncategorized -> filter { it.isUncategorized }
 }
 
 private fun List<TransactionUi>.filter(type: TransactionType?): List<TransactionUi> {

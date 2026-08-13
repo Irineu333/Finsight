@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionType
 import kotlinx.datetime.YearMonth
 
@@ -12,7 +12,8 @@ sealed class InvoiceTransactionsAction {
      * it. The month is what the caller knows after creating one; the index is not.
      */
     data class SelectInvoiceForDueMonth(val dueMonth: YearMonth) : InvoiceTransactionsAction()
-    data class SelectCategory(val category: Category?) : InvoiceTransactionsAction()
+    /** Selects a value of the analytic axis, or `null` for the neutral state. */
+    data class SelectSubject(val subject: SpendingSubject?) : InvoiceTransactionsAction()
     data class SelectType(val type: TransactionType?) : InvoiceTransactionsAction()
     data class ToggleRecurring(val enabled: Boolean) : InvoiceTransactionsAction()
     data class ToggleInstallment(val enabled: Boolean) : InvoiceTransactionsAction()

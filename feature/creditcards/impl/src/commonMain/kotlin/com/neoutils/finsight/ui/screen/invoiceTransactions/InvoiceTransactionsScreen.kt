@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.DisplayAmount
@@ -75,6 +76,7 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.category_spending_uncategorized
 import com.neoutils.finsight.resources.credit_cards_unarchive
 import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
@@ -844,7 +846,7 @@ private fun FiltersRow(
         ) {
             Box {
                 CategoryFilterChip(
-                    selectedCategory = uiState.selectedCategory,
+                    selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
                     onAction = onAction
                 )
@@ -888,24 +890,37 @@ private fun FiltersRow(
 
 @Composable
 private fun CategoryFilterChip(
-    selectedCategory: Category?,
+    selectedSubject: SpendingSubject?,
     categories: List<Category>,
     onAction: (InvoiceTransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor =
-        selectedCategory?.let { category ->
-            when (category.type) {
-                Category.Type.INCOME -> IncomeColor
-                Category.Type.EXPENSE -> ExpenseColor
-            }
+    // Only a category has a declared nature; the unclassified value borrows none.
+    val chipColor = when (selectedSubject) {
+        is SpendingSubject.Categorized -> when (selectedSubject.category.type) {
+            Category.Type.INCOME -> IncomeColor
+            Category.Type.EXPENSE -> ExpenseColor
         }
 
+        SpendingSubject.Uncategorized, null -> null
+    }
+
     FilterChip(
-        selected = selectedCategory != null,
+        selected = selectedSubject != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: stringResource(Res.string.invoice_transactions_filter_category)) },
+        label = {
+            Text(
+                when (selectedSubject) {
+                    is SpendingSubject.Categorized -> selectedSubject.category.name
+                    // The same key the breakdown names this value with: one concept, one word.
+                    SpendingSubject.Uncategorized ->
+                        stringResource(Res.string.category_spending_uncategorized)
+
+                    null -> stringResource(Res.string.invoice_transactions_filter_category)
+                }
+            )
+        },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -927,7 +942,7 @@ private fun CategoryFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.invoice_transactions_filter_category_all)) },
             onClick = {
-                onAction(InvoiceTransactionsAction.SelectCategory(null))
+                onAction(InvoiceTransactionsAction.SelectSubject(null))
                 expanded = false
             }
         )
@@ -936,11 +951,23 @@ private fun CategoryFilterChip(
             DropdownMenuItem(
                 text = { Text(category.name) },
                 onClick = {
-                    onAction(InvoiceTransactionsAction.SelectCategory(category))
+                    onAction(InvoiceTransactionsAction.SelectSubject(SpendingSubject.Categorized(category)))
                     expanded = false
                 }
             )
         }
+
+        // Last and set apart, as in the breakdown: the list of categories must not hold
+        // something that is not one in its middle.
+        HorizontalDivider()
+
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+            onClick = {
+                onAction(InvoiceTransactionsAction.SelectSubject(SpendingSubject.Uncategorized))
+                expanded = false
+            }
+        )
     }
 }
 

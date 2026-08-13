@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
@@ -120,7 +121,7 @@ class AccountsEmptyStateTest {
         vm.uiState.test {
             assertIs<ListState.Content>(awaitContent().listState)
 
-            vm.onAction(AccountsAction.SelectCategory(food))
+            vm.onAction(AccountsAction.SelectSubject(SpendingSubject.Categorized(food)))
 
             val listState = assertIs<ListState.EmptyScope>(awaitContent().listState)
             assertEquals(true, listState.canClearFilters)
@@ -136,10 +137,10 @@ class AccountsEmptyStateTest {
             awaitContent()
 
             vm.onAction(AccountsAction.SelectMonth(previousMonth))
-            vm.onAction(AccountsAction.SelectCategory(food))
+            vm.onAction(AccountsAction.SelectSubject(SpendingSubject.Categorized(food)))
 
             var content = awaitContent()
-            while (content.selectedCategory == null || content.selectedMonth != previousMonth) {
+            while (content.selectedSubject == null || content.selectedMonth != previousMonth) {
                 content = awaitContent()
             }
             assertIs<ListState.EmptyScope>(content.listState)
@@ -147,7 +148,7 @@ class AccountsEmptyStateTest {
             vm.onAction(AccountsAction.ClearFilters)
 
             var cleared = awaitContent()
-            while (cleared.selectedCategory != null) cleared = awaitContent()
+            while (cleared.selectedSubject != null) cleared = awaitContent()
             assertEquals(previousMonth, cleared.selectedMonth, "the month is not a filter")
             assertEquals(1L, cleared.selectedAccountId, "the account is not a filter either")
             assertEquals(false, cleared.showRecurringOnly)
@@ -156,13 +157,13 @@ class AccountsEmptyStateTest {
     }
 }
 
-private suspend fun app.cash.turbine.TurbineTestContext<AccountsUiState>.awaitContent(): AccountsUiState.Content {
+internal suspend fun app.cash.turbine.TurbineTestContext<AccountsUiState>.awaitContent(): AccountsUiState.Content {
     var state = awaitItem()
     while (state !is AccountsUiState.Content) state = awaitItem()
     return state
 }
 
-private class FakeAccountRepository(private val account: Account) : IAccountRepository {
+internal class FakeAccountRepository(private val account: Account) : IAccountRepository {
     override fun observeAllAccounts(): Flow<List<Account>> = MutableStateFlow(listOf(account))
     override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = observeAllAccounts()
     override suspend fun getAllAccounts(): List<Account> = listOf(account)
@@ -181,7 +182,7 @@ private class FakeAccountRepository(private val account: Account) : IAccountRepo
     override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 }
 
-private class FakeTransactionRepository(private val transactions: List<Transaction>) : ITransactionRepository {
+internal class FakeTransactionRepository(private val transactions: List<Transaction>) : ITransactionRepository {
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
         MutableStateFlow(transactions)
@@ -219,7 +220,7 @@ internal class FakeCategoryRepository(private val categories: List<Category> = e
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private object NoInstallments : IInstallmentRepository {
+internal object NoInstallments : IInstallmentRepository {
     override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
     override suspend fun getAllInstallments(): List<Installment> = emptyList()
     override suspend fun getInstallmentById(id: Long): Installment? = null
@@ -229,7 +230,7 @@ private object NoInstallments : IInstallmentRepository {
 }
 
 /** No figure is under test here; the card at the top only needs the reads to answer. */
-private object FlatEntryRepository : IEntryRepository {
+internal object FlatEntryRepository : IEntryRepository {
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = emptyList()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = flowOf(emptyList())
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

@@ -72,9 +72,31 @@ está verde de novo.
 ## 7. Verificação final
 
 **Para começar:** os grupos 1 a 6 concluídos.
-**Ao terminar:** a suíte unitária passa (7.1). A checagem E2E do risco declarado no design foi
-**adiada por decisão**, com validação manual da tela no lugar — o que ficou de fora está escrito
-na própria 7.2, para que ninguém leia o grupo como uma travessia confirmada.
+**Ao terminar:** a suíte completa está verde e o efeito do item novo no fim do menu sobre os
+fluxos Maestro está checado — o risco declarado no design.
 
 - [x] 7.1 Rodar `./gradlew jvmTest` e ler a saída; a suíte inteira passa. Relatar qualquer falha com o teste e o arquivo, sem presumir que é pré-existente.
-- [x] 7.2 **Adiada por decisão, com validação manual no lugar.** O que foi executado: AVD de referência `finsight_e2e` (`emulator-5556`), as sete checagens da §2.2 conferidas e corretas (API 36, 1080x2400, 420dpi, `-en-rUS-`, `-nokeys-`, IME presente, `show_ime_with_hard_keyboard = 0`), APK debug reinstalado, `maestro test .maestro` → **12/14**. `installments_lifecycle` passa sozinho (ordem/sincronização). `creditcards_lifecycle` falha também com esta mudança no stash, logo é anterior a ela — o passo é a fatura seguinte oferecer fechamento após o salto de 45 dias. `ledger_lifecycle`, o único fluxo que passa pela tela de transações, passou na suíte e depois ficou intermitente em execuções avulsas, sem conclusão. O risco do design ("um item novo no fim do menu altera a rolagem") **não** foi fechado por E2E: nenhum fluxo da suíte abre o filtro de categoria da tela de transações, e a verificação ficou na conferência manual da tela. Retomar quando a suíte for estabilizada.
+- [ ] 7.2 Rodar a suíte Maestro conferindo o risco "fluxos que abrem o filtro por posição": ler `.maestro/README.md` §2 antes, executar as sete checagens `adb` do dispositivo (AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de hardware), reinstalar o APK debug com `./gradlew :app:android:installDebug` e rodar `maestro test .maestro`. Relatar o resultado por fluxo e em qual dispositivo a execução aconteceu; um item novo no fim do menu pode alterar a rolagem, então qualquer fluxo que toque o filtro de categoria precisa ser confirmado, não presumido.
+
+## 8. As outras quatro superfícies do filtro
+
+**Para começar:** os grupos 1 a 6 concluídos — o eixo, o dono da definição (`matches`) e a
+primeira superfície já existem. Este grupo é o resto do trabalho: o filtro de categoria é
+oferecido em cinco telas, e um valor que existisse só numa delas leria como "aqui não há nada
+sem categoria" nas outras quatro.
+**Ao terminar:** `./gradlew jvmTest` sem falha nova, com as cinco superfícies recortando pelo
+mesmo critério.
+
+- [x] 8.1 `core/ui` — `TransactionUi.isUncategorized`, preenchido pelo mapper com
+  `matches(SpendingSubject.Uncategorized)`. A tela de contas recorta modelo de exibição, e ali
+  `categoryId == null` também vale para transferência, pagamento, ajuste e dimensão órfã.
+- [x] 8.2 `feature/accounts/impl` — quarteto (filtros, ação, estado, predicado) e chip.
+- [x] 8.3 `feature/creditcards/impl` — tela de cartões: quarteto e chip.
+- [x] 8.4 `feature/creditcards/impl` — transações de fatura: quarteto e chip.
+- [x] 8.5 `feature/creditcards/impl` — parcelamentos: os `MutableStateFlow` do eixo e o chip.
+- [x] 8.6 Testes: `TransactionUiUncategorizedTest` (`core/ui`, incluindo a dimensão órfã sobre
+  o modelo de exibição), `AccountsUncategorizedFilterTest`, `InstallmentsUncategorizedFilterTest`
+  e um caso de fiação em `CreditCardsEmptyStateTest` e `InvoiceTransactionsEmptyStateTest`.
+- [x] 8.7 `./gradlew jvmTest` — 1246 testes, 10 falhas, todas as 10 pré-existentes
+  (`:app:shared`, testes de arquitetura que enxergam a cópia do repositório em
+  `.claude/worktrees/main-limpo`).

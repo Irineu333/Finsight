@@ -1,12 +1,13 @@
 package com.neoutils.finsight.ui.screen.accounts
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionType
 import kotlinx.datetime.YearMonth
 
 sealed class AccountsAction {
     data class SelectAccount(val index: Int) : AccountsAction()
-    data class SelectCategory(val category: Category?) : AccountsAction()
+    /** Selects a value of the analytic axis, or `null` for the neutral state. */
+    data class SelectSubject(val subject: SpendingSubject?) : AccountsAction()
     data class SelectType(val type: TransactionType?) : AccountsAction()
     data class ToggleRecurring(val enabled: Boolean) : AccountsAction()
 

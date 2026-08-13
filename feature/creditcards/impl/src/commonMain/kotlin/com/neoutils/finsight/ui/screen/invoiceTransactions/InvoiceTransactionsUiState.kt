@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import com.neoutils.finsight.ui.model.RetireAction
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
@@ -31,7 +32,7 @@ data class InvoiceTransactionsUiState(
     val selectedInvoiceIndex: Int = 0,
     val listState: ListState = ListState.Loading,
     val categories: List<Category> = emptyList(),
-    val selectedCategory: Category? = null,
+    val selectedSubject: SpendingSubject? = null,
     val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,

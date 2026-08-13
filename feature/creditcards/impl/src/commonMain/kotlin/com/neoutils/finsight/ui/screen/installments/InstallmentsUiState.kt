@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.installments
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
@@ -36,7 +37,7 @@ sealed class InstallmentsUiState {
         // while the display models above stay free of domain.
         val selectedDomainInstallment: Installment?,
         val selectedDomainTransactions: List<Transaction>,
-        val selectedCategory: Category?,
+        val selectedSubject: SpendingSubject?,
         val selectedType: TransactionType?,
         override val selectedFilter: InstallmentFilter,
         val categories: List<Category>,

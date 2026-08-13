@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
@@ -60,6 +61,17 @@ class InvoiceTransactionsEmptyStateTest {
         entries = listOf(
             Entry(transactionId = id, account = cardAccount, amount = -6_000, dimensionId = dimensionId),
             Entry(transactionId = id, account = expenseAccount, amount = 6_000, dimensionId = 77),
+        ),
+    )
+
+    /** The same purchase with nothing on its nominal leg — the unclassified case. */
+    private fun loosePurchase(id: Long, dimensionId: Long) = Transaction(
+        id = id,
+        title = "Loose purchase",
+        date = LocalDate(2026, 3, 11),
+        entries = listOf(
+            Entry(transactionId = id, account = cardAccount, amount = -3_000, dimensionId = dimensionId),
+            Entry(transactionId = id, account = expenseAccount, amount = 3_000),
         ),
     )
 
@@ -127,6 +139,45 @@ class InvoiceTransactionsEmptyStateTest {
             assertIs<ListState.Content>(awaitListState { it is ListState.Content })
         }
     }
+
+    @Test
+    fun `the unclassified cut drops what is classified and keeps what is not`() =
+        runTest(dispatcher) {
+            // Asserted on the cut rather than on the rendered rows: the mapping under the
+            // card's perspective is `InvoiceTransactionsPerspectiveTest`'s subject, and
+            // this harness does not wire the card to its ledger account.
+            val classifiedOnly = viewModel(
+                invoices = listOf(invoice(1, dimensionId = 1, month = 2)),
+                transactions = listOf(purchase(id = 1, dimensionId = 1)),
+            )
+
+            classifiedOnly.uiState.test {
+                awaitListState { it is ListState.Content }
+
+                classifiedOnly.onAction(
+                    InvoiceTransactionsAction.SelectSubject(SpendingSubject.Uncategorized)
+                )
+
+                val cut = assertIs<ListState.EmptyScope>(awaitListState { it is ListState.EmptyScope })
+                assertEquals(true, cut.canClearFilters)
+            }
+
+            val looseOnly = viewModel(
+                invoices = listOf(invoice(1, dimensionId = 1, month = 2)),
+                transactions = listOf(loosePurchase(id = 2, dimensionId = 1)),
+            )
+
+            looseOnly.uiState.test {
+                awaitListState { it is ListState.Content }
+
+                looseOnly.onAction(
+                    InvoiceTransactionsAction.SelectSubject(SpendingSubject.Uncategorized)
+                )
+
+                // It survives the cut: the state stays Content instead of going empty.
+                assertIs<ListState.Content>(awaitListState { it is ListState.Content })
+            }
+        }
 
     @Test
     fun `switching invoice does not go back to loading`() = runTest(dispatcher) {

@@ -104,6 +104,45 @@ natureza declarada.
 - **WHEN** o valor "sem categoria" está selecionado
 - **THEN** o controle é exibido no estado selecionado sem a cor de receita nem a de despesa
 
+### Requirement: A regra vale em toda superfície que oferece o filtro
+
+Toda superfície que oferece o filtro de categoria sobre uma lista de lançamentos SHALL
+oferecer também o valor não classificado, com o mesmo critério de recorte, o mesmo rótulo e
+a mesma posição no controle. MUST NOT existir superfície em que o filtro de categoria seja
+oferecido e o não classificado não.
+
+Uma superfície a menos não é uma lacuna cosmética: quem procura o que ficou por classificar
+não sabe de cor em que tela o comando existe, e a ausência do valor lê-se como "aqui não há
+nada sem categoria" — uma afirmação sobre os dados que a tela não fez.
+
+Onde o recorte é aplicado sobre o **modelo de exibição** e não sobre o lançamento, o modelo
+SHALL carregar a resposta já decidida pelo domínio, e MUST NOT reconstituí-la a partir da
+ausência de categoria no próprio modelo: ali "sem categoria" e "fora do eixo" são
+indistinguíveis, e uma dimensão órfã apareceria como não classificada.
+
+Os seletores de categoria de **escrita** — lançar, editar, confirmar uma recorrência, criar
+um parcelamento — MUST NOT oferecer o valor: neles o não classificado já é dizível como a
+ausência de escolha, e um item selecionável criaria duas formas de dizer a mesma coisa.
+
+#### Scenario: As cinco superfícies oferecem o valor
+- **WHEN** o filtro de categoria é aberto na tela de transações, na de contas, na de cartões,
+  na de transações de fatura e na de parcelamentos
+- **THEN** todas oferecem o valor "sem categoria", com o mesmo rótulo e na mesma posição
+
+#### Scenario: O recorte concorda entre superfícies
+- **WHEN** o mesmo lançamento sem categoria é alcançável por duas dessas telas
+- **THEN** o recorte sem classificação o exibe nas duas, e nenhuma delas exibe um lançamento
+  que a outra descarta pelo mesmo valor do eixo
+
+#### Scenario: Dimensão órfã continua fora, mesmo sobre o modelo de exibição
+- **WHEN** a superfície recorta modelos de exibição e um deles vem de uma perna nominal com
+  dimensão órfã
+- **THEN** ele não é exibido pelo recorte sem classificação
+
+#### Scenario: O seletor de escrita não ganha o valor
+- **WHEN** o usuário escolhe a categoria ao lançar ou editar uma transação
+- **THEN** nenhum item "sem categoria" é oferecido — não escolher já é o que ele significa
+
 ### Requirement: O não classificado é limpo como qualquer outro recorte
 
 O valor não classificado SHALL contar como filtro ativo: enquanto ele estiver selecionado, o

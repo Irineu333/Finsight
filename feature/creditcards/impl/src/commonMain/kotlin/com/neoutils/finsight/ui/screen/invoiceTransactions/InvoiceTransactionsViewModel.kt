@@ -67,7 +67,7 @@ class InvoiceTransactionsViewModel(
 
     private val filters = MutableStateFlow(
         InvoiceTransactionsFilters(
-            category = null,
+            subject = null,
             type = null,
             recurringOnly = false,
             installmentOnly = false,
@@ -148,7 +148,7 @@ class InvoiceTransactionsViewModel(
         val invoiceTransactions = transactions
             .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
         val filteredTransactions = invoiceTransactions
-            .filter(currentFilters.category)
+            .filter(currentFilters.subject)
             .filter(currentFilters.type, creditCard.accountId)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
@@ -241,7 +241,7 @@ class InvoiceTransactionsViewModel(
             listState = listState,
             // The filter offers only open categories.
             categories = categories.filterNot { it.isArchived },
-            selectedCategory = currentFilters.category,
+            selectedSubject = currentFilters.subject,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
             showInstallmentOnly = currentFilters.installmentOnly,
@@ -288,8 +288,8 @@ class InvoiceTransactionsViewModel(
                 }
             }
 
-            is InvoiceTransactionsAction.SelectCategory -> {
-                filters.value = filters.value.copy(category = action.category)
+            is InvoiceTransactionsAction.SelectSubject -> {
+                filters.value = filters.value.copy(subject = action.subject)
             }
 
             is InvoiceTransactionsAction.SelectType -> {
@@ -309,7 +309,7 @@ class InvoiceTransactionsViewModel(
             // more than it says.
             is InvoiceTransactionsAction.ClearFilters -> {
                 filters.value = InvoiceTransactionsFilters(
-                    category = null,
+                    subject = null,
                     type = null,
                     recurringOnly = false,
                     installmentOnly = false,
@@ -329,20 +329,23 @@ class InvoiceTransactionsViewModel(
 }
 
 private data class InvoiceTransactionsFilters(
-    val category: Category?,
+    val subject: SpendingSubject?,
     val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
 ) {
     /** Whether there is anything for [InvoiceTransactionsAction.ClearFilters] to clear. */
-    val isNotNeutral = category != null || type != null || recurringOnly || installmentOnly
+    val isNotNeutral = subject != null || type != null || recurringOnly || installmentOnly
 }
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
-    if (category == null) return this
-    return filter { transaction ->
-        transaction.nominalDimensionId == category.dimensionId
-    }
+/**
+ * The cut by the analytic axis. What each of its values contains is decided by
+ * `Transaction.matches` in `core/model` — in particular, "unclassified" is not
+ * `nominalDimensionId == null`, which is also true of what has no nominal leg at all.
+ */
+private fun List<Transaction>.filter(subject: SpendingSubject?): List<Transaction> {
+    if (subject == null) return this
+    return filter { it.matches(subject) }
 }
 
 /**

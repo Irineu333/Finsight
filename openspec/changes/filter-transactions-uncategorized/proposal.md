@@ -25,9 +25,16 @@ verificando quais não exibem ícone de categoria.
 - Uma dimensão órfã (que não resolve para categoria alguma) **não** é lavada em "sem
   categoria" — a mesma regra já escrita para o detalhamento.
 
-Fora de escopo, deliberadamente: os demais filtros de categoria do app (parcelamentos,
-transações de fatura, cartões). O tipo do eixo é compartilhado, então cada um pode adotá-lo
-depois sem redefinir a regra.
+A regra vale em **toda superfície que oferece o filtro de categoria sobre uma lista de
+lançamentos** — são cinco, e todas recortam pelo mesmo critério: transações, contas,
+cartões, transações de fatura e parcelamentos. Um filtro que existisse em quatro delas
+seria o mesmo que não existir: quem procura o que ficou por classificar não sabe de cor em
+qual tela o comando aparece, e a ausência lê-se como "aqui não há nada sem categoria".
+
+Fora de escopo: os seletores de categoria de **escrita** (lançar, editar, confirmar uma
+recorrência, criar um parcelamento). Ali o não classificado já é dizível — é não escolher
+categoria alguma — e transformá-lo num item selecionável criaria duas formas de dizer a
+mesma coisa.
 
 ## Capabilities
 
@@ -43,9 +50,13 @@ depois sem redefinir a regra.
 
 ## Impact
 
-- `feature/transactions/impl` — `TransactionsFilters`, `TransactionsAction.SelectCategory`,
-  `TransactionsUiState.selectedCategory`, o predicado de recorte no `TransactionsViewModel`
-  e o `CategoryFilterChip` do `TransactionsScreen`.
+- As cinco superfícies do filtro, cada uma com o seu quarteto (filtros, ação, estado,
+  predicado) e o seu chip: `feature/transactions/impl` (tela de transações),
+  `feature/accounts/impl` (tela de contas), `feature/creditcards/impl` (cartões,
+  transações de fatura e parcelamentos).
+- `core/ui` — `TransactionUi` ganha o fato plano que a tela de contas precisa: ela recorta
+  o modelo de exibição, não o lançamento, e `categoryId == null` ali não distingue "sem
+  categoria" de "fora do eixo".
 - `core/model` — `SpendingSubject` passa a ser consumido também como valor de filtro; nenhum
   campo novo.
 - `core/ledger` — nenhuma mudança. O critério ("tem perna nominal, sem dimensão") já é

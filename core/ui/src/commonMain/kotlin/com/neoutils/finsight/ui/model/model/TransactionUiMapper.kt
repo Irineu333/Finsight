@@ -1,7 +1,9 @@
 package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
@@ -51,6 +53,9 @@ fun Transaction.toTransactionUi(
         ),
         date = date,
         categoryId = category?.id,
+        // Decided by the single owner of what a value of the analytic axis contains, so a
+        // surface that cuts display models cuts by the same rule as one that cuts the ledger.
+        isUncategorized = matches(SpendingSubject.Uncategorized),
         categoryIcon = category?.icon,
         isCategoryArchived = category?.isArchived == true,
         isCardTarget = entries.any { it.account.type == AccountType.LIABILITY },

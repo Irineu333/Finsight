@@ -51,6 +51,7 @@ import com.neoutils.finsight.domain.closingBalanceDateOf
 import com.neoutils.finsight.domain.openingBalanceDateOf
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
@@ -78,6 +79,7 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.category_spending_uncategorized
 import com.neoutils.finsight.resources.accounts_edit
 import com.neoutils.finsight.resources.accounts_empty_body
 import com.neoutils.finsight.resources.accounts_empty_filter_body
@@ -570,7 +572,7 @@ private fun FiltersRow(
         ) {
             Box {
                 CategoryFilterChip(
-                    selectedCategory = uiState.selectedCategory,
+                    selectedSubject = uiState.selectedSubject,
                     categories = uiState.categories,
                     onAction = onAction
                 )
@@ -660,18 +662,26 @@ private fun MonthSelector(
 
 @Composable
 private fun CategoryFilterChip(
-    selectedCategory: Category?,
+    selectedSubject: SpendingSubject?,
     categories: List<Category>,
     onAction: (AccountsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor = selectedCategory?.displayColor
+    // Only a category has a colour of its own. The unclassified value declares no nature,
+    // so borrowing one would be inventing state.
+    val chipColor = (selectedSubject as? SpendingSubject.Categorized)?.category?.displayColor
+
+    val label = when (selectedSubject) {
+        is SpendingSubject.Categorized -> selectedSubject.category.name
+        SpendingSubject.Uncategorized -> stringResource(Res.string.category_spending_uncategorized)
+        null -> stringResource(Res.string.accounts_filter_category)
+    }
 
     FilterChip(
-        selected = selectedCategory != null,
+        selected = selectedSubject != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: stringResource(Res.string.accounts_filter_category)) },
+        label = { Text(label) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -694,7 +704,7 @@ private fun CategoryFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_category_all)) },
             onClick = {
-                onAction(AccountsAction.SelectCategory(null))
+                onAction(AccountsAction.SelectSubject(null))
                 expanded = false
             }
         )
@@ -703,11 +713,23 @@ private fun CategoryFilterChip(
             DropdownMenuItem(
                 text = { Text(category.name) },
                 onClick = {
-                    onAction(AccountsAction.SelectCategory(category))
+                    onAction(AccountsAction.SelectSubject(SpendingSubject.Categorized(category)))
                     expanded = false
                 }
             )
         }
+
+        // Last and set apart, as in the breakdown: the list of categories must not hold
+        // something that is not one in its middle.
+        HorizontalDivider()
+
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.category_spending_uncategorized)) },
+            onClick = {
+                onAction(AccountsAction.SelectSubject(SpendingSubject.Uncategorized))
+                expanded = false
+            }
+        )
     }
 }
 

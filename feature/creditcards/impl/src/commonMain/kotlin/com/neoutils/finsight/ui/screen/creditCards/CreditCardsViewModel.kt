@@ -8,7 +8,9 @@ import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -65,7 +67,7 @@ class CreditCardsViewModel(
 
     private val filters = MutableStateFlow(
         CreditCardsFilters(
-            category = null,
+            subject = null,
             type = null,
             recurringOnly = false,
             installmentOnly = false,
@@ -110,7 +112,7 @@ class CreditCardsViewModel(
         val lookup = TransactionFacadeLookup.of(categories, installments)
 
         val filteredTransactions = transactions
-            .filter(currentFilters.category)
+            .filter(currentFilters.subject)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
@@ -177,7 +179,7 @@ class CreditCardsViewModel(
             listState = listState,
             // The filter offers only open categories.
             categories = categories.filterNot { it.isArchived },
-            selectedCategory = currentFilters.category,
+            selectedSubject = currentFilters.subject,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
             showInstallmentOnly = currentFilters.installmentOnly,
@@ -201,8 +203,8 @@ class CreditCardsViewModel(
                     ?.id
             }
 
-            is CreditCardsAction.SelectCategory -> {
-                filters.value = filters.value.copy(category = action.category)
+            is CreditCardsAction.SelectSubject -> {
+                filters.value = filters.value.copy(subject = action.subject)
             }
 
             is CreditCardsAction.SelectType -> {
@@ -222,7 +224,7 @@ class CreditCardsViewModel(
             // than it says.
             is CreditCardsAction.ClearFilters -> {
                 filters.value = CreditCardsFilters(
-                    category = null,
+                    subject = null,
                     type = null,
                     recurringOnly = false,
                     installmentOnly = false,
@@ -241,20 +243,23 @@ private data class CardRow(
 )
 
 private data class CreditCardsFilters(
-    val category: Category?,
+    val subject: SpendingSubject?,
     val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
 ) {
     /** Whether there is anything for [CreditCardsAction.ClearFilters] to clear. */
-    val isNotNeutral = category != null || type != null || recurringOnly || installmentOnly
+    val isNotNeutral = subject != null || type != null || recurringOnly || installmentOnly
 }
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
-    if (category == null) return this
-    return filter { transaction ->
-        transaction.nominalDimensionId == category.dimensionId
-    }
+/**
+ * The cut by the analytic axis. What each of its values contains is decided by
+ * `Transaction.matches` in `core/model` — in particular, "unclassified" is not
+ * `nominalDimensionId == null`, which is also true of what has no nominal leg at all.
+ */
+private fun List<Transaction>.filter(subject: SpendingSubject?): List<Transaction> {
+    if (subject == null) return this
+    return filter { it.matches(subject) }
 }
 
 private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.accounts
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.TransactionUi
@@ -29,7 +30,7 @@ sealed class AccountsUiState {
         val selectedAccountId: Long? = null,
         val listState: ListState,
         val categories: List<Category>,
-        val selectedCategory: Category? = null,
+        val selectedSubject: SpendingSubject? = null,
         val selectedType: TransactionType? = null,
         val showRecurringOnly: Boolean = false,
         override val selectedMonth: YearMonth,

@@ -41,15 +41,9 @@ fun CategoryIconBox(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
     contentPadding: PaddingValues = PaddingValues(12.dp),
-    /**
-     * How present the box behind the icon is. The default is the identity colour of a
-     * category; a neutral tint is dialled down, because there it stands for "secondary"
-     * rather than for a colour worth recognising.
-     */
-    containerAlpha: Float = 0.2f,
 ) {
     Surface(
-        color = tint.copy(alpha = containerAlpha),
+        color = tint.copy(alpha = 0.2f),
         shape = shape,
         modifier = modifier,
     ) {

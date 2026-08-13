@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionTarget
@@ -686,6 +687,7 @@ private fun DashboardSpendingByCategorySection(
 
     CategorySpendingCard(
         categorySpending = component.categorySpending,
+        type = Category.Type.EXPENSE,
         onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier
             .fillMaxWidth()
@@ -714,6 +716,7 @@ private fun DashboardIncomeByCategorySection(
 
     CategorySpendingCard(
         categorySpending = component.categoryIncome,
+        type = Category.Type.INCOME,
         title = stringResource(Res.string.component_income_by_category),
         onSeeRates = { navController.navigate(ExchangeRatesRoute) },
         modifier = modifier

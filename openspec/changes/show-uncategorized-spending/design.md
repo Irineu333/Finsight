@@ -218,6 +218,26 @@ inconsistente no caminho.
 
 ### Q1 — O par ícone/cor da linha sem classificação — **fechado**
 
+**Decisão final: a linha lê a cor e o glifo da sua natureza, como toda linha do card.**
+`Icons.AutoMirrored.Filled.TrendingDown` em vermelho `Expense` no detalhamento de despesas,
+`TrendingUp` em verde `Income` no de receitas — os mesmos pares que a lista de transações já usa,
+resolvidos pelo `categoryDisplayColor`, que é o dono único dessa regra. A linha sem classificação é
+uma linha do mesmo detalhamento e diz a mesma coisa sobre a direção do dinheiro, então é denominada
+na mesma paleta em vez de num neutro próprio.
+
+Como o mesmo componente renderiza gastos **e** receitas, o card passou a receber a natureza que
+está desenhando (`type: Category.Type`, com `EXPENSE` por padrão): sem ela, a receita sem categoria
+sairia vermelha e com a seta para baixo, afirmando que o dinheiro saiu. Toda outra linha lê a cor da
+sua própria categoria; esta não tem categoria a quem perguntar, e por isso é dita ao card.
+
+O separador só é desenhado quando existem os **dois** grupos. O domínio fixa a linha sem
+classificação por último, o que faz de "existe algo acima dela" o teste inteiro — um detalhamento
+que só tem essa linha não ganha um traço em cima do nada.
+
+O que se segue é o parecer que precedeu essa decisão, mantido porque explica o que foi pesado.
+
+#### O parecer do `ux-ui-designer` (proposta neutra, substituída acima)
+
 `colorScheme.onSurfaceVariant`, não `outline`. O parecer do `ux-ui-designer`: `outline` é
 dimensionado para bordas e traços, e o seu contraste contra `surfaceContainer` fica perto do limite
 não-textual (~3:1); `onSurfaceVariant` é o token de *conteúdo secundário legível*, com contraste
@@ -228,9 +248,9 @@ secundário", não "decorativo". `surfaceVariant` está descartado por ser token
 Aplicado em três lugares:
 
 - fundo do `CategoryIconBox`: `onSurfaceVariant.copy(alpha = 0.12f)` — mais baixo que os `0.2f` das
-  categorias reais, porque aqui a intenção é neutralidade e não uma cor de identidade. O alfa virou
-  parâmetro do componente (`containerAlpha`, com o `0.2f` de antes como padrão) em vez de uma
-  segunda cópia da caixa;
+  categorias reais, porque aqui a intenção é neutralidade e não uma cor de identidade. *(Com a
+  decisão final a linha passou a ter o peso das demais, e o `containerAlpha` que este item pedia
+  deixou de existir: o `CategoryIconBox` ficou como sempre foi.)*;
 - ícone: `Icons.Outlined.Category`, tintado com `onSurfaceVariant` puro. `HelpOutline` e
   `QuestionMark` comunicam erro, e não classificar é estado legítimo; `MoreHoriz` já significa
   *overflow* e prometeria um toque que a linha não tem; `Label` sugere justamente a etiqueta que

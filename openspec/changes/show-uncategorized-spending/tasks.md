@@ -145,6 +145,12 @@ A compilação do app ainda está quebrada nos pontos de chamada — o grupo 6 f
       linha; trocar `onCategoryClick: (Category) -> Unit` por `onSubjectClick: (SpendingSubject) -> Unit`
       com o ramo `Uncategorized` inerte e sem `clickable` (D9); aplicar o `testTag` se 4.4 disse sim.
       *Verificação:* o `when` é exaustivo e o card não referencia mais `CategorySpending.category`.
+      **Ajustado depois da primeira entrega, por decisão do dono do produto** (ver Q1 do `design.md`):
+      a linha usa a cor e o glifo da sua *natureza* — `TrendingDown` em vermelho `Expense` na despesa,
+      `TrendingUp` em verde `Income` na receita — e o separador só aparece quando existem os dois
+      grupos. Como o mesmo card renderiza gastos e receitas, ele passou a receber
+      `type: Category.Type`; sem isso a receita sem categoria sairia vermelha, dizendo que o dinheiro
+      saiu. Os quatro pontos de chamada de 6.1 e 6.2 informam a natureza que renderizam.
 - [x] 5.2 `feature/report/impl/.../ui/screen/report/viewer/ReportExportLayout.kt`: acrescentar a
       `ReportExportStrings` o campo do rótulo sem classificação — a exportação recebe o texto já
       resolvido, o que a mantém fora do mundo `@Composable` (D8) — e trocar os usos de `category` nas

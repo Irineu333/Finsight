@@ -16,12 +16,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.ui.icons.LazyIcon
+import com.neoutils.finsight.ui.model.categoryDisplayColor
 import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.component.MoneyLayout
 import com.neoutils.finsight.ui.component.MoneyText
@@ -33,12 +36,17 @@ import com.neoutils.finsight.resources.category_spending_uncategorized
 import org.jetbrains.compose.resources.stringResource
 
 /**
+ * @param type the nature this breakdown is about. Every other line reads its colour off
+ * its own category; the unclassified one has no category to ask, so the card has to be
+ * told — the same card renders spending and income, and a line that took the wrong one
+ * would say money came in when it went out.
  * @param onSeeRates where the badge that explains a missing bar leads. `null` leaves the
  * card without that way out — accepted only where the screen has nowhere to send the user.
  */
 @Composable
 fun CategorySpendingCard(
     categorySpending: List<CategorySpending>,
+    type: Category.Type = Category.Type.EXPENSE,
     title: String? = null,
     modifier: Modifier = Modifier,
     onSeeRates: (() -> Unit)? = null,
@@ -98,29 +106,35 @@ fun CategorySpendingCard(
                 }
             }
 
-            categorySpending.forEach { spending ->
+            categorySpending.forEachIndexed { index, spending ->
                 when (spending.subject) {
                     is SpendingSubject.Categorized -> CategorySpendingItem(
                         spending = spending,
+                        type = type,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .clickable { onSubjectClick(spending.subject) }
                     )
 
-                    // Pinned last by the domain, so the divider that closes the
-                    // categories can simply precede it. No `clickable`: the absence of a
-                    // ripple is how a row says it is not a way through, and the line has
-                    // no id to navigate by.
+                    // No `clickable`: the absence of a ripple is how a row says it is not
+                    // a way through, and the line has no id to navigate by.
                     SpendingSubject.Uncategorized -> {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .padding(vertical = 4.dp),
-                            color = colorScheme.outlineVariant,
-                        )
+                        // A divider separates two groups, so it needs both. The domain
+                        // pins this line last, which makes "there is something above it"
+                        // the whole test — and a breakdown that is *only* unclassified
+                        // gets a rule across the top of nothing.
+                        if (index > 0) {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .padding(vertical = 4.dp),
+                                color = colorScheme.outlineVariant,
+                            )
+                        }
 
                         CategorySpendingItem(
                             spending = spending,
+                            type = type,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         )
                     }
@@ -131,16 +145,26 @@ fun CategorySpendingCard(
 }
 
 /**
- * The colour of the unclassified line, icon and bar alike: the content token for
- * "secondary but legible", so the row reads as a value of the axis without borrowing the
- * visual weight of a category the user chose.
+ * The colour of the unclassified line, icon and bar alike: the colour of its **nature**,
+ * by the same rule every category on the card reads — red for spending, green for income
+ * (`categoryDisplayColor`). It is a line of the same breakdown and says the same thing
+ * about the direction of the money, so it is denominated in the same palette rather than
+ * in a neutral of its own.
  */
-private val uncategorizedColor: Color
-    @Composable get() = colorScheme.onSurfaceVariant
+@Composable
+private fun uncategorizedColor(type: Category.Type): Color =
+    categoryDisplayColor(type, isArchived = false)
+
+/** The glyph of the nature, the one the transaction list already uses for it. */
+private fun uncategorizedIcon(type: Category.Type) = when (type) {
+    Category.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+    Category.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+}
 
 @Composable
 private fun CategorySpendingItem(
     spending: CategorySpending,
+    type: Category.Type,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -162,15 +186,13 @@ private fun CategorySpendingItem(
                 modifier = Modifier.size(40.dp),
             )
 
-            // Neutral on purpose, and outlined where a real category is filled: the
-            // line is a value of the axis, so it is legible, but it does not compete
-            // with categories the user named and coloured himself.
+            // The nature's own glyph and colour: no category named this line, so it
+            // says what it can — which way the money went.
             SpendingSubject.Uncategorized -> CategoryIconBox(
-                icon = LazyIcon { rememberVectorPainter(Icons.Outlined.Category) },
-                tint = uncategorizedColor,
+                icon = LazyIcon { rememberVectorPainter(uncategorizedIcon(type)) },
+                tint = uncategorizedColor(type),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(8.dp),
-                containerAlpha = 0.12f,
                 modifier = Modifier.size(40.dp),
             )
         }
@@ -233,7 +255,7 @@ private fun CategorySpendingItem(
                     .height(8.dp),
                 color = when (val subject = spending.subject) {
                     is SpendingSubject.Categorized -> subject.category.displayColor
-                    SpendingSubject.Uncategorized -> uncategorizedColor
+                    SpendingSubject.Uncategorized -> uncategorizedColor(type)
                 },
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,

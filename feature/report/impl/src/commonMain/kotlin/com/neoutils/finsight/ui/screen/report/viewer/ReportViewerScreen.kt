@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalPlatformContext
@@ -247,6 +248,7 @@ private fun ReportViewerContent(
                             item {
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
+                                    type = Category.Type.EXPENSE,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
                                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                     onSubjectClick = { subject ->
@@ -267,6 +269,7 @@ private fun ReportViewerContent(
                             item {
                                 CategorySpendingCard(
                                     categorySpending = state.categoryIncome,
+                                    type = Category.Type.INCOME,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
                                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                                     onSubjectClick = { subject ->

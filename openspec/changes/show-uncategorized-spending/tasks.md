@@ -243,10 +243,14 @@ grupo é dado por feito sem a saída do comando lida.
 
 - [x] 8.1 Rodar `./gradlew jvmTest` e ler a saída inteira; rodar `./gradlew :app:android:assembleDebug`.
       Ambos verdes.
-- [ ] 8.2 **Pendente — exige interação com a GUI.** `./gradlew :app:desktop:run` sobe e roda sem
-      exceção (90s observados, log só com avisos de SLF4J), mas o passeio visual em si não foi feito:
-      criar uma despesa e uma receita sem categoria no mês e conferir as duas linhas, mais a
-      exportação HTML. Exercitar o caminho no app (`./gradlew :app:desktop:run`): um mês com despesa e receita sem
+- [ ] 8.2 **Conferido nas telas pelo dono do produto; falta a exportação HTML.** O passeio manual
+      cobriu o dashboard e o relatório, com a despesa e a receita sem categoria, e ambos estão
+      corretos — inclusive o par cor/glifo por natureza que o ajuste de Q1 introduziu. O que ainda
+      não foi olhado é a **exportação HTML** do relatório, que monta a sua própria lista
+      (`ReportExportLayout`) e por isso é o ponto onde tela e documento poderiam divergir; o teste
+      `ReportExportFootnoteTest` afirma a ordem e o rótulo, mas nada substitui abrir o arquivo.
+      Do lado do agente, `./gradlew :app:desktop:run` sobe e roda sem exceção (90s observados, log
+      só com avisos de SLF4J) — a GUI em si está fora do que ele alcança. Exercitar o caminho no app (`./gradlew :app:desktop:run`): um mês com despesa e receita sem
       categoria mostra as duas linhas, cada uma no seu detalhamento, por último e visualmente distinta;
       um mês inteiramente classificado mostra exatamente o que mostrava antes. Conferir também a
       exportação HTML do relatório, que monta a sua própria lista.

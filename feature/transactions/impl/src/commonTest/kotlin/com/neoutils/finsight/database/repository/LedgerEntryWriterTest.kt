@@ -473,6 +473,10 @@ private class FakeEntryDao : EntryDao {
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInMonth(
+        nominalType: String,
+        yearMonth: String,
+    ): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(
         nominalType: String,
         scopeDimensionIds: List<Long>,

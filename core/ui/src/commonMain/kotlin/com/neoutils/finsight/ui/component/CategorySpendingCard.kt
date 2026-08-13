@@ -15,8 +15,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.SpendingSubject
+import com.neoutils.finsight.ui.icons.LazyIcon
 import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.component.MoneyLayout
 import com.neoutils.finsight.ui.component.MoneyText
@@ -24,6 +29,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_card_title
+import com.neoutils.finsight.resources.category_spending_uncategorized
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -36,7 +42,7 @@ fun CategorySpendingCard(
     title: String? = null,
     modifier: Modifier = Modifier,
     onSeeRates: (() -> Unit)? = null,
-    onCategoryClick: (Category) -> Unit = {}
+    onSubjectClick: (SpendingSubject) -> Unit = {}
 ) {
     // A bar is missing when no share could be taken, and a share needs a whole: one
     // category in a currency no rate reaches leaves the period without one. The card has
@@ -93,16 +99,44 @@ fun CategorySpendingCard(
             }
 
             categorySpending.forEach { spending ->
-                CategorySpendingItem(
-                    spending = spending,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .clickable { onCategoryClick(spending.category) }
-                )
+                when (spending.subject) {
+                    is SpendingSubject.Categorized -> CategorySpendingItem(
+                        spending = spending,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .clickable { onSubjectClick(spending.subject) }
+                    )
+
+                    // Pinned last by the domain, so the divider that closes the
+                    // categories can simply precede it. No `clickable`: the absence of a
+                    // ripple is how a row says it is not a way through, and the line has
+                    // no id to navigate by.
+                    SpendingSubject.Uncategorized -> {
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .padding(vertical = 4.dp),
+                            color = colorScheme.outlineVariant,
+                        )
+
+                        CategorySpendingItem(
+                            spending = spending,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+/**
+ * The colour of the unclassified line, icon and bar alike: the content token for
+ * "secondary but legible", so the row reads as a value of the axis without borrowing the
+ * visual weight of a category the user chose.
+ */
+private val uncategorizedColor: Color
+    @Composable get() = colorScheme.onSurfaceVariant
 
 @Composable
 private fun CategorySpendingItem(
@@ -120,12 +154,26 @@ private fun CategorySpendingItem(
         // bar — because the share cannot be taken — shrank its icon too, and the card read
         // as broken rather than as one line short. It is the size `BudgetProgressCard`
         // already uses for the same shape.
-        CategoryIconBox(
-            category = spending.category,
-            shape = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(8.dp),
-            modifier = Modifier.size(40.dp),
-        )
+        when (val subject = spending.subject) {
+            is SpendingSubject.Categorized -> CategoryIconBox(
+                category = subject.category,
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(8.dp),
+                modifier = Modifier.size(40.dp),
+            )
+
+            // Neutral on purpose, and outlined where a real category is filled: the
+            // line is a value of the axis, so it is legible, but it does not compete
+            // with categories the user named and coloured himself.
+            SpendingSubject.Uncategorized -> CategoryIconBox(
+                icon = LazyIcon { rememberVectorPainter(Icons.Outlined.Category) },
+                tint = uncategorizedColor,
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(8.dp),
+                containerAlpha = 0.12f,
+                modifier = Modifier.size(40.dp),
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -139,7 +187,11 @@ private fun CategorySpendingItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = spending.category.name,
+                    text = when (val subject = spending.subject) {
+                        is SpendingSubject.Categorized -> subject.category.name
+                        SpendingSubject.Uncategorized ->
+                            stringResource(Res.string.category_spending_uncategorized)
+                    },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -179,7 +231,10 @@ private fun CategorySpendingItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = spending.category.displayColor,
+                color = when (val subject = spending.subject) {
+                    is SpendingSubject.Categorized -> subject.category.displayColor
+                    SpendingSubject.Uncategorized -> uncategorizedColor
+                },
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},

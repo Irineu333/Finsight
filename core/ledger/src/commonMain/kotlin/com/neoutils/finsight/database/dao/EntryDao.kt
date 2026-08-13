@@ -269,6 +269,35 @@ interface EntryDao {
     ): List<CurrencyTotal>
 
     /**
+     * Per-dimension totals of the nominal legs of a given nature within a single month
+     * (yyyy-MM), per currency — a whole breakdown in one read instead of one read per
+     * dimension.
+     *
+     * The unclassified legs come back as the `null` group, by the same mechanism, not
+     * by a second query and not through a bucket account.
+     *
+     * The `a.type = :nominalType` filter is not an optimisation: without it
+     * `dimensionId IS NULL` would match every unclassified leg in the ledger — asset,
+     * liability, conversion — and the null group would stop being a total about
+     * classification.
+     */
+    @Query(
+        """
+        SELECT e.dimensionId AS dimensionId, e.currency AS currency,
+          COALESCE(SUM(e.amount), 0) AS total
+        FROM entries e
+        JOIN transactions o ON o.id = e.transactionId
+        JOIN accounts a ON a.id = e.accountId
+        WHERE a.type = :nominalType AND substr(o.date, 1, 7) = :yearMonth
+        GROUP BY e.dimensionId, e.currency
+        """
+    )
+    suspend fun totalsByDimensionInMonth(
+        nominalType: String,
+        yearMonth: String,
+    ): List<DimensionCurrencyTotal>
+
+    /**
      * Natural balance of a sub-ledger, per currency = Σ the entries tagged with its
      * dimension, grouped.
      */

@@ -169,26 +169,37 @@ class DashboardPreviewFactory(
                 component = DashboardComponent.SpendingByCategory(
                     categorySpending = listOf(
                         CategorySpending(
-                            category = Category(
-                                id = 1,
-                                name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
+                            subject = SpendingSubject.Categorized(
+                                Category(
+                                    id = 1,
+                                    name = getString(Res.string.preview_category_food),
+                                    icon = CategoryLazyIcon("shopping"),
+                                    type = Category.Type.EXPENSE,
+                                    createdAt = 0,
+                                )
                             ),
                             amount = figure(450.0, on),
-                            percentage = 61.64
+                            percentage = 52.94
                         ),
                         CategorySpending(
-                            category = Category(
-                                id = 3,
-                                name = getString(Res.string.preview_category_transport),
-                                icon = CategoryLazyIcon("directions_car"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
+                            subject = SpendingSubject.Categorized(
+                                Category(
+                                    id = 3,
+                                    name = getString(Res.string.preview_category_transport),
+                                    icon = CategoryLazyIcon("directions_car"),
+                                    type = Category.Type.EXPENSE,
+                                    createdAt = 0,
+                                )
                             ),
                             amount = figure(280.0, on),
-                            percentage = 38.36,
+                            percentage = 32.94,
+                        ),
+                        // Last whatever its size, and part of the same whole: 450 + 280
+                        // + 120 is what the three shares are taken over.
+                        CategorySpending(
+                            subject = SpendingSubject.Uncategorized,
+                            amount = figure(120.0, on),
+                            percentage = 14.12,
                         ),
                     ),
                 ),
@@ -200,23 +211,27 @@ class DashboardPreviewFactory(
                 component = DashboardComponent.IncomeByCategory(
                     categoryIncome = listOf(
                         CategorySpending(
-                            category = Category(
-                                id = 2,
-                                name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
-                                type = Category.Type.INCOME,
-                                createdAt = 0,
+                            subject = SpendingSubject.Categorized(
+                                Category(
+                                    id = 2,
+                                    name = getString(Res.string.preview_category_salary),
+                                    icon = CategoryLazyIcon("payments"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                )
                             ),
                             amount = figure(3200.0, on),
                             percentage = 84.21
                         ),
                         CategorySpending(
-                            category = Category(
-                                id = 4,
-                                name = getString(Res.string.preview_category_freelance),
-                                icon = CategoryLazyIcon("laptop"),
-                                type = Category.Type.INCOME,
-                                createdAt = 0,
+                            subject = SpendingSubject.Categorized(
+                                Category(
+                                    id = 4,
+                                    name = getString(Res.string.preview_category_freelance),
+                                    icon = CategoryLazyIcon("laptop"),
+                                    type = Category.Type.INCOME,
+                                    createdAt = 0,
+                                )
                             ),
                             amount = figure(600.0, on),
                             percentage = 15.79,

@@ -187,6 +187,13 @@ class EntryRepository(
             .byDimension()
     }
 
+    override suspend fun totalsByDimensionInMonthByCurrency(
+        month: YearMonth,
+        nominalType: AccountType,
+    ): Map<Long?, MoneyByCurrency> = entryDao
+        .totalsByDimensionInMonth(nominalType.name, month.toString())
+        .byDimension()
+
     override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,

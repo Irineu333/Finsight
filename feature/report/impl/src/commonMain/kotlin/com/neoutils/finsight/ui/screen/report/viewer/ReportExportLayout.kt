@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.domain.model.ReportSummaryItem
 import com.neoutils.finsight.domain.model.ReportTableLabels
 import com.neoutils.finsight.domain.model.ReportTone
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionGroup
 import com.neoutils.finsight.domain.model.TransactionItem
 import com.neoutils.finsight.util.DateFormats
@@ -40,6 +41,12 @@ data class ReportExportStrings(
     val transactionPayment: String,
     val transactionBalanceAdjustment: String,
     val transactionInvoiceAdjustment: String,
+    /**
+     * The name of the unclassified line, resolved before the export runs — the document
+     * is built outside the `@Composable` world, so every string it prints arrives here
+     * already translated.
+     */
+    val uncategorized: String,
     val columnCategory: String,
     val columnTransaction: String,
     val columnAmount: String,
@@ -110,7 +117,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     title = strings.sectionSpendingByCategory,
                     items = categorySpending.map { item ->
                         CategoryItem(
-                            label = item.category.name,
+                            label = item.subject.exportLabel(strings),
                             amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
@@ -125,7 +132,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                     title = strings.sectionIncomeByCategory,
                     items = categoryIncome.map { item ->
                         CategoryItem(
-                            label = item.category.name,
+                            label = item.subject.exportLabel(strings),
                             amount = formatter.exportText(item.amount),
                             percentage = item.percentage.toRoundedPercent(),
                         )
@@ -194,6 +201,16 @@ private fun ReportViewerUiState.Content.approximateFigures(): List<ConsolidatedA
     }
     categorySpending?.forEach { add(it.amount) }
     categoryIncome?.forEach { add(it.amount) }
+}
+
+/**
+ * The subject's name in the document. The order the items come in is the domain's and
+ * is printed as received — the export reorders nothing, which is what keeps it agreeing
+ * with the screen down to the position of the unclassified line.
+ */
+private fun SpendingSubject.exportLabel(strings: ReportExportStrings): String = when (this) {
+    is SpendingSubject.Categorized -> category.name
+    SpendingSubject.Uncategorized -> strings.uncategorized
 }
 
 private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {

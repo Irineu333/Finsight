@@ -138,6 +138,10 @@ private class StubEntryRepository(private val hasEntries: Boolean) : IEntryRepos
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
     ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInMonthByCurrency(
+        month: YearMonth,
+        nominalType: AccountType,
+    ): Map<Long?, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,

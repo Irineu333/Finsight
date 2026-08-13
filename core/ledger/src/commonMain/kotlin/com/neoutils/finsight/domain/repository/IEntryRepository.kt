@@ -284,6 +284,22 @@ interface IEntryRepository {
         siblingAccountIds: List<Long>,
     ): Map<Long?, MoneyByCurrency>
 
+    /**
+     * Natural balance per dimension of the [nominalType] legs within [month], per
+     * currency — a whole month's breakdown in one read.
+     *
+     * The `null` key is a group of this same aggregate: the nominal legs carrying no
+     * dimension. It is not a separate read, so it can never diverge from the rest.
+     *
+     * The nature filter is part of the signature, not an optional clause: without it
+     * the absence of a dimension would reach asset, liability and conversion legs
+     * alike, and the null group would stop being a total about classification.
+     */
+    suspend fun totalsByDimensionInMonthByCurrency(
+        month: YearMonth,
+        nominalType: AccountType,
+    ): Map<Long?, MoneyByCurrency>
+
     /** The same totals, scoped to the transactions touching a set of sub-ledgers. */
     suspend fun totalsByDimensionInScopeByCurrency(
         nominalType: AccountType,

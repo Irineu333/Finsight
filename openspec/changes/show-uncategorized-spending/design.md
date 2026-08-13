@@ -214,11 +214,44 @@ Nada é persistido: todo número aqui é derivado das entries. **Sem migração 
 de esquema, sem backfill.** A reversão é o `revert` do commit, e nenhum dado do usuário fica
 inconsistente no caminho.
 
-## Open Questions
+## Resolved Questions
 
-- O par ícone/cor da linha sem classificação. A proposta é `colorScheme.outline` sobre
-  `surfaceContainerHighest` — deliberadamente apagado, para não competir com categorias reais — mais
-  um separador acima da linha. Vale passar pelo `ux-ui-designer` antes de fixar.
-- Se a linha ganha `testTag` próprio para o Maestro nesta entrega, e se algum fluxo do `.maestro/`
-  passa a cobri-la. Lembrar que a tag só alcança o Maestro pela raiz de composição que chamou
-  `Modifier.exposeTestTags()`.
+### Q1 — O par ícone/cor da linha sem classificação — **fechado**
+
+`colorScheme.onSurfaceVariant`, não `outline`. O parecer do `ux-ui-designer`: `outline` é
+dimensionado para bordas e traços, e o seu contraste contra `surfaceContainer` fica perto do limite
+não-textual (~3:1); `onSurfaceVariant` é o token de *conteúdo secundário legível*, com contraste
+garantido nos dois temas, que é exatamente o papel semântico pretendido — "existe, mas é
+secundário", não "decorativo". `surfaceVariant` está descartado por ser token de superfície, e
+`outlineVariant` por ser feito para quase desaparecer.
+
+Aplicado em três lugares:
+
+- fundo do `CategoryIconBox`: `onSurfaceVariant.copy(alpha = 0.12f)` — mais baixo que os `0.2f` das
+  categorias reais, porque aqui a intenção é neutralidade e não uma cor de identidade. O alfa virou
+  parâmetro do componente (`containerAlpha`, com o `0.2f` de antes como padrão) em vez de uma
+  segunda cópia da caixa;
+- ícone: `Icons.Outlined.Category`, tintado com `onSurfaceVariant` puro. `HelpOutline` e
+  `QuestionMark` comunicam erro, e não classificar é estado legítimo; `MoreHoriz` já significa
+  *overflow* e prometeria um toque que a linha não tem; `Label` sugere justamente a etiqueta que
+  falta. Sendo `Outlined` ao lado dos `Filled` das categorias reais, o próprio peso do traço já é um
+  segundo sinal de diferença;
+- barra: `color = onSurfaceVariant` sobre o mesmo `trackColor = surfaceContainerHighest` das demais.
+
+O separador acima da linha está aprovado, com `colorScheme.outlineVariant` — o token certo para
+divisores — na espessura padrão, com o mesmo `padding(horizontal = 16.dp)` dos itens (para ler como
+separador de conteúdo, não como borda estrutural do card) mais `padding(vertical = 4.dp)`, de modo
+que o intervalo antes da linha fique um pouco maior que entre duas categorias. Só o espaçamento
+maior, sem a linha, foi rejeitado: com uma ou duas categorias no card ele passa despercebido.
+
+A ausência de `clickable` basta para dizer que a linha não é um caminho — no Material a presença do
+*ripple* já é essa linguagem. Nada de *chevron*, opacidade de desabilitado ou `Role.Button`: o dado
+é válido, apenas não navegável nesta entrega (D9).
+
+### Q2 — `testTag` próprio para o Maestro — **não, nesta entrega**
+
+A linha não ganha tag própria. O valor dela já é alcançável pelo `category_spending_amount` que toda
+linha do card publica e que `flows/categories/lifecycle.yaml` e `flows/budgets/lifecycle.yaml` já
+leem; nenhum fluxo do `.maestro/` exercita hoje um período com movimento sem classificação, e uma
+tag que fluxo algum lê é peso morto. Quando um fluxo precisar isolar a linha, a tag é uma linha de
+código — e terá de ser acompanhada da raiz de composição que chama `Modifier.exposeTestTags()`.

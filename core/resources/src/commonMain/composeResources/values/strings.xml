@@ -628,6 +628,8 @@
 
     <string name="category_spending_card_title">Gastos por Categoria</string>
 
+    <string name="category_spending_uncategorized">Sem categoria</string>
+
     <string name="budget_progress_card_title">Orçamentos</string>
 
     <!-- Invoice statuses -->

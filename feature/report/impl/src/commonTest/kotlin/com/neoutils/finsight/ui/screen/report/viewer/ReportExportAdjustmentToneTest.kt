@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.domain.model.ReportTone
@@ -77,7 +78,7 @@ class ReportExportAdjustmentToneTest {
             ),
             categorySpending = listOf(
                 CategorySpending(
-                    category = category,
+                    subject = SpendingSubject.Categorized(category),
                     // A category breakdown line is a figure the reducer produced; a
                     // single term is the ordinary case, not a special one.
                     amount = ConsolidatedAmount(
@@ -126,6 +127,55 @@ class ReportExportAdjustmentToneTest {
         assertTrue(item.amount.startsWith("+"))
     }
 
+    /**
+     * The unclassified line is a value of the breakdown's axis, not an adjustment: it
+     * lands in the category section like any other item — a plain magnitude, with no
+     * sign forced onto it and no tone at all — while the adjustment above keeps its own.
+     */
+    @Test
+    fun `the unclassified line is not given an adjustment's treatment`() {
+        val content = ReportViewerUiState.Content(
+            perspectiveLabel = "Card",
+            perspectiveBadge = UiText.Raw("Card"),
+            perspectiveIconKey = "other",
+            stats = ReportViewerUiState.Stats.Invoice(
+                openingDate = LocalDate(2026, 1, 1),
+                closingDate = LocalDate(2026, 1, 31),
+                expense = DisplayAmount.forcedNegative(0.0, CURRENCY, isApproximate = false),
+                advancePayment = DisplayAmount.forcedPositive(0.0, CURRENCY, isApproximate = false),
+                adjustment = DisplayAmount.explicitSign(100.0, CURRENCY, isApproximate = false),
+                total = DisplayAmount.natural(100.0, CURRENCY, isApproximate = false),
+            ),
+            categorySpending = listOf(
+                CategorySpending(
+                    subject = SpendingSubject.Uncategorized,
+                    amount = ConsolidatedAmount(
+                        terms = listOf(DisplayAmount.magnitude(100.0, CURRENCY, isApproximate = false)),
+                        isApproximate = false,
+                        baseIndex = 0,
+                    ),
+                    percentage = 100.0,
+                ),
+            ),
+            categoryIncome = null,
+            transactions = null,
+        )
+
+        val item = content.toReportLayout(
+            strings = strings,
+            dateFormats = DateFormats(MonthNames.ENGLISH_FULL, DayOfWeekNames.ENGLISH_FULL),
+            formatter = formatter,
+            perspectiveBadgeText = "Card",
+        ).sections
+            .filterIsInstance<ReportLayoutSection.SpendingByCategory>()
+            .single()
+            .items.single()
+
+        assertEquals(UNCATEGORIZED, item.label)
+        assertEquals(formatter.format(100.0, CURRENCY), item.amount, "a plain magnitude, unsigned")
+        assertEquals("100.0%", item.percentage)
+    }
+
     private val strings = ReportExportStrings(
         title = "Report",
         generatedAtPrefix = "Generated at",
@@ -143,6 +193,7 @@ class ReportExportAdjustmentToneTest {
         transactionPayment = "Payment",
         transactionBalanceAdjustment = "Balance adjustment",
         transactionInvoiceAdjustment = "Invoice adjustment",
+        uncategorized = UNCATEGORIZED,
         columnCategory = "Category",
         columnTransaction = "Transaction",
         columnAmount = "Amount",
@@ -153,6 +204,9 @@ class ReportExportAdjustmentToneTest {
     private companion object {
         /** The currency of the card every figure in this report belongs to (design D17). */
         const val CURRENCY = "BRL"
+
+        /** The label the screen resolved for the unclassified line, handed over as text. */
+        const val UNCATEGORIZED = "Uncategorized"
 
         /** What the document says about its own mark, on the reports that carry one. */
         const val FOOTNOTE = "Approximate figures passed through a rate."

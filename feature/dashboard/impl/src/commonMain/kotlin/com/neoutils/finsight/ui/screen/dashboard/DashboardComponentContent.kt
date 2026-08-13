@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.DisplayAmount
@@ -689,9 +690,13 @@ private fun DashboardSpendingByCategorySection(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        onCategoryClick = { category ->
-            if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
-                detailController.show(categoriesEntry.viewCategoryModal(category.id))
+        onSubjectClick = { subject ->
+            // Only a category has a modal to open: the unclassified line has no id to
+            // navigate by, and no destination of its own yet.
+            if (variant is DashboardComponentVariant.SpendingByCategory.Viewing &&
+                subject is SpendingSubject.Categorized
+            ) {
+                detailController.show(categoriesEntry.viewCategoryModal(subject.category.id))
             }
         }
     )
@@ -714,9 +719,13 @@ private fun DashboardIncomeByCategorySection(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        onCategoryClick = { category ->
-            if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
-                detailController.show(categoriesEntry.viewCategoryModal(category.id))
+        onSubjectClick = { subject ->
+            // Only a category has a modal to open: the unclassified line has no id to
+            // navigate by, and no destination of its own yet.
+            if (variant is DashboardComponentVariant.IncomeByCategory.Viewing &&
+                subject is SpendingSubject.Categorized
+            ) {
+                detailController.show(categoriesEntry.viewCategoryModal(subject.category.id))
             }
         }
     )

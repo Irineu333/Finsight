@@ -3,7 +3,8 @@ package com.neoutils.finsight.domain.model
 import com.neoutils.finsight.extension.ConsolidatedAmount
 
 /**
- * What a category cost in a period.
+ * What one subject of a breakdown — a category, or the absence of one — cost in a
+ * period.
  *
  * [amount] is a **consolidated figure**, not a number: a category is a dimension and
  * not an account, so it has no currency of its own and its entries may sit in several
@@ -11,7 +12,7 @@ import com.neoutils.finsight.extension.ConsolidatedAmount
  * which is why what arrives here is already the figure a screen shows.
  */
 data class CategorySpending(
-    val category: Category,
+    val subject: SpendingSubject,
     val amount: ConsolidatedAmount,
     /**
      * The share of the period's total, or `null` when there is no answer.

@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 import com.neoutils.finsight.di.commonModule
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.CurrencyFormatter
@@ -76,7 +77,7 @@ class ReportExportFootnoteTest {
                 balance = balance,
             ),
             categorySpending = listOf(
-                CategorySpending(category = category, amount = spending, percentage = 100.0),
+                CategorySpending(subject = SpendingSubject.Categorized(category), amount = spending, percentage = 100.0),
             ),
             categoryIncome = null,
             transactions = null,
@@ -127,6 +128,56 @@ class ReportExportFootnoteTest {
         assertTrue(formatter.format(50.0, "USD") in amount, amount)
     }
 
+    /**
+     * The order the export prints is the order the domain produced — the document
+     * reorders nothing, which is what keeps it agreeing with the screen down to the
+     * position of the unclassified line.
+     */
+    @Test
+    fun `the export prints the breakdown in the order it received, unclassified last`() {
+        val layout = ReportViewerUiState.Content(
+            perspectiveLabel = "Accounts",
+            perspectiveBadge = UiText.Raw("Accounts"),
+            perspectiveIconKey = "other",
+            stats = ReportViewerUiState.Stats.Account(
+                startDate = LocalDate(2026, 1, 1),
+                endDate = LocalDate(2026, 1, 31),
+                openingBalance = exactFigure("BRL"),
+                income = exactFigure("BRL"),
+                expense = exactFigure("BRL"),
+                balance = exactFigure("BRL"),
+            ),
+            categorySpending = listOf(
+                CategorySpending(
+                    subject = SpendingSubject.Categorized(category),
+                    amount = exactFigure("BRL"),
+                    percentage = 40.0,
+                ),
+                // Bigger than the category above it, and still where the domain put it.
+                CategorySpending(
+                    subject = SpendingSubject.Uncategorized,
+                    amount = exactFigure("BRL"),
+                    percentage = 60.0,
+                ),
+            ),
+            categoryIncome = null,
+            transactions = null,
+        ).toReportLayout(
+            strings = strings,
+            dateFormats = DateFormats(MonthNames.ENGLISH_FULL, DayOfWeekNames.ENGLISH_FULL),
+            formatter = formatter,
+            perspectiveBadgeText = "Accounts",
+        )
+
+        val items = layout.sections
+            .filterIsInstance<ReportLayoutSection.SpendingByCategory>()
+            .single()
+            .items
+
+        assertEquals(listOf(category.name, UNCATEGORIZED), items.map { it.label })
+        assertEquals("60.0%", items.last().percentage)
+    }
+
     private val strings = ReportExportStrings(
         title = "Report",
         generatedAtPrefix = "Generated at",
@@ -144,6 +195,7 @@ class ReportExportFootnoteTest {
         transactionPayment = "Payment",
         transactionBalanceAdjustment = "Balance adjustment",
         transactionInvoiceAdjustment = "Invoice adjustment",
+        uncategorized = UNCATEGORIZED,
         columnCategory = "Category",
         columnTransaction = "Transaction",
         columnAmount = "Amount",
@@ -153,5 +205,8 @@ class ReportExportFootnoteTest {
 
     private companion object {
         const val FOOTNOTE = "Approximate figures passed through a rate."
+
+        /** The label the screen resolved for the unclassified line, handed over as text. */
+        const val UNCATEGORIZED = "Uncategorized"
     }
 }

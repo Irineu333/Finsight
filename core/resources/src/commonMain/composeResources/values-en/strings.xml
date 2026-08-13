@@ -627,6 +627,8 @@
 
     <string name="category_spending_card_title">Spending by Category</string>
 
+    <string name="category_spending_uncategorized">Uncategorized</string>
+
     <string name="budget_progress_card_title">Budgets</string>
 
     <!-- Invoice statuses -->

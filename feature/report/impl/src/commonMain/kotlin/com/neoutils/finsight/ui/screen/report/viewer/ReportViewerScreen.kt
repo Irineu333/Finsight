@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
@@ -143,6 +144,7 @@ private fun ReportViewerContent(
         transactionPayment = stringResource(Res.string.transaction_card_payment),
         transactionBalanceAdjustment = stringResource(Res.string.transaction_card_balance_adjustment),
         transactionInvoiceAdjustment = stringResource(Res.string.transaction_card_invoice_adjustment),
+        uncategorized = stringResource(Res.string.category_spending_uncategorized),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),
@@ -247,7 +249,13 @@ private fun ReportViewerContent(
                                     categorySpending = state.categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
                                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
-                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
+                                    onSubjectClick = { subject ->
+                                        // The unclassified line has no id to navigate
+                                        // by, and no destination of its own yet.
+                                        if (subject is SpendingSubject.Categorized) {
+                                            detailController.show(categoriesEntry.viewCategoryModal(subject.category.id))
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -261,7 +269,13 @@ private fun ReportViewerContent(
                                     categorySpending = state.categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
                                     onSeeRates = { navController.navigate(ExchangeRatesRoute) },
-                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
+                                    onSubjectClick = { subject ->
+                                        // The unclassified line has no id to navigate
+                                        // by, and no destination of its own yet.
+                                        if (subject is SpendingSubject.Categorized) {
+                                            detailController.show(categoriesEntry.viewCategoryModal(subject.category.id))
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),

@@ -3,7 +3,7 @@
 App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multiplatform.
 
 Produção atual: **1.9.0**. 
-Em preparação: **1.10.0-rc01**.
+Em preparação: **1.10.0-rc02**.
 
 | Nome                            | Descrição                                                                            | Tipo           | Versão        |
 |---------------------------------|--------------------------------------------------------------------------------------|----------------|---------------|

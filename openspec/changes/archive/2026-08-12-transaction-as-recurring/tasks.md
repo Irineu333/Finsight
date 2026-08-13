@@ -248,7 +248,7 @@ lida.
       e `values-en/strings.xml`)
 - [x] 8.6 Conferir que a restrição de dispatcher está registrada em KDoc no método novo do `api`
       (2.1) e na implementação (3.1) — é ela que sustenta os três `useWriterConnection` aninhados
-- [ ] 8.7 Rodar o fluxo `.maestro` novo: reinstalar o debug (`./gradlew :app:android:installDebug`)
+- [x] 8.7 Rodar o fluxo `.maestro` novo: reinstalar o debug (`./gradlew :app:android:installDebug`)
       e executar num AVD `pixel_6` API 36, em inglês, com teclado na tela e sem teclado de
       hardware — conferindo antes as verificações `adb` de `.maestro/README.md` §2 e **relatando
       em qual dispositivo a execução aconteceu**

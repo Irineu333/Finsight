@@ -282,8 +282,11 @@ class AddTransactionModal : ModalBottomSheet() {
                     // brought to 40dp and overlapped slightly — one pair of affordances
                     // for one field, which is what they are.
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy((-4).dp),
                         verticalAlignment = Alignment.CenterVertically,
+                        // Shrinking the buttons to 40dp also took away the breathing room
+                        // their touch area used to give against the field's edge; this
+                        // puts it back, without pushing the pair apart again.
+                        modifier = Modifier.padding(end = 4.dp),
                     ) {
                         // Beside the date because the date is what decides the day of the
                         // repetition — which is why marking it asks for no field of its own.

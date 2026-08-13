@@ -269,6 +269,9 @@ muda — nada aqui toca estado ou decisão, só a forma.
       com 48dp de alvo cada, e o par lê como dois controles separados com um vão entre eles. Ambos
       passam a 40dp, num `Row` com `Arrangement.spacedBy((-4).dp)`: um par de affordances de um
       campo só, que é o que eles são. O alvo de toque continua confortável e o `testTag` não muda.
+      **Encolher os botões também tirou a folga que a área de 48dp dava contra a borda do campo** —
+      o seletor de data encostava nela. O `Row` recebe `padding(end = 4.dp)`, que devolve os ~14dp
+      de respiro sem afastar os dois de novo; conferido em captura de tela, não no olho.
 - [x] 9.2 **Tirar o solavanco ao marcar a recorrência.** O `supportingText` entra e sai com a nota,
       e a altura do campo mudava num quadro só, empurrando tudo abaixo dele. O campo de data ganha
       `Modifier.animateContentSize()`, que carrega a mudança de altura, e a nota troca dentro de um

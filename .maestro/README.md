@@ -2,7 +2,7 @@
 
 ```bash
 ./gradlew :app:android:installDebug              # instala o APK de debug (o de release não serve)
-maestro test .maestro                            # roda tudo (~28 min)
+maestro test .maestro                            # roda tudo (~29 min)
 maestro test .maestro/flows/budgets/lifecycle.yaml   # um fluxo só (§2.3)
 ```
 
@@ -33,7 +33,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) �
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~28 minutos** para 13 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~29 minutos** para 14 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -190,7 +190,7 @@ aponta para dentro:
 
 | Comando | O que acontece |
 |---|---|
-| `maestro test .maestro` | Workspace: os 13 fluxos, com as animações desligadas pelo `config.yaml` |
+| `maestro test .maestro` | Workspace: os 14 fluxos, com as animações desligadas pelo `config.yaml` |
 | `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
 | `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
 | `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
@@ -245,6 +245,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
+| `recurring/from_transaction` | uma despesa lançada abre a recorrência da qual ela é o primeiro ciclo — e o mês que ela acabou de pagar não volta a ser cobrado |
 | `currency/lifecycle` | duas moedas no mesmo bolso: o segundo campo nasce da discordância entre dois seletores, e a mesma escrita é exata na conta e aproximada no total — sob duas moedas base |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
 | `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai dos seletores e continua no gasto do mês, e volta inteira |
@@ -446,7 +447,8 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~28 minutos e 13 fluxos** (medido de ponta a ponta: 25m16 e 28m10). Ao estourar,
+**Orçamento: ~29 minutos e 14 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais os 39s do
+fluxo mais novo, medido sozinho). Ao estourar,
 corta-se ou funde-se — o teto não sobe por reflexo. Cada fluxo novo compete com os existentes pelo
 tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto muda**.
 
@@ -464,6 +466,7 @@ travessia que nenhuma camada abaixo alcança:
 | ~20 → ~21 | `support/lifecycle` | 1m06–1m12 | A última feature sem travessia nenhuma, intestável até o build de debug responder suporte da memória (`InMemorySupportRepository`) no lugar do Firestore, que exigiria rede, credenciais e projeto de verdade |
 | ~21 → ~23 | `dashboard/customization` | 1m42 | O único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um** componente também — os comandos em massa movem os onze ou nenhum. Nenhuma camada monta o editor e a tela que lê o resultado |
 | ~25 → ~28 | `currency/lifecycle` | 2m53 | O **segundo campo de valor**, único controle do app que nasce da discordância entre dois seletores: o arquivo o pré-preenche e digitar por cima retira a oferta. Ele existia no código sem fluxo nenhum — `transfer_destination_amount` era peso morto. E a **fronteira da consolidação**, que exige a tela de contas e o dashboard montados ao mesmo tempo sob **duas** moedas base: a mesma escrita exata de um lado e aproximada do outro. Nenhuma camada abaixo monta duas telas, e é a fronteira que a feature inteira existe para não quebrar |
+| ~28 → ~29 | `recurring/from_transaction` | 39s | O que a marca de recorrência no lançamento **impede**: sem a ocorrência escrita junto, o mês recém-pago volta como pendente e o usuário lança a mesma despesa duas vezes no razão. A afirmação é uma ausência em duas telas — a recorrência existe na lista e o dashboard não cobra o mês —, e ausência em duas telas ao mesmo tempo nenhuma camada abaixo monta |
 | ~23 → ~25 | `categories/lifecycle` | 2m19–2m22 | O ciclo de aposentadoria da dimensão, que `budgets/lifecycle` só atravessa de raspão: o comando trocar de *Delete* para *Archive* porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção certa — o seletor de transação deixa de oferecê-la no instante em que o dashboard continua somando o que ela gastou |
 
 Duas recusas vêm no mesmo pacote, e valem como precedente igual. A aritmética do arrasto **não** é

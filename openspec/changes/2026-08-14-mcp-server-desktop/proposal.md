@@ -38,6 +38,14 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   critério de triagem que já governa o projeto ("só entra na `api` o que outro módulo
   consome"). Nenhuma regra de dependência muda, e o `:app:shared` continua sendo o único
   módulo que enxerga um `impl`.
+- A superfície da primeira entrega é **ler tudo e escrever lançamento**: nove leituras e três
+  escritas. Ciclo de vida de fatura e de recorrência, criação de conta, categoria, cartão e
+  orçamento, e tudo que toque moeda base ou taxas ficam inalcançáveis por agente — são as
+  operações de maior custo de erro e menor frequência.
+- A escrita é **em lote, ensaiável e idempotente**, não uma chamada por lançamento. Lançar um
+  extrato é o pedido de primeira classe, e trinta chamadas separadas são trinta oportunidades
+  de falha parcial silenciosa. O ensaio devolve o que seria gravado — inclusive em qual fatura
+  cada compra cairia — sem persistir nada.
 
 **Fora de escopo, deliberadamente:**
 
@@ -90,8 +98,14 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   como contrato público: assinatura, tipo de erro, nada de `UiText` na fronteira.
 - **`core/database`** — entidade, DAO e migração de `agent_activity`.
 - **`core/resources`** — chaves novas da tela de configuração, em pt e en.
-- **`core/ledger`** — **nenhuma mudança**. Nenhuma regra do domínio ramifica em "quem pediu",
-  e o que não produz derivação não pertence ao razão.
+- **`core/ledger`** — o registro de origem **não** entra: nenhuma regra do domínio ramifica em
+  "quem pediu", e o que não produz derivação não pertence ao razão. Mas há trabalho, e ele é do
+  razão: a leitura filtrada de lançamentos existe hoje só no caminho reativo
+  (`observeTransactionsBy`), e a variante `suspend` (`getAllTransactions`) não filtra. MCP é
+  requisição/resposta e não consome `Flow`, então a leitura filtrada precisa de gêmea
+  `suspend` — e ela precisa recortar por **período**, não pelo dia único que o filtro atual
+  aceita, sob pena de a tool paginar o mês em memória e filtrar fora do razão. Faturas em
+  aberto sem escopo de cartão têm a mesma lacuna, no repositório de faturas.
 - **Dependências novas** — o SDK Kotlin de MCP e um servidor HTTP embarcado. Ambos entram no
   `libs.versions.toml` e ficam confinados a `:app:mcp`.
 - **Ponta solta assumida:** os módulos Koin dos `impl` declaram `viewModel {}`, então o

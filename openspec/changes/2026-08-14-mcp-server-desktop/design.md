@@ -230,6 +230,48 @@ consentimento que pressuponha alguém olhando. É também o que enterra a ideia 
 escrita por modal: com o app fechado como destino, aprovação vive no protocolo
 (*elicitation*) ou na política (o que Settings permite), nunca na UI.
 
+### D10 — Poucas tools grossas e em lote, derivadas do pedido do usuário
+
+A primeira versão desta superfície foi derivada de baixo para cima, dos casos de uso que o
+código já expunha. Como casos de uso são unitários, as tools nasceram unitárias — e "lança
+essas trinta linhas do meu extrato" virava trinta chamadas, com trinta chances de falha parcial
+silenciosa e nenhuma forma de o agente saber se deve reprocessar. Derivada do pedido, a mesma
+necessidade é **uma** chamada com trinta itens.
+
+Três consequências, todas na spec:
+
+- **Ensaio antes de gravar.** É como o agente mostra "a compra do dia 28 cai na fatura de
+  julho" antes de confirmar. Sem ele, todo lançamento em massa é ato de fé.
+- **Chave de idempotência.** Agentes repetem chamadas por tempo esgotado, reinício de sessão e
+  decisão própria. Sem chave, repetição é duplicação — e duplicação em contabilidade é dano que
+  não se anuncia.
+- **Desfecho por item.** Um sucesso agregado sobre trinta lançamentos não permite corrigir o
+  que falhou sem reprocessar tudo.
+
+O mesmo raciocínio produz o par que protege as leituras: **listas paginam, agregados não**. Sem
+uma tool de agregação, o agente pagina, soma e apresenta como exato — errando por moeda e
+contando como gasto o que o domínio não classifica como gasto. É a tool que mais protege o
+domínio, e ela existe por isso, não por conveniência.
+
+### D11 — A resposta é estruturalmente uniforme, mesmo quando isso custa concisão
+
+Duas escolhas parecem excesso de rigor e não são.
+
+**A coleção por moeda não colapsa** quando há uma moeda só. Se colapsasse, o consumidor
+aprenderia a forma escalar — que funciona por meses — e quebraria no dia em que o usuário
+abrisse uma conta em outra moeda. Consistência estrutural vale mais que concisão numa fronteira
+consumida por quem infere schema a partir de exemplos.
+
+**Taxa faltando não vira número.** O campo consolidado vem ausente com motivo, nunca com taxa
+um, nunca com a cotação de hoje no lugar da datada, nunca descartando em silêncio a moeda sem
+cotação. Um total ausente o agente reporta como ausente; um total errado ele reporta como
+verdade, porque nada na resposta permite suspeitar dele.
+
+Pelo mesmo motivo o **sinal** é fixado como o de exibição em toda a superfície: misturar a
+convenção débito-positivo do razão com a de exibição entre respostas diferentes faz o agente
+relatar gasto como receita — e é o tipo de erro que só aparece depois de ter sido dito ao
+usuário.
+
 ## Risks / Trade-offs
 
 - **A `api` incha.** Mitigação: a superfície de tools é deliberada (D4), e cada promoção é

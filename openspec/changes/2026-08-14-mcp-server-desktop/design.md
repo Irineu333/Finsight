@@ -122,6 +122,21 @@ depende de `feature:*:api` + `:core:*`, expõe o seu módulo Koin e é agregado 
         :app:mcp ──▶ feature:*:api + :core:*     ← direitos de um impl
 ```
 
+Duas descobertas no `build-logic` fecham isso melhor do que a proposta previa.
+
+A primeira: `verifyFeatureDependencyRules(isApi = false)` (`Extensions.kt:103-134`) já é,
+item por item, a regra que o `:app:mcp` precisa — admite `:core:*` e qualquer `:feature:*:api`,
+recusa `impl`. A convenção do módulo novo a **reusa**; nenhuma verificação nova é escrita, e
+não há um segundo texto da mesma regra para divergir no primeiro ajuste.
+
+A segunda: `verifyAppSharedDependencyRules` (`Extensions.kt:136-158`) recusa todo projeto que
+não comece por `:core:` ou `:feature:` — o que hoje **impede** o shell de sequer declarar
+`implementation(projects.app.mcp)`. Ela é **removida**, não alargada. Alargá-la seria manter
+uma regra cuja lista de exceções é exatamente aquilo que ela deveria descrever; e o que ela
+guardava já era pouco, porque o shell tem licença para depender de `impl` de qualquer forma —
+a única coisa que ainda bloqueava é precisamente o que agora se quer permitir. Nenhuma spec a
+descrevia.
+
 O custo real não é churn: é que **a demanda do MCP passa a definir a superfície da `api`**.
 Se as tools expuserem tudo, `api ≈ impl` nas features tocadas e a distinção perde sentido.
 Isso é uma pressão saudável — força a pergunta certa cedo ("o que um agente deve poder

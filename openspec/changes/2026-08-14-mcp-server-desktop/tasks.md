@@ -83,10 +83,14 @@ projeto não configura até que todas as tarefas tenham entrado — incluir um p
       que é literalmente a regra 4 já escrita (`Extensions.kt:103-134`: admite `:core:*` e
       qualquer `:feature:*:api`, recusa `impl`). Registrar o id `finsight.app.mcp` em
       `build-logic/build.gradle.kts` (bloco `gradlePlugin { plugins { … } }`, junto dos seis
-      já existentes). E **alargar `verifyAppSharedDependencyRules`** (`Extensions.kt:136-158`)
-      para admitir `:app:mcp`: hoje ela recusa todo projeto que não comece por `:core:` ou
-      `:feature:`, então `:app:shared` não consegue nem declarar a dependência. A mensagem de
-      violação continua nomeando módulo e dependência proibida.
+      já existentes). E **remover `verifyAppSharedDependencyRules`** (`Extensions.kt:136-158`)
+      junto da sua única chamada (`AppSharedConventionPlugin.kt:26`): ela recusa todo projeto
+      que não comece por `:core:` ou `:feature:`, e a existência de `:app:mcp` a torna falsa —
+      o shell passa a depender legitimamente de um módulo `:app:`. Alargá-la seria manter uma
+      regra cuja lista de exceções é a própria coisa que ela deveria descrever. O que ela ainda
+      guardava é quase nada: o `:app:shared` já tem licença para depender de `impl`, e a regra
+      não está escrita em spec alguma. A garantia que importa — o `:app:mcp` não alcançar
+      `impl` — passa a vir de `verifyFeatureDependencyRules`, no módulo certo.
       Teste em `build-logic` não existe hoje e não é criado aqui; a garantia é exercida em 11.6.
 - [ ] 1.2 **O grafo de módulos.** Em `settings.gradle.kts`: `include(":app:mcp")` no bloco
       `// App` (linhas 36-40) e `include(":feature:mcp:api")` / `include(":feature:mcp:impl")`
@@ -119,9 +123,9 @@ projeto não configura até que todas as tarefas tenham entrado — incluir um p
       `libs.multiplatform.settings` e, em `commonTest`, `libs.multiplatform.settings.test`.
 - [ ] 1.6 **`app/shared/build.gradle.kts`**: `api(projects.feature.mcp.api)` e
       `implementation(projects.feature.mcp.impl)` no bloco das features (linhas 21-42), e
-      `implementation(projects.app.mcp)`. Esta última só passa na verificação depois de 1.1;
-      é a única dependência do shell para fora de `:core:`/`:feature:` no projeto, e é o que o
-      delta `module-architecture` autoriza. **Nada é acrescentado ao `export()` de
+      `implementation(projects.app.mcp)`. Esta última só é aceita depois de 1.1 remover a
+      verificação escopada ao shell; é a única dependência do shell para fora de
+      `:core:`/`:feature:` no projeto, e é o que o delta `module-architecture` autoriza. **Nada é acrescentado ao `export()` de
       `app/ios/build.gradle.kts`**: nenhum código Swift nomeia a feature `mcp`, e a regra é
       export por demanda.
 

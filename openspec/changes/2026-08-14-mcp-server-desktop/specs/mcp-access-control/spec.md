@@ -67,8 +67,8 @@ Em somente leitura, as tools de escrita MUST NOT ser anunciadas na listagem de t
 uma capacidade que será recusada faz o consumidor insistir numa operação impossível, e nada na
 resposta lhe diz que o problema é permissão e não formulação.
 
-A mudança de nível em tempo de execução SHALL ser notificada aos clientes que assinaram
-mudanças na lista de tools, pelo mecanismo de assinatura do protocolo.
+O servidor SHALL declarar a capability de aviso de mudança na lista de tools, e a mudança de
+nível em tempo de execução SHALL emitir esse aviso.
 
 Ainda assim, a permissão SHALL ser aplicada também na execução: uma tool de escrita chamada em
 somente leitura SHALL ser recusada antes de alcançar o domínio, nomeando a permissão como
@@ -79,8 +79,9 @@ motivo. Esconder é para o consumidor bem comportado; recusar é o que vale.
 - **THEN** o nível vigente é somente leitura, e a listagem de tools não contém nenhuma escrita
 
 #### Scenario: Mudança de nível notifica
-- **WHEN** o usuário muda o nível para leitura e escrita com um cliente conectado e assinado
-- **THEN** o cliente é notificado de que a lista de tools mudou, e passa a enxergar as escritas
+- **WHEN** o usuário muda o nível para leitura e escrita com um cliente conectado
+- **THEN** o servidor emite o aviso de que a lista de tools mudou, e o cliente passa a enxergar
+  as escritas
 
 #### Scenario: Escrita recusada por permissão
 - **WHEN** uma tool de escrita é chamada com o nível em somente leitura

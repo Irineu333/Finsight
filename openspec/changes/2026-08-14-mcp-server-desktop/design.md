@@ -242,14 +242,16 @@ devolva um resultado pedindo entrada e que o **cliente** a colete — interaçã
 tela do cliente. Redigir a proibição como "nenhuma interação visual" teria banido isso junto,
 que é o único caminho de consentimento que sobra.
 
-E o mecanismo mudou de forma que o desenho precisa absorver: na revisão vigente o servidor não
-inicia requisição alguma. Ele devolve um resultado de "preciso de entrada", e o **cliente
-reexecuta a requisição original** com a resposta. Ou seja, **a chamada de tool roda duas vezes**
-— o que promove a chave de idempotência de conveniência a pré-requisito de qualquer confirmação,
-e é mais um motivo para ela ser ligada ao resumo dos argumentos (D10). O estado que atravessa as
-duas execuções é entrada controlada pelo cliente: se guardasse "os trinta itens aprovados", seria
-uma autorização de escrita no razão emitida por quem chamou. Ele fica fora do escopo desta
-entrega, junto com a confirmação que dependeria dele.
+Na revisão alvo (D12) o servidor **pode** iniciar a solicitação de entrada ao cliente, e a
+confirmação por esse caminho é viável — mas fica fora desta entrega, porque depende de o cliente
+declarar suporte e o desenho teria de definir o que fazer quando ele não declara. Nesta entrega
+o consentimento é a política: o que Settings permite.
+
+Vale registrar para quem migrar: na revisão seguinte esse mecanismo inverte-se. O servidor
+devolve "preciso de entrada" e o **cliente reexecuta a requisição original** — ou seja, a chamada
+de tool roda duas vezes. Quando a migração acontecer, a chave de idempotência deixa de ser
+conveniência e passa a ser pré-requisito de qualquer confirmação. Ligá-la ao resumo dos
+argumentos desde já (D10) é o que torna essa migração barata.
 
 ### D10 — Poucas tools grossas e em lote, derivadas do pedido do usuário
 
@@ -293,30 +295,45 @@ convenção débito-positivo do razão com a de exibição entre respostas difer
 relatar gasto como receita — e é o tipo de erro que só aparece depois de ter sido dito ao
 usuário.
 
-### D12 — A revisão alvo é a `2026-07-28`, e ela é sem estado
+### D12 — A revisão alvo é a `2025-11-25`, porque é a que o SDK fala
 
-A primeira versão desta proposta foi escrita contra um MCP que não existe mais. A revisão
-vigente removeu o handshake `initialize`, removeu as sessões de protocolo, tornou
-`server/discover` obrigatório, substituiu as requisições iniciadas pelo servidor por um padrão
-em que o cliente reexecuta a chamada, removeu `ping` e a configuração de log por método, removeu
-a retomada de stream, e depreciou Roots, Sampling e Logging.
+A primeira versão desta proposta foi escrita contra um MCP anterior, de memória. A segunda
+rebaseou-a para a `2026-07-28`, a revisão vigente. A verificação seguinte derrubou a segunda: o
+**SDK Kotlin de MCP 0.15.0**, publicado no mesmo dia daquela revisão, declara
+`LATEST_PROTOCOL_VERSION = "2025-11-25"`, e o repositório tem uma issue **aberta** rastreando a
+implementação da `2026-07-28`. O SDK Java está uma release atrás disso, sem publicação após
+junho. Nenhum SDK JVM fala a revisão vigente.
 
-O que isso obriga a mudar aqui, além do já dito em D2 e D9:
+Restavam duas saídas: escrever o transporte à mão contra a revisão nova, ou falar a
+`2025-11-25` e usar o SDK. A escolha é a segunda — o transporte não é o produto, e o custo de
+mantê-lo à mão não se paga num servidor local de usuário único.
 
-- **Identidade do cliente não vem de handshake.** Ela chega declarada a cada requisição, é
-  recomendada e não obrigatória, e é autodeclarada — não autenticada. A auditoria precisa aceitar
-  ausência e apresentar a etiqueta como afirmação, não como fato. O que autentica é o token, e
-  ele é um só para todos os clientes: se distinguir chamadores vier a importar, o caminho é token
-  por cliente, não confiar no campo.
-- **Nada de estado acumulado entre chamadas.** Onde estado for necessário, ele é um identificador
-  emitido pelo servidor e passado como argumento comum.
-- **Headers são conferidos contra o corpo.** Versão de protocolo, método e nome viajam também em
-  header, e divergência é recusa — a defesa contra um componente decidir por um valor enquanto o
-  servidor executa por outro.
-- **Fechar o stream é cancelar.** Isso não é polimento: define o que acontece com um lote
-  interrompido no meio, e sem resposta o razão fica num estado que ninguém consegue nomear. A
-  resposta escolhida é a chave de idempotência — repetir conclui o que faltou sem duplicar o que
-  entrou.
+O preço é dívida datada, e o gatilho dela é objetivo: **o SDK passar a falar a `2026-07-28`**.
+Enquanto isso, o desenho evita acumular o que a migração teria de desfazer — nada de Roots,
+Sampling ou Logging, que a revisão seguinte já depreciou, e nenhuma sessão, que ela remove.
+
+O que muda em relação à segunda versão, e por quê:
+
+| | `2026-07-28` (recusada) | `2025-11-25` (alvo) |
+|---|---|---|
+| Início | sem handshake, metadados por requisição | `initialize` com negociação de capabilities |
+| Sessão | não existe | opcional — **não usamos** |
+| Descoberta | `server/discover` obrigatório | não existe |
+| Headers | versão + método + nome, conferidos contra o corpo | apenas a versão de protocolo |
+| Cancelamento | fechar o stream **é** cancelar | fechar **não** é cancelar; há notificação própria |
+| Aviso de mudança | assinatura explícita | capability de mudança de lista |
+| Cache de listagem | validade e escopo obrigatórios | não existe |
+
+A inversão do cancelamento é a que mais importa, e não por elegância: ela decide o que acontece
+com um lote interrompido. Aqui, perder a conexão **não** cancela, e cancelar é ato explícito do
+cliente. Nos dois casos o desfecho é o mesmo e continua sendo o da chave de idempotência —
+repetir conclui o que faltou sem duplicar o que entrou.
+
+**O que sobrevive intacto do rebase anterior**, porque já valia nesta revisão: a validação de
+`Origin` (`MUST`, e omitida na primeira versão), o bind em loopback, o erro de execução de tool
+distinto do erro de protocolo, `outputSchema` com conteúdo estruturado, as anotações de risco,
+o aviso de mudança na lista de tools, a paginação por cursor em listagens do protocolo — e o
+**limite de taxa**, que a revisão exige como `MUST` e que nenhuma versão desta proposta tinha.
 
 **Sobre autorização.** A especificação de autorização do MCP é opcional, e conformá-la é
 recomendado para transportes HTTP; dentro dela, o servidor seria um resource server OAuth 2.1
@@ -324,6 +341,26 @@ com metadados de recurso protegido. Um token de portador estático para um servi
 usuário único é desproporcionalmente mais simples, e é a escolha. O que muda é que ela passa a
 ser **registrada como desvio**, com o mínimo que torna a falha legível: `401` com o desafio de
 autorização apontando os metadados do recurso, em vez de uma recusa opaca.
+
+### D13 — As perguntas de domínio foram respondidas pelo código, e a superfície as espelha
+
+Quatro decisões que a superfície teria de tomar já estavam tomadas no domínio, e a verificação
+as recuperou em vez de reinventá-las:
+
+- **Transferência entre moedas informa os dois valores, nunca uma taxa.** O caso de uso é
+  explícito: *"the rate is a quotient of the two ends and is derived"*, e a taxa é arquivada
+  depois da gravação. Uma tool que aceitasse taxa criaria um segundo dono para esse número.
+- **Orçamento declara a sua moeda**, sem padrão — deliberadamente, diz o próprio modelo. Não é
+  sempre a base, e a tool não pode assumir.
+- **Confirmar recorrência recebe a data**, usada tanto no lançamento quanto no registro da
+  ocorrência. Não existe "hoje" implícito, e a tool não inventa um.
+- **Compra parcelada gera todas as parcelas numa operação**, devolvendo o conjunto de
+  lançamentos. Não é uma chamada por parcela.
+
+E duas confirmações que fecham lacunas apontadas nas revisões: lançar em fatura fechada ou paga
+**já é recusado** pelo domínio, com erros nomeados — logo os códigos de recusa que a superfície
+enumera já existem; e ajuste de fatura e ajuste de conta são o **mesmo** mecanismo, distintos
+apenas por onde a dimensão pousa, não por natureza.
 
 ## Risks / Trade-offs
 
@@ -338,12 +375,11 @@ autorização apontando os metadados do recurso, em vez de uma recusa opaca.
 - **Dependências novas de rede no app.** Um servidor HTTP embarcado num app financeiro
   desktop é superfície nova mesmo desligado. Mitigação: confinado a `:app:mcp`, sem socket
   aberto enquanto o toggle estiver desligado, `Origin` validado e token obrigatório quando ligado.
-- **O SDK Kotlin de MCP pode não falar a revisão alvo.** A documentação pública do SDK não
-  declara qual revisão implementa, e a `2026-07-28` é uma quebra grande (sem `initialize`, sem
-  sessão, `server/discover`, o padrão de reexecução). Se o SDK ainda for da era com handshake,
-  isto deixa de ser detalhe de implementação: ou se implementa o transporte à mão, ou a entrega
-  fala uma revisão anterior — e aí boa parte desta spec muda. **Verificar antes de fixar a
-  dependência no `libs.versions.toml`.**
+- **Nasce uma revisão atrás (D12).** O alvo é a `2025-11-25` porque é o que o SDK fala; a
+  `2026-07-28` já é a vigente. A dívida é datada e o gatilho é objetivo — o SDK alcançar a
+  revisão nova —, e o desenho evita acumular o que a migração desfaria. Não mitigado: se o SDK
+  demorar, o servidor envelhece junto, e clientes que abandonarem a revisão antiga deixam de
+  conectar.
 - **O volume das respostas não tem número.** A forma exigida aqui — coleção por moeda que não
   colapsa, identificador junto do nome em todo objeto aninhado, proveniência de taxa, eco de
   todo default — é individualmente justificada e no conjunto produz respostas grandes. O limite

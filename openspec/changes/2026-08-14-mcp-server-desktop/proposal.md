@@ -17,7 +17,7 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
 ## What Changes
 
 - Um módulo `:app:mcp` passa a expor o domínio como um **servidor MCP local**, falando a
-  revisão `2026-07-28` do protocolo por Streamable HTTP em `127.0.0.1`, agregado como qualquer
+  revisão `2025-11-25` do protocolo por Streamable HTTP em `127.0.0.1`, agregado como qualquer
   módulo Koin de feature. A porta é fixa e persistida, para que a configuração que o usuário
   cola num cliente continue valendo depois de reiniciar o app.
 - O servidor **nasce desativado**. Habilitar não é ligar uma tela: é passar a escutar numa
@@ -112,11 +112,11 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   `suspend` — e ela precisa recortar por **período**, não pelo dia único que o filtro atual
   aceita, sob pena de a tool paginar o mês em memória e filtrar fora do razão. Faturas em
   aberto sem escopo de cartão têm a mesma lacuna, no repositório de faturas.
-- **Dependências novas** — um SDK de MCP e um servidor HTTP embarcado, ambos confinados a
-  `:app:mcp`. **Premissa não verificada:** a documentação pública do SDK Kotlin de MCP não
-  declara qual revisão do protocolo implementa, e a `2026-07-28` é uma quebra grande. Confirmar
-  antes de fixar a dependência — se o SDK for da era com handshake, ou se implementa o transporte
-  à mão, ou a entrega fala uma revisão anterior, e boa parte desta proposta muda.
+- **Dependências novas** — o SDK Kotlin de MCP e um servidor HTTP embarcado, ambos confinados a
+  `:app:mcp`. **Verificado:** o SDK 0.15.0 declara `LATEST_PROTOCOL_VERSION = "2025-11-25"`, e o
+  repositório tem issue aberta rastreando a `2026-07-28`; o SDK Java está atrás disso. Daí o
+  alvo ser a `2025-11-25` — decisão registrada, com o gatilho de migração escrito (design D12),
+  em vez de escrever o transporte à mão.
 - **Ponta solta assumida:** os módulos Koin dos `impl` declaram `viewModel {}`, então o
   runtime do Compose permanece no classpath de qualquer processo que agregue `appModules`.
   Declarar não é instanciar, e isso não impede nada — mas é peso morto conhecido, e é o que

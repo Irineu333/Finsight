@@ -376,6 +376,38 @@ importação produziria variações da mesma categoria a cada extrato, e isso é
 - **WHEN** um agente tenta fechar, pagar ou reabrir uma fatura
 - **THEN** nenhuma tool oferece essa operação nesta entrega
 
+### Requirement: A forma das entradas é a que o domínio já decidiu
+
+Onde o domínio já fixou como uma operação é expressa, a tool SHALL espelhar essa forma, e MUST
+NOT oferecer uma segunda.
+
+**Transferência entre moedas informa os dois valores, nunca uma taxa.** É o que o extrato mostra
+— saiu tanto aqui, chegou tanto ali —, e a taxa é o quociente dos dois, derivada e arquivada
+pelo próprio domínio depois da gravação. Aceitar taxa como parâmetro criaria um segundo caminho
+para um número que já tem dono.
+
+**Orçamento declara a sua moeda.** Ele não é sempre na moeda base e não tem moeda por omissão; a
+tool SHALL exigi-la explicitamente.
+
+**Confirmar recorrência exige a data.** O domínio recebe a data da ocorrência e a usa tanto no
+lançamento quanto no registro; não existe "hoje" implícito, e a tool MUST NOT inventar um.
+
+**Compra parcelada gera todas as parcelas numa operação.** A tool SHALL tratar o resultado como
+o conjunto de lançamentos produzidos, e MUST NOT emitir uma chamada por parcela.
+
+#### Scenario: Transferência entre moedas
+- **WHEN** uma transferência entre contas de moedas diferentes é registrada
+- **THEN** a chamada informa o valor que sai e o valor que chega, e nenhuma taxa é aceita como
+  parâmetro
+
+#### Scenario: Orçamento sem moeda é recusado
+- **WHEN** um orçamento é criado sem declarar a moeda
+- **THEN** a chamada é recusada como entrada inválida, e nenhuma moeda é assumida
+
+#### Scenario: Recorrência confirmada com data explícita
+- **WHEN** uma ocorrência atrasada é confirmada
+- **THEN** a data usada é a informada na chamada, e não a data corrente
+
 ### Requirement: Toda tool declara o seu risco pelas anotações do protocolo
 
 Cada tool SHALL declarar as anotações que o protocolo define para descrever o seu efeito —
@@ -414,8 +446,8 @@ expostos como **prompts**. Um prompt é texto, não lógica: ele não pode decid
 aplica, e por isso oferece o vocabulário do usuário sem o risco que um verbo agregador em forma
 de tool traria.
 
-Mudança no que é anunciado SHALL ser notificada aos clientes que assinaram, pelo mecanismo do
-protocolo.
+Mudança no que é anunciado SHALL ser avisada pelo mecanismo de mudança de lista do protocolo,
+cuja capability o servidor declara na inicialização.
 
 #### Scenario: Orientação disponível sem decisão do modelo
 - **WHEN** um cliente anexa os resources do servidor ao contexto
@@ -430,7 +462,8 @@ protocolo.
 ### Requirement: Nomes são prefixados e o tamanho da resposta é limite declarado
 
 Toda tool, resource e prompt SHALL ter nome prefixado pelo servidor e conter o verbo da
-operação. Clientes agregam servidores num espaço de nomes único, e nomes genéricos colidem entre
+operação, dentro do conjunto de caracteres que o protocolo recomenda para nomes de tool.
+Clientes agregam servidores num espaço de nomes único, e nomes genéricos colidem entre
 servidores diferentes.
 
 A descrição de cada tool SHALL declarar o que a resposta significa onde o formato pode enganar —

@@ -20,54 +20,48 @@ por uma delas não apareceria na outra até um reinício.
 - **WHEN** algo tenta iniciar a aplicação enquanto outra instância já é dona do banco
 - **THEN** a segunda tentativa não abre o banco, e o processo já existente permanece o único dono
 
-### Requirement: O servidor conforma a revisão 2026-07-28 do protocolo, que é sem estado
+### Requirement: A revisão alvo é a `2025-11-25`, e a defasagem é declarada
 
-O servidor SHALL implementar a revisão `2026-07-28` do Model Context Protocol, na qual o
-protocolo **não tem handshake e não tem sessão**. Não existem `initialize` nem
-`notifications/initialized`; cada requisição carrega a própria versão de protocolo e as
-capabilities do cliente em `_meta`.
+O servidor SHALL implementar a revisão `2025-11-25` do Model Context Protocol — a mais recente
+que o SDK Kotlin de MCP fala. A revisão seguinte, `2026-07-28`, existe e é sem estado: ela
+remove o handshake e as sessões, exige `server/discover` e substitui as requisições iniciadas
+pelo servidor. **Não** é alvo aqui porque nenhum SDK JVM a implementa, e escrever o transporte à
+mão foi recusado como custo desproporcional.
 
-O servidor MUST NOT depender de estado acumulado entre chamadas para decidir o que responder.
-Onde estado entre chamadas for necessário, ele SHALL ser um identificador explícito emitido pelo
-servidor e passado como argumento comum de tool.
+Essa defasagem SHALL constar da documentação do servidor como dívida datada, com o gatilho da
+migração: o SDK passar a falar a revisão seguinte. Uma defasagem escolhida e escrita é decisão;
+a mesma defasagem não escrita vira uma surpresa para quem mantiver isto depois.
 
-O servidor SHALL implementar `server/discover`, anunciando as versões de protocolo que fala,
-as suas capabilities e a sua identidade. Ele SHALL identificar-se no `_meta` de cada resultado.
+O servidor SHALL declarar as suas capabilities na inicialização, incluindo aviso de mudança na
+lista de tools. Ele MUST NOT adotar funcionalidades que a revisão seguinte já depreciou —
+Roots, Sampling e Logging — para não acumular o que a migração teria de desfazer.
 
-Todo resultado SHALL declarar o seu tipo, distinguindo resultado completo de resultado que ainda
-pede entrada.
+#### Scenario: Versão anunciada
+- **WHEN** um cliente inicializa a conexão
+- **THEN** o servidor negocia a revisão `2025-11-25` e declara as capabilities que oferece,
+  entre elas o aviso de mudança na lista de tools
 
-Resultados de listagem e de leitura de recurso SHALL declarar validade de cache e escopo de
-cache. A listagem de tools SHALL ter ordem determinística, para que o cache do cliente valha.
-
-Funcionalidades depreciadas na revisão — Roots, Sampling e Logging — MUST NOT ser adotadas.
-
-#### Scenario: Nenhum handshake é esperado
-- **WHEN** um cliente envia uma chamada de tool como primeira requisição da conexão
-- **THEN** ela é atendida, sem que nenhuma inicialização prévia tenha sido exigida
-
-#### Scenario: Descoberta antes de qualquer chamada
-- **WHEN** um cliente chama `server/discover`
-- **THEN** o servidor responde com as versões de protocolo suportadas, as suas capabilities e a
-  sua identidade
-
-#### Scenario: Listagem é cacheável e estável
-- **WHEN** a listagem de tools é pedida duas vezes sem que nada tenha mudado
-- **THEN** a ordem é a mesma, e a resposta declara por quanto tempo pode ser cacheada e em que
-  escopo
+#### Scenario: Nada que a próxima revisão já depreciou
+- **WHEN** o servidor é inspecionado
+- **THEN** ele não oferece Roots, Sampling nem Logging
 
 ### Requirement: O transporte é Streamable HTTP em loopback, com Origin validado
 
-O servidor SHALL expor um **único caminho de endpoint HTTP** que aceita `POST`, e SHALL escutar
-exclusivamente em `127.0.0.1`. Ele MUST NOT associar-se a todas as interfaces de rede.
+O servidor SHALL expor um **único caminho de endpoint HTTP**, aceitando `POST` para as
+requisições e `GET` para o fluxo de notificações que ele inicia, e SHALL escutar exclusivamente
+em `127.0.0.1`. Ele MUST NOT associar-se a todas as interfaces de rede.
 
 O servidor SHALL validar o header `Origin` em toda conexão recebida. Se o `Origin` estiver
 presente e não for reconhecido, o servidor SHALL responder `403 Forbidden` **antes de executar
 qualquer tool**. Sem isso, uma página web aberta pelo usuário alcança o servidor local por DNS
-rebinding — e este servidor escreve no razão do usuário.
+rebinding — e este servidor escreve no razão.
 
-`GET` e `DELETE` no endpoint SHALL responder `405`. Headers de sessão e de retomada de stream
-de revisões anteriores SHALL ser ignorados: não há sessão, e streams não são retomáveis.
+O servidor MUST NOT atribuir sessão. A revisão permite sessões, e elas não servem a nada aqui:
+um servidor local de usuário único não tem estado de conversa para guardar, e um identificador
+de sessão a mais é um segredo a mais para vazar.
+
+Toda requisição SHALL trazer o header de versão de protocolo, e versão inválida ou não suportada
+SHALL ser recusada com `400`.
 
 #### Scenario: Origin desconhecido é barrado
 - **WHEN** uma requisição chega com `Origin` presente e não reconhecido
@@ -78,56 +72,55 @@ de revisões anteriores SHALL ser ignorados: não há sessão, e streams não s�
 - **THEN** o socket está associado apenas ao loopback, e nenhuma tentativa vinda de outra
   máquina o alcança
 
-#### Scenario: Verbo antigo recusado
-- **WHEN** um cliente de revisão anterior faz `GET` no endpoint esperando abrir um stream
-- **THEN** o servidor responde `405`
-
-### Requirement: Os headers de requisição são obrigatórios e conferidos contra o corpo
-
-Toda requisição SHALL trazer o header de versão de protocolo, e o seu valor SHALL coincidir com
-a versão declarada no `_meta` do corpo. Divergência SHALL ser recusada com `400` e o erro de
-divergência de header.
-
-O header que espelha o método SHALL ser exigido em toda requisição, e o que espelha o nome
-SHALL ser exigido em chamada de tool, leitura de recurso e obtenção de prompt. Header ausente,
-malformado ou divergente do corpo SHALL ser recusado com `400` e o mesmo erro.
-
-Versão de protocolo não suportada SHALL ser recusada com `400` e o erro próprio, **listando as
-versões que o servidor fala**. Método desconhecido SHALL responder `404` com o erro JSON-RPC de
-método não encontrado.
-
-A conferência não é burocracia: ela impede que um componente decida por um valor do header
-enquanto o servidor executa por outro do corpo.
-
-#### Scenario: Header diverge do corpo
-- **WHEN** o header de nome traz uma tool diferente da nomeada no corpo
-- **THEN** a requisição é recusada com `400` e o erro de divergência, sem executar nada
+#### Scenario: Nenhuma sessão é emitida
+- **WHEN** um cliente inicializa a conexão
+- **THEN** nenhum identificador de sessão é atribuído, e requisições seguintes não precisam
+  carregá-lo
 
 #### Scenario: Versão não suportada
-- **WHEN** um cliente declara uma versão de protocolo que o servidor não implementa
-- **THEN** a resposta é `400` com o erro próprio, listando as versões suportadas
+- **WHEN** uma requisição declara uma versão de protocolo que o servidor não implementa
+- **THEN** a resposta é `400`
 
-### Requirement: Fechar o stream cancela, e um lote precisa saber o que isso significa
+### Requirement: Desconexão não é cancelamento, e um lote interrompido tem desfecho nomeado
 
-Fechar o stream de resposta SHALL ser tratado como cancelamento daquela requisição. O servidor
-SHALL interromper o trabalho assim que praticável e MUST NOT emitir mais nada para ela.
+Nesta revisão, perder a conexão MUST NOT ser interpretado como cancelamento: o cliente cancela
+por notificação explícita. O servidor SHALL tratar as duas situações separadamente.
 
-Uma escrita em lote cancelada no meio SHALL ter desfecho definido: o que já foi aplicado
-permanece aplicado, e SHALL ser recuperável pela mesma chave de idempotência da chamada, para
-que repetir a chamada conclua o que faltou em vez de duplicar o que entrou. Um lote cancelado
-MUST NOT deixar o razão num estado que ninguém consegue nomear.
+Recebido o cancelamento, o servidor SHALL interromper o trabalho assim que praticável e MUST NOT
+emitir mais nada para aquela requisição.
 
-Operações longas — lote grande, agregado sobre período extenso — SHOULD emitir progresso no
-stream da própria requisição.
+Em qualquer dos dois casos, uma escrita em lote interrompida no meio SHALL ter desfecho
+definido: o que já foi aplicado permanece aplicado, e SHALL ser recuperável pela mesma chave de
+idempotência da chamada, para que repetir conclua o que faltou em vez de duplicar o que entrou.
+Um lote interrompido MUST NOT deixar o razão num estado que ninguém consegue nomear.
 
-#### Scenario: Cliente desconecta no meio do lote
-- **WHEN** o cliente fecha o stream durante uma escrita de trinta itens
-- **THEN** o servidor para assim que possível, o que já foi gravado permanece, e repetir a
-  chamada com a mesma chave conclui o restante sem duplicar o que já entrou
+Operações longas — lote grande, agregado sobre período extenso — SHOULD emitir progresso.
 
-#### Scenario: Nada é emitido após o cancelamento
-- **WHEN** uma requisição é cancelada pelo fechamento do stream
-- **THEN** o servidor não emite nenhuma mensagem adicional para ela
+#### Scenario: Cancelamento explícito
+- **WHEN** o cliente envia a notificação de cancelamento durante uma escrita de trinta itens
+- **THEN** o servidor para assim que possível, não emite mais nada para aquela requisição, e o
+  que já foi gravado permanece
+
+#### Scenario: Conexão cai sem cancelamento
+- **WHEN** a conexão se perde durante uma escrita em lote, sem notificação de cancelamento
+- **THEN** o servidor não trata isso como cancelamento
+
+#### Scenario: Repetir conclui em vez de duplicar
+- **WHEN** um lote interrompido é repetido com a mesma chave e os mesmos itens
+- **THEN** o que já entrou não é gravado de novo, e o que faltava é concluído
+
+### Requirement: A execução de tools é limitada por taxa
+
+O servidor SHALL limitar a taxa de invocação de tools, conforme a revisão exige. Um agente
+escreve em lote e repete por decisão própria, e um servidor local sem limite transforma um
+laço de prompt num laço de escrita no razão.
+
+O limite SHALL ser recusa nomeada e repetível, distinguível de recusa de regra do domínio.
+
+#### Scenario: Excesso de chamadas
+- **WHEN** um cliente excede o limite de invocações
+- **THEN** as chamadas seguintes são recusadas com erro repetível que nomeia o limite, e nenhuma
+  escrita acontece
 
 ### Requirement: O servidor não depende da interface do Finsight
 
@@ -135,9 +128,8 @@ O servidor MUST NOT depender de nenhum elemento de interface **do Finsight** par
 não SHALL ser iniciado a partir de um escopo de composição, não SHALL ler estado de janela e
 MUST NOT exigir interação na tela do próprio app para concluir uma tool.
 
-Isso não proíbe pedir informação ao usuário: o protocolo prevê que o servidor devolva um
-resultado pedindo entrada, e que o **cliente** a colete e reenvie a requisição. Essa interação
-acontece na interface do cliente, não na do Finsight, e é permitida.
+Isso não proíbe pedir informação ao usuário: o protocolo permite ao servidor solicitar entrada
+ao cliente, e essa interação acontece na interface do cliente, não na do Finsight.
 
 #### Scenario: Tool conclui com a janela minimizada
 - **WHEN** uma tool é chamada e a janela do app está minimizada ou fora de foco

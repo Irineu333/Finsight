@@ -10,9 +10,10 @@ foi tocado.
 Chamadas **recusadas** — por permissão ou por regra do domínio — SHALL ser registradas
 também: são justamente o que alguém procura ao investigar por que algo não aconteceu.
 
-O cliente SHALL ser registrado pelo que ele **declara sobre si em cada requisição**. O protocolo
-não tem handshake e essa identificação é recomendada, não obrigatória: o campo SHALL aceitar
-ausência sem que isso seja falha.
+O cliente SHALL ser registrado pelo que ele **declara sobre si na inicialização da conexão**. O
+campo SHALL aceitar ausência sem que isso seja falha, porque a conexão pode ser encerrada e
+retomada e porque a próxima revisão do protocolo torna essa identificação opcional e por
+requisição — e o registro não deve precisar de migração quando isso acontecer.
 
 A identificação é autodeclarada e **não autenticada** — ela diz quem afirmou ser, não quem é. O
 que autentica é o token, e ele é o mesmo para todos os clientes. A apresentação dessa informação

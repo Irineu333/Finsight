@@ -76,29 +76,36 @@ Somam-se dois candidatos a executar migração no mesmo arquivo.
 A invariante que fica escrita na spec e sobrevive a todos os degraus futuros: **exatamente um
 processo é dono do banco, sempre**. Nenhum caminho pode subir uma segunda instância.
 
-### D2 — O transporte é HTTP em loopback; stdio é problema do cliente, não do app
+### D2 — Streamable HTTP em loopback, porta fixa, sem ponte e sem arquivo de descoberta
 
 O transporte stdio do MCP pressupõe que o **cliente** faz spawn do servidor. Aqui isso
-significaria o cliente lançando uma segunda instância do Finsight — exatamente o que D1
-proíbe. Então o app expõe HTTP em `127.0.0.1`, porta efêmera, e quem precisa de stdio usa
-uma ponte que fala loopback.
+significaria o cliente lançando uma segunda instância do Finsight — exatamente o que D1 proíbe.
+Logo, Streamable HTTP em `127.0.0.1`, que é o transporte vigente do protocolo e o que os
+clientes reais já falam nativamente, com o token indo no header de autorização.
 
-Que essa ponte exista neste change ou seja um binário à parte é decisão de empacotamento,
-não de domínio; o que a spec exige é o que a torna possível: **o anúncio em disco**.
+A primeira versão desta decisão previa uma ponte stdio e um `~/.finance/mcp.json` anunciando
+porta e token. Os dois caem, pela mesma cadeia:
 
 ```
-~/.finance/
-  ├── finsight.db
-  └── mcp.json      { "port": 51823, "token": "…", "pid": 4711 }
-                      ↑ escrito quando o servidor sobe
-                      ↑ APAGADO quando desce
+porta efêmera  →  a configuração colada no cliente contém a porta
+               →  todo cliente quebra a cada reinício do app
+               →  contradiz o próprio D8
 ```
 
-O arquivo é necessário porque a configuração do app vive em `Settings` — no JVM, o
-`java.util.prefs` (registro no Windows, plist no macOS), que nenhum processo externo lê de
-forma razoável (`core/common/.../CommonModule.kt:15`). E ele tem de morrer junto do servidor:
-um `mcp.json` órfão aponta clientes para uma porta morta ou, pior, para uma porta que outro
-processo herdou.
+Com a porta **fixa e persistida**, a configuração colada continua válida, e aí o arquivo de
+descoberta perde o único leitor que teria — a ponte. E a ponte já não se justificava: nenhum
+cliente de referência precisa dela, e ela seria mais um binário para empacotar e assinar cuja
+única função é ler um segredo do disco e repassá-lo. Menos código, menos uma cópia do segredo
+em disco, e três requisitos de ciclo de vida que existiam só para manter um arquivo honesto
+desaparecem.
+
+Porta ocupada não vira porta sorteada: o servidor falha a subir e mostra o conflito. Escolher
+outra em silêncio é a mesma quebra da porta efêmera, só que mais rara e por isso mais difícil de
+diagnosticar.
+
+O que **não** cai é a validação de `Origin`, que a spec exige como `MUST` e que a primeira versão
+desta proposta omitiu. Sem ela, uma página web aberta pelo usuário alcança o servidor por DNS
+rebinding — e este servidor escreve no razão.
 
 ### D3 — `:app:mcp` é um `impl` sem tela
 
@@ -225,10 +232,24 @@ mesmo processo com a mesma `Window`, e não pedem separação alguma; e o MVP fu
 
 Então o corte fica para quando for necessário. O que **esta** mudança precisa garantir é não
 o impedir, e isso se resume a uma proibição concreta, que a spec fixa: o servidor MUST NOT
-depender de janela — nada de `LaunchedEffect`, `WindowScope`, `ModalManager` ou qualquer
-consentimento que pressuponha alguém olhando. É também o que enterra a ideia de confirmar
-escrita por modal: com o app fechado como destino, aprovação vive no protocolo
-(*elicitation*) ou na política (o que Settings permite), nunca na UI.
+depender da interface **do Finsight** — nada de `LaunchedEffect`, `WindowScope`, `ModalManager`
+ou qualquer consentimento que pressuponha alguém olhando para a janela do app. É também o que
+enterra a ideia de confirmar escrita por modal: com o app fechado como destino, aprovação vive
+no protocolo ou na política (o que Settings permite), nunca na UI do Finsight.
+
+A proibição é dessa interface, não de toda interação. O protocolo permite que o servidor
+devolva um resultado pedindo entrada e que o **cliente** a colete — interação que acontece na
+tela do cliente. Redigir a proibição como "nenhuma interação visual" teria banido isso junto,
+que é o único caminho de consentimento que sobra.
+
+E o mecanismo mudou de forma que o desenho precisa absorver: na revisão vigente o servidor não
+inicia requisição alguma. Ele devolve um resultado de "preciso de entrada", e o **cliente
+reexecuta a requisição original** com a resposta. Ou seja, **a chamada de tool roda duas vezes**
+— o que promove a chave de idempotência de conveniência a pré-requisito de qualquer confirmação,
+e é mais um motivo para ela ser ligada ao resumo dos argumentos (D10). O estado que atravessa as
+duas execuções é entrada controlada pelo cliente: se guardasse "os trinta itens aprovados", seria
+uma autorização de escrita no razão emitida por quem chamou. Ele fica fora do escopo desta
+entrega, junto com a confirmação que dependeria dele.
 
 ### D10 — Poucas tools grossas e em lote, derivadas do pedido do usuário
 
@@ -272,6 +293,38 @@ convenção débito-positivo do razão com a de exibição entre respostas difer
 relatar gasto como receita — e é o tipo de erro que só aparece depois de ter sido dito ao
 usuário.
 
+### D12 — A revisão alvo é a `2026-07-28`, e ela é sem estado
+
+A primeira versão desta proposta foi escrita contra um MCP que não existe mais. A revisão
+vigente removeu o handshake `initialize`, removeu as sessões de protocolo, tornou
+`server/discover` obrigatório, substituiu as requisições iniciadas pelo servidor por um padrão
+em que o cliente reexecuta a chamada, removeu `ping` e a configuração de log por método, removeu
+a retomada de stream, e depreciou Roots, Sampling e Logging.
+
+O que isso obriga a mudar aqui, além do já dito em D2 e D9:
+
+- **Identidade do cliente não vem de handshake.** Ela chega declarada a cada requisição, é
+  recomendada e não obrigatória, e é autodeclarada — não autenticada. A auditoria precisa aceitar
+  ausência e apresentar a etiqueta como afirmação, não como fato. O que autentica é o token, e
+  ele é um só para todos os clientes: se distinguir chamadores vier a importar, o caminho é token
+  por cliente, não confiar no campo.
+- **Nada de estado acumulado entre chamadas.** Onde estado for necessário, ele é um identificador
+  emitido pelo servidor e passado como argumento comum.
+- **Headers são conferidos contra o corpo.** Versão de protocolo, método e nome viajam também em
+  header, e divergência é recusa — a defesa contra um componente decidir por um valor enquanto o
+  servidor executa por outro.
+- **Fechar o stream é cancelar.** Isso não é polimento: define o que acontece com um lote
+  interrompido no meio, e sem resposta o razão fica num estado que ninguém consegue nomear. A
+  resposta escolhida é a chave de idempotência — repetir conclui o que faltou sem duplicar o que
+  entrou.
+
+**Sobre autorização.** A especificação de autorização do MCP é opcional, e conformá-la é
+recomendado para transportes HTTP; dentro dela, o servidor seria um resource server OAuth 2.1
+com metadados de recurso protegido. Um token de portador estático para um servidor loopback de
+usuário único é desproporcionalmente mais simples, e é a escolha. O que muda é que ela passa a
+ser **registrada como desvio**, com o mínimo que torna a falha legível: `401` com o desafio de
+autorização apontando os metadados do recurso, em vez de uma recusa opaca.
+
 ## Risks / Trade-offs
 
 - **A `api` incha.** Mitigação: a superfície de tools é deliberada (D4), e cada promoção é
@@ -284,7 +337,18 @@ usuário.
   que tocou. Não mitigado: reversão em lote (fora de escopo, e honestamente sinalizado).
 - **Dependências novas de rede no app.** Um servidor HTTP embarcado num app financeiro
   desktop é superfície nova mesmo desligado. Mitigação: confinado a `:app:mcp`, sem socket
-  aberto enquanto o toggle estiver desligado.
+  aberto enquanto o toggle estiver desligado, `Origin` validado e token obrigatório quando ligado.
+- **O SDK Kotlin de MCP pode não falar a revisão alvo.** A documentação pública do SDK não
+  declara qual revisão implementa, e a `2026-07-28` é uma quebra grande (sem `initialize`, sem
+  sessão, `server/discover`, o padrão de reexecução). Se o SDK ainda for da era com handshake,
+  isto deixa de ser detalhe de implementação: ou se implementa o transporte à mão, ou a entrega
+  fala uma revisão anterior — e aí boa parte desta spec muda. **Verificar antes de fixar a
+  dependência no `libs.versions.toml`.**
+- **O volume das respostas não tem número.** A forma exigida aqui — coleção por moeda que não
+  colapsa, identificador junto do nome em todo objeto aninhado, proveniência de taxa, eco de
+  todo default — é individualmente justificada e no conjunto produz respostas grandes. O limite
+  existe como requisito, e o número precisa ser medido: a listagem de tools serializada e uma
+  página típica de lançamentos são critério de aceitação, não detalhe.
 - **O Compose fica no classpath** de qualquer processo que agregue `appModules`, por causa
   dos `viewModel {}` declarados nos módulos dos `impl`. Inerte hoje; é dívida conhecida para
   o dia do processo headless.

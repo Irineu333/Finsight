@@ -211,12 +211,21 @@ Toda tool de escrita sobre lançamentos SHALL aceitar de um a muitos itens na me
 Lançar um extrato é um pedido de primeira classe, e uma chamada por linha multiplica as
 oportunidades de falha parcial silenciosa.
 
-Toda tool de escrita SHALL aceitar um ensaio, que devolve exatamente o que seria gravado — os
-rótulos derivados e as faturas resolvidas incluídos — **sem persistir nada**.
+O ensaio SHALL ser uma **tool própria**, que devolve exatamente o que seria gravado — os rótulos
+derivados e as faturas resolvidas incluídos — sem persistir nada. Ele MUST NOT ser um parâmetro
+booleano da tool de escrita: uma tool que é somente-leitura ou destrutiva conforme um argumento
+não pode ser anotada com honestidade, e é pela anotação que o cliente decide pedir confirmação
+ao usuário.
 
-Toda tool de escrita SHALL aceitar uma chave de idempotência por chamada, e uma repetição com a
-mesma chave MUST NOT duplicar. Agentes repetem chamadas por tempo esgotado, por reinício de
-sessão e por decisão própria, e duplicação em contabilidade é dano silencioso.
+Toda tool de escrita SHALL aceitar uma chave de idempotência por chamada. A chave SHALL ser
+avaliada **junto com um resumo dos argumentos**: repetição com a mesma chave e os mesmos
+argumentos MUST NOT duplicar, e a mesma chave com argumentos diferentes SHALL ser recusada como
+conflito. Agentes reutilizam strings, e uma chave que fizesse a segunda remessa virar operação
+nula descartaria lançamentos legítimos em silêncio — o desfecho mais grave que esta superfície
+pode produzir.
+
+Os registros de idempotência SHALL ter prazo de validade declarado, e o local onde vivem SHALL
+ser próprio: eles guardam a resposta produzida, que o registro de atividade não guarda.
 
 A resposta SHALL informar o desfecho **por item**, distinguindo gravado, recusado e ignorado por
 duplicidade, mais quantos foram aplicados. Um sucesso agregado sem detalhe por item MUST NOT ser
@@ -227,13 +236,17 @@ importar o mesmo extrato duas vezes é o erro mais comum que existe, e decidir p
 que um lançamento legítimo é repetido é o erro oposto.
 
 #### Scenario: Ensaio antes de gravar
-- **WHEN** trinta lançamentos são enviados em ensaio
+- **WHEN** trinta lançamentos são enviados à tool de ensaio
 - **THEN** a resposta descreve os trinta resultados, inclusive em qual fatura cada compra de
   cartão cairia, e nada foi gravado
 
-#### Scenario: Repetição com a mesma chave
-- **WHEN** a mesma chamada é repetida com a mesma chave de idempotência
+#### Scenario: Repetição idêntica não duplica
+- **WHEN** a mesma chamada é repetida com a mesma chave e os mesmos argumentos
 - **THEN** nada é gravado novamente, e a resposta descreve o que já havia sido gravado
+
+#### Scenario: Chave reutilizada com outros itens é conflito
+- **WHEN** uma segunda remessa, com lançamentos diferentes, chega com a chave já usada
+- **THEN** ela é recusada como conflito, e nenhum lançamento é descartado em silêncio
 
 #### Scenario: Item recusado não derruba o lote
 - **WHEN** um item entre trinta é recusado por regra do domínio
@@ -243,31 +256,49 @@ que um lançamento legítimo é repetido é o erro oposto.
 - **WHEN** um item coincide com um lançamento já existente em data, valor, conta e descrição
 - **THEN** ele é gravado com aviso de provável duplicidade
 
-### Requirement: O erro tem classe, código estável e retentabilidade explícita
+### Requirement: A recusa é erro de execução da tool, e vem estruturada sob schema declarado
 
-Toda recusa SHALL ser devolvida num envelope contendo: a **classe** do erro, distinguindo ao
-menos recusa de regra do domínio, não encontrado, entrada inválida, conflito, indisponibilidade
-e falha interna; um **código estável e enumerado** no schema da tool; uma mensagem em inglês
-destinada a log; e se a chamada **pode ser repetida**.
+O protocolo distingue dois canais, e a distinção SHALL ser respeitada. Falha de protocolo —
+método desconhecido, requisição malformada, header divergente, versão não suportada — é erro
+JSON-RPC. Recusa de uma operação que o servidor entendeu e executou é **erro de execução da
+tool**, sinalizado como tal dentro de um resultado de sucesso do transporte.
+
+Uma recusa de regra do domínio SHALL ser marcada como erro de execução da tool. Ela MUST NOT ser
+devolvida como resultado comum com um objeto de erro dentro: hosts que não veem a marcação não
+contabilizam a chamada como falha, e o consumidor relata ao usuário que a operação foi feita.
+
+Toda tool SHALL declarar um schema de saída, e o desfecho SHALL ser devolvido como conteúdo
+estruturado conforme esse schema — recusas e avisos incluídos. Fora do conteúdo estruturado sob
+schema, um aviso é prosa, e prosa é descartada.
+
+O desfecho SHALL conter: a **classe** do erro, distinguindo ao menos recusa de regra do domínio,
+não encontrado, entrada inválida, conflito, indisponibilidade e falha interna; um **código
+estável e enumerado** no schema de saída; uma mensagem em inglês destinada a log; e se a chamada
+**pode ser repetida**.
 
 Recusa de regra do domínio SHALL ser sempre não repetível: o estado do sistema está correto e
 tentar de novo produzirá a mesma recusa. Indisponibilidade e falha interna SHALL ser repetíveis.
-
-Uma recusa de regra SHALL ser resposta bem-sucedida do transporte descrevendo a recusa, e não
-falha de transporte. O consumidor MUST NOT precisar interpretar texto livre para decidir se
-repete, explica ou desiste.
+O consumidor MUST NOT precisar interpretar texto livre para decidir se repete, explica ou desiste.
 
 A resposta MUST NOT conter o texto internacionalizado destinado à tela como mensagem para o
-consumidor. Um texto já traduzido PODE acompanhar o envelope, declarado como destinado ao
+consumidor. Um texto já traduzido PODE acompanhar o desfecho, declarado como destinado ao
 usuário final.
 
-Ausência de taxa numa leitura MUST NOT ser erro: é resultado parcial, e SHALL ser sinalizada
-como aviso no payload de sucesso.
+Ausência de taxa numa leitura MUST NOT ser erro: é resultado parcial, e SHALL ser um aviso no
+conteúdo estruturado de um resultado bem-sucedido.
 
 #### Scenario: Regra recusa
 - **WHEN** uma escrita é recusada por uma regra do domínio
-- **THEN** a resposta traz classe de regra, código enumerado, mensagem em inglês e indicação de
-  que repetir não adianta
+- **THEN** o resultado é marcado como erro de execução da tool, com classe de regra, código
+  enumerado, mensagem em inglês e indicação de que repetir não adianta
+
+#### Scenario: Recusa não é erro de protocolo
+- **WHEN** uma tool tenta lançar em fatura fechada
+- **THEN** o transporte responde com sucesso, e a recusa vem marcada dentro do resultado
+
+#### Scenario: Aviso sobrevive porque é estruturado
+- **WHEN** um item é gravado com aviso de provável duplicidade
+- **THEN** o aviso está no conteúdo estruturado, conforme o schema de saída declarado pela tool
 
 #### Scenario: Repetível é distinguível
 - **WHEN** o consumidor recebe uma indisponibilidade e, noutra chamada, uma recusa de regra
@@ -344,3 +375,80 @@ importação produziria variações da mesma categoria a cada extrato, e isso é
 #### Scenario: Ciclo de vida fora do alcance
 - **WHEN** um agente tenta fechar, pagar ou reabrir uma fatura
 - **THEN** nenhuma tool oferece essa operação nesta entrega
+
+### Requirement: Toda tool declara o seu risco pelas anotações do protocolo
+
+Cada tool SHALL declarar as anotações que o protocolo define para descrever o seu efeito —
+se apenas lê, se é destrutiva, se é idempotente, se alcança um domínio aberto. É por elas que o
+cliente decide quando pedir confirmação ao usuário, e é o único canal pelo qual o servidor
+comunica risco.
+
+As anotações SHALL ser verdadeiras: uma tool anotada como somente-leitura MUST NOT escrever sob
+nenhum argumento. É a razão de o ensaio ser tool separada.
+
+Anotar MUST NOT substituir aplicar. O protocolo instrui clientes a tratar anotação como não
+confiável, logo toda restrição anotada SHALL também ser imposta na execução, no servidor.
+
+#### Scenario: Ensaio é honestamente somente-leitura
+- **WHEN** a tool de ensaio é inspecionada
+- **THEN** ela está anotada como somente-leitura, e nenhum argumento a faz persistir algo
+
+#### Scenario: Escrita anuncia o que é
+- **WHEN** a tool que remove lançamentos é inspecionada
+- **THEN** ela está anotada como destrutiva, e a que registra lançamentos declara a sua
+  idempotência
+
+#### Scenario: Anotação não é a salvaguarda
+- **WHEN** um cliente ignora as anotações e chama uma escrita em somente leitura
+- **THEN** o servidor recusa mesmo assim
+
+### Requirement: A superfície usa as três primitivas, não só tools
+
+Os dados de orientação — panorama, contas, categorias — SHALL ser expostos também como
+**resources** endereçáveis, além de alcançáveis por tool. Eles são documento estável cuja função
+é estar disponível **antes** de qualquer decisão; como tool, dependem de o modelo escolher
+chamá-los, e um modelo que não chama chuta identificadores.
+
+Os fluxos que o usuário invoca por nome — lançar o extrato do mês, revisar o mês — SHALL ser
+expostos como **prompts**. Um prompt é texto, não lógica: ele não pode decidir qual regra se
+aplica, e por isso oferece o vocabulário do usuário sem o risco que um verbo agregador em forma
+de tool traria.
+
+Mudança no que é anunciado SHALL ser notificada aos clientes que assinaram, pelo mecanismo do
+protocolo.
+
+#### Scenario: Orientação disponível sem decisão do modelo
+- **WHEN** um cliente anexa os resources do servidor ao contexto
+- **THEN** moeda base, contas e categorias estão disponíveis com os seus identificadores, sem
+  que nenhuma tool tenha sido chamada
+
+#### Scenario: Fluxo do usuário é prompt
+- **WHEN** o usuário invoca o fluxo de lançar um extrato
+- **THEN** ele recebe um prompt que orienta o uso das tools existentes, e nenhuma tool nova
+  decide regra alguma
+
+### Requirement: Nomes são prefixados e o tamanho da resposta é limite declarado
+
+Toda tool, resource e prompt SHALL ter nome prefixado pelo servidor e conter o verbo da
+operação. Clientes agregam servidores num espaço de nomes único, e nomes genéricos colidem entre
+servidores diferentes.
+
+A descrição de cada tool SHALL declarar o que a resposta significa onde o formato pode enganar —
+que a coleção por moeda é coleção mesmo com um elemento, e que existe tool de agregação para
+totais. A descrição da tool de listagem SHALL nomear a tool de agregação.
+
+O tamanho da resposta SHALL ter limite declarado, e ele SHALL valer também para os agregados,
+que não paginam. Um intervalo que produziria volume desproporcional SHALL ser recusado com
+orientação sobre como reformular, e MUST NOT despejar o resultado inteiro.
+
+#### Scenario: Nome não colide
+- **WHEN** o servidor é agregado num cliente junto de outros servidores
+- **THEN** nenhum nome anunciado por ele é genérico a ponto de colidir
+
+#### Scenario: Listagem aponta o agregado
+- **WHEN** a descrição da tool de listagem de lançamentos é lida
+- **THEN** ela nomeia a tool de agregação como o caminho para totais
+
+#### Scenario: Volume desproporcional é recusado
+- **WHEN** um agregado é pedido para um recorte que excederia o limite declarado
+- **THEN** a chamada é recusada com orientação sobre como reduzir o recorte

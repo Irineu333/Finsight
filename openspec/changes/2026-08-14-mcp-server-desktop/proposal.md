@@ -16,18 +16,20 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
 
 ## What Changes
 
-- Um módulo `:app:mcp` passa a expor o domínio como um **servidor MCP local**, escutando em
-  `127.0.0.1` numa porta efêmera, agregado como qualquer módulo Koin de feature.
+- Um módulo `:app:mcp` passa a expor o domínio como um **servidor MCP local**, falando a
+  revisão `2026-07-28` do protocolo por Streamable HTTP em `127.0.0.1`, agregado como qualquer
+  módulo Koin de feature. A porta é fixa e persistida, para que a configuração que o usuário
+  cola num cliente continue valendo depois de reiniciar o app.
 - O servidor **nasce desativado**. Habilitar não é ligar uma tela: é passar a escutar numa
   porta com poder sobre o razão do usuário — e ninguém ganha essa superfície sem pedir.
 - Habilitado, ele nasce em **somente leitura**. Escrita é um segundo ato deliberado, porque
   os dois riscos não têm o mesmo tamanho.
 - "Só local" **não é autenticação**: qualquer processo do usuário alcança o loopback. Toda
-  requisição carrega um token, e o token é revogável sem desligar o servidor.
-- Enquanto ligado, o app publica `~/.finance/mcp.json` (porta, token, pid) — o anúncio de
-  que está de pé, que um cliente stdio usa para achar e autenticar. Desligado, **o arquivo é
-  apagado**: deixá-lo para trás aponta clientes para uma porta morta, ou para uma porta que
-  outro processo herdou.
+  requisição carrega um token no header de autorização, e o token é revogável sem desligar o
+  servidor. E porque o loopback é alcançável também por uma página web aberta no navegador, o
+  servidor valida o `Origin` de toda conexão — exigência do protocolo, contra DNS rebinding.
+- Não há ponte stdio nem arquivo de descoberta em disco: os clientes MCP falam HTTP
+  nativamente, e com a porta fixa a configuração colada basta.
 - Uma nova feature `mcp` (api+impl) hospeda a tela de configuração em Settings: o toggle, o
   nível de permissão, o token com botão de girar, o trecho de configuração pronto para colar
   no cliente, e a atividade recente.
@@ -110,8 +112,11 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   `suspend` — e ela precisa recortar por **período**, não pelo dia único que o filtro atual
   aceita, sob pena de a tool paginar o mês em memória e filtrar fora do razão. Faturas em
   aberto sem escopo de cartão têm a mesma lacuna, no repositório de faturas.
-- **Dependências novas** — o SDK Kotlin de MCP e um servidor HTTP embarcado. Ambos entram no
-  `libs.versions.toml` e ficam confinados a `:app:mcp`.
+- **Dependências novas** — um SDK de MCP e um servidor HTTP embarcado, ambos confinados a
+  `:app:mcp`. **Premissa não verificada:** a documentação pública do SDK Kotlin de MCP não
+  declara qual revisão do protocolo implementa, e a `2026-07-28` é uma quebra grande. Confirmar
+  antes de fixar a dependência — se o SDK for da era com handshake, ou se implementa o transporte
+  à mão, ou a entrega fala uma revisão anterior, e boa parte desta proposta muda.
 - **Ponta solta assumida:** os módulos Koin dos `impl` declaram `viewModel {}`, então o
   runtime do Compose permanece no classpath de qualquer processo que agregue `appModules`.
   Declarar não é instanciar, e isso não impede nada — mas é peso morto conhecido, e é o que

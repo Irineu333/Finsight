@@ -26,6 +26,59 @@ nunca reimplementá-la.
 - **WHEN** uma tool em lote processa um item
 - **THEN** o resultado é o mesmo que a operação unitária produziria para aquele item
 
+### Requirement: A superfície é deliberada, e a lacuna que ela revela é preenchida no domínio
+
+A superfície de tools SHALL cobrir o que o usuário consegue fazer nas telas do app, excluindo o
+que depende de julgamento visual. Ela MUST NOT ser gerada automaticamente a partir de todos os
+casos de uso existentes.
+
+Cada caso de uso alcançado por uma tool SHALL ser promovido de `impl` para `api` da sua feature,
+aplicando o critério de triagem já vigente — só entra na `api` o que outro módulo consome.
+
+Quando o comportamento que uma tool precisa **não existe** como caso de uso, ele SHALL ser
+criado no domínio, com dono único, e não improvisado na camada de tools. A lacuna é achado sobre
+o domínio, não licença para o servidor compor regra: o que ela revela é que aquela regra nunca
+teve dono, e o consumidor novo apenas a expôs.
+
+O caso de uso novo SHALL passar a ser o único dono daquele comportamento. Se a mesma regra já
+existia embutida numa tela, num ViewModel ou num repositório chamado direto, essa cópia SHALL
+ser substituída pelo caso de uso novo. MUST NOT existir caso de uso que só o servidor MCP usa
+enquanto a interface continua fazendo o mesmo por outro caminho — seriam dois donos da mesma
+regra, e o segundo é um domínio paralelo para agentes.
+
+Ampliar uma leitura existente para atender a superfície — uma variante não reativa, um recorte
+por período onde só havia por dia — SHALL acontecer no módulo que já é dono daquela leitura, e
+MUST NOT ser compensado filtrando ou agregando o resultado fora dele.
+
+#### Scenario: Promoção segue o critério existente
+- **WHEN** uma tool precisa de um caso de uso que hoje vive no `impl`
+- **THEN** o caso de uso é promovido para a `api` da feature, e nenhum módulo passa a depender
+  de `impl` para alcançá-lo
+
+#### Scenario: Caso de uso não alcançado permanece interno
+- **WHEN** um caso de uso não é consumido por nenhuma tool nem por outra feature
+- **THEN** ele permanece no `impl`
+
+#### Scenario: Comportamento sem caso de uso
+- **WHEN** uma tool precisa de um comportamento que hoje não existe como caso de uso
+- **THEN** o caso de uso é criado na feature dona do comportamento, e a camada de tools apenas
+  o invoca
+
+#### Scenario: Regra que vivia embutida numa tela
+- **WHEN** o comportamento que a tool precisa já existia inline num ViewModel
+- **THEN** ele é extraído para o caso de uso novo, e o ViewModel passa a consumi-lo — a cópia
+  embutida deixa de existir
+
+#### Scenario: Nenhum caso de uso exclusivo do agente
+- **WHEN** os casos de uso criados por esta mudança são inspecionados
+- **THEN** nenhum deles duplica comportamento que a interface continua executando por outro
+  caminho
+
+#### Scenario: Leitura ampliada no dono
+- **WHEN** a superfície precisa de um recorte de leitura que o repositório dono não oferece
+- **THEN** o recorte é acrescentado a esse repositório, e a tool não filtra nem agrega o
+  resultado por fora
+
 ### Requirement: O agente expressa intenção, nunca lançamentos
 
 Nenhuma tool SHALL aceitar ou devolver lançamentos assinados do razão. A escrita SHALL ser

@@ -96,6 +96,10 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   (`CreateAccountUseCase`, `TransferBetweenAccountsUseCase`, `PayInvoiceUseCase`,
   `ConfirmRecurringUseCase`, entre outros). Cada promoção é também uma revisão do caso de uso
   como contrato público: assinatura, tipo de erro, nada de `UiText` na fronteira.
+  Onde não há caso de uso a promover — criar categoria vai direto ao repositório, por exemplo —
+  o caso de uso é **criado**, na feature dona do comportamento, e assume a titularidade única
+  daquela regra: a cópia que existia embutida no ViewModel passa a consumi-lo. A lacuna é
+  achado sobre o domínio, e corrigi-la ali é o que impede um domínio paralelo para agentes.
 - **`core/database`** — entidade, DAO e migração de `agent_activity`.
 - **`core/resources`** — chaves novas da tela de configuração, em pt e en.
 - **`core/ledger`** — o registro de origem **não** entra: nenhuma regra do domínio ramifica em

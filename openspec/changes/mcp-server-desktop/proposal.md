@@ -80,6 +80,11 @@ com os mesmos direitos e as mesmas regras que a tela tem, e nenhuma regra própr
   de dependência de um `impl` (qualquer `api` mais `:core:*`) e nenhum direito novo; e
   registra a promoção de casos de uso para `api` como aplicação do critério de triagem
   existente, não como exceção a ele.
+- `platform-adaptive-features`: o eixo de plataforma passa a valer nos dois sentidos. Ele hoje
+  só descreve esconder uma feature `mobile-only` no desktop; o servidor MCP é o caso espelhado —
+  `desktop-only`, porque escuta numa porta do processo de desktop e nada equivalente existe no
+  Android ou no iOS. A entrada em Configurações aparece só no desktop, e a rota não é alcançável
+  fora dele.
 - `build-conventions`: a verificação mecânica das regras de dependência passa a cobrir
   `:app:mcp` — a garantia de que ele não alcança `impl` algum tem de ser do build, não da
   disciplina.

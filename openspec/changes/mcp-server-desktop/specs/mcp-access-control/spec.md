@@ -1,5 +1,34 @@
 ## ADDED Requirements
 
+### Requirement: A configuração do servidor é alcançável em Configurações, ligada ou desligada
+
+Configurações SHALL oferecer uma entrada dedicada ao servidor MCP, que abre uma tela própria — o
+mesmo padrão das entradas de taxas de câmbio e moedas, que já são tiles navegáveis agrupados.
+
+A entrada SHALL estar presente **independentemente de o servidor estar ligado**. Ela é o único
+caminho até a capacidade, e uma entrada que só aparecesse depois de habilitada seria inalcançável
+por quem ainda não habilitou.
+
+O caminho SHALL ser exatamente: **Configurações → entrada do servidor MCP → tela do servidor
+MCP**. MUST NOT existir um segundo caminho para habilitar — nem atalho, nem controle embutido
+noutra tela —, porque duas portas para o mesmo interruptor tornam impossível responder onde a
+capacidade foi ligada.
+
+A entrada SHALL nomear a capacidade de forma que quem nunca ouviu falar de MCP entenda o que ela
+faz, e SHALL indicar o estado vigente sem que a tela precise ser aberta.
+
+#### Scenario: Entrada presente com o servidor desligado
+- **WHEN** o usuário abre Configurações sem nunca ter habilitado o servidor
+- **THEN** a entrada do servidor MCP está lá, indicando que está desligado
+
+#### Scenario: Entrada indica o estado
+- **WHEN** o servidor está ligado e o usuário abre Configurações
+- **THEN** a entrada indica que está ligado, e também o nível de permissão vigente
+
+#### Scenario: Um caminho só
+- **WHEN** a aplicação é inspecionada
+- **THEN** o interruptor do servidor existe apenas na tela do servidor MCP
+
 ### Requirement: O servidor nasce desligado e só é ligado por ato explícito
 
 O servidor MCP SHALL estar desligado por padrão, tanto numa instalação nova quanto numa
@@ -136,24 +165,79 @@ O token MUST NOT ser exibido em claro por padrão na configuração.
 - **WHEN** o usuário gira o token e um cliente tenta usar o token anterior
 - **THEN** a requisição é recusada, e o servidor continua atendendo quem usa o token novo
 
-### Requirement: Habilitar entrega uma configuração que continua válida
+### Requirement: A tela mostra exatamente o estado em que o servidor está
 
-Ao habilitar, a configuração SHALL apresentar o que um cliente MCP precisa para conectar —
-endereço do endpoint e header de autorização — pronto para ser copiado.
+A tela SHALL ter três estados distinguíveis, e MUST NOT apresentar o mesmo conteúdo em dois deles.
 
-O que é apresentado SHALL permanecer válido enquanto o token e a porta não mudarem. Um trecho
-que expira no próximo reinício é pior que nenhum, porque o usuário só descobre quando falha.
+**Desligado.** A tela SHALL apresentar o interruptor na posição desligada e explicar o que
+habilitar significa — que o app passa a escutar localmente e que um agente poderá ler os dados
+financeiros do usuário. Ela MUST NOT oferecer os dados de conexão como prontos para uso: com
+nada escutando, um trecho copiável produz um cliente configurado que falha, e o usuário atribui
+a falha ao cliente. Nenhum outro controle da tela precisa estar disponível nesse estado.
 
-Quando o token for girado, o trecho apresentado SHALL passar a conter o token vigente.
+**Ligado.** A tela SHALL apresentar, todos ao mesmo tempo: o interruptor ligado; o endereço em
+que está escutando; o nível de permissão, com os dois valores e o vigente marcado; o token,
+oculto, com a ação de girar; as instruções de conexão; e o caminho para a atividade recente.
 
-#### Scenario: Primeiro on
+**Falha ao subir.** Quando a porta persistida estiver ocupada, a tela SHALL declarar que o
+servidor **não** está escutando e nomear o conflito, oferecendo escolher outra porta. Esse estado
+MUST NOT ser apresentado como ligado nem como desligado: nos dois casos o usuário concluiria que
+o estado é o que ele pediu.
+
+Toda mudança de estado SHALL refletir-se na tela sem que ela precise ser reaberta.
+
+#### Scenario: Desligado não oferece o que não funciona
+- **WHEN** a tela é aberta com o servidor desligado
+- **THEN** o interruptor está desligado, a tela explica o que habilitar significa, e nenhum
+  trecho de conexão é oferecido para cópia
+
+#### Scenario: Ligado mostra tudo de uma vez
 - **WHEN** o usuário habilita o servidor
-- **THEN** a tela apresenta a configuração de cliente completa, com ação de copiar
+- **THEN** a mesma tela passa a mostrar endereço, nível de permissão, token oculto com ação de
+  girar, instruções de conexão e o caminho para a atividade
+
+#### Scenario: Porta ocupada é um terceiro estado
+- **WHEN** o usuário habilita e a porta persistida está em uso por outro processo
+- **THEN** a tela declara que o servidor não subiu, nomeia o conflito e oferece escolher outra
+  porta — sem se apresentar como ligado
+
+### Requirement: As instruções de conexão são completas, coláveis e continuam válidas
+
+Com o servidor ligado, a tela SHALL apresentar o que um cliente MCP precisa para conectar —
+endereço do endpoint e header de autorização com o token — em **pelo menos uma forma pronta para
+colar**, com ação de copiar. Um endereço e um token soltos, que o usuário tenha de montar num
+formato de configuração, não satisfazem este requisito.
+
+As instruções SHALL dizer três coisas que o usuário não tem como deduzir e cuja ausência produz
+diagnóstico errado:
+
+1. **O acesso é local.** Só um agente na mesma máquina alcança. Sem isso, alguém tenta conectar
+   de outro dispositivo e conclui que a capacidade está quebrada.
+2. **O nível vigente é somente leitura**, quando for. Recém-habilitado, um agente conecta,
+   funciona e **não enxerga nenhuma escrita** — porque as tools de escrita não são anunciadas. A
+   tela SHALL dizer isso e apontar o controle que muda o nível, senão a leitura natural é que o
+   servidor está com defeito.
+3. **Qual revisão do protocolo o servidor fala.** Um cliente que fale outra revisão falha ao
+   conectar, e nada mais na tela explicaria a falha.
+
+O que é apresentado SHALL permanecer válido enquanto o token e a porta não mudarem, e SHALL
+refletir imediatamente a mudança de qualquer um dos dois. Um trecho que expira no próximo
+reinício é pior que nenhum, porque o usuário só descobre quando falha.
+
+#### Scenario: Pronto para colar
+- **WHEN** o usuário habilita o servidor e usa a ação de copiar
+- **THEN** o que vai para a área de transferência é aceito por um cliente MCP sem edição, com o
+  endereço e o token já no lugar
+
+#### Scenario: A tela avisa que ainda não se escreve
+- **WHEN** o servidor está ligado em somente leitura
+- **THEN** as instruções dizem que o agente não enxergará operações de escrita e apontam o
+  controle que muda o nível
 
 #### Scenario: Configuração sobrevive ao reinício
 - **WHEN** o usuário cola a configuração num cliente, fecha o app e o abre novamente
 - **THEN** o cliente conecta sem ser reconfigurado
 
-#### Scenario: Configuração acompanha o token
+#### Scenario: Instruções acompanham o token
 - **WHEN** o token é girado
-- **THEN** o trecho apresentado passa a conter o token vigente
+- **THEN** o trecho apresentado passa a conter o token vigente, e o anterior deixa de funcionar

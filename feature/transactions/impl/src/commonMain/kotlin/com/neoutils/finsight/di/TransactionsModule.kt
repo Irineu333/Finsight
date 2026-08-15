@@ -2,6 +2,10 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CreateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.CreateTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
@@ -44,6 +48,20 @@ val transactionsModule = module {
         )
     }
 
+    factory<CreateTransactionUseCase> {
+        CreateTransactionUseCaseImpl(
+            buildTransactionUseCase = get(),
+            transactionRepository = get(),
+        )
+    }
+
+    factory<UpdateTransactionUseCase> {
+        UpdateTransactionUseCaseImpl(
+            buildTransactionUseCase = get(),
+            transactionRepository = get(),
+        )
+    }
+
     single<TransactionsEntry> { TransactionsEntryImpl() }
 
     viewModel {
@@ -81,9 +99,9 @@ val transactionsModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
             accountRepository = get(),
             buildTransactionUseCase = get(),
+            createTransaction = get(),
             addInstallmentUseCase = get(),
             modalManager = get(),
             analytics = get(),
@@ -96,12 +114,11 @@ val transactionsModule = module {
     viewModel {
         EditTransactionViewModel(
             transaction = it.get(),
-            transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
-            buildTransactionUseCase = get(),
+            updateTransaction = get(),
             validateTransactionForm = get(),
             formatter = get(),
             modalManager = get(),

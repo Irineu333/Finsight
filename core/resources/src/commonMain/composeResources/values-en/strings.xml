@@ -942,6 +942,48 @@
     <string name="currency_form_name_helper">Optional. With no name, the app uses whatever the system calls this currency, in the current language.</string>
     <string name="currency_form_save">Save</string>
 
+    <string name="settings_mcp_title">MCP server</string>
+    <string name="settings_mcp_subtitle">Let an AI agent read and record in the app, on this computer</string>
+
+    <string name="mcp_screen_title">MCP server</string>
+    <string name="mcp_enabled_label">MCP server</string>
+    <string name="mcp_enabled_description">While on, the server exists and listens only on 127.0.0.1, on this computer. Turning it on does not decide what an agent can do — that is the permission level.</string>
+
+    <string name="mcp_permission_title">Permission</string>
+    <string name="mcp_permission_read_only">Read-only</string>
+    <string name="mcp_permission_read_only_description">The agent reads accounts, transactions, invoices and budgets. The write tools are not announced: as far as it can tell, they do not exist.</string>
+    <string name="mcp_permission_read_write">Read and write</string>
+    <string name="mcp_permission_read_write_description">Besides reading, the agent creates, changes and deletes transactions on your behalf.</string>
+
+    <string name="mcp_address_label">Address</string>
+    <string name="mcp_address_value">http://127.0.0.1:%1$d/mcp</string>
+    <string name="mcp_status_running">Running</string>
+    <string name="mcp_status_off">Off</string>
+    <string name="mcp_status_port_in_use">Port %1$d in use</string>
+    <string name="mcp_status_port_in_use_detail">Port %1$d is already in use by %2$s. The server did not start, and no other port is taken in its place: free that port or pick another one.</string>
+    <string name="mcp_port_conflict_unknown_process">another program</string>
+
+    <string name="mcp_token_label">Token</string>
+    <string name="mcp_token_hidden">••••••••••••</string>
+    <string name="mcp_token_show">Show</string>
+    <string name="mcp_token_hide">Hide</string>
+    <string name="mcp_token_rotate">Rotate token</string>
+    <string name="mcp_token_rotate_warning">Rotating creates a new token and invalidates the current one. Every client already configured stops connecting until you paste the new configuration into it.</string>
+
+    <string name="mcp_client_config_title">Client configuration</string>
+    <string name="mcp_client_config_description">Paste this into your MCP client's configuration file. It already carries the address and the token.</string>
+    <string name="mcp_client_config_copy">Copy configuration</string>
+    <string name="mcp_client_config_local_only">Only an agent running on this computer can reach the server. It will not connect from another device.</string>
+    <string name="mcp_client_config_read_only_notice">The current level is read-only: an agent will connect and see no write operations at all. Change it under Permission, above.</string>
+    <string name="mcp_client_config_protocol_revision">The server speaks revision %1$s of the MCP protocol. A client that speaks another one will not connect.</string>
+
+    <string name="mcp_activity_title">Recent activity</string>
+    <string name="mcp_activity_client_declared">%1$s (declared by the client, not verified)</string>
+    <string name="mcp_activity_client_unknown">Client did not identify itself</string>
+    <string name="mcp_activity_outcome_ok">Succeeded</string>
+    <string name="mcp_activity_outcome_refused">Refused</string>
+    <string name="mcp_activity_outcome_failed">Failed</string>
+
     <string name="currency_error_code_required">Enter the currency code.</string>
     <string name="currency_error_symbol_required">Enter the currency symbol.</string>
     <string name="currency_error_code_exists">A currency with this code already exists.</string>

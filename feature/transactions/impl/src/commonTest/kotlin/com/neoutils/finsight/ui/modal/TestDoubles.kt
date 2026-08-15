@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.modal
 
+import arrow.core.Either
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
@@ -13,6 +14,9 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.domain.usecase.CreateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.datetime.LocalDate
@@ -39,6 +43,13 @@ class FakeTransactionRepository : ITransactionRepository {
     override fun observeTransactionById(id: Long): Flow<Transaction?> = byId
 
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(
         date: LocalDate?,
         dimensionId: Long?,
@@ -124,4 +135,41 @@ fun transaction(
             Entry(account = counterpart, amount = -moneyAmount),
         ),
     )
+}
+
+/**
+ * The recording stand-in for [CreateTransactionUseCase], for the sheets that only need
+ * to know the write happened — and, when [failure] is set, that its refusal travelled
+ * back intact.
+ */
+class RecordingCreateTransaction(
+    private val failure: Throwable? = null,
+) : CreateTransactionUseCase {
+
+    val created = mutableListOf<TransactionForm>()
+
+    override suspend fun invoke(form: TransactionForm): Either<Throwable, Transaction> {
+        failure?.let { return Either.Left(it) }
+        created += form
+        return Either.Right(
+            Transaction(id = created.size.toLong(), title = form.title, date = LocalDate(2026, 1, 1))
+        )
+    }
+}
+
+/** The same, for [UpdateTransactionUseCase]. */
+class RecordingUpdateTransaction(
+    private val failure: Throwable? = null,
+) : UpdateTransactionUseCase {
+
+    val updated = mutableListOf<Pair<Long, TransactionForm>>()
+
+    override suspend fun invoke(
+        transactionId: Long,
+        form: TransactionForm,
+    ): Either<Throwable, Unit> {
+        failure?.let { return Either.Left(it) }
+        updated += transactionId to form
+        return Either.Right(Unit)
+    }
 }

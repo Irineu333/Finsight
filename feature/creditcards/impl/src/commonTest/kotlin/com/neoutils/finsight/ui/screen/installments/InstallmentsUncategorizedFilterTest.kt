@@ -156,6 +156,7 @@ private object NoInvoices : IInvoiceRepository {
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = observeAllInvoices()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = MutableStateFlow(null)
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = observeAllInvoices()
+    override suspend fun getOpenInvoices(): List<Invoice> = emptyList()
     override suspend fun getAllInvoices(): List<Invoice> = emptyList()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
@@ -168,6 +169,13 @@ private object NoInvoices : IInvoiceRepository {
 
 private class ChargeStore(private val transactions: List<Transaction>) : ITransactionRepository {
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
         observeAllTransactions()
 

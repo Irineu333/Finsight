@@ -943,6 +943,48 @@
     <string name="currency_form_name_helper">Opcional. Sem nome, o app usa o que o sistema chama esta moeda, no idioma corrente.</string>
     <string name="currency_form_save">Salvar</string>
 
+    <string name="settings_mcp_title">Servidor MCP</string>
+    <string name="settings_mcp_subtitle">Deixe um agente de IA consultar e lançar no app, neste computador</string>
+
+    <string name="mcp_screen_title">Servidor MCP</string>
+    <string name="mcp_enabled_label">Servidor MCP</string>
+    <string name="mcp_enabled_description">Ligado, o servidor existe e escuta apenas em 127.0.0.1, neste computador. Ligar não decide o que um agente pode fazer — isso é o nível de permissão.</string>
+
+    <string name="mcp_permission_title">Permissão</string>
+    <string name="mcp_permission_read_only">Somente leitura</string>
+    <string name="mcp_permission_read_only_description">O agente consulta contas, lançamentos, faturas e orçamentos. As tools de escrita não são anunciadas: para ele, elas não existem.</string>
+    <string name="mcp_permission_read_write">Leitura e escrita</string>
+    <string name="mcp_permission_read_write_description">Além de consultar, o agente cria, altera e apaga lançamentos em seu nome.</string>
+
+    <string name="mcp_address_label">Endereço</string>
+    <string name="mcp_address_value">http://127.0.0.1:%1$d/mcp</string>
+    <string name="mcp_status_running">No ar</string>
+    <string name="mcp_status_off">Desligado</string>
+    <string name="mcp_status_port_in_use">Porta %1$d ocupada</string>
+    <string name="mcp_status_port_in_use_detail">A porta %1$d já está em uso por %2$s. O servidor não subiu, e nenhuma outra porta é assumida no lugar: libere a porta ou escolha outra.</string>
+    <string name="mcp_port_conflict_unknown_process">outro programa</string>
+
+    <string name="mcp_token_label">Token</string>
+    <string name="mcp_token_hidden">••••••••••••</string>
+    <string name="mcp_token_show">Mostrar</string>
+    <string name="mcp_token_hide">Ocultar</string>
+    <string name="mcp_token_rotate">Girar token</string>
+    <string name="mcp_token_rotate_warning">Girar cria um token novo e invalida o atual. Todo cliente já configurado para de conectar até você colar nele a configuração nova.</string>
+
+    <string name="mcp_client_config_title">Configuração do cliente</string>
+    <string name="mcp_client_config_description">Cole isto no arquivo de configuração do seu cliente MCP. Ele já traz o endereço e o token.</string>
+    <string name="mcp_client_config_copy">Copiar configuração</string>
+    <string name="mcp_client_config_local_only">Só um agente rodando neste computador alcança o servidor. De outro aparelho não conecta.</string>
+    <string name="mcp_client_config_read_only_notice">O nível vigente é somente leitura: o agente vai conectar e não enxergar nenhuma operação de escrita. Mude em Permissão, acima.</string>
+    <string name="mcp_client_config_protocol_revision">O servidor fala a revisão %1$s do protocolo MCP. Um cliente que fale outra não conecta.</string>
+
+    <string name="mcp_activity_title">Atividade recente</string>
+    <string name="mcp_activity_client_declared">%1$s (declarado pelo cliente, não verificado)</string>
+    <string name="mcp_activity_client_unknown">Cliente não se identificou</string>
+    <string name="mcp_activity_outcome_ok">Sucesso</string>
+    <string name="mcp_activity_outcome_refused">Recusado</string>
+    <string name="mcp_activity_outcome_failed">Erro</string>
+
     <string name="currency_error_code_required">Informe o código da moeda.</string>
     <string name="currency_error_symbol_required">Informe o símbolo da moeda.</string>
     <string name="currency_error_code_exists">Já existe uma moeda com este código.</string>

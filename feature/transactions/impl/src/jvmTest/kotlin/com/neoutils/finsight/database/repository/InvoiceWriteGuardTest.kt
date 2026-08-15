@@ -385,6 +385,7 @@ private class LedgerAccountRepository(private val db: AppDatabase) : IAccountRep
 }
 
 private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRepository {
+    override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = listOf(invoice)
     override fun observeAllInvoices(): Flow<List<Invoice>> = flowOf(listOf(invoice))
     override suspend fun getInvoiceById(id: Long): Invoice? = invoice.takeIf { it.id == id }

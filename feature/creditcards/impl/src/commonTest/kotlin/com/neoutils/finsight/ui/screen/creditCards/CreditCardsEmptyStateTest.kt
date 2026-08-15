@@ -222,6 +222,7 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = invoices
+    override suspend fun getOpenInvoices(): List<Invoice> = invoices.filter { it.status.isOpen }
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoices.firstOrNull { it.status.isOpen }
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
@@ -229,6 +230,13 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
 }
 
 private class FakeTransactionRepository(private val transactions: List<Transaction>) : ITransactionRepository {
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
         MutableStateFlow(transactions)
 

@@ -112,6 +112,21 @@ class TransactionRepository(
         accountId = accountId,
     ).mapToDomain()
 
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> {
+        val accounts = ledgerAccounts()
+        return transactionDao.getBy(
+            startDate = startDate,
+            endDate = endDate,
+            dimensionId = dimensionId,
+            accountId = accountId,
+        ).mapNotNull { it.toDomain(accounts) }
+    }
+
     override fun observeTransactionById(id: Long): Flow<Transaction?> {
         return observeAllTransactions()
             .map { transactions -> transactions.firstOrNull { it.id == id } }

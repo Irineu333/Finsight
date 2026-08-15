@@ -4,6 +4,19 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 
+/**
+ * How much of a card's limit is still available, and how much of it the unpaid
+ * invoices already take.
+ *
+ * A card with no declared limit (`limit == 0.0`) reports no usage rather than a
+ * division by zero — "unknown", not "full".
+ *
+ * **Public contract.** A [CreditCard] in, a [Limit] out — plain numbers in the card's
+ * own currency, since every invoice of a card is denominated in it (see
+ * [CalculateInvoiceUseCase]). Nothing can fail and nothing is presented: no error type
+ * and no `UiText`. A concrete class rather than an interface, because it depends only
+ * on `:core:*` and on this same `api`.
+ */
 class CalculateAvailableLimitUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,

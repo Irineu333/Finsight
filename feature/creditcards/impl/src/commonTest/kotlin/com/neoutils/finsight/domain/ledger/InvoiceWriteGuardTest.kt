@@ -79,6 +79,7 @@ class InvoiceWriteGuardTest {
 }
 
 private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRepository {
+    override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = listOf(invoice)
     override fun observeAllInvoices(): Flow<List<Invoice>> = flowOf(listOf(invoice))
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = flowOf(listOf(invoice))

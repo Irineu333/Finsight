@@ -142,7 +142,7 @@ compila. Nenhum comportamento de tela muda: as promoções movem arquivo, e os d
 novos passam a ser o único dono do que dois ViewModels faziam à mão. Cada tarefa toca arquivos
 de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tarefa.
 
-- [ ] 2.1 **`:core:ledger` — a leitura filtrada `suspend`, por período.** Em
+- [x] 2.1 **`:core:ledger` — a leitura filtrada `suspend`, por período.** Em
       `core/ledger/src/commonMain/kotlin/com/neoutils/finsight/database/dao/TransactionDao.kt`,
       `.../domain/repository/ITransactionRepository.kt` e
       `.../database/repository/TransactionRepository.kt`: hoje existe `observeBy(date,
@@ -157,7 +157,7 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       `core/ledger/src/jvmTest/.../TransactionDaoPeriodFilterTest.kt`: extremos inclusivos,
       cada filtro isolado e combinados, e a concordância com `observeBy` quando
       `startDate == endDate`.
-- [ ] 2.2 **`creditcards` — faturas em aberto sem escopo de cartão.** Em
+- [x] 2.2 **`creditcards` — faturas em aberto sem escopo de cartão.** Em
       `core/database/src/commonMain/kotlin/com/neoutils/finsight/database/dao/InvoiceDao.kt`,
       `feature/creditcards/api/.../domain/repository/IInvoiceRepository.kt` e
       `feature/creditcards/impl/.../database/repository/InvoiceRepository.kt`: a consulta
@@ -167,7 +167,7 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       `suspend fun getOpenInvoices(): List<Invoice>` sobre
       `SELECT * FROM invoices WHERE status = 'OPEN' ORDER BY openingMonth DESC`. Teste em
       `feature/creditcards/impl/src/commonTest/.../InvoiceRepositoryOpenInvoicesTest.kt`.
-- [ ] 2.3 **`accounts` — promoções.** Mover para
+- [x] 2.3 **`accounts` — promoções.** Mover para
       `feature/accounts/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/`:
       `TransferBetweenAccountsUseCase` (`impl/.../TransferBetweenAccountsUseCase.kt:47` —
       `invoke(sourceAccountId, destinationAccountId, amount, date, destinationAmount = null):
@@ -179,7 +179,7 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       de `:core:*` e da própria `api`, então vão como **classe concreta** na `api` (padrão 2 do
       `feature/README.md`: interface só quando há dependência interna). `CreateAccountUseCase`
       **não sobe** — criar conta está fora da superfície (`mcp-tool-surface`).
-- [ ] 2.4 **`creditcards` — promoções.** Mover para
+- [x] 2.4 **`creditcards` — promoções.** Mover para
       `feature/creditcards/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/`:
       `PayInvoicePaymentUseCase` (`impl/.../PayInvoicePaymentUseCase.kt:46`),
       `AdjustInvoiceUseCase` (`:22`), `CalculateInvoiceUseCase` (`:37`),
@@ -194,7 +194,7 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       fatura e criação de cartão estão fora da entrega, e caso de uso não alcançado por tool
       permanece no `impl` (`mcp-tool-surface`, cenário "Caso de uso não alcançado permanece
       interno").
-- [ ] 2.5 **`transactions` — os dois casos de uso que faltavam.** Criar em
+- [x] 2.5 **`transactions` — os dois casos de uso que faltavam.** Criar em
       `feature/transactions/api/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/`:
       `CreateTransactionUseCase` e `UpdateTransactionUseCase` (interfaces), com `Impl` em
       `feature/transactions/impl/.../domain/usecase/`, registrados em
@@ -206,13 +206,18 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       cenário "Regra que vivia embutida numa tela" do delta: a cópia embutida **deixa de
       existir** e os dois ViewModels passam a consumir o caso de uso —
       `MUST NOT existir caso de uso que só o servidor MCP usa`.
-      `UpdateTransactionUseCase` aceita **apenas** categoria, descrição e data como alteráveis
-      (`mcp-tool-surface`: alterar valor ou conta não é oferecido) e repete no KDoc a restrição
+      `UpdateTransactionUseCase` recebe o `TransactionForm` inteiro e repete no KDoc a restrição
       já escrita em `ITransactionRepository.updateTransaction` (perna monetária única).
+      **A restrição a categoria, descrição e data é da tool, não do caso de uso** (8.2): o que
+      `mcp-tool-surface` proíbe é *oferecer* valor e conta a um agente, e a tela de edição
+      oferece — `EditTransactionModal` liga `ChangeAmount`, `ChangeType`, `ChangeTarget`,
+      `SelectCreditCard` e `SelectAccount`. Um caso de uso de três campos não serviria a ela, e
+      o ViewModel manteria a cópia embutida, contrariando o `MUST NOT` acima. É a regra de
+      derivação do projeto: o consumidor decide *se* oferece uma operação, nunca *qual* ela é.
       Testes em `feature/transactions/impl/src/commonTest/.../CreateTransactionUseCaseTest.kt` e
       `UpdateTransactionUseCaseTest.kt`; os testes existentes dos dois ViewModels continuam
       passando sem mudança de comportamento observável.
-- [ ] 2.6 **`:core:database` — `agent_activity`, a migração e os seus testes.** Delta
+- [x] 2.6 **`:core:database` — `agent_activity`, a migração e os seus testes.** Delta
       `agent-activity-log`: o registro vive **ao lado das entidades de facade** e nunca no
       razão. Criar
       `core/database/src/commonMain/kotlin/com/neoutils/finsight/database/entity/AgentActivityEntity.kt`
@@ -231,7 +236,7 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       `MigrationSchemaEquivalenceTest.kt` (`:49-54` e as demais) — é ele que roda a validação
       de schema do próprio Room. O `core/database/schemas/…/15.json` é gerado pelo KSP e entra
       no commit.
-- [ ] 2.7 **As chaves de string, em pt e en no mesmo passo.** Acrescentar a
+- [x] 2.7 **As chaves de string, em pt e en no mesmo passo.** Acrescentar a
       `core/resources/src/commonMain/composeResources/values/strings.xml` (pt, o padrão) **e**
       `values-en/strings.xml` (en) as chaves da tela de configuração do MCP, no bloco dos
       `settings_*` (pt: linhas 872-878 e 916-917): título e subtítulo do tile em Settings;
@@ -239,7 +244,11 @@ de uma feature só, e o módulo Koin de cada feature é escrito por **uma** tare
       de permissão (somente leitura / leitura e escrita) com a explicação de que a lista de
       tools de escrita some no primeiro; o endereço e o estado (no ar / desligado / **porta
       ocupada**, com o conflito nomeado); o token oculto por padrão, o botão de girar e o
-      aviso do que girar quebra; o trecho de configuração de cliente e a ação de copiar; o
+      aviso do que girar quebra; o trecho de configuração de cliente, a ação de copiar e as
+      **três coisas que o usuário não tem como deduzir** (`mcp-access-control`, "As instruções
+      de conexão são completas"): que o acesso é local, que em somente leitura o agente não
+      enxergará escrita alguma — apontando o controle que muda o nível —, e qual revisão do
+      protocolo o servidor fala; o
       cabeçalho da atividade recente, o rótulo de cliente **declarado e não verificado**
       (`agent-activity-log`: "a etiqueta não é apresentada como fato"), e os três desfechos
       (sucesso / recusado / erro). Uma chave presente em só um dos arquivos é um bug.

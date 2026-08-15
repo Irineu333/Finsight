@@ -184,6 +184,13 @@ internal class FakeAccountRepository(private val account: Account) : IAccountRep
 
 internal class FakeTransactionRepository(private val transactions: List<Transaction>) : ITransactionRepository {
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
         MutableStateFlow(transactions)
 

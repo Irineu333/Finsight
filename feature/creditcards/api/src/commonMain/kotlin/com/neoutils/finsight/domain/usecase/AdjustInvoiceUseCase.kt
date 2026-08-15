@@ -15,6 +15,26 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 
+/**
+ * Restates what an invoice owes on a date, by writing — or rewriting, or removing —
+ * the single reconciliation transaction that stands for the difference.
+ *
+ * It is the sole owner of "adjust an invoice", and it is the same mechanism as
+ * adjusting an account: one leg and an `EQUITY` counter-leg. What distinguishes the
+ * two is only where the dimension lands, not their nature. Re-adjusting reads the
+ * existing size back off its own leg rather than accumulating onto a stale figure.
+ *
+ * **Public contract.** An [Invoice], a target and a date in, `Unit` out, and no
+ * presentation type anywhere — no `UiText`, no string resource. A concrete class rather
+ * than an interface, because it depends only on `:core:ledger` and on this same `api`.
+ *
+ * The failure channel is `Either<Throwable, Unit>`, which is weaker than the named
+ * error types this project prefers: [InvoiceNotAdjustedException] — "the invoice
+ * already owes what you asked for" — arrives on the same channel as a database failure,
+ * so a consumer that wants to tell them apart has to test the type. That is the
+ * contract as it stands, recorded rather than widened here, because narrowing it is a
+ * change to what the screens already handle.
+ */
 class AdjustInvoiceUseCase(
     private val transactionRepository: ITransactionRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,

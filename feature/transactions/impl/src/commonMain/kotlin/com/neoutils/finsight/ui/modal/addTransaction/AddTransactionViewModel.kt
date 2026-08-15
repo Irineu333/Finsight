@@ -12,7 +12,7 @@ import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import arrow.core.Either.Companion.catch
+import arrow.core.Either
 import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
@@ -29,6 +29,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.CreateTransactionUseCase
 import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.combine
@@ -47,9 +48,9 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
+    private val createTransaction: CreateTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
@@ -317,22 +318,23 @@ class AddTransactionViewModel(
         // frame later, and a submit right after the toggle would read the old answer.
         val isRecurring = input.value.isRecurring
 
-        buildTransactionUseCase(form)
-            .flatMap { intent ->
-                if (isRecurring) {
-                    // The intent is completed, never rebuilt: it already carries the
-                    // invoice the user picked, and how a recurring is born is the
-                    // recurring feature's rule, consumed here.
-                    startRecurringFromTransaction(
-                        form = form.asRecurringOn(intent.date),
-                        firstCycle = intent,
-                    )
-                } else {
-                    catch {
-                        transactionRepository.createTransaction(intent)
-                    }
-                }
-            }.onLeft {
+        val result: Either<Throwable, Any> = if (isRecurring) {
+            // A recurring is not a transaction that repeats: the first cycle is written
+            // by the recurring feature, from the intent this screen already resolved —
+            // the intent is completed, never rebuilt, because it carries the invoice the
+            // user picked.
+            buildTransactionUseCase(form).flatMap { intent ->
+                startRecurringFromTransaction(
+                    form = form.asRecurringOn(intent.date),
+                    firstCycle = intent,
+                )
+            }
+        } else {
+            createTransaction(form)
+        }
+
+        result
+            .onLeft {
                 crashlytics.recordException(it)
                 modalManager.showError(it.toUiMessage())
             }.onRight {

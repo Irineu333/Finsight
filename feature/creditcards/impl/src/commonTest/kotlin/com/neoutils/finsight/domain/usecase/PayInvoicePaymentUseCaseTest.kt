@@ -45,7 +45,7 @@ class PayInvoicePaymentUseCaseTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
         owed: Map<Long, Double>,
-    ) = PayInvoicePaymentUseCase(
+    ): PayInvoicePaymentUseCase = PayInvoicePaymentUseCaseImpl(
         transactionRepository = writer,
         invoiceRepository = store,
         calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),

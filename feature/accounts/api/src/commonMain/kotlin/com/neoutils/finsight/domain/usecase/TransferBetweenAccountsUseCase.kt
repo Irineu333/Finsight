@@ -33,6 +33,14 @@ private val currentDate
  * them afterwards (design D6). The write boundary is what completes the intent, posting
  * the residue of each currency to that currency's conversion account, so nothing here
  * has to know how a cross-currency transaction balances.
+ *
+ * **Public contract.** It lives in the `api` because more than one module invokes it,
+ * and the boundary was reviewed as such: identities and primitives in, `Transaction`
+ * out, and the failure channel is [TransferException] wrapping [TransferError] — a
+ * domain error carrying an English `message` for logs. Nothing here names a
+ * presentation type: `toUiText()` is an extension in `:core:model` that a screen opts
+ * into, never something this signature hands out. A concrete class rather than an
+ * interface, because it depends only on `:core:*` and on this same `api`.
  */
 class TransferBetweenAccountsUseCase(
     private val transactionRepository: ITransactionRepository,

@@ -15,6 +15,14 @@ interface IInvoiceRepository {
     suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getOpenInvoice(creditCardId: Long): Invoice?
+
+    /**
+     * Every invoice whose status is strictly `OPEN`, across all cards, newest opening
+     * month first. Unlike [observeUnpaidInvoices] it excludes `CLOSED` and `FUTURE`,
+     * so a caller does not have to filter the wider list in memory.
+     */
+    suspend fun getOpenInvoices(): List<Invoice>
+
     suspend fun getInvoiceById(id: Long): Invoice?
     /**
      * Returns the invoice as it was persisted — with the `id` and the `dimensionId`

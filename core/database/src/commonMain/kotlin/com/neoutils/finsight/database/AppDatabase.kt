@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.database.dao.AgentActivityDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
@@ -19,6 +20,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.entity.AgentActivityEntity
 import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
@@ -49,8 +51,9 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         DimensionEntity::class,
         ExchangeRateEntity::class,
         CurrencyEntity::class,
+        AgentActivityEntity::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(Converters::class, LedgerConverters::class)
@@ -69,6 +72,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dimensionDao(): DimensionDao
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun currencyDao(): CurrencyDao
+    abstract fun agentActivityDao(): AgentActivityDao
 }
 
 // Room compiler generates the actual implementations

@@ -20,6 +20,7 @@ import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCaseImpl
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
@@ -61,8 +62,8 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        PayInvoicePaymentUseCase(
+    factory<PayInvoicePaymentUseCase> {
+        PayInvoicePaymentUseCaseImpl(
             harvestExchangeRate = get(),
             accountRepository = get(),
             transactionRepository = get(),

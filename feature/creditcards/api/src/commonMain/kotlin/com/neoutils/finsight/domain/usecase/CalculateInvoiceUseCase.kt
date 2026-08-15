@@ -21,6 +21,11 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
  * More than one currency on an invoice would be a broken guarantee rather than a case to
  * handle: `singleOrNull()` answering `null` collapses to zero, the same as an invoice
  * with no dimension at all.
+ *
+ * **Public contract.** An [Invoice] in, a scalar in that invoice's own currency out —
+ * scalar precisely because the guarantee above holds. Nothing can fail and nothing is
+ * presented: no error type, no `UiText`, no string resource. A concrete class rather
+ * than an interface, because it depends only on `:core:ledger`.
  */
 class CalculateInvoiceUseCase(
     private val entryRepository: IEntryRepository,

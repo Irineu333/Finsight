@@ -16,6 +16,26 @@ import com.neoutils.finsight.extension.naturalBalanceOf
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 
+/**
+ * Restates an account's balance on a date, by writing — or rewriting, or removing —
+ * the single reconciliation transaction that stands for the difference.
+ *
+ * It is the sole owner of "adjust an account": the ledger shape of an adjustment is
+ * one leg on the account and an `EQUITY` counter-leg, and re-adjusting reads the
+ * existing size back off that leg instead of accumulating onto a stale figure.
+ *
+ * **Public contract.** It lives in the `api` because more than one module invokes it,
+ * and the boundary was reviewed as such: identities, a date and an [Account] in,
+ * `Unit` out, and no presentation type anywhere — no `UiText`, no string resource.
+ * A concrete class rather than an interface, because it depends only on `:core:*`.
+ *
+ * The failure channel is `Either<Throwable, Unit>`, which is weaker than the named
+ * error types this project prefers: [AccountNotAdjustedException] — "the balance is
+ * already the one you asked for" — arrives on the same channel as a database failure,
+ * so a consumer that wants to tell them apart has to test the type. That is the
+ * contract as it stands, recorded rather than widened here, because narrowing it is a
+ * change to what the screens already handle.
+ */
 class AdjustBalanceUseCase(
     private val transactionRepository: ITransactionRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,

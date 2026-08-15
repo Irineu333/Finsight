@@ -16,6 +16,22 @@ interface ITransactionRepository {
         accountId: Long? = null,
     ): Flow<List<Transaction>>
 
+    /**
+     * The one-shot twin of [observeTransactionsBy], cut by a **period** instead of a
+     * single day. Both ends are inclusive, and every filter is null-neutral.
+     *
+     * It exists because not every consumer of this reading is a screen: a
+     * request/response caller has no use for a `Flow`, and narrowing the whole
+     * ledger outside this module would take the cut away from its owner.
+     * [observeTransactionsBy] is unchanged and remains what the screens use.
+     */
+    suspend fun getTransactionsBy(
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
+        dimensionId: Long? = null,
+        accountId: Long? = null,
+    ): List<Transaction>
+
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
     suspend fun getAllTransactions(): List<Transaction>

@@ -111,6 +111,13 @@ class TransactionsViewModelCharacterizationTest {
 internal class FakeTransactionRepository(transactions: List<Transaction>) : ITransactionRepository {
     private val flow = MutableStateFlow(transactions)
     override fun observeAllTransactions(): Flow<List<Transaction>> = flow
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()

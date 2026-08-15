@@ -27,7 +27,7 @@ import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.ui.modal.RecordingCreateTransaction
 import com.neoutils.finsight.ui.modal.RecordingRecurringRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -84,7 +84,7 @@ class AddTransactionRecurringTest {
     @Test
     fun `marking writes nothing and changes nothing about the submit`() = runTest(dispatcher) {
         val recurringRepository = RecordingRecurringRepository()
-        val transactions = FakeTransactionRepository()
+        val transactions = RecordingCreateTransaction()
         val viewModel = viewModel(recurringRepository, transactions)
 
         viewModel.uiState.test {
@@ -105,7 +105,7 @@ class AddTransactionRecurringTest {
     @Test
     fun `marking and unmarking saves a transaction like any other`() = runTest(dispatcher) {
         val recurringRepository = RecordingRecurringRepository()
-        val transactions = FakeTransactionRepository()
+        val transactions = RecordingCreateTransaction()
         val viewModel = viewModel(recurringRepository, transactions)
 
         viewModel.uiState.test {
@@ -153,7 +153,7 @@ class AddTransactionRecurringTest {
     fun `saving marked hands over the intent the screen built, invoice and all`() =
         runTest(dispatcher) {
             val recurringRepository = RecordingRecurringRepository()
-            val transactions = FakeTransactionRepository()
+            val transactions = RecordingCreateTransaction()
             val viewModel = viewModel(recurringRepository, transactions)
 
             viewModel.uiState.test {
@@ -213,15 +213,15 @@ class AddTransactionRecurringTest {
 
     private fun viewModel(
         recurringRepository: RecordingRecurringRepository = RecordingRecurringRepository(),
-        transactionRepository: FakeTransactionRepository = FakeTransactionRepository(),
+        transactions: RecordingCreateTransaction = RecordingCreateTransaction(),
         modalManager: ModalManager = ModalManager(),
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = AddTransactionViewModel(
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards,
         invoiceRepository = FakeInvoices,
-        transactionRepository = transactionRepository,
         accountRepository = FakeAccounts(account),
+        createTransaction = transactions,
         buildTransactionUseCase = BuildsWithInvoice(invoiceDimension),
         addInstallmentUseCase = NotWritten,
         modalManager = modalManager,
@@ -320,6 +320,7 @@ class AddTransactionRecurringTest {
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()

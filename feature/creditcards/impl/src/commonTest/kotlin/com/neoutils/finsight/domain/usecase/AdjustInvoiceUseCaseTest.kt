@@ -201,6 +201,13 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
         ledger.dateByTransaction.remove(id)
     }
 
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(
         date: LocalDate?,
         dimensionId: Long?,

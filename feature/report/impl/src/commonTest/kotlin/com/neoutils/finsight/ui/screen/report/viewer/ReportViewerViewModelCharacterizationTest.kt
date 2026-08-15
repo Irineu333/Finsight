@@ -239,6 +239,13 @@ class ReportViewerViewModelCharacterizationTest {
 private class Fakes {
     fun transactionRepository(transactions: List<Transaction>) = object : ITransactionRepository {
         override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
+        override suspend fun getTransactionsBy(
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+            dimensionId: Long?,
+            accountId: Long?,
+        ): List<Transaction> = throw NotImplementedError()
+
         override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
         override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
@@ -291,6 +298,7 @@ private class Fakes {
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()

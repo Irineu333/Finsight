@@ -149,6 +149,13 @@ private class RecordingTransactions : ITransactionRepository {
 
     override suspend fun deleteTransactionById(id: Long) { deleted += id }
     override suspend fun deleteTransactionsByIds(ids: List<Long>) { deleted += ids }
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
         flowOf(emptyList())
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()

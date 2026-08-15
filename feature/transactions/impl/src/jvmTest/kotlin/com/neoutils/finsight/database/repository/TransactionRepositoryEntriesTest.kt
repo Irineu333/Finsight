@@ -220,6 +220,7 @@ internal object FakeCreditCardRepository : ICreditCardRepository {
 }
 
 private object FakeInvoiceRepository : IInvoiceRepository {
+    override suspend fun getOpenInvoices(): List<Invoice> = emptyList()
     override suspend fun getAllInvoices(): List<Invoice> = emptyList()
     override fun observeAllInvoices(): Flow<List<Invoice>> = flowOf(emptyList())
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()

@@ -21,33 +21,31 @@ import kotlinx.datetime.LocalDate
 import kotlin.time.ExperimentalTime
 
 /**
- * Pays a closed invoice in full.
+ * The write side of [PayInvoicePaymentUseCase], which is where the contract lives.
  *
- * **The paying account may be in another currency, and then the caller states what
- * leaves it** — the invoice's own side stays exactly what is owed, in the card's
- * currency, because that is a fact and not a choice. No rate is a parameter: it is the
- * quotient of the two ends, derived afterwards (design D6). The write boundary posts the
- * residue of each currency to that currency's conversion account, **without** the
- * invoice's dimension: the exchange result does not belong to the invoice, and copying
- * the dimension onto it would have the whole transaction refused (design D15).
+ * The write boundary posts the residue of each currency to that currency's conversion
+ * account, **without** the invoice's dimension: the exchange result does not belong to
+ * the invoice, and copying the dimension onto it would have the whole transaction
+ * refused (design D15).
+ *
+ * It stays here, behind the interface, because it composes [PayInvoiceUseCase] — the
+ * lifecycle transition that marks the invoice paid, which no other module reaches and
+ * which therefore did not go up with it.
  */
-class PayInvoicePaymentUseCase(
+class PayInvoicePaymentUseCaseImpl(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase,
     private val harvestExchangeRate: HarvestExchangeRateUseCase,
     private val accountRepository: IAccountRepository,
-) {
-    /**
-     * @param paidAmount what leaves [account], when it is not what the invoice owes.
-     * `null` is the same-currency case and is byte-identical to what it was.
-     */
-    suspend operator fun invoke(
+) : PayInvoicePaymentUseCase {
+    override suspend operator fun invoke(
         invoiceId: Long,
         date: LocalDate,
         account: Account,
-        paidAmount: Double? = null,
+        // No default here: the interface declares it, and an override may not repeat it.
+        paidAmount: Double?,
         // Throwable, not InvoiceException: `createTransaction` throws from the write
         // boundary (e.g. ClosedAccountException if the paying account is archived
         // mid-flight), and `either {}` does not intercept a thrown exception — only a

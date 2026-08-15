@@ -90,6 +90,7 @@ internal class RecordingInvoiceStore(vararg seed: Invoice) : IInvoiceRepository 
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? =
         rows.values.firstOrNull { it.creditCard.id == creditCardId && it.status.isOpen }
 
+    override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = rows.values.toList()
     override suspend fun deleteById(id: Long) { rows.remove(id) }
 
@@ -133,6 +134,13 @@ internal class RecordingTransactionWriter(
     }
 
     override fun observeAllTransactions(): Flow<List<Transaction>> = notUnderTest()
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = notUnderTest()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = notUnderTest()
     override suspend fun getAllTransactions(): List<Transaction> = notUnderTest()

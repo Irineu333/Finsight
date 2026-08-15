@@ -119,6 +119,13 @@ private class RecordingTransactionsForDeclaration : com.neoutils.finsight.domain
 
     override suspend fun deleteTransactionById(id: Long) { touched += "deleted" }
     override suspend fun deleteTransactionsByIds(ids: List<Long>) { touched += "deleted" }
+    override suspend fun getTransactionsBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<com.neoutils.finsight.domain.model.Transaction> = throw NotImplementedError()
+
     override fun observeTransactionsBy(
         date: LocalDate?,
         dimensionId: Long?,

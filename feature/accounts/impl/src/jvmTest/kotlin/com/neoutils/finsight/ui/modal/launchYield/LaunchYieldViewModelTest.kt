@@ -228,6 +228,13 @@ class LaunchYieldViewModelTest {
         ) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
+        override suspend fun getTransactionsBy(
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+            dimensionId: Long?,
+            accountId: Long?,
+        ): List<Transaction> = throw NotImplementedError()
+
         override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> =
             flowOf(emptyList())
         override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()

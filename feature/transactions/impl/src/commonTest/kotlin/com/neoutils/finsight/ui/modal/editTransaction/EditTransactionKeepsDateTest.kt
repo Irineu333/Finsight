@@ -17,12 +17,11 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.extension.currencyFormatterOf
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.ui.modal.RecordingUpdateTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -124,12 +123,11 @@ class EditTransactionKeepsDateTest {
 
     private fun viewModel() = EditTransactionViewModel(
         transaction = purchase,
-        transactionRepository = FakeTransactionRepository(),
         categoryRepository = NoCategories,
         creditCardRepository = TheCard(card),
         invoiceRepository = TheInvoice(invoice),
         accountRepository = TheAccounts(cardAccount),
-        buildTransactionUseCase = Unbuilt,
+        updateTransaction = RecordingUpdateTransaction(),
         validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = ClockAt(today)),
         formatter = currencyFormatterOf(mapOf("BRL" to "R$")),
         modalManager = ModalManager(),
@@ -147,11 +145,6 @@ private object SilentAnalytics : Analytics {
     override fun logScreenView(screenName: String) = Unit
     override fun logEvent(event: Event) = Unit
     override fun setUserId(id: String?) = Unit
-}
-
-/** Nothing here writes: this test stops at what the form holds. */
-private object Unbuilt : BuildTransactionUseCase {
-    override suspend operator fun invoke(form: TransactionForm) = throw NotImplementedError()
 }
 
 private object NoCategories : ICategoryRepository {
@@ -189,6 +182,7 @@ private class TheCard(private val card: CreditCard) : ICreditCardRepository {
 
 private class TheInvoice(private val invoice: Invoice) : IInvoiceRepository {
     override suspend fun getAllInvoices(): List<Invoice> = listOf(invoice)
+    override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long) =
         listOf(invoice).filter { it.creditCard.id == creditCardId }
 

@@ -22,7 +22,7 @@ import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.ui.modal.RecordingCreateTransaction
 import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.ui.modal.RecordingRecurringRepository
 import kotlinx.coroutines.Dispatchers
@@ -278,9 +278,9 @@ class AddTransactionInvoiceDateTest {
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards(cards),
         invoiceRepository = FakeInvoices(cards.map(::openInvoiceOf)),
-        transactionRepository = FakeTransactionRepository(),
         accountRepository = FakeAccounts(account),
         buildTransactionUseCase = Unwritten,
+        createTransaction = RecordingCreateTransaction(),
         addInstallmentUseCase = Unwritten,
         modalManager = ModalManager(),
         analytics = MuteAnalytics,
@@ -355,6 +355,7 @@ private class FakeInvoices(private val invoices: List<Invoice>) : IInvoiceReposi
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
+    override suspend fun getOpenInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()

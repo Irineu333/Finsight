@@ -67,4 +67,35 @@ interface TransactionDao {
         dimensionId: Long?,
         accountId: Long?,
     ): Flow<List<TransactionEntity>>
+
+    /**
+     * The same reading, answered once instead of observed, and cut by a **period**
+     * instead of a single day.
+     *
+     * It is a twin of [observeBy], not a replacement: the screens are reactive and
+     * keep their `Flow`. A request/response consumer has no use for one, and a
+     * consumer that wanted a month would otherwise have to fetch everything and
+     * narrow it outside this module — which would move the cut away from the owner
+     * of the reading.
+     *
+     * Every predicate is null-neutral, exactly as in [observeBy], and both ends of
+     * the period are **inclusive**. With `startDate == endDate` this answers what
+     * [observeBy] observes for that day, in the same order.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions o
+        WHERE (:startDate IS NULL OR o.date >= :startDate)
+          AND (:endDate IS NULL OR o.date <= :endDate)
+          AND (:dimensionId IS NULL OR EXISTS (SELECT 1 FROM entries e WHERE e.transactionId = o.id AND e.dimensionId = :dimensionId))
+          AND (:accountId IS NULL OR EXISTS (SELECT 1 FROM entries e WHERE e.transactionId = o.id AND e.accountId = :accountId))
+        ORDER BY o.date DESC, o.id DESC
+    """
+    )
+    suspend fun getBy(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        dimensionId: Long?,
+        accountId: Long?,
+    ): List<TransactionEntity>
 }

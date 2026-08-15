@@ -177,6 +177,22 @@ class InvoiceRepository(
         }
     }
 
+    /**
+     * Cards are resolved including the closed ones, for the same reason
+     * [getAllInvoices] does it: an archived card can still hold an open invoice.
+     */
+    override suspend fun getOpenInvoices(): List<Invoice> {
+
+        val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
+
+        return dao.getOpenInvoices().map { entity ->
+            mapper.toDomain(
+                entity = entity,
+                creditCard = creditCards[entity.creditCardId]!!
+            )
+        }
+    }
+
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
         val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return emptyList()
 

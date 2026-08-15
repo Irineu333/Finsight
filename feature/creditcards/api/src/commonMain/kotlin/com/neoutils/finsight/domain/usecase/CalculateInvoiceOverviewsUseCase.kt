@@ -16,6 +16,11 @@ import kotlinx.datetime.YearMonth
  * totals below then add invoices of *possibly different* cards — but every card here
  * belongs to one screen and, until the summary is consolidated, they are added as the
  * plain numbers they already were.
+ *
+ * **Public contract.** Invoices and a month in, the nested result types below out —
+ * every one of them plain data, with the identifier beside the name. Nothing can fail
+ * and nothing is presented: no error type, no `UiText`, no string resource. A concrete
+ * class rather than an interface, because it depends only on `:core:ledger`.
  */
 class CalculateInvoiceOverviewsUseCase(
     private val entryRepository: IEntryRepository,

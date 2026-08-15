@@ -694,14 +694,14 @@ Delta: `module-architecture` ("plataforma apenas hospeda"), `mcp-server`.
 **Barreira de saída:** `./gradlew :app:desktop:run` sobe o app; com o servidor habilitado,
 um cliente MCP conecta; fechar a janela derruba o socket.
 
-- [ ] 10.1 **`app/desktop/src/main/kotlin/com/neoutils/finsight/main.kt`**: obter o
+- [x] 10.1 **`app/desktop/src/main/kotlin/com/neoutils/finsight/main.kt`**: obter o
       `McpServerController` do Koin logo depois de `startKoin { modules(appModules) }`
       (`:23-28`) e subi-lo/derrubá-lo com o **processo**, não com a composição — **nada de
       `LaunchedEffect`** (D9 e `mcp-server`: o servidor não é iniciado a partir de escopo de
       composição e não lê estado de janela), ao contrário dos dois `LaunchedEffect` que o
       arquivo já tem para tamanho de janela. `onCloseRequest` derruba o servidor antes de
       `exitApplication`. **Nenhuma lógica** entra aqui: só o bootstrap.
-- [ ] 10.2 **A instância única**, em
+- [x] 10.2 **A instância única**, em
       `app/desktop/src/main/kotlin/com/neoutils/finsight/SingleInstanceGuard.kt` (novo). Só a
       implementação: quem a invoca é 10.1, pelo nome fixado aqui, para que as duas tarefas não
       escrevam no mesmo arquivo. Uma segunda tentativa de iniciar a aplicação **não abre o
@@ -719,7 +719,11 @@ um cliente MCP conecta; fechar a janela derruba o socket.
 verificado está dito, não implícito.
 
 - [ ] 11.1 `./gradlew jvmTest` — a suíte inteira verde. Relatar qualquer falha com o teste e o
-      arquivo, sem presumir que é pré-existente.
+      arquivo, sem presumir que é pré-existente. Contar os testes somando os XML de
+      `**/build/test-results/jvmTest/*.xml`, e **não** pela linha de resumo do Gradle, que não
+      diz quantos rodaram. E rodar **também `./gradlew :app:desktop:test`**: o `:app:desktop` é
+      `kotlin("jvm")` e a sua task chama-se `test`, então o `jvmTest` da raiz **não a seleciona**
+      — sem isto o teste da guarda de instância única (10.2) nunca roda na verificação.
 - [ ] 11.2 `./gradlew :core:database:jvmTest --tests "*Migration14To15*" --tests "*MigrationSchemaEquivalence*"`
       — a migração `14 → 15` roda e o Room valida o schema que a cadeia inteira produz.
 - [ ] 11.3 `./gradlew :app:android:assembleDebug` e `./gradlew :app:desktop:run` — compilam e

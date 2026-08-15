@@ -14,6 +14,9 @@ kotlin {
 
 dependencies {
     implementation(projects.app.shared)
+    // The desktop is where the MCP server actually listens, and starting and stopping it with the
+    // process is the whole of this module's part in it: the controller has to be nameable here.
+    implementation(projects.app.mcp)
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
     implementation(libs.koin.core)

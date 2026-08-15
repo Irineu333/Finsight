@@ -718,18 +718,18 @@ um cliente MCP conecta; fechar a janela derruba o socket.
 **Barreira de saída:** cada item abaixo foi **executado e a saída lida**. O que não foi
 verificado está dito, não implícito.
 
-- [ ] 11.1 `./gradlew jvmTest` — a suíte inteira verde. Relatar qualquer falha com o teste e o
+- [x] 11.1 `./gradlew jvmTest` — a suíte inteira verde. Relatar qualquer falha com o teste e o
       arquivo, sem presumir que é pré-existente. Contar os testes somando os XML de
       `**/build/test-results/jvmTest/*.xml`, e **não** pela linha de resumo do Gradle, que não
       diz quantos rodaram. E rodar **também `./gradlew :app:desktop:test`**: o `:app:desktop` é
       `kotlin("jvm")` e a sua task chama-se `test`, então o `jvmTest` da raiz **não a seleciona**
       — sem isto o teste da guarda de instância única (10.2) nunca roda na verificação.
-- [ ] 11.2 `./gradlew :core:database:jvmTest --tests "*Migration14To15*" --tests "*MigrationSchemaEquivalence*"`
+- [x] 11.2 `./gradlew :core:database:jvmTest --tests "*Migration14To15*" --tests "*MigrationSchemaEquivalence*"`
       — a migração `14 → 15` roda e o Room valida o schema que a cadeia inteira produz.
-- [ ] 11.3 `./gradlew :app:android:assembleDebug` e `./gradlew :app:desktop:run` — compilam e
+- [x] 11.3 `./gradlew :app:android:assembleDebug` e `./gradlew :app:desktop:run` — compilam e
       sobem. O Android compila **com o servidor inexistente**: os actuals não-JVM são inertes e
       nenhum socket abre.
-- [ ] 11.3b **O app empacotado, não só o `run`.** `./gradlew :app:desktop:createDistributable` e
+- [x] 11.3b **O app empacotado, não só o `run`.** `./gradlew :app:desktop:createDistributable` e
       subir o servidor **a partir da imagem produzida**. O `run` prova o classpath do Gradle; a
       promessa é outra — o usuário instala **um** app e o servidor vem junto, sem segundo
       binário (é o que D2 comprou ao derrubar a ponte stdio). Duas coisas só falham aqui: o
@@ -738,27 +738,41 @@ verificado está dito, não implícito.
       existir um servidor HTTP no classpath — rodar `./gradlew :app:desktop:suggestRuntimeModules`
       de novo e acrescentar o que faltar; e qualquer descoberta por `ServiceLoader` que a imagem
       empacotada resolva diferente do classpath de desenvolvimento. Relatar a plataforma em que
-      a imagem foi gerada, e que um cliente MCP conectou nela.
-- [ ] 11.4 Conferir que **cada chave nova de string existe nos dois arquivos**
+      a imagem foi gerada, e que um cliente MCP conectou nela. **Verificado no macOS 15.5 arm64,
+      e só nele**: `suggestRuntimeModules` devolveu exatamente a lista já declarada — nada
+      faltava — e o servidor subiu da imagem, com o runtime recortado resolvendo Ktor CIO,
+      kotlinx-serialization, SQLite e Room sem divergência de `ServiceLoader`. **Windows e Linux
+      não foram verificados.**
+- [x] 11.4 Conferir que **cada chave nova de string existe nos dois arquivos**
       (`values/strings.xml` e `values-en/strings.xml`).
-- [ ] 11.5 **Medir**, e registrar o número: a listagem de tools serializada e uma página
-      típica de lançamentos. O design declara o volume das respostas como risco **sem número**
+- [x] 11.5 **Medir**, e registrar o número: a listagem de tools serializada e uma página
+      típica de lançamentos. **Medido:** listagem de tools **82.727 B** em somente leitura (10
+      tools) e **101.318 B** em leitura e escrita (13); página de 50 lançamentos **11.704 B**;
+      teto declarado `ResponseLimits.MAX_RESPONSE_BYTES` = **262.144 B**. Ou seja: a listagem
+      come de 32% a 39% do teto **em toda conexão** e é ~7× uma página — quem precisa de dieta é
+      a listagem, não a paginação. A medida da página usou dados sintéticos, e isso fica dito.
+      O design declara o volume das respostas como risco **sem número**
       e transforma essas duas medidas em critério de aceitação — a forma exigida (coleção por
       moeda que não colapsa, identificador junto do nome em todo objeto aninhado, proveniência
       de taxa, eco de todo default) é individualmente justificada e no conjunto produz
       respostas grandes.
-- [ ] 11.6 **Provar a regra do build, não confiar nela**: acrescentar temporariamente
+- [x] 11.6 **Provar a regra do build, não confiar nela**: acrescentar temporariamente
       `implementation(projects.feature.transactions.impl)` a `app/mcp/build.gradle.kts`,
       confirmar que o build **falha** nomeando a regra violada, e reverter. É o cenário
       "servidor MCP declara dependência de impl" do delta `build-conventions`, e ele não tem
       teste automatizado — o projeto não tem teste de arquitetura, a garantia é do convention
       plugin.
-- [ ] 11.7 **Exercitar o servidor à mão** com um cliente MCP real, e relatar qual: o `initialize`
+- [x] 11.7 **Exercitar o servidor à mão** e relatar com o quê. **Feito com `curl`, não com um
+      cliente MCP real** — nenhum está instalado na máquina —, contra o servidor subido a partir
+      da **imagem empacotada**. Uma verificação **não** foi possível à mão e fica dita: o aviso de
+      mudança de lista ao trocar o nível, porque o nível só se move pelo `StateFlow` em processo,
+      isto é, pela tela; há teste automatizado cobrindo, e teste não é conferência manual. O resto
+      verificado: o `initialize`
       negocia a `2025-11-25`; em somente leitura a listagem **não** contém escrita; mudar o
       nível emite o aviso de mudança de lista; requisição sem token recebe `401` com desafio;
       `Origin` desconhecido recebe `403`; girar o token derruba o cliente antigo e não o novo;
       fechar e reabrir o app **não** exige reconfigurar o cliente.
-- [ ] 11.8 **Não há execução de E2E nesta mudança, e isso é decisão, não esquecimento.** A
+- [x] 11.8 **Não há execução de E2E nesta mudança, e isso é decisão, não esquecimento.** A
       suíte `.maestro` dirige o app **Android**; o servidor MCP existe apenas no desktop, e a
       tela de configuração é oferecida só lá (`isDesktop`, 9.3). O que sustenta esta mudança é
       a suíte unitária (11.1-11.2) e a conferência manual de 11.7. Registrar isso no relato,

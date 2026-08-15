@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * **The remote source is a writer of the archive, and never a path of reading it.**
@@ -115,11 +116,20 @@ class RemoteSourceIsNeverReadTest {
      * The reciprocal half, and the structural one: a `:core:network` was rejected precisely
      * so that "only one module may reach the network" would be a fact about the module
      * graph rather than a matter of discipline (design D11). This is that fact, checked.
+     *
+     * Ktor now lives in **two** modules, and the two hold opposite halves of it. The
+     * settings feature holds the **client** — the one thing in the app that may reach out
+     * to the network — and `:app:mcp` holds the embedded **server**, which listens on
+     * loopback and reaches out to nothing. What this test guards is the client: a second
+     * module able to *call* out is an invitation for a figure to wait on one. A server
+     * cannot make a balance wait, so it is named here rather than widening the rule into
+     * something that no longer says what it means.
      */
     @Test
-    fun `no module outside the settings feature declares Ktor`() {
+    fun `no module outside the settings feature declares a Ktor client`() {
         val ktor = Regex("""ktor""", RegexOption.IGNORE_CASE)
-        val owner = "feature/settings/impl/build.gradle.kts"
+        val clientOwner = "feature/settings/impl/build.gradle.kts"
+        val serverOwner = "app/mcp/build.gradle.kts"
 
         val found = repoRoot.walkTopDown()
             .onEnter { it.name != "build" && it.name != ".git" }
@@ -128,13 +138,22 @@ class RemoteSourceIsNeverReadTest {
             .map { it.relativeTo(repoRoot).invariantSeparatorsPath }
             .toSet()
 
+        val allowed = setOf(clientOwner, serverOwner)
+
         assertEquals(
-            setOf(owner),
+            allowed,
             found,
-            "Ktor left the one module that may hold it. The restriction is the module " +
+            "Ktor left the two modules that may hold it. The restriction is the module " +
                 "graph, not discipline: a second module with a client is an invitation " +
                 "for a figure to wait on one.\n" +
-                (found - setOf(owner)).joinToString("\n") { "  NEW: $it" },
+                (found - allowed).joinToString("\n") { "  NEW: $it" },
+        )
+
+        val mcpBuild = File(repoRoot, serverOwner).readText().lowercase()
+        assertTrue(
+            "ktor.client" !in mcpBuild && "ktor-client" !in mcpBuild,
+            "the MCP module may declare the server half and only that: reaching out to " +
+                "the network stays the settings feature's alone",
         )
     }
 }

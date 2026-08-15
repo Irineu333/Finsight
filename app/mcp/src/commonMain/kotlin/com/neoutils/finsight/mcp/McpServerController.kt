@@ -1,40 +1,12 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
-import com.neoutils.finsight.feature.mcp.api.McpPermission
+import com.neoutils.finsight.feature.mcp.api.McpServerState
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 import com.neoutils.finsight.mcp.prompt.PromptRegistry
 import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import kotlinx.coroutines.flow.StateFlow
-
-/**
- * What the MCP server is actually doing — the three states the configuration screen distinguishes,
- * and it distinguishes them because presenting any two of them alike would tell the user the
- * capability is in a state it is not.
- */
-sealed interface McpServerState {
-
-    /** Nothing is listening. No socket exists — not an idle one, not a closed one. */
-    data object Stopped : McpServerState
-
-    /**
-     * Listening, and reachable at [url] with the level [permission] in force.
-     *
-     * [url] is the whole endpoint, because the endpoint is what a client's configuration holds;
-     * handing the screen a host and a port to assemble would put the assembling rule in two
-     * places.
-     */
-    data class Listening(val url: String, val permission: McpPermission) : McpServerState
-
-    /**
-     * The persisted port is taken by another process, so **the server did not start**.
-     *
-     * A state of its own on purpose. Presented as stopped, the user would think the switch is off;
-     * presented as listening, they would think it works. Neither is true, and no other port is
-     * taken silently — an address that moves breaks every client that pasted the old one.
-     */
-    data class PortUnavailable(val port: Int, val reason: String) : McpServerState
-}
 
 /**
  * Owns the lifetime of the MCP server: it starts, it stops, and it follows the configuration —
@@ -66,6 +38,7 @@ expect class McpServerController(
     tools: ToolRegistry,
     resources: ResourceRegistry,
     prompts: PromptRegistry,
+    declaredClient: DeclaredClientName,
 ) {
 
     /** What the server is doing, for the screen to render. Emits on every change. */

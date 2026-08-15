@@ -44,6 +44,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 /**
  * The read surface as a connected client sees it: nine tools, three orientation documents
@@ -147,6 +148,7 @@ class ReadSurfaceTest {
             ),
             resources = orientationResources(overview, accountsTool, categoriesTool),
             prompts = userFlowPrompts(),
+            declaredClient = DeclaredClientName(),
         )
         controller.start()
         client = McpTestClient(port, token)

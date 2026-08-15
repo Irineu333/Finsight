@@ -13,10 +13,16 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
+import com.neoutils.finsight.feature.mcp.api.IMcpServerStateSource
+import com.neoutils.finsight.feature.mcp.api.McpEntry
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import com.neoutils.finsight.mcp.McpServerController
+import com.neoutils.finsight.mcp.contract.ToolRegistry
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
@@ -102,6 +108,38 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertSame(koin.get<ExchangeRateRepository>(), koin.get<IExchangeRateRepository>())
+    }
+
+    /**
+     * The MCP server closes across **two** modules the shell aggregates: the feature's, which owns
+     * the configuration, the journal and the screen, and `:app:mcp`'s, which owns the tools and
+     * the socket. Neither can name the other's implementations, so a miss would surface as the
+     * settings graph failing to build its destination — at navigation time, not at compile time.
+     */
+    @Test
+    fun appModulesResolveTheMcpFeatureAndItsServer() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<IMcpServerSettingsRepository>())
+        assertNotNull(koin.get<IAgentActivityRepository>())
+        // Resolved from a `NavGraphBuilder` lambda, which is not `@Composable` and therefore has
+        // no compiler telling it the binding is there.
+        assertNotNull(koin.get<McpEntry>())
+        // The whole server: thirteen tools, the resources, the prompts and the controller. Every
+        // one of its dependencies comes from another feature's module.
+        assertNotNull(koin.get<McpServerController>())
+        assertEquals(13, koin.get<ToolRegistry>().tools.size)
+    }
+
+    /** The screen reads the server's state through the port, and it is the controller's own. */
+    @Test
+    fun theServerStateTheScreenReadsIsTheControllersOwn() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertSame(
+            koin.get<McpServerController>().state,
+            koin.get<IMcpServerStateSource>().state,
+        )
     }
 
     @Test

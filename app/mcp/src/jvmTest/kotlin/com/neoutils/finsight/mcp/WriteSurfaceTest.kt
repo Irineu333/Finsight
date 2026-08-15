@@ -59,6 +59,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 /**
  * The whole surface as a connected client sees it, over a real loopback socket: **thirteen
@@ -198,6 +199,12 @@ class WriteSurfaceTest {
         assertEquals(1, recorded["appliedCount"]!!.jsonPrimitive.content.toInt())
         assertEquals(1, written.size)
         assertContains(journal.records.single().tool, RECORD_TRANSACTIONS_TOOL)
+
+        // The client is recorded by what it declared at `initialize` — self-declared and not
+        // authenticated, which is why the screen labels it as such. It reaches the journal only
+        // because the transport and the recorder share one holder; with a holder each, every
+        // record would claim nobody ever introduced themselves.
+        assertEquals("finsight-test-client", journal.records.single().client)
     }
 
     // ------------------------------------------------------------------ setup
@@ -206,6 +213,9 @@ class WriteSurfaceTest {
 
     private val journal = RecordingJournal()
 
+    /** One holder, both halves — exactly the wiring `mcpModule` builds. */
+    private val declaredClient = DeclaredClientName()
+
     private fun listening(permission: McpPermission): McpTestClient = runBlocking {
         val port = freePort()
         val controller = McpServerController(
@@ -213,6 +223,7 @@ class WriteSurfaceTest {
             tools = ToolRegistry(readTools() + writeSurface()),
             resources = noResources(),
             prompts = noPrompts(),
+            declaredClient = declaredClient,
         )
         controller.start()
         this@WriteSurfaceTest.controller = controller
@@ -256,7 +267,7 @@ class WriteSurfaceTest {
         )
         val duplicates = ProbableDuplicates(transactions, creditCards)
         val idempotency = IdempotencyStore(clock)
-        val activity = ActivityRecorder(journal, clock)
+        val activity = ActivityRecorder(journal, clock, declaredClient = { declaredClient.name })
 
         return listOf(
             RecordTransactionsTool(resolver, duplicates, idempotency, activity),

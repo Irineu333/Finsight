@@ -634,7 +634,7 @@ repositórios existem, e existe superfície para o toggle governar.
 compila; a tela abre a partir de Settings, o toggle liga o servidor no desktop e a atividade
 aparece sem recarregar.
 
-- [ ] 9.1 **A tela**, em `feature/mcp/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/mcp/`
+- [x] 9.1 **A tela**, em `feature/mcp/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/mcp/`
       — `McpScreen.kt`, `McpUiState.kt`, `McpViewModel.kt`, no molde de
       `feature/settings/impl/.../ui/screen/exchangeRates/`: o toggle, o nível de permissão, a
       porta com o conflito quando ela estiver ocupada, o token **oculto por padrão** com botão
@@ -648,34 +648,37 @@ aparece sem recarregar.
       (`core/designsystem/.../ui/util/ExposeTestTags.kt:20`) em qualquer raiz de composição
       nova. Toda decisão (o que mostrar, o que habilitar) vive no `UiState`, nunca no
       composable. Teste `feature/mcp/impl/src/commonTest/.../McpViewModelTest.kt`.
-- [ ] 9.2 **O grafo e o entry point**, em
+- [x] 9.2 **O grafo e o entry point**, em
       `feature/mcp/impl/.../ui/navigation/McpGraph.kt` (a extension `internal fun
       NavGraphBuilder.mcpGraph()`, com o `composable<McpRoute>`) e
       `feature/mcp/impl/.../feature/mcp/impl/McpEntryImpl.kt` (`internal class McpEntryImpl :
       McpEntry`, chamando `mcpGraph()` a partir do `NavGraphBuilder` do contexto), no molde de
       `BudgetsEntryImpl`. A extension fica `internal`, invocada apenas pelo próprio
       `EntryImpl` — é a regra do `feature/README.md` para feature hospedada.
-- [ ] 9.3 **O destino dentro de `SettingsGraph`**, em
+- [x] 9.3 **O destino dentro de `SettingsGraph`**, em
       `feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/navigation/SettingsGraph.kt`
       (registrar `koin.get<McpEntry>().register()` dentro do `navigation<SettingsGraph>`,
       resolvendo por `KoinPlatform.getKoin()` porque o lambda de `NavGraphBuilder` não é
       `@Composable`) e em
       `feature/settings/impl/.../ui/screen/settings/SettingsScreen.kt` (o tile que navega para
-      `McpRoute`, no `SettingsGroup` existente, com as chaves do 2.7). O tile é oferecido
+      `McpRoute`, com as chaves do 2.7). O tile **indica o estado vigente sem que a tela precise
+      ser aberta** — `mcp-access-control` exige, com dois cenários, e é a razão de ele ler
+      `IMcpServerStateSource`: desligado, no ar com o nível em vigor, ou porta ocupada, cada um
+      lendo como si mesmo. O tile é oferecido
       apenas onde o servidor pode existir — `isDesktop` de
       `core/common/.../Platform.kt:9`. Acrescentar `implementation(projects.feature.mcp.api)`
       em `feature/settings/impl/build.gradle.kts`.
-- [ ] 9.4 **Os bindings que faltam**, em
+- [x] 9.4 **Os bindings que faltam**, em
       `feature/mcp/impl/src/commonMain/kotlin/com/neoutils/finsight/di/McpModule.kt`:
       `single<McpEntry> { McpEntryImpl() }` e `viewModel { McpViewModel(…) }` ao lado dos dois
       `single` do 4.3.
-- [ ] 9.5 **A agregação no shell**, em
+- [x] 9.5 **A agregação no shell**, em
       `app/shared/src/commonMain/kotlin/com/neoutils/finsight/di/AppModules.kt`: acrescentar
       `mcpFeatureModule` e `mcpModule` à lista (linhas 5-25). É a mudança inteira do shell —
       `AppNavHost` **não muda**, porque o destino entra pelo `SettingsGraph` (9.3). Estender
       `app/shared/src/jvmTest/.../AppModulesTest.kt` com a resolução das duas ligações novas,
       no molde dos casos que já estão ali.
-- [ ] 9.6 **O módulo Koin do `:app:mcp`**, em
+- [x] 9.6 **O módulo Koin do `:app:mcp`**, em
       `app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/di/McpServerModule.kt`
       (`val mcpModule`): as treze tools, os resources, os prompts, o registro (5.4), o
       transporte, a idempotência, o `ActivityRecorder` e o `McpServerController`. Nome fixado

@@ -1,7 +1,9 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
+import com.neoutils.finsight.feature.mcp.api.McpServerState
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 import com.neoutils.finsight.mcp.prompt.PromptRegistry
 import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +26,7 @@ actual class McpServerController actual constructor(
     tools: ToolRegistry,
     resources: ResourceRegistry,
     prompts: PromptRegistry,
+    declaredClient: DeclaredClientName,
 ) {
 
     private val _state = MutableStateFlow<McpServerState>(McpServerState.Stopped)

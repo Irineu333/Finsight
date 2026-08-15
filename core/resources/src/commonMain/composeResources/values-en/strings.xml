@@ -871,6 +871,7 @@
     <string name="settings_screen_title">Settings</string>
     <string name="settings_group_preferences">Preferences</string>
     <string name="settings_group_currency_data">Currencies and rates</string>
+    <string name="settings_group_integrations">Integrations</string>
     <string name="settings_base_currency_title">Base currency</string>
     <string name="settings_base_currency_picker_title">Base currency</string>
     <string name="settings_exchange_rates_title">Exchange rates</string>
@@ -944,10 +945,15 @@
 
     <string name="settings_mcp_title">MCP server</string>
     <string name="settings_mcp_subtitle">Let an AI agent read and record in the app, on this computer</string>
+    <string name="settings_mcp_state_off">Off — %1$s</string>
+    <string name="settings_mcp_state_on">Running · %1$s</string>
+    <string name="settings_mcp_state_port_in_use">Did not start — port %1$d in use</string>
 
     <string name="mcp_screen_title">MCP server</string>
     <string name="mcp_enabled_label">MCP server</string>
     <string name="mcp_enabled_description">While on, the server exists and listens only on 127.0.0.1, on this computer. Turning it on does not decide what an agent can do — that is the permission level.</string>
+
+    <string name="mcp_off_notice">While off, nothing is listening and no agent reaches your data. While on, an agent on this computer will be able to read your accounts, transactions, invoices and budgets.</string>
 
     <string name="mcp_permission_title">Permission</string>
     <string name="mcp_permission_read_only">Read-only</string>
@@ -962,6 +968,11 @@
     <string name="mcp_status_port_in_use">Port %1$d in use</string>
     <string name="mcp_status_port_in_use_detail">Port %1$d is already in use by %2$s. The server did not start, and no other port is taken in its place: free that port or pick another one.</string>
     <string name="mcp_port_conflict_unknown_process">another program</string>
+
+    <string name="mcp_port_label">Port</string>
+    <string name="mcp_port_apply">Use this port</string>
+    <string name="mcp_activity_empty">No agent has written anything yet.</string>
+    <string name="mcp_activity_open_entity">Open what it touched</string>
 
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_hidden">••••••••••••</string>

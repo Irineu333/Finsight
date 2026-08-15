@@ -1,8 +1,10 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.McpPermission
+import com.neoutils.finsight.feature.mcp.api.McpServerState
 import com.neoutils.finsight.feature.mcp.api.McpServerSettings
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.server.TARGET_PROTOCOL_VERSION
 import com.neoutils.finsight.mcp.transport.LOOPBACK_HOST
 import com.neoutils.finsight.mcp.transport.MCP_ENDPOINT_PATH
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 class McpServerControllerTest {
 
@@ -62,7 +65,11 @@ class McpServerControllerTest {
 
         try {
             assertEquals(
-                McpServerState.Listening("http://$LOOPBACK_HOST:$port$MCP_ENDPOINT_PATH", McpPermission.READ_ONLY),
+                McpServerState.Listening(
+                    url = "http://$LOOPBACK_HOST:$port$MCP_ENDPOINT_PATH",
+                    permission = McpPermission.READ_ONLY,
+                    protocolRevision = TARGET_PROTOCOL_VERSION,
+                ),
                 controller.state.value,
             )
             assertTrue(isListening(port))
@@ -87,7 +94,7 @@ class McpServerControllerTest {
     fun `switching off at runtime closes the socket`() = runBlocking {
         val port = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(port, token))
-        val controller = McpServerController(settings, registry, noResources(), noPrompts())
+        val controller = McpServerController(settings, registry, noResources(), noPrompts(), DeclaredClientName())
         controller.start()
         assertTrue(isListening(port))
 
@@ -165,7 +172,7 @@ class McpServerControllerTest {
     fun `changing the level at runtime emits the tool list change notice`() = runBlocking {
         val port = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(port, token, McpPermission.READ_ONLY))
-        val controller = McpServerController(settings, registry, noResources(), noPrompts())
+        val controller = McpServerController(settings, registry, noResources(), noPrompts(), DeclaredClientName())
         controller.start()
 
         try {
@@ -207,7 +214,7 @@ class McpServerControllerTest {
         val first = freePort()
         val second = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(first, token))
-        val controller = McpServerController(settings, registry, noResources(), noPrompts())
+        val controller = McpServerController(settings, registry, noResources(), noPrompts(), DeclaredClientName())
         controller.start()
         assertTrue(isListening(first))
 
@@ -239,7 +246,13 @@ class McpServerControllerTest {
     }
 
     private fun controller(settings: McpServerSettings) =
-        McpServerController(FakeMcpServerSettingsRepository(settings), registry, noResources(), noPrompts())
+        McpServerController(
+            FakeMcpServerSettingsRepository(settings),
+            registry,
+            noResources(),
+            noPrompts(),
+            DeclaredClientName(),
+        )
 
     private suspend fun awaitState(controller: McpServerController, predicate: (McpServerState) -> Boolean) {
         repeat(POLLS) {

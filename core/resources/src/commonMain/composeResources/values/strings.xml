@@ -872,6 +872,7 @@
     <string name="settings_screen_title">Configurações</string>
     <string name="settings_group_preferences">Preferências</string>
     <string name="settings_group_currency_data">Moedas e taxas</string>
+    <string name="settings_group_integrations">Integrações</string>
     <string name="settings_base_currency_title">Moeda base</string>
     <string name="settings_base_currency_picker_title">Moeda base</string>
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>
@@ -945,10 +946,15 @@
 
     <string name="settings_mcp_title">Servidor MCP</string>
     <string name="settings_mcp_subtitle">Deixe um agente de IA consultar e lançar no app, neste computador</string>
+    <string name="settings_mcp_state_off">Desligado — %1$s</string>
+    <string name="settings_mcp_state_on">No ar · %1$s</string>
+    <string name="settings_mcp_state_port_in_use">Não subiu — porta %1$d ocupada</string>
 
     <string name="mcp_screen_title">Servidor MCP</string>
     <string name="mcp_enabled_label">Servidor MCP</string>
     <string name="mcp_enabled_description">Ligado, o servidor existe e escuta apenas em 127.0.0.1, neste computador. Ligar não decide o que um agente pode fazer — isso é o nível de permissão.</string>
+
+    <string name="mcp_off_notice">Desligado, nada escuta e nenhum agente alcança seus dados. Ligado, um agente neste computador poderá ler suas contas, lançamentos, faturas e orçamentos.</string>
 
     <string name="mcp_permission_title">Permissão</string>
     <string name="mcp_permission_read_only">Somente leitura</string>
@@ -963,6 +969,11 @@
     <string name="mcp_status_port_in_use">Porta %1$d ocupada</string>
     <string name="mcp_status_port_in_use_detail">A porta %1$d já está em uso por %2$s. O servidor não subiu, e nenhuma outra porta é assumida no lugar: libere a porta ou escolha outra.</string>
     <string name="mcp_port_conflict_unknown_process">outro programa</string>
+
+    <string name="mcp_port_label">Porta</string>
+    <string name="mcp_port_apply">Usar esta porta</string>
+    <string name="mcp_activity_empty">Nenhum agente escreveu nada ainda.</string>
+    <string name="mcp_activity_open_entity">Abrir o que foi tocado</string>
 
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_hidden">••••••••••••</string>

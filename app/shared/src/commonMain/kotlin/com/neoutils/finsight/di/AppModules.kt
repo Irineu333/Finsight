@@ -1,5 +1,6 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.mcp.di.mcpModule
 import org.koin.core.module.Module
 
 val appModules: List<Module> = listOf(
@@ -22,4 +23,6 @@ val appModules: List<Module> = listOf(
     accountsModule,
     budgetsModule,
     recurringModule,
+    mcpFeatureModule,
+    mcpModule,
 )

@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 class McpServerCapabilitiesTest {
 
@@ -45,6 +46,6 @@ class McpServerCapabilitiesTest {
     fun `nobody has introduced themselves until a client does`() {
         // Null is "no declaration yet", never a failure: a connection can be dropped and resumed
         // without the client repeating who it is.
-        assertNull(DeclaredClient().name)
+        assertNull(DeclaredClient(DeclaredClientName()).name)
     }
 }

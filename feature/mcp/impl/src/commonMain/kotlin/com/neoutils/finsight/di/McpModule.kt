@@ -5,6 +5,10 @@ import com.neoutils.finsight.database.repository.AgentActivityRepository
 import com.neoutils.finsight.database.repository.McpServerSettingsRepository
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
 import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
+import com.neoutils.finsight.feature.mcp.api.McpEntry
+import com.neoutils.finsight.feature.mcp.impl.McpEntryImpl
+import com.neoutils.finsight.ui.screen.mcp.McpViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -25,6 +29,20 @@ val mcpFeatureModule = module {
         AgentActivityRepository(
             dao = get(),
             mapper = get(),
+        )
+    }
+
+    // The subgraph registration `settings:impl` asks for. `single` because it holds nothing: one
+    // instance answers every graph that is built.
+    single<McpEntry> { McpEntryImpl() }
+
+    viewModel {
+        McpViewModel(
+            settingsRepository = get(),
+            activityRepository = get(),
+            // Bound by `:app:mcp`, which owns the socket — the screen asks the question and never
+            // names the answerer.
+            serverState = get(),
         )
     }
 }

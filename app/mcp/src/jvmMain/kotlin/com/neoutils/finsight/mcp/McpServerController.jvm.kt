@@ -3,10 +3,12 @@ package com.neoutils.finsight.mcp
 import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
 import com.neoutils.finsight.feature.mcp.api.McpPermission
 import com.neoutils.finsight.feature.mcp.api.McpServerSettings
+import com.neoutils.finsight.feature.mcp.api.McpServerState
 import com.neoutils.finsight.mcp.contract.McpTool
 import com.neoutils.finsight.mcp.contract.ToolError
 import com.neoutils.finsight.mcp.contract.ToolOutcome
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 import com.neoutils.finsight.mcp.prompt.McpPrompt
 import com.neoutils.finsight.mcp.prompt.PromptRegistry
 import com.neoutils.finsight.mcp.resource.McpResource
@@ -14,6 +16,7 @@ import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import com.neoutils.finsight.mcp.server.CallCompletion
 import com.neoutils.finsight.mcp.server.DeclaredClient
 import com.neoutils.finsight.mcp.server.FINSIGHT_SERVER_INFO
+import com.neoutils.finsight.mcp.server.TARGET_PROTOCOL_VERSION
 import com.neoutils.finsight.mcp.server.finsightServerCapabilities
 import com.neoutils.finsight.mcp.server.underCancellation
 import com.neoutils.finsight.mcp.transport.BearerTokenAuth
@@ -80,6 +83,7 @@ actual class McpServerController actual constructor(
     private val tools: ToolRegistry,
     private val resources: ResourceRegistry,
     private val prompts: PromptRegistry,
+    private val declaredClient: DeclaredClientName,
 ) {
 
     /** Everything that exists only while the server is listening. */
@@ -180,7 +184,7 @@ actual class McpServerController actual constructor(
                 // Refusing the call without revoking it would leave the leak in force.
                 onTokenCompromised = { settings.rotateToken() },
             ),
-            declaredClient = DeclaredClient(),
+            declaredClient = DeclaredClient(declaredClient),
             onSession = ::announceVisibleTools,
         )
 
@@ -254,6 +258,9 @@ actual class McpServerController actual constructor(
     private fun listeningState(configured: McpServerSettings) = McpServerState.Listening(
         url = "http://$LOOPBACK_HOST:${configured.port}$MCP_ENDPOINT_PATH",
         permission = configured.permission,
+        // Read from the server that is listening, and from the SDK that makes it listen — the
+        // screen states the revision rather than owning it.
+        protocolRevision = TARGET_PROTOCOL_VERSION,
     )
 }
 

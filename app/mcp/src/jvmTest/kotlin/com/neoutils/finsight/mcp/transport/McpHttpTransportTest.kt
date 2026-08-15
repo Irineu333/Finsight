@@ -28,6 +28,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 /**
  * The transport, exercised over a real loopback socket by a client that is not the MCP SDK.
@@ -56,6 +57,7 @@ class McpHttpTransportTest {
             tools = ToolRegistry(listOf(tool)),
             resources = noResources(),
             prompts = noPrompts(),
+            declaredClient = DeclaredClientName(),
         )
         controller.start()
         client = McpTestClient(port, token)
@@ -88,6 +90,7 @@ class McpHttpTransportTest {
             tools = ToolRegistry(emptyList()),
             resources = noResources(),
             prompts = noPrompts(),
+            declaredClient = DeclaredClientName(),
         )
         bare.start()
 

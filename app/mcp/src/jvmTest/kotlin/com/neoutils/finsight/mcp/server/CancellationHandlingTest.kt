@@ -31,6 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.neoutils.finsight.mcp.server.DeclaredClientName
 
 class CancellationHandlingTest {
 
@@ -194,6 +195,7 @@ class CancellationHandlingTest {
             tools = ToolRegistry(listOf(tool)),
             resources = noResources(),
             prompts = noPrompts(),
+            declaredClient = DeclaredClientName(),
         )
         controller.start()
         try {

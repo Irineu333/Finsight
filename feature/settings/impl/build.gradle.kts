@@ -17,6 +17,10 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
+            // Settings holds the single path to the MCP server's switch: it names the route
+            // and asks the feature's entry point to register the destination.
+            implementation(projects.feature.mcp.api)
+
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)

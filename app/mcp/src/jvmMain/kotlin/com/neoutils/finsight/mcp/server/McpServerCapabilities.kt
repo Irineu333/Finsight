@@ -67,12 +67,10 @@ fun finsightServerCapabilities(): ServerCapabilities = ServerCapabilities(
  * and resumed without the declaration being repeated; the field it feeds is nullable for exactly
  * that reason, and `null` here is "nobody has introduced themselves yet", not a failure.
  */
-class DeclaredClient {
-
-    private val declared = AtomicReference<String?>(null)
+class DeclaredClient(private val declared: DeclaredClientName) {
 
     /** The last name a client declared, or `null` when none ever did. */
-    val name: String? get() = declared.get()
+    val name: String? get() = declared.name
 
     /**
      * Watches [session] for its initialisation and records what the client called itself.
@@ -83,7 +81,7 @@ class DeclaredClient {
      */
     fun observe(session: ServerSession) {
         session.onInitialized {
-            session.clientVersion?.name?.takeIf { it.isNotBlank() }?.let(declared::set)
+            declared.declare(session.clientVersion?.name)
         }
     }
 }

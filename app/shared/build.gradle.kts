@@ -30,6 +30,8 @@ kotlin {
             implementation(projects.feature.categories.impl)
             api(projects.feature.creditcards.api)
             implementation(projects.feature.creditcards.impl)
+            api(projects.feature.mcp.api)
+            implementation(projects.feature.mcp.impl)
             api(projects.feature.recurring.api)
             implementation(projects.feature.recurring.impl)
             api(projects.feature.report.api)
@@ -40,6 +42,8 @@ kotlin {
             implementation(projects.feature.support.impl)
             api(projects.feature.transactions.api)
             implementation(projects.feature.transactions.impl)
+
+            implementation(projects.app.mcp)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.datetime)

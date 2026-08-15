@@ -30,9 +30,22 @@ kotlinx-serialization-json = "1.8.0"
 # publishing the `iosX64` target, which this project still compiles.
 compose-settings = "2.26.0"
 
-# A última 3.4.x — a mais recente cujo stdlib (2.3.0) não passa à frente do compilador
-# do projeto (Kotlin 2.3.10). Vive num módulo só, `feature/settings/impl` (design D11).
+# The HTTP client, in `feature/settings/impl` and nowhere else. The last 3.4.x — the most
+# recent one whose stdlib (2.3.0) does not run ahead of the project's compiler (Kotlin
+# 2.3.10).
 ktor = "3.4.3"
+
+# The embedded HTTP server, in `:app:mcp` and nowhere else. It is a version of its own
+# because the MCP SDK drags `ktor-server-core` in at 3.5.1: declaring the engine at 3.4.3
+# would leave core and engine on different versions, which Ktor does not support. The
+# server side therefore follows the SDK, and the client above stays where it is.
+ktor-server = "3.5.1"
+
+# The Kotlin MCP SDK. It pins the target protocol revision: 0.15.0 declares
+# `LATEST_PROTOCOL_VERSION = "2025-11-25"`, which is the revision this server negotiates,
+# one behind the current `2026-07-28` because no JVM SDK speaks that one yet. Migration
+# trigger, dated and objective (design D12): the SDK starting to speak `2026-07-28`.
+mcp-kotlin-sdk = "0.15.0"
 
 kotlinSerialization = "2.3.10"
 
@@ -85,6 +98,11 @@ ktor-serialization-kotlinxJson = { module = "io.ktor:ktor-serialization-kotlinx-
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor-server" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor-server" }
+
+mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk", version.ref = "mcp-kotlin-sdk" }
 
 compose-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "composeMaterial3Adaptive" }
 

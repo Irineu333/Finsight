@@ -74,7 +74,7 @@ dependência de `:app:mcp` para qualquer `feature:*:impl` **falha o build**. Den
 projeto não configura até que todas as tarefas tenham entrado — incluir um projeto sem
 `build.gradle.kts` é erro de configuração, e é isto que a barreira fecha.
 
-- [ ] 1.1 **O convention plugin e a verificação.** Criar
+- [x] 1.1 **O convention plugin e a verificação.** Criar
       `build-logic/src/main/kotlin/com/neoutils/finsight/convention/AppMcpConventionPlugin.kt`
       (`class AppMcpConventionPlugin : Plugin<Project>`) chamando `configureKotlinMultiplatform()`
       — **não** `configureCompose()`: o módulo é de app **sem UI** (delta `module-architecture`)
@@ -92,10 +92,10 @@ projeto não configura até que todas as tarefas tenham entrado — incluir um p
       não está escrita em spec alguma. A garantia que importa — o `:app:mcp` não alcançar
       `impl` — passa a vir de `verifyFeatureDependencyRules`, no módulo certo.
       Teste em `build-logic` não existe hoje e não é criado aqui; a garantia é exercida em 11.6.
-- [ ] 1.2 **O grafo de módulos.** Em `settings.gradle.kts`: `include(":app:mcp")` no bloco
+- [x] 1.2 **O grafo de módulos.** Em `settings.gradle.kts`: `include(":app:mcp")` no bloco
       `// App` (linhas 36-40) e `include(":feature:mcp:api")` / `include(":feature:mcp:impl")`
       no bloco `// Features` (linhas 55-77), na ordem alfabética que o bloco já segue.
-- [ ] 1.3 **O catálogo de dependências.** Em `gradle/libs.versions.toml`: acrescentar o **SDK
+- [x] 1.3 **O catálogo de dependências.** Em `gradle/libs.versions.toml`: acrescentar o **SDK
       Kotlin de MCP 0.15.0** (`io.modelcontextprotocol:kotlin-sdk`) e o **servidor HTTP
       embarcado** — `ktor-server-core` e `ktor-server-cio`, na `ktor = "3.4.3"` já fixada
       (linha 35). Corrigir o comentário dessa versão: ele afirma hoje que o Ktor "vive num
@@ -103,7 +103,7 @@ projeto não configura até que todas as tarefas tenham entrado — incluir um p
       **servidor** em `:app:mcp` e em nenhum outro (proposal, "Dependências novas"). Registrar
       no comentário do SDK que `LATEST_PROTOCOL_VERSION = "2025-11-25"` é o que fixa a revisão
       alvo, e o gatilho de migração (D12).
-- [ ] 1.4 **`app/mcp/build.gradle.kts`** (novo): `plugins { id("finsight.app.mcp") }`;
+- [x] 1.4 **`app/mcp/build.gradle.kts`** (novo): `plugins { id("finsight.app.mcp") }`;
       `commonMain` com `:core:common`, `:core:ledger`, `:core:model`, e as `api` das features
       que as tools alcançam (`accounts`, `budgets`, `categories`, `creditcards`, `recurring`,
       `transactions`, `mcp`); `jvmMain` com o SDK de MCP e `ktor-server-core`/`ktor-server-cio`.
@@ -114,14 +114,14 @@ projeto não configura até que todas as tarefas tenham entrado — incluir um p
       contradiz "uma linha em `appModules`" (proposal, Impact). O transporte fica confinado ao
       `jvmMain` atrás de um `expect`, exatamente como `feature/support/impl` já faz com
       `expect val supportPlatformModule: Module` (`di/SupportModule.kt:11` + os três actuals).
-- [ ] 1.5 **`feature/mcp/api/build.gradle.kts`** e **`feature/mcp/impl/build.gradle.kts`**
+- [x] 1.5 **`feature/mcp/api/build.gradle.kts`** e **`feature/mcp/impl/build.gradle.kts`**
       (novos), no molde de `feature/support` (o menor par do projeto): a `api` com
       `id("finsight.feature.api")`, `implementation(projects.core.model)` e
       `api(projects.core.navigation)`; a `impl` com `id("finsight.feature.impl")`,
       `projects.feature.mcp.api`, `:core:common`, `:core:database`, `:core:designsystem`,
       `:core:navigation`, `:core:resources`, `:core:ui`, `:core:analytics`,
       `libs.multiplatform.settings` e, em `commonTest`, `libs.multiplatform.settings.test`.
-- [ ] 1.6 **`app/shared/build.gradle.kts`**: `api(projects.feature.mcp.api)` e
+- [x] 1.6 **`app/shared/build.gradle.kts`**: `api(projects.feature.mcp.api)` e
       `implementation(projects.feature.mcp.impl)` no bloco das features (linhas 21-42), e
       `implementation(projects.app.mcp)`. Esta última só é aceita depois de 1.1 remover a
       verificação escopada ao shell; é a única dependência do shell para fora de

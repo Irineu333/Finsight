@@ -102,6 +102,11 @@ internal fun Project.configureCompose() {
 
 internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
     afterEvaluate {
+        val role = when {
+            isApi -> "api"
+            path.startsWith(":app:") -> "app"
+            else -> "impl"
+        }
         val violations = mutableListOf<String>()
         configurations.forEach { configuration ->
             configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
@@ -113,38 +118,15 @@ internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
 
                 if (isApi) {
                     if (!isCore) {
-                        violations += "api '$path' não pode depender de '$depPath' " +
+                        violations += "$role '$path' não pode depender de '$depPath' " +
                             "(regra: api só depende de :core:*)"
                     }
                 } else {
                     if (!isCore && !depPath.endsWith(":api")) {
-                        violations += "impl '$path' não pode depender de '$depPath' " +
-                            "(regra: impl só depende de :feature:*:api e :core:*)"
+                        violations += "$role '$path' não pode depender de '$depPath' " +
+                            "(regra: depende apenas de :feature:*:api e :core:*) — " +
+                            "promova o comportamento para a api da feature"
                     }
-                }
-            }
-        }
-        if (violations.isNotEmpty()) {
-            throw org.gradle.api.GradleException(
-                "Violação das regras de dependência de módulos:\n" +
-                    violations.joinToString("\n") { " - $it" }
-            )
-        }
-    }
-}
-
-internal fun Project.verifyAppSharedDependencyRules() {
-    afterEvaluate {
-        val violations = mutableListOf<String>()
-        configurations.forEach { configuration ->
-            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val depPath = dependency.path
-                if (depPath == path) return@forEach
-                val isCore = depPath.startsWith(":core:")
-                val isFeature = depPath.startsWith(":feature:")
-                if (!isCore && !isFeature) {
-                    violations += "app '$path' não pode depender de '$depPath' " +
-                        "(regra: :app:shared só depende de :core:* e :feature:*)"
                 }
             }
         }

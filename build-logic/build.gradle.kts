@@ -39,5 +39,9 @@ gradlePlugin {
             id = "finsight.app.shared"
             implementationClass = "com.neoutils.finsight.convention.AppSharedConventionPlugin"
         }
+        register("appMcp") {
+            id = "finsight.app.mcp"
+            implementationClass = "com.neoutils.finsight.convention.AppMcpConventionPlugin"
+        }
     }
 }

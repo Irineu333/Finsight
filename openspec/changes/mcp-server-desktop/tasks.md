@@ -306,7 +306,7 @@ antes de implementador.
 persiste entre execuções e a atividade é gravável e observável — sem nenhuma tela e sem
 nenhum socket.
 
-- [ ] 4.1 **`McpServerSettingsRepository`** em
+- [x] 4.1 **`McpServerSettingsRepository`** em
       `feature/mcp/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/McpServerSettingsRepository.kt`,
       sobre `com.russhwolf.settings.Settings` — o mecanismo de preferência do projeto (o único
       binding é `single<Settings> { Settings() }` em `core/common/.../di/CommonModule.kt:15`),
@@ -315,13 +315,18 @@ nenhum socket.
       escrita. Padrões: desligado, `READ_ONLY`, porta fixa persistida na primeira execução.
       O token é gerado por fonte **criptograficamente segura, ≥ 128 bits**, e comparado em
       **tempo constante** — nenhuma das duas coisas existe em `kotlin.random`, então entram
-      como `expect fun` em `commonMain` com actual JVM sobre `java.security.SecureRandom` /
-      `MessageDigest.isEqual`, e actuals inertes nos demais targets (o servidor só existe no
-      desktop). O token **MUST NOT** ir para log. Teste em
+      como `expect fun` com actual JVM sobre `java.security.SecureRandom` /
+      `MessageDigest.isEqual`. Elas vivem em **`:core:common`** (`security/Secrets.kt`,
+      `secureRandomHex` + `constantTimeEquals`), e não neste módulo: quem **verifica** o token é
+      o `BearerTokenAuth` do `:app:mcp` (6.2), que não enxerga `impl` algum — pôr o utilitário
+      aqui deixaria os dois lados da comparação com donos diferentes. O actual do Android é o
+      real, porque `java.security` existe lá e uma limitação fabricada não protege ninguém; o do
+      iOS **lança**, porque "inalcançável" não pode significar segredo mais fraco em silêncio.
+      O token **MUST NOT** ir para log. Teste em
       `feature/mcp/impl/src/commonTest/.../McpServerSettingsRepositoryTest.kt` com `MapSettings`:
       padrões ao nascer; porta sobrevive à releitura; desligar **não** muda o token; girar
       troca o token e o antigo não volta.
-- [ ] 4.2 **`AgentActivityRepository`** em
+- [x] 4.2 **`AgentActivityRepository`** em
       `feature/mcp/impl/.../database/repository/AgentActivityRepository.kt` sobre o
       `AgentActivityDao` do grupo 2, mais o mapper entity↔model em
       `feature/mcp/impl/.../database/mapper/AgentActivityMapper.kt`. `observeRecent` devolve o
@@ -330,7 +335,7 @@ nenhum socket.
       `Room.inMemoryDatabaseBuilder`: uma chamada grava um registro só, a recusada também é
       gravada, cliente ausente não faz a gravação falhar, e a poda remove registro sem tocar
       nas transações que ele descrevia.
-- [ ] 4.3 **O módulo Koin da feature**, em
+- [x] 4.3 **O módulo Koin da feature**, em
       `feature/mcp/impl/src/commonMain/kotlin/com/neoutils/finsight/di/McpModule.kt`:
       `val mcpFeatureModule = module { single<IMcpServerSettingsRepository> { … };
       single<IAgentActivityRepository> { … } }`. Os nomes das duas classes estão fixados em 4.1

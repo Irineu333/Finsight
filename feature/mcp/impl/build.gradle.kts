@@ -19,6 +19,11 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.multiplatform.settings.test)
+            implementation(libs.kotlinx.coroutinesTest)
+
+            // The journal's suite seeds a real `transactions` row to assert that pruning a
+            // record leaves it intact, and that entity is dated with `LocalDate`.
+            implementation(libs.kotlinx.datetime)
         }
     }
 }

@@ -692,6 +692,16 @@ verificado está dito, não implícito.
 - [ ] 11.3 `./gradlew :app:android:assembleDebug` e `./gradlew :app:desktop:run` — compilam e
       sobem. O Android compila **com o servidor inexistente**: os actuals não-JVM são inertes e
       nenhum socket abre.
+- [ ] 11.3b **O app empacotado, não só o `run`.** `./gradlew :app:desktop:createDistributable` e
+      subir o servidor **a partir da imagem produzida**. O `run` prova o classpath do Gradle; a
+      promessa é outra — o usuário instala **um** app e o servidor vem junto, sem segundo
+      binário (é o que D2 comprou ao derrubar a ponte stdio). Duas coisas só falham aqui: o
+      `jlink` recorta o runtime pela lista explícita de `modules(...)` em
+      `app/desktop/build.gradle.kts`, que foi levantada por `suggestRuntimeModules` **antes** de
+      existir um servidor HTTP no classpath — rodar `./gradlew :app:desktop:suggestRuntimeModules`
+      de novo e acrescentar o que faltar; e qualquer descoberta por `ServiceLoader` que a imagem
+      empacotada resolva diferente do classpath de desenvolvimento. Relatar a plataforma em que
+      a imagem foi gerada, e que um cliente MCP conectou nela.
 - [ ] 11.4 Conferir que **cada chave nova de string existe nos dois arquivos**
       (`values/strings.xml` e `values-en/strings.xml`).
 - [ ] 11.5 **Medir**, e registrar o número: a listagem de tools serializada e uma página

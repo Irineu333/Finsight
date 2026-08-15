@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.model
 
+import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.extension.nominalLeg
@@ -42,6 +43,28 @@ data class Transaction(
      * counterpart legs (category, reconciliation).
      */
     val monetaryEntries: List<Entry> get() = entries.filter { it.account.type.isMonetary }
+
+    /**
+     * Whether this transaction can be **rewritten in place** — the precondition of
+     * `ITransactionRepository.updateTransaction`, stated once, where the facts it reads
+     * are.
+     *
+     * A rewrite deletes every entry and rebuilds from the single monetary leg the caller
+     * describes. So it is only correct for a transaction that *has* a single monetary
+     * leg: routing a transfer or a card payment through it would drop the second leg
+     * silently. The other three gates are the same kind of fact — an adjustment states a
+     * balance rather than a movement, one payment of an installment plan is not
+     * changeable on its own, and a leg on a closed account cannot receive entries again.
+     *
+     * It lives here, and not in a screen or in a tool, because it is derivable from the
+     * transaction and therefore has exactly one owner. Every consumer decides *whether*
+     * it offers the edit; none of them decides *what* the rule is.
+     */
+    val isRewritable: Boolean get() =
+        label != TransactionLabel.ADJUSTMENT &&
+            monetaryEntries.size == 1 &&
+            installmentId == null &&
+            entries.closedLegBlockingChange() == null
 
     /**
      * The leg a neutral list looks through: the outgoing one — the monetary leg the

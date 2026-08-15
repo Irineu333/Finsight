@@ -42,7 +42,11 @@ import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.CreateTransactionUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
+import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
 import com.neoutils.finsight.mcp.contract.MoneyPayloadFactory
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.flow.Flow
@@ -559,6 +563,49 @@ class RecordingPayInvoice(
         calls += Triple(invoiceId, date, paidAmount)
         return answer(invoiceId)
     }
+}
+
+class RecordingUpdateTransaction(
+    private val answer: (Long, TransactionForm) -> Either<Throwable, Unit> = { _, _ -> Either.Right(Unit) },
+) : UpdateTransactionUseCase {
+
+    var calls: MutableList<Pair<Long, TransactionForm>> = mutableListOf()
+        private set
+
+    override suspend fun invoke(transactionId: Long, form: TransactionForm): Either<Throwable, Unit> {
+        calls += transactionId to form
+        return answer(transactionId, form)
+    }
+}
+
+class RecordingDeleteTransaction(
+    private val answer: (Transaction) -> Either<Throwable, Unit> = { Either.Right(Unit) },
+) : DeleteTransactionUseCase {
+
+    var removed: MutableList<Transaction> = mutableListOf()
+        private set
+
+    override suspend fun invoke(transaction: Transaction): Either<Throwable, Unit> {
+        removed += transaction
+        return answer(transaction)
+    }
+}
+
+/** The application's journal, kept in memory so a test can read what a call left in it. */
+class RecordingJournal : IAgentActivityRepository {
+
+    val records: MutableList<AgentActivity> = mutableListOf()
+
+    private val recent = MutableStateFlow<List<AgentActivity>>(emptyList())
+
+    override fun observeRecent(limit: Int): Flow<List<AgentActivity>> = recent
+
+    override suspend fun record(activity: AgentActivity) {
+        records += activity
+        recent.value = records.toList()
+    }
+
+    override suspend fun prune(olderThan: Instant) = Unit
 }
 
 /**

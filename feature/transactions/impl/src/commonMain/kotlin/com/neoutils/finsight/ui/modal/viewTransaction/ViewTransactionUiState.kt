@@ -134,15 +134,13 @@ sealed interface ViewTransactionUiState {
         val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
 
         /**
-         * Derived edit gate, gate by gate (design D2): not an adjustment, exactly
-         * one monetary leg, no installment, and not frozen. The invoice-status gate
-         * (CLOSED/PAID blocks edit *and* delete) is applied one level up.
+         * Whether the edit is offered — which is `Transaction.isRewritable`, the ledger's
+         * own gate, consumed rather than restated. It reads the same four facts this
+         * screen used to spell out: not an adjustment, exactly one monetary leg, no
+         * installment, and not frozen. The invoice-status gate (CLOSED/PAID blocks edit
+         * *and* delete) is applied one level up.
          */
-        val isEditable: Boolean =
-            label != TransactionLabel.ADJUSTMENT &&
-                transaction.monetaryEntries.size == 1 &&
-                transaction.installmentId == null &&
-                isChangeable
+        val isEditable: Boolean = transaction.isRewritable
 
         val isRemovable: Boolean = isChangeable
     }

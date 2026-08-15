@@ -586,10 +586,14 @@ existem. Esta sequência é imposta pelo desenho: o ensaio devolve **exatamente 
 gravado**, inclusive a fatura resolvida, e por isso consome o mesmo resolvedor; dois
 resolvedores seriam duas respostas para "em qual fatura isto cai".
 **Barreira de saída:** `./gradlew :app:mcp:jvmTest` verde; com o nível em **leitura e
-escrita** o cliente lista as três escritas mais o ensaio, e em **somente leitura** não lista
-nenhuma delas.
+escrita** o cliente lista as treze tools, e em **somente leitura** não lista **nenhuma das três
+escritas**. O ensaio **continua listado** em somente leitura, e isto é correção desta barreira,
+não desvio: ele é honestamente somente-leitura, `ToolRegistry.isPermitted` deriva a visibilidade
+**só** da anotação, e o delta `mcp-access-control` exige esconder as tools *de escrita*.
+Escondê-lo pediria mentir na anotação — que a spec proíbe — ou um caso especial que faria
+esconder e recusar divergirem.
 
-- [ ] 8.1 **`finsight_record_transactions`** (`RecordTransactionsTool.kt`): **de um a muitos
+- [x] 8.1 **`finsight_record_transactions`** (`RecordTransactionsTool.kt`): **de um a muitos
       itens na mesma chamada** — lançar um extrato é pedido de primeira classe, e uma chamada
       por linha multiplica as chances de falha parcial silenciosa (D10). Invoca o **mesmo caso
       de uso por item** e **não ganha comportamento que a operação unitária não tenha**.
@@ -598,18 +602,22 @@ nenhuma delas.
       **Duplicata provável é aviso no item e não bloqueia a gravação**: importar o mesmo
       extrato duas vezes é o erro mais comum que existe, e decidir sozinho que um lançamento
       legítimo é repetido é o erro oposto. Anotada como **não somente-leitura e idempotente**.
-- [ ] 8.2 **`finsight_update_transactions`** (`UpdateTransactionsTool.kt`) sobre o
+- [x] 8.2 **`finsight_update_transactions`** (`UpdateTransactionsTool.kt`) sobre o
       `UpdateTransactionUseCase` do 2.5: **apenas categoria, descrição e data**. Valor e conta
       **não são oferecidos** — mudar o dinheiro de um lançamento é removê-lo e criar outro, e
       uma edição que disfarçasse isso esconderia a correção.
-- [ ] 8.3 **`finsight_delete_transactions`** (`DeleteTransactionsTool.kt`) sobre
+- [x] 8.3 **`finsight_delete_transactions`** (`DeleteTransactionsTool.kt`) sobre
       `DeleteTransactionUseCase` (já na `api`), anotada como **destrutiva**.
-- [ ] 8.4 **`finsight_preview_transactions`** (`PreviewTransactionsTool.kt`): o ensaio, **tool
+- [x] 8.4 **`finsight_preview_transactions`** (`PreviewTransactionsTool.kt`): o ensaio, **tool
       própria** e não parâmetro booleano da escrita — uma tool que é somente-leitura ou
       destrutiva conforme um argumento não pode ser anotada com honestidade, e é pela anotação
       que o cliente decide pedir confirmação ao usuário. Devolve **exatamente o que seria
-      gravado**, com os rótulos derivados e as faturas resolvidas, e **não persiste nada** sob
-      nenhum argumento. Anotada como **somente-leitura**. Nota de contagem: a spec enumera nove
+      gravado**, com as faturas resolvidas, e **não persiste nada** sob
+      nenhum argumento. Anotada como **somente-leitura**. **O rótulo não vai no ensaio**: ele é
+      derivado das pernas (`Transaction.label` → `deriveTransactionLabel`), que só existem depois
+      da gravação, e calculá-lo antes seria uma segunda implementação da derivação. O ensaio
+      devolve a intenção, a fatura resolvida e as referências; o rótulo derivado volta na
+      resposta do `record`, depois de escrito. Nota de contagem: a spec enumera nove
       leituras e três escritas e, em requisito separado, exige que o ensaio seja tool própria —
       são **treze** tools anunciadas, e este é o item que fecha a conta.
 

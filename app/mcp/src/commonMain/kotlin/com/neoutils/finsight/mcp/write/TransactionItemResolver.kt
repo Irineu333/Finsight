@@ -545,15 +545,7 @@ class TransactionItemResolver(
     )
 
     private fun categoryTypeMismatch(category: Category, type: TransactionType): ToolError? =
-        if (category.type.isAccept(type)) {
-            null
-        } else {
-            ToolError.invalidInput(
-                code = WriteItemCodes.CATEGORY_TYPE_MISMATCH,
-                message = "Category ${category.id} is declared ${category.type.name} and does not classify " +
-                    "a ${type.name}. Pass a category of the matching type, or none.",
-            )
-        }
+        categoryTypeRefusal(category, type)
 
     private fun currencyMismatch(amount: ItemMoney, declared: String): ToolError? =
         if (amount.currency == declared) {
@@ -566,6 +558,25 @@ class TransactionItemResolver(
             )
         }
 }
+
+/**
+ * The refusal a category that does not classify [type] earns, or `null` when it does.
+ *
+ * Refused rather than dropped, wherever a category is chosen: [TransactionForm] discards a
+ * category the direction does not accept, and letting that happen would record the item
+ * unclassified while the call looked like it succeeded. `Category.Type.isAccept` is the
+ * domain's rule; this is only the refusal that states it once for the whole write surface.
+ */
+internal fun categoryTypeRefusal(category: Category, type: TransactionType): ToolError? =
+    if (category.type.isAccept(type)) {
+        null
+    } else {
+        ToolError.invalidInput(
+            code = WriteItemCodes.CATEGORY_TYPE_MISMATCH,
+            message = "Category ${category.id} is declared ${category.type.name} and does not classify " +
+                "a ${type.name}. Pass a category of the matching type, or none.",
+        )
+    }
 
 /** A money value as an item states it: the currency, and the integer minor unit. */
 data class ItemMoney(val currency: String, val minorUnits: Long) {

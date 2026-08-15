@@ -73,6 +73,17 @@ class ConsolidationBoundaryTest {
             // rate of the day may legitimately differ from the one this operation got.
             "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/modal/viewTransaction/ViewTransactionModal.kt",
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/mapper/ExchangeRateMapper.kt",
+            // The money payload of the MCP surface, which carries the **provenance** of a
+            // consolidated figure — the rate, its date and whether it is stale — beside
+            // the figure itself. It is admitted for the same reason the settings screens
+            // are: no money passes through it. The number came from the reducer, which
+            // this file calls and does not second-guess; what it reads off an
+            // `ExchangeRate` is copied into the response verbatim and never multiplied by
+            // anything, which the sibling test below is what actually holds.
+            //
+            // It is here because a consolidated number without the rate that produced it
+            // is irreproducible, and an agent will do arithmetic on top of it regardless.
+            "app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/contract/MoneyPayload.kt",
             // The declared precedence — direct ▸ inverse ▸ one pivot (design D3). It is
             // the one place that composes a rate *out of other rates*, and it is a
             // legitimate entry for a reason worth stating: **no money passes through

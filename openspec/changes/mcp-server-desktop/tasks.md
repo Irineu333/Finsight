@@ -354,7 +354,7 @@ paginação e as anotações. Nenhuma tool ainda.
 como dinheiro, erro, página e default atravessam a fronteira — e é o que torna as 13 tarefas
 do grupo 7 independentes entre si.
 
-- [ ] 5.1 **A forma do dinheiro**, em
+- [x] 5.1 **A forma do dinheiro**, em
       `app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/contract/MoneyPayload.kt`: todo
       valor atravessa como objeto com **moeda, inteiro na menor unidade e escala**, mais um
       texto formatado opcional **declarado como exclusivo de exibição**. Uma leitura que pode
@@ -366,11 +366,18 @@ do grupo 7 independentes entre si.
       nunca descarte silencioso. O consolidado vem de `ConsolidateMoneyUseCase`
       (`core/model/.../usecase/ConsolidateMoneyUseCase.kt`), que é **o único lugar do app onde
       uma taxa multiplica alguma coisa** — a fronteira MCP não ganha exceção por ser
-      serializável (D5). O **sinal é o de exibição** em toda a superfície, derivado de
-      `AccountType.displaySign`; a convenção débito-positivo do razão **MUST NOT** vazar.
+      serializável (D5). O **sinal é o de exibição** em toda a superfície — despesa negativa,
+      receita positiva —; a convenção débito-positivo do razão **MUST NOT** vazar. Atenção:
+      `AccountType.displaySign` **não** produz isso sozinho. Ele é `if (isDebitNatured) 1 else
+      -1` (`core/ledger/.../extension/Ledger.kt:20`) e existe para fazer conta credora ler
+      positivo, o que deixa despesa **e** receita positivas — é o que `SpendingBreakdown` e
+      `ViewCategoryViewModel` consomem, e não muda. O sinal desta superfície tem dono próprio
+      (`DisplaySign`, um só lugar): conta **monetária** (`ASSET`/`LIABILITY`) lê com
+      `displaySign`; conta **nominal** lê com `-1`, que é o sinal que a perna monetária da
+      mesma transação carrega. Nenhum ponto de chamada decide sinal.
       Teste `MoneyPayloadTest.kt`: uma moeda continua coleção; taxa ausente não vira número;
       despesa negativa e receita positiva.
-- [ ] 5.2 **A forma do desfecho**, em `.../mcp/contract/ToolOutcome.kt`: recusa de regra do
+- [x] 5.2 **A forma do desfecho**, em `.../mcp/contract/ToolOutcome.kt`: recusa de regra do
       domínio é **erro de execução da tool**, marcado como tal dentro de um resultado de
       sucesso do transporte — nunca um resultado comum com objeto de erro dentro, porque hosts
       que não veem a marcação relatam ao usuário que a operação foi feita. O desfecho carrega
@@ -381,7 +388,7 @@ do grupo 7 independentes entre si.
       de erro do projeto; `toUiText()` **MUST NOT** atravessar (D6). Aviso é campo
       estruturado, não prosa. Ausência de taxa **não é erro**: é aviso num resultado
       bem-sucedido. Teste `ToolOutcomeTest.kt`.
-- [ ] 5.3 **Página, teto e eco de defaults**, em `.../mcp/contract/Page.kt` e
+- [x] 5.3 **Página, teto e eco de defaults**, em `.../mcp/contract/Page.kt` e
       `.../mcp/contract/AssumedDefaults.kt`: paginação por **cursor opaco** (não deslocamento
       numérico, que duplica e pula itens diante de escrita concorrente), com o **total de
       registros que satisfazem o filtro**; limite acima do teto é **recusado com erro que
@@ -391,7 +398,7 @@ do grupo 7 independentes entre si.
       superfície **MUST NOT** interpretar período em linguagem natural. O **limite de tamanho
       de resposta** é declarado aqui e vale também para os agregados, que não paginam.
       Teste `PageTest.kt` e `AssumedDefaultsTest.kt`.
-- [ ] 5.4 **O registro de tools, os nomes e as anotações**, em
+- [x] 5.4 **O registro de tools, os nomes e as anotações**, em
       `.../mcp/contract/ToolRegistry.kt`: a interface que toda tool implementa (nome, título,
       descrição, `inputSchema`, **`outputSchema` obrigatório**, anotações, execução) e o
       registro que o servidor consulta. Nomes **prefixados por `finsight_`** e contendo o

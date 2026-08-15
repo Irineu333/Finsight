@@ -1,0 +1,78 @@
+package com.neoutils.finsight.mcp
+
+import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
+import com.neoutils.finsight.feature.mcp.api.McpPermission
+import com.neoutils.finsight.mcp.contract.ToolRegistry
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * What the MCP server is actually doing — the three states the configuration screen distinguishes,
+ * and it distinguishes them because presenting any two of them alike would tell the user the
+ * capability is in a state it is not.
+ */
+sealed interface McpServerState {
+
+    /** Nothing is listening. No socket exists — not an idle one, not a closed one. */
+    data object Stopped : McpServerState
+
+    /**
+     * Listening, and reachable at [url] with the level [permission] in force.
+     *
+     * [url] is the whole endpoint, because the endpoint is what a client's configuration holds;
+     * handing the screen a host and a port to assemble would put the assembling rule in two
+     * places.
+     */
+    data class Listening(val url: String, val permission: McpPermission) : McpServerState
+
+    /**
+     * The persisted port is taken by another process, so **the server did not start**.
+     *
+     * A state of its own on purpose. Presented as stopped, the user would think the switch is off;
+     * presented as listening, they would think it works. Neither is true, and no other port is
+     * taken silently — an address that moves breaks every client that pasted the old one.
+     */
+    data class PortUnavailable(val port: Int, val reason: String) : McpServerState
+}
+
+/**
+ * Owns the lifetime of the MCP server: it starts, it stops, and it follows the configuration —
+ * **with nothing of the Finsight interface involved**.
+ *
+ * That absence is the requirement, not a side effect. This is not started from a composition
+ * scope, it reads no window state, and no tool it serves needs anyone looking at the app's screen
+ * to finish. A tool completes with the window minimised, and consent is the *policy* — what
+ * Settings permits — never a modal. The protocol's own way of asking the user something happens
+ * in the **client's** interface, and that stays available.
+ *
+ * It reacts to two keys of [IMcpServerSettingsRepository], which are independent:
+ * - **the toggle**, which decides whether a socket exists at all;
+ * - **the permission level**, which decides which tools are announced. Changing it while a client
+ *   is connected emits the tool list change notification, so the client stops seeing a listing
+ *   that is no longer the truth.
+ *
+ * `expect` because the type is named from common code, and **actual on the JVM only**. Android and
+ * iOS get inert implementations that never listen: this server exists on the desktop, where the
+ * process the user already has open is the one that owns the database.
+ */
+expect class McpServerController(
+    settings: IMcpServerSettingsRepository,
+    tools: ToolRegistry,
+) {
+
+    /** What the server is doing, for the screen to render. Emits on every change. */
+    val state: StateFlow<McpServerState>
+
+    /**
+     * Applies the configuration in force and starts following it. Idempotent: calling it on a
+     * controller that is already following does nothing.
+     */
+    suspend fun start()
+
+    /**
+     * Stops following the configuration and closes the socket. Afterwards nothing is listening.
+     *
+     * It does not touch the token or the level: those are the user's, and a stop that revoked
+     * them would teach the user never to stop.
+     */
+    suspend fun stop()
+}

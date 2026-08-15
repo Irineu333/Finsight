@@ -44,6 +44,19 @@ enum class ToolErrorCategory(val isRetryable: Boolean) {
     /** The call collides with something already done — a reused idempotency key, notably. */
     CONFLICT(isRetryable = false),
 
+    /**
+     * The permission level in force does not allow it — a write while the server is
+     * read-only.
+     *
+     * A class of its own, for two reasons the spec states separately. It must be
+     * **distinguishable from [DOMAIN_RULE]**: the operation is not wrong, the server is
+     * simply not allowed to do it, and a consumer that could not tell them apart would
+     * report a perfectly legal request as an illegal one. And it must **not be retryable**:
+     * nothing about the system will change until a human opens Settings and grants the
+     * level, so telling an agent to try again is telling it to loop.
+     */
+    PERMISSION(isRetryable = false),
+
     /** The server could not attend to it now — a rate limit, a resource in use. */
     UNAVAILABLE(isRetryable = true),
 
@@ -94,6 +107,9 @@ data class ToolError(
         fun invalidInput(code: String, message: String) = of(ToolErrorCategory.INVALID_INPUT, code, message)
 
         fun conflict(code: String, message: String) = of(ToolErrorCategory.CONFLICT, code, message)
+
+        /** The permission level in force refused it. Never retryable — a human has to grant it. */
+        fun permission(code: String, message: String) = of(ToolErrorCategory.PERMISSION, code, message)
 
         fun unavailable(code: String, message: String) = of(ToolErrorCategory.UNAVAILABLE, code, message)
 

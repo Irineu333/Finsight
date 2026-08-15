@@ -31,6 +31,13 @@ kotlin {
             implementation(libs.mcp.kotlin.sdk)
             implementation(libs.ktor.server.core)
             implementation(libs.ktor.server.cio)
+            implementation(libs.ktor.server.contentNegotiation)
+            implementation(libs.ktor.server.serializationKotlinxJson)
+        }
+        jvmTest.dependencies {
+            // The server is exercised over a real loopback socket, and the controller is driven
+            // by a settings flow; both are asserted from a coroutine test.
+            implementation(libs.kotlinx.coroutinesTest)
         }
     }
 }

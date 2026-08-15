@@ -421,7 +421,7 @@ lê) e o registro de tools existe (o servidor o lista).
 `initialize` e responde a uma listagem vazia de tools** — é essa barreira que torna o grupo 7
 verificável ponta a ponta em vez de só compilável.
 
-- [ ] 6.1 **O transporte e o `Origin`**, em
+- [x] 6.1 **O transporte e o `Origin`**, em
       `app/mcp/src/jvmMain/kotlin/com/neoutils/finsight/mcp/transport/McpHttpTransport.kt`
       sobre `ktor-server-cio`: **um único caminho de endpoint**, `POST` para requisições e
       `GET` para o fluxo de notificações, associado **exclusivamente a `127.0.0.1`** e nunca a
@@ -432,7 +432,7 @@ verificável ponta a ponta em vez de só compilável.
       suportada → **`400`**. **Nenhuma sessão é atribuída** (a revisão permite, e um
       identificador a mais é um segredo a mais para vazar). Teste
       `McpHttpTransportTest.kt`.
-- [ ] 6.2 **A autenticação**, em `.../mcp/transport/BearerTokenAuth.kt`: token no header de
+- [x] 6.2 **A autenticação**, em `.../mcp/transport/BearerTokenAuth.kt`: token no header de
       autorização, esquema de portador; **em query string é recusado e o token é tratado como
       comprometido**; comparação em tempo constante (o utilitário é o do 4.1). Sem token ou
       com token inválido → **`401` com o desafio de autorização apontando o documento de
@@ -441,11 +441,11 @@ verificável ponta a ponta em vez de só compilável.
       deliberado** da especificação de autorização do MCP (OAuth 2.1 para um servidor loopback
       de usuário único é desproporcional) fica **escrito no KDoc**, não subentendido — é o que
       a spec exige. Teste `BearerTokenAuthTest.kt`.
-- [ ] 6.3 **O limite de taxa**, em `.../mcp/transport/ToolRateLimiter.kt`: a revisão exige
+- [x] 6.3 **O limite de taxa**, em `.../mcp/transport/ToolRateLimiter.kt`: a revisão exige
       como `MUST`, e nenhuma versão anterior desta proposta o tinha. Recusa **nomeada e
       repetível**, distinguível de recusa de regra do domínio (classe do 5.2), e **nenhuma
       escrita acontece** na chamada recusada. Teste `ToolRateLimiterTest.kt`.
-- [ ] 6.4 **A inicialização e as capabilities**, em `.../mcp/server/McpServerCapabilities.kt`:
+- [x] 6.4 **A inicialização e as capabilities**, em `.../mcp/server/McpServerCapabilities.kt`:
       negociar a revisão **`2025-11-25`** — a mais recente que o SDK Kotlin fala — e declarar
       as capabilities, **incluindo o aviso de mudança na lista de tools**. **MUST NOT** ofertar
       **Roots, Sampling ou Logging**, que a revisão seguinte já depreciou, para não acumular o
@@ -454,14 +454,14 @@ verificável ponta a ponta em vez de só compilável.
       **autodeclarado, não autenticado**. A **defasagem é dívida datada e fica escrita na
       documentação do servidor** (`app/mcp/README.md`, novo), com o gatilho objetivo: o SDK
       passar a falar a `2026-07-28`. Teste `McpServerCapabilitiesTest.kt`.
-- [ ] 6.5 **Cancelamento e interrupção**, em `.../mcp/server/CancellationHandling.kt`: nesta
+- [x] 6.5 **Cancelamento e interrupção**, em `.../mcp/server/CancellationHandling.kt`: nesta
       revisão **perder a conexão MUST NOT ser cancelamento** — o cliente cancela por
       notificação explícita, e é a inversão que mais importa em relação à revisão seguinte
       (D12). Recebido o cancelamento, o servidor para assim que praticável e **não emite mais
       nada para aquela requisição**. Nos dois casos, um lote interrompido tem desfecho
       definido: o que foi aplicado permanece, e repetir com a mesma chave conclui o que faltou.
       Operações longas emitem progresso. Teste `CancellationHandlingTest.kt`.
-- [ ] 6.6 **O ciclo de vida e o dono único do banco**, em
+- [x] 6.6 **O ciclo de vida e o dono único do banco**, em
       `app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/McpServerController.kt`
       (`expect`) com actual JVM em `app/mcp/src/jvmMain/.../McpServerController.jvm.kt` e
       actuals inertes nos demais targets: `start()`/`stop()`, reagindo ao toggle e ao nível de

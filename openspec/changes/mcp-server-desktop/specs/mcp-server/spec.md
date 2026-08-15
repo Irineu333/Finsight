@@ -60,8 +60,14 @@ O servidor MUST NOT atribuir sessão. A revisão permite sessões, e elas não s
 um servidor local de usuário único não tem estado de conversa para guardar, e um identificador
 de sessão a mais é um segredo a mais para vazar.
 
-Toda requisição SHALL trazer o header de versão de protocolo, e versão inválida ou não suportada
-SHALL ser recusada com `400`.
+Toda requisição **posterior à inicialização** SHALL trazer o header de versão de protocolo, e
+versão inválida ou não suportada SHALL ser recusada com `400`. A requisição de inicialização é a
+exceção, e não por indulgência: nela a versão ainda não foi negociada e viaja no corpo, de modo
+que exigir o header ali recusaria todo cliente conforme antes de o handshake acontecer.
+
+#### Scenario: Inicialização sem o header
+- **WHEN** a requisição de inicialização chega sem o header de versão de protocolo
+- **THEN** ela é atendida, e a versão é negociada pelo corpo
 
 #### Scenario: Origin desconhecido é barrado
 - **WHEN** uma requisição chega com `Origin` presente e não reconhecido

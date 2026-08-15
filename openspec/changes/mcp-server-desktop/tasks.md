@@ -265,7 +265,7 @@ no banco.
 contratos, sem implementador — é o grupo 4 que os fecha. Três tarefas, cada uma num arquivo
 novo, nenhuma lendo a saída da outra.
 
-- [ ] 3.1 **O estado do servidor.** `feature/mcp/api/src/commonMain/kotlin/com/neoutils/finsight/feature/mcp/api/McpServerSettings.kt`:
+- [x] 3.1 **O estado do servidor.** `feature/mcp/api/src/commonMain/kotlin/com/neoutils/finsight/feature/mcp/api/McpServerSettings.kt`:
       `enum class McpPermission { READ_ONLY, READ_WRITE }`, `data class McpServerSettings(val
       isEnabled: Boolean, val permission: McpPermission, val port: Int, val token: String)` e
       `interface IMcpServerSettingsRepository` com `observe(): StateFlow<McpServerSettings>`,
@@ -277,7 +277,7 @@ novo, nenhuma lendo a saída da outra.
       contém a URL; e **desligar não gira o token**, senão o interruptor de segurança vira o
       que ninguém toca. O toggle significa **sempre e só** "o servidor MCP existe": a vida do
       processo é decisão de outras chaves, que não existem nesta entrega (D8).
-- [ ] 3.2 **A atividade.** `feature/mcp/api/.../feature/mcp/api/AgentActivity.kt`:
+- [x] 3.2 **A atividade.** `feature/mcp/api/.../feature/mcp/api/AgentActivity.kt`:
       `enum class AgentActivityOutcome { OK, REFUSED, FAILED }`, `data class AgentActivity(val
       id: Long, val timestamp: Instant, val client: String?, val tool: String, val arguments:
       String, val outcome: AgentActivityOutcome, val affected: List<String>)` e
@@ -286,7 +286,7 @@ novo, nenhuma lendo a saída da outra.
       chamada de tool**, não por linha escrita, recusadas incluídas; `client` é anulável e
       **autodeclarado, não autenticado**; o **token MUST NOT** constar de campo algum,
       `arguments` inclusive; leituras não produzem registro.
-- [ ] 3.3 **A rota e o entry point.** `feature/mcp/api/.../feature/mcp/api/McpRoute.kt`:
+- [x] 3.3 **A rota e o entry point.** `feature/mcp/api/.../feature/mcp/api/McpRoute.kt`:
       `@Serializable data object McpRoute : NavRoute`, e `McpEntry.kt` com
       `interface McpEntry { context(builder: NavGraphBuilder) fun register() }`. A rota vive na
       `api` porque **`settings:impl` a nomeia** (critério de triagem: só entra na `api` o que

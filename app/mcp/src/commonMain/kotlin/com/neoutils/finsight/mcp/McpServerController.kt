@@ -3,6 +3,8 @@ package com.neoutils.finsight.mcp
 import com.neoutils.finsight.feature.mcp.api.IMcpServerSettingsRepository
 import com.neoutils.finsight.feature.mcp.api.McpPermission
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.prompt.PromptRegistry
+import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -44,6 +46,11 @@ sealed interface McpServerState {
  * Settings permits — never a modal. The protocol's own way of asking the user something happens
  * in the **client's** interface, and that stays available.
  *
+ * It serves the three primitives of the protocol and not only tools: the orientation
+ * documents are published as **resources**, so a client can attach them before the model
+ * decides anything, and the flows the user invokes by name are **prompts**, which are text
+ * and therefore cannot decide which rule applies.
+ *
  * It reacts to two keys of [IMcpServerSettingsRepository], which are independent:
  * - **the toggle**, which decides whether a socket exists at all;
  * - **the permission level**, which decides which tools are announced. Changing it while a client
@@ -57,6 +64,8 @@ sealed interface McpServerState {
 expect class McpServerController(
     settings: IMcpServerSettingsRepository,
     tools: ToolRegistry,
+    resources: ResourceRegistry,
+    prompts: PromptRegistry,
 ) {
 
     /** What the server is doing, for the screen to render. Emits on every change. */

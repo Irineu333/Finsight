@@ -121,6 +121,15 @@ class BaseCurrencyReachTest {
         // longer offers. It denominates nothing here — it is read to be compared
         // against, and the answer is a refusal rather than a figure.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/domain/usecase/ArchiveCurrencyUseCase.kt",
+        // The MCP overview: the entry point an agent orients itself by, which **states**
+        // the base as a fact about the user's configuration and uses it to say which
+        // currencies the rate archive can price at the reference date. It denominates no
+        // figure — every figure of that response is either the ledger's per-currency
+        // collection or an amount scoped to one account, and the only reduction to the
+        // base is the reducer's own, reported with the rates it applied. The base is
+        // named because the consumer has to know what a consolidated field would be in,
+        // and because an agent that had to infer it would infer it wrong.
+        "app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/tool/GetOverviewTool.kt",
     )
 
     @Test

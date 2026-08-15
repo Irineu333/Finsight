@@ -7,6 +7,8 @@ import com.neoutils.finsight.mcp.contract.McpTool
 import com.neoutils.finsight.mcp.contract.ToolAnnotations
 import com.neoutils.finsight.mcp.contract.ToolOutcome
 import com.neoutils.finsight.mcp.contract.toolOutcomeSchema
+import com.neoutils.finsight.mcp.prompt.PromptRegistry
+import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import com.neoutils.finsight.mcp.transport.LOOPBACK_HOST
 import com.neoutils.finsight.mcp.transport.MCP_ENDPOINT_PATH
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -186,3 +188,9 @@ class FakeMcpServerSettingsRepository(initial: McpServerSettings) : IMcpServerSe
         return rotated
     }
 }
+
+/** A server that announces no orientation document — the transport tests are not about them. */
+fun noResources() = ResourceRegistry(emptyList())
+
+/** A server that offers no flow — likewise. */
+fun noPrompts() = PromptRegistry(emptyList())

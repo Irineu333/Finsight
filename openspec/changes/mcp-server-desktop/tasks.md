@@ -491,60 +491,70 @@ barreira verificável: sem servidor no ar, nenhuma tool é exercitável ponta a 
 um arquivo de tool cada, sob `app/mcp/src/commonMain/kotlin/com/neoutils/finsight/mcp/tool/`
 — nenhuma toca o arquivo de outra.
 
-- [ ] 7.1 **`finsight_get_overview`** (`GetOverviewTool.kt`): o ponto de entrada dos
+- [x] 7.1 **`finsight_get_overview`** (`GetOverviewTool.kt`): o ponto de entrada dos
       identificadores — moeda base (`IBaseCurrencyRepository`), patrimônio **por moeda**
       (`IEntryRepository.balanceUpToByCurrency`), saldo por conta, resumo de cartões
       (`CalculateInvoiceUseCase`/`CalculateAvailableLimitUseCase`, promovidos em 2.4) e
       **cobertura do acervo de taxas** (`IExchangeRateRepository`). Coleção por moeda que não
       colapsa (5.1).
-- [ ] 7.2 **`finsight_list_accounts`** (`ListAccountsTool.kt`) sobre `IAccountRepository`.
+- [x] 7.2 **`finsight_list_accounts`** (`ListAccountsTool.kt`) sobre `IAccountRepository`.
       **Contas de sistema nunca aparecem** — as duas nominais, a de reconciliação e a de
       conversão são criadas sob demanda pela fronteira de escrita, são mecanismo e não fato do
       usuário, e um agente que as enxergasse as citaria como destino do dinheiro dele.
-- [ ] 7.3 **`finsight_list_categories`** (`ListCategoriesTool.kt`) sobre `ICategoryRepository`,
+- [x] 7.3 **`finsight_list_categories`** (`ListCategoriesTool.kt`) sobre `ICategoryRepository`,
       arquivadas fora por omissão e o recorte ecoado (5.3).
-- [ ] 7.4 **`finsight_list_transactions`** (`ListTransactionsTool.kt`) sobre o
+- [x] 7.4 **`finsight_list_transactions`** (`ListTransactionsTool.kt`) sobre o
       `getTransactionsBy` do 2.1 — recorte por **período**, conta, cartão (que é
       `creditCard.accountId`, não um filtro próprio), fatura, **categoria em três estados**
       (qualquer, uma dada, sem classificação — a ausência de dimensão, nunca um balde) e faixa
       de valor. Compra de cartão devolve **as duas datas** (a da compra e a da fatura em que
       caiu) e o filtro **declara sobre qual delas recorta**. A descrição da tool **nomeia
-      `finsight_aggregate_transactions`** como o caminho para totais. Nada é filtrado nem
-      agregado fora do dono da leitura.
-- [ ] 7.5 **`finsight_aggregate_transactions`** (`AggregateTransactionsTool.kt`): totais por
+      `finsight_aggregate_transactions`** como o caminho para totais. Nada é **agregado** fora do
+      dono da leitura, e o recorte que o razão sabe expressar — período, conta, dimensão — desce
+      até ele (2.1). Dois cortes **não** descem, e é a decisão certa: "sem classificação" é o
+      predicado `Transaction.matches(SpendingSubject)` e faixa de valor lê `Transaction.amount`,
+      ambos **derivados das entradas e não persistidos**. Empurrá-los para SQL seria uma segunda
+      derivação da mesma regra, o que a regra de derivação proíbe com mais força do que a linha
+      sobre filtrar fora do dono — e é exatamente por isso que `TransactionsViewModel`,
+      `InvoiceTransactionsViewModel` e `InstallmentsViewModel` já os aplicam assim. A tool
+      consome os mesmos predicados do domínio; não escreve os seus.
+- [x] 7.5 **`finsight_aggregate_transactions`** (`AggregateTransactionsTool.kt`): totais por
       categoria, mês, conta ou cartão, sobre `IEntryRepository.totalsByDimensionByCurrency` /
       `scopeStatsByCurrency`. **Calculado no servidor sobre o conjunto completo e sem
       paginação** — é a tool que mais protege o domínio: sem ela o agente pagina, soma e
       apresenta como exato, errando por moeda e contando como gasto o que o domínio não
       classifica como gasto (D10). Recorte que excederia o limite declarado é **recusado com
       orientação de como reformular**, nunca despejado.
-- [ ] 7.6 **`finsight_list_invoices`** (`ListInvoicesTool.kt`) sobre `IInvoiceRepository`,
+- [x] 7.6 **`finsight_list_invoices`** (`ListInvoicesTool.kt`) sobre `IInvoiceRepository`,
       incluindo o `getOpenInvoices()` do 2.2, com o devido por fatura via
       `CalculateInvoiceUseCase`.
-- [ ] 7.7 **`finsight_list_budgets`** (`ListBudgetsTool.kt`) sobre `IBudgetRepository` +
+- [x] 7.7 **`finsight_list_budgets`** (`ListBudgetsTool.kt`) sobre `IBudgetRepository` +
       `CalculateBudgetProgressUseCase` (já na `api`). O orçamento **declara a sua moeda** e
       não tem moeda por omissão — a resposta a informa sempre.
-- [ ] 7.8 **`finsight_list_recurring`** (`ListRecurringTool.kt`) sobre `IRecurringRepository`,
+- [x] 7.8 **`finsight_list_recurring`** (`ListRecurringTool.kt`) sobre `IRecurringRepository`,
       `IRecurringOccurrenceRepository` e `GetPendingRecurringUseCase` (já na `api`), incluindo
       as **ocorrências pendentes**. Somente leitura: confirmar, pular e parar são ciclo de vida
       e estão fora desta entrega.
-- [ ] 7.9 **`finsight_list_installments`** (`ListInstallmentsTool.kt`) sobre
+- [x] 7.9 **`finsight_list_installments`** (`ListInstallmentsTool.kt`) sobre
       `IInstallmentRepository`.
-- [ ] 7.10 **Os resources**, em `.../mcp/resource/OrientationResources.kt`: panorama, contas e
+- [x] 7.10 **Os resources**, em `.../mcp/resource/OrientationResources.kt`: panorama, contas e
       categorias **também** como resources endereçáveis, além de alcançáveis por tool. São
       documento estável cuja função é estar disponível **antes** de qualquer decisão; como
       tool dependem de o modelo escolher chamá-los, e um modelo que não chama **chuta
       identificadores**.
-- [ ] 7.11 **Os prompts**, em `.../mcp/prompt/UserFlowPrompts.kt`: lançar o extrato do mês e
+- [x] 7.11 **Os prompts**, em `.../mcp/prompt/UserFlowPrompts.kt`: lançar o extrato do mês e
       revisar o mês. **Um prompt é texto, não lógica** — ele não decide qual regra se aplica,
       e é por isso que oferece o vocabulário do usuário sem o risco de um verbo agregador em
       forma de tool (D4/D10). Os prompts nomeiam as tools existentes e não introduzem nenhuma.
-- [ ] 7.12 **O resolvedor de item**, em `.../mcp/write/TransactionItemResolver.kt`: traduz um
+- [x] 7.12 **O resolvedor de item**, em `.../mcp/write/TransactionItemResolver.kt`: traduz um
       item de intenção (despesa, receita, compra em cartão inclusive parcelada, transferência,
       pagamento de fatura, ajuste de conta, ajuste de fatura) no caso de uso dono e nos seus
-      argumentos, **sem decidir regra nenhuma**: em qual fatura uma compra cai é resolvido por
-      `GetOrCreateInvoiceForMonthUseCase`, que já é dono dessa regra
-      (`invoice-governs-date`). Identificadores são **opacos** — nome, rótulo ou texto livre
+      argumentos, **sem decidir regra nenhuma**: em qual fatura uma compra cai é resolvido pelo
+      domínio, e o dono não é o que esta tarefa dizia. `GetOrCreateInvoiceForMonthUseCase` recebe
+      `(creditCard, targetDueMonth)` — quem traduz **data → mês da fatura** é
+      `CreditCard.invoiceWindowOn(date)` / `dueMonthFor(...)`, em `core/model/InvoiceWindow.kt`,
+      e é esse o enunciado único de `invoice-governs-date`. O resolvedor consome os dois e não
+      reimplementa nenhum. Identificadores são **opacos** — nome, rótulo ou texto livre
       **nunca** identificam conta, categoria, cartão, fatura ou orçamento; categoria
       inexistente é **entrada inválida que nomeia a categoria pedida**, e **nenhuma categoria é
       criada implicitamente** (um agente que criasse categoria durante importação produziria
@@ -554,7 +564,7 @@ um arquivo de tool cada, sob `app/mcp/src/commonMain/kotlin/com/neoutils/finsigh
       operação** via `AddInstallmentUseCase`, nunca uma chamada por parcela. Nenhuma perna,
       nenhum valor assinado, nenhum rótulo de transação como entrada — o rótulo volta
       **derivado**. Teste `TransactionItemResolverTest.kt`.
-- [ ] 7.13 **A idempotência e o registro na execução**, em
+- [x] 7.13 **A idempotência e o registro na execução**, em
       `.../mcp/write/IdempotencyStore.kt` e `.../mcp/write/ActivityRecorder.kt` (dois arquivos,
       uma tarefa: a chave e o registro são gravados no mesmo ponto do fluxo). A chave é
       avaliada **junto com um resumo dos argumentos**: mesma chave e mesmos argumentos não

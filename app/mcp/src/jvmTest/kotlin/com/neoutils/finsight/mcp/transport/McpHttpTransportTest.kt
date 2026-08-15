@@ -9,6 +9,8 @@ import com.neoutils.finsight.mcp.asJson
 import com.neoutils.finsight.mcp.contract.ToolRegistry
 import com.neoutils.finsight.mcp.enabledSettings
 import com.neoutils.finsight.mcp.freePort
+import com.neoutils.finsight.mcp.noPrompts
+import com.neoutils.finsight.mcp.noResources
 import com.neoutils.finsight.mcp.request
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -52,6 +54,8 @@ class McpHttpTransportTest {
         controller = McpServerController(
             settings = FakeMcpServerSettingsRepository(enabledSettings(port, token)),
             tools = ToolRegistry(listOf(tool)),
+            resources = noResources(),
+            prompts = noPrompts(),
         )
         controller.start()
         client = McpTestClient(port, token)
@@ -82,6 +86,8 @@ class McpHttpTransportTest {
         val bare = McpServerController(
             settings = FakeMcpServerSettingsRepository(enabledSettings(emptyPort, token)),
             tools = ToolRegistry(emptyList()),
+            resources = noResources(),
+            prompts = noPrompts(),
         )
         bare.start()
 

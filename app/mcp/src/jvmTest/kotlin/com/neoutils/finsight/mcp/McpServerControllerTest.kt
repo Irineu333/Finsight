@@ -87,7 +87,7 @@ class McpServerControllerTest {
     fun `switching off at runtime closes the socket`() = runBlocking {
         val port = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(port, token))
-        val controller = McpServerController(settings, registry)
+        val controller = McpServerController(settings, registry, noResources(), noPrompts())
         controller.start()
         assertTrue(isListening(port))
 
@@ -165,7 +165,7 @@ class McpServerControllerTest {
     fun `changing the level at runtime emits the tool list change notice`() = runBlocking {
         val port = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(port, token, McpPermission.READ_ONLY))
-        val controller = McpServerController(settings, registry)
+        val controller = McpServerController(settings, registry, noResources(), noPrompts())
         controller.start()
 
         try {
@@ -207,7 +207,7 @@ class McpServerControllerTest {
         val first = freePort()
         val second = freePort()
         val settings = FakeMcpServerSettingsRepository(enabledSettings(first, token))
-        val controller = McpServerController(settings, registry)
+        val controller = McpServerController(settings, registry, noResources(), noPrompts())
         controller.start()
         assertTrue(isListening(first))
 
@@ -239,7 +239,7 @@ class McpServerControllerTest {
     }
 
     private fun controller(settings: McpServerSettings) =
-        McpServerController(FakeMcpServerSettingsRepository(settings), registry)
+        McpServerController(FakeMcpServerSettingsRepository(settings), registry, noResources(), noPrompts())
 
     private suspend fun awaitState(controller: McpServerController, predicate: (McpServerState) -> Boolean) {
         repeat(POLLS) {

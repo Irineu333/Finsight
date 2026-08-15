@@ -22,6 +22,10 @@ kotlin {
             // uses for them, and re-expressing it as a string at the boundary would put a
             // second date format in the app.
             implementation(libs.kotlinx.datetime)
+
+            // The write path calls use cases whose failure channel is Arrow's `Either`,
+            // which is the project's error vocabulary. Nothing here introduces a second one.
+            implementation(libs.arrow.core)
         }
         commonTest.dependencies {
             // The money payload is built by a suspending factory over the reducer.

@@ -7,6 +7,10 @@ import com.neoutils.finsight.mcp.contract.McpTool
 import com.neoutils.finsight.mcp.contract.ToolError
 import com.neoutils.finsight.mcp.contract.ToolOutcome
 import com.neoutils.finsight.mcp.contract.ToolRegistry
+import com.neoutils.finsight.mcp.prompt.McpPrompt
+import com.neoutils.finsight.mcp.prompt.PromptRegistry
+import com.neoutils.finsight.mcp.resource.McpResource
+import com.neoutils.finsight.mcp.resource.ResourceRegistry
 import com.neoutils.finsight.mcp.server.CallCompletion
 import com.neoutils.finsight.mcp.server.DeclaredClient
 import com.neoutils.finsight.mcp.server.FINSIGHT_SERVER_INFO
@@ -22,12 +26,18 @@ import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.EmptyJsonObject
+import io.modelcontextprotocol.kotlin.sdk.types.GetPromptResult
+import io.modelcontextprotocol.kotlin.sdk.types.PromptMessage
+import io.modelcontextprotocol.kotlin.sdk.types.ReadResourceResult
+import io.modelcontextprotocol.kotlin.sdk.types.Role
+import io.modelcontextprotocol.kotlin.sdk.types.TextResourceContents
 import io.modelcontextprotocol.kotlin.sdk.types.ListToolsRequest
 import io.modelcontextprotocol.kotlin.sdk.types.ListToolsResult
 import io.modelcontextprotocol.kotlin.sdk.types.Method
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
+import io.modelcontextprotocol.kotlin.sdk.types.PromptArgument as SdkPromptArgument
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,6 +78,8 @@ const val PERMISSION_REFUSED_CODE: String = "PERMISSION_READ_ONLY"
 actual class McpServerController actual constructor(
     private val settings: IMcpServerSettingsRepository,
     private val tools: ToolRegistry,
+    private val resources: ResourceRegistry,
+    private val prompts: PromptRegistry,
 ) {
 
     /** Everything that exists only while the server is listening. */
@@ -150,6 +162,12 @@ actual class McpServerController actual constructor(
                 execute(tool, request.arguments ?: EmptyJsonObject, limiter).asCallToolResult()
             }
         }
+
+        // The orientation documents and the user's flows. Neither is filtered by the permission
+        // level: both are read-only by construction — a resource is a document and a prompt is
+        // text — and a level that governs writes has nothing to say about either.
+        resources.resources.forEach { resource -> server.publish(resource) }
+        prompts.prompts.forEach { prompt -> server.offer(prompt) }
 
         val transport = McpHttpTransport(
             port = configured.port,
@@ -277,3 +295,50 @@ private fun JsonObject.asToolSchema() = ToolSchema(
     required = this["required"]?.jsonArray?.map { it.jsonPrimitive.content },
     defs = this["\$defs"]?.jsonObject,
 )
+
+/** One orientation document, as the protocol publishes one. */
+private fun Server.publish(resource: McpResource) = addResource(
+    uri = resource.uri,
+    name = resource.name,
+    description = resource.description,
+    mimeType = resource.mimeType,
+) {
+    ReadResourceResult(
+        contents = listOf(
+            TextResourceContents(
+                text = resource.read(),
+                uri = resource.uri,
+                mimeType = resource.mimeType,
+            ),
+        ),
+    )
+}
+
+/**
+ * One flow of the user's, as the protocol offers one.
+ *
+ * A prompt expands to a message addressed to the model, and to nothing else: it carries no
+ * behaviour of the server, which is the whole reason the user's vocabulary is safe here and
+ * would not be as a tool.
+ */
+private fun Server.offer(prompt: McpPrompt) = addPrompt(
+    name = prompt.name,
+    description = prompt.description,
+    arguments = prompt.arguments.map { argument ->
+        SdkPromptArgument(
+            name = argument.name,
+            description = argument.description,
+            required = argument.required,
+        )
+    },
+) { request ->
+    GetPromptResult(
+        description = prompt.description,
+        messages = listOf(
+            PromptMessage(
+                role = Role.User,
+                content = TextContent(prompt.render(request.params.arguments.orEmpty())),
+            ),
+        ),
+    )
+}

@@ -27,6 +27,17 @@ kotlin {
             // What the user chose about the server outlives the process, and this is the
             // mechanism the app already keeps preferences in (design D11).
             implementation(libs.multiplatform.settings)
+
+            // The agent's presentation surface, which exists only where the server does.
+            // `:core:ui` is here for the *decisions* a transaction is presented by — the
+            // leg a perspective reads, the end that denominates a cross-currency figure,
+            // the item's sign rule — never for its display models, which carry Compose
+            // types an agent has no use for (`presentation-mapping`).
+            implementation(projects.core.common)
+            implementation(projects.core.ledger)
+            implementation(projects.core.model)
+            implementation(projects.core.ui)
+            implementation(libs.kotlinx.datetime)
         }
         jvmTest.dependencies {
             // A `Settings` the test states, never the developer's own: the tests below turn

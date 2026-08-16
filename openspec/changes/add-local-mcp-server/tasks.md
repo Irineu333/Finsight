@@ -97,15 +97,15 @@
 
 ## 7. Apresentação para o agente (`presentation-mapping`, `mcp-tool-surface`)
 
-- [ ] 7.1 DTOs planos da superfície: transação, conta, cartão, fatura, parcelamento, categoria, orçamento, recorrência. Nenhum campo de tipo de domínio, no máximo o identificador.
-- [ ] 7.2 O tipo de figura monetária da superfície: valor, moeda, e — quando consolidada — a marca de consolidação e a data da taxa.
-- [ ] 7.3 Mapper de transação que consome `deriveTransactionLabel`, `TransactionPerspective` e `figureLegUnder`, sem re-derivar nenhum dos três.
-- [ ] 7.4 Redução por `ConsolidateMoneyUseCase`, e a resposta de ausência de taxa (D16): decomposição por moeda e a limitação dita explicitamente.
-- [ ] 7.5 Teste que inspeciona os DTOs da superfície e falha se algum declarar campo de tipo de domínio.
-- [ ] 7.6 Teste que apresenta a mesma transação pela tela e pela superfície do agente e exige o mesmo rótulo, a mesma perna lida e a mesma ponta denominando a figura.
-- [ ] 7.7 O envelope de erro: motivo da recusa, e o nome da operação alternativa quando o domínio oferece uma.
-- [ ] 7.8 **Teste que fecha a superfície**: compara o conjunto de ferramentas anunciado com a lista declarada e falha nos dois sentidos — uma ferramenta a mais entrou sem decisão, uma a menos sumiu sem ninguém notar. No molde de `AgentInstructionsTest`, que já faz isso com as instruções de agente e os arquivos que elas nomeiam.
-- [ ] 7.9 Teste de que nenhuma ferramenta escreve taxa de câmbio, altera a moeda base, ou reconfigura o servidor e as próprias permissões — as três exclusões cujo motivo é dano assimétrico e silencioso, não escopo.
+- [x] 7.1 DTOs planos da superfície, em `feature/mcp/impl` `jvmMain/.../mcp/surface/`: transação, conta, cartão, fatura, parcelamento, categoria, orçamento e recorrência, mais a figura, a sua decomposição e o envelope de recusa. `@Serializable`, `snake_case` no fio, sem nenhum tipo de domínio — nem enum: `nature`, `status` e `type` viajam como texto.
+- [x] 7.2 `AgentFigure`: valor, moeda, decomposição por moeda, a marca de aproximação e a data da taxa. O valor é **anulável**, porque uma figura que nenhuma taxa alcança não tem número único e nomear um dos termos seria escolher moeda à mão.
+- [x] 7.3 `Transaction.toAgentTransaction` — irmão de `toTransactionUi`. Consome `deriveTransactionLabel`, `legUnder` sob `TransactionPerspective`, `figureLegUnder` e `itemDisplayAmount`, e não re-deriva nenhum. Sem perspectiva não devolve direção: a spec proíbe apresentar a direção de uma perna escolhida como propriedade do lançamento.
+- [x] 7.4 `ConsolidateMoneyUseCase.agentFigure` reduz e traduz; nunca soma moedas nem escolhe taxa. Sem taxa no acervo (D16) devolve a decomposição exata e `limitation`, que nomeia as moedas sem taxa e diz em palavras o que o número deixa de fora.
+- [x] 7.5 `AgentSurfaceCarriesNoDomainTest` lê as fontes do pacote e falha por campo de tipo de domínio (`core:ledger`/`core:model` `domain/**`) **e** por modelo da tela (`core:ui` `ui/model`, `DisplayAmount`, `ConsolidatedAmount`). Verificado falhando com `Account`, `TransactionLabel` e `TransactionUi` injetados.
+- [x] 7.6 `ScreenAndAgentAgreeTest`: despesa, transferência pelas duas pontas e sem perspectiva, e pagamento cruzando moedas sob duas bases. Verificado falhando quando o mapper troca `figureLegUnder` por `legUnder` (BRL × USD) e quando re-deriva rótulo e perna.
+- [x] 7.7 `AgentRefusal(reason, try_instead)`. O motivo são as palavras do próprio erro do domínio — nenhum tipo de erro novo nasceu, e por isso nenhuma chave de string —, e a alternativa vem de `retireActionOf`, o dono de arquivar-versus-apagar que as telas já consultam. `notFound(kind, id)` diz qual identidade não foi achada.
+- [x] 7.8 `McpToolName` declara as 56 com o seu eixo e a sua família; `McpSurface.offered` declara as que o servidor anuncia hoje (vazio) e `mcpTools()` é o registro que a DI entrega. `McpSurfaceIsClosedTest` compara os dois nos dois sentidos, e os grupos 8–11 têm de escrever nos dois. **Todo `delete_*` fica no eixo apagar** (8, não 4): o requisito diz "remover definitivamente" sem qualificar entidade, e o seu cenário é literal — conceder "registrar e editar" sem "apagar" deixa um agente que cria e altera e **não remove**.
+- [x] 7.9 Duas metades no mesmo teste: nenhuma das 56 se chama por taxa, moeda base ou servidor, e as três retenções constam de `McpSurface.exclusions` como `WITHHELD` com o motivo; e nenhuma fonte que declare `McpTool` segura `IExchangeRateRepository`, `McpServerController` ou `McpServerSettings`, nem chama `.set(` sobre a moeda base. Verificado falhando com uma ferramenta forjada que faz as três coisas.
 
 ## 8. Família Perguntas — permissão "ler"
 
@@ -140,7 +140,7 @@
 - [ ] 10.4 `create_category`, `update_category`; `create_budget`, `update_budget`.
 - [ ] 10.5 `create_recurring`, `update_recurring`; `create_installment`, `update_installment`.
 - [ ] 10.6 `create_invoice`, `delete_invoice` — esta recusando quando a fatura não é futura.
-- [ ] 10.7 As quatro ferramentas do eixo "apagar": transação, conta, categoria, orçamento.
+- [ ] 10.7 As demais ferramentas do eixo "apagar": transação, conta, categoria, orçamento, **cartão, recorrência e parcelamento**. Com `delete_invoice` (10.6), são as **oito** que o eixo concede: `mcp-permissions` define "apagar" como *remover definitivamente*, sem qualificar entidade, e enumera em "registrar e editar" apenas *criar e alterar* — de modo que toda `delete_*` cai neste eixo. As três últimas não constavam de task alguma, e sem elas a superfície declarada teria ferramenta que nenhum passo constrói.
 - [ ] 10.8 Teste de que apagar uma categoria com lançamentos é recusado **e** que a recusa nomeia o arquivamento.
 - [ ] 10.9 Teste de que nenhuma ferramenta de registro escreve em repositório sem passar pelo use case dono.
 

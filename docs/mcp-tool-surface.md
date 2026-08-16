@@ -322,9 +322,23 @@ O segundo é o que o MCP consegue chamar.
 
 ## O que fica de fora
 
-- **Dirigir a UI.** Navegar, abrir modal, clicar. Escopo é dado.
-- **Ler o estado da tela.** Expor `UiState` congelaria a UI como contrato.
-- **Android e iOS.** Servidor local é coisa de desktop.
-- **Idempotência.** Um agente que perde a resposta e repete a chamada duplica o lançamento.
-  Reconhecido, adiado — melhoria futura.
-- **Taxas de câmbio e moeda base.** Configuração do app, não superfície de agente.
+Varrido contra as features do app, não amostrado. O que faltar aqui é omissão, não silêncio.
+
+| Fica de fora | Por quê |
+|---|---|
+| **Escrever taxa de câmbio**, trocar a **moeda base**, cadastrar/arquivar/remover **moeda** (`feature/settings`) | Reescreve em silêncio **toda** figura consolidada do app, inclusive de meses fechados, sem lançamento que denuncie. O agente lê a taxa aplicada; não a escreve |
+| **Suporte** (`feature/support`) | Única superfície do app que sai da máquina (Firestore) |
+| **Configurar, renderizar e exportar relatório** (`feature/report`) | `get_report_stats` dá as figuras; montar documento é artefato visual, não dado |
+| **Preferências do dashboard**, incluindo **contas fora do saldo total** | Mudá-la altera o número que o próprio agente lê depois |
+| **Lançar rendimento** (`LaunchYieldUseCase`) | A fronteira mais discutível: é lançamento. Fora porque não estava no escopo e a conta que rende tem regra própria |
+| **Ícones** de conta, cartão e categoria | O que o agente cria nasce com o padrão; catálogo visual não traduz para JSON |
+| **Categorias padrão** (`CreateDefaultCategoriesUseCase`) | Semeadura de primeira execução, não operação de usuário |
+| **Autenticação** (`core:auth`) | O servidor herda a sessão do app; não a gerencia |
+| **Telemetria** e **estado da janela** | Não são dados do usuário |
+| **Dirigir a UI** e **ler estado de tela** | Expor `UiState` congelaria a UI como contrato |
+| **Android e iOS** | Servidor local é coisa de desktop |
+| **Administrar o próprio servidor** — porta, token, permissões | Um agente que amplia as próprias permissões não tem permissões |
+| **Idempotência de escrita** | Repetir uma chamada perdida duplica o lançamento. Reconhecido, não resolvido |
+
+A lista é normativa: um teste compara as ferramentas anunciadas com a lista declarada e falha
+nos dois sentidos — uma a mais entrou sem decisão, uma a menos sumiu sem ninguém notar.

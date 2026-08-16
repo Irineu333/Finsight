@@ -191,6 +191,36 @@ as duas e comparar as saídas.
 - **WHEN** duas ferramentas devolvem faturas com recortes distintos
 - **THEN** cada descrição diz qual recorte oferece, e o consumidor escolhe sem experimentar
 
+### Requirement: A superfície é fechada, e o que fica de fora é declarado
+
+O conjunto de ferramentas oferecido SHALL ser exatamente o conjunto declarado, e uma capacidade
+do app que a superfície não alcança SHALL constar de uma lista de exclusões, com o motivo. Uma
+ferramenta nova MUST NOT surgir sem passar por essa declaração.
+
+A regra existe porque a ausência não se manifesta: uma capacidade esquecida é indistinguível de
+uma capacidade recusada, e ninguém percebe a diferença lendo a lista do que existe. É a mesma
+razão pela qual o app já compara, por teste, as instruções de agente com os arquivos que elas
+nomeiam.
+
+Em particular, o servidor MUST NOT oferecer escrita de taxa de câmbio nem troca da moeda base:
+qualquer das duas reescreve, em silêncio e retroativamente, toda figura consolidada do app —
+inclusive as de períodos já fechados — sem produzir lançamento que a denuncie.
+
+O servidor MUST NOT oferecer ferramenta que altere a sua própria configuração ou as suas próprias
+permissões.
+
+#### Scenario: A lista anunciada é a lista declarada
+- **WHEN** o conjunto de ferramentas anunciado é comparado à lista declarada
+- **THEN** os dois conjuntos são idênticos, sem ferramenta a mais nem a menos
+
+#### Scenario: Taxa e moeda base ficam fora
+- **WHEN** a superfície é inspecionada
+- **THEN** nenhuma ferramenta escreve taxa de câmbio ou altera a moeda base
+
+#### Scenario: O servidor não se reconfigura
+- **WHEN** a superfície é inspecionada
+- **THEN** nenhuma ferramenta liga, desliga, reconfigura o servidor ou amplia as permissões dele
+
 ### Requirement: A resposta é plana, e não carrega domínio
 
 Um payload devolvido por uma ferramenta SHALL conter apenas valores já resolvidos: textos,

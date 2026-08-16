@@ -38,11 +38,22 @@ decide cada regra, verificado arquivo a arquivo.
 
 **Non-Goals:**
 
-- Dirigir a UI (navegar, abrir modal) ou ler estado de tela.
-- Android e iOS.
-- Idempotência de escrita: um agente que repete uma chamada perdida duplica o lançamento.
-- Acesso remoto, autenticação de múltiplos usuários, ou qualquer superfície fora da máquina.
-- Configurar moeda base e acervo de taxas por MCP — permanece configuração do app.
+A enumeração completa está no `proposal.md`, obtida varrendo as features do app contra a
+superfície. Aqui ficam apenas as exclusões cuja **razão é técnica** e informa o desenho:
+
+- **Escrever taxa de câmbio ou trocar a moeda base.** O agente lê figuras consolidadas e recebe
+  a taxa aplicada com a sua data; escrever qualquer uma das duas reescreveria em silêncio toda
+  figura consolidada do app, retroativamente e sem lançamento que denuncie. A assimetria entre o
+  esforço da chamada e o alcance do estrago é grande demais para uma superfície automatizada.
+- **Preferência de contas excluídas do saldo total.** Mudá-la altera o número que o próprio
+  agente lê depois, o que fecha um laço em que ele influencia a própria medida.
+- **Suporte.** É a única superfície do app que sai da máquina; o servidor existe para ser local.
+- **Administração do próprio servidor** — ligar, desligar, porta, token, permissões. Um agente
+  capaz de ampliar as próprias permissões não tem permissões.
+- **Dirigir a UI ou ler estado de tela.** Expor `UiState` congelaria a UI como contrato.
+- **Android e iOS.**
+- **Idempotência de escrita:** um agente que repete uma chamada perdida duplica o lançamento.
+- **Acesso remoto** ou autenticação de múltiplos usuários.
 
 ## Decisions
 

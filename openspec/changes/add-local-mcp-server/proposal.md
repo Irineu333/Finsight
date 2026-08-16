@@ -43,8 +43,61 @@ consolidação de moeda.
   contradiz a regra que o próprio chamador documenta ("blank is an absence, not the
   template's title").
 
-Não entram: dirigir a UI, ler estado de tela, Android e iOS, e idempotência de escrita
-(um agente que repete uma chamada perdida duplica o lançamento — reconhecido e adiado).
+## O que fica de fora
+
+A lista abaixo é o resultado de varrer as features do app contra a superfície proposta, e não
+uma amostra. Cada exclusão é uma decisão com motivo — o que estiver ausente daqui é omissão, e
+deve ser tratado como defeito desta proposta.
+
+**Moedas e câmbio** (`feature/settings`) — cadastrar, editar, arquivar e remover moeda; trocar a
+moeda base; cadastrar, corrigir e remover taxa; disparar a sincronização de taxas. O agente
+**lê** figuras consolidadas e recebe a taxa aplicada com a data, mas não escreve nenhuma das
+duas. O motivo é assimetria de dano: uma taxa errada reescreve em silêncio **toda** figura
+consolidada do app, inclusive as de meses fechados, e a moeda base é preferência de exibição do
+usuário — nada disso é lançamento, e nenhum dos dois tem como ser conferido pelo estrago que
+causa.
+
+**Suporte** (`feature/support`) — abrir chamado e responder mensagem. É a única superfície do app
+que sai da máquina (Firestore), e o servidor existe para ser local.
+
+**Relatórios além dos números** (`feature/report`) — configurar o relatório, renderizar o
+documento e exportá-lo. `get_report_stats` entrega as figuras; montar e exportar um documento é
+produção de artefato visual, não dado.
+
+**Preferências do dashboard** (`IDashboardPreferencesRepository`) — quais widgets aparecem, em que
+ordem, e **quais contas ficam de fora do saldo total**. São escolhas de exibição do usuário; a
+última, em particular, mudaria o número que o próprio agente lê, sem que ele tivesse pedido.
+
+**Lançamento de rendimento** (`LaunchYieldUseCase`, spec `yield-accounts`) — creditar o rendimento
+de uma conta que rende. É a fronteira mais discutível desta lista: é um lançamento como outro
+qualquer. Fica fora porque não estava no escopo declarado e porque a conta que rende tem regra
+própria (a categoria de rendimento é garantida pelo domínio); entra numa mudança própria, se
+entrar.
+
+**Ícones** — escolher ícone de conta, cartão ou categoria, e a sugestão automática
+(`SuggestAccountIconUseCase`). O que o agente cria nasce com o ícone padrão. É cosmético e
+depende de um catálogo visual que não tem tradução útil em JSON.
+
+**Semeadura de categorias padrão** (`CreateDefaultCategoriesUseCase`) — acontece uma vez, na
+primeira execução, e não é operação de usuário.
+
+**Autenticação e conta** (`core:auth`) — entrar, sair, identidade. O servidor herda a sessão do
+app; não a gerencia.
+
+**Telemetria** (`core:analytics`, `core:crashlytics`) e **estado da janela do desktop** — não são
+dados do usuário.
+
+**Dirigir a interface** — navegar, abrir modal, acionar botão. E **ler estado de tela**: expor
+`UiState` congelaria a UI como contrato.
+
+**Android e iOS** — servidor local é coisa de desktop.
+
+**Idempotência de escrita** — um agente que perde a resposta e repete a chamada duplica o
+lançamento. Reconhecido, não resolvido, e a única mitigação hoje é o usuário ver o lançamento
+aparecer na tela em tempo real.
+
+**Uma superfície de administração do próprio servidor** — o agente não liga, desliga, reconfigura
+porta, regenera token nem altera as próprias permissões. Tudo isso é do usuário, na tela do app.
 
 ## Capabilities
 

@@ -88,6 +88,8 @@
 - [ ] 7.5 Teste que inspeciona os DTOs da superfície e falha se algum declarar campo de tipo de domínio.
 - [ ] 7.6 Teste que apresenta a mesma transação pela tela e pela superfície do agente e exige o mesmo rótulo, a mesma perna lida e a mesma ponta denominando a figura.
 - [ ] 7.7 O envelope de erro: motivo da recusa, e o nome da operação alternativa quando o domínio oferece uma.
+- [ ] 7.8 **Teste que fecha a superfície**: compara o conjunto de ferramentas anunciado com a lista declarada e falha nos dois sentidos — uma ferramenta a mais entrou sem decisão, uma a menos sumiu sem ninguém notar. No molde de `AgentInstructionsTest`, que já faz isso com as instruções de agente e os arquivos que elas nomeiam.
+- [ ] 7.9 Teste de que nenhuma ferramenta escreve taxa de câmbio, altera a moeda base, ou reconfigura o servidor e as próprias permissões — as três exclusões cujo motivo é dano assimétrico e silencioso, não escopo.
 
 ## 8. Família Perguntas — permissão "ler"
 

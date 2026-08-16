@@ -151,17 +151,70 @@ Cada um nasce no módulo que possui a regra, e o ViewModel que hoje a executa pa
 mesmo passo. Extrair sem migrar o chamador criaria duas verdades sobre a mesma operação — a da
 tela e a do agente —, que é exatamente o defeito que a mudança existe para não introduzir.
 
-### D10 — Endereço e segredo
+### D10 — A porta é fixa, editável, e falha visível quando ocupada
 
-O token é gerado pelo app, persistido para sobreviver a reinícios, e regenerável. `Settings`
-(multiplatform-settings) é o mecanismo de preferência que o app já usa, mas guarda texto claro
-num local previsível — aceitável para um segredo que só concede acesso ao loopback da própria
-máquina, e que o usuário pode invalidar a qualquer momento. Um cofre de sistema operacional
-seria mais forte e traz dependência nativa por plataforma; fica registrado como caminho de
-reforço, não como requisito desta mudança.
+Uma porta efêmera nunca colide e obriga a reconfigurar o cliente a cada reinício — ou a
+publicar um arquivo de descoberta, que reintroduz um artefato fora do binário. Descartada.
 
-A porta precisa ser estável para que a configuração feita no cliente continue valendo. Porta
-fixa com fallback quando ocupada, e o valor efetivo sempre exibido na tela — ver Open Questions.
+Uma porta fixa **com fallback automático** é pior do que falhar: o cliente configurado para a
+porta A não encontra nada quando o servidor sobe na porta B, e o sintoma — "o agente não
+conecta" — não aponta para a causa. Descartada.
+
+A porta é fixa, tem valor padrão, é editável na tela, e **quando está ocupada o servidor não
+sobe**: a tela diz qual porta está ocupada e oferece trocá-la. O usuário resolve uma vez, e o
+cliente configurado continua valendo para sempre.
+
+O padrão é `8477`, escolhido por dois critérios: fora das faixas que ferramentas de
+desenvolvimento disputam (3000, 4000, 5000, 8000, 8080, 8081, 9000) e fora da faixa efêmera
+que o sistema operacional aloca sozinho (49152–65535).
+
+### D11 — O token fica em `Settings`, e o perímetro real é a validação de origem
+
+O token é gerado pelo app, persistido em `Settings` — o mecanismo de preferência que o app já
+usa — e regenerável. Guarda texto claro num local previsível, o que é aceitável para um segredo
+cujo alcance é o loopback da própria máquina em que ele está gravado: quem consegue lê-lo já
+tem acesso ao arquivo do banco, que não é cifrado.
+
+Um cofre de sistema operacional traria três dependências nativas (Keychain, DPAPI, libsecret)
+para proteger contra um atacante que já venceu.
+
+O vetor que **de fato** existe contra um servidor local é outro: uma página web qualquer,
+aberta no navegador do usuário, fazendo requisições para `127.0.0.1` — diretamente ou via DNS
+rebinding. O SDK traz `DnsRebindingProtectionConfig` e validação de `Host`/`Origin` para
+exatamente isso, e é **essa** a defesa a configurar, não o sigilo do token em disco.
+
+### D12 — As versões estão fixadas, e foram verificadas empiricamente
+
+O spike foi executado, e não sobrou incerteza de build:
+
+| | |
+|---|---|
+| `io.modelcontextprotocol:kotlin-sdk-server` | **`0.14.0`** |
+| Ktor que ela exige | **`3.4.3`** — o pino exato do projeto |
+| Revisão de protocolo | `2025-11-25` |
+
+`0.15.0`, a mais recente, foi **descartada**: exige Ktor `3.5.1` e `kotlin-stdlib 2.4.0`, que
+passa à frente do compilador do projeto (`2.3.10`) — a mesma razão pela qual o Ktor já estava
+pinado em 3.4.x.
+
+Verificado: `0.14.0` compila com Kotlin 2.3.10; o servidor sobe escutando em `127.0.0.1`; e o
+ciclo `initialize` → `tools/list` → `tools/call` responde corretamente, com
+`capabilities.tools.listChanged = true` — o mecanismo que D5 usa para as permissões.
+
+**O custo real não era o Ktor, e sim o que vem junto.** `kotlin-sdk-core:0.14.0` exige:
+
+| Dependência | Projeto hoje | Exigido |
+|---|---|---|
+| `kotlinx-serialization-json` | 1.8.0 | **1.11.0** |
+| `kotlinx-coroutines-core` | 1.10.2 | **1.11.0** |
+| `kotlin-stdlib` | 2.3.10 | 2.3.21 *(mesma versão de linguagem)* |
+| `kotlinx-collections-immutable`, `kotlin-logging` | — | novas, transitivas |
+
+Como o Gradle eleva para a maior versão, adicionar o SDK **sobe serialization e coroutines no
+app inteiro**. Isso foi testado antes de ser proposto: com as duas elevadas no catálogo,
+`./gradlew jvmTest --rerun-tasks` executou 349 tasks sem nenhuma reaproveitada de cache, e
+1488 testes em 21 módulos passaram sem falha. A elevação entra junto com a dependência, no
+grupo 5, e não é um risco em aberto.
 
 ### D11 — O que a resposta faz quando falta taxa
 
@@ -173,12 +226,22 @@ consolidado e não é.
 
 ## Risks / Trade-offs
 
-- **O SDK MCP pode não resolver contra Ktor 3.4.3 / Kotlin 2.3.10** → é o primeiro passo da
-  implementação, antes de qualquer código de produto. Se não resolver, as saídas são fixar o
-  engine numa versão compatível isolada no módulo do MCP, ou implementar o transporte sobre o
-  `HttpServer` do JDK e usar apenas as camadas de protocolo do SDK.
+- ~~O SDK MCP pode não resolver contra Ktor 3.4.3 / Kotlin 2.3.10~~ → **verificado e
+  resolvido** (D12): `0.14.0` exige exatamente Ktor 3.4.3, compila com Kotlin 2.3.10 e
+  responde ao ciclo completo do protocolo.
+- **Serialization e coroutines sobem no app inteiro** (1.8.0 → 1.11.0 e 1.10.2 → 1.11.0) →
+  testado antes de propor: 1488 testes em 21 módulos passam com as duas elevadas, sem nenhuma
+  task reaproveitada de cache. O que resta é o que teste não pega — comportamento em runtime
+  fora da suíte —, coberto pela passagem manual do grupo 14.
+- **O SDK está em 0.x e muda de forma entre versões menores** → a superfície que consumimos é
+  pequena (`Server`, `addTool`, `mcpStreamableHttp`) e fica atrás do controlador declarado na
+  `api`. Entre 0.14 e 0.15 o Ktor exigido já pulou de 3.4.3 para 3.5.1; subir de versão passa
+  a ser uma decisão consciente, não um `+`.
 - **Ktor deixa de viver num módulo só** → a nota do catálogo é reescrita no mesmo commit que
   adiciona a dependência, dizendo qual módulo usa cliente e qual usa servidor.
+- **Uma página web alcançando `127.0.0.1`** → validação de `Host`/`Origin` e
+  `DnsRebindingProtectionConfig`, que o SDK já oferece (D11). É o vetor real contra um servidor
+  local, e não o sigilo do token em disco.
 - **Segunda porta de escrita concorrendo com a UI** → toda escrita atravessa a mesma fronteira
   do razão (`LedgerEntryWriter`), que já valida `Σ = 0` e as regras de dimensão. Nada do MCP
   escreve fora dela.
@@ -210,12 +273,11 @@ reverter — nenhum chamador existente muda de forma.
 
 ## Open Questions
 
-- **Porta fixa ou efêmera?** Fixa mantém a configuração do cliente válida entre execuções, mas
-  colide quando ocupada. Efêmera nunca colide e obriga a reconfigurar o cliente a cada
-  reinício — a menos que o app publique o valor num arquivo de descoberta previsível, o que
-  reintroduz um artefato fora do binário.
-- **A conversão para id vira change própria?** Os 14 use cases, os 24 chamadores e seus testes
-  existem independentemente do servidor. Manter junto dá uma change grande; separar atrasa o
-  MCP por uma mudança que não é dele.
-- **O token vai para um cofre do sistema operacional?** Fora do escopo aqui, mas a decisão muda
-  se o app um dia guardar outro segredo.
+Nenhuma em aberto. As quatro que existiam foram fechadas antes da implementação começar:
+
+| Questão | Resolução |
+|---|---|
+| O SDK resolve contra o pino do projeto? | Sim, na `0.14.0`. Verificado compilando e exercitando o protocolo — D12 |
+| Porta fixa ou efêmera? | Fixa, editável, e falha visível quando ocupada. Padrão `8477` — D10 |
+| O token vai para um cofre do sistema operacional? | Não. `Settings`, com a defesa real na validação de origem — D11 |
+| A conversão para id vira change própria? | Fica aqui. Separada, ela seria uma proposta cujo único motivo é citar esta; os grupos 2–4 já são mescláveis sozinhos, que é o que a separação buscava |

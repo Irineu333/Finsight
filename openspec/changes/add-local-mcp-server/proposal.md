@@ -72,10 +72,16 @@ Não entram: dirigir a UI, ler estado de tela, Android e iOS, e idempotência de
 tela de configurações sujeita ao eixo `desktop-only`. `:app:desktop` inicia e encerra o
 servidor com o processo.
 
-**Dependências**: `io.modelcontextprotocol:kotlin-sdk-server` e um engine `ktor-server-*`
-(o transporte streamable HTTP exige um). O catálogo hoje registra que o Ktor *"vive num
-módulo só, `feature/settings/impl`"* — a nota precisa ser reescrita, e a compatibilidade do
-SDK com Ktor 3.4.3 / Kotlin 2.3.10 é o primeiro risco de build a verificar.
+**Dependências**: `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine
+`ktor-server-*` em `3.4.3` — a versão que o SDK exige é exatamente o pino que o projeto já
+tem. Verificado antes de propor: compila com Kotlin 2.3.10 e responde ao ciclo completo do
+protocolo. A `0.15.0` está descartada (exige Ktor 3.5.1 e stdlib 2.4.0, à frente do
+compilador). O catálogo registra que o Ktor *"vive num módulo só, `feature/settings/impl`"* —
+a nota é reescrita para distinguir o módulo que usa cliente do que usa servidor.
+
+O SDK eleva, no app inteiro, `kotlinx-serialization-json` de 1.8.0 para **1.11.0** e
+`kotlinx-coroutines` de 1.10.2 para **1.11.0**. Também verificado: com as duas elevadas, os
+1488 testes de `jvmTest` passam em 21 módulos, sem nenhuma task reaproveitada de cache.
 
 **Domínio**: 7 use cases criados, 35 promovidos, 14 sobrecargas por id adicionadas. Os
 ViewModels de categoria, orçamento e transação passam a consumir os use cases extraídos.

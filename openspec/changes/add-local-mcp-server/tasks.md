@@ -2,11 +2,14 @@
 > (grupos 2–4) vem antes do servidor. Os grupos 2–4 compilam, são testáveis e podem ser
 > mesclados sem que exista servidor algum — se a mudança for fatiada, é aqui que ela corta.
 
-## 1. Spike de compatibilidade — bloqueia todo o resto
+## 1. Spike de compatibilidade — CONCLUÍDO antes da implementação
 
-- [ ] 1.1 Verificar se `io.modelcontextprotocol:kotlin-sdk-server` resolve contra Ktor `3.4.3` e Kotlin `2.3.10`, em um módulo descartável. Registrar a versão do SDK e do engine que funcionam.
-- [ ] 1.2 Se não resolver: avaliar as duas saídas do design (engine isolado no módulo do MCP, ou transporte sobre o `HttpServer` do JDK usando só as camadas de protocolo do SDK) e registrar a escolha em `design.md` antes de seguir.
-- [ ] 1.3 Confirmar que o handshake de protocolo funciona com pelo menos um cliente MCP real, ainda sem nenhuma ferramenta.
+> Executado durante a proposta. As versões estão fixadas em D12 e não há incerteza de build.
+
+- [x] 1.1 `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` exige **Ktor 3.4.3**, o pino exato do projeto, e compila com Kotlin 2.3.10. A `0.15.0` foi descartada: exige Ktor 3.5.1 e `kotlin-stdlib 2.4.0`, à frente do compilador.
+- [x] 1.2 Não foi necessário: nenhuma das saídas alternativas precisou ser usada.
+- [x] 1.3 Ciclo do protocolo exercitado ponta a ponta — `initialize` → `tools/list` → `tools/call` — com o servidor escutando em `127.0.0.1`, revisão `2025-11-25` e `capabilities.tools.listChanged = true`.
+- [x] 1.4 Impacto transitivo medido: o SDK eleva `kotlinx-serialization-json` 1.8.0 → 1.11.0 e `kotlinx-coroutines` 1.10.2 → 1.11.0 no app inteiro. Com as duas elevadas, `./gradlew jvmTest --rerun-tasks` executou 349 tasks sem cache e 1488 testes em 21 módulos passaram.
 
 ## 2. Identidade por id (`use-case-identity`)
 
@@ -59,7 +62,8 @@
 
 - [ ] 5.1 Criar `feature/mcp/api` e `feature/mcp/impl` com as convenções `feature.api` e `feature.impl`, e registrá-los em `settings.gradle.kts`.
 - [ ] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*`, a rota `@Serializable` da tela e o `McpEntry`.
-- [ ] 5.3 Adicionar o SDK e o engine ao catálogo, com a versão confirmada em 1.1, apenas no `jvmMain` do `impl`.
+- [ ] 5.3 Adicionar ao catálogo `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine `ktor-server-*` em `3.4.3`, usados apenas no `jvmMain` do `impl`. Fixar a versão do SDK sem faixa — entre 0.14 e 0.15 o Ktor exigido mudou de minor.
+- [ ] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base de 1.4: 1488 testes, nenhuma falha.
 - [ ] 5.4 Reescrever a nota do catálogo que diz que Ktor "vive num módulo só" — ela passa a distinguir o módulo que usa cliente do que usa servidor.
 - [ ] 5.5 Prover o `actual` no-op do controlador nos targets Android e iOS, no padrão de `SupportModule`.
 - [ ] 5.6 Registrar o módulo Koin da feature e agregá-lo em `appModules`; `NavGraphBuilder.mcpGraph()` no `AppNavHost`.
@@ -69,9 +73,10 @@
 
 - [ ] 6.1 Ciclo de vida ligado ao processo: `:app:desktop` obtém o controlador via Koin, inicia com a janela e encerra no fechamento, liberando a porta.
 - [ ] 6.2 Escuta restrita à interface de loopback. Teste que confirma que o socket não aceita conexão de interface externa.
+- [ ] 6.2a Validação de `Host`/`Origin` e `DnsRebindingProtectionConfig` (D11) — a defesa contra uma página web aberta no navegador do usuário alcançar `127.0.0.1`. Teste com `Origin` de terceiro sendo recusado.
 - [ ] 6.3 Geração, persistência e regeneração do token; recusa de requisição sem token ou com token que não confere, antes de qualquer execução.
 - [ ] 6.4 Teste de que o token sobrevive ao reinício e de que regenerar invalida o anterior.
-- [ ] 6.5 Resolução da porta com fallback quando ocupada, e o valor efetivo exposto no estado observável do controlador (Open Question do design — fechar aqui).
+- [ ] 6.5 Porta fixa (padrão `8477`), editável e persistida. Quando ocupada, o servidor **não sobe** e o estado observável diz qual porta está em uso — sem fallback silencioso, que quebraria a configuração já feita no cliente (D10).
 - [ ] 6.6 Teste de que uma escrita feita pelo servidor emite invalidação e atinge um `Flow` observado, provando a reatividade de D1.
 
 ## 7. Apresentação para o agente (`presentation-mapping`, `mcp-tool-surface`)

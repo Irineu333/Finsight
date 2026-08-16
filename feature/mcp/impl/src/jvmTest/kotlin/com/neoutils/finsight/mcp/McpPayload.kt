@@ -84,6 +84,19 @@ internal fun JsonObject.text(field: String): String? = this[field]?.jsonPrimitiv
 
 internal fun JsonObject.number(field: String): Double? = this[field]?.jsonPrimitive?.content?.toDouble()
 
+/**
+ * An identity a payload carries, as the wire carries it.
+ *
+ * It fails loudly rather than answering `null`: a write that came back without the identity of what
+ * it produced is the defect these tests exist to catch, and a silent `0` would read as one.
+ */
+internal fun JsonObject.identity(field: String = "id"): Long =
+    requireNotNull(this[field]) { "no `$field` in $this" }.jsonPrimitive.content.toLong()
+
+/** A whole count a payload carries — a number of shares, of items, of anything discrete. */
+internal fun JsonObject.count(field: String): Int =
+    requireNotNull(this[field]) { "no `$field` in $this" }.jsonPrimitive.content.toInt()
+
 internal fun JsonObject.flag(field: String): Boolean? = this[field]?.jsonPrimitive?.boolean
 
 /** A figure's decomposition, as `currency to amount`. */

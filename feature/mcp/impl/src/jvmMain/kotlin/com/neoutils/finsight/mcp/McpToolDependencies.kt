@@ -11,6 +11,8 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -19,7 +21,27 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
+import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.CreateBudgetUseCase
+import com.neoutils.finsight.domain.usecase.CreateCategoryUseCase
+import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.DeleteBudgetUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCategoryUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCase
+import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
+import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
 import kotlin.time.Clock
 
 /**
@@ -60,6 +82,35 @@ internal class McpToolDependencies(
     val calculateAvailableLimit: CalculateAvailableLimitUseCase,
     val calculateInvoice: CalculateInvoiceUseCase,
     val calculateReportStats: CalculateReportStatsUseCase,
+
+    // --- What the registration family writes through -----------------------------------
+    //
+    // Every one of them is the operation's owner, and the same one the corresponding screen
+    // calls. A tool resolves the identities its arguments name, fills the form the use case
+    // asks for, and hands it over — the decision of what the operation *means* never arrives
+    // here, which is the whole reason the surface can have a second door at all.
+    val registerTransaction: RegisterTransactionUseCase,
+    val updateTransaction: UpdateTransactionUseCase,
+    val deleteTransaction: DeleteTransactionUseCase,
+    val createAccount: CreateAccountUseCase,
+    val updateAccount: UpdateAccountUseCase,
+    val deleteAccount: DeleteAccountUseCase,
+    val createCategory: CreateCategoryUseCase,
+    val updateCategory: UpdateCategoryUseCase,
+    val deleteCategory: DeleteCategoryUseCase,
+    val addCreditCard: AddCreditCardUseCase,
+    val updateCreditCard: UpdateCreditCardUseCase,
+    val deleteCreditCard: DeleteCreditCardUseCase,
+    val createBudget: CreateBudgetUseCase,
+    val updateBudget: UpdateBudgetUseCase,
+    val deleteBudget: DeleteBudgetUseCase,
+    val saveRecurring: SaveRecurringUseCase,
+    val deleteRecurring: DeleteRecurringUseCase,
+    val addInstallment: AddInstallmentUseCase,
+    val updateInstallment: UpdateInstallmentUseCase,
+    val deleteInstallment: DeleteInstallmentUseCase,
+    val createInvoice: CreateInvoiceUseCase,
+    val deleteFutureInvoice: DeleteFutureInvoiceUseCase,
 ) {
 
     /**

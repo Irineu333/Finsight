@@ -33,9 +33,9 @@ class QuestionsFamilyOverTheProtocolTest {
                 announced.announcedToolNames().sorted(),
                 "The socket and the declaration disagree about what is offered.",
             )
-
             // Design D14 and the perimeter requirement: the description is the only material an
-            // agent has before it chooses, so every aggregate figure states its perimeter there.
+            // agent has before it chooses, so every tool states there what it covers and — where
+            // there is a confusion worth naming — what it leaves out.
             McpSurface.offered.forEach { tool ->
                 val description = announced.announcedDescription(tool.wireName)
                 assertTrue(
@@ -269,11 +269,16 @@ class QuestionsFamilyOverTheProtocolTest {
      * through without either. Both facts are unrecoverable from the payload once they are missing:
      * `18.400,00` is the same number whether or not card debt was taken off it, and two totals with
      * no mark of completeness read as a fall in spending when one month simply has not finished.
+     *
+     * It sweeps the tools that **read**, which is every tool of the two families that answer with a
+     * figure. A write answers with what it wrote, and a perimeter on it would be describing an act
+     * rather than an aggregate — what a write leaves out is stated in its description, where the
+     * agent reads it before deciding to call it.
      */
     @Test
     fun `every answer declares its perimeter, and every period says whether it has finished`() = runTest {
         withWorld { _, client ->
-            McpSurface.offered.forEach { tool ->
+            McpSurface.offered.filter { it.axis == McpPermissionAxis.READ }.forEach { tool ->
                 val payload = client.callTool(tool.wireName, MINIMAL_ARGUMENTS[tool] ?: "{}").payload()
 
                 assertNotNull(

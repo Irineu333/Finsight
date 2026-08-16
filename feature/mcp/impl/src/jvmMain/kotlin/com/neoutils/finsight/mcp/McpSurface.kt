@@ -25,7 +25,9 @@ internal object McpSurface {
      *
      * Family 1, the questions, is here: the app calculates and the agent receives the number. So is
      * family 2, the catalogue: what exists, what it is called, and the figure that belongs beside
-     * it — the family an agent resolves a name into an identity through.
+     * it — the family an agent resolves a name into an identity through. And so is family 3, the
+     * registration — what is created, altered and removed —, which straddles two axes: fifteen
+     * tools a user grants by saying "record and edit", and eight `delete_*` on an axis of its own.
      */
     val offered: Set<McpToolName> = setOf(
         McpToolName.GET_BALANCE,
@@ -48,6 +50,34 @@ internal object McpSurface {
         McpToolName.LIST_INSTALLMENTS,
         McpToolName.LIST_BUDGETS,
         McpToolName.LIST_RECURRING,
+
+        // Family 3 — recording and editing.
+        McpToolName.CREATE_TRANSACTION,
+        McpToolName.UPDATE_TRANSACTION,
+        McpToolName.CREATE_ACCOUNT,
+        McpToolName.UPDATE_ACCOUNT,
+        McpToolName.CREATE_CARD,
+        McpToolName.UPDATE_CARD,
+        McpToolName.CREATE_CATEGORY,
+        McpToolName.UPDATE_CATEGORY,
+        McpToolName.CREATE_BUDGET,
+        McpToolName.UPDATE_BUDGET,
+        McpToolName.CREATE_RECURRING,
+        McpToolName.UPDATE_RECURRING,
+        McpToolName.CREATE_INSTALLMENT,
+        McpToolName.UPDATE_INSTALLMENT,
+        McpToolName.CREATE_INVOICE,
+
+        // Family 3 — removing, which is its own axis: granting "record and edit" without this one
+        // leaves an agent that creates and alters and does not remove.
+        McpToolName.DELETE_TRANSACTION,
+        McpToolName.DELETE_ACCOUNT,
+        McpToolName.DELETE_CARD,
+        McpToolName.DELETE_CATEGORY,
+        McpToolName.DELETE_BUDGET,
+        McpToolName.DELETE_RECURRING,
+        McpToolName.DELETE_INSTALLMENT,
+        McpToolName.DELETE_INVOICE,
     )
 
     /** What the app can do that the surface does not reach, and why each one is out. */

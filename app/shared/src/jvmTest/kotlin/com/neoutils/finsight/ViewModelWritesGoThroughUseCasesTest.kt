@@ -126,16 +126,6 @@ class ViewModelWritesGoThroughUseCasesTest {
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/" +
                 "modal/exchangeRateForm/ExchangeRateFormViewModel.kt" to
                 listOf("exchangeRateRepository.remove", "exchangeRateRepository.save"),
-
-            // **The one that is a gap rather than a decision.** Editing a transaction is a
-            // domain operation with no use case of its own: the view model builds the
-            // intent and writes it. It is out of scope here — the seven use cases this
-            // change extracted are named in D9 and this is not among them — and it is
-            // recorded so that the surface's `update_transaction` (task 10.2) has to
-            // resolve it rather than quietly grow a second copy of the same write.
-            "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/" +
-                "modal/editTransaction/EditTransactionViewModel.kt" to
-                listOf("transactionRepository.updateTransaction"),
         )
     }
 }

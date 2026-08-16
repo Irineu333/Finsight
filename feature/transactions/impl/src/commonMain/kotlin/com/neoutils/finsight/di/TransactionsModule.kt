@@ -8,6 +8,8 @@ import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCaseImpl
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
 import com.neoutils.finsight.ui.model.LedgerTransactionFacadeResolver
@@ -43,6 +45,13 @@ val transactionsModule = module {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
             validateTransactionForm = get(),
+        )
+    }
+
+    factory<UpdateTransactionUseCase> {
+        UpdateTransactionUseCaseImpl(
+            transactionRepository = get(),
+            buildTransaction = get(),
         )
     }
 
@@ -104,12 +113,11 @@ val transactionsModule = module {
     viewModel {
         EditTransactionViewModel(
             transaction = it.get(),
-            transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
-            buildTransactionUseCase = get(),
+            updateTransaction = get(),
             validateTransactionForm = get(),
             formatter = get(),
             modalManager = get(),

@@ -271,17 +271,111 @@ internal class AgentWorld(
     private suspend fun ledgerChart(): List<Account> =
         database.accountDao().getAllLedgerAccounts().map { it.toDomain() }
 
+    // ------------------------------------------------------------------------------
+    // The facades, writable — and the ledger rows a creation has to bring with it
+    // ------------------------------------------------------------------------------
+
+    /**
+     * The facade repositories, built once and shared by every read and every write of a world.
+     *
+     * They are properties rather than expressions in [dependencies] because the registration
+     * family writes to them: two instances over the same list would be two stores, and a tool
+     * that created an account would answer with one nothing else could see.
+     *
+     * Each creation carries the ledger row it needs — an account row for an account, a
+     * `LIABILITY` row for a card, a dimension for a category and for an invoice — which is what
+     * the real repositories do and what makes a posting on something just created possible.
+     */
+    val accountRepository = FakeAccounts(
+        accounts = accounts,
+        chart = { ledgerChart() },
+        onInsert = { account ->
+            database.accountDao().insert(
+                AccountEntity(
+                    name = account.name,
+                    type = AccountEntity.Type.ASSET,
+                    currency = account.currency,
+                    isArchived = account.isArchived,
+                ),
+            )
+        },
+    )
+
+    val categoryRepository = FakeCategories(
+        categories = categories,
+        onInsert = { category ->
+            category.copy(
+                id = ++nextCategoryId,
+                dimensionId = database.dimensionDao().emit(DimensionKind.CATEGORY),
+            )
+        },
+    )
+
+    val creditCardRepository = FakeCards(
+        cards = cards,
+        onInsert = { card, currency ->
+            val accountId = database.accountDao().insert(
+                AccountEntity(
+                    name = card.name,
+                    type = AccountEntity.Type.LIABILITY,
+                    currency = currency,
+                ),
+            )
+            (++nextCardId).also {
+                cards += card.copy(id = it, accountId = accountId, currency = currency)
+            }
+        },
+    )
+
+    val invoiceRepository = FakeInvoices(invoices).apply {
+        onInsert = { invoice ->
+            invoice.copy(
+                id = ++nextInvoiceId,
+                dimensionId = database.dimensionDao().emit(DimensionKind.INVOICE),
+            )
+        }
+    }
+
+    val budgetRepository = FakeBudgets(budgets)
+    val installmentRepository = FakeInstallments(installments)
+
+    val recurringRepository = FakeRecurring(
+        recurringList = recurringList,
+        // The ledger's own answer, not a flag a fixture set: a template is in use when a posting
+        // names it, and that is what decides whether it may be deleted or must be archived.
+        postedRecurringIds = {
+            transactionRepository.getAllTransactions().mapNotNull { it.recurringId }.toSet()
+        },
+    )
+
+    private var nextCategoryId = 500L
+    private var nextCardId = 600L
+    private var nextInvoiceId = 700L
+
+    /** The write use cases, over the real ledger. See `AgentWorldWrites`. */
+    private val createInvoice = WorldCreateInvoice(creditCardRepository, invoiceRepository)
+
+    private val buildTransaction = WorldBuildTransaction(clock, invoiceRepository, createInvoice)
+
+    private val addInstallment = WorldAddInstallment(
+        transactionRepository = transactionRepository,
+        installmentRepository = installmentRepository,
+        invoiceRepository = invoiceRepository,
+        createInvoice = createInvoice,
+        clock = clock,
+    )
+
     fun dependencies() = McpToolDependencies(
         clock = clock,
         entryRepository = entryRepository,
         transactionRepository = transactionRepository,
-        accountRepository = FakeAccounts(accounts) { ledgerChart() },
-        categoryRepository = FakeCategories(categories),
-        creditCardRepository = FakeCards(cards),
-        invoiceRepository = FakeInvoices(invoices),
-        installmentRepository = FakeInstallments(installments),
-        budgetRepository = FakeBudgets(budgets),
-        recurringRepository = FakeRecurring(recurringList),
+        accountRepository = accountRepository,
+        categoryRepository = categoryRepository,
+        creditCardRepository = creditCardRepository,
+        invoiceRepository = invoiceRepository,
+        installmentRepository = installmentRepository,
+        budgetRepository = budgetRepository,
+        recurringRepository = recurringRepository,
         recurringOccurrenceRepository = FakeOccurrences(occurrences),
         baseCurrencyRepository = FixedBaseCurrency(baseCurrency),
         consolidateMoney = consolidateMoney,
@@ -303,6 +397,40 @@ internal class AgentWorld(
         calculateAvailableLimit = LedgerAvailableLimit(cards, invoices, LedgerInvoiceOwed(entryRepository)),
         calculateInvoice = LedgerInvoiceOwed(entryRepository),
         calculateReportStats = LedgerReportStats(accounts, cards, entryRepository),
+        registerTransaction = WorldRegisterTransaction(
+            transactionRepository = transactionRepository,
+            buildTransaction = buildTransaction,
+            addInstallment = addInstallment,
+            recurringRepository = recurringRepository,
+            clock = clock,
+        ),
+        updateTransaction = WorldUpdateTransaction(transactionRepository, buildTransaction),
+        deleteTransaction = WorldDeleteTransaction(transactionRepository),
+        createAccount = WorldCreateAccount(accountRepository),
+        updateAccount = WorldUpdateAccount(accountRepository),
+        deleteAccount = WorldDeleteAccount(accountRepository, entryRepository, recurringRepository),
+        createCategory = WorldCreateCategory(categoryRepository),
+        updateCategory = WorldUpdateCategory(categoryRepository),
+        deleteCategory = WorldDeleteCategory(
+            categoryRepository = categoryRepository,
+            entryRepository = entryRepository,
+            budgetRepository = budgetRepository,
+            recurringRepository = recurringRepository,
+            accountRepository = accountRepository,
+        ),
+        addCreditCard = WorldAddCreditCard(creditCardRepository, createInvoice, invoiceRepository, clock),
+        updateCreditCard = WorldUpdateCreditCard(creditCardRepository),
+        deleteCreditCard = WorldDeleteCreditCard(creditCardRepository, entryRepository, recurringRepository),
+        createBudget = WorldCreateBudget(budgetRepository),
+        updateBudget = WorldUpdateBudget(budgetRepository),
+        deleteBudget = WorldDeleteBudget(budgetRepository),
+        saveRecurring = WorldSaveRecurring(recurringRepository),
+        deleteRecurring = WorldDeleteRecurring(recurringRepository, budgetRepository),
+        addInstallment = addInstallment,
+        updateInstallment = WorldUpdateInstallment(installmentRepository),
+        deleteInstallment = WorldDeleteInstallment(transactionRepository, installmentRepository),
+        createInvoice = createInvoice,
+        deleteFutureInvoice = WorldDeleteFutureInvoice(invoiceRepository, transactionRepository),
     )
 
     /** The production registry, over this world. */

@@ -71,8 +71,9 @@ import kotlinx.datetime.YearMonth
  * purchase invisible to anything asking that question.
  */
 internal class FakeAccounts(
-    private val accounts: List<Account>,
+    private val accounts: MutableList<Account>,
     private val chart: suspend () -> List<Account> = { accounts },
+    private val onInsert: suspend (Account) -> Long = { 0L },
 ) : IAccountRepository {
     override suspend fun getAllAccounts(): List<Account> = accounts.filterNot { it.isArchived }
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
@@ -90,13 +91,27 @@ internal class FakeAccounts(
         flowOf(accounts.firstOrNull { it.id == accountId })
 
     override fun observeDefaultAccount(): Flow<Account?> = flowOf(accounts.firstOrNull { it.isDefault })
-    override suspend fun insert(account: Account): Long = throw NotImplementedError()
-    override suspend fun update(account: Account) = throw NotImplementedError()
-    override suspend fun delete(account: Account) = throw NotImplementedError()
-    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+    override suspend fun insert(account: Account): Long = onInsert(account).also {
+        accounts += account.copy(id = it)
+    }
+
+    override suspend fun update(account: Account) {
+        accounts.replaceAll { if (it.id == account.id) account else it }
+    }
+
+    override suspend fun delete(account: Account) {
+        accounts.removeAll { it.id == account.id }
+    }
+
+    override suspend fun reopen(accountId: Long) {
+        accounts.replaceAll { if (it.id == accountId) it.copy(isArchived = false) else it }
+    }
 }
 
-internal class FakeCategories(private val categories: List<Category>) : ICategoryRepository {
+internal class FakeCategories(
+    private val categories: MutableList<Category>,
+    private val onInsert: suspend (Category) -> Category = { it },
+) : ICategoryRepository {
     override suspend fun getAllCategories(): List<Category> = categories.filterNot { it.isArchived }
     override suspend fun getAllCategoriesIncludingClosed(): List<Category> = categories
     override suspend fun getCategoryById(id: Long): Category? = categories.firstOrNull { it.id == id }
@@ -114,16 +129,35 @@ internal class FakeCategories(private val categories: List<Category>) : ICategor
     override fun observeCategoryById(id: Long): Flow<Category?> =
         flowOf(categories.firstOrNull { it.id == id })
 
-    override suspend fun archive(id: Long) = throw NotImplementedError()
-    override suspend fun unarchive(id: Long) = throw NotImplementedError()
-    override suspend fun existsByName(name: String, ignoreId: Long): Boolean = false
-    override suspend fun insert(category: Category): Long = throw NotImplementedError()
+    override suspend fun archive(id: Long) {
+        categories.replaceAll { if (it.id == id) it.copy(isArchived = true) else it }
+    }
+
+    override suspend fun unarchive(id: Long) {
+        categories.replaceAll { if (it.id == id) it.copy(isArchived = false) else it }
+    }
+
+    override suspend fun existsByName(name: String, ignoreId: Long): Boolean =
+        categories.any { it.id != ignoreId && it.name.equals(name, ignoreCase = true) }
+
+    override suspend fun insert(category: Category): Long =
+        onInsert(category).also { categories += it }.id
+
     override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
-    override suspend fun update(category: Category) = throw NotImplementedError()
-    override suspend fun delete(category: Category) = throw NotImplementedError()
+
+    override suspend fun update(category: Category) {
+        categories.replaceAll { if (it.id == category.id) category else it }
+    }
+
+    override suspend fun delete(category: Category) {
+        categories.removeAll { it.id == category.id }
+    }
 }
 
-internal class FakeCards(private val cards: List<CreditCard>) : ICreditCardRepository {
+internal class FakeCards(
+    private val cards: MutableList<CreditCard>,
+    private val onInsert: suspend (CreditCard, String) -> Long = { _, _ -> 0L },
+) : ICreditCardRepository {
     override suspend fun getAllCreditCards(): List<CreditCard> = cards.filterNot { it.isArchived }
     override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = cards
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? =
@@ -134,14 +168,25 @@ internal class FakeCards(private val cards: List<CreditCard>) : ICreditCardRepos
     override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> =
         flowOf(cards.firstOrNull { it.id == creditCardId })
 
-    override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
-    override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
-    override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
-    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long =
+        onInsert(creditCard, currency)
+
+    override suspend fun update(creditCard: CreditCard) {
+        cards.replaceAll { if (it.id == creditCard.id) creditCard.copy(currency = it.currency) else it }
+    }
+
+    override suspend fun delete(creditCard: CreditCard) {
+        cards.removeAll { it.id == creditCard.id }
+    }
+
+    override suspend fun unarchive(accountId: Long) {
+        cards.replaceAll { if (it.accountId == accountId) it.copy(isArchived = false) else it }
+    }
+
     override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
-internal class FakeInvoices(private val invoices: List<Invoice>) : IInvoiceRepository {
+internal class FakeInvoices(private val invoices: MutableList<Invoice>) : IInvoiceRepository {
     override suspend fun getAllInvoices(): List<Invoice> = invoices
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> =
         invoices.filter { it.creditCard.id == creditCardId }
@@ -176,40 +221,92 @@ internal class FakeInvoices(private val invoices: List<Invoice>) : IInvoiceRepos
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> =
         flowOf(invoices.filterNot { it.status.isPaid })
 
-    override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
-    override suspend fun update(invoice: Invoice) = throw NotImplementedError()
-    override suspend fun deleteById(id: Long) = throw NotImplementedError()
+    /**
+     * The store's two assignments in one place: the identity and the ledger dimension its legs
+     * are tagged with. A fixture that handed out neither would let an invoice exist that no
+     * posting could ever land on.
+     */
+    var onInsert: suspend (Invoice) -> Invoice = { it }
+
+    override suspend fun insert(invoice: Invoice): Invoice =
+        onInsert(invoice).also { invoices += it }
+
+    override suspend fun update(invoice: Invoice) {
+        invoices.replaceAll { if (it.id == invoice.id) invoice else it }
+    }
+
+    override suspend fun deleteById(id: Long) {
+        invoices.removeAll { it.id == id }
+    }
 }
 
-internal class FakeBudgets(private val budgets: List<Budget>) : IBudgetRepository {
+internal class FakeBudgets(private val budgets: MutableList<Budget>) : IBudgetRepository {
+    private var nextId = 1_000L
+
     override suspend fun getAllBudgets(): List<Budget> = budgets
     override fun observeAllBudgets(): Flow<List<Budget>> = flowOf(budgets)
-    override suspend fun insert(budget: Budget): Long = throw NotImplementedError()
-    override suspend fun update(budget: Budget) = throw NotImplementedError()
-    override suspend fun delete(budget: Budget) = throw NotImplementedError()
-    override suspend fun hasBudgetForCategory(categoryId: Long): Boolean = false
-    override suspend fun hasBudgetForRecurring(recurringId: Long): Boolean = false
+
+    override suspend fun insert(budget: Budget): Long = nextId++.also {
+        budgets += budget.copy(id = it)
+    }
+
+    override suspend fun update(budget: Budget) {
+        budgets.replaceAll { if (it.id == budget.id) budget else it }
+    }
+
+    override suspend fun delete(budget: Budget) {
+        budgets.removeAll { it.id == budget.id }
+    }
+
+    override suspend fun hasBudgetForCategory(categoryId: Long): Boolean =
+        budgets.any { budget -> budget.categories.any { it.id == categoryId } }
+
+    override suspend fun hasBudgetForRecurring(recurringId: Long): Boolean =
+        budgets.any { it.recurringId == recurringId }
 }
 
-internal class FakeRecurring(private val recurringList: List<Recurring>) : IRecurringRepository {
+internal class FakeRecurring(
+    private val recurringList: MutableList<Recurring>,
+    /** Whether any posting names a template — the ledger's own `recurringId`, not a copy. */
+    private val postedRecurringIds: suspend () -> Set<Long> = { emptySet() },
+    private val budgets: List<Budget> = emptyList(),
+) : IRecurringRepository {
+    private var nextId = 2_000L
+
     override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(recurringList)
     override fun observeRecurringById(id: Long): Flow<Recurring?> =
         flowOf(recurringList.firstOrNull { it.id == id })
 
     override suspend fun getRecurringById(id: Long): Recurring? = recurringList.firstOrNull { it.id == id }
-    override suspend fun hasRecurringForAccount(accountId: Long): Boolean = false
-    override suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean = false
-    override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
-    override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean = false
-    override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+
+    override suspend fun hasRecurringForAccount(accountId: Long): Boolean =
+        recurringList.any { it.account?.id == accountId }
+
+    override suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean =
+        recurringList.any { it.creditCard?.id == creditCardId }
+
+    override suspend fun hasRecurringForCategory(categoryId: Long): Boolean =
+        recurringList.any { it.category?.id == categoryId }
+
+    override suspend fun hasTransactionForRecurring(recurringId: Long): Boolean =
+        recurringId in postedRecurringIds()
+
+    override suspend fun insert(recurring: Recurring): Long = nextId++.also {
+        recurringList += recurring.copy(id = it)
+    }
     override suspend fun createWithFirstCycle(
         recurring: Recurring,
         firstCycle: TransactionIntent,
         occurrence: RecurringOccurrence,
     ): Transaction = throw NotImplementedError()
 
-    override suspend fun update(recurring: Recurring) = throw NotImplementedError()
-    override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun update(recurring: Recurring) {
+        recurringList.replaceAll { if (it.id == recurring.id) recurring else it }
+    }
+
+    override suspend fun delete(recurring: Recurring) {
+        recurringList.removeAll { it.id == recurring.id }
+    }
 }
 
 internal class FakeOccurrences(
@@ -230,19 +327,27 @@ internal class FakeOccurrences(
     ): Transaction = throw NotImplementedError()
 }
 
-internal class FakeInstallments(private val installments: List<Installment>) : IInstallmentRepository {
+internal class FakeInstallments(private val installments: MutableList<Installment>) : IInstallmentRepository {
+    private var nextId = 3_000L
+
     override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(installments)
     override suspend fun getAllInstallments(): List<Installment> = installments
     override suspend fun getInstallmentById(id: Long): Installment? =
         installments.firstOrNull { it.id == id }
 
-    override suspend fun createInstallment(count: Int, totalAmount: Double): Long =
-        throw NotImplementedError()
+    override suspend fun createInstallment(count: Int, totalAmount: Double): Long = nextId++.also {
+        installments += Installment(id = it, count = count, totalAmount = totalAmount)
+    }
 
-    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) =
-        throw NotImplementedError()
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) {
+        installments.replaceAll {
+            if (it.id == id) it.copy(count = count, totalAmount = totalAmount) else it
+        }
+    }
 
-    override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
+    override suspend fun deleteInstallmentById(id: Long) {
+        installments.removeAll { it.id == id }
+    }
 }
 
 // ----------------------------------------------------------------------------------

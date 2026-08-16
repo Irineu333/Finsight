@@ -54,6 +54,9 @@
     <string name="ledger_error_closed_removal_credit_card">This card is archived. Deleting this transaction would give it a balance back, and an archived card cannot be settled.</string>
     <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
     <string name="transaction_error_not_found">Transaction not found.</string>
+    <string name="transaction_error_multiple_monetary_legs">This transaction moves money in two places and cannot be edited here.</string>
+    <string name="transaction_error_is_adjustment">An adjustment is not edited as an ordinary transaction.</string>
+    <string name="transaction_error_installment_share">One share is not edited on its own; edit the installment.</string>
     <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
     <string name="ledger_action_error_generic">Something went wrong. Try again in a moment.</string>
 

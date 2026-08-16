@@ -4,6 +4,7 @@ import arrow.core.Either
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 
 /**
@@ -12,6 +13,9 @@ import com.neoutils.finsight.domain.model.TransactionType
  * The rules a template has to satisfy live with `RecurringForm` (one owner); what is
  * decided here is only what the form has no way to know: the identity of an edit and the
  * archived flag it carries over.
+ *
+ * It answers the template as stored, identity included, because a caller that cannot name what
+ * it just created cannot report it either — and creating one is exactly what `id = 0` does.
  */
 interface SaveRecurringUseCase {
 
@@ -33,5 +37,5 @@ interface SaveRecurringUseCase {
         creditCard: CreditCard?,
         createdAt: Long? = null,
         isArchived: Boolean = false,
-    ): Either<Throwable, Unit>
+    ): Either<Throwable, Recurring>
 }

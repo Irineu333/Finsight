@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -32,7 +33,7 @@ class SaveRecurringUseCaseImpl(
         creditCard: CreditCard?,
         createdAt: Long?,
         isArchived: Boolean,
-    ): Either<Throwable, Unit> = either {
+    ): Either<Throwable, Recurring> = either {
 
         // Editing is a blind `UPDATE` by id, which touches nothing when the id matches
         // nothing: without this the caller would be told the template was edited. A `0`
@@ -64,8 +65,14 @@ class SaveRecurringUseCaseImpl(
         )
 
         catch {
-            if (id == NEW_RECURRING) repository.insert(recurring)
-            else repository.update(recurring)
+            if (id == NEW_RECURRING) {
+                // The identity exists only after the insert, and it is what the caller reports:
+                // a template created from outside has nothing else to be named by.
+                recurring.copy(id = repository.insert(recurring))
+            } else {
+                repository.update(recurring)
+                recurring
+            }
         }.bind()
     }
 

@@ -1,5 +1,21 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.mcp.tool.CreateAccountTool
+import com.neoutils.finsight.mcp.tool.CreateBudgetTool
+import com.neoutils.finsight.mcp.tool.CreateCardTool
+import com.neoutils.finsight.mcp.tool.CreateCategoryTool
+import com.neoutils.finsight.mcp.tool.CreateInstallmentTool
+import com.neoutils.finsight.mcp.tool.CreateInvoiceTool
+import com.neoutils.finsight.mcp.tool.CreateRecurringTool
+import com.neoutils.finsight.mcp.tool.CreateTransactionTool
+import com.neoutils.finsight.mcp.tool.DeleteAccountTool
+import com.neoutils.finsight.mcp.tool.DeleteBudgetTool
+import com.neoutils.finsight.mcp.tool.DeleteCardTool
+import com.neoutils.finsight.mcp.tool.DeleteCategoryTool
+import com.neoutils.finsight.mcp.tool.DeleteInstallmentTool
+import com.neoutils.finsight.mcp.tool.DeleteInvoiceTool
+import com.neoutils.finsight.mcp.tool.DeleteRecurringTool
+import com.neoutils.finsight.mcp.tool.DeleteTransactionTool
 import com.neoutils.finsight.mcp.tool.GetBalanceTool
 import com.neoutils.finsight.mcp.tool.GetBudgetProgressTool
 import com.neoutils.finsight.mcp.tool.GetCardOverviewTool
@@ -20,6 +36,13 @@ import com.neoutils.finsight.mcp.tool.ListInstallmentsTool
 import com.neoutils.finsight.mcp.tool.ListInvoicesTool
 import com.neoutils.finsight.mcp.tool.ListRecurringTool
 import com.neoutils.finsight.mcp.tool.ListTransactionsTool
+import com.neoutils.finsight.mcp.tool.UpdateAccountTool
+import com.neoutils.finsight.mcp.tool.UpdateBudgetTool
+import com.neoutils.finsight.mcp.tool.UpdateCardTool
+import com.neoutils.finsight.mcp.tool.UpdateCategoryTool
+import com.neoutils.finsight.mcp.tool.UpdateInstallmentTool
+import com.neoutils.finsight.mcp.tool.UpdateRecurringTool
+import com.neoutils.finsight.mcp.tool.UpdateTransactionTool
 
 /**
  * The tools the running server is given — the single place production assembles them.
@@ -34,8 +57,10 @@ import com.neoutils.finsight.mcp.tool.ListTransactionsTool
  * tool a decision rather than a side effect of writing one.
  *
  * The families are built one at a time, so this list grows in steps. What is here is family 1, the
- * questions — the app calculates and the agent receives the number — and family 2, the catalogue:
- * what exists, what it is called, and the figure that belongs beside it.
+ * questions — the app calculates and the agent receives the number —, family 2, the catalogue:
+ * what exists, what it is called, and the figure that belongs beside it —, and family 3, the
+ * registration: what is created, altered and removed, every one of them through the use case that
+ * already owns the rule.
  */
 internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
     GetBalanceTool(
@@ -167,5 +192,124 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
         recurringRepository = deps.recurringRepository,
         occurrenceRepository = deps.recurringOccurrenceRepository,
         getPendingRecurring = deps.getPendingRecurring,
+    ),
+
+    // --- Family 3 — the registration: what is created, altered and removed -----------------
+    //
+    // Split over two permission axes and not two families: creating and altering are one grant,
+    // and every `delete_*` below is on the other. What a user is asked is *what an agent may do*,
+    // and removing permanently is a different question from writing.
+
+    CreateTransactionTool(
+        clock = deps.clock,
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        installmentRepository = deps.installmentRepository,
+        invoiceRepository = deps.invoiceRepository,
+        registerTransaction = deps.registerTransaction,
+    ),
+    UpdateTransactionTool(
+        transactionRepository = deps.transactionRepository,
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        installmentRepository = deps.installmentRepository,
+        invoiceRepository = deps.invoiceRepository,
+        updateTransaction = deps.updateTransaction,
+    ),
+    DeleteTransactionTool(
+        transactionRepository = deps.transactionRepository,
+        deleteTransaction = deps.deleteTransaction,
+    ),
+    CreateAccountTool(
+        accountRepository = deps.accountRepository,
+        createAccount = deps.createAccount,
+    ),
+    UpdateAccountTool(
+        accountRepository = deps.accountRepository,
+        updateAccount = deps.updateAccount,
+    ),
+    DeleteAccountTool(
+        accountRepository = deps.accountRepository,
+        deleteAccount = deps.deleteAccount,
+    ),
+    CreateCardTool(
+        addCreditCard = deps.addCreditCard,
+    ),
+    UpdateCardTool(
+        creditCardRepository = deps.creditCardRepository,
+        updateCreditCard = deps.updateCreditCard,
+    ),
+    DeleteCardTool(
+        creditCardRepository = deps.creditCardRepository,
+        deleteCreditCard = deps.deleteCreditCard,
+    ),
+    CreateCategoryTool(
+        createCategory = deps.createCategory,
+    ),
+    UpdateCategoryTool(
+        categoryRepository = deps.categoryRepository,
+        updateCategory = deps.updateCategory,
+    ),
+    DeleteCategoryTool(
+        categoryRepository = deps.categoryRepository,
+        deleteCategory = deps.deleteCategory,
+    ),
+    CreateBudgetTool(
+        categoryRepository = deps.categoryRepository,
+        recurringRepository = deps.recurringRepository,
+        createBudget = deps.createBudget,
+    ),
+    UpdateBudgetTool(
+        budgetRepository = deps.budgetRepository,
+        categoryRepository = deps.categoryRepository,
+        recurringRepository = deps.recurringRepository,
+        updateBudget = deps.updateBudget,
+    ),
+    DeleteBudgetTool(
+        budgetRepository = deps.budgetRepository,
+        deleteBudget = deps.deleteBudget,
+    ),
+    CreateRecurringTool(
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        saveRecurring = deps.saveRecurring,
+    ),
+    UpdateRecurringTool(
+        recurringRepository = deps.recurringRepository,
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        saveRecurring = deps.saveRecurring,
+    ),
+    DeleteRecurringTool(
+        recurringRepository = deps.recurringRepository,
+        deleteRecurring = deps.deleteRecurring,
+    ),
+    CreateInstallmentTool(
+        clock = deps.clock,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        installmentRepository = deps.installmentRepository,
+        invoiceRepository = deps.invoiceRepository,
+        addInstallment = deps.addInstallment,
+    ),
+    UpdateInstallmentTool(
+        installmentRepository = deps.installmentRepository,
+        updateInstallment = deps.updateInstallment,
+    ),
+    DeleteInstallmentTool(
+        installmentRepository = deps.installmentRepository,
+        deleteInstallment = deps.deleteInstallment,
+    ),
+    CreateInvoiceTool(
+        creditCardRepository = deps.creditCardRepository,
+        createInvoice = deps.createInvoice,
+    ),
+    DeleteInvoiceTool(
+        invoiceRepository = deps.invoiceRepository,
+        deleteFutureInvoice = deps.deleteFutureInvoice,
     ),
 )

@@ -44,6 +44,7 @@
 - [x] 3.7 Migrar `AddTransactionViewModel` para consumi-lo; o `if` sai do ViewModel.
 - [x] 3.8 Teste de cada use case novo, cobrindo o caminho que o ViewModel exercitava.
 - [x] 3.9 Teste que falha quando um ViewModel chama `insert`/`update`/`delete` de repositório diretamente — o guarda que impede a regressão dos oito pontos.
+- [x] 3.10 **`UpdateTransactionUseCase`, que a change não previa.** D9 enumera sete extrações e editar um lançamento não está entre elas, mas `EditTransactionViewModel` escrevia direto em `transactionRepository.updateTransaction` — o oitavo ponto, registrado como pendência pelo próprio guarda da 3.9. Sem dono, a 10.2 só tinha caminhos proibidos: reimplementar a edição na ferramenta ou escrever no repositório. A regra é a forma da reescrita — `updateTransaction` apaga todas as pernas e reconstrói a partir de **uma** mais o `contra` —, então o que ela não consegue exprimir é recusado: mais de uma perna monetária (transferência e pagamento), um ajuste e uma parcela. `Transaction.editObstacle` (`core/model`) é o dono único dessa derivação, e `ViewTransactionUiState.isEditable` passou a lê-lo em vez de repeti-lo. O ViewModel foi migrado no mesmo passo e saiu da lista do guarda.
 
 ## 4. Promoção para `api`
 
@@ -134,15 +135,15 @@
 
 ## 10. Família Registro — permissões "registrar e editar" e "apagar"
 
-- [ ] 10.1 `create_transaction` sobre `RegisterTransactionUseCase`; teste de que um formulário parcelado produz as N transações.
-- [ ] 10.2 `update_transaction`, com a recusa nomeando "mais de uma perna monetária" para transferência e pagamento.
-- [ ] 10.3 `create_account`, `update_account`; `create_card`, `update_card`.
-- [ ] 10.4 `create_category`, `update_category`; `create_budget`, `update_budget`.
-- [ ] 10.5 `create_recurring`, `update_recurring`; `create_installment`, `update_installment`.
-- [ ] 10.6 `create_invoice`, `delete_invoice` — esta recusando quando a fatura não é futura.
-- [ ] 10.7 As demais ferramentas do eixo "apagar": transação, conta, categoria, orçamento, **cartão, recorrência e parcelamento**. Com `delete_invoice` (10.6), são as **oito** que o eixo concede: `mcp-permissions` define "apagar" como *remover definitivamente*, sem qualificar entidade, e enumera em "registrar e editar" apenas *criar e alterar* — de modo que toda `delete_*` cai neste eixo. As três últimas não constavam de task alguma, e sem elas a superfície declarada teria ferramenta que nenhum passo constrói.
-- [ ] 10.8 Teste de que apagar uma categoria com lançamentos é recusado **e** que a recusa nomeia o arquivamento.
-- [ ] 10.9 Teste de que nenhuma ferramenta de registro escreve em repositório sem passar pelo use case dono.
+- [x] 10.1 `create_transaction` sobre `RegisterTransactionUseCase`; teste de que um formulário parcelado produz as N transações. O despacho fica inteiro no use case — a ferramenta não lê `installments > 1`. Um formulário de 12 parcelas sobre o protocolo produz 12 lançamentos no razão, um por fatura, e **uma** entrada no registro: uma compra é uma decisão do usuário, não doze.
+- [x] 10.2 `update_transaction`, com a recusa nomeando "mais de uma perna monetária" para transferência e pagamento. A regra é de `UpdateTransactionUseCase` (task 3.10) e chega ao agente nas palavras do domínio; a ferramenta não a repete. Editar o valor para **zero** também é recusado, nomeando `delete_transaction` — o que a 12.4c vai exigir, deixado pronto aqui porque é a recusa da edição e não o eixo de permissão.
+- [x] 10.3 `create_account`, `update_account`; `create_card`, `update_card`. A moeda é obrigatória nos dois `create_*` e não tem padrão — a mesma razão pela qual o use case não tem: nada pode criar conta em moeda que ninguém escolheu. Em `update_account` a moeda é recusada pelo domínio; em `update_card` ela é **indizível**, porque um cartão não a declara.
+- [x] 10.4 `create_category`, `update_category`; `create_budget`, `update_budget`. O tipo de categoria e a moeda de orçamento estão fora dos `update_*`, e a descrição diz por quê. Ícone não entra na superfície: o que o agente cria nasce com o padrão do app.
+- [x] 10.5 `create_recurring`, `update_recurring` (o mesmo `SaveRecurringUseCase`, id zero ou não); `create_installment`, `update_installment`. **`SaveRecurringUseCase` passou a devolver o `Recurring` gravado** e `IRecurringRepository.insert` a devolver a identidade: sem isso `create_recurring` não teria o que responder e o registro de atividade não teria como referenciar o que criou.
+- [x] 10.6 `create_invoice`, `delete_invoice` — esta recusando quando a fatura não é futura. `Invoice.Status.isDeletable` é a regra e `DeleteFutureInvoiceUseCase` a aplica; a recusa diz "only future or retroactive invoices can be deleted", nas palavras do próprio domínio.
+- [x] 10.7 As demais ferramentas do eixo "apagar": transação, conta, categoria, orçamento, **cartão, recorrência e parcelamento**. Com `delete_invoice` (10.6), são as **oito** que o eixo concede: `mcp-permissions` define "apagar" como *remover definitivamente*, sem qualificar entidade, e enumera em "registrar e editar" apenas *criar e alterar* — de modo que toda `delete_*` cai neste eixo. As três últimas não constavam de task alguma, e sem elas a superfície declarada teria ferramenta que nenhum passo constrói. Cada uma resolve o que vai sumir **antes** de removê-lo, para que o registro possa dizer o que foi, e declara o que foi junto (as parcelas de um plano, os lançamentos de uma fatura futura).
+- [x] 10.8 Teste de que apagar uma categoria com lançamentos é recusado **e** que a recusa nomeia o arquivamento. As duas metades: o motivo é `RetireError.HAS_TRANSACTIONS` inteiro, e `try_instead` é `archive_entity`, decidido por `retireActionOf` — o mesmo dono que as telas consultam. O mesmo formato vale para conta e cartão que se moveram.
+- [x] 10.9 Teste de que nenhuma ferramenta de registro escreve em repositório sem passar pelo use case dono. `RegistrationToolsGoThroughUseCasesTest`, no molde do guarda dos ViewModels: varre as fontes do pacote `mcp/tool` atrás de verbo de escrita sobre repositório ou DAO — **sem lista de exceções, porque não há exceção legítima** — e exige que toda ferramenta `CHANGES` segure o use case por onde escreve. Verificado falhando: uma ferramenta forjada chamando `categoryRepository.insert` derrubou as duas metades.
 
 ## 11. Família Operações — permissão "operar"
 

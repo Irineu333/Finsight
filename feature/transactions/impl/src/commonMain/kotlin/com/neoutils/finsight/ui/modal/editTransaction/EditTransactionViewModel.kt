@@ -6,13 +6,12 @@ import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.TransactionException
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
@@ -24,7 +23,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EditTransaction
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.*
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.combine
@@ -43,12 +42,11 @@ import kotlin.time.ExperimentalTime
 
 class EditTransactionViewModel(
     private val transaction: Transaction,
-    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
-    private val buildTransactionUseCase: BuildTransactionUseCase,
+    private val updateTransaction: UpdateTransactionUseCase,
     private val validateTransactionForm: ValidateTransactionFormUseCase,
     private val formatter: CurrencyFormatter,
     private val modalManager: ModalManager,
@@ -273,17 +271,7 @@ class EditTransactionViewModel(
     private fun submit() = viewModelScope.launch {
         val form = uiState.value.form
 
-        buildTransactionUseCase(form).flatMap { intent ->
-            catch {
-                transactionRepository.updateTransaction(
-                    id = transaction.id,
-                    title = intent.title,
-                    date = intent.date,
-                    leg = intent.legs.first(),
-                    contra = intent.contra,
-                )
-            }
-        }.onLeft {
+        updateTransaction(transaction.id, form).onLeft {
             crashlytics.recordException(it)
             modalManager.showError(it.toUiMessage())
         }.onRight {
@@ -300,6 +288,10 @@ class EditTransactionViewModel(
         is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
+        // What the edit itself refuses: an identity that stopped existing while the sheet was
+        // open, and the transactions the rewrite cannot express. The screen does not offer
+        // those, so reaching one here means the world moved underneath it.
+        is TransactionException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

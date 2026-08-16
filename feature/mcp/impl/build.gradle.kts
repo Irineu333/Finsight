@@ -49,6 +49,11 @@ kotlin {
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.report.api)
+            implementation(projects.feature.transactions.api)
+
+            // Every write use case answers `Either`, so the type is on the signature of
+            // everything the registration family calls.
+            implementation(libs.arrow.core)
         }
         jvmTest.dependencies {
             // A `Settings` the test states, never the developer's own: the tests below turn

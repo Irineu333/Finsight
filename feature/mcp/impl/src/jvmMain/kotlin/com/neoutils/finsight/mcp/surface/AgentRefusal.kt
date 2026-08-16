@@ -1,5 +1,9 @@
 package com.neoutils.finsight.mcp.surface
 
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
+import com.neoutils.finsight.domain.exception.RecurringRetireException
+import com.neoutils.finsight.domain.exception.RetireException
 import com.neoutils.finsight.mcp.McpToolName
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.model.retireActionOf
@@ -59,5 +63,39 @@ internal data class AgentRefusal(
                 RetireAction.DELETE -> null
             },
         )
+
+        /**
+         * A refusal the domain raised, translated once.
+         *
+         * **The reason is never rewritten here.** Every error type of the app already states why it
+         * refused, in English, for logging — and that sentence is the one the agent gets. A second
+         * wording maintained beside it would be a second answer to "why not", free to drift from the
+         * first with nothing failing.
+         *
+         * What this decides is only the *alternative*, and only for the refusals that mean **what
+         * was named has to be preserved**: those are the ones with somewhere else to go, and
+         * [cannotRemove] asks `retireActionOf` — the same owner the screens ask — which operation
+         * that is. Everything else is a plain no: an amount that is not positive has no other tool
+         * to offer, and pointing at one would be worse than saying nothing.
+         */
+        fun fromDomain(cause: Throwable): AgentRefusal {
+            val reason = cause.message?.takeIf { it.isNotBlank() }
+                ?: cause::class.simpleName
+                ?: "The operation was refused."
+
+            return when {
+                cause is RetireException -> cannotRemove(reason)
+                cause is RecurringRetireException -> cannotRemove(reason)
+                cause is AccountException && cause.error in PRESERVES -> cannotRemove(reason)
+                else -> AgentRefusal(reason)
+            }
+        }
+
+        /**
+         * The two account refusals that mean preservation rather than a bad request — they are
+         * raised by the removal of a card as well, which is why they are read off the error and
+         * not off the tool that hit them.
+         */
+        private val PRESERVES = setOf(AccountError.HAS_TRANSACTIONS, AccountError.HAS_RECURRING)
     }
 }

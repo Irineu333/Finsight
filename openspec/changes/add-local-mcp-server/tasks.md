@@ -72,6 +72,9 @@
 ## 6. Servidor no socket (`mcp-server`)
 
 - [ ] 6.1 Ciclo de vida ligado ao processo: `:app:desktop` obtém o controlador via Koin, inicia com a janela e encerra no fechamento, liberando a porta.
+- [ ] 6.1a **Persistir a habilitação** e subir sozinho nos inícios seguintes, sem visita à tela. Teste: habilitar, encerrar, reabrir, e o servidor está no ar; desabilitar, reabrir, e não está. O usuário habilita **uma vez**.
+- [ ] 6.1b Teste do estado de estreia: app atualizado e aberto pela primeira vez não sobe nada e não escuta nada, porque não houve escolha a persistir.
+- [ ] 6.1c **Falha ao subir é dita ao usuário** na interface do app, com o motivo e o caminho — não silenciosa, e sem que o estado exibido diga "no ar" quando não está. O aviso alcança quem não está na tela de configurações.
 - [ ] 6.2 Escuta restrita à interface de loopback. Teste que confirma que o socket não aceita conexão de interface externa.
 - [ ] 6.2a Validação de `Host`/`Origin` e `DnsRebindingProtectionConfig` (D11) — a defesa contra uma página web aberta no navegador do usuário alcançar `127.0.0.1`. Teste com `Origin` de terceiro sendo recusado.
 - [ ] 6.3 Geração, persistência e regeneração do token; recusa de requisição sem token ou com token que não confere, antes de qualquer execução.
@@ -153,8 +156,9 @@
 
 ## 13. Tela de configurações (`mcp-server`, `platform-adaptive-features`)
 
-- [ ] 13.1 Seção de configurações: ligar/desligar, estado do servidor, endereço, token oculto por padrão e revelado sob ação explícita.
+- [ ] 13.1 Seção de configurações **entre as integrações**, alcançável a partir das configurações do app. Com o servidor desabilitado, ela apresenta o que ele é e o interruptor — e nada mais a decidir antes de ligar. Habilitado, revela permissões, endereço, token (oculto por padrão) e instruções.
 - [ ] 13.2 Os quatro interruptores de permissão, com o texto que diz o que cada eixo autoriza.
+- [ ] 13.2a Estado do servidor visível e verdadeiro na tela enquanto ela estiver aberta — inclusive uma queda posterior ao início.
 - [ ] 13.3 Instruções de conexão copiáveis, não específicas de um cliente, incluindo a nota sobre clientes que só falam stdio.
 - [ ] 13.4 A nota de que o servidor só existe com o app aberto.
 - [ ] 13.5 Classificar a feature como `desktop-only` no catálogo de destinos e ocultar o ponto de entrada nas demais plataformas.
@@ -165,5 +169,6 @@
 
 - [ ] 14.1 `./gradlew jvmTest` verde, com a saída lida e reportada.
 - [ ] 14.2 `./gradlew :app:desktop:run` com um cliente MCP real conectado: exercitar uma pergunta, uma listagem, um registro e uma operação, e confirmar que a UI aberta reage a cada escrita.
+- [ ] 14.2a **Percorrer a jornada inteira, na ordem, num app que nunca teve o servidor**: abrir e confirmar que nada escuta; achar a seção nas integrações; ver desabilitado; habilitar e ver subir com permissões e instruções; registrar um cliente pelas instruções da própria tela; fechar e reabrir o app e confirmar que o servidor voltou sozinho; lançar uma transação pelo agente e ver aparecer na tela aberta. Reportar cada passo, e não um "funciona" agregado.
 - [ ] 14.3 Conferir `docs/mcp-tool-surface.md` contra o que foi construído e corrigir as divergências — o documento é material de exploração e envelhece.
 - [ ] 14.4 Registrar o que ficou sem verificação automatizada, nominalmente, em vez de deixar a suíte sugerir cobertura que não existe.

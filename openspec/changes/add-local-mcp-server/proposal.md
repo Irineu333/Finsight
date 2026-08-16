@@ -96,6 +96,13 @@ dados do usuário.
 lançamento. Reconhecido, não resolvido, e a única mitigação hoje é o usuário ver o lançamento
 aparecer na tela em tempo real.
 
+**Responder com o app fechado** — o servidor vive no processo do app e morre com ele, porque o
+`invalidationTracker` do Room é do processo e um segundo processo escrevendo no mesmo banco não
+acordaria a tela aberta. Atender com o app fechado é **mudança futura**, não limitação aceita em
+silêncio: exige resolver a reatividade entre processos, e nada aqui a antecipa. A tela de
+configurações diz que o servidor só responde com o app aberto, para que a falha do agente não
+seja lida como configuração errada.
+
 **Uma superfície de administração do próprio servidor** — o agente não liga, desliga, reconfigura
 porta, regenera token nem altera as próprias permissões. Tudo isso é do usuário, na tela do app.
 

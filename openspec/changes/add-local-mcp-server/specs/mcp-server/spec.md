@@ -66,18 +66,83 @@ reabrir ou navegar.
 - **WHEN** um agente registra uma despesa enquanto o dashboard está aberto
 - **THEN** o saldo exibido passa a considerá-la
 
+### Requirement: A habilitação é uma escolha que persiste
+
+A decisão do usuário de habilitar o servidor SHALL ser persistida, e o servidor SHALL subir
+sozinho nos inícios seguintes do app, sem que o usuário volte à tela de configurações.
+
+Um servidor que exigisse ser religado a cada abertura do app seria inutilizável para o que ele
+existe: o agente conectaria ou não conforme o usuário tivesse lembrado, e a falha apareceria do
+lado do agente, longe da causa.
+
+Desabilitar SHALL ser igualmente persistente: um servidor desligado permanece desligado entre
+execuções.
+
+#### Scenario: O servidor sobe sozinho no início seguinte
+- **WHEN** o usuário habilita o servidor e depois fecha e reabre o app
+- **THEN** o servidor sobe automaticamente, e o cliente já configurado conecta sem nenhuma ação do usuário
+
+#### Scenario: O desligamento também persiste
+- **WHEN** o usuário desabilita o servidor e reabre o app
+- **THEN** o servidor não sobe, e nenhuma ferramenta é oferecida
+
+#### Scenario: A primeira execução após a atualização
+- **WHEN** o app é atualizado para uma versão com o servidor e aberto pela primeira vez
+- **THEN** nada sobe e nada escuta, porque não houve escolha do usuário a persistir
+
+### Requirement: Uma falha ao subir é dita ao usuário
+
+Quando o servidor estiver habilitado e não conseguir subir, o app SHALL informar o usuário na
+sua própria interface, dizendo o motivo e o que fazer. A falha MUST NOT ser silenciosa, e o
+estado exibido MUST NOT dizer que o servidor está no ar quando ele não está.
+
+Sem isso, o sintoma aparece apenas do outro lado — o agente não conecta — e a pessoa que precisa
+agir é a única que não é avisada. O caso concreto previsto é a porta ocupada por outro programa,
+e a informação útil é qual porta, com o caminho para trocá-la.
+
+O estado do servidor SHALL ser observável na tela enquanto ela estiver aberta: uma queda depois
+de o servidor ter subido também se reflete ali.
+
+#### Scenario: Porta ocupada no início do app
+- **WHEN** o servidor está habilitado e a porta configurada já está em uso por outro programa
+- **THEN** o app informa que o servidor não subiu, qual porta está ocupada, e oferece trocá-la
+
+#### Scenario: O estado exibido não mente
+- **WHEN** o servidor está habilitado mas não está aceitando conexões
+- **THEN** a tela não o apresenta como no ar
+
+#### Scenario: Falha percebida fora da tela de configurações
+- **WHEN** o servidor falha ao subir durante o início do app e o usuário não está na tela de configurações
+- **THEN** ele ainda assim é avisado, sem depender de visitar aquela tela para descobrir
+
 ### Requirement: A configuração ensina a conectar
 
-O app SHALL oferecer uma seção de configurações dedicada ao servidor, onde o usuário o liga e
-desliga, vê se está no ar, e obtém o endereço e o token. A seção SHALL apresentar as
-instruções de configuração de um cliente MCP em forma copiável.
+O app SHALL oferecer uma seção de configurações dedicada ao servidor, alcançável a partir das
+configurações do app junto das demais **integrações**, onde o usuário o liga e desliga, vê se
+está no ar, e obtém o endereço e o token.
+
+Com o servidor desabilitado, a seção SHALL apresentar o que ele é e o interruptor que o liga, e
+MUST NOT exigir nenhuma outra decisão para ligá-lo — endereço, token, permissões e instruções de
+conexão só fazem sentido depois que existe um servidor a que se conectar.
+
+Com o servidor habilitado, a seção SHALL apresentar os eixos de permissão, o endereço e o token,
+e as instruções de configuração de um cliente MCP em forma copiável. O token SHALL ficar oculto
+por padrão, revelado sob ação explícita.
 
 As instruções MUST NOT ser específicas de um cliente: o servidor fala o protocolo, e qualquer
-cliente que o fale conecta.
+cliente que o fale conecta. A seção SHALL dizer que o servidor só responde com o app aberto.
+
+#### Scenario: Encontrar a configuração
+- **WHEN** o usuário abre as configurações do app
+- **THEN** encontra o servidor MCP entre as integrações
+
+#### Scenario: Primeira visita, com o servidor desabilitado
+- **WHEN** o usuário abre a seção pela primeira vez
+- **THEN** vê o que o servidor é e um interruptor para habilitá-lo, sem precisar decidir mais nada antes
 
 #### Scenario: Usuário liga o servidor
 - **WHEN** o usuário habilita o servidor na seção de configurações
-- **THEN** o servidor passa a aceitar conexões e a seção exibe o endereço e o token
+- **THEN** o servidor passa a aceitar conexões e a seção passa a exibir os eixos de permissão, o endereço, o token e as instruções de conexão
 
 #### Scenario: Usuário desliga o servidor
 - **WHEN** o usuário desabilita o servidor
@@ -86,6 +151,10 @@ cliente que o fale conecta.
 #### Scenario: Instruções copiáveis
 - **WHEN** o usuário abre a seção de configurações com o servidor no ar
 - **THEN** ele consegue copiar o endereço e o token sem transcrevê-los à mão
+
+#### Scenario: O token não fica exposto
+- **WHEN** a seção é exibida com o servidor no ar
+- **THEN** o token aparece oculto, e só é revelado sob ação explícita do usuário
 
 ### Requirement: O servidor é desktop-only
 

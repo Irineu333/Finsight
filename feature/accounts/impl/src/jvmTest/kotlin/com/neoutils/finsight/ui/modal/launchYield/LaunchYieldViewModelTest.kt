@@ -57,7 +57,11 @@ class LaunchYieldViewModelTest {
         accounts: List<Account> = listOf(account, picpay, wallet),
     ) = LaunchYieldViewModel(
         account = account,
-        launchYieldUseCase = LaunchYieldUseCase(transactions, EnsureYieldCategoryUseCase(YieldCategoryStore())),
+        launchYieldUseCase = LaunchYieldUseCase(
+            AccountStore(accounts),
+            transactions,
+            EnsureYieldCategoryUseCase(YieldCategoryStore()),
+        ),
         accountRepository = AccountStore(accounts),
         modalManager = manager,
         analytics = analytics,

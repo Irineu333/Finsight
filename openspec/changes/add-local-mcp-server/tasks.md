@@ -16,8 +16,8 @@
 > Aditivo por construção: nenhum dos 24 chamadores existentes muda. Verificação do grupo: a
 > suíte passa sem que nenhum call site tenha sido tocado.
 
-- [ ] 2.1 Escrever a forma por id de `ArchiveAccountUseCase` e `DeleteAccountUseCase`, com a sobrecarga por agregado delegando na interface, e a recusa tipada de "não encontrado".
-- [ ] 2.2 Idem para `AdjustBalanceUseCase` e `LaunchYieldUseCase`.
+- [x] 2.1 Escrever a forma por id de `ArchiveAccountUseCase` e `DeleteAccountUseCase`, com a sobrecarga por agregado delegando na interface, e a recusa tipada de "não encontrado".
+- [x] 2.2 Idem para `AdjustBalanceUseCase` e `LaunchYieldUseCase`.
 - [ ] 2.3 Idem para `DeleteCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`.
 - [ ] 2.4 Idem para `DeleteTransactionUseCase`.
 - [ ] 2.5 Idem para `AdjustInvoiceUseCase`, `CreateInvoiceUseCase` e `GetOrCreateInvoiceForMonthUseCase`.
@@ -50,7 +50,7 @@
 > Interface na `api`, `Impl` no `impl` — o padrão que `ArchiveAccountUseCase` já usa. Nenhuma
 > regra se move; muda a visibilidade.
 
-- [ ] 4.1 Promover os use cases de contas: `CreateAccountUseCase`, `UpdateAccountUseCase`, `AdjustBalanceUseCase`, `TransferBetweenAccountsUseCase`, `SetDefaultAccountUseCase`, `UnarchiveAccountUseCase`.
+- [x] 4.1 Promover os use cases de contas: `CreateAccountUseCase`, `UpdateAccountUseCase`, `AdjustBalanceUseCase`, `TransferBetweenAccountsUseCase`, `SetDefaultAccountUseCase`, `UnarchiveAccountUseCase`.
 - [ ] 4.2 Promover os de categorias: `ArchiveCategoryUseCase`, `UnarchiveCategoryUseCase`, `DeleteCategoryUseCase`, `ResolveCategoryRetirabilityUseCase`, e os dois criados em 3.1.
 - [ ] 4.3 Promover os de cartão: `AddCreditCardUseCase`, `UpdateCreditCardUseCase`, `DeleteCreditCardUseCase`, `ArchiveCreditCardUseCase`, `UnarchiveCreditCardUseCase`, `CalculateAvailableLimitUseCase`.
 - [ ] 4.4 Promover os de fatura: `CreateInvoiceUseCase`, `OpenInvoiceUseCase`, `CloseInvoiceUseCase`, `PayInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `ReopenInvoiceUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `CalculateInvoiceUseCase`.

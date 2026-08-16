@@ -10,25 +10,13 @@ import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 
-/**
- * Updates an account — everything about it except the one attribute that is its
- * identity.
- *
- * **The currency is refused unconditionally** (design D12): not "once the account has
- * entries", but always, and the refusal reads no state at all. A conditional refusal is
- * one somebody has to remember to keep correct, and the condition would be answering a
- * question that does not apply — currency is an attribute of identity, not of history.
- *
- * The rule lives here, in the domain, and not only in the form that hides the control:
- * the project's own layering forbids the inversion where a screen is the only thing
- * keeping an invariant.
- */
-class UpdateAccountUseCase(
+class UpdateAccountUseCaseImpl(
     private val repository: IAccountRepository,
     private val validateAccountName: ValidateAccountNameUseCase,
     private val setDefaultAccount: SetDefaultAccountUseCase,
-) {
-    suspend operator fun invoke(
+) : UpdateAccountUseCase {
+
+    override suspend fun invoke(
         accountId: Long,
         update: (Account) -> Account,
     ): Either<Throwable, Account> {

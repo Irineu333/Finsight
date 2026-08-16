@@ -24,32 +24,18 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-/**
- * Money moving between two of the user's own accounts.
- *
- * **When the two differ in currency the caller states both ends**, because that is what
- * the statement shows: R$ 550 left here, US$ 100 arrived there. No rate is a parameter
- * anywhere on this path — the rate is a quotient of the two ends and is *derived* from
- * them afterwards (design D6). The write boundary is what completes the intent, posting
- * the residue of each currency to that currency's conversion account, so nothing here
- * has to know how a cross-currency transaction balances.
- */
-class TransferBetweenAccountsUseCase(
+class TransferBetweenAccountsUseCaseImpl(
     private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val harvestExchangeRate: HarvestExchangeRateUseCase,
-) {
-    /**
-     * @param destinationAmount what arrives, when it is not what left. `null` means the
-     * two ends are the same number, which is the whole of the mono-currency case and
-     * stays byte-identical to what it was.
-     */
-    suspend operator fun invoke(
+) : TransferBetweenAccountsUseCase {
+
+    override suspend fun invoke(
         sourceAccountId: Long,
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
-        destinationAmount: Double? = null,
+        destinationAmount: Double?,
     ): Either<TransferException, Transaction> = either {
         ensure(amount > 0.0) {
             TransferException(TransferError.InvalidAmount)

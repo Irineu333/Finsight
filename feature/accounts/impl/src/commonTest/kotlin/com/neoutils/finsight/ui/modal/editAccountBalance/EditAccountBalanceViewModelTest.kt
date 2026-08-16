@@ -11,7 +11,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.openingBalanceDateOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.FakeEntryRepository
 import com.neoutils.finsight.domain.usecase.FakeTransactionRepository
@@ -189,7 +189,8 @@ class EditAccountBalanceViewModelTest {
     private fun viewModel(ledger: LedgerStore, initialDate: LocalDate) = EditAccountBalanceViewModel(
         initialDate = initialDate,
         account = account,
-        adjustBalanceUseCase = AdjustBalanceUseCase(
+        adjustBalanceUseCase = AdjustBalanceUseCaseImpl(
+            accountRepository = OneAccount(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         ),

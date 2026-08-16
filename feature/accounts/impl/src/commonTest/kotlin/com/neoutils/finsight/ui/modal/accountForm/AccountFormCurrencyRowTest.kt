@@ -10,12 +10,12 @@ import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
-import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.CreateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
 import com.neoutils.finsight.ui.screen.accounts.FakeCategoryRepository
-import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCaseImpl
-import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.DebounceManager
@@ -63,15 +63,15 @@ class AccountFormCurrencyRowTest {
             suggestAccountIcon = SuggestAccountIconUseCaseImpl(repository),
             baseCurrencyRepository = StubBaseCurrency(base),
             currencyRepository = StubCurrencies(),
-            createAccountUseCase = CreateAccountUseCase(
+            createAccountUseCase = CreateAccountUseCaseImpl(
                 repository = repository,
                 validateAccountName = ValidateAccountNameUseCase(repository),
-                setDefaultAccount = SetDefaultAccountUseCase(repository),
+                setDefaultAccount = SetDefaultAccountUseCaseImpl(repository),
             ),
-            updateAccountUseCase = UpdateAccountUseCase(
+            updateAccountUseCase = UpdateAccountUseCaseImpl(
                 repository = repository,
                 validateAccountName = ValidateAccountNameUseCase(repository),
-                setDefaultAccount = SetDefaultAccountUseCase(repository),
+                setDefaultAccount = SetDefaultAccountUseCaseImpl(repository),
             ),
             // The form declares whether an account yields; this test is about the
             // currency row, and never submits, so the category is never reached.

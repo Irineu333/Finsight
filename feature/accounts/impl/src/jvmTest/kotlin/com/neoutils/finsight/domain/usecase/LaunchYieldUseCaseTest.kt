@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.ContraLeg
@@ -14,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -28,6 +31,7 @@ class LaunchYieldUseCaseTest {
 
     private fun useCase(store: RecordingTransactions, categories: YieldCategoryStore = YieldCategoryStore()) =
         LaunchYieldUseCase(
+            accountRepository = KnownAccounts(account),
             transactionRepository = store,
             ensureYieldCategory = EnsureYieldCategoryUseCase(categories),
         )
@@ -106,6 +110,29 @@ class LaunchYieldUseCaseTest {
         assertTrue(store.deleted.isEmpty())
         assertEquals(5_000.0, store.created.first { it.title == "Salário" }.legs.single().amount)
         assertEquals(1L, salary.id)
+    }
+
+    @Test
+    fun `a yield on an account that does not exist is refused and nothing is written`() = runTest {
+        val store = RecordingTransactions()
+
+        val error = assertIs<AccountException>(
+            useCase(store)(accountId = 404L, date = date, amount = 12.40).leftOrNull()
+        )
+
+        assertEquals(AccountError.NOT_FOUND, error.error)
+        assertTrue(store.created.isEmpty(), "nothing may be written")
+    }
+
+    @Test
+    fun `launching by id and by account are the same operation`() = runTest {
+        val byId = RecordingTransactions()
+        val byAccount = RecordingTransactions()
+
+        useCase(byId)(accountId = account.id, date = date, amount = 12.40)
+        useCase(byAccount)(account = account, date = date, amount = 12.40)
+
+        assertEquals(byId.created, byAccount.created)
     }
 
     @Test

@@ -22,10 +22,10 @@ class YieldDeclarationTest {
     private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
     private val date = LocalDate(2026, 7, 5)
 
-    private fun updateUseCase(accounts: AccountStore) = UpdateAccountUseCase(
+    private fun updateUseCase(accounts: AccountStore) = UpdateAccountUseCaseImpl(
         repository = accounts,
         validateAccountName = ValidateAccountNameUseCase(accounts),
-        setDefaultAccount = SetDefaultAccountUseCase(accounts),
+        setDefaultAccount = SetDefaultAccountUseCaseImpl(accounts),
     )
 
     @Test
@@ -45,7 +45,7 @@ class YieldDeclarationTest {
         val accounts = AccountStore(account.copy(yieldsInterest = true))
         val transactions = RecordingTransactionsForDeclaration()
         val categories = YieldCategoryStore()
-        LaunchYieldUseCase(transactions, EnsureYieldCategoryUseCase(categories))(
+        LaunchYieldUseCase(accounts, transactions, EnsureYieldCategoryUseCase(categories))(
             account = accounts.rows.single(),
             date = date,
             amount = 12.40,

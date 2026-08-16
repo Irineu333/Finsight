@@ -38,7 +38,7 @@ class ArchiveCreditCardUseCaseTest {
         val result = useCase(card)
 
         assertTrue(result.isRight())
-        assertEquals(listOf(cardAccount), archive.archived)
+        assertEquals(listOf(cardAccount.id), archive.archived)
     }
 
     @Test
@@ -57,9 +57,9 @@ class ArchiveCreditCardUseCaseTest {
 }
 
 private class RecordingArchiveAccountUseCase : ArchiveAccountUseCase {
-    val archived = mutableListOf<Account>()
-    override suspend fun invoke(account: Account): Either<Throwable, Unit> {
-        archived += account
+    val archived = mutableListOf<Long>()
+    override suspend fun invoke(accountId: Long): Either<Throwable, Unit> {
+        archived += accountId
         return Unit.right()
     }
 }

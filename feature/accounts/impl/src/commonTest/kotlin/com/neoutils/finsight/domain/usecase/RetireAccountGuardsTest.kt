@@ -42,7 +42,7 @@ class RetireAccountGuardsTest {
 
     @Test
     fun `deleting an account with transactions is refused and not silently closed`() = runTest {
-        val repository = RecordingAccountRepository()
+        val repository = RecordingAccountRepository(account)
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = true),
@@ -57,7 +57,7 @@ class RetireAccountGuardsTest {
 
     @Test
     fun `deleting the default account is refused before anything else`() = runTest {
-        val repository = RecordingAccountRepository()
+        val repository = RecordingAccountRepository(account.copy(isDefault = true))
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = false),
@@ -74,7 +74,11 @@ class RetireAccountGuardsTest {
     fun `archiving the default account is refused before anything else`() = runTest {
         val ledger = FakeEntries(hasEntries = false, balance = 0.0)
         val dao = RecordingAccountDao()
-        val useCase = ArchiveAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)
+        val useCase = ArchiveAccountUseCaseImpl(
+            accountRepository = RecordingAccountRepository(account.copy(isDefault = true)),
+            accountDao = dao,
+            entryRepository = ledger,
+        )
 
         val error = assertIs<AccountException>(useCase(account.copy(isDefault = true)).leftOrNull())
 
@@ -86,7 +90,11 @@ class RetireAccountGuardsTest {
     fun `closing an account with a balance is refused and nothing is written`() = runTest {
         val ledger = FakeEntries(hasEntries = true, balance = 100.0)
         val dao = RecordingAccountDao()
-        val useCase = ArchiveAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)
+        val useCase = ArchiveAccountUseCaseImpl(
+            accountRepository = RecordingAccountRepository(account),
+            accountDao = dao,
+            entryRepository = ledger,
+        )
 
         val error = assertIs<AccountException>(useCase(account).leftOrNull())
 
@@ -100,6 +108,7 @@ class RetireAccountGuardsTest {
     fun `closing an account with movement and no balance closes it`() = runTest {
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(
+            accountRepository = RecordingAccountRepository(account),
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = true, balance = 0.0),
         )
@@ -116,6 +125,7 @@ class RetireAccountGuardsTest {
         // is removed between opening the screen and confirming.
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(
+            accountRepository = RecordingAccountRepository(account),
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = false, balance = 0.0),
         )
@@ -132,6 +142,7 @@ class RetireAccountGuardsTest {
         val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE, currency = "BRL")
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(
+            accountRepository = RecordingAccountRepository(category),
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = true, balance = 250.0),
         )
@@ -142,7 +153,7 @@ class RetireAccountGuardsTest {
 
     @Test
     fun `deleting an account that never moved removes it`() = runTest {
-        val repository = RecordingAccountRepository()
+        val repository = RecordingAccountRepository(account)
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = false),
@@ -157,7 +168,7 @@ class RetireAccountGuardsTest {
     fun `deleting an account a recurring still points at is refused`() = runTest {
         // The FK is SET_NULL: without the guard the row would go and the template
         // would survive pointing at nothing.
-        val repository = RecordingAccountRepository()
+        val repository = RecordingAccountRepository(account)
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = false),
@@ -171,7 +182,7 @@ class RetireAccountGuardsTest {
     }
 }
 
-private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurringRepository {
+internal class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurringRepository {
     override suspend fun hasRecurringForAccount(accountId: Long) = hasRecurring
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) = hasRecurring
     override suspend fun hasRecurringForCategory(categoryId: Long) = hasRecurring
@@ -189,28 +200,29 @@ private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurr
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }
 
-private class RecordingAccountRepository : IAccountRepository {
+internal class RecordingAccountRepository(private vararg val rows: Account) : IAccountRepository {
     val deleted = mutableListOf<Long>()
     val reopened = mutableListOf<Long>()
+    val updated = mutableListOf<Account>()
     override suspend fun delete(account: Account) { deleted += account.id }
     override suspend fun reopen(accountId: Long) { reopened += accountId }
-    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAllAccounts(): List<Account> = emptyList()
-    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
-    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
-    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
-    override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
+    override suspend fun update(account: Account) { updated += account }
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(rows.toList())
+    override suspend fun getAllAccounts(): List<Account> = rows.toList()
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = rows.toList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(rows.toList())
+    override suspend fun getAllLedgerAccounts(): List<Account> = rows.toList()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(rows.toList())
+    override suspend fun getAccountById(accountId: Long): Account? = rows.firstOrNull { it.id == accountId }
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
     override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
     override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountCount(): Int = throw NotImplementedError()
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
-    override suspend fun update(account: Account) = throw NotImplementedError()
 }
 
-private class FakeEntries(
+internal class FakeEntries(
     private val hasEntries: Boolean,
     private val balance: Double = 0.0,
 ) : IEntryRepository {
@@ -255,7 +267,7 @@ private class FakeEntries(
     ): ScopeStatsByCurrency = throw NotImplementedError()
 }
 
-private class RecordingAccountDao : AccountDao {
+internal class RecordingAccountDao : AccountDao {
     val closed = mutableListOf<Long>()
     override suspend fun close(id: Long) { closed += id }
     override suspend fun reopen(id: Long) { closed -= id }

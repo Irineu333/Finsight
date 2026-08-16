@@ -179,24 +179,21 @@ class McpViewModelTest {
     // ------------------------------------------------------------------------------
 
     @Test
-    fun `what is not a port is refused on the field and never bound`() = runTest {
+    fun `what is not a port never reaches the server`() = runTest {
         val controller = FakeController(enabled = true)
         val viewModel = viewModelOf(controller)
-        val state = subscribe(viewModel)
+        subscribe(viewModel)
 
-        viewModel.onAction(McpAction.EditPort("70000"))
+        // The sheet refuses to offer it, and this is the second half of the same rule: a caller
+        // reaching the action from anywhere else cannot bind what the sheet would not collect.
+        viewModel.onAction(McpAction.ChangePort(70000))
+        viewModel.onAction(McpAction.ChangePort(0))
 
-        assertEquals("70000", state().portDraft)
-        assertEquals(UiText.Res(Res.string.mcp_port_error_invalid), state().portError)
-        assertFalse(state().canApplyPort, "a port outside the range was offered for binding")
-
-        viewModel.onAction(McpAction.ApplyPort)
-
-        assertTrue(controller.calls.isEmpty(), "an invalid port reached the server")
+        assertTrue(controller.calls.isEmpty(), "a port outside the range reached the server")
     }
 
     @Test
-    fun `a port another program holds is said on the field, naming the port`() = runTest {
+    fun `a port another program holds is said on the address, naming the port`() = runTest {
         val controller = FakeController(enabled = true)
         val viewModel = viewModelOf(controller)
         val state = subscribe(viewModel)
@@ -204,31 +201,40 @@ class McpViewModelTest {
         controller.serverState.value = McpServerState.Failed(port = 8477, cause = McpServerFailure.PORT_IN_USE)
 
         val error = assertIs<UiText.ResWithArgs>(
-            state().portError,
-            "the bind failure did not reach the field the user would fix it on",
+            state().addressError,
+            "the bind failure did not reach the row the user would fix it from",
         )
         assertEquals(Res.string.mcp_port_error_in_use, error.res)
         assertEquals(listOf(8477), error.args, "the message does not name the port that failed")
 
-        // Typing another port ends the sentence about the old one, which is no longer on screen.
-        viewModel.onAction(McpAction.EditPort("8500"))
-        assertNull(state().portError)
+        // The address a client was configured with survives the failure: what changed is that the
+        // row now says it is not answering, not that it stopped being the address.
+        assertTrue(state().address.endsWith(":8477/mcp"))
     }
 
     @Test
-    fun `applying a port moves the server, and the field goes back to following it`() = runTest {
+    fun `the failure ends when the socket does come up`() = runTest {
         val controller = FakeController(enabled = true)
         val viewModel = viewModelOf(controller)
         val state = subscribe(viewModel)
 
-        viewModel.onAction(McpAction.EditPort("8500"))
-        assertTrue(state().canApplyPort)
+        controller.serverState.value = McpServerState.Failed(port = 8477, cause = McpServerFailure.PORT_IN_USE)
+        assertNotNull(state().addressError)
 
-        viewModel.onAction(McpAction.ApplyPort)
+        controller.serverState.value = McpServerState.Running(port = 8500, sessions = 0)
+
+        assertNull(state().addressError, "the row still reported a failure the socket had left behind")
+    }
+
+    @Test
+    fun `changing the port moves the server`() = runTest {
+        val controller = FakeController(enabled = true)
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        viewModel.onAction(McpAction.ChangePort(8500))
 
         assertEquals(8500, state().port)
-        assertEquals("8500", state().portDraft)
-        assertFalse(state().canApplyPort, "the field still offered to apply the port it is already on")
         assertEquals(listOf("setPort(8500)"), controller.calls)
     }
 

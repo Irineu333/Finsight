@@ -27,10 +27,10 @@ import kotlinx.coroutines.launch
  * section show a server that was switched on and did not come up — and keeps it from ever showing
  * "up" for a socket that is down.
  *
- * **The port is typed here and applied on purpose.** What the user types is a draft: it is
- * validated on the field, and the server is only rebound when they say so. While no draft exists
- * the field follows the port the server holds, so a port changed anywhere else is reflected without
- * fighting the user's typing.
+ * **The port arrives already chosen.** Collecting and validating it belongs to the sheet that asks
+ * for it; what reaches here is a port the user settled on, and the server is rebound once. The
+ * range is checked again all the same, against the contract's own — a rule stated in two places
+ * would be one edit away from disagreeing with itself.
  */
 class McpViewModel(
     private val controller: McpServerController,
@@ -39,18 +39,14 @@ class McpViewModel(
     private val clearAgentActivity: ClearAgentActivityUseCase,
 ) : ViewModel() {
 
-    /** `null` while the field simply follows the server's port — the user has typed nothing. */
-    private val portDraft = MutableStateFlow<String?>(null)
-
     private val isTokenRevealed = MutableStateFlow(false)
 
     private val fieldState = combine(
         controller.port,
         controller.token,
-        portDraft,
         isTokenRevealed,
-    ) { port, token, draft, revealed ->
-        FieldState(port = port, token = token, draft = draft ?: port.toString(), revealed = revealed)
+    ) { port, token, revealed ->
+        FieldState(port = port, token = token, revealed = revealed)
     }
 
     private val recentActivity = activityRepository
@@ -69,7 +65,6 @@ class McpViewModel(
             isEnabled = isEnabled,
             server = server,
             port = fields.port,
-            portDraft = fields.draft,
             token = fields.token,
             isTokenRevealed = fields.revealed,
             permissions = McpPermissionAxis.entries.map { axis ->
@@ -97,19 +92,12 @@ class McpViewModel(
                 controller.setPermission(action.axis, action.granted)
             }
 
-            is McpAction.EditPort -> portDraft.value = action.text.filter { it.isDigit() }.take(PORT_DIGITS)
-
-            McpAction.ApplyPort -> {
-                // The same rule the field states, read from the state that states it: a second
-                // definition of "a port" here would be one edit away from letting through exactly
-                // what the field is refusing on screen.
-                val port = uiState.value.takeIf { it.canApplyPort }?.portDraft?.toInt() ?: return
-                viewModelScope.launch {
-                    controller.setPort(port)
-                    // The draft has become the port: the field goes back to following the server,
-                    // so a later change from anywhere else reaches it.
-                    portDraft.value = null
-                }
+            // The range is the contract's, not a second definition here: what the sheet refuses
+            // to collect and what the controller accepts are the same rule, so a caller reaching
+            // this from elsewhere cannot let through what the sheet is refusing on screen.
+            is McpAction.ChangePort -> {
+                if (action.port !in McpServerController.VALID_PORTS) return
+                viewModelScope.launch { controller.setPort(action.port) }
             }
 
             McpAction.ToggleTokenVisibility -> isTokenRevealed.value = !isTokenRevealed.value
@@ -125,7 +113,6 @@ class McpViewModel(
     private data class FieldState(
         val port: Int,
         val token: String?,
-        val draft: String,
         val revealed: Boolean,
     )
 
@@ -137,8 +124,5 @@ class McpViewModel(
          * above it.
          */
         const val SECTION_PREVIEW = 5
-
-        /** 65535 is five digits; anything longer is not a port being typed. */
-        private const val PORT_DIGITS = 5
     }
 }

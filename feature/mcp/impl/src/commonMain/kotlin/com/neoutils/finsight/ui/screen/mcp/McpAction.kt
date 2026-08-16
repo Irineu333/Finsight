@@ -14,16 +14,14 @@ sealed interface McpAction {
      */
     data class SetPermission(val axis: McpPermissionAxis, val granted: Boolean) : McpAction
 
-    /** Typing in the port field, which moves nothing until [ApplyPort]. */
-    data class EditPort(val text: String) : McpAction
-
     /**
-     * Moves the server to the typed port.
+     * Moves the server to [port].
      *
-     * Explicit, and never a consequence of typing: a port applied per keystroke would rebind on
-     * "8", then "84", then "847" on the way to 8477.
+     * It carries the port already chosen, never the typing on the way to it: the number is settled
+     * where it is collected, and what reaches here is a decision rather than a keystroke — a port
+     * applied per keystroke would rebind on "8", then "84", then "847" on the way to 8477.
      */
-    data object ApplyPort : McpAction
+    data class ChangePort(val port: Int) : McpAction
 
     /** Shows the token, or hides it again. It is masked until this is asked for. */
     data object ToggleTokenVisibility : McpAction

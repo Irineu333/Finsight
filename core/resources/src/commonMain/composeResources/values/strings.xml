@@ -1009,6 +1009,7 @@
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_reveal">Mostrar o token</string>
     <string name="mcp_token_hide">Ocultar o token</string>
+    <string name="mcp_port_title">Trocar a porta</string>
     <string name="mcp_token_regenerate">Gerar um token novo</string>
     <string name="mcp_token_regenerate_title">Gerar um token novo?</string>
     <string name="mcp_token_regenerate_message">O token atual deixa de ser aceito, e quem estiver conectado agora é desconectado. Todo cliente já configurado precisa receber o token novo para voltar a conectar.</string>

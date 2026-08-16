@@ -125,5 +125,12 @@ interface McpServerController {
          * likely to be holding it (design D10).
          */
         const val DEFAULT_PORT: Int = 8477
+
+        /**
+         * The ports a socket can be asked to take. It belongs to the contract and not to whichever
+         * screen collects the number, so what [setPort] accepts and what a field offers cannot
+         * disagree — and a second surface asking for a port has the range already answered.
+         */
+        val VALID_PORTS: IntRange = 1..65535
     }
 }

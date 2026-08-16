@@ -39,8 +39,6 @@ data class McpUiState(
     val isEnabled: Boolean = false,
     val server: McpServerState = McpServerState.Stopped,
     val port: Int = McpServerController.DEFAULT_PORT,
-    /** What the port field holds, which is the user's typing and not yet the server's port. */
-    val portDraft: String = port.toString(),
     val token: String? = null,
     val isTokenRevealed: Boolean = false,
     val permissions: List<McpPermissionUi> = emptyList(),
@@ -67,25 +65,16 @@ data class McpUiState(
     val displayedToken: String? get() = token?.let { if (isTokenRevealed) it else MASK }
 
     /**
-     * What is wrong with the port, said **on the field** — the typing that is not a port, and the
-     * port a bind refused. A failure that landed anywhere else would leave the user reading about a
-     * port with no way to move it.
+     * What is wrong with the address, which in practice is always its port.
      *
-     * The bind failure is shown only while the draft still names the port that failed: as soon as
-     * the user types another one, the error is about a number that is no longer on screen.
+     * It is said **on the address row** because that is where the port is visible and where the
+     * affordance to move it sits: a failure reported anywhere else would leave the user reading
+     * about a port with nothing to act on nearby. The address a client was configured with survives
+     * a bind that failed, so the row keeps showing it — what changes is that it now says it is not
+     * answering, and why.
      */
-    val portError: UiText?
-        get() = when {
-            portDraft.toIntOrNull() !in VALID_PORTS -> UiText.Res(Res.string.mcp_port_error_invalid)
-            server is McpServerState.Failed && portDraft == server.port.toString() ->
-                server.toPortFieldUiText()
-
-            else -> null
-        }
-
-    /** Whether applying the typed port would do anything — it is a different port, and a valid one. */
-    val canApplyPort: Boolean
-        get() = portDraft.toIntOrNull().let { it in VALID_PORTS && it != port }
+    val addressError: UiText?
+        get() = (server as? McpServerState.Failed)?.toPortFieldUiText()
 
     private companion object {
 
@@ -95,8 +84,6 @@ data class McpUiState(
 
         /** Not text to translate: it stands for characters, and every language hides them alike. */
         const val MASK = "••••••••••••••••"
-
-        val VALID_PORTS = 1..65535
     }
 }
 

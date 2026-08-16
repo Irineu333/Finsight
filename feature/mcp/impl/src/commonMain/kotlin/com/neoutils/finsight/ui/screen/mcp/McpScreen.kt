@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
@@ -29,10 +30,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import com.neoutils.finsight.ui.component.FinsightSwitch
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.modal.editPort.EditPortModal
 import com.neoutils.finsight.ui.modal.regenerateToken.RegenerateTokenModal
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,13 +47,9 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.mcp_about_body
@@ -80,9 +77,7 @@ import com.neoutils.finsight.resources.mcp_permission_remove_title
 import com.neoutils.finsight.resources.mcp_permission_withheld_count
 import com.neoutils.finsight.resources.mcp_permissions_description
 import com.neoutils.finsight.resources.mcp_permissions_title
-import com.neoutils.finsight.resources.mcp_port_apply
-import com.neoutils.finsight.resources.mcp_port_helper
-import com.neoutils.finsight.resources.mcp_port_label
+import com.neoutils.finsight.resources.mcp_port_title
 import com.neoutils.finsight.resources.mcp_screen_title
 import com.neoutils.finsight.resources.mcp_status_clients
 import com.neoutils.finsight.resources.mcp_status_failed
@@ -304,14 +299,7 @@ private fun ConnectionCard(
         color = colorScheme.onSurfaceVariant,
     )
 
-    PortField(uiState = uiState, onAction = onAction)
-
-    CopyableRow(
-        label = stringResource(Res.string.mcp_address_label),
-        value = uiState.address,
-        copied = uiState.address,
-        testTag = "mcp_address",
-    )
+    AddressRow(uiState = uiState, onAction = onAction)
 
     TokenRow(uiState = uiState, onAction = onAction)
 
@@ -338,47 +326,57 @@ private fun ConnectionCard(
 }
 
 /**
- * The port, editable, **with its own error under it**.
+ * The address a client is pointed at, and the one failure the user can do something about.
  *
- * A port another program is holding is the one failure the user can act on, and the place to say so
- * is the field where they act: a notice elsewhere would state a problem and leave the fix a search
- * away.
+ * The port lives inside the address, so changing it starts here rather than in a field of its own:
+ * what the user is moving is where a client connects. A port another program is holding is said on
+ * this row for the same reason — the affordance to move it is the button beside the message, and a
+ * notice elsewhere would state a problem and leave the fix a search away.
+ *
+ * The address is still shown while a bind is failing: it is the address a client was configured
+ * with, and hiding it would take away what the user needs to compare against.
  */
 @Composable
-private fun PortField(
+private fun AddressRow(
     uiState: McpUiState,
     onAction: (McpAction) -> Unit,
 ) {
-    val error = uiState.portError
+    val modalManager = LocalModalManager.current
+    val error = uiState.addressError
 
-    OutlinedTextField(
-        value = uiState.portDraft,
-        onValueChange = { onAction(McpAction.EditPort(it)) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("mcp_port_field"),
-        label = { Text(text = stringResource(Res.string.mcp_port_label)) },
-        singleLine = true,
-        isError = error != null,
-        supportingText = {
-            Text(
-                text = error?.let { stringUiText(it) } ?: stringResource(Res.string.mcp_port_helper),
-                modifier = Modifier.testTag("mcp_port_supporting_text"),
-            )
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onAction(McpAction.ApplyPort) }),
-        trailingIcon = {
-            if (uiState.canApplyPort) {
-                TextButton(
-                    onClick = { onAction(McpAction.ApplyPort) },
-                    modifier = Modifier.testTag("mcp_port_apply"),
-                ) {
-                    Text(text = stringResource(Res.string.mcp_port_apply))
-                }
+    CopyableRow(
+        label = stringResource(Res.string.mcp_address_label),
+        value = uiState.address,
+        copied = uiState.address,
+        testTag = "mcp_address",
+        leading = {
+            IconButton(
+                onClick = {
+                    modalManager.show(
+                        EditPortModal(
+                            current = uiState.port,
+                            onConfirm = { onAction(McpAction.ChangePort(it)) },
+                        )
+                    )
+                },
+                modifier = Modifier.testTag("mcp_address_edit_port"),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(Res.string.mcp_port_title),
+                )
             }
         },
     )
+
+    if (error != null) {
+        Text(
+            text = stringUiText(error),
+            modifier = Modifier.testTag("mcp_address_error"),
+            style = typography.bodySmall,
+            color = colorScheme.error,
+        )
+    }
 }
 
 /**

@@ -26,8 +26,8 @@
 - [x] 2.8 Remover os seis defaults derivados do agregado de `ConfirmRecurringUseCase` (D8) e ajustar `ConfirmRecurringViewModel`, que já passa os oito argumentos explicitamente. Escrever a forma por id.
 - [x] 2.9 Dar a `CalculateAvailableLimitUseCase` a forma plural — recebe as identidades dos cartões e devolve o mapa (D7) — e migrar a tela que hoje a chama em laço.
 - [x] 2.10 Uniformizar `PayInvoicePaymentUseCase` e `AdvanceInvoicePaymentUseCase`, que hoje recebem `invoiceId: Long` e `account: Account` na mesma assinatura.
-- [ ] 2.11 Teste que percorre as interfaces de use case público e falha quando uma delas não oferece a forma por id, ou quando declara valor padrão derivado de outro parâmetro agregado.
-- [ ] 2.12 Teste que exercita as duas formas de um mesmo use case com a mesma identidade e exige resultado idêntico.
+- [x] 2.11 Teste que percorre as interfaces de use case público e falha quando uma delas não oferece a forma por id, ou quando declara valor padrão derivado de outro parâmetro agregado.
+- [x] 2.12 Teste que exercita as duas formas de um mesmo use case com a mesma identidade e exige resultado idêntico.
 
 ## 3. Use cases que precisam nascer (D9)
 
@@ -42,8 +42,8 @@
 - [x] 3.5 `UpdateInstallmentUseCase` sobre `IInstallmentRepository.updateInstallment`.
 - [x] 3.6 `RegisterTransactionUseCase`: o despacho entre parcelamento, recorrência e transação simples que hoje é um `if` em `AddTransactionViewModel:299-340`. Recebe o formulário e decide.
 - [x] 3.7 Migrar `AddTransactionViewModel` para consumi-lo; o `if` sai do ViewModel.
-- [ ] 3.8 Teste de cada use case novo, cobrindo o caminho que o ViewModel exercitava.
-- [ ] 3.9 Teste que falha quando um ViewModel chama `insert`/`update`/`delete` de repositório diretamente — o guarda que impede a regressão dos oito pontos.
+- [x] 3.8 Teste de cada use case novo, cobrindo o caminho que o ViewModel exercitava.
+- [x] 3.9 Teste que falha quando um ViewModel chama `insert`/`update`/`delete` de repositório diretamente — o guarda que impede a regressão dos oito pontos.
 
 ## 4. Promoção para `api`
 
@@ -56,7 +56,7 @@
 - [x] 4.4 Promover os de fatura: `CreateInvoiceUseCase`, `OpenInvoiceUseCase`, `CloseInvoiceUseCase`, `PayInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `ReopenInvoiceUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `CalculateInvoiceUseCase`.
 - [x] 4.5 Promover os de recorrência: `SaveRecurringUseCase`, `ConfirmRecurringUseCase`, `SkipRecurringUseCase`, `ArchiveRecurringUseCase`, `UnarchiveRecurringUseCase`, `DeleteRecurringUseCase`, `ResolveRecurringRetirabilityUseCase`.
 - [x] 4.6 Promover os de orçamento e relatório: os três criados em 3.3 e `CalculateReportStatsUseCase`.
-- [ ] 4.7 Conferir que nenhuma interface promovida referencia tipo declarado em `impl` — a regra de `feature-entry-points` vale para toda a `api`.
+- [x] 4.7 Conferir que nenhuma interface promovida referencia tipo declarado em `impl` — a regra de `feature-entry-points` vale para toda a `api`.
 
 ## 5. Módulo e build
 

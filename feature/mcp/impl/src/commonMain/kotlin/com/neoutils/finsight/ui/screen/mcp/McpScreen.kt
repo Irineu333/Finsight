@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -331,17 +332,23 @@ private fun ConnectionCard(
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
         ) {
-            Text(
-                text = instructions,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    // The end padding is the copy button's room: the block scrolls under a button
-                    // that does not, so without it the longest line ends beneath the icon.
-                    .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
-                    .testTag("mcp_instructions_json"),
-                style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-            )
+            // Selectable, because copying the whole block is the common case and not the only
+            // one: a user pointing a client that words the transport differently needs the url
+            // or the token out of here on its own.
+            SelectionContainer {
+                Text(
+                    text = instructions,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        // The end padding is the copy button's room: the block scrolls under a
+                        // button that does not, so without it the longest line ends beneath the
+                        // icon.
+                        .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
+                        .testTag("mcp_instructions_json"),
+                    style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                )
+            }
         }
 
         IconButton(

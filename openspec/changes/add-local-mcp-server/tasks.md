@@ -82,18 +82,18 @@
 
 ## 6. Servidor no socket (`mcp-server`)
 
-- [ ] 6.1 Ciclo de vida ligado ao processo: `:app:desktop` obtém o controlador via Koin, inicia com a janela e encerra no fechamento, liberando a porta.
-- [ ] 6.1a **Persistir a habilitação** e subir sozinho nos inícios seguintes, sem visita à tela. Teste: habilitar, encerrar, reabrir, e o servidor está no ar; desabilitar, reabrir, e não está. O usuário habilita **uma vez**.
-- [ ] 6.1b Teste do estado de estreia: app atualizado e aberto pela primeira vez não sobe nada e não escuta nada, porque não houve escolha a persistir.
+- [x] 6.1 Ciclo de vida ligado ao processo: `:app:desktop` obtém o controlador via Koin, inicia com a janela e encerra no fechamento, liberando a porta.
+- [x] 6.1a **Persistir a habilitação** e subir sozinho nos inícios seguintes, sem visita à tela. Teste: habilitar, encerrar, reabrir, e o servidor está no ar; desabilitar, reabrir, e não está. O usuário habilita **uma vez**.
+- [x] 6.1b Teste do estado de estreia: app atualizado e aberto pela primeira vez não sobe nada e não escuta nada, porque não houve escolha a persistir.
 - [ ] 6.1c **Falha ao subir é dita ao usuário** na interface do app, com o motivo e o caminho — não silenciosa, e sem que o estado exibido diga "no ar" quando não está. O aviso alcança quem não está na tela de configurações.
-- [ ] 6.2 Escuta restrita à interface de loopback. Teste que confirma que o socket não aceita conexão de interface externa.
-- [ ] 6.2a Validação de `Host`/`Origin` e `DnsRebindingProtectionConfig` (D11) — a defesa contra uma página web aberta no navegador do usuário alcançar `127.0.0.1`. Teste com `Origin` de terceiro sendo recusado.
-- [ ] 6.3 Geração, persistência e regeneração do token; recusa de requisição sem token ou com token que não confere, antes de qualquer execução.
-- [ ] 6.4 Teste de que o token sobrevive ao reinício e de que regenerar invalida o anterior.
-- [ ] 6.5 Porta fixa (padrão `8477`), editável e persistida. Quando ocupada, o servidor **não sobe** e o estado observável diz qual porta está em uso — sem fallback silencioso, que quebraria a configuração já feita no cliente (D10).
-- [ ] 6.6 Teste de que uma escrita feita pelo servidor emite invalidação e atinge um `Flow` observado, provando a reatividade de D1.
-- [ ] 6.7 Gravar no registro toda escrita, operação e recusa — e **nenhuma** leitura. Teste que exercita uma sequência de consultas e exige registro vazio, e outro que repete a mesma escrita e exige duas entradas lado a lado.
-- [ ] 6.8 Expor as sessões em curso no estado observável do controlador, e a ação de encerrá-las.
+- [x] 6.2 Escuta restrita à interface de loopback. Teste que confirma que o socket não aceita conexão de interface externa.
+- [x] 6.2a Validação de `Host`/`Origin` e `DnsRebindingProtectionConfig` (D11) — a defesa contra uma página web aberta no navegador do usuário alcançar `127.0.0.1`. Teste com `Origin` de terceiro sendo recusado.
+- [x] 6.3 Geração, persistência e regeneração do token; recusa de requisição sem token ou com token que não confere, antes de qualquer execução.
+- [x] 6.4 Teste de que o token sobrevive ao reinício e de que regenerar invalida o anterior.
+- [x] 6.5 Porta fixa (padrão `8477`), editável e persistida. Quando ocupada, o servidor **não sobe** e o estado observável diz qual porta está em uso — sem fallback silencioso, que quebraria a configuração já feita no cliente (D10).
+- [x] 6.6 Teste de que uma escrita feita pelo servidor emite invalidação e atinge um `Flow` observado, provando a reatividade de D1.
+- [x] 6.7 Gravar no registro toda escrita, operação e recusa — e **nenhuma** leitura. Teste que exercita uma sequência de consultas e exige registro vazio, e outro que repete a mesma escrita e exige duas entradas lado a lado.
+- [x] 6.8 Expor as sessões em curso no estado observável do controlador, e a ação de encerrá-las.
 
 ## 7. Apresentação para o agente (`presentation-mapping`, `mcp-tool-surface`)
 

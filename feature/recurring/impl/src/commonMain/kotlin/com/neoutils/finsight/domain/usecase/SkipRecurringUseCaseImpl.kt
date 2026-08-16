@@ -20,6 +20,10 @@ import kotlin.time.Instant
 class SkipRecurringUseCaseImpl(
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
+    // When the cycle was handled is a decision, taken once for the whole app, and not a
+    // reading each use case takes off the system: two calls that are the same operation
+    // must record the same instant, whatever the millisecond they happen to straddle.
+    private val clock: Clock,
 ) : SkipRecurringUseCase {
 
     override suspend fun invoke(
@@ -50,7 +54,7 @@ class SkipRecurringUseCaseImpl(
                 yearMonth = yearMonth,
                 status = RecurringOccurrence.Status.SKIPPED,
                 effectiveDate = date,
-                handledAt = Clock.System.now().toEpochMilliseconds(),
+                handledAt = clock.now().toEpochMilliseconds(),
             )
         )
     }

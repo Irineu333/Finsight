@@ -86,12 +86,14 @@ val recurringModule = module {
             accountRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
+            clock = get(),
         )
     }
     factory<SkipRecurringUseCase> {
         SkipRecurringUseCaseImpl(
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
+            clock = get(),
         )
     }
 

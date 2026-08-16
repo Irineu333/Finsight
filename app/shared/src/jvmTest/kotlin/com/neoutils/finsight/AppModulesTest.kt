@@ -114,7 +114,7 @@ class AppModulesTest {
      */
     @Test
     fun appModulesResolveTheMcpServerController() {
-        val koin = koinApplication { modules(appModules) }.koin
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertNotNull(koin.get<McpServerController>())
     }

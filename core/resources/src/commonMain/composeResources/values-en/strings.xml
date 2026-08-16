@@ -972,4 +972,6 @@
     <string name="build_transaction_error_account_required">Pick the account.</string>
     <string name="build_transaction_error_closed_invoice">A closed invoice takes no new spending.</string>
     <string name="build_transaction_error_closed_selection">An archived account or card takes no new transactions.</string>
+    <string name="mcp_server_error_port_in_use">The MCP server did not start: port %1$d is already held by another program. Pick another port in the server settings.</string>
+    <string name="mcp_server_error_unavailable">The MCP server did not start: port %1$d could not be listened on. Pick another port in the server settings.</string>
 </resources>

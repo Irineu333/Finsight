@@ -35,6 +35,10 @@ class ConfirmRecurringUseCaseImpl(
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
     private val accountRepository: IAccountRepository,
+    // When the cycle was handled is a decision, taken once for the whole app, and not a
+    // reading each use case takes off the system — the same rule its sibling
+    // [SkipRecurringUseCase] follows, so the two agree on what "now" means.
+    private val clock: Clock,
 ) : ConfirmRecurringUseCase {
 
     override suspend fun invoke(
@@ -146,7 +150,7 @@ class ConfirmRecurringUseCaseImpl(
                 yearMonth = yearMonth,
                 status = RecurringOccurrence.Status.CONFIRMED,
                 effectiveDate = date,
-                handledAt = Clock.System.now().toEpochMilliseconds(),
+                handledAt = clock.now().toEpochMilliseconds(),
             ),
         )
     }

@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
@@ -82,6 +83,7 @@ class ConfirmRecurringOverridesTest {
                 throw NotImplementedError("every card test here passes the invoice in")
         },
         accountRepository = StubAccounts(listOf(account, cardAccount)),
+        clock = StoppedClock(),
     )
 
     /**

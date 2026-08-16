@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
@@ -67,6 +68,7 @@ class ConfirmRecurringCurrencyTest {
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = FakeAccountRepository(listOf(reais, dollars, dollarCardAccount)),
+        clock = StoppedClock(),
     )
 
     @Test

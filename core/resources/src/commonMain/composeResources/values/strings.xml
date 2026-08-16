@@ -973,4 +973,6 @@
     <string name="build_transaction_error_account_required">Selecione a conta.</string>
     <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
+    <string name="mcp_server_error_port_in_use">O servidor MCP não subiu: a porta %1$d já está em uso por outro programa. Escolha outra porta nas configurações do servidor.</string>
+    <string name="mcp_server_error_unavailable">O servidor MCP não subiu: não foi possível escutar na porta %1$d. Escolha outra porta nas configurações do servidor.</string>
 </resources>

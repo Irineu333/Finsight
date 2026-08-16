@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.FakeBudgetRepository
 import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
@@ -72,6 +73,7 @@ class RecurringUseCaseIdentityTest {
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = KnownAccounts(listOf(account)),
+        clock = StoppedClock(),
     )
 
     // region — an identity that matches nothing
@@ -123,6 +125,7 @@ class RecurringUseCaseIdentityTest {
         val useCase = SkipRecurringUseCaseImpl(
             recurringRepository = repository(template),
             recurringOccurrenceRepository = occurrences,
+            clock = StoppedClock(),
         )
 
         val error = assertIs<RecurringException>(useCase(absent.id, date).leftOrNull())
@@ -235,8 +238,8 @@ class RecurringUseCaseIdentityTest {
         val byId = RecordingSkips()
         val byRecurring = RecordingSkips()
 
-        val fromId = SkipRecurringUseCaseImpl(repository(template), byId)(template.id, date)
-        val fromRecurring = SkipRecurringUseCaseImpl(repository(template), byRecurring)(template, date)
+        val fromId = SkipRecurringUseCaseImpl(repository(template), byId, StoppedClock())(template.id, date)
+        val fromRecurring = SkipRecurringUseCaseImpl(repository(template), byRecurring, StoppedClock())(template, date)
 
         assertEquals(fromId.isRight(), fromRecurring.isRight())
         assertEquals(byId.saved, byRecurring.saved)

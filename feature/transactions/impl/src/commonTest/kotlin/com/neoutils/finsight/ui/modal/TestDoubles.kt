@@ -25,12 +25,20 @@ class FakeCrashlytics : Crashlytics {
     }
 }
 
-class FakeTransactionRepository : ITransactionRepository {
+class FakeTransactionRepository(
+    stored: List<Transaction> = emptyList(),
+) : ITransactionRepository {
 
     private val byId = MutableSharedFlow<Transaction?>(replay = 1)
 
+    /** What the store already holds, for the reads a use case does before it writes. */
+    private val stored = stored.associateBy { it.id }
+
     /** What was written straight through this repository, rather than by a cycle. */
     val created = mutableListOf<TransactionIntent>()
+
+    /** The identities this repository was asked to remove. */
+    val deleted = mutableListOf<Long>()
 
     fun emit(transaction: Transaction?) {
         byId.tryEmit(transaction)
@@ -45,7 +53,7 @@ class FakeTransactionRepository : ITransactionRepository {
         accountId: Long?,
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
-    override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getTransactionById(id: Long): Transaction? = stored[id]
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         created += intent
         return transaction(id = created.size.toLong())
@@ -55,7 +63,9 @@ class FakeTransactionRepository : ITransactionRepository {
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
-    override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
+    override suspend fun deleteTransactionById(id: Long) {
+        deleted += id
+    }
 }
 
 /**

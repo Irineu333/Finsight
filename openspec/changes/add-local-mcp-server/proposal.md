@@ -46,7 +46,7 @@ consolidação de moeda.
   recebem o agregado, e `PayInvoicePaymentUseCase` recebe os dois na mesma assinatura. O id
   passa a carregar a implementação; a forma por agregado vira sobrecarga de uma linha que
   delega. **Não é breaking**: a mudança é aditiva e nenhum dos 24 chamadores existentes muda.
-- **`ConfirmRecurringUseCase` perde os cinco defaults derivados do agregado.** Nenhum é
+- **`ConfirmRecurringUseCase` perde os seis defaults derivados do agregado.** Nenhum é
   exercido — o único chamador passa os oito argumentos explicitamente — e o de `title`
   contradiz a regra que o próprio chamador documenta ("blank is an absence, not the
   template's title").

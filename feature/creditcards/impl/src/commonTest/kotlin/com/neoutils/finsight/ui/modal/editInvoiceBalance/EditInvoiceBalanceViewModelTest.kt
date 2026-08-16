@@ -14,7 +14,9 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.FakeEntryRepository
 import com.neoutils.finsight.domain.usecase.FakeTransactionRepository
 import com.neoutils.finsight.domain.usecase.InvoiceLedgerStore
@@ -249,11 +251,12 @@ class EditInvoiceBalanceViewModelTest {
 
     private fun viewModel(ledger: InvoiceLedgerStore, invoice: Invoice) = EditInvoiceBalanceViewModel(
         initialInvoice = invoice,
-        adjustInvoiceUseCase = AdjustInvoiceUseCase(
+        adjustInvoiceUseCase = AdjustInvoiceUseCaseImpl(
+            invoiceRepository = TwoInvoices(januaryInvoice, juneInvoice),
             transactionRepository = FakeTransactionRepository(ledger),
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         ),
-        calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+        calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         invoiceRepository = TwoInvoices(januaryInvoice, juneInvoice),
         creditCardRepository = OneCard(card),
         accountRepository = CardAccounts(cardAccount),
@@ -306,6 +309,8 @@ private class TwoInvoices(private vararg val invoices: Invoice) : IInvoiceReposi
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoices.firstOrNull()
     override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()

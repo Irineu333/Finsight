@@ -24,6 +24,8 @@ import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.InvoiceUi
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -83,8 +85,15 @@ class DashboardCategoryBreakdownTest {
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(NoReadsEntryRepository, reducer()),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
-                throw NotImplementedError()
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
+                emptyMap()
         },
         entryRepository = NoReadsEntryRepository,
         accountRepository = FakeAccountRepository(),

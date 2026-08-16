@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ErrorModal
@@ -220,18 +221,22 @@ class AddTransactionRecurringTest {
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards,
         invoiceRepository = FakeInvoices,
-        transactionRepository = transactionRepository,
         accountRepository = FakeAccounts(account),
-        buildTransactionUseCase = BuildsWithInvoice(invoiceDimension),
-        addInstallmentUseCase = NotWritten,
+        // The real register, so the screen's part is exercised against the dispatch it
+        // delegates to rather than against a stand-in for it.
+        registerTransaction = RegisterTransactionUseCaseImpl(
+            transactionRepository = transactionRepository,
+            buildTransaction = BuildsWithInvoice(invoiceDimension),
+            addInstallment = NotWritten,
+            startRecurringFromTransaction = StartRecurringFromTransactionUseCase(
+                repository = recurringRepository,
+                clock = ClockOn(today),
+            ),
+        ),
         modalManager = modalManager,
         analytics = NoAnalytics,
         crashlytics = crashlytics,
         validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = ClockOn(today)),
-        startRecurringFromTransaction = StartRecurringFromTransactionUseCase(
-            repository = recurringRepository,
-            clock = ClockOn(today),
-        ),
         clock = ClockOn(today),
     )
 
@@ -322,6 +327,7 @@ class AddTransactionRecurringTest {
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
         override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
         override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()

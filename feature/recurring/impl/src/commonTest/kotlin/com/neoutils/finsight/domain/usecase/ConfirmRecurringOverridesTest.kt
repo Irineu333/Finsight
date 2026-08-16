@@ -78,7 +78,7 @@ class ConfirmRecurringOverridesTest {
         recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = object : GetOrCreateInvoiceForMonthUseCase {
-            override suspend fun invoke(creditCard: CreditCard, targetDueMonth: YearMonth) =
+            override suspend fun invoke(creditCardId: Long, targetDueMonth: YearMonth) =
                 throw NotImplementedError("every card test here passes the invoice in")
         },
         accountRepository = StubAccounts(listOf(account, cardAccount)),

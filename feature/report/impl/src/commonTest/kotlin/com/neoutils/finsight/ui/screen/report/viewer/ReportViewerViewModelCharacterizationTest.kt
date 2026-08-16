@@ -35,6 +35,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCaseImpl
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
@@ -110,7 +111,7 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(listOf(account)),
             creditCardRepository = fakes.creditCardRepository(),
             invoiceRepository = fakes.invoiceRepository(),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+            calculateReportStatsUseCase = CalculateReportStatsUseCaseImpl(
                 entryRepository = fakes.entryRepository(
                     stats = brlStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
                 ),
@@ -193,7 +194,7 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(listOf(cardLiability)),
             creditCardRepository = fakes.creditCardRepository(listOf(card)),
             invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+            calculateReportStatsUseCase = CalculateReportStatsUseCaseImpl(
                 entryRepository = fakes.entryRepository(),
                 accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
@@ -294,6 +295,9 @@ private class Fakes {
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getUnpaidInvoicesByCreditCards(
+            creditCardIds: Collection<Long>,
+        ): Map<Long, List<Invoice>> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
         override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
         override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()

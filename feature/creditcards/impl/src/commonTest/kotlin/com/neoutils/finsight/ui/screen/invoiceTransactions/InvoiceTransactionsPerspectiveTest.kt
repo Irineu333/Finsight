@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsUiState.ListState
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +98,7 @@ class InvoiceTransactionsPerspectiveTest {
             flowsByInvoiceId = mapOf(1L to DimensionFlowsByCurrency.zero),
         ),
         recurringRepository = NoRecurring,
-        unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
+        unarchiveCreditCard = UnarchiveCreditCardUseCaseImpl(FakeCreditCardRepository(card)),
         crashlytics = NoCrashlytics,
         clock = Clock.System,
     )

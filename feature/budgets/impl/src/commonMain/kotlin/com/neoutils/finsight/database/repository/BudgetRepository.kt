@@ -44,11 +44,12 @@ class BudgetRepository(
         return observeAllBudgets().first()
     }
 
-    override suspend fun insert(budget: Budget) {
+    override suspend fun insert(budget: Budget): Long {
         val id = dao.insert(mapper.toEntity(budget))
         budget.categories.forEach { category ->
             dao.insertBudgetCategory(BudgetCategoryEntity(budgetId = id, categoryId = category.id))
         }
+        return id
     }
 
     override suspend fun update(budget: Budget) {

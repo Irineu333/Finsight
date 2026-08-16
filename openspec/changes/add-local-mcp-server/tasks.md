@@ -9,7 +9,7 @@
 - [x] 1.1 `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` exige **Ktor 3.4.3**, o pino exato do projeto, e compila com Kotlin 2.3.10. A `0.15.0` foi descartada: exige Ktor 3.5.1 e `kotlin-stdlib 2.4.0`, à frente do compilador.
 - [x] 1.2 Não foi necessário: nenhuma das saídas alternativas precisou ser usada.
 - [x] 1.3 Ciclo do protocolo exercitado ponta a ponta — `initialize` → `tools/list` → `tools/call` — com o servidor escutando em `127.0.0.1`, revisão `2025-11-25` e `capabilities.tools.listChanged = true`.
-- [x] 1.4 Impacto transitivo medido: o SDK eleva `kotlinx-serialization-json` 1.8.0 → 1.11.0 e `kotlinx-coroutines` 1.10.2 → 1.11.0 no app inteiro. Com as duas elevadas, `./gradlew jvmTest --rerun-tasks` executou 349 tasks sem cache e 1488 testes em 21 módulos passaram.
+- [x] 1.4 Impacto transitivo medido: o SDK eleva `kotlinx-serialization-json` 1.8.0 → 1.11.0 e `kotlinx-coroutines` 1.10.2 → 1.11.0 no app inteiro. Com as duas elevadas, `./gradlew jvmTest --rerun-tasks` executou sem cache e a suíte passou inteira. **A contagem "1488 testes em 21 módulos" registrada na medição não serve de linha de base:** ela somava relatórios de `app/mcp` e `feature/mcp/impl`, diretórios que o protótipo do spike deixou em disco contendo só `build/`, sem fonte alguma e sem estarem em `settings.gradle.kts`. Os módulos reais são **19**.
 
 ## 2. Identidade por id (`use-case-identity`)
 
@@ -19,13 +19,13 @@
 - [x] 2.1 Escrever a forma por id de `ArchiveAccountUseCase` e `DeleteAccountUseCase`, com a sobrecarga por agregado delegando na interface, e a recusa tipada de "não encontrado".
 - [x] 2.2 Idem para `AdjustBalanceUseCase` e `LaunchYieldUseCase`.
 - [x] 2.3 Idem para `DeleteCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`.
-- [ ] 2.4 Idem para `DeleteTransactionUseCase`.
-- [ ] 2.5 Idem para `AdjustInvoiceUseCase`, `CreateInvoiceUseCase` e `GetOrCreateInvoiceForMonthUseCase`.
-- [ ] 2.6 Idem para `DeleteInstallmentUseCase`.
+- [x] 2.4 Idem para `DeleteTransactionUseCase`.
+- [x] 2.5 Idem para `AdjustInvoiceUseCase`, `CreateInvoiceUseCase` e `GetOrCreateInvoiceForMonthUseCase`.
+- [x] 2.6 Idem para `DeleteInstallmentUseCase`.
 - [x] 2.7 Idem para `SkipRecurringUseCase`.
-- [x] 2.8 Remover os cinco defaults derivados do agregado de `ConfirmRecurringUseCase` (D8) e ajustar `ConfirmRecurringViewModel`, que já passa os oito argumentos explicitamente. Escrever a forma por id.
-- [ ] 2.9 Dar a `CalculateAvailableLimitUseCase` a forma plural — recebe as identidades dos cartões e devolve o mapa (D7) — e migrar a tela que hoje a chama em laço.
-- [ ] 2.10 Uniformizar `PayInvoicePaymentUseCase` e `AdvanceInvoicePaymentUseCase`, que hoje recebem `invoiceId: Long` e `account: Account` na mesma assinatura.
+- [x] 2.8 Remover os seis defaults derivados do agregado de `ConfirmRecurringUseCase` (D8) e ajustar `ConfirmRecurringViewModel`, que já passa os oito argumentos explicitamente. Escrever a forma por id.
+- [x] 2.9 Dar a `CalculateAvailableLimitUseCase` a forma plural — recebe as identidades dos cartões e devolve o mapa (D7) — e migrar a tela que hoje a chama em laço.
+- [x] 2.10 Uniformizar `PayInvoicePaymentUseCase` e `AdvanceInvoicePaymentUseCase`, que hoje recebem `invoiceId: Long` e `account: Account` na mesma assinatura.
 - [ ] 2.11 Teste que percorre as interfaces de use case público e falha quando uma delas não oferece a forma por id, ou quando declara valor padrão derivado de outro parâmetro agregado.
 - [ ] 2.12 Teste que exercita as duas formas de um mesmo use case com a mesma identidade e exige resultado idêntico.
 
@@ -37,11 +37,11 @@
 
 - [x] 3.1 `CreateCategoryUseCase` e `UpdateCategoryUseCase`, com a validação, o `trim()` e o `createdAt` que hoje vivem em `CategoryFormViewModel:120-151`.
 - [x] 3.2 Migrar `CategoryFormViewModel` para consumi-los; ele deixa de chamar `repository.insert/update`.
-- [ ] 3.3 `CreateBudgetUseCase`, `UpdateBudgetUseCase` e `DeleteBudgetUseCase`, extraídos de `BudgetFormViewModel` e `DeleteBudgetViewModel`.
-- [ ] 3.4 Migrar os dois ViewModels de orçamento.
-- [ ] 3.5 `UpdateInstallmentUseCase` sobre `IInstallmentRepository.updateInstallment`.
-- [ ] 3.6 `RegisterTransactionUseCase`: o despacho entre parcelamento, recorrência e transação simples que hoje é um `if` em `AddTransactionViewModel:299-340`. Recebe o formulário e decide.
-- [ ] 3.7 Migrar `AddTransactionViewModel` para consumi-lo; o `if` sai do ViewModel.
+- [x] 3.3 `CreateBudgetUseCase`, `UpdateBudgetUseCase` e `DeleteBudgetUseCase`, extraídos de `BudgetFormViewModel` e `DeleteBudgetViewModel`.
+- [x] 3.4 Migrar os dois ViewModels de orçamento.
+- [x] 3.5 `UpdateInstallmentUseCase` sobre `IInstallmentRepository.updateInstallment`.
+- [x] 3.6 `RegisterTransactionUseCase`: o despacho entre parcelamento, recorrência e transação simples que hoje é um `if` em `AddTransactionViewModel:299-340`. Recebe o formulário e decide.
+- [x] 3.7 Migrar `AddTransactionViewModel` para consumi-lo; o `if` sai do ViewModel.
 - [ ] 3.8 Teste de cada use case novo, cobrindo o caminho que o ViewModel exercitava.
 - [ ] 3.9 Teste que falha quando um ViewModel chama `insert`/`update`/`delete` de repositório diretamente — o guarda que impede a regressão dos oito pontos.
 
@@ -52,10 +52,10 @@
 
 - [x] 4.1 Promover os use cases de contas: `CreateAccountUseCase`, `UpdateAccountUseCase`, `AdjustBalanceUseCase`, `TransferBetweenAccountsUseCase`, `SetDefaultAccountUseCase`, `UnarchiveAccountUseCase`.
 - [x] 4.2 Promover os de categorias: `ArchiveCategoryUseCase`, `UnarchiveCategoryUseCase`, `DeleteCategoryUseCase`, `ResolveCategoryRetirabilityUseCase`, e os dois criados em 3.1.
-- [ ] 4.3 Promover os de cartão: `AddCreditCardUseCase`, `UpdateCreditCardUseCase`, `DeleteCreditCardUseCase`, `ArchiveCreditCardUseCase`, `UnarchiveCreditCardUseCase`, `CalculateAvailableLimitUseCase`.
-- [ ] 4.4 Promover os de fatura: `CreateInvoiceUseCase`, `OpenInvoiceUseCase`, `CloseInvoiceUseCase`, `PayInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `ReopenInvoiceUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `CalculateInvoiceUseCase`.
+- [x] 4.3 Promover os de cartão: `AddCreditCardUseCase`, `UpdateCreditCardUseCase`, `DeleteCreditCardUseCase`, `ArchiveCreditCardUseCase`, `UnarchiveCreditCardUseCase`, `CalculateAvailableLimitUseCase`.
+- [x] 4.4 Promover os de fatura: `CreateInvoiceUseCase`, `OpenInvoiceUseCase`, `CloseInvoiceUseCase`, `PayInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `ReopenInvoiceUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `CalculateInvoiceUseCase`.
 - [x] 4.5 Promover os de recorrência: `SaveRecurringUseCase`, `ConfirmRecurringUseCase`, `SkipRecurringUseCase`, `ArchiveRecurringUseCase`, `UnarchiveRecurringUseCase`, `DeleteRecurringUseCase`, `ResolveRecurringRetirabilityUseCase`.
-- [ ] 4.6 Promover os de orçamento e relatório: os três criados em 3.3 e `CalculateReportStatsUseCase`.
+- [x] 4.6 Promover os de orçamento e relatório: os três criados em 3.3 e `CalculateReportStatsUseCase`.
 - [ ] 4.7 Conferir que nenhuma interface promovida referencia tipo declarado em `impl` — a regra de `feature-entry-points` vale para toda a `api`.
 
 ## 5. Módulo e build
@@ -63,7 +63,7 @@
 - [ ] 5.1 Criar `feature/mcp/api` e `feature/mcp/impl` com as convenções `feature.api` e `feature.impl`, e registrá-los em `settings.gradle.kts`.
 - [ ] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*` e a rota `@Serializable` da tela. **Sem entry point**: `feature-entry-points` o exige de "cada feature que expõe UI a outras features", e esta não expõe — Settings apenas navega para a rota.
 - [ ] 5.3 Adicionar ao catálogo `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine `ktor-server-*` em `3.4.3`, usados apenas no `jvmMain` do `impl`. Fixar a versão do SDK sem faixa — entre 0.14 e 0.15 o Ktor exigido mudou de minor.
-- [ ] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base de 1.4: 1488 testes, nenhuma falha.
+- [ ] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base **medida imediatamente antes de elevar**, nos 19 módulos reais — nunca contra o número de 1.4, que contava diretórios sem fonte. Nenhuma falha, e nenhum teste a menos.
 - [ ] 5.4 Reescrever a nota do catálogo que diz que Ktor "vive num módulo só" — ela passa a distinguir o módulo que usa cliente do que usa servidor.
 - [ ] 5.5 Prover o `actual` no-op do controlador nos targets Android e iOS, no padrão de `SupportModule`.
 - [ ] 5.6 Registrar o módulo Koin da feature e agregá-lo em `appModules`; `NavGraphBuilder.mcpGraph()` no `AppNavHost`.

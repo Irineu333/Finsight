@@ -91,7 +91,7 @@ class AddInstallmentUseCaseTest {
         installmentRepository = installments,
         invoiceRepository = FakeInvoiceReader(existing),
         buildTransactionUseCase = FakeTransactionBuilder(total, purchaseDate),
-        getOrCreateInvoiceForMonthUseCase = FakeInvoiceOpener(existing),
+        getOrCreateInvoiceForMonthUseCase = FakeInvoiceOpener(existing, card),
     )
 
     private fun List<TransactionIntent>.cents() = map { (it.legs.single().amount * 100).roundToLong() }
@@ -246,9 +246,10 @@ private class FakeTransactionBuilder(
 /** Hands back what it was seeded with, and mints anything else on demand. */
 private class FakeInvoiceOpener(
     private val existing: List<Invoice>,
+    private val creditCard: CreditCard,
 ) : GetOrCreateInvoiceForMonthUseCase {
     override suspend fun invoke(
-        creditCard: CreditCard,
+        creditCardId: Long,
         targetDueMonth: YearMonth,
     ): Either<Throwable, Invoice> {
         val found = existing.find { it.dueMonth == targetDueMonth }
@@ -332,6 +333,8 @@ private class FakeInvoiceReader(private val invoices: List<Invoice>) : IInvoiceR
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = outOfScope()
     override suspend fun getAllInvoices(): List<Invoice> = outOfScope()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = outOfScope()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = outOfScope()
     override suspend fun getInvoiceById(id: Long): Invoice? = outOfScope()
     override suspend fun insert(invoice: Invoice): Invoice = outOfScope()

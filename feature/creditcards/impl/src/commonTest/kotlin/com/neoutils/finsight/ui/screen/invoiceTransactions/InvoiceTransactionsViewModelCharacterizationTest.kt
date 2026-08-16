@@ -25,6 +25,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.model.AccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -107,7 +108,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
                 ),
             ),
             recurringRepository = NoRecurring,
-            unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
+            unarchiveCreditCard = UnarchiveCreditCardUseCaseImpl(FakeCreditCardRepository(card)),
             crashlytics = NoCrashlytics,
             clock = Clock.System,
         )

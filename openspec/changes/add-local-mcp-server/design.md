@@ -140,17 +140,25 @@ consultas. A resposta não é receber o agregado, e sim receber a coleção de i
 devolver um mapa — como `IEntryRepository.owedByDimensionByCurrency` já faz sob a regra *"N
 invoices custam uma leitura, não N"*.
 
-### D8 — `ConfirmRecurringUseCase` perde os cinco defaults derivados do agregado
+### D8 — `ConfirmRecurringUseCase` perde os seis defaults derivados do agregado
 
 É o único use case do repositório cuja assinatura declara valores padrão lidos de outro
-parâmetro (`amount = recurring.amount`, `title = recurring.title`, e mais três). Parecia forçar a
-delegação na direção inversa — id resolvendo e chamando a forma por agregado.
+parâmetro — seis deles: `amount`, `target`, `account`, `creditCard`, `title` e `category`.
+Parecia forçar a delegação na direção inversa — id resolvendo e chamando a forma por agregado.
 
-Não força: nenhum é exercido. O único chamador (`ConfirmRecurringViewModel:206-219`) passa os
-oito argumentos explicitamente, duplica o de `amount` antes de chamar, e contorna o de `title`
+Não força: nenhum é exercido **em produção**. O único chamador (`ConfirmRecurringViewModel:206-219`)
+passa os oito argumentos explicitamente, duplica o de `amount` antes de chamar, e contorna o de `title`
 com um comentário explicando que cair no template *"would hand the user a name they had just
 erased"*. O default existe e o único chamador o evita de propósito; um segundo chamador que
 confiasse nele reintroduziria o bug.
+
+O significado da ausência passa a ser resolvido no corpo, e ele não é um só: `amount`, `target`,
+`account` e `creditCard` omitidos pedem o ciclo que o template descreve, enquanto `title` e
+`category` omitidos pedem **nada**. Os dois últimos são coisas que o usuário apaga, e repor o
+valor do template devolveria o que ele acabou de remover — a tela já entrega o formulário
+pré-preenchido, então quem não mexe continua vendo o template. **Uma superfície sem formulário
+pré-preenchido precisa saber disso:** a ferramenta que confirma uma recorrência sem opinar sobre
+título e categoria tem de passá-los explicitamente, ou lança um ciclo sem nenhum dos dois.
 
 ### D9 — Os use cases faltantes nascem no dono, e o ViewModel passa a consumi-los
 

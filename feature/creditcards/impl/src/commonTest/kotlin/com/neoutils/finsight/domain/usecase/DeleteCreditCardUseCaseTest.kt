@@ -37,8 +37,8 @@ class DeleteCreditCardUseCaseTest {
     private fun useCase(
         hasEntries: Boolean = false,
         hasRecurring: Boolean = false,
-        repository: RecordingCreditCardRepository = RecordingCreditCardRepository(),
-    ) = DeleteCreditCardUseCase(
+        repository: RecordingCreditCardRepository = RecordingCreditCardRepository(card),
+    ) = DeleteCreditCardUseCaseImpl(
         creditCardRepository = repository,
         entryRepository = StubEntryRepository(hasEntries),
         recurringRepository = FakeRecurringRepository(hasRecurring),
@@ -50,7 +50,7 @@ class DeleteCreditCardUseCaseTest {
 
     @Test
     fun `a card with transactions is refused and not deleted`() = runTest {
-        val repository = RecordingCreditCardRepository()
+        val repository = RecordingCreditCardRepository(card)
 
         val result = useCase(hasEntries = true, repository = repository)(card)
 
@@ -60,7 +60,7 @@ class DeleteCreditCardUseCaseTest {
 
     @Test
     fun `a card a recurring still uses is refused and not deleted`() = runTest {
-        val repository = RecordingCreditCardRepository()
+        val repository = RecordingCreditCardRepository(card)
 
         val result = useCase(hasRecurring = true, repository = repository)(card)
 
@@ -70,7 +70,7 @@ class DeleteCreditCardUseCaseTest {
 
     @Test
     fun `a card that never moved is deleted`() = runTest {
-        val repository = RecordingCreditCardRepository()
+        val repository = RecordingCreditCardRepository(card)
 
         val result = useCase(repository = repository)(card)
 
@@ -79,14 +79,17 @@ class DeleteCreditCardUseCaseTest {
     }
 }
 
-private class RecordingCreditCardRepository : ICreditCardRepository {
+private class RecordingCreditCardRepository(
+    private vararg val cards: CreditCard,
+) : ICreditCardRepository {
     val deleted = mutableListOf<CreditCard>()
     override suspend fun delete(creditCard: CreditCard) { deleted += creditCard }
     override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
-    override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
-    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
+    override suspend fun getAllCreditCards(): List<CreditCard> = cards.toList()
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = cards.toList()
     override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
-    override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
+    override suspend fun getCreditCardById(creditCardId: Long): CreditCard? =
+        cards.firstOrNull { it.id == creditCardId }
     override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
     override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()

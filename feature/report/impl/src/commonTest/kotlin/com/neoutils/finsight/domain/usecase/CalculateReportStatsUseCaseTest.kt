@@ -37,7 +37,7 @@ class CalculateReportStatsUseCaseTest {
         entry: CapturingEntryRepository,
         accounts: List<Account> = emptyList(),
         cards: List<CreditCard> = emptyList(),
-    ) = CalculateReportStatsUseCase(
+    ) = CalculateReportStatsUseCaseImpl(
         entryRepository = entry,
         accountRepository = FakeAccountRepository(accounts),
         creditCardRepository = FakeCreditCardRepository(cards),

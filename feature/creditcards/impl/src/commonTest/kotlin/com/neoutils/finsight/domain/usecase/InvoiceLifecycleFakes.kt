@@ -75,6 +75,12 @@ internal class RecordingInvoiceStore(vararg seed: Invoice) : IInvoiceRepository 
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long) =
         rows.values.filter { it.creditCard.id == creditCardId && !it.status.isPaid }
 
+    override suspend fun getUnpaidInvoicesByCreditCards(
+        creditCardIds: Collection<Long>,
+    ): Map<Long, List<Invoice>> = creditCardIds
+        .associateWith { getUnpaidInvoicesByCreditCard(it) }
+        .filterValues { it.isNotEmpty() }
+
     override suspend fun update(invoice: Invoice) {
         rows[invoice.id] = invoice
         updates += invoice

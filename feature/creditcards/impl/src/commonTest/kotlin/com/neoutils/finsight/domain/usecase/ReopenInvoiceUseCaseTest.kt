@@ -58,7 +58,7 @@ class ReopenInvoiceUseCaseTest {
         val current = invoice(2, YearMonth(2026, 2), Invoice.Status.OPEN)
         val repo = FakeInvoiceStore(pastCycle, current)
 
-        val reopened = ReopenInvoiceUseCase(repo)(pastCycle.id).getOrNull()
+        val reopened = ReopenInvoiceUseCaseImpl(repo)(pastCycle.id).getOrNull()
 
         assertEquals(Invoice.Status.OPEN, reopened?.status)
         assertNull(reopened?.closedAt)
@@ -75,7 +75,7 @@ class ReopenInvoiceUseCaseTest {
         val current = invoice(3, YearMonth(2026, 3), Invoice.Status.OPEN)
         val repo = FakeInvoiceStore(midChain, nextClosed, current)
 
-        val result = ReopenInvoiceUseCase(repo)(midChain.id)
+        val result = ReopenInvoiceUseCaseImpl(repo)(midChain.id)
 
         assertTrue(result.isLeft())
         assertEquals(InvoiceError.CannotReopenInvoice, result.leftOrNull()?.error)
@@ -91,7 +91,7 @@ class ReopenInvoiceUseCaseTest {
         val paid = invoice(1, YearMonth(2026, 1), Invoice.Status.PAID)
         val repo = FakeInvoiceStore(paid)
 
-        val result = ReopenInvoiceUseCase(repo)(paid.id)
+        val result = ReopenInvoiceUseCaseImpl(repo)(paid.id)
 
         assertEquals(InvoiceError.CannotReopenPaidInvoice, result.leftOrNull()?.error)
     }
@@ -101,7 +101,7 @@ class ReopenInvoiceUseCaseTest {
         val open = invoice(1, YearMonth(2026, 1), Invoice.Status.OPEN)
         val repo = FakeInvoiceStore(open)
 
-        val result = ReopenInvoiceUseCase(repo)(open.id)
+        val result = ReopenInvoiceUseCaseImpl(repo)(open.id)
 
         assertEquals(InvoiceError.AlreadyOpen, result.leftOrNull()?.error)
     }
@@ -132,6 +132,8 @@ private class FakeInvoiceStore(vararg invoices: Invoice) : IInvoiceRepository {
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()

@@ -24,6 +24,8 @@
     <!-- Budget errors -->
     <string name="budget_error_empty_title">Budget title cannot be empty.</string>
     <string name="budget_error_already_exist">A budget with this title already exists.</string>
+    <string name="budget_error_not_found">Budget not found.</string>
+    <string name="budget_error_missing_base_income">A percentage budget needs the recurring income it is a share of.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">Card name is required.</string>
@@ -51,6 +53,7 @@
     <string name="ledger_error_closed_removal_account">This account is archived. Deleting this transaction would give it a balance back, and an archived account cannot be settled.</string>
     <string name="ledger_error_closed_removal_credit_card">This card is archived. Deleting this transaction would give it a balance back, and an archived card cannot be settled.</string>
     <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
+    <string name="transaction_error_not_found">Transaction not found.</string>
     <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
     <string name="ledger_action_error_generic">Something went wrong. Try again in a moment.</string>
 
@@ -59,6 +62,9 @@
     <string name="installment_error_blocked_invoice">One of the installments coincides with a blocked invoice.</string>
     <string name="installment_error_missing_credit_card">Select a card to register the installment.</string>
     <string name="installment_error_missing_invoice">Select an invoice to register the installment.</string>
+    <string name="installment_error_not_found">Installment not found.</string>
+    <string name="installment_error_non_positive_count">The number of instalments must be greater than zero.</string>
+    <string name="installment_error_non_positive_total">The installment total must be greater than zero.</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>

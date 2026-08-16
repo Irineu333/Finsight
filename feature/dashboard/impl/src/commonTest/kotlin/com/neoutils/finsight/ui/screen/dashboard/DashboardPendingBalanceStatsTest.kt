@@ -16,6 +16,8 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.InvoiceUi
 import kotlinx.coroutines.flow.Flow
@@ -54,8 +56,15 @@ class DashboardPendingBalanceStatsTest {
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(NoFlowsEntryRepository, reducer()),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
-                throw NotImplementedError()
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
+                emptyMap()
         },
         entryRepository = NoFlowsEntryRepository,
         accountRepository = FakeAccountRepository(),

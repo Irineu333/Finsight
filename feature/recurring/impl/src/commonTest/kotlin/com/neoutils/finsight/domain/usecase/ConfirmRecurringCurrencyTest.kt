@@ -63,7 +63,7 @@ class ConfirmRecurringCurrencyTest {
         recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = object : GetOrCreateInvoiceForMonthUseCase {
-            override suspend fun invoke(creditCard: CreditCard, targetDueMonth: YearMonth) =
+            override suspend fun invoke(creditCardId: Long, targetDueMonth: YearMonth) =
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = FakeAccountRepository(listOf(reais, dollars, dollarCardAccount)),

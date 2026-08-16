@@ -6,6 +6,8 @@ import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCaseImpl
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
 import com.neoutils.finsight.ui.model.LedgerTransactionFacadeResolver
@@ -41,6 +43,15 @@ val transactionsModule = module {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
             validateTransactionForm = get(),
+        )
+    }
+
+    factory<RegisterTransactionUseCase> {
+        RegisterTransactionUseCaseImpl(
+            transactionRepository = get(),
+            buildTransaction = get(),
+            addInstallment = get(),
+            startRecurringFromTransaction = get(),
         )
     }
 
@@ -81,15 +92,12 @@ val transactionsModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
             accountRepository = get(),
-            buildTransactionUseCase = get(),
-            addInstallmentUseCase = get(),
+            registerTransaction = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
             validateTransactionForm = get(),
-            startRecurringFromTransaction = get(),
             clock = get(),
         )
     }

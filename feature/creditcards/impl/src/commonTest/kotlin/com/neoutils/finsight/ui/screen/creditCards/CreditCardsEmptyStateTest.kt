@@ -28,7 +28,9 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCaseImpl
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapperImpl
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsUiState.ListState
 import kotlinx.coroutines.Dispatchers
@@ -105,7 +107,7 @@ class CreditCardsEmptyStateTest {
     ): CreditCardsViewModel {
         val invoices = if (cards.isEmpty()) emptyList() else listOf(invoice)
         val invoiceRepository = FakeInvoiceRepository(invoices)
-        val calculateInvoice = CalculateInvoiceUseCase(FlatEntryRepository)
+        val calculateInvoice = CalculateInvoiceUseCaseImpl(FlatEntryRepository)
 
         return CreditCardsViewModel(
             entryRepository = FlatEntryRepository,
@@ -118,12 +120,13 @@ class CreditCardsEmptyStateTest {
             installmentRepository = NoInstallments,
             invoiceUiMapper = InvoiceUiMapperImpl(
                 calculateInvoiceUseCase = calculateInvoice,
-                calculateAvailableLimitUseCase = CalculateAvailableLimitUseCase(
-                    invoiceRepository = invoiceRepository,
-                    calculateInvoiceUseCase = calculateInvoice,
-                ),
                 accountRepository = FakeCardAccountRepository(),
                 clock = Clock.System,
+            ),
+            calculateAvailableLimit = CalculateAvailableLimitUseCaseImpl(
+                creditCardRepository = FakeCreditCardRepository(cards),
+                invoiceRepository = invoiceRepository,
+                calculateInvoiceUseCase = calculateInvoice,
             ),
         )
     }
@@ -215,6 +218,8 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = MutableStateFlow(invoices)
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
     override fun observeAllInvoices(): Flow<List<Invoice>> = MutableStateFlow(invoices)
     override fun observeInvoiceById(dimensionId: Long): Flow<Invoice?> = throw NotImplementedError()
@@ -312,7 +317,8 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
-    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> =
+        dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()

@@ -86,6 +86,7 @@ val creditCardsModule = module {
             transactionRepository = get(),
             invoiceRepository = get(),
             invoiceUiMapper = get(),
+            calculateAvailableLimit = get(),
             categoryRepository = get(),
             installmentRepository = get(),
         )

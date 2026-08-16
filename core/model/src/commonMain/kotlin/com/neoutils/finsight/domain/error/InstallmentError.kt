@@ -6,24 +6,42 @@ import com.neoutils.finsight.resources.installment_error_blocked_invoice
 import com.neoutils.finsight.resources.installment_error_min_installments
 import com.neoutils.finsight.resources.installment_error_missing_credit_card
 import com.neoutils.finsight.resources.installment_error_missing_invoice
+import com.neoutils.finsight.resources.installment_error_non_positive_count
+import com.neoutils.finsight.resources.installment_error_non_positive_total
+import com.neoutils.finsight.resources.installment_error_not_found
 import com.neoutils.finsight.util.UiText
 
 sealed class InstallmentError(val message: String) {
 
     data object MinInstallment : InstallmentError(
-        message = "O número de parcelas deve ser superior a 1"
+        message = "Installment count must be greater than 1"
     )
 
     data class BlockedInvoice(
         val installment: Int,
         val invoice: Invoice,
     ) : InstallmentError(
-        message = "Parcela $installment coincidiu com uma fatura ${invoice.status}"
+        message = "Installment $installment landed on a ${invoice.status} invoice"
     )
 
     data object MissingCreditCard : InstallmentError(message = "Missing target credit card")
 
     data object MissingInvoice: InstallmentError(message = "Missing target invoice")
+
+    data object NotFound : InstallmentError(message = "Installment not found")
+
+    /**
+     * An installment of no shares describes nothing. The floor is one and not two,
+     * unlike [MinInstallment]: an installment whose transactions were removed one by
+     * one legitimately reaches a single share, and the reconciler writes exactly that.
+     */
+    data object NonPositiveCount : InstallmentError(
+        message = "Installment count must be positive"
+    )
+
+    data object NonPositiveTotal : InstallmentError(
+        message = "Installment total must be positive"
+    )
 }
 
 fun InstallmentError.toUiText() = when (this) {
@@ -31,4 +49,7 @@ fun InstallmentError.toUiText() = when (this) {
     is InstallmentError.BlockedInvoice -> UiText.Res(Res.string.installment_error_blocked_invoice)
     InstallmentError.MissingCreditCard -> UiText.Res(Res.string.installment_error_missing_credit_card)
     InstallmentError.MissingInvoice -> UiText.Res(Res.string.installment_error_missing_invoice)
+    InstallmentError.NotFound -> UiText.Res(Res.string.installment_error_not_found)
+    InstallmentError.NonPositiveCount -> UiText.Res(Res.string.installment_error_non_positive_count)
+    InstallmentError.NonPositiveTotal -> UiText.Res(Res.string.installment_error_non_positive_total)
 }

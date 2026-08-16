@@ -309,9 +309,23 @@ internal class FakeRecurring(
     }
 }
 
+/**
+ * The record of which cycles were handled, and how.
+ *
+ * [confirmCycle] writes the posting through the **real** transaction repository before saving the
+ * occurrence, exactly as the production repository does inside one unit of work: the re-entry check
+ * reads the occurrence, so a confirmation that saved no occurrence would let the next one duplicate
+ * the posting.
+ *
+ * @param transactionRepository the ledger a confirmed cycle is written to. Absent for the worlds
+ * that only read occurrences, where confirming is not part of what is being asserted.
+ */
 internal class FakeOccurrences(
-    private val occurrences: List<RecurringOccurrence>,
+    private val occurrences: MutableList<RecurringOccurrence>,
+    private val transactionRepository: ITransactionRepository? = null,
 ) : IRecurringOccurrenceRepository {
+    private var nextId = 4_000L
+
     override suspend fun getAllOccurrences(): List<RecurringOccurrence> = occurrences
     override fun observeAllOccurrences(): Flow<List<RecurringOccurrence>> = flowOf(occurrences)
     override suspend fun getOccurrenceBy(recurringId: Long, yearMonth: YearMonth): RecurringOccurrence? =
@@ -320,11 +334,30 @@ internal class FakeOccurrences(
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? =
         occurrences.firstOrNull { it.recurringId == recurringId && it.cycleNumber == cycleNumber }
 
-    override suspend fun save(occurrence: RecurringOccurrence): Long = throw NotImplementedError()
+    override suspend fun save(occurrence: RecurringOccurrence): Long {
+        val existing = getOccurrenceBy(occurrence.recurringId, occurrence.yearMonth)
+        val saved = occurrence.copy(id = existing?.id ?: nextId++)
+        occurrences.removeAll { it.id == saved.id }
+        occurrences += saved
+        return saved.id
+    }
+
     override suspend fun confirmCycle(
         intent: TransactionIntent,
         occurrence: RecurringOccurrence,
-    ): Transaction = throw NotImplementedError()
+    ): Transaction {
+        val store = requireNotNull(transactionRepository) { "this world confirms no cycle" }
+        require(
+            getOccurrenceBy(occurrence.recurringId, occurrence.yearMonth)?.status !=
+                RecurringOccurrence.Status.CONFIRMED,
+        ) {
+            "Recurring already confirmed for ${occurrence.yearMonth}"
+        }
+
+        return store.createTransaction(intent).also {
+            save(occurrence.copy(transactionId = it.id))
+        }
+    }
 }
 
 internal class FakeInstallments(private val installments: MutableList<Installment>) : IInstallmentRepository {
@@ -456,10 +489,22 @@ internal class FixedBaseCurrency(base: String) : IBaseCurrencyRepository {
     override suspend fun set(code: String) = error("the surface never moves the base")
 }
 
+/**
+ * The rate archive: the rates the test states, and the ones the app's own operations **harvest**.
+ *
+ * [ratesAsOf] answers what the test declared, and nothing else — the reducer's input is the test's
+ * to state. [saved] is the other direction, and it is why this records instead of refusing: an
+ * operation that crosses currencies derives its rate from its own two ends and writes it here, and
+ * that write is a fact about the domain rather than a tool reaching for the archive. No tool of the
+ * surface can: `McpSurfaceIsClosedTest` holds that line by reading the sources.
+ */
 internal class FixedRates(
     private val base: String,
     private val rates: Map<String, Double>,
 ) : IExchangeRateRepository {
+
+    /** Every rate written here, in the order it was written. */
+    val saved = mutableListOf<ExchangeRate>()
 
     override suspend fun ratesAsOf(date: LocalDate): Map<String, ExchangeRate> =
         rates.mapValues { (currency, rate) ->
@@ -475,10 +520,13 @@ internal class FixedRates(
     override suspend fun rateAsOf(currency: String, date: LocalDate) = ratesAsOf(date)[currency]
     override suspend fun rateBetween(from: String, to: String, date: LocalDate): ExchangeRate? = null
     override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
-    override suspend fun save(rate: ExchangeRate) = error("the surface never writes a rate")
-    override suspend fun remove(rate: ExchangeRate) = error("the surface never writes a rate")
+    override suspend fun save(rate: ExchangeRate) {
+        saved += rate
+    }
+
+    override suspend fun remove(rate: ExchangeRate) = error("the surface never removes a rate")
     override suspend fun countNaming(currency: String): Int = 0
-    override suspend fun removeAllNaming(currency: String) = error("the surface never writes a rate")
+    override suspend fun removeAllNaming(currency: String) = error("the surface never removes a rate")
 }
 
 internal class CurrenciesInUse(private val inUse: List<String>) : GetAccountCurrenciesUseCase {

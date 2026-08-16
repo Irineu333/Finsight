@@ -30,6 +30,7 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.LocalDate
@@ -108,13 +109,23 @@ internal class AgentWorld(
 
     private var nextTransactionId = 0L
 
+    /**
+     * The one rate archive of this world: what the test declared, and what the app's own operations
+     * harvested. Held as a property because both directions are asserted — the reducer reads the
+     * first, and a cross-currency operation writes the second.
+     */
+    val exchangeRates = FixedRates(baseCurrency, rates)
+
     val consolidateMoney = ConsolidateMoneyUseCase(
         baseCurrencyRepository = FixedBaseCurrency(baseCurrency),
-        exchangeRateRepository = FixedRates(baseCurrency, rates),
+        exchangeRateRepository = exchangeRates,
         // What the reducer asks for when a figure has nothing to say: a zero is denominated by the
         // currencies the user actually holds, never by the base out of habit.
         getAccountCurrencies = CurrenciesInUse(currenciesInUse),
     )
+
+    /** The app's own harvester, over this world's archive — never a stand-in for it. */
+    val harvestExchangeRate = HarvestExchangeRateUseCase(exchangeRates)
 
     // ------------------------------------------------------------------------------
     // Seeding
@@ -352,10 +363,19 @@ internal class AgentWorld(
     private var nextCardId = 600L
     private var nextInvoiceId = 700L
 
+    val occurrenceRepository = FakeOccurrences(occurrences, transactionRepository)
+
     /** The write use cases, over the real ledger. See `AgentWorldWrites`. */
     private val createInvoice = WorldCreateInvoice(creditCardRepository, invoiceRepository)
 
     private val buildTransaction = WorldBuildTransaction(clock, invoiceRepository, createInvoice)
+
+    /** The operation use cases, over the same ledger. See `AgentWorldOperations`. */
+    private val calculateInvoice = LedgerInvoiceOwed(entryRepository)
+
+    private val payInvoice = WorldPayInvoice(invoiceRepository, clock)
+
+    private val openInvoice = WorldOpenInvoice(invoiceRepository, creditCardRepository, clock)
 
     private val addInstallment = WorldAddInstallment(
         transactionRepository = transactionRepository,
@@ -376,7 +396,7 @@ internal class AgentWorld(
         installmentRepository = installmentRepository,
         budgetRepository = budgetRepository,
         recurringRepository = recurringRepository,
-        recurringOccurrenceRepository = FakeOccurrences(occurrences),
+        recurringOccurrenceRepository = occurrenceRepository,
         baseCurrencyRepository = FixedBaseCurrency(baseCurrency),
         consolidateMoney = consolidateMoney,
         calculateBalance = CalculateBalanceUseCase(entryRepository),
@@ -394,8 +414,8 @@ internal class AgentWorld(
         ),
         calculateBudgetProgress = CalculateBudgetProgressUseCase(entryRepository, consolidateMoney),
         getPendingRecurring = GetPendingRecurringUseCase(),
-        calculateAvailableLimit = LedgerAvailableLimit(cards, invoices, LedgerInvoiceOwed(entryRepository)),
-        calculateInvoice = LedgerInvoiceOwed(entryRepository),
+        calculateAvailableLimit = LedgerAvailableLimit(cards, invoices, calculateInvoice),
+        calculateInvoice = calculateInvoice,
         calculateReportStats = LedgerReportStats(accounts, cards, entryRepository),
         registerTransaction = WorldRegisterTransaction(
             transactionRepository = transactionRepository,
@@ -431,6 +451,67 @@ internal class AgentWorld(
         deleteInstallment = WorldDeleteInstallment(transactionRepository, installmentRepository),
         createInvoice = createInvoice,
         deleteFutureInvoice = WorldDeleteFutureInvoice(invoiceRepository, transactionRepository),
+        payInvoicePayment = WorldPayInvoicePayment(
+            transactionRepository = transactionRepository,
+            invoiceRepository = invoiceRepository,
+            accountRepository = accountRepository,
+            calculateInvoice = calculateInvoice,
+            payInvoice = payInvoice,
+            harvestExchangeRate = harvestExchangeRate,
+        ),
+        advanceInvoicePayment = WorldAdvanceInvoicePayment(
+            transactionRepository = transactionRepository,
+            invoiceRepository = invoiceRepository,
+            accountRepository = accountRepository,
+            calculateInvoice = calculateInvoice,
+            harvestExchangeRate = harvestExchangeRate,
+            clock = clock,
+        ),
+        closeInvoice = WorldCloseInvoice(
+            invoiceRepository = invoiceRepository,
+            calculateInvoice = calculateInvoice,
+            payInvoice = payInvoice,
+            openInvoice = openInvoice,
+        ),
+        openInvoice = openInvoice,
+        reopenInvoice = WorldReopenInvoice(invoiceRepository),
+        adjustInvoice = WorldAdjustInvoice(invoiceRepository, transactionRepository, calculateInvoice),
+        adjustBalance = WorldAdjustBalance(
+            accountRepository = accountRepository,
+            transactionRepository = transactionRepository,
+            calculateBalance = CalculateBalanceUseCase(entryRepository),
+        ),
+        transferBetweenAccounts = WorldTransfer(
+            transactionRepository = transactionRepository,
+            accountRepository = accountRepository,
+            harvestExchangeRate = harvestExchangeRate,
+            clock = clock,
+        ),
+        setDefaultAccount = WorldSetDefaultAccount(accountRepository),
+        confirmRecurring = WorldConfirmRecurring(
+            recurringRepository = recurringRepository,
+            occurrenceRepository = occurrenceRepository,
+            invoiceRepository = invoiceRepository,
+            createInvoice = createInvoice,
+            clock = clock,
+        ),
+        skipRecurring = WorldSkipRecurring(recurringRepository, occurrenceRepository, clock),
+        archiveAccount = WorldArchiveAccount(
+            accountRepository = accountRepository,
+            accountDao = database.accountDao(),
+            entryRepository = entryRepository,
+        ),
+        unarchiveAccount = WorldUnarchiveAccount(accountRepository, database.accountDao()),
+        archiveCreditCard = WorldArchiveCreditCard(
+            creditCardRepository = creditCardRepository,
+            accountDao = database.accountDao(),
+            entryRepository = entryRepository,
+        ),
+        unarchiveCreditCard = WorldUnarchiveCreditCard(creditCardRepository, database.accountDao()),
+        archiveCategory = WorldArchiveCategory(categoryRepository),
+        unarchiveCategory = WorldUnarchiveCategory(categoryRepository),
+        archiveRecurring = WorldArchiveRecurring(recurringRepository),
+        unarchiveRecurring = WorldUnarchiveRecurring(recurringRepository),
     )
 
     /** The production registry, over this world. */

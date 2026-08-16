@@ -19,15 +19,16 @@ internal object McpSurface {
     /**
      * The tools the server announces today.
      *
-     * The surface is built one family at a time, and each family adds its own names here in the
-     * same change that registers the tools — which is what keeps the two from drifting: an addition
-     * on either side alone fails the test.
+     * The surface was built one family at a time, and each family added its own names here in the
+     * same change that registered the tools — which is what keeps the two from drifting: an
+     * addition on either side alone fails the test.
      *
-     * Family 1, the questions, is here: the app calculates and the agent receives the number. So is
-     * family 2, the catalogue: what exists, what it is called, and the figure that belongs beside
-     * it — the family an agent resolves a name into an identity through. And so is family 3, the
+     * All four are here. Family 1, the questions: the app calculates and the agent receives the
+     * number. Family 2, the catalogue: what exists, what it is called, and the figure that belongs
+     * beside it — the family an agent resolves a name into an identity through. Family 3, the
      * registration — what is created, altered and removed —, which straddles two axes: fifteen
      * tools a user grants by saying "record and edit", and eight `delete_*` on an axis of its own.
+     * And family 4, the operations: thirteen tools that move money or move a life cycle.
      */
     val offered: Set<McpToolName> = setOf(
         McpToolName.GET_BALANCE,
@@ -78,6 +79,23 @@ internal object McpSurface {
         McpToolName.DELETE_RECURRING,
         McpToolName.DELETE_INSTALLMENT,
         McpToolName.DELETE_INVOICE,
+
+        // Family 4 — the operations, on the axis of their own: what moves money or moves
+        // something through its life cycle. `pay_invoice` is here and `mark_invoice_paid` is
+        // nowhere, which is the decision this list exists to record.
+        McpToolName.PAY_INVOICE,
+        McpToolName.ADVANCE_INVOICE_PAYMENT,
+        McpToolName.CLOSE_INVOICE,
+        McpToolName.OPEN_INVOICE,
+        McpToolName.REOPEN_INVOICE,
+        McpToolName.ADJUST_INVOICE,
+        McpToolName.ADJUST_BALANCE,
+        McpToolName.TRANSFER,
+        McpToolName.SET_DEFAULT_ACCOUNT,
+        McpToolName.CONFIRM_RECURRING,
+        McpToolName.SKIP_RECURRING,
+        McpToolName.ARCHIVE_ENTITY,
+        McpToolName.UNARCHIVE_ENTITY,
     )
 
     /** What the app can do that the surface does not reach, and why each one is out. */

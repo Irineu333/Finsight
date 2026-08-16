@@ -149,6 +149,44 @@ class RegistrationToolsGoThroughUseCasesTest {
         )
     }
 
+    /**
+     * **No tool holds the use case that writes an invoice's status without posting the payment.**
+     *
+     * `mcp-tool-surface` states it in as many words: a tool that alters state *derived from
+     * postings* reaches it through the use case that posts, and marking an invoice paid without
+     * writing the payment produces a balance incoherent with the ledger **without anything
+     * failing**. `PayInvoiceUseCase` is exactly that half — it writes `status = PAID` and nothing
+     * else — and it is one letter's difference from `PayInvoicePaymentUseCase`, which posts the
+     * payment and then comes through it.
+     *
+     * Structural rather than behavioural on purpose. The behavioural test exists too, and it asserts
+     * both consequences; this one catches the substitution at the point where it is made, and covers
+     * every tool written afterwards without anybody remembering to add one.
+     */
+    @Test
+    fun `no tool holds the use case that marks an invoice paid without posting the payment`() {
+        val holders = declaredTools
+            .filter { tool -> STATUS_ONLY_PAYMENT in tool.held }
+            .map { "${it.name} (${it.path})" }
+
+        assertEquals(
+            emptyList(),
+            holders,
+            "`$STATUS_ONLY_PAYMENT` writes the status and no money. A tool settling a bill " +
+                "through it would leave the account's balance lying, with nothing failing — " +
+                "`PayInvoicePaymentUseCase` is the one that does both.\n" +
+                holders.joinToString("\n") { "  $it" },
+        )
+        // The floor under it: the tool that pays does exist and does hold the other one, so the
+        // emptiness above is a fact about which use case was chosen rather than about neither
+        // being present.
+        assertTrue(
+            declaredTools.any { tool -> FULL_PAYMENT in tool.held },
+            "no tool holds `$FULL_PAYMENT`, so the check above passes over a surface that " +
+                "cannot pay a bill at all",
+        )
+    }
+
     /** And the converse floor: the ones that only read hold none, so the check above discriminates. */
     @Test
     fun `a tool that only reads holds no write use case, so the check above is not vacuous`() {
@@ -175,7 +213,18 @@ class RegistrationToolsGoThroughUseCasesTest {
         val path: String,
         val parameters: List<String>,
         val changes: Boolean,
-    )
+    ) {
+        /**
+         * What the tool holds, by simple name.
+         *
+         * A type written out in full is the same collaborator as one that was imported, and an
+         * assertion that could be evaded by qualifying a name would be an assertion about import
+         * style rather than about what the tool reaches.
+         */
+        val held: Set<String> = parameters
+            .map { it.substringBefore('<').substringAfterLast('.').trim() }
+            .toSet()
+    }
 
     /** Every class in the package that declares [McpTool] as a supertype, with what it holds. */
     private val declaredTools: List<DeclaredTool> = sources.flatMap { file ->
@@ -220,6 +269,15 @@ class RegistrationToolsGoThroughUseCasesTest {
             }
         }
         return code.toString()
+    }
+
+    private companion object {
+
+        /** Writes `status = PAID` and moves no money. Nothing on this surface may settle through it. */
+        const val STATUS_ONLY_PAYMENT = "PayInvoiceUseCase"
+
+        /** Posts the payment **and** marks the invoice paid — the one a bill is settled through. */
+        const val FULL_PAYMENT = "PayInvoicePaymentUseCase"
     }
 
     /** The index of the parenthesis closing the one at [opening]. */

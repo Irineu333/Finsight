@@ -13,6 +13,13 @@ import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -20,6 +27,8 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.CreateBudgetUseCase
@@ -34,8 +43,18 @@ import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
+import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
+import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCase
@@ -111,6 +130,33 @@ internal class McpToolDependencies(
     val deleteInstallment: DeleteInstallmentUseCase,
     val createInvoice: CreateInvoiceUseCase,
     val deleteFutureInvoice: DeleteFutureInvoiceUseCase,
+
+    // --- What the operations family acts through -----------------------------------------
+    //
+    // Same rule as above, with one member that is the reason the rule is written down at
+    // all: [payInvoicePayment] posts the payment **and** marks the invoice paid, and its
+    // near-namesake `PayInvoiceUseCase` only writes the status. The second one is
+    // deliberately absent from this list — nothing on this surface has a use for a bill
+    // marked settled with the money still in the account.
+    val payInvoicePayment: PayInvoicePaymentUseCase,
+    val advanceInvoicePayment: AdvanceInvoicePaymentUseCase,
+    val closeInvoice: CloseInvoiceUseCase,
+    val openInvoice: OpenInvoiceUseCase,
+    val reopenInvoice: ReopenInvoiceUseCase,
+    val adjustInvoice: AdjustInvoiceUseCase,
+    val adjustBalance: AdjustBalanceUseCase,
+    val transferBetweenAccounts: TransferBetweenAccountsUseCase,
+    val setDefaultAccount: SetDefaultAccountUseCase,
+    val confirmRecurring: ConfirmRecurringUseCase,
+    val skipRecurring: SkipRecurringUseCase,
+    val archiveAccount: ArchiveAccountUseCase,
+    val unarchiveAccount: UnarchiveAccountUseCase,
+    val archiveCreditCard: ArchiveCreditCardUseCase,
+    val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    val archiveCategory: ArchiveCategoryUseCase,
+    val unarchiveCategory: UnarchiveCategoryUseCase,
+    val archiveRecurring: ArchiveRecurringUseCase,
+    val unarchiveRecurring: UnarchiveRecurringUseCase,
 ) {
 
     /**

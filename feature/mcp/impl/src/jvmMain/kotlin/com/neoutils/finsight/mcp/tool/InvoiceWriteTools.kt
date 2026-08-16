@@ -16,7 +16,7 @@ import com.neoutils.finsight.mcp.surface.AgentRemovalAnswer
 import kotlinx.serialization.json.JsonObject
 
 /** An invoice as an agent receives it back from a write — no owed figure, because none was read. */
-private fun Invoice.asAgentInvoice() = AgentInvoice(
+internal fun Invoice.asAgentInvoice() = AgentInvoice(
     id = id,
     card = creditCard.name,
     cardId = creditCard.id,

@@ -1,5 +1,11 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.mcp.tool.AdjustBalanceTool
+import com.neoutils.finsight.mcp.tool.AdjustInvoiceTool
+import com.neoutils.finsight.mcp.tool.AdvanceInvoicePaymentTool
+import com.neoutils.finsight.mcp.tool.ArchiveEntityTool
+import com.neoutils.finsight.mcp.tool.CloseInvoiceTool
+import com.neoutils.finsight.mcp.tool.ConfirmRecurringTool
 import com.neoutils.finsight.mcp.tool.CreateAccountTool
 import com.neoutils.finsight.mcp.tool.CreateBudgetTool
 import com.neoutils.finsight.mcp.tool.CreateCardTool
@@ -36,6 +42,13 @@ import com.neoutils.finsight.mcp.tool.ListInstallmentsTool
 import com.neoutils.finsight.mcp.tool.ListInvoicesTool
 import com.neoutils.finsight.mcp.tool.ListRecurringTool
 import com.neoutils.finsight.mcp.tool.ListTransactionsTool
+import com.neoutils.finsight.mcp.tool.OpenInvoiceTool
+import com.neoutils.finsight.mcp.tool.PayInvoiceTool
+import com.neoutils.finsight.mcp.tool.ReopenInvoiceTool
+import com.neoutils.finsight.mcp.tool.SetDefaultAccountTool
+import com.neoutils.finsight.mcp.tool.SkipRecurringTool
+import com.neoutils.finsight.mcp.tool.TransferTool
+import com.neoutils.finsight.mcp.tool.UnarchiveEntityTool
 import com.neoutils.finsight.mcp.tool.UpdateAccountTool
 import com.neoutils.finsight.mcp.tool.UpdateBudgetTool
 import com.neoutils.finsight.mcp.tool.UpdateCardTool
@@ -56,11 +69,11 @@ import com.neoutils.finsight.mcp.tool.UpdateTransactionTool
  * [McpSurface.offered]; either edit alone fails `McpSurfaceIsClosedTest`, which is what makes a new
  * tool a decision rather than a side effect of writing one.
  *
- * The families are built one at a time, so this list grows in steps. What is here is family 1, the
- * questions — the app calculates and the agent receives the number —, family 2, the catalogue:
- * what exists, what it is called, and the figure that belongs beside it —, and family 3, the
- * registration: what is created, altered and removed, every one of them through the use case that
- * already owns the rule.
+ * All four families are here. Family 1, the questions — the app calculates and the agent receives
+ * the number. Family 2, the catalogue: what exists, what it is called, and the figure that belongs
+ * beside it. Family 3, the registration: what is created, altered and removed. And family 4, the
+ * operations: what moves money or moves something through its life cycle. Every one of them reaches
+ * the domain through the use case that already owns the rule.
  */
 internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
     GetBalanceTool(
@@ -311,5 +324,98 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
     DeleteInvoiceTool(
         invoiceRepository = deps.invoiceRepository,
         deleteFutureInvoice = deps.deleteFutureInvoice,
+    ),
+
+    // --- Family 4 — the operations: what moves money or moves a life cycle -----------------
+    //
+    // One axis, thirteen tools, and one of them is the reason the surface has a rule about
+    // where a decision lives: `pay_invoice` posts the payment and settles the invoice
+    // together, through the use case that does both.
+
+    PayInvoiceTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        accountRepository = deps.accountRepository,
+        calculateInvoice = deps.calculateInvoice,
+        payInvoicePayment = deps.payInvoicePayment,
+    ),
+    AdvanceInvoicePaymentTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        accountRepository = deps.accountRepository,
+        calculateInvoice = deps.calculateInvoice,
+        advanceInvoicePayment = deps.advanceInvoicePayment,
+    ),
+    CloseInvoiceTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        calculateInvoice = deps.calculateInvoice,
+        closeInvoice = deps.closeInvoice,
+    ),
+    OpenInvoiceTool(
+        creditCardRepository = deps.creditCardRepository,
+        invoiceRepository = deps.invoiceRepository,
+        calculateInvoice = deps.calculateInvoice,
+        openInvoice = deps.openInvoice,
+    ),
+    ReopenInvoiceTool(
+        invoiceRepository = deps.invoiceRepository,
+        calculateInvoice = deps.calculateInvoice,
+        reopenInvoice = deps.reopenInvoice,
+    ),
+    AdjustInvoiceTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        calculateInvoice = deps.calculateInvoice,
+        adjustInvoice = deps.adjustInvoice,
+    ),
+    AdjustBalanceTool(
+        clock = deps.clock,
+        accountRepository = deps.accountRepository,
+        calculateBalance = deps.calculateBalance,
+        adjustBalance = deps.adjustBalance,
+    ),
+    TransferTool(
+        clock = deps.clock,
+        accountRepository = deps.accountRepository,
+        transferBetweenAccounts = deps.transferBetweenAccounts,
+    ),
+    SetDefaultAccountTool(
+        accountRepository = deps.accountRepository,
+        setDefaultAccount = deps.setDefaultAccount,
+    ),
+    ConfirmRecurringTool(
+        clock = deps.clock,
+        recurringRepository = deps.recurringRepository,
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        invoiceRepository = deps.invoiceRepository,
+        confirmRecurring = deps.confirmRecurring,
+    ),
+    SkipRecurringTool(
+        clock = deps.clock,
+        recurringRepository = deps.recurringRepository,
+        skipRecurring = deps.skipRecurring,
+    ),
+    ArchiveEntityTool(
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        recurringRepository = deps.recurringRepository,
+        archiveAccount = deps.archiveAccount,
+        archiveCreditCard = deps.archiveCreditCard,
+        archiveCategory = deps.archiveCategory,
+        archiveRecurring = deps.archiveRecurring,
+    ),
+    UnarchiveEntityTool(
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        categoryRepository = deps.categoryRepository,
+        recurringRepository = deps.recurringRepository,
+        unarchiveAccount = deps.unarchiveAccount,
+        unarchiveCreditCard = deps.unarchiveCreditCard,
+        unarchiveCategory = deps.unarchiveCategory,
+        unarchiveRecurring = deps.unarchiveRecurring,
     ),
 )

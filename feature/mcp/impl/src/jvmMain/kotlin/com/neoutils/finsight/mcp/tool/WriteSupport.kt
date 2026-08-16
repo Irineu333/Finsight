@@ -126,6 +126,16 @@ internal fun JsonObject?.requiredString(name: String): String =
     string(name) ?: throw BadArgument(AgentRefusal(reason = "`$name` is required."))
 
 /**
+ * Whether the call **mentioned** a field at all — which is a different question from what it put
+ * there.
+ *
+ * It exists for the one case where absence and emptiness are different intentions: a tool that
+ * pre-fills from a template has to tell *"say nothing, give me the template's"* from *"this cycle
+ * genuinely has none"*, and both arrive as something [string] and [long] answer `null` to.
+ */
+internal fun JsonObject?.names(name: String): Boolean = this?.get(name) != null
+
+/**
  * A yes-or-no the caller may leave out entirely.
  *
  * Distinct from [flag] with a default, and the distinction is what makes an edit safe: on a write

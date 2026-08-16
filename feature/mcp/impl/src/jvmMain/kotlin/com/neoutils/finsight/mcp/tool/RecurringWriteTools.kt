@@ -32,7 +32,7 @@ private val RECURRING_TYPES: Map<String, TransactionType> = mapOf(
  * place a currency is stated; a template pointing at neither states none, and the figure says so
  * rather than borrowing the base.
  */
-private fun Recurring.asAgentRecurring() = AgentRecurring(
+internal fun Recurring.asAgentRecurring() = AgentRecurring(
     id = id,
     type = type.name.lowercase(),
     title = label,

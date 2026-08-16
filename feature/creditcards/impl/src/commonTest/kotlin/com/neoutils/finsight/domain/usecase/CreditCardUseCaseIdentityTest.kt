@@ -348,6 +348,7 @@ class CreditCardUseCaseIdentityTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
     ) = PayInvoicePaymentUseCaseImpl(
+        clock = StoppedClock(LocalDate(2026, 2, 20)),
         transactionRepository = writer,
         invoiceRepository = store,
         calculateInvoiceUseCase = OwesFixed(70.0),

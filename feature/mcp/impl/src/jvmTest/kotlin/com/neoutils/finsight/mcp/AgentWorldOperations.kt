@@ -29,6 +29,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.paymentObstacleOn
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
@@ -118,10 +119,9 @@ internal class WorldPayInvoice(
         val invoice = ensureNotNull(invoiceRepository.getInvoiceById(invoiceId)) {
             InvoiceException(InvoiceError.NotFound)
         }
-        ensure(invoice.isPayable) { InvoiceException(InvoiceError.CannotPayOpenInvoice) }
-        ensure(paidAt >= invoice.closingDate) { InvoiceException(InvoiceError.PaymentDateBeforeClosing) }
-        ensure(paidAt <= invoice.dueDate) { InvoiceException(InvoiceError.PaymentDateAfterDue) }
-        ensure(paidAt <= clock.today()) { InvoiceException(InvoiceError.PaymentDateInFuture) }
+        invoice.paymentObstacleOn(date = paidAt, today = clock.today())?.let {
+            raise(InvoiceException(it))
+        }
 
         invoice.copy(status = Invoice.Status.PAID, paidAt = paidAt)
             .also { invoiceRepository.update(it) }
@@ -137,6 +137,7 @@ internal class WorldPayInvoice(
  * boundary's to place.
  */
 internal class WorldPayInvoicePayment(
+    private val clock: Clock,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
@@ -157,7 +158,9 @@ internal class WorldPayInvoicePayment(
         val account = ensureNotNull(accountRepository.getAccountById(accountId)) {
             AccountException(AccountError.NOT_FOUND)
         }
-        ensure(invoice.isPayable) { InvoiceException(InvoiceError.InvoiceNotClosed) }
+        // The same obstacle production reads, and read here for the same reason: before the
+        // posting, so a refusal cannot arrive once the money has already left.
+        invoice.paymentObstacleOn(date = date, today = clock.today())?.let { raise(InvoiceException(it)) }
 
         val owed = calculateInvoice(invoice)
         ensure(owed > 0.0) { InvoiceException(InvoiceError.InvoiceNotInDebt) }

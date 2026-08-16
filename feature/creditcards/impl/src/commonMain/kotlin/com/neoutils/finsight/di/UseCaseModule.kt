@@ -85,6 +85,7 @@ val useCaseModules = module {
         PayInvoicePaymentUseCaseImpl(
             harvestExchangeRate = get(),
             accountRepository = get(),
+            clock = get(),
             transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),

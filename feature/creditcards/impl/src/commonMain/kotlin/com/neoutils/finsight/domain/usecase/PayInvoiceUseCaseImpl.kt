@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.extension.paymentObstacleOn
 import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
@@ -32,20 +33,11 @@ class PayInvoiceUseCaseImpl(
             InvoiceException(InvoiceError.NotFound)
         }
 
-        ensure(invoice.isPayable) {
-            InvoiceException(InvoiceError.CannotPayOpenInvoice)
-        }
-
-        ensure(paidAt >= invoice.closingDate) {
-            InvoiceException(InvoiceError.PaymentDateBeforeClosing)
-        }
-
-        ensure(paidAt <= invoice.dueDate) {
-            InvoiceException(InvoiceError.PaymentDateAfterDue)
-        }
-
-        ensure(paidAt <= currentDate) {
-            InvoiceException(InvoiceError.PaymentDateInFuture)
+        // The one owner of "may this invoice be paid on this date", read here and read again by
+        // the operation that posts the payment — before it posts anything, so a refusal cannot
+        // arrive after the money has already left.
+        invoice.paymentObstacleOn(date = paidAt, today = currentDate)?.let {
+            raise(InvoiceException(it))
         }
 
         invoice.copy(

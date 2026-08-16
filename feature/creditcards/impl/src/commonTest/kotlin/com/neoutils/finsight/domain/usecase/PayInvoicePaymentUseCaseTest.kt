@@ -16,6 +16,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.plus
+import kotlinx.datetime.minus
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -46,6 +49,7 @@ class PayInvoicePaymentUseCaseTest {
         writer: RecordingTransactionWriter,
         owed: Map<Long, Double>,
     ) = PayInvoicePaymentUseCaseImpl(
+        clock = StoppedClock(LocalDate(2026, 2, 20)),
         transactionRepository = writer,
         invoiceRepository = store,
         calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed)),
@@ -121,7 +125,7 @@ class PayInvoicePaymentUseCaseTest {
         val result = useCase(store, writer, owed = mapOf(100L to 70.0))(open.id, paymentDay, account)
 
         val error = assertIs<InvoiceException>(result.leftOrNull())
-        assertEquals(InvoiceError.InvoiceNotClosed, error.error)
+        assertEquals(InvoiceError.CannotPayOpenInvoice, error.error)
         assertNull(writer.captured, "nothing is written for a refusal")
     }
 
@@ -156,5 +160,74 @@ class PayInvoicePaymentUseCaseTest {
 
         assertEquals(InvoiceError.NotFound, (result.leftOrNull() as InvoiceException).error)
         assertNull(writer.captured)
+    }
+    /**
+     * **A refusal has to mean nothing happened.**
+     *
+     * Paying is two writes — the posting that takes the money out, and the invoice marked paid —
+     * and what refuses the payment used to be discovered inside the second one. The first had
+     * already run: the account came up short by a payment the app reported as refused, with no
+     * compensating write and a log entry saying it had not gone through.
+     */
+    @Test
+    fun `a payment dated before the invoice closed writes nothing at all`() = runTest {
+        val store = RecordingInvoiceStore(closed)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(closed.dimensionId!! to 70.0))(
+            invoiceId = closed.id,
+            date = closed.closingDate.minus(1, DateTimeUnit.DAY),
+            accountId = account.id,
+        )
+
+        assertEquals(
+            InvoiceError.PaymentDateBeforeClosing,
+            (result.leftOrNull() as InvoiceException).error,
+        )
+        assertNull(writer.captured, "the money left the account on a payment that was refused")
+        assertTrue(store.updates.isEmpty(), "the invoice was touched by a payment that was refused")
+    }
+
+    @Test
+    fun `a payment dated after the due date writes nothing at all`() = runTest {
+        val store = RecordingInvoiceStore(closed)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(closed.dimensionId!! to 70.0))(
+            invoiceId = closed.id,
+            date = closed.dueDate.plus(1, DateTimeUnit.DAY),
+            accountId = account.id,
+        )
+
+        assertEquals(
+            InvoiceError.PaymentDateAfterDue,
+            (result.leftOrNull() as InvoiceException).error,
+        )
+        assertNull(writer.captured, "the money left the account on a payment that was refused")
+    }
+
+    /**
+     * `Invoice.isPayable` owns which statuses accept a payment, and it accepts a retroactive
+     * invoice. Restating that as `status == CLOSED` here made a bill the domain is willing to
+     * settle unpayable through this path alone.
+     */
+    @Test
+    fun `a retroactive invoice is payable, as the domain says it is`() = runTest {
+        val retroactive = testInvoice(
+            openingMonth = YearMonth(2026, 1),
+            status = Invoice.Status.RETROACTIVE,
+            card = card,
+        )
+        val store = RecordingInvoiceStore(retroactive)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(retroactive.dimensionId!! to 70.0))(
+            invoiceId = retroactive.id,
+            date = paymentDay,
+            accountId = account.id,
+        )
+
+        assertTrue(result.isRight(), "the domain allows paying a retroactive invoice")
+        assertNotNull(writer.captured, "the payment was not posted")
     }
 }

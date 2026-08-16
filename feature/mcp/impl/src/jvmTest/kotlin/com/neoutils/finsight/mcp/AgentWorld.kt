@@ -452,6 +452,7 @@ internal class AgentWorld(
         createInvoice = createInvoice,
         deleteFutureInvoice = WorldDeleteFutureInvoice(invoiceRepository, transactionRepository),
         payInvoicePayment = WorldPayInvoicePayment(
+            clock = clock,
             transactionRepository = transactionRepository,
             invoiceRepository = invoiceRepository,
             accountRepository = accountRepository,

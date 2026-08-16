@@ -18,10 +18,14 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.paymentObstacleOn
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class PayInvoicePaymentUseCaseImpl(
+    private val clock: Clock,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
@@ -56,8 +60,17 @@ class PayInvoicePaymentUseCaseImpl(
             AccountException(AccountError.NOT_FOUND)
         }
 
-        ensure(invoice.status == Invoice.Status.CLOSED) {
-            InvoiceException(InvoiceError.InvoiceNotClosed)
+        // **Asked before anything is written, and this order is the rule.** Marking the invoice
+        // paid is a second write, and what refuses the payment used to be discovered inside it —
+        // after the posting had already taken the money out. There is no compensating write, so
+        // the account came up short by a payment the app reported as refused, and the log recorded
+        // it as such. Reading the obstacle here is what makes a refusal mean nothing happened.
+        //
+        // It is the same derivation `PayInvoiceUseCase` consults, not a copy: the status this used
+        // to check by hand was narrower than the domain's own answer, and rejected a retroactive
+        // invoice the ledger is willing to settle.
+        invoice.paymentObstacleOn(date = date, today = clock.today())?.let {
+            raise(InvoiceException(it))
         }
 
         val currentBillAmount = calculateInvoiceUseCase(invoice)

@@ -220,6 +220,7 @@ private class FlowsEntryRepository(
     private val asset: AssetMonthFlowsByCurrency,
     private val liability: LiabilityMonthFlowsByCurrency,
 ) : IEntryRepository {
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = asset
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = liability
 

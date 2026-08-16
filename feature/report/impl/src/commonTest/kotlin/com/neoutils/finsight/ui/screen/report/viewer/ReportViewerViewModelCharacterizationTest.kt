@@ -355,6 +355,7 @@ private class Fakes {
             flows[dimensionId] ?: DimensionFlowsByCurrency.zero
 
         override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+        override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
         override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
         override suspend fun totalsByDimensionByCurrency(
             nominalType: AccountType,

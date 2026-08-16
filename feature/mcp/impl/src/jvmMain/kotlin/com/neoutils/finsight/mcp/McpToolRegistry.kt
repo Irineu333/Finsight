@@ -1,5 +1,16 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.mcp.tool.GetBalanceTool
+import com.neoutils.finsight.mcp.tool.GetBudgetProgressTool
+import com.neoutils.finsight.mcp.tool.GetCardOverviewTool
+import com.neoutils.finsight.mcp.tool.GetCategoryIncomeTool
+import com.neoutils.finsight.mcp.tool.GetCategorySpendingTool
+import com.neoutils.finsight.mcp.tool.GetMonthSummaryTool
+import com.neoutils.finsight.mcp.tool.GetNetWorthTool
+import com.neoutils.finsight.mcp.tool.GetPendingRecurringTool
+import com.neoutils.finsight.mcp.tool.GetReportStatsTool
+import com.neoutils.finsight.mcp.tool.GetSpendingBreakdownTool
+
 /**
  * The tools the running server is given — the single place production assembles them.
  *
@@ -12,7 +23,71 @@ package com.neoutils.finsight.mcp
  * [McpSurface.offered]; either edit alone fails `McpSurfaceIsClosedTest`, which is what makes a new
  * tool a decision rather than a side effect of writing one.
  *
- * Empty today: the families are built in the changes that follow, and a server with no tools still
- * speaks the protocol and answers `tools/list` with the truth about itself.
+ * The families are built one at a time, so this list grows in steps. What is here is family 1, the
+ * questions: the app calculates and the agent receives the number.
  */
-internal fun mcpTools(): List<McpTool> = emptyList()
+internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
+    GetBalanceTool(
+        clock = deps.clock,
+        calculateBalance = deps.calculateBalance,
+        consolidateMoney = deps.consolidateMoney,
+        accountRepository = deps.accountRepository,
+    ),
+    GetNetWorthTool(
+        clock = deps.clock,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetMonthSummaryTool(
+        clock = deps.clock,
+        entryRepository = deps.entryRepository,
+        categoryRepository = deps.categoryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetCategorySpendingTool(
+        clock = deps.clock,
+        calculateCategorySpending = deps.calculateCategorySpending,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetCategoryIncomeTool(
+        clock = deps.clock,
+        calculateCategoryIncome = deps.calculateCategoryIncome,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetSpendingBreakdownTool(
+        clock = deps.clock,
+        calculateCategorySpending = deps.calculateCategorySpending,
+        calculateCategoryIncome = deps.calculateCategoryIncome,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetBudgetProgressTool(
+        clock = deps.clock,
+        budgetRepository = deps.budgetRepository,
+        recurringRepository = deps.recurringRepository,
+        transactionRepository = deps.transactionRepository,
+        calculateBudgetProgress = deps.calculateBudgetProgress,
+    ),
+    GetPendingRecurringTool(
+        clock = deps.clock,
+        recurringRepository = deps.recurringRepository,
+        occurrenceRepository = deps.recurringOccurrenceRepository,
+        getPendingRecurring = deps.getPendingRecurring,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetCardOverviewTool(
+        creditCardRepository = deps.creditCardRepository,
+        invoiceRepository = deps.invoiceRepository,
+        calculateAvailableLimit = deps.calculateAvailableLimit,
+        calculateInvoice = deps.calculateInvoice,
+    ),
+    GetReportStatsTool(
+        clock = deps.clock,
+        accountRepository = deps.accountRepository,
+        creditCardRepository = deps.creditCardRepository,
+        calculateReportStats = deps.calculateReportStats,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+)

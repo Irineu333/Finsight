@@ -109,16 +109,16 @@
 
 ## 8. Família Perguntas — permissão "ler"
 
-- [ ] 8.1 `get_balance`, `get_month_summary`.
-- [ ] 8.2 `get_category_spending`, `get_category_income`, `get_spending_breakdown` — com o grupo sem categoria como linha própria.
-- [ ] 8.3 `get_budget_progress` — compondo as três listas que `CalculateBudgetProgressUseCase` exige.
-- [ ] 8.4 `get_pending_recurring`, `get_card_overview`, `get_report_stats`.
-- [ ] 8.4a `get_net_worth` — ASSET menos LIABILITY, por moeda e consolidado. Hoje `IEntryRepository` não expõe essa leitura *"porque não tem consumidor em produção"*; o agente é esse consumidor, e `EntryDao.netWorthCents()` já existe agrupado por moeda.
-- [ ] 8.4b Comparação entre períodos em `get_month_summary` (parâmetro do mês a comparar), devolvendo as variações já calculadas — sem deixar a subtração para o agente.
-- [ ] 8.4c Toda figura agregada declara o seu perímetro, na descrição e na resposta. `get_balance` diz que a dívida de cartão não está descontada e nomeia `get_net_worth`.
-- [ ] 8.4d Todo período responde se está em andamento e até que data está apurado; uma comparação marca qual dos lados é o incompleto.
-- [ ] 8.5 Teste de que o total de um mês com transferência entre contas próprias e pagamento de fatura não os inclui.
-- [ ] 8.6 Teste de que uma figura que atravessa contas em moedas diferentes traz decomposição, consolidado e data da taxa.
+- [x] 8.1 `get_balance`, `get_month_summary`.
+- [x] 8.2 `get_category_spending`, `get_category_income`, `get_spending_breakdown` — com o grupo sem categoria como linha própria.
+- [x] 8.3 `get_budget_progress` — compondo as três listas que `CalculateBudgetProgressUseCase` exige.
+- [x] 8.4 `get_pending_recurring`, `get_card_overview`, `get_report_stats`.
+- [x] 8.4a `get_net_worth` — ASSET menos LIABILITY, por moeda e consolidado. Hoje `IEntryRepository` não expõe essa leitura *"porque não tem consumidor em produção"*; o agente é esse consumidor, e `EntryDao.netWorthCents()` já existe agrupado por moeda.
+- [x] 8.4b Comparação entre períodos em `get_month_summary` (parâmetro do mês a comparar), devolvendo as variações já calculadas — sem deixar a subtração para o agente.
+- [x] 8.4c Toda figura agregada declara o seu perímetro, na descrição e na resposta. `get_balance` diz que a dívida de cartão não está descontada e nomeia `get_net_worth`.
+- [x] 8.4d Todo período responde se está em andamento e até que data está apurado; uma comparação marca qual dos lados é o incompleto.
+- [x] 8.5 Teste de que o total de um mês com transferência entre contas próprias e pagamento de fatura não os inclui.
+- [x] 8.6 Teste de que uma figura que atravessa contas em moedas diferentes traz decomposição, consolidado e data da taxa.
 
 ## 9. Família Catálogo — permissão "ler"
 

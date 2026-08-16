@@ -19,16 +19,17 @@ import kotlin.test.assertTrue
  * It is the same shape as `AgentInstructionsTest`, which compares `AGENTS.md` with the skills on
  * disk for the same reason: a list nothing checks drifts, and the drift is silent.
  *
- * **What it holds up today, before a single tool exists.** [McpSurface.offered] is empty and so is
- * [mcpTools], so the first check passes on two empty sets — and it starts biting on the very first
- * tool: registering one without naming it in [McpSurface.offered] fails, and naming one without
- * registering it fails too. Everything else here is already load-bearing: the fifty-six names, the
- * axis each of them sits on, and the capabilities that are withheld rather than merely unbuilt.
+ * The registry is asked for the **production** list — [mcpTools] over a dependency set the test
+ * assembles — rather than for a list of the test's own, which would be free to drift away from the
+ * one the socket announces.
  */
 class McpSurfaceIsClosedTest {
 
     private val repoRoot: File = generateSequence(File("").absoluteFile) { it.parentFile }
         .first { File(it, "settings.gradle.kts").exists() }
+
+    /** The tools the desktop would announce, built exactly the way the desktop builds them. */
+    private fun announcedTools(): List<McpTool> = AgentWorld().use { it.tools() }
 
     // ----------------------------------------------------------------------------------
     // The surface is closed
@@ -36,7 +37,7 @@ class McpSurfaceIsClosedTest {
 
     @Test
     fun `the tools the server announces are exactly the tools declared`() {
-        val announced = mcpTools().map { it.name }.toSortedSet()
+        val announced = announcedTools().map { it.name }.toSortedSet()
         val declared = McpSurface.offered.map { it.wireName }.toSortedSet()
 
         assertEquals(
@@ -55,7 +56,7 @@ class McpSurfaceIsClosedTest {
     @Test
     fun `a name the surface never decided on cannot be announced`() {
         val decided = McpToolName.entries.map { it.wireName }.toSet()
-        val strangers = mcpTools().map { it.name }.filterNot { it in decided }
+        val strangers = announcedTools().map { it.name }.filterNot { it in decided }
 
         assertEquals(
             emptyList(),

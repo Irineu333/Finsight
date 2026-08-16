@@ -64,6 +64,60 @@ internal suspend fun ConsolidateMoneyUseCase.agentFigure(
 }
 
 /**
+ * A figure the reducer **already built against a nominated currency**, translated as it stands.
+ *
+ * The one case is a budget: its limit is denominated once, when the budget is created, and the
+ * spending is re-expressed against *that* rather than against the base (design D13). What comes back
+ * is already the reduction — `ReducedAmount.asFigure` — so there is nothing left to reduce and
+ * nothing here reduces anything.
+ *
+ * **[AgentFigure.byCurrency] is the reduction's own terms here**, which is a different decomposition
+ * from the one [agentFigure] publishes and is the right one for this figure: the part that reached
+ * the limit's currency is a single term by construction, and each part no rate could price stands
+ * beside it, exact, in its own currency. Publishing the raw ledger terms instead would decompose a
+ * figure the user never reads that way.
+ */
+internal fun ConsolidatedAmount.agentFigure(): AgentFigure {
+    val stated = statedTerm()
+    val unreached = terms.filter { it !== stated }
+
+    return AgentFigure(
+        amount = stated?.value,
+        currency = stated?.currency,
+        byCurrency = terms.map { AgentMoney(currency = it.currency, amount = it.value) },
+        isApproximate = isApproximate,
+        rateDate = asOf,
+        limitation = unreached
+            .takeIf { it.isNotEmpty() }
+            ?.let { unpriced ->
+                AgentFigureLimitation(
+                    missingRateFor = unpriced.map { it.currency },
+                    explanation = explanationOf(
+                        missing = unpriced.map { it.currency },
+                        on = asOf,
+                        hasNumber = stated != null,
+                    ),
+                )
+            },
+    )
+}
+
+/**
+ * A single denominated amount the domain already resolved — a budget's limit, what is left of it —
+ * as a figure of one term.
+ *
+ * It carries the approximation the amount carries rather than asserting exactness: a remainder
+ * computed from spending a rate touched is approximate, and a figure that dropped that would read as
+ * a number the app is sure of.
+ */
+internal fun DisplayAmount.agentFigure(): AgentFigure = AgentFigure(
+    amount = value,
+    currency = currency,
+    byCurrency = listOf(AgentMoney(currency = currency, amount = value)),
+    isApproximate = isApproximate,
+)
+
+/**
  * The term that answers for the figure as a number: the only one when the reduction produced one,
  * and otherwise the base term — the one everything that *could* be reduced was reduced into.
  *
@@ -75,14 +129,15 @@ private fun ConsolidatedAmount.statedTerm(): DisplayAmount? =
 
 private fun explanationOf(
     missing: List<String>,
-    on: LocalDate,
+    on: LocalDate?,
     hasNumber: Boolean,
 ): String {
     val consequence =
         if (hasNumber) "`amount` covers only the part that could be converted"
         else "this figure has no single number"
+    val asOfText = if (on == null) "on this figure's date" else "on $on"
 
-    return "The local exchange-rate archive holds no rate on $on for " +
+    return "The local exchange-rate archive holds no rate $asOfText for " +
         "${missing.joinToString(", ")}, so $consequence. The parts are in `by_currency`, each " +
         "exact in its own currency. Report them as they are: adding them would require a rate " +
         "the app does not have."

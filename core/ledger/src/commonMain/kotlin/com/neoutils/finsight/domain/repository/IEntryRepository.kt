@@ -259,15 +259,26 @@ interface IEntryRepository {
         yieldDimensionId: Long? = null,
     ): AssetMonthFlowsByCurrency
 
-    // No net-worth read here, deliberately (task 4.11). `Σ ASSET − Σ LIABILITY` is a
-    // real capability and `ledger-reporting` requires it per currency — but the figure
-    // the dashboard shows comes through `CalculateBalanceUseCase(accountId = null)`,
-    // which is a different read (ASSET only, up to a target month). A member with no
-    // production caller is a signature 21 fakes have to carry, so the read lives where
-    // it does have one: `EntryDao.netWorthCents()`, already grouped by currency and
-    // consumed by the migration-parity checks. Giving it a screen is its own change
-    // (design D6 defers exposing the exchange result), and reinstating a one-line
-    // member then is trivial.
+    /**
+     * Net worth per currency: `Σ ASSET + Σ LIABILITY`, over every date, with the
+     * conversion accounts left out.
+     *
+     * **It is a sum and not a subtraction.** A liability is stored in credit, so the
+     * debt is already negative and adding the two natures is what "assets minus what
+     * is owed" means in the ledger's own sign. There is no sign rule of its own here,
+     * exactly as in [naturalBalanceUpToByCurrency].
+     *
+     * **CONVERSION stays out, and that is the point.** With the rate at 5.50, a
+     * transfer of R$ 550 → US$ 100 leaves `−550 BRL` and `+100 USD` in the user's own
+     * accounts, which consolidate to zero: net worth does not move, as it should.
+     * Including the conversion accounts would count the exchange result twice.
+     *
+     * It is a **different read** from [balanceUpToByCurrency], which answers over ASSET
+     * alone and up to a target month — the figure the dashboard shows. The two are
+     * different numbers about the same money, and a consumer that confused them would
+     * report card debt as if it were not owed.
+     */
+    suspend fun netWorthByCurrency(): MoneyByCurrency
 
     /**
      * Natural balance per dimension of the [nominalType] legs in a date range,

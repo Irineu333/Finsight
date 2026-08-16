@@ -19,11 +19,24 @@ internal object McpSurface {
     /**
      * The tools the server announces today.
      *
-     * Empty while the surface is being built. Each family adds its own names here in the same
-     * change that registers the tools, which is what keeps the two from drifting: an addition on
-     * either side alone fails the test.
+     * The surface is built one family at a time, and each family adds its own names here in the
+     * same change that registers the tools — which is what keeps the two from drifting: an addition
+     * on either side alone fails the test.
+     *
+     * Family 1, the questions, is here: the app calculates and the agent receives the number.
      */
-    val offered: Set<McpToolName> = emptySet()
+    val offered: Set<McpToolName> = setOf(
+        McpToolName.GET_BALANCE,
+        McpToolName.GET_NET_WORTH,
+        McpToolName.GET_MONTH_SUMMARY,
+        McpToolName.GET_CATEGORY_SPENDING,
+        McpToolName.GET_CATEGORY_INCOME,
+        McpToolName.GET_SPENDING_BREAKDOWN,
+        McpToolName.GET_BUDGET_PROGRESS,
+        McpToolName.GET_PENDING_RECURRING,
+        McpToolName.GET_CARD_OVERVIEW,
+        McpToolName.GET_REPORT_STATS,
+    )
 
     /** What the app can do that the surface does not reach, and why each one is out. */
     val exclusions: List<McpSurfaceExclusion> = listOf(

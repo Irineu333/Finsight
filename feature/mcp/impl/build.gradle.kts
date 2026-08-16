@@ -38,6 +38,17 @@ kotlin {
             implementation(projects.core.model)
             implementation(projects.core.ui)
             implementation(libs.kotlinx.datetime)
+
+            // The domain the tools consume. Every one of these is a feature's `api`: the use cases
+            // that own the rules and the repositories that hold the facades. Nothing of an `impl`
+            // is reachable from here, which is what keeps a tool from re-deciding what a screen
+            // decides — it can only call the same owner the screen calls.
+            implementation(projects.feature.accounts.api)
+            implementation(projects.feature.budgets.api)
+            implementation(projects.feature.categories.api)
+            implementation(projects.feature.creditcards.api)
+            implementation(projects.feature.recurring.api)
+            implementation(projects.feature.report.api)
         }
         jvmTest.dependencies {
             // A `Settings` the test states, never the developer's own: the tests below turn

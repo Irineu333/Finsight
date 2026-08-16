@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -63,6 +64,7 @@ import com.neoutils.finsight.resources.mcp_enable_description
 import com.neoutils.finsight.resources.mcp_enable_title
 import com.neoutils.finsight.resources.mcp_instructions_body
 import com.neoutils.finsight.resources.mcp_instructions_copy
+import com.neoutils.finsight.resources.mcp_instructions_json_note
 import com.neoutils.finsight.resources.mcp_instructions_stdio_note
 import com.neoutils.finsight.resources.mcp_instructions_title
 import com.neoutils.finsight.resources.mcp_permission_granted_count
@@ -312,6 +314,31 @@ private fun ConnectionCard(
 
     val copy = rememberCopy()
     val instructions = connectionSnippet(address = uiState.address, token = uiState.token)
+
+    Text(
+        text = stringResource(Res.string.mcp_instructions_json_note),
+        modifier = Modifier.testTag("mcp_instructions_json_note"),
+        style = typography.bodySmall,
+        color = colorScheme.onSurfaceVariant,
+    )
+
+    // Shown and not merely copyable: a block the user can read is one they can adapt when their
+    // client words the transport differently, and the values above are what they adapt it from.
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
+    ) {
+        Text(
+            text = instructions,
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(12.dp)
+                .testTag("mcp_instructions_json"),
+            style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+        )
+    }
 
     OutlinedButton(
         onClick = { copy(instructions) },
@@ -608,11 +635,19 @@ private fun rememberCopy(): (String) -> Unit {
  * header — so pasting it into whichever configuration file a client happens to have is a matter of
  * putting each value where that client keeps it.
  */
-private fun connectionSnippet(address: String, token: String?): String = buildString {
-    appendLine("Transport: HTTP (streamable)")
-    appendLine("URL: $address")
-    appendLine("Header: Authorization: Bearer ${token.orEmpty()}")
-}
+private fun connectionSnippet(address: String, token: String?): String = """
+    {
+      "mcpServers": {
+        "finsight": {
+          "type": "http",
+          "url": "$address",
+          "headers": {
+            "Authorization": "Bearer ${token.orEmpty()}"
+          }
+        }
+      }
+    }
+""".trimIndent()
 
 private val McpPermissionAxis.titleRes
     get() = when (this) {

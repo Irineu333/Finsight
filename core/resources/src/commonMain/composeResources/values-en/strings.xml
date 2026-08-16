@@ -1008,6 +1008,7 @@
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_reveal">Show the token</string>
     <string name="mcp_token_hide">Hide the token</string>
+    <string name="mcp_instructions_json_note">Most clients accept the configuration below. The format is their convention, not the protocol's — if yours uses another, build it from the address and token above.</string>
     <string name="mcp_port_title">Change the port</string>
     <string name="mcp_token_regenerate">Mint a new token</string>
     <string name="mcp_token_regenerate_title">Mint a new token?</string>

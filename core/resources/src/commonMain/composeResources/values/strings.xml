@@ -1009,6 +1009,7 @@
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_reveal">Mostrar o token</string>
     <string name="mcp_token_hide">Ocultar o token</string>
+    <string name="mcp_instructions_json_note">A maioria dos clientes aceita a configuração abaixo. O formato é convenção deles, não do protocolo — se o seu usar outro, monte-o com o endereço e o token acima.</string>
     <string name="mcp_port_title">Trocar a porta</string>
     <string name="mcp_token_regenerate">Gerar um token novo</string>
     <string name="mcp_token_regenerate_title">Gerar um token novo?</string>

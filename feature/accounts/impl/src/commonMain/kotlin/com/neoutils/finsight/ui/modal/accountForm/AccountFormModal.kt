@@ -28,8 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import com.neoutils.finsight.ui.component.FinsightSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -339,12 +338,9 @@ private fun DefaultAccountSelector(
                 )
             }
 
-            Switch(
+            FinsightSwitch(
                 checked = checked,
                 enabled = canChange,
-                colors = SwitchDefaults.colors(
-                    uncheckedThumbColor = Color.LightGray,
-                ),
                 onCheckedChange = onCheckedChange,
             )
         }
@@ -419,11 +415,8 @@ private fun YieldsInterestSelector(
                 )
             }
 
-            Switch(
+            FinsightSwitch(
                 checked = checked,
-                colors = SwitchDefaults.colors(
-                    uncheckedThumbColor = Color.LightGray,
-                ),
                 onCheckedChange = onCheckedChange,
                 modifier = Modifier.testTag("account_form_yield"),
             )

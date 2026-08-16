@@ -1,6 +1,8 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.error.CategoryError
 import com.neoutils.finsight.domain.error.RetireError
+import com.neoutils.finsight.domain.exception.CategoryException
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategoryRetirability
 import com.neoutils.finsight.domain.model.SystemCategoryKey
@@ -32,7 +34,8 @@ class ResolveCategoryRetirabilityUseCaseTest {
         hasBudget: Boolean = false,
         hasRecurring: Boolean = false,
         hasYieldingAccount: Boolean = false,
-    ) = ResolveCategoryRetirabilityUseCase(
+    ) = ResolveCategoryRetirabilityUseCaseImpl(
+        categoryRepository = RecordingCategoryRepository(existing = listOf(category, yieldCategory)),
         entryRepository = FakeEntries(hasEntries),
         budgetRepository = FakeBudget(hasBudget),
         recurringRepository = FakeRecurring(hasRecurring),
@@ -41,31 +44,37 @@ class ResolveCategoryRetirabilityUseCaseTest {
 
     @Test
     fun `no dependents is deletable`() = runTest {
-        assertEquals(CategoryRetirability.Deletable, useCase()(category))
+        assertEquals(CategoryRetirability.Deletable, useCase()(category).getOrNull())
     }
 
     @Test
     fun `movement forces archive with HAS_TRANSACTIONS`() = runTest {
-        val result = assertIs<CategoryRetirability.MustArchive>(useCase(hasEntries = true)(category))
+        val result = assertIs<CategoryRetirability.MustArchive>(
+            useCase(hasEntries = true)(category).getOrNull()
+        )
         assertEquals(RetireError.HAS_TRANSACTIONS, result.reason)
     }
 
     @Test
     fun `a budget forces archive with HAS_BUDGET`() = runTest {
-        val result = assertIs<CategoryRetirability.MustArchive>(useCase(hasBudget = true)(category))
+        val result = assertIs<CategoryRetirability.MustArchive>(
+            useCase(hasBudget = true)(category).getOrNull()
+        )
         assertEquals(RetireError.HAS_BUDGET, result.reason)
     }
 
     @Test
     fun `a recurring forces archive with HAS_RECURRING`() = runTest {
-        val result = assertIs<CategoryRetirability.MustArchive>(useCase(hasRecurring = true)(category))
+        val result = assertIs<CategoryRetirability.MustArchive>(
+            useCase(hasRecurring = true)(category).getOrNull()
+        )
         assertEquals(RetireError.HAS_RECURRING, result.reason)
     }
 
     @Test
     fun `a declared yielding account forces archive with HAS_YIELDING_ACCOUNTS`() = runTest {
         val result = assertIs<CategoryRetirability.MustArchive>(
-            useCase(hasYieldingAccount = true)(yieldCategory)
+            useCase(hasYieldingAccount = true)(yieldCategory).getOrNull()
         )
         assertEquals(RetireError.HAS_YIELDING_ACCOUNTS, result.reason)
     }
@@ -74,12 +83,15 @@ class ResolveCategoryRetirabilityUseCaseTest {
     fun `with the last declaration turned off the yield category is deletable again`() = runTest {
         // The protection is a dependent, not an immutability: being a system category
         // grants nothing by itself.
-        assertEquals(CategoryRetirability.Deletable, useCase()(yieldCategory))
+        assertEquals(CategoryRetirability.Deletable, useCase()(yieldCategory).getOrNull())
     }
 
     @Test
     fun `an ordinary category is unaffected by a yielding account`() = runTest {
-        assertEquals(CategoryRetirability.Deletable, useCase(hasYieldingAccount = true)(category))
+        assertEquals(
+            CategoryRetirability.Deletable,
+            useCase(hasYieldingAccount = true)(category).getOrNull(),
+        )
     }
 
     @Test
@@ -87,8 +99,25 @@ class ResolveCategoryRetirabilityUseCaseTest {
         // No new outcome for the delete-vs-archive pair: it is the same MustArchive
         // every other dependent produces, and the first guard tripped names it.
         val result = assertIs<CategoryRetirability.MustArchive>(
-            useCase(hasEntries = true)(yieldCategory)
+            useCase(hasEntries = true)(yieldCategory).getOrNull()
         )
         assertEquals(RetireError.HAS_TRANSACTIONS, result.reason)
+    }
+
+    @Test
+    fun `an identity that matches no category is refused`() = runTest {
+        // Delete-or-archive answers for a category that exists; a missing one is
+        // neither, so it is a refusal rather than a third outcome.
+        val error = assertIs<CategoryException>(useCase()(404L).leftOrNull())
+        assertEquals(CategoryError.NOT_FOUND, error.error)
+    }
+
+    @Test
+    fun `the aggregate form answers exactly what the id form answers`() = runTest {
+        assertEquals(useCase()(category.id), useCase()(category))
+        assertEquals(
+            useCase(hasBudget = true)(category.id),
+            useCase(hasBudget = true)(category),
+        )
     }
 }

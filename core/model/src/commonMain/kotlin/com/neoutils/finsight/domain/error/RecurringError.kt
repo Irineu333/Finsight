@@ -6,10 +6,21 @@ import com.neoutils.finsight.resources.recurring_error_amount_required
 import com.neoutils.finsight.resources.recurring_error_amount_zero
 import com.neoutils.finsight.resources.recurring_error_currency_mismatch
 import com.neoutils.finsight.resources.recurring_error_invalid_day
+import com.neoutils.finsight.resources.recurring_error_not_found
 import com.neoutils.finsight.resources.recurring_error_title_or_category_required
 import com.neoutils.finsight.util.UiText
 
 enum class RecurringError(val message: String) {
+
+    /**
+     * The identity the operation was given matches no recurring.
+     *
+     * The use cases resolve the template when the operation runs rather than trusting
+     * what the caller holds, so this is the answer whenever that resolution finds
+     * nothing — and it is given before anything is written.
+     */
+    NOT_FOUND(message = "Recurring not found."),
+
     AMOUNT_REQUIRED(message = "Amount is required."),
     AMOUNT_ZERO(message = "Amount cannot be zero."),
     TITLE_OR_CATEGORY_REQUIRED(message = "Title or category is required."),
@@ -33,6 +44,7 @@ enum class RecurringError(val message: String) {
 }
 
 fun RecurringError.toUiText() = when (this) {
+    RecurringError.NOT_FOUND -> UiText.Res(Res.string.recurring_error_not_found)
     RecurringError.AMOUNT_REQUIRED -> UiText.Res(Res.string.recurring_error_amount_required)
     RecurringError.AMOUNT_ZERO -> UiText.Res(Res.string.recurring_error_amount_zero)
     RecurringError.TITLE_OR_CATEGORY_REQUIRED -> UiText.Res(Res.string.recurring_error_title_or_category_required)

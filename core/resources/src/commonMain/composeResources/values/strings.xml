@@ -20,6 +20,7 @@
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
+    <string name="category_error_not_found">Categoria não encontrada.</string>
 
     <!-- Budget errors -->
     <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
@@ -772,6 +773,7 @@
     <string name="report_output_error_unknown">Ocorreu um erro inesperado.</string>
 
     <!-- Recurring Errors -->
+    <string name="recurring_error_not_found">Recorrência não encontrada.</string>
     <string name="recurring_error_amount_required">O valor é obrigatório.</string>
     <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
     <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>

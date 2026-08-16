@@ -7,15 +7,23 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CreateCategoryUseCase
+import com.neoutils.finsight.domain.usecase.CreateCategoryUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.categories.impl.CategoriesEntryImpl
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteCategoryUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCategoryUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCaseImpl
 import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
@@ -50,6 +58,18 @@ val categoriesModule = module {
     }
     factory { ValidateCategoryNameUseCase(repository = get()) }
     factory { CreateDefaultCategoriesUseCase(categoryRepository = get()) }
+    factory<CreateCategoryUseCase> {
+        CreateCategoryUseCaseImpl(
+            categoryRepository = get(),
+            validateCategoryName = get(),
+        )
+    }
+    factory<UpdateCategoryUseCase> {
+        UpdateCategoryUseCaseImpl(
+            categoryRepository = get(),
+            validateCategoryName = get(),
+        )
+    }
 
     single<CategoriesEntry> { CategoriesEntryImpl() }
 
@@ -65,16 +85,19 @@ val categoriesModule = module {
         CategoryFormViewModel(
             category = it.getOrNull(),
             initialType = it.getOrNull(),
-            repository = get(),
+            createCategory = get(),
+            updateCategory = get(),
             validateCategoryName = get(),
             modalManager = get(),
             debounceManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
 
-    factory {
-        ResolveCategoryRetirabilityUseCase(
+    factory<ResolveCategoryRetirabilityUseCase> {
+        ResolveCategoryRetirabilityUseCaseImpl(
+            categoryRepository = get(),
             entryRepository = get(),
             budgetRepository = get(),
             recurringRepository = get(),
@@ -82,21 +105,21 @@ val categoriesModule = module {
         )
     }
 
-    factory {
-        DeleteCategoryUseCase(
+    factory<DeleteCategoryUseCase> {
+        DeleteCategoryUseCaseImpl(
             categoryRepository = get(),
             resolveRetirability = get(),
         )
     }
 
-    factory {
-        ArchiveCategoryUseCase(
+    factory<ArchiveCategoryUseCase> {
+        ArchiveCategoryUseCaseImpl(
             categoryRepository = get(),
         )
     }
 
-    factory {
-        UnarchiveCategoryUseCase(
+    factory<UnarchiveCategoryUseCase> {
+        UnarchiveCategoryUseCaseImpl(
             categoryRepository = get(),
         )
     }

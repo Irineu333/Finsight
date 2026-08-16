@@ -18,12 +18,12 @@
 
 - [x] 2.1 Escrever a forma por id de `ArchiveAccountUseCase` e `DeleteAccountUseCase`, com a sobrecarga por agregado delegando na interface, e a recusa tipada de "não encontrado".
 - [x] 2.2 Idem para `AdjustBalanceUseCase` e `LaunchYieldUseCase`.
-- [ ] 2.3 Idem para `DeleteCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`.
+- [x] 2.3 Idem para `DeleteCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`.
 - [ ] 2.4 Idem para `DeleteTransactionUseCase`.
 - [ ] 2.5 Idem para `AdjustInvoiceUseCase`, `CreateInvoiceUseCase` e `GetOrCreateInvoiceForMonthUseCase`.
 - [ ] 2.6 Idem para `DeleteInstallmentUseCase`.
-- [ ] 2.7 Idem para `SkipRecurringUseCase`.
-- [ ] 2.8 Remover os cinco defaults derivados do agregado de `ConfirmRecurringUseCase` (D8) e ajustar `ConfirmRecurringViewModel`, que já passa os oito argumentos explicitamente. Escrever a forma por id.
+- [x] 2.7 Idem para `SkipRecurringUseCase`.
+- [x] 2.8 Remover os cinco defaults derivados do agregado de `ConfirmRecurringUseCase` (D8) e ajustar `ConfirmRecurringViewModel`, que já passa os oito argumentos explicitamente. Escrever a forma por id.
 - [ ] 2.9 Dar a `CalculateAvailableLimitUseCase` a forma plural — recebe as identidades dos cartões e devolve o mapa (D7) — e migrar a tela que hoje a chama em laço.
 - [ ] 2.10 Uniformizar `PayInvoicePaymentUseCase` e `AdvanceInvoicePaymentUseCase`, que hoje recebem `invoiceId: Long` e `account: Account` na mesma assinatura.
 - [ ] 2.11 Teste que percorre as interfaces de use case público e falha quando uma delas não oferece a forma por id, ou quando declara valor padrão derivado de outro parâmetro agregado.
@@ -35,8 +35,8 @@
 > migrado cria duas verdades sobre a mesma operação, que é o defeito que a mudança existe para
 > não introduzir.
 
-- [ ] 3.1 `CreateCategoryUseCase` e `UpdateCategoryUseCase`, com a validação, o `trim()` e o `createdAt` que hoje vivem em `CategoryFormViewModel:120-151`.
-- [ ] 3.2 Migrar `CategoryFormViewModel` para consumi-los; ele deixa de chamar `repository.insert/update`.
+- [x] 3.1 `CreateCategoryUseCase` e `UpdateCategoryUseCase`, com a validação, o `trim()` e o `createdAt` que hoje vivem em `CategoryFormViewModel:120-151`.
+- [x] 3.2 Migrar `CategoryFormViewModel` para consumi-los; ele deixa de chamar `repository.insert/update`.
 - [ ] 3.3 `CreateBudgetUseCase`, `UpdateBudgetUseCase` e `DeleteBudgetUseCase`, extraídos de `BudgetFormViewModel` e `DeleteBudgetViewModel`.
 - [ ] 3.4 Migrar os dois ViewModels de orçamento.
 - [ ] 3.5 `UpdateInstallmentUseCase` sobre `IInstallmentRepository.updateInstallment`.
@@ -51,10 +51,10 @@
 > regra se move; muda a visibilidade.
 
 - [x] 4.1 Promover os use cases de contas: `CreateAccountUseCase`, `UpdateAccountUseCase`, `AdjustBalanceUseCase`, `TransferBetweenAccountsUseCase`, `SetDefaultAccountUseCase`, `UnarchiveAccountUseCase`.
-- [ ] 4.2 Promover os de categorias: `ArchiveCategoryUseCase`, `UnarchiveCategoryUseCase`, `DeleteCategoryUseCase`, `ResolveCategoryRetirabilityUseCase`, e os dois criados em 3.1.
+- [x] 4.2 Promover os de categorias: `ArchiveCategoryUseCase`, `UnarchiveCategoryUseCase`, `DeleteCategoryUseCase`, `ResolveCategoryRetirabilityUseCase`, e os dois criados em 3.1.
 - [ ] 4.3 Promover os de cartão: `AddCreditCardUseCase`, `UpdateCreditCardUseCase`, `DeleteCreditCardUseCase`, `ArchiveCreditCardUseCase`, `UnarchiveCreditCardUseCase`, `CalculateAvailableLimitUseCase`.
 - [ ] 4.4 Promover os de fatura: `CreateInvoiceUseCase`, `OpenInvoiceUseCase`, `CloseInvoiceUseCase`, `PayInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `ReopenInvoiceUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `CalculateInvoiceUseCase`.
-- [ ] 4.5 Promover os de recorrência: `SaveRecurringUseCase`, `ConfirmRecurringUseCase`, `SkipRecurringUseCase`, `ArchiveRecurringUseCase`, `UnarchiveRecurringUseCase`, `DeleteRecurringUseCase`, `ResolveRecurringRetirabilityUseCase`.
+- [x] 4.5 Promover os de recorrência: `SaveRecurringUseCase`, `ConfirmRecurringUseCase`, `SkipRecurringUseCase`, `ArchiveRecurringUseCase`, `UnarchiveRecurringUseCase`, `DeleteRecurringUseCase`, `ResolveRecurringRetirabilityUseCase`.
 - [ ] 4.6 Promover os de orçamento e relatório: os três criados em 3.3 e `CalculateReportStatsUseCase`.
 - [ ] 4.7 Conferir que nenhuma interface promovida referencia tipo declarado em `impl` — a regra de `feature-entry-points` vale para toda a `api`.
 

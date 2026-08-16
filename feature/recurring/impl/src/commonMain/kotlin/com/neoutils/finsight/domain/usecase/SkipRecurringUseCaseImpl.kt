@@ -4,24 +4,34 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.error.RecurringError
+import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
-import kotlin.time.Instant
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-class SkipRecurringUseCase(
+class SkipRecurringUseCaseImpl(
+    private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
-) {
-    suspend operator fun invoke(
-        recurring: Recurring,
+) : SkipRecurringUseCase {
+
+    override suspend fun invoke(
+        recurringId: Long,
         date: LocalDate,
     ): Either<Throwable, Unit> = catch {
+        // Resolved here and not received: the cycle number is counted from the template's
+        // `createdAt`, so the occurrence is numbered off the recurring as it is at this
+        // instant rather than off a copy a screen loaded earlier.
+        val recurring = recurringRepository.getRecurringById(recurringId)
+            ?: throw RecurringException(RecurringError.NOT_FOUND)
+
         val yearMonth = date.yearMonth
         val cycleNumber = Instant
             .fromEpochMilliseconds(recurring.createdAt)

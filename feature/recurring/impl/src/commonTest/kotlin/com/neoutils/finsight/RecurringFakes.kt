@@ -42,11 +42,12 @@ class FakeCrashlytics : Crashlytics {
 }
 
 class FakeRecurringRepository(
+    stored: List<Recurring> = emptyList(),
     private val hasTransaction: Boolean = false,
     private val updateFailure: Throwable? = null,
 ) : IRecurringRepository {
 
-    val all = MutableStateFlow<List<Recurring>>(emptyList())
+    val all = MutableStateFlow(stored)
     private val byId = MutableSharedFlow<Recurring?>(replay = 1)
 
     val updated = mutableListOf<Recurring>()

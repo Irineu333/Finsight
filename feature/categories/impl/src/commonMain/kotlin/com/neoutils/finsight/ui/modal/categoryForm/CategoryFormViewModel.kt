@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.ui.modal.categoryForm
 
 import androidx.lifecycle.ViewModel
@@ -9,28 +7,29 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCategory
 import com.neoutils.finsight.domain.analytics.event.EditCategory
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.usecase.CreateCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.util.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class CategoryFormViewModel(
     private val category: Category?,
     private val initialType: Category.Type?,
-    private val repository: ICategoryRepository,
+    private val createCategory: CreateCategoryUseCase,
+    private val updateCategory: UpdateCategoryUseCase,
     private val validateCategoryName: ValidateCategoryNameUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val isEditMode = category != null
@@ -127,26 +126,28 @@ class CategoryFormViewModel(
         }
 
         if (category != null) {
-            repository.update(
-                category.copy(
-                    name = name.trim(),
-                    icon = CategoryLazyIcon(icon.value.key)
-                )
-            )
-            analytics.logEvent(EditCategory(name.trim(), category.type))
-            modalManager.dismissAll()
+            updateCategory(
+                categoryId = category.id,
+                name = name,
+                iconKey = icon.value.key,
+            ).onLeft {
+                crashlytics.recordException(it)
+            }.onRight {
+                analytics.logEvent(EditCategory(name, category.type))
+                modalManager.dismissAll()
+            }
             return@launch
         }
 
-        repository.insert(
-            Category(
-                name = name.trim(),
-                icon = CategoryLazyIcon(icon.value.key),
-                type = type.value,
-                createdAt = Clock.System.now().toEpochMilliseconds()
-            )
-        )
-        analytics.logEvent(CreateCategory(name.trim(), type.value))
-        modalManager.dismiss()
+        createCategory(
+            name = name,
+            iconKey = icon.value.key,
+            type = type.value,
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
+            analytics.logEvent(CreateCategory(name, type.value))
+            modalManager.dismiss()
+        }
     }
 }

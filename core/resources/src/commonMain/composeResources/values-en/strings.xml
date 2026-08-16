@@ -19,6 +19,7 @@
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
     <string name="category_error_already_exist">A category with this name already exists.</string>
+    <string name="category_error_not_found">Category not found.</string>
 
     <!-- Budget errors -->
     <string name="budget_error_empty_title">Budget title cannot be empty.</string>
@@ -771,6 +772,7 @@
     <string name="report_output_error_unknown">An unexpected error occurred.</string>
 
     <!-- Recurring Errors -->
+    <string name="recurring_error_not_found">Recurring not found.</string>
     <string name="recurring_error_amount_required">Amount is required.</string>
     <string name="recurring_error_amount_zero">Amount cannot be zero.</string>
     <string name="recurring_error_title_or_category_required">Provide a title or category.</string>

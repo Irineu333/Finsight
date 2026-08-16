@@ -1,9 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
-import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.repository.IRecurringRepository
 
 /**
  * Puts the recurring back into circulation — reversible, so it is refused by no
@@ -17,9 +15,20 @@ import com.neoutils.finsight.domain.repository.IRecurringRepository
  * putting a generator back, and the confirmation is where that — and the interval
  * it does not restore — gets said (design D9).
  */
-class UnarchiveRecurringUseCase(
-    private val repository: IRecurringRepository,
-) {
+interface UnarchiveRecurringUseCase {
+
+    /**
+     * The canonical form, and the one that carries the implementation.
+     *
+     * The template is resolved **when the operation runs**; an identity that matches
+     * nothing is refused with `RecurringError.NOT_FOUND` and nothing is put back.
+     */
+    suspend operator fun invoke(recurringId: Long): Either<Throwable, Unit>
+
+    /**
+     * The convenience for a caller that already holds the recurring. It extracts the
+     * identity and delegates — not another rule, so not another implementation.
+     */
     suspend operator fun invoke(recurring: Recurring): Either<Throwable, Unit> =
-        catch { repository.update(recurring.copy(isArchived = false)) }
+        invoke(recurring.id)
 }

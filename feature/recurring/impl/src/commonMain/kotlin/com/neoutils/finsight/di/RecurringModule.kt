@@ -2,19 +2,26 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCase
+import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCaseImpl
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.RecurringRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
+import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCaseImpl
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCaseImpl
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.SaveRecurringUseCaseImpl
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
+import com.neoutils.finsight.domain.usecase.SkipRecurringUseCaseImpl
 import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveRecurringUseCaseImpl
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.impl.RecurringEntryImpl
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
@@ -52,35 +59,41 @@ val recurringModule = module {
     factory { RecurringOccurrenceMapper() }
 
     factory { GetPendingRecurringUseCase() }
-    factory {
-        ResolveRecurringRetirabilityUseCase(
+    factory<ResolveRecurringRetirabilityUseCase> {
+        ResolveRecurringRetirabilityUseCaseImpl(
             recurringRepository = get(),
             budgetRepository = get(),
         )
     }
-    factory {
-        DeleteRecurringUseCase(
+    factory<DeleteRecurringUseCase> {
+        DeleteRecurringUseCaseImpl(
             repository = get(),
             resolveRetirability = get(),
         )
     }
-    factory { SaveRecurringUseCase(repository = get()) }
+    factory<SaveRecurringUseCase> { SaveRecurringUseCaseImpl(repository = get()) }
     factory {
         StartRecurringFromTransactionUseCase(
             repository = get(),
             clock = get(),
         )
     }
-    factory { UnarchiveRecurringUseCase(repository = get()) }
-    factory { ArchiveRecurringUseCase(repository = get()) }
-    factory {
-        ConfirmRecurringUseCase(
+    factory<UnarchiveRecurringUseCase> { UnarchiveRecurringUseCaseImpl(repository = get()) }
+    factory<ArchiveRecurringUseCase> { ArchiveRecurringUseCaseImpl(repository = get()) }
+    factory<ConfirmRecurringUseCase> {
+        ConfirmRecurringUseCaseImpl(
+            recurringRepository = get(),
             accountRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )
     }
-    factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
+    factory<SkipRecurringUseCase> {
+        SkipRecurringUseCaseImpl(
+            recurringRepository = get(),
+            recurringOccurrenceRepository = get(),
+        )
+    }
 
     single<RecurringEntry> { RecurringEntryImpl() }
 

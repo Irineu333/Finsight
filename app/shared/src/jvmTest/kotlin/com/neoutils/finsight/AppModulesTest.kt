@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -116,6 +117,18 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules) }.koin
 
         assertNotNull(koin.get<McpServerController>())
+    }
+
+    /**
+     * The activity log is bound in the same feature module as the controller but closes over the
+     * database instead of a socket, so it can be missing while the controller resolves fine. The
+     * section that reads it resolves it outside composition, like everything else here.
+     */
+    @Test
+    fun appModulesResolveTheAgentActivityLog() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<IAgentActivityRepository>())
     }
 
     @Test

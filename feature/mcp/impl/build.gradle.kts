@@ -5,9 +5,14 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.core.database)
             implementation(projects.core.navigation)
 
             implementation(projects.feature.mcp.api)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.kotlinx.datetime)
         }
         jvmMain.dependencies {
             // The server and its transport are declared here and nowhere else: the JVM

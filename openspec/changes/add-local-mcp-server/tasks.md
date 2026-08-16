@@ -74,11 +74,11 @@
 > A tabela nova sobe a versão de `AppDatabase`. O projeto já tem o caminho: schema exportado
 > pelo plugin de convenção e `MigrationSchemaEquivalenceTest` cobrindo as migrações.
 
-- [ ] 5b.1 Entidade e DAO do registro em `:core:database`: quando, operação, descrição legível, resultado, e a referência ao que foi criado ou alterado. Sem coluna de leitura — consultas não entram.
-- [ ] 5b.2 Migração de `AppDatabase` com a versão nova, schema exportado e `MigrationSchemaEquivalenceTest` estendido. Nenhum valor existente é alterado: a tabela nasce vazia.
-- [ ] 5b.3 Política de retenção declarada e aplicada — o registro não cresce sem limite. Teste que prova o descarte.
-- [ ] 5b.4 Limpeza pelo usuário. Teste de que limpar remove entradas e **não** altera nenhum lançamento.
-- [ ] 5b.5 Repositório do registro e a leitura observável que a tela consome.
+- [x] 5b.1 Entidade e DAO do registro em `:core:database`: quando, operação, descrição legível, resultado, e a referência ao que foi criado ou alterado. Sem coluna de leitura — consultas não entram.
+- [x] 5b.2 Migração de `AppDatabase` com a versão nova, schema exportado e `MigrationSchemaEquivalenceTest` estendido. Nenhum valor existente é alterado: a tabela nasce vazia.
+- [x] 5b.3 Política de retenção declarada e aplicada — o registro não cresce sem limite. Teste que prova o descarte.
+- [x] 5b.4 Limpeza pelo usuário. Teste de que limpar remove entradas e **não** altera nenhum lançamento.
+- [x] 5b.5 Repositório do registro e a leitura observável que a tela consome.
 
 ## 6. Servidor no socket (`mcp-server`)
 

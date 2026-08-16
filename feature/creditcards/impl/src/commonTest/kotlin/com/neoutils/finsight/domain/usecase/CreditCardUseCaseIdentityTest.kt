@@ -183,11 +183,11 @@ class CreditCardUseCaseIdentityTest {
         val byInvoice = RecordingInvoiceStore(closed)
         val paidAt = LocalDate(2026, 2, 10)
 
-        val fromId = PayInvoiceUseCaseImpl(byId, StoppedClock(LocalDate(2026, 2, 20)))(
+        val fromId = PayInvoiceUseCaseImpl(byId, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20)))(
             closed.id,
             paidAt,
         )
-        val fromInvoice = PayInvoiceUseCaseImpl(byInvoice, StoppedClock(LocalDate(2026, 2, 20)))(
+        val fromInvoice = PayInvoiceUseCaseImpl(byInvoice, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20)))(
             closed,
             paidAt,
         )
@@ -249,7 +249,7 @@ class CreditCardUseCaseIdentityTest {
         val store = RecordingInvoiceStore(stale.copy(status = Invoice.Status.PAID))
 
         val error = assertIs<InvoiceException>(
-            PayInvoiceUseCaseImpl(store, StoppedClock(LocalDate(2026, 2, 20)))(
+            PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20)))(
                 stale,
                 LocalDate(2026, 2, 10),
             ).leftOrNull()
@@ -348,11 +348,12 @@ class CreditCardUseCaseIdentityTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
     ) = PayInvoicePaymentUseCaseImpl(
+        validateInvoicePayment = ValidateInvoicePaymentUseCase(),
         clock = StoppedClock(LocalDate(2026, 2, 20)),
         transactionRepository = writer,
         invoiceRepository = store,
         calculateInvoiceUseCase = OwesFixed(70.0),
-        payInvoiceUseCase = PayInvoiceUseCaseImpl(store, StoppedClock(LocalDate(2026, 2, 20))),
+        payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20))),
         harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
         accountRepository = accounts(),
     )

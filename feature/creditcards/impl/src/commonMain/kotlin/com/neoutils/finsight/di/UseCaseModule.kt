@@ -42,6 +42,7 @@ import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -83,6 +84,7 @@ val useCaseModules = module {
 
     factory<PayInvoicePaymentUseCase> {
         PayInvoicePaymentUseCaseImpl(
+            validateInvoicePayment = get(),
             harvestExchangeRate = get(),
             accountRepository = get(),
             clock = get(),
@@ -116,6 +118,7 @@ val useCaseModules = module {
     factory<PayInvoiceUseCase> {
         PayInvoiceUseCaseImpl(
             invoiceRepository = get(),
+            validateInvoicePayment = get(),
             clock = get(),
         )
     }
@@ -139,6 +142,10 @@ val useCaseModules = module {
             creditCardRepository = get(),
             clock = get(),
         )
+    }
+
+    factory {
+        ValidateInvoicePaymentUseCase()
     }
 
     factory {

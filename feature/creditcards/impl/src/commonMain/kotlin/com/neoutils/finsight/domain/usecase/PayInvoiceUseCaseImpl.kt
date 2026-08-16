@@ -10,7 +10,6 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.extension.paymentObstacleOn
 import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
@@ -18,6 +17,7 @@ import kotlin.time.ExperimentalTime
 
 class PayInvoiceUseCaseImpl(
     private val invoiceRepository: IInvoiceRepository,
+    private val validateInvoicePayment: ValidateInvoicePaymentUseCase,
     private val clock: Clock,
 ) : PayInvoiceUseCase {
 
@@ -33,12 +33,12 @@ class PayInvoiceUseCaseImpl(
             InvoiceException(InvoiceError.NotFound)
         }
 
-        // The one owner of "may this invoice be paid on this date", read here and read again by
-        // the operation that posts the payment — before it posts anything, so a refusal cannot
-        // arrive after the money has already left.
-        invoice.paymentObstacleOn(date = paidAt, today = currentDate)?.let {
-            raise(InvoiceException(it))
-        }
+        // The one owner of "may this invoice be paid on this date", consulted here and consulted
+        // again by the operation that posts the payment — before it posts anything, so a refusal
+        // cannot arrive after the money has already left.
+        validateInvoicePayment(invoice = invoice, date = paidAt, today = currentDate)
+            .mapLeft(::InvoiceException)
+            .bind()
 
         invoice.copy(
             status = Invoice.Status.PAID,

@@ -38,7 +38,7 @@ class CloseInvoiceUseCaseTest {
         return CloseInvoiceUseCaseImpl(
             invoiceRepository = store,
             calculateInvoiceUseCase = calculate,
-            payInvoiceUseCase = PayInvoiceUseCaseImpl(store, clock),
+            payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), clock),
             openInvoiceUseCase = OpenInvoiceUseCaseImpl(store, SingleCardRepository(card), clock),
         )
     }

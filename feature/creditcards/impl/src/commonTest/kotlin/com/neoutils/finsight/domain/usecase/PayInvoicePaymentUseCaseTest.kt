@@ -49,11 +49,12 @@ class PayInvoicePaymentUseCaseTest {
         writer: RecordingTransactionWriter,
         owed: Map<Long, Double>,
     ) = PayInvoicePaymentUseCaseImpl(
+        validateInvoicePayment = ValidateInvoicePaymentUseCase(),
         clock = StoppedClock(LocalDate(2026, 2, 20)),
         transactionRepository = writer,
         invoiceRepository = store,
         calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed)),
-        payInvoiceUseCase = PayInvoiceUseCaseImpl(store, StoppedClock(LocalDate(2026, 2, 20))),
+        payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20))),
         // Same-currency throughout, so there is no rate to learn and no second
         // denomination to resolve.
         harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),

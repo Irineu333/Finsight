@@ -29,7 +29,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.extension.paymentObstacleOn
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
@@ -62,6 +61,7 @@ import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
@@ -119,9 +119,9 @@ internal class WorldPayInvoice(
         val invoice = ensureNotNull(invoiceRepository.getInvoiceById(invoiceId)) {
             InvoiceException(InvoiceError.NotFound)
         }
-        invoice.paymentObstacleOn(date = paidAt, today = clock.today())?.let {
-            raise(InvoiceException(it))
-        }
+        ValidateInvoicePaymentUseCase()(invoice = invoice, date = paidAt, today = clock.today())
+            .mapLeft(::InvoiceException)
+            .bind()
 
         invoice.copy(status = Invoice.Status.PAID, paidAt = paidAt)
             .also { invoiceRepository.update(it) }
@@ -160,7 +160,9 @@ internal class WorldPayInvoicePayment(
         }
         // The same obstacle production reads, and read here for the same reason: before the
         // posting, so a refusal cannot arrive once the money has already left.
-        invoice.paymentObstacleOn(date = date, today = clock.today())?.let { raise(InvoiceException(it)) }
+        ValidateInvoicePaymentUseCase()(invoice = invoice, date = date, today = clock.today())
+            .mapLeft(::InvoiceException)
+            .bind()
 
         val owed = calculateInvoice(invoice)
         ensure(owed > 0.0) { InvoiceException(InvoiceError.InvoiceNotInDebt) }

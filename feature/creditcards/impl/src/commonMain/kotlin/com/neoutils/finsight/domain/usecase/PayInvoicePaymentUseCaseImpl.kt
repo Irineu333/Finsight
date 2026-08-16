@@ -18,7 +18,6 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.extension.paymentObstacleOn
 import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
@@ -26,6 +25,7 @@ import kotlin.time.ExperimentalTime
 
 class PayInvoicePaymentUseCaseImpl(
     private val clock: Clock,
+    private val validateInvoicePayment: ValidateInvoicePaymentUseCase,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
@@ -69,9 +69,9 @@ class PayInvoicePaymentUseCaseImpl(
         // It is the same derivation `PayInvoiceUseCase` consults, not a copy: the status this used
         // to check by hand was narrower than the domain's own answer, and rejected a retroactive
         // invoice the ledger is willing to settle.
-        invoice.paymentObstacleOn(date = date, today = clock.today())?.let {
-            raise(InvoiceException(it))
-        }
+        validateInvoicePayment(invoice = invoice, date = date, today = clock.today())
+            .mapLeft(::InvoiceException)
+            .bind()
 
         val currentBillAmount = calculateInvoiceUseCase(invoice)
 

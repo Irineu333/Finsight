@@ -27,6 +27,10 @@ desktop continua sendo desktop, e a feature continua oferecida.
 - **WHEN** o app roda no desktop numa janela estreita
 - **THEN** a feature `desktop-only` continua sendo oferecida, porque quem decide é a plataforma e não a largura
 
+#### Scenario: A ocultação alcança todo ponto de entrada, seja qual for a afordância
+- **WHEN** uma feature `desktop-only` é oferecida por um ponto de entrada que não pertence ao catálogo de destinos — um item dentro de outra tela, por exemplo
+- **THEN** esse ponto de entrada também deixa de ser exibido no mobile, porque a regra é sobre a feature e não sobre a afordância que a oferece
+
 #### Scenario: Os dois sentidos coexistem
-- **WHEN** o catálogo de destinos é inspecionado
-- **THEN** ele distingue destinos `mobile-only` de destinos `desktop-only`, e um destino sem classificação é oferecido em ambas
+- **WHEN** os pontos de entrada do app são inspecionados numa plataforma
+- **THEN** os de features não suportadas nela não aparecem, nos dois sentidos, e os de features sem classificação aparecem em ambas

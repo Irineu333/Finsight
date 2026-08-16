@@ -61,7 +61,7 @@
 ## 5. Módulo e build
 
 - [ ] 5.1 Criar `feature/mcp/api` e `feature/mcp/impl` com as convenções `feature.api` e `feature.impl`, e registrá-los em `settings.gradle.kts`.
-- [ ] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*`, a rota `@Serializable` da tela e o `McpEntry`.
+- [ ] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*` e a rota `@Serializable` da tela. **Sem entry point**: `feature-entry-points` o exige de "cada feature que expõe UI a outras features", e esta não expõe — Settings apenas navega para a rota.
 - [ ] 5.3 Adicionar ao catálogo `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine `ktor-server-*` em `3.4.3`, usados apenas no `jvmMain` do `impl`. Fixar a versão do SDK sem faixa — entre 0.14 e 0.15 o Ktor exigido mudou de minor.
 - [ ] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base de 1.4: 1488 testes, nenhuma falha.
 - [ ] 5.4 Reescrever a nota do catálogo que diz que Ktor "vive num módulo só" — ela passa a distinguir o módulo que usa cliente do que usa servidor.

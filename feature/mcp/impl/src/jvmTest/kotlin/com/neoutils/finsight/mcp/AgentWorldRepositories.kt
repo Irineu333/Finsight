@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
@@ -23,6 +24,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -43,6 +45,7 @@ import com.neoutils.finsight.extension.safeOnDay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -60,7 +63,17 @@ import kotlinx.datetime.YearMonth
  * ledger and the real consolidation layer**, so that what the tools consume behaves as the app's
  * does rather than returning canned answers.
  */
-internal class FakeAccounts(private val accounts: List<Account>) : IAccountRepository {
+/**
+ * @param chart the **whole chart of accounts**, which is a different list from the facade's:
+ * `getAllLedgerAccounts` answers every row the ledger holds — the cards' `LIABILITY` rows and the
+ * nominal ones included — and a caller resolving "every account money can sit in" reads it. Backed
+ * by the real `accounts` table, because a fake that answered only the facade would make a card
+ * purchase invisible to anything asking that question.
+ */
+internal class FakeAccounts(
+    private val accounts: List<Account>,
+    private val chart: suspend () -> List<Account> = { accounts },
+) : IAccountRepository {
     override suspend fun getAllAccounts(): List<Account> = accounts.filterNot { it.isArchived }
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
     override suspend fun getAccountById(accountId: Long): Account? =
@@ -71,8 +84,8 @@ internal class FakeAccounts(private val accounts: List<Account>) : IAccountRepos
     override suspend fun hasYieldingAccount(): Boolean = accounts.any { it.yieldsInterest }
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
     override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts)
-    override suspend fun getAllLedgerAccounts(): List<Account> = accounts
-    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
+    override suspend fun getAllLedgerAccounts(): List<Account> = chart()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flow { emit(chart()) }
     override fun observeAccountById(accountId: Long): Flow<Account?> =
         flowOf(accounts.firstOrNull { it.id == accountId })
 
@@ -217,33 +230,19 @@ internal class FakeOccurrences(
     ): Transaction = throw NotImplementedError()
 }
 
-internal class FakeTransactions(private val transactions: List<Transaction>) : ITransactionRepository {
-    override suspend fun getAllTransactions(): List<Transaction> = transactions
-    override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
-    override fun observeAllTransactions(): Flow<List<Transaction>> = flowOf(transactions)
-    override fun observeTransactionsBy(
-        date: LocalDate?,
-        dimensionId: Long?,
-        accountId: Long?,
-    ): Flow<List<Transaction>> = flowOf(transactions)
+internal class FakeInstallments(private val installments: List<Installment>) : IInstallmentRepository {
+    override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(installments)
+    override suspend fun getAllInstallments(): List<Installment> = installments
+    override suspend fun getInstallmentById(id: Long): Installment? =
+        installments.firstOrNull { it.id == id }
 
-    override fun observeTransactionById(id: Long): Flow<Transaction?> =
-        flowOf(transactions.firstOrNull { it.id == id })
-
-    override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
-    override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> =
+    override suspend fun createInstallment(count: Int, totalAmount: Double): Long =
         throw NotImplementedError()
 
-    override suspend fun updateTransaction(
-        id: Long,
-        title: String?,
-        date: LocalDate,
-        leg: TransactionLeg,
-        contra: ContraLeg?,
-    ) = throw NotImplementedError()
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) =
+        throw NotImplementedError()
 
-    override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
-    override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
+    override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }
 
 // ----------------------------------------------------------------------------------

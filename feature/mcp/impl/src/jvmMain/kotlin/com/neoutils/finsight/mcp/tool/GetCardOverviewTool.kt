@@ -46,9 +46,11 @@ internal class GetCardOverviewTool(
     override val description: String =
         "Each credit card with its limit, how much of it is taken by unpaid invoices, how much " +
             "is left, and the invoice open on it right now. " +
-            "PERIMETER: one line per card, and only the invoice that is open at this moment. " +
-            "Closed, future and paid invoices are not here — for those, and for a card's " +
-            "invoices over time, use list_invoices; for one invoice in full, get_invoice. " +
+            "PERIMETER: this answers for CARDS, one line per card, and reaches only the invoice " +
+            "that is open at this moment. Closed, future and paid invoices are not here — for " +
+            "those, and for a card's cycles over time, use list_invoices, which answers for " +
+            "INVOICES instead: one line per cycle, in any state. For one invoice in full, with " +
+            "its statement, use get_invoice. " +
             "`used`, `available` and `limit` are three separate readings, not two plus a " +
             "subtraction: what is available is what the app computes, not `limit - used`. " +
             "Figures are in each card's own currency and are never added across cards."

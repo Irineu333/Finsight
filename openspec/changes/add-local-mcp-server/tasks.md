@@ -122,15 +122,15 @@
 
 ## 9. Família Catálogo — permissão "ler"
 
-- [ ] 9.1 `list_transactions` com os filtros de período, conta, categoria, cartão e natureza, e a paginação.
-- [ ] 9.2 O agregado da listagem, vindo do razão, mais `matching` e `returned`. Teste de que ele não é a soma da página.
-- [ ] 9.2a Ordem total e determinística, com desempate estável quando a data empata, e a opção de ordenar por **ordem de registro** — sem ela, "o último que eu registrei" não é respondível, já que a data tem resolução de dia. Teste de que paginar não repete nem omite item.
-- [ ] 9.6a Cada descrição de `list_invoices` e `get_card_overview` diz o seu recorte; a escolha entre as duas não deve exigir chamar as duas e comparar as saídas.
-- [ ] 9.3 A alternância de vocabulário por perspectiva: sem conta na chamada, natureza; com conta, direção. Teste com uma transferência, nos dois modos.
-- [ ] 9.4 `get_transaction` com todas as pernas monetárias e a taxa praticada quando elas cruzam moedas.
-- [ ] 9.5 `list_accounts`, `list_cards`, `list_categories` — cada uma com a figura que a acompanha.
-- [ ] 9.6 `list_invoices` usando a leitura em lote de devido, `get_invoice` com janela e extrato.
-- [ ] 9.7 `list_installments`, `list_budgets`, `list_recurring`.
+- [x] 9.1 `list_transactions` com os filtros de período, conta, categoria, cartão e natureza, e a paginação. **O período é o mês**, não um intervalo livre como sugere `docs/`: é o recorte que os agregados do razão têm, e um intervalo forçaria a trocá-los por um que não concorda com os itens. `account_id` e `card_id` juntos são recusados — uma listagem se lê de um ponto de vista só.
+- [x] 9.2 O agregado da listagem, vindo do razão, mais `matching` e `returned`. Três leituras, uma por filtro: `assetMonthFlows + liabilityMonthFlows` sem perspectiva, `scopeStats` sob uma conta ou cartão, e `totalsByDimension` sob uma categoria. **`nature` corta a lista e não move os totais** — o razão não tem agregado cortado por natureza (não existe total de transferência), e o payload diz isso em `narrowed_by`, na descrição e no perímetro, em vez de somar a página para preencher. Teste com 65 lançamentos e página de 50: o total é 1.100,00 e a soma das linhas de despesa da página é 670,00, conferido também contra `get_month_summary`.
+- [x] 9.2a Ordem total e determinística, com desempate estável quando a data empata, e a opção de ordenar por **ordem de registro** — sem ela, "o último que eu registrei" não é respondível, já que a data tem resolução de dia. Teste de que paginar não repete nem omite item. As duas ordens terminam na identidade que o razão atribui, que é única por construção; `order_by` oferece o critério, e a coluna que o realiza é assunto interno da ferramenta.
+- [x] 9.6a Cada descrição de `list_invoices` e `get_card_overview` diz o seu recorte; a escolha entre as duas não deve exigir chamar as duas e comparar as saídas. As duas passaram a declarar a **unidade** da resposta no mesmo vocabulário — uma responde por FATURAS, a outra por CARTÕES — e cada uma nomeia a outra. O mesmo foi feito em `list_cards`, `list_categories`, `list_budgets` e `list_recurring`, que também se sobrepõem a uma ferramenta da família 1.
+- [x] 9.3 A alternância de vocabulário por perspectiva: sem conta na chamada, natureza; com conta, direção. Teste com uma transferência, nos dois modos.
+- [x] 9.4 `get_transaction` com todas as pernas monetárias e a taxa praticada quando elas cruzam moedas. Cada perna vai **assinada como o razão a gravou**, sem regra de exibição: a direção já é dita, e as pernas de uma operação têm de somar zero para quem as conferir.
+- [x] 9.5 `list_accounts`, `list_cards`, `list_categories` — cada uma com a figura que a acompanha. O total de `list_accounts` é a leitura do razão sobre **exatamente** as contas listadas: as arquivadas que a lista omite são nomeadas ao agregado, não subtraídas depois.
+- [x] 9.6 `list_invoices` usando a leitura em lote de devido, `get_invoice` com janela e extrato. Teste com três faturas e página de duas: cada devido vem da leitura em lote e `owed_total` é o das três.
+- [x] 9.7 `list_installments`, `list_budgets`, `list_recurring`. **`list_budgets` não traz gasto nem progresso**, ao contrário do que `docs/` supõe: isso é pergunta sobre um mês e `get_budget_progress` a responde — duas ferramentas com a mesma saída não teriam recorte a declarar.
 
 ## 10. Família Registro — permissões "registrar e editar" e "apagar"
 

@@ -107,6 +107,17 @@ internal fun JsonObject?.longs(name: String): List<Long>? {
     }
 }
 
+/**
+ * A count — a page size, an offset — clamped to the range the tool states rather than refused.
+ *
+ * Clamped and not refused because there is nothing here for a caller to correct: asking for a
+ * thousand items and getting two hundred with `has_more` set is a complete answer, while a refusal
+ * costs a round trip to learn a number the description already gives. A malformed value is still a
+ * refusal — that is [long]'s doing, and it is a different mistake.
+ */
+internal fun JsonObject?.count(name: String, default: Int, max: Int, min: Int = 0): Int =
+    long(name)?.coerceIn(min.toLong(), max.toLong())?.toInt() ?: default
+
 /** A month as `2026-03`. Absent means the month the app is in, which is what a person means. */
 internal fun JsonObject?.month(name: String, clock: Clock): YearMonth =
     monthOrNull(name) ?: clock.today().yearMonth

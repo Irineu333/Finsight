@@ -5,11 +5,21 @@ import com.neoutils.finsight.mcp.tool.GetBudgetProgressTool
 import com.neoutils.finsight.mcp.tool.GetCardOverviewTool
 import com.neoutils.finsight.mcp.tool.GetCategoryIncomeTool
 import com.neoutils.finsight.mcp.tool.GetCategorySpendingTool
+import com.neoutils.finsight.mcp.tool.GetInvoiceTool
 import com.neoutils.finsight.mcp.tool.GetMonthSummaryTool
 import com.neoutils.finsight.mcp.tool.GetNetWorthTool
 import com.neoutils.finsight.mcp.tool.GetPendingRecurringTool
 import com.neoutils.finsight.mcp.tool.GetReportStatsTool
 import com.neoutils.finsight.mcp.tool.GetSpendingBreakdownTool
+import com.neoutils.finsight.mcp.tool.GetTransactionTool
+import com.neoutils.finsight.mcp.tool.ListAccountsTool
+import com.neoutils.finsight.mcp.tool.ListBudgetsTool
+import com.neoutils.finsight.mcp.tool.ListCardsTool
+import com.neoutils.finsight.mcp.tool.ListCategoriesTool
+import com.neoutils.finsight.mcp.tool.ListInstallmentsTool
+import com.neoutils.finsight.mcp.tool.ListInvoicesTool
+import com.neoutils.finsight.mcp.tool.ListRecurringTool
+import com.neoutils.finsight.mcp.tool.ListTransactionsTool
 
 /**
  * The tools the running server is given — the single place production assembles them.
@@ -24,7 +34,8 @@ import com.neoutils.finsight.mcp.tool.GetSpendingBreakdownTool
  * tool a decision rather than a side effect of writing one.
  *
  * The families are built one at a time, so this list grows in steps. What is here is family 1, the
- * questions: the app calculates and the agent receives the number.
+ * questions — the app calculates and the agent receives the number — and family 2, the catalogue:
+ * what exists, what it is called, and the figure that belongs beside it.
  */
 internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
     GetBalanceTool(
@@ -89,5 +100,72 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
         creditCardRepository = deps.creditCardRepository,
         calculateReportStats = deps.calculateReportStats,
         consolidateMoney = deps.consolidateMoney,
+    ),
+
+    // --- Family 2 — the catalogue: what exists, and the figure beside it --------------------
+
+    ListTransactionsTool(
+        clock = deps.clock,
+        transactionRepository = deps.transactionRepository,
+        entryRepository = deps.entryRepository,
+        accountRepository = deps.accountRepository,
+        categoryRepository = deps.categoryRepository,
+        creditCardRepository = deps.creditCardRepository,
+        installmentRepository = deps.installmentRepository,
+        consolidateMoney = deps.consolidateMoney,
+        baseCurrency = deps.baseCurrency,
+    ),
+    GetTransactionTool(
+        transactionRepository = deps.transactionRepository,
+        categoryRepository = deps.categoryRepository,
+        installmentRepository = deps.installmentRepository,
+        invoiceRepository = deps.invoiceRepository,
+    ),
+    ListAccountsTool(
+        clock = deps.clock,
+        accountRepository = deps.accountRepository,
+        calculateBalance = deps.calculateBalance,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    ListCardsTool(
+        creditCardRepository = deps.creditCardRepository,
+        calculateAvailableLimit = deps.calculateAvailableLimit,
+    ),
+    ListCategoriesTool(
+        clock = deps.clock,
+        categoryRepository = deps.categoryRepository,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    ListInvoicesTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        creditCardRepository = deps.creditCardRepository,
+        entryRepository = deps.entryRepository,
+        consolidateMoney = deps.consolidateMoney,
+    ),
+    GetInvoiceTool(
+        clock = deps.clock,
+        invoiceRepository = deps.invoiceRepository,
+        transactionRepository = deps.transactionRepository,
+        entryRepository = deps.entryRepository,
+        categoryRepository = deps.categoryRepository,
+        installmentRepository = deps.installmentRepository,
+    ),
+    ListInstallmentsTool(
+        installmentRepository = deps.installmentRepository,
+        transactionRepository = deps.transactionRepository,
+        invoiceRepository = deps.invoiceRepository,
+        categoryRepository = deps.categoryRepository,
+        creditCardRepository = deps.creditCardRepository,
+    ),
+    ListBudgetsTool(
+        budgetRepository = deps.budgetRepository,
+    ),
+    ListRecurringTool(
+        clock = deps.clock,
+        recurringRepository = deps.recurringRepository,
+        occurrenceRepository = deps.recurringOccurrenceRepository,
+        getPendingRecurring = deps.getPendingRecurring,
     ),
 )

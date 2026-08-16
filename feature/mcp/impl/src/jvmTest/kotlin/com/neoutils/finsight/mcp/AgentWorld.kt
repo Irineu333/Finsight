@@ -9,13 +9,20 @@ import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
+import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.database.repository.EntryRepository
+import com.neoutils.finsight.database.repository.LedgerEntryWriter
+import com.neoutils.finsight.database.repository.TransactionRepository
+import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DimensionKind
+import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
@@ -64,6 +71,28 @@ internal class AgentWorld(
 
     val entryRepository = EntryRepository(database.entryDao())
 
+    /**
+     * The production repository over the production DAOs, so what the catalogue lists is the
+     * ledger's own answer — the row, its legs, and every account hydrated from the chart.
+     *
+     * The two ports take their no-op forms because nothing here writes: a facade veto and a removal
+     * hook exist for the write path, and the catalogue family has none.
+     */
+    val transactionRepository = TransactionRepository(
+        database = database,
+        transactionDao = database.transactionDao(),
+        entryDao = database.entryDao(),
+        accountDao = database.accountDao(),
+        writeGuard = DimensionWriteGuard.None,
+        removalHook = TransactionRemovalHook.None,
+        transactionMapper = TransactionMapper(),
+        ledgerEntryWriter = LedgerEntryWriter(
+            entryDao = database.entryDao(),
+            accountDao = database.accountDao(),
+            dimensionDao = database.dimensionDao(),
+        ),
+    )
+
     val clock = object : Clock {
         override fun now(): Instant = today.atTime(NOON, 0).toInstant(TimeZone.currentSystemDefault())
     }
@@ -75,6 +104,7 @@ internal class AgentWorld(
     val budgets = mutableListOf<Budget>()
     val recurringList = mutableListOf<Recurring>()
     val occurrences = mutableListOf<RecurringOccurrence>()
+    val installments = mutableListOf<Installment>()
 
     private var nextTransactionId = 0L
 
@@ -189,11 +219,32 @@ internal class AgentWorld(
         AccountEntity(id = id, name = name, type = type, currency = currency, isArchived = isArchived),
     )
 
-    /** One balanced posting. What its legs sum to is the caller's business, as in the ledger's own suites. */
-    suspend fun posting(date: String, vararg legs: Leg): Long {
+    /**
+     * One balanced posting. What its legs sum to is the caller's business, as in the ledger's own
+     * suites.
+     *
+     * The identity is assigned here, in ascending order, which is what makes a fixture able to say
+     * "recorded after": the ledger assigns the same way, and the catalogue's recording order is
+     * that identity.
+     */
+    suspend fun posting(
+        date: String,
+        vararg legs: Leg,
+        title: String? = null,
+        installmentId: Long? = null,
+        installmentNumber: Int? = null,
+        recurringId: Long? = null,
+    ): Long {
         val id = ++nextTransactionId
         database.transactionDao().insert(
-            TransactionEntity(id = id, title = null, date = LocalDate.parse(date)),
+            TransactionEntity(
+                id = id,
+                title = title,
+                date = LocalDate.parse(date),
+                installmentId = installmentId,
+                installmentNumber = installmentNumber,
+                recurringId = recurringId,
+            ),
         )
         database.entryDao().insertAll(
             legs.map {
@@ -213,17 +264,26 @@ internal class AgentWorld(
     // What the tools are handed
     // ------------------------------------------------------------------------------
 
+    /**
+     * The whole chart of accounts, from the real table — the cards' `LIABILITY` rows and the
+     * nominal ones included, which the facade list deliberately does not hold.
+     */
+    private suspend fun ledgerChart(): List<Account> =
+        database.accountDao().getAllLedgerAccounts().map { it.toDomain() }
+
     fun dependencies() = McpToolDependencies(
         clock = clock,
         entryRepository = entryRepository,
-        transactionRepository = FakeTransactions(emptyList()),
-        accountRepository = FakeAccounts(accounts),
+        transactionRepository = transactionRepository,
+        accountRepository = FakeAccounts(accounts) { ledgerChart() },
         categoryRepository = FakeCategories(categories),
         creditCardRepository = FakeCards(cards),
         invoiceRepository = FakeInvoices(invoices),
+        installmentRepository = FakeInstallments(installments),
         budgetRepository = FakeBudgets(budgets),
         recurringRepository = FakeRecurring(recurringList),
         recurringOccurrenceRepository = FakeOccurrences(occurrences),
+        baseCurrencyRepository = FixedBaseCurrency(baseCurrency),
         consolidateMoney = consolidateMoney,
         calculateBalance = CalculateBalanceUseCase(entryRepository),
         calculateCategorySpending = LedgerCategoryTotals(

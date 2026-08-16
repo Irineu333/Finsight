@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 class QuestionsFamilyOverTheProtocolTest {
 
     @Test
-    fun `the server announces exactly the ten questions, each with what it covers`() = runTest {
+    fun `the server announces exactly what the surface declares, each with what it covers`() = runTest {
         withWorld { _, client ->
             val announced = client.listTools()
 
@@ -340,10 +340,13 @@ class QuestionsFamilyOverTheProtocolTest {
 
         /**
          * The least a caller can say and still be answered. Empty for every tool that defaults to
-         * the month the app is in, which is what a person means by "this month".
+         * the month the app is in, which is what a person means by "this month" — and an identity
+         * for the two that answer about one thing, which have nothing to default to.
          */
         val MINIMAL_ARGUMENTS = mapOf(
             McpToolName.GET_REPORT_STATS to """{"from":"2026-03-01","to":"2026-03-31"}""",
+            McpToolName.GET_TRANSACTION to """{"id":1}""",
+            McpToolName.GET_INVOICE to """{"id":1}""",
         )
     }
 }

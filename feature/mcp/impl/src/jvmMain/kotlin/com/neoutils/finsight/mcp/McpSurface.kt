@@ -23,7 +23,9 @@ internal object McpSurface {
      * same change that registers the tools — which is what keeps the two from drifting: an addition
      * on either side alone fails the test.
      *
-     * Family 1, the questions, is here: the app calculates and the agent receives the number.
+     * Family 1, the questions, is here: the app calculates and the agent receives the number. So is
+     * family 2, the catalogue: what exists, what it is called, and the figure that belongs beside
+     * it — the family an agent resolves a name into an identity through.
      */
     val offered: Set<McpToolName> = setOf(
         McpToolName.GET_BALANCE,
@@ -36,6 +38,16 @@ internal object McpSurface {
         McpToolName.GET_PENDING_RECURRING,
         McpToolName.GET_CARD_OVERVIEW,
         McpToolName.GET_REPORT_STATS,
+        McpToolName.LIST_TRANSACTIONS,
+        McpToolName.GET_TRANSACTION,
+        McpToolName.LIST_ACCOUNTS,
+        McpToolName.LIST_CARDS,
+        McpToolName.LIST_CATEGORIES,
+        McpToolName.LIST_INVOICES,
+        McpToolName.GET_INVOICE,
+        McpToolName.LIST_INSTALLMENTS,
+        McpToolName.LIST_BUDGETS,
+        McpToolName.LIST_RECURRING,
     )
 
     /** What the app can do that the surface does not reach, and why each one is out. */

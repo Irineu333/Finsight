@@ -156,6 +156,83 @@ cliente que o fale conecta. A seção SHALL dizer que o servidor só responde co
 - **WHEN** a seção é exibida com o servidor no ar
 - **THEN** o token aparece oculto, e só é revelado sob ação explícita do usuário
 
+### Requirement: O que um agente escreve fica registrado
+
+Toda escrita, operação e recusa executada por um agente SHALL ser registrada, e o registro SHALL
+persistir entre execuções do app. Uma entrada SHALL dizer **quando**, **qual operação**, **sobre
+o quê** — em termos que o usuário reconheça, não identificadores soltos — e **qual foi o
+resultado**, referenciando o que criou ou alterou, para que o usuário alcance o lançamento a
+partir dali.
+
+Este é o único lugar do app onde a **autoria** de uma escrita aparece. A reatividade mostra o
+resultado — a transação surge na tela —, e não mostra que ela veio de fora: sem o registro, um
+lançamento indevido feito por um agente é indistinguível de um lançamento que o próprio usuário
+esqueceu de ter feito.
+
+O registro também é a única defesa hoje contra a duplicação que a ausência de idempotência
+permite: um agente que repete uma chamada perdida cria dois lançamentos idênticos, e é aqui que
+os dois aparecem lado a lado.
+
+**Leituras MUST NOT ser registradas.** Um agente faz dezenas de consultas para responder a uma
+pergunta, e listá-las afoga exatamente o que o registro existe para mostrar; uma leitura não
+altera nada e não tem o que auditar.
+
+O registro SHALL ter política de retenção declarada, e MUST NOT crescer sem limite. O usuário
+SHALL poder limpá-lo, e a limpeza MUST NOT alterar nenhum lançamento — o registro é rastro do que
+foi feito, e MUST NOT ser tratado como fonte de verdade contábil: apagar uma entrada não desfaz a
+operação que ela descreve.
+
+#### Scenario: Escrita de agente deixa rastro
+- **WHEN** um agente registra um lançamento
+- **THEN** o registro ganha uma entrada com o horário, a operação, o que foi lançado em termos legíveis e a referência ao lançamento criado
+
+#### Scenario: Rastro sobrevive ao reinício
+- **WHEN** o app é encerrado e aberto novamente
+- **THEN** as entradas anteriores continuam disponíveis
+
+#### Scenario: Consulta não vira entrada
+- **WHEN** um agente executa uma sequência de consultas para responder a uma pergunta
+- **THEN** nenhuma entrada é criada
+
+#### Scenario: Recusa é registrada
+- **WHEN** uma operação é recusada por falta de permissão ou pelo domínio
+- **THEN** o registro guarda a tentativa e o motivo da recusa
+
+#### Scenario: Duplicação fica visível
+- **WHEN** um agente repete uma chamada de escrita já executada
+- **THEN** as duas execuções aparecem no registro, lado a lado
+
+#### Scenario: Limpar o registro não desfaz nada
+- **WHEN** o usuário limpa o registro
+- **THEN** as entradas somem e todos os lançamentos permanecem intactos
+
+### Requirement: A tela diz quem está conectado e o que cada eixo libera
+
+A seção de configurações SHALL informar se há cliente conectado no momento, e SHALL oferecer ao
+usuário encerrar as sessões em curso. Estar habilitado e ter alguém do outro lado são fatos
+diferentes, e só o segundo significa que algo pode estar lendo as finanças agora.
+
+Cada eixo de permissão SHALL informar **quantas ferramentas** ele concede, e o eixo retido SHALL
+informar quantas retém. Um interruptor cujo efeito não é dito é concedido às cegas.
+
+A seção SHALL apresentar o registro de atividade recente, com acesso ao histórico completo.
+
+#### Scenario: Cliente conectado
+- **WHEN** um agente está com sessão aberta e o usuário abre a seção
+- **THEN** ela informa que há cliente conectado e oferece encerrar a sessão
+
+#### Scenario: Habilitado sem ninguém conectado
+- **WHEN** o servidor está no ar e nenhum cliente tem sessão
+- **THEN** a seção distingue esse estado de "há alguém conectado"
+
+#### Scenario: O efeito de um eixo é dito
+- **WHEN** o usuário lê os eixos de permissão
+- **THEN** cada um informa quantas ferramentas concede, e o retido informa quantas retém
+
+#### Scenario: Atividade recente na própria seção
+- **WHEN** o usuário abre a seção depois de um agente ter lançado algo
+- **THEN** a operação aparece na atividade recente, com acesso ao histórico completo
+
 ### Requirement: O servidor é desktop-only
 
 A feature do servidor MCP SHALL ser classificada como `desktop-only`, e o seu ponto de entrada

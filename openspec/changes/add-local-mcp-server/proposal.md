@@ -26,8 +26,16 @@ consolidação de moeda.
   `if` dentro de cada uma; mudá-la emite `notifications/tools/list_changed`. E o handshake
   **declara o que está retido**: sem isso, um agente conclui que a capacidade não existe e
   responde ao usuário que a operação é impossível — o que a simulação registrou acontecendo.
-- **Seção de configurações dedicada**, que liga/desliga o servidor, mostra o endereço e o
-  token, e ensina a configurar um cliente MCP.
+- **Seção de configurações dedicada**, entre as integrações do app: liga e desliga o servidor,
+  mostra o endereço e o token, ensina a configurar um cliente MCP, informa se há alguém
+  conectado agora, e diz quantas ferramentas cada eixo de permissão concede.
+- **Registro persistido do que o agente fez** — escritas, operações e recusas; nunca leituras.
+  É o único lugar do app onde a **autoria** de uma escrita aparece: a reatividade mostra a
+  transação surgindo na tela, mas não que ela veio de fora, e um lançamento indevido feito por
+  um agente é indistinguível de um que o usuário esqueceu de ter feito. Também é a única defesa
+  disponível contra a duplicação que a falta de idempotência permite — os dois lançamentos
+  gêmeos aparecem lado a lado, com horário. Guarda uma **tabela nova** e, portanto, uma
+  migração.
 - **7 use cases novos**, extraídos de ViewModels que hoje escrevem direto no repositório
   (categoria, orçamento) ou concentram uma decisão de domínio na UI (o despacho entre
   parcelamento, recorrência e transação simples, hoje em `AddTransactionViewModel:299-340`).
@@ -136,6 +144,10 @@ porta, regenera token nem altera as próprias permissões. Tudo isso é do usuá
 **Módulos novos**: `feature/mcp/api` e `feature/mcp/impl`, com o servidor em `jvmMain` e a
 tela de configurações sujeita ao eixo `desktop-only`. `:app:desktop` inicia e encerra o
 servidor com o processo.
+
+**Banco**: o registro de atividade é uma **tabela nova** em `:core:database`, o que sobe a
+versão de `AppDatabase` e exige migração, schema exportado e `MigrationSchemaEquivalenceTest`
+estendido. Nenhum valor existente é alterado — a tabela nasce vazia.
 
 **Dependências**: `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine
 `ktor-server-*` em `3.4.3` — a versão que o SDK exige é exatamente o pino que o projeto já

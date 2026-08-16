@@ -261,6 +261,31 @@ A correção tem duas partes, e nenhuma reabre o `tools/list`:
    valor para zero passa a ser recusado: não é a remoção que o usuário pediu, e é pior do que a
    recusa, porque some do total sem sumir do histórico.
 
+### D15 — O registro é persistido, e só guarda o que muda alguma coisa
+
+A tela de configurações resolvia ligar, conectar e controlar. Faltava a quarta coisa que ela
+precisa fazer: **contar o que aconteceu**. A reatividade entrega o resultado — a transação
+aparece — e não entrega a autoria; um lançamento indevido feito por um agente é
+indistinguível, na lista, de um que o usuário esqueceu de ter feito.
+
+**Persistido, e não em memória.** Um registro que morre com o app some exatamente quando alguém
+vai investigar: o usuário nota o número estranho no dia seguinte, reabre o app, e o rastro já
+não existe. O custo é uma **tabela nova e uma migração** de `AppDatabase`, com schema exportado
+e a paridade de migração estendida — o projeto já tem esse caminho montado.
+
+**Só escritas, operações e recusas.** Um agente faz dezenas de consultas para responder a uma
+pergunta; registrá-las afogaria o que o registro existe para mostrar. Leitura não altera nada e
+não tem o que auditar. Recusa entra porque é ela que explica ao usuário por que o agente disse
+que não conseguiu.
+
+**Não é fonte de verdade contábil.** O usuário pode limpar o registro, e limpar MUST NOT tocar em
+lançamento algum. O rastro é sobre quem fez; o que foi feito continua no razão, que é onde
+sempre esteve.
+
+Efeito colateral que vale nomear: é a única defesa disponível hoje contra a duplicação que a
+ausência de idempotência permite. Os dois lançamentos gêmeos aparecem lado a lado, com horário,
+em vez de esperarem serem notados no meio do extrato.
+
 ### D14 — O que a simulação mediu, e o que ela não mediu
 
 Um protótipo do servidor foi construído com as versões de D12, populado com um mês sintético, e

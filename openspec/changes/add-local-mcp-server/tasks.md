@@ -69,6 +69,17 @@
 - [ ] 5.6 Registrar o módulo Koin da feature e agregá-lo em `appModules`; `NavGraphBuilder.mcpGraph()` no `AppNavHost`.
 - [ ] 5.7 Teste que confirma que o servidor é alcançável a partir do artefato de distribuição do desktop, e não apenas em execução de desenvolvimento.
 
+## 5b. Registro de atividade — tabela e migração
+
+> A tabela nova sobe a versão de `AppDatabase`. O projeto já tem o caminho: schema exportado
+> pelo plugin de convenção e `MigrationSchemaEquivalenceTest` cobrindo as migrações.
+
+- [ ] 5b.1 Entidade e DAO do registro em `:core:database`: quando, operação, descrição legível, resultado, e a referência ao que foi criado ou alterado. Sem coluna de leitura — consultas não entram.
+- [ ] 5b.2 Migração de `AppDatabase` com a versão nova, schema exportado e `MigrationSchemaEquivalenceTest` estendido. Nenhum valor existente é alterado: a tabela nasce vazia.
+- [ ] 5b.3 Política de retenção declarada e aplicada — o registro não cresce sem limite. Teste que prova o descarte.
+- [ ] 5b.4 Limpeza pelo usuário. Teste de que limpar remove entradas e **não** altera nenhum lançamento.
+- [ ] 5b.5 Repositório do registro e a leitura observável que a tela consome.
+
 ## 6. Servidor no socket (`mcp-server`)
 
 - [ ] 6.1 Ciclo de vida ligado ao processo: `:app:desktop` obtém o controlador via Koin, inicia com a janela e encerra no fechamento, liberando a porta.
@@ -81,6 +92,8 @@
 - [ ] 6.4 Teste de que o token sobrevive ao reinício e de que regenerar invalida o anterior.
 - [ ] 6.5 Porta fixa (padrão `8477`), editável e persistida. Quando ocupada, o servidor **não sobe** e o estado observável diz qual porta está em uso — sem fallback silencioso, que quebraria a configuração já feita no cliente (D10).
 - [ ] 6.6 Teste de que uma escrita feita pelo servidor emite invalidação e atinge um `Flow` observado, provando a reatividade de D1.
+- [ ] 6.7 Gravar no registro toda escrita, operação e recusa — e **nenhuma** leitura. Teste que exercita uma sequência de consultas e exige registro vazio, e outro que repete a mesma escrita e exige duas entradas lado a lado.
+- [ ] 6.8 Expor as sessões em curso no estado observável do controlador, e a ação de encerrá-las.
 
 ## 7. Apresentação para o agente (`presentation-mapping`, `mcp-tool-surface`)
 
@@ -159,6 +172,10 @@
 - [ ] 13.1 Seção de configurações **entre as integrações**, alcançável a partir das configurações do app. Com o servidor desabilitado, ela apresenta o que ele é e o interruptor — e nada mais a decidir antes de ligar. Habilitado, revela permissões, endereço, token (oculto por padrão) e instruções.
 - [ ] 13.2 Os quatro interruptores de permissão, com o texto que diz o que cada eixo autoriza.
 - [ ] 13.2a Estado do servidor visível e verdadeiro na tela enquanto ela estiver aberta — inclusive uma queda posterior ao início.
+- [ ] 13.2b Cada eixo informa quantas ferramentas concede, e o retido quantas retém — um interruptor cujo efeito não é dito é concedido às cegas.
+- [ ] 13.2c Cliente conectado: a tela distingue "habilitado" de "há alguém do outro lado agora", e oferece encerrar as sessões.
+- [ ] 13.2d Atividade recente na seção, com acesso ao histórico completo e à limpeza. Cada entrada alcança o lançamento que descreve.
+- [ ] 13.2e Porta como campo editável, com o erro de porta ocupada aparecendo **no campo** — não num alerta solto.
 - [ ] 13.3 Instruções de conexão copiáveis, não específicas de um cliente, incluindo a nota sobre clientes que só falam stdio.
 - [ ] 13.4 A nota de que o servidor só existe com o app aberto.
 - [ ] 13.5 Classificar a feature como `desktop-only` no catálogo de destinos e ocultar o ponto de entrada nas demais plataformas.

@@ -81,11 +81,13 @@ internal class ListTransactionsTool(
         "The postings of one month, newest first, in pages — with the totals the ledger gives " +
             "for the same filter. " +
             "PERIMETER: `matching` is how many postings the filter reaches and `returned` how " +
-            "many came back; `totals` covers ALL of the matching ones and is read from the " +
-            "ledger, never summed from this page. Transfers between the user's own accounts and " +
-            "credit-card payments appear in the list and are in NEITHER total, because neither " +
-            "is income or spending. `narrowed_by` names the arguments the totals reflect: " +
-            "`nature` cuts the list and does not move them. " +
+            "many came back; `totals` is read from the ledger and never summed from this page. " +
+            "It covers all the matching postings EXCEPT where `nature` narrows them — the ledger " +
+            "has no total cut that way, so `nature` cuts the list and leaves the totals where " +
+            "they are. `narrowed_by` names exactly the arguments the totals do reflect; read it " +
+            "before quoting them beside a narrowed list. Transfers between the user's own " +
+            "accounts and credit-card payments appear in the list and are in NEITHER total, " +
+            "because neither is income or spending. " +
             "Give `account_id` or `card_id` — never both — to read the month from that account " +
             "or card: each posting then carries `direction` (which way the money went, seen from " +
             "there). Without one, each carries `nature` instead, and a transfer is a transfer " +

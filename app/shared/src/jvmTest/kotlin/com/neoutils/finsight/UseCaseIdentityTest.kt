@@ -279,11 +279,14 @@ class UseCaseIdentityTest {
             "CalculateCategoryIncomeUseCase" to "answers for every income category of a month",
             "CalculateReportStatsUseCase" to "answers for a perspective over a period",
 
-            // The owed of an invoice is `Σ` the entries carrying its **dimension**, and the
-            // dimension is what the ledger knows. Resolving invoice → dimension is the
-            // caller's business here, the same direction the write intent takes, which is
-            // why the plural form receives the invoices themselves. Stated in its KDoc.
-            "CalculateInvoiceUseCase" to "reads by the invoice's ledger dimension, not by its id",
+            // The only exception here that is a judgement rather than a fact about the shape,
+            // so it is worth stating plainly. Its answer *is* keyed by the invoice's id — what
+            // it reads by is the dimension, which the invoice carries and the id does not. Every
+            // caller already holds the invoices for something else, so taking identities would
+            // buy a read nobody needs, on a use case that today touches only the ledger. If a
+            // caller ever arrives holding ids alone, this entry is the one to delete rather than
+            // to reword.
+            "CalculateInvoiceUseCase" to "every caller already holds the invoices it asks about",
 
             // It suggests an icon for an account that does not exist yet, so it takes
             // nothing at all — the answer is about the icons already in use.

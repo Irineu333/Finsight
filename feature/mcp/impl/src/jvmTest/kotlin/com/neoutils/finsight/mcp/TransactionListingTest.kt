@@ -205,6 +205,46 @@ class TransactionListingTest {
         }
     }
 
+    /**
+     * **The one filter with no aggregate behind it, and the declaration that stands in for one.**
+     *
+     * The ledger has no total cut by nature — there is no "total of transfers" — and inventing one
+     * by summing the page is what the surface forbids everywhere else. So `nature` narrows the list
+     * and leaves the totals where they are, and the payload has to say so: an argument that moves
+     * the list without moving the figure beside it reads, otherwise, as the total of what is next
+     * to it. This is the whole of that mitigation, and it was the part nothing exercised.
+     */
+    @Test
+    fun `narrowing by nature leaves the totals where they are, and the payload says which arguments they reflect`() = runTest {
+        crowdedMarch().use { world ->
+            world.overTheProtocol { client ->
+                val answer = client
+                    .callTool("list_transactions", """{"month":"2026-03","nature":"transfer"}""")
+                    .payload()
+
+                assertEquals(
+                    SPENT,
+                    answer.at("totals").at("expense").amount(),
+                    "the totals are the month's, read from the ledger — not the transfers listed " +
+                        "beside them, and not the page",
+                )
+
+                val narrowedBy = answer.at("totals")["narrowed_by"]!!.jsonArray.joinToString()
+                assertTrue(
+                    "nature" !in narrowedBy,
+                    "`nature` narrowed the list without moving the totals, so naming it among the " +
+                        "arguments they reflect would be the false half of an honest payload",
+                )
+                assertTrue("month" in narrowedBy, "and the argument they do reflect is named")
+
+                assertTrue(
+                    answer.at("perimeter")["excludes"]!!.jsonArray.any { "nature" in it.toString() },
+                    "the perimeter has to spell out that nothing else was cut the same way",
+                )
+            }
+        }
+    }
+
     @Test
     fun `read from either end the same transfer keeps its nature and gains opposite directions`() = runTest {
         crowdedMarch().use { world ->

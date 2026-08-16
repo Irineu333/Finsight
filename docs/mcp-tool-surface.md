@@ -481,5 +481,21 @@ versões e não há um `createComposeRule` sequer. Todos os testes da seção s�
 E a **paridade** das chaves de string é verificada nos dois arquivos (`StringResourceParityTest`);
 que a tradução diga a mesma coisa que o original, não.
 
+### 9. Uma queda do engine *depois* do bind não altera o estado publicado
+
+`mcp-server` pede que "uma queda depois de o servidor ter subido também se reflete ali". O que
+existe hoje cobre a metade que acontece: um bind que falha vira `Failed` e chega à tela, com
+teste. O que não existe é a detecção de um engine que caia sozinho **depois** de ter subido — o
+estado continuaria dizendo `Running`, que é o que o requisito proíbe.
+
+Não foi implementado por escolha, e a escolha tem motivo: distinguir uma queda espontânea de uma
+parada intencional exige um sinalizador no ciclo de vida que hoje está testado e funcionando, e a
+queda em si não é simulável de forma confiável — a implementação entraria sem teste no caminho
+crítico do servidor. Trocar um limite conhecido por um risco desconhecido não é uma troca boa.
+
+O caso é patológico: o servidor vive **dentro** do processo do app, então um engine que morre
+sozinho com a janela viva é um estado em que o app já está mal. Se aparecer na prática, o ponto
+é `DesktopMcpServerController.bringUp`, assinando o monitor do engine.
+
 > As tasks 14.2 e 14.2a da change existem por causa desta lista: são a passagem manual, com um
 > cliente MCP real sobre o desktop em execução, e não são substituíveis por teste.

@@ -325,12 +325,18 @@ internal class UpdateTransactionTool(
         // Zeroing an amount is the contortion a withheld removal invites, and it is worse than
         // the refusal it stands in for: the posting leaves every total and stays in every
         // listing and count. Refused here, and named as what it was reaching for.
+        //
+        // A negative amount is the same contortion by another route, and a worse one: what an
+        // expense of minus forty means to a double-entry ledger is an income of forty, so the
+        // posting does not merely leave the total — it moves to the other side of it. The
+        // domain refuses zero and not this, because a screen has no field that can express it.
         val amount = arguments.money("amount")
-        if (amount == 0.0) {
+        if (amount != null && amount <= 0.0) {
             return@writing refusedWith(
                 AgentRefusal(
-                    reason = "An amount of zero would leave the posting in the history and out " +
-                        "of every total, which is not the removal it imitates. Removing it is " +
+                    reason = "An amount of ${if (amount == 0.0) "zero" else "less than zero"} " +
+                        "would leave the posting in the history and out of every total, which is " +
+                        "not the removal it imitates. Removing it is " +
                         "`${McpToolName.DELETE_TRANSACTION.wireName}`, on the " +
                         "${McpToolName.DELETE_TRANSACTION.axis.capability} capability — and where " +
                         "that capability is withheld, ${McpPermissionNotice.WHERE_TO_GRANT}.",

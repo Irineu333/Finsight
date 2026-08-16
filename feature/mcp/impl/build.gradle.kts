@@ -5,10 +5,34 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.core.common)
             implementation(projects.core.database)
+            implementation(projects.core.designsystem)
             implementation(projects.core.navigation)
+            implementation(projects.core.resources)
+
+            // The section asks one question of the ledger, and only one: whether the posting an
+            // entry of the log points at is still there. The log carries no foreign key — it must
+            // never keep a posting from being deleted — so the reference may name something that is
+            // gone, and offering a door to it would open an empty detail.
+            implementation(projects.core.ledger)
 
             implementation(projects.feature.mcp.api)
+
+            // The platform axis, whose owner is the destination catalog: the entry point into this
+            // section is hidden off the desktop, and the section itself reads the same rule rather
+            // than restating it.
+            implementation(projects.feature.shell.api)
+
+            // Where an entry of the activity log leads. Each of these is a feature's `api`: the
+            // route of the section that holds what an act created, and — for a posting — the same
+            // detail every list in the app opens.
+            implementation(projects.feature.accounts.api)
+            implementation(projects.feature.budgets.api)
+            implementation(projects.feature.categories.api)
+            implementation(projects.feature.creditcards.api)
+            implementation(projects.feature.recurring.api)
+            implementation(projects.feature.transactions.api)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutinesTest)

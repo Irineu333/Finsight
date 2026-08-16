@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.settings.api.CurrenciesRoute
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
@@ -30,6 +31,7 @@ fun NavGraphBuilder.settingsGraph() {
                     onNavigateBack = { navController.navigateUp() },
                     onOpenExchangeRates = { navController.navigate(ExchangeRatesRoute) },
                     onOpenCurrencies = { navController.navigate(CurrenciesRoute) },
+                    onOpenMcpServer = { navController.navigate(McpRoute) },
                 )
             }
         }

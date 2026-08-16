@@ -2,8 +2,12 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.AgentActivityMapper
 import com.neoutils.finsight.database.repository.AgentActivityRepository
+import com.neoutils.finsight.domain.usecase.ClearAgentActivityUseCase
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.ui.screen.mcp.McpViewModel
+import com.neoutils.finsight.ui.screen.mcpActivity.McpActivityViewModel
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -19,4 +23,12 @@ val mcpModule = module {
     // ever writes, it simply stays empty.
     factory { AgentActivityMapper() }
     single<IAgentActivityRepository> { AgentActivityRepository(get(), get(), get()) }
+
+    // The section is bound everywhere the route is, which is everywhere: on a platform with no
+    // server it resolves the controller that never opens one and says so, rather than offering a
+    // switch that turns nothing on.
+    factory { ClearAgentActivityUseCase(get()) }
+
+    viewModel { McpViewModel(get(), get(), get(), get()) }
+    viewModel { McpActivityViewModel(get(), get(), get()) }
 }

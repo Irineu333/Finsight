@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,7 +38,11 @@ import com.alorma.compose.settings.ui.base.internal.LocalSettingsTextStyles
 import com.alorma.compose.settings.ui.base.internal.LocalSettingsTileColors
 import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.FeaturePlatform
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.mcp_settings_subtitle
+import com.neoutils.finsight.resources.mcp_settings_title
+import com.neoutils.finsight.resources.settings_group_integrations
 import com.neoutils.finsight.resources.settings_base_currency_picker_title
 import com.neoutils.finsight.resources.settings_base_currency_title
 import com.neoutils.finsight.resources.settings_currencies_subtitle
@@ -79,6 +84,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onOpenExchangeRates: () -> Unit = {},
     onOpenCurrencies: () -> Unit = {},
+    onOpenMcpServer: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val analytics = koinInject<Analytics>()
@@ -133,6 +139,18 @@ fun SettingsScreen(
                 ) {
                     ExchangeRatesTile(onClick = onOpenExchangeRates)
                     CurrenciesTile(onClick = onOpenCurrencies)
+                }
+
+                // Integrations: what the app talks to that is not the app. The MCP server is the
+                // only one today, and it exists only where a process can hold a socket — the
+                // platform axis decides, in the same terms the destination catalog uses, so this
+                // entry point and the rail cannot disagree about which platforms offer a feature.
+                if (FeaturePlatform.DESKTOP.isCurrent) {
+                    SettingsGroup(
+                        title = { Text(text = stringResource(Res.string.settings_group_integrations)) },
+                    ) {
+                        McpServerTile(onClick = onOpenMcpServer)
+                    }
                 }
             }
         }
@@ -212,6 +230,26 @@ private fun ExchangeRatesTile(onClick: () -> Unit) {
         icon = { CurrencyGlyphIcon(Icons.Default.CurrencyExchange) },
         title = { Text(text = stringResource(Res.string.settings_exchange_rates_title)) },
         subtitle = { Text(text = stringResource(Res.string.settings_exchange_rates_subtitle)) },
+        action = { Chevron() },
+        onClick = onClick,
+    )
+}
+
+/**
+ * The MCP server section — where the user switches it on, sees whether it is up, and gets the
+ * address and the token a client is configured with.
+ *
+ * Settings names the destination and nothing else of that feature: the switch, the permissions, the
+ * address and the token belong to the section itself.
+ */
+@Composable
+private fun McpServerTile(onClick: () -> Unit) {
+    SettingsMenuLink(
+        modifier = Modifier.testTag("settings_mcp_server"),
+        shape = TileShape,
+        icon = { CurrencyGlyphIcon(Icons.Default.Hub) },
+        title = { Text(text = stringResource(Res.string.mcp_settings_title)) },
+        subtitle = { Text(text = stringResource(Res.string.mcp_settings_subtitle)) },
         action = { Chevron() },
         onClick = onClick,
     )

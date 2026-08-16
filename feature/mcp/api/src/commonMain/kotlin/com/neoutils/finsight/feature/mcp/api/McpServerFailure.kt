@@ -1,6 +1,8 @@
 package com.neoutils.finsight.feature.mcp.api
 
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.mcp_port_error_in_use
+import com.neoutils.finsight.resources.mcp_port_error_unavailable
 import com.neoutils.finsight.resources.mcp_server_error_port_in_use
 import com.neoutils.finsight.resources.mcp_server_error_unavailable
 import com.neoutils.finsight.util.UiText
@@ -29,9 +31,23 @@ enum class McpServerFailure(val message: String) {
 
 /**
  * The failure in the user's words, naming the port, because a port is the only thing here they can
- * act on.
+ * act on — and naming the way out, because whoever reads this is anywhere in the app.
  */
 fun McpServerState.Failed.toUiText(): UiText = when (cause) {
     McpServerFailure.PORT_IN_USE -> UiText.ResWithArgs(Res.string.mcp_server_error_port_in_use, port)
     McpServerFailure.UNAVAILABLE -> UiText.ResWithArgs(Res.string.mcp_server_error_unavailable, port)
+}
+
+/**
+ * The same failure said to someone already standing at the port field.
+ *
+ * It is the same fact and a different sentence, because the audience is different: [toUiText] has
+ * to send the reader somewhere, and this one is read *at* the place it would send them, where
+ * "pick another port in the server settings" would point at the field it is written under. The
+ * error belongs on the field and not in a notice of its own, so that the port and its refusal are
+ * one thing on screen.
+ */
+fun McpServerState.Failed.toPortFieldUiText(): UiText = when (cause) {
+    McpServerFailure.PORT_IN_USE -> UiText.ResWithArgs(Res.string.mcp_port_error_in_use, port)
+    McpServerFailure.UNAVAILABLE -> UiText.ResWithArgs(Res.string.mcp_port_error_unavailable, port)
 }

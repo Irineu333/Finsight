@@ -76,7 +76,9 @@ fun ChromeHost(
     val chromeController = rememberChromeStateHolder()
 
     val destinations = navCatalog.destinations
-    val railItems = destinations.filter { !it.mobileOnly }
+    // The platform decides, in both directions: what has no desktop backing stays out of the rail,
+    // and what only the desktop can run stays out of every mobile affordance.
+    val railItems = destinations.filter { it.isOffered }
     val bottomItems = destinations.filter { it.primaryTab }
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()

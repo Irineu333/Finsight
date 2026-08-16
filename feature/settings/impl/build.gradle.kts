@@ -17,6 +17,11 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
+            // The integrations group: Settings names the MCP section's route, and the platform axis
+            // that decides whether the entry point is offered at all.
+            implementation(projects.feature.mcp.api)
+            implementation(projects.feature.shell.api)
+
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)

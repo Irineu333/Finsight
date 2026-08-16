@@ -141,9 +141,12 @@ class AppModulesTest {
     }
 
     /**
-     * The catalog is the single source of truth projected into the desktop rail (`!mobileOnly`), the
-     * mobile bottom bar (`primaryTab`) and the mobile grid (`!primaryTab`). Guard those projections
-     * and the persistence-key uniqueness the dashboard grid relies on.
+     * The catalog is the single source of truth projected into the rail (`isOffered`), the mobile
+     * bottom bar (`primaryTab`) and the mobile grid (`!primaryTab`). Guard those projections and the
+     * persistence-key uniqueness the dashboard grid relies on.
+     *
+     * `isOffered` is the platform axis and it points both ways: a destination with no desktop
+     * implementation and one that exists only on the desktop are both answered by it.
      */
     @Test
     fun navCatalogProjectionsAreConsistent() {
@@ -153,17 +156,17 @@ class AppModulesTest {
         // Exactly two primary tabs feed the mobile bottom bar.
         assertEquals(2, destinations.count { it.primaryTab })
 
-        // A primary tab is never mobile-only (tabs exist on every form factor).
-        assertTrue(destinations.none { it.primaryTab && it.mobileOnly })
+        // A primary tab is restricted to no platform (tabs exist on every form factor).
+        assertTrue(destinations.none { it.primaryTab && it.onlyOn != null })
 
-        // The desktop rail excludes mobile-only destinations.
-        val railCount = destinations.count { !it.mobileOnly }
-        assertEquals(destinations.size - destinations.count { it.mobileOnly }, railCount)
+        // The rail carries what this platform offers, and nothing it does not.
+        val railCount = destinations.count { it.isOffered }
+        assertEquals(destinations.size - destinations.count { !it.isOffered }, railCount)
 
-        // Support is now supported on desktop: it is not mobile-only and appears in the rail projection.
+        // Support is now supported on desktop: it is restricted to no platform and is in the rail.
         val support = destinations.single { it.route == SupportGraph }
         assertTrue(!support.mobileOnly)
-        assertTrue(destinations.filter { !it.mobileOnly }.contains(support))
+        assertTrue(destinations.filter { it.isOffered }.contains(support))
 
         // Settings sits immediately before Support: the two are both "about the app",
         // and Support's KDoc records being last on purpose.

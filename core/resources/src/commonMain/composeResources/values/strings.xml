@@ -978,4 +978,68 @@
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
     <string name="mcp_server_error_port_in_use">O servidor MCP não subiu: a porta %1$d já está em uso por outro programa. Escolha outra porta nas configurações do servidor.</string>
     <string name="mcp_server_error_unavailable">O servidor MCP não subiu: não foi possível escutar na porta %1$d. Escolha outra porta nas configurações do servidor.</string>
+
+    <string name="settings_group_integrations">Integrações</string>
+    <string name="mcp_settings_title">Servidor MCP</string>
+    <string name="mcp_settings_subtitle">Deixe um agente de IA consultar e lançar no app</string>
+
+    <string name="mcp_screen_title">Servidor MCP</string>
+    <string name="mcp_about_body">Um servidor MCP local permite que um agente de IA rodando nesta máquina consulte suas finanças e lance por você, com as ferramentas que você liberar. Ele escuta apenas em 127.0.0.1 e exige um token.</string>
+    <string name="mcp_app_open_note">O servidor só existe com o app aberto: ao fechar o Finsight, nada fica escutando e nenhum agente alcança seus dados.</string>
+    <string name="mcp_enable_title">Habilitar o servidor</string>
+    <string name="mcp_enable_description">A escolha vale para as próximas aberturas do app — você habilita uma vez.</string>
+    <string name="mcp_unavailable_title">Indisponível nesta plataforma</string>
+    <string name="mcp_unavailable_description">O servidor MCP precisa de um processo que segure um socket local, o que só existe no app de desktop.</string>
+
+    <string name="mcp_status_stopped">Desligado</string>
+    <string name="mcp_status_running">No ar em 127.0.0.1:%1$d</string>
+    <string name="mcp_status_failed">Habilitado, mas não está no ar</string>
+    <string name="mcp_status_no_client">Nenhum cliente conectado agora</string>
+    <string name="mcp_status_clients">Clientes com sessão aberta agora: %1$d</string>
+    <string name="mcp_disconnect_sessions">Encerrar sessões</string>
+
+    <string name="mcp_port_label">Porta</string>
+    <string name="mcp_port_helper">O cliente é configurado contra esta porta; trocá-la exige reconfigurá-lo.</string>
+    <string name="mcp_port_apply">Aplicar a porta</string>
+    <string name="mcp_port_error_invalid">Informe um número de porta entre 1 e 65535.</string>
+    <string name="mcp_port_error_in_use">A porta %1$d já está em uso por outro programa. Escolha outra.</string>
+    <string name="mcp_port_error_unavailable">Não foi possível escutar na porta %1$d. Escolha outra.</string>
+
+    <string name="mcp_address_label">Endereço</string>
+    <string name="mcp_token_label">Token</string>
+    <string name="mcp_token_reveal">Mostrar o token</string>
+    <string name="mcp_token_hide">Ocultar o token</string>
+    <string name="mcp_token_regenerate">Gerar um token novo</string>
+    <string name="mcp_token_pending">O token é criado quando o servidor sobe pela primeira vez.</string>
+    <string name="mcp_copy">Copiar</string>
+
+    <string name="mcp_instructions_title">Como conectar um cliente</string>
+    <string name="mcp_instructions_body">Qualquer cliente que fale o protocolo MCP conecta — não há um cliente oficial. Aponte-o para o endereço abaixo, com transporte HTTP (streamable), e faça-o enviar o token no cabeçalho Authorization.</string>
+    <string name="mcp_instructions_stdio_note">Clientes que só falam stdio precisam de um adaptador de terceiros: aqui o transporte é HTTP na interface de loopback, e não entrada e saída padrão.</string>
+    <string name="mcp_instructions_copy">Copiar as instruções</string>
+
+    <string name="mcp_permissions_title">O que o agente pode fazer</string>
+    <string name="mcp_permissions_description">Cada eixo é uma pergunta independente: liberar um não libera outro. O que estiver retido não é nem anunciado ao agente.</string>
+    <string name="mcp_permission_read_title">Consultar</string>
+    <string name="mcp_permission_read_description">Ler saldos, listar lançamentos, contas, cartões, categorias, orçamentos e recorrências.</string>
+    <string name="mcp_permission_record_title">Registrar e editar</string>
+    <string name="mcp_permission_record_description">Criar e alterar lançamentos, contas, cartões, categorias, orçamentos, parcelamentos e recorrências.</string>
+    <string name="mcp_permission_remove_title">Apagar</string>
+    <string name="mcp_permission_remove_description">Remover definitivamente o que existe — lançamentos, contas, cartões, categorias, orçamentos, parcelamentos, recorrências e faturas futuras.</string>
+    <string name="mcp_permission_operate_title">Operar</string>
+    <string name="mcp_permission_operate_description">Mover dinheiro e ciclo de vida: transferir, ajustar saldo, pagar, fechar, reabrir e ajustar faturas, confirmar e pular recorrências, arquivar e desarquivar.</string>
+    <string name="mcp_permission_granted_count">%1$d ferramentas liberadas</string>
+    <string name="mcp_permission_withheld_count">%1$d ferramentas retidas</string>
+
+    <string name="mcp_activity_title">Atividade recente</string>
+    <string name="mcp_activity_see_all">Ver tudo</string>
+    <string name="mcp_activity_history_title">Atividade do agente</string>
+    <string name="mcp_activity_outcome_refused">Recusado</string>
+    <string name="mcp_activity_empty_title">Nada registrado ainda</string>
+    <string name="mcp_activity_empty_description">Toda escrita, operação e recusa de um agente aparece aqui. Consultas não entram — elas não alteram nada.</string>
+    <string name="mcp_activity_reference_gone">O que esta entrada criou não existe mais.</string>
+    <string name="mcp_activity_clear">Limpar</string>
+    <string name="mcp_activity_clear_title">Limpar o registro?</string>
+    <string name="mcp_activity_clear_message">As entradas somem e nenhum lançamento é alterado: o registro é o rastro do que foi feito, não a contabilidade. Apagar uma entrada não desfaz a operação que ela descreve.</string>
+    <string name="mcp_activity_clear_confirm">Limpar o registro</string>
 </resources>

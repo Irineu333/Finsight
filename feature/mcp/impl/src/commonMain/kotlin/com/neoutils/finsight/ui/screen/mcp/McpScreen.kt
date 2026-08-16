@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.mcp
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -324,31 +325,37 @@ private fun ConnectionCard(
 
     // Shown and not merely copyable: a block the user can read is one they can adapt when their
     // client words the transport differently, and the values above are what they adapt it from.
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
-    ) {
-        Text(
-            text = instructions,
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(12.dp)
-                .testTag("mcp_instructions_json"),
-            style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-        )
-    }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
+        ) {
+            Text(
+                text = instructions,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    // The end padding is the copy button's room: the block scrolls under a button
+                    // that does not, so without it the longest line ends beneath the icon.
+                    .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
+                    .testTag("mcp_instructions_json"),
+                style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            )
+        }
 
-    OutlinedButton(
-        onClick = { copy(instructions) },
-        modifier = Modifier.testTag("mcp_copy_instructions"),
-    ) {
-        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-        Text(
-            text = stringResource(Res.string.mcp_instructions_copy),
-            modifier = Modifier.padding(start = 8.dp),
-        )
+        IconButton(
+            onClick = { copy(instructions) },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .testTag("mcp_copy_instructions"),
+        ) {
+            Icon(
+                imageVector = Icons.Default.ContentCopy,
+                contentDescription = stringResource(Res.string.mcp_instructions_copy),
+                modifier = Modifier.size(16.dp),
+            )
+        }
     }
 }
 

@@ -60,14 +60,14 @@
 
 ## 5. Módulo e build
 
-- [ ] 5.1 Criar `feature/mcp/api` e `feature/mcp/impl` com as convenções `feature.api` e `feature.impl`, e registrá-los em `settings.gradle.kts`.
-- [ ] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*` e a rota `@Serializable` da tela. **Sem entry point**: `feature-entry-points` o exige de "cada feature que expõe UI a outras features", e esta não expõe — Settings apenas navega para a rota.
-- [ ] 5.3 Adicionar ao catálogo `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine `ktor-server-*` em `3.4.3`, usados apenas no `jvmMain` do `impl`. Fixar a versão do SDK sem faixa — entre 0.14 e 0.15 o Ktor exigido mudou de minor.
-- [ ] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base **medida imediatamente antes de elevar**, nos 19 módulos reais — nunca contra o número de 1.4, que contava diretórios sem fonte. Nenhuma falha, e nenhum teste a menos.
-- [ ] 5.4 Reescrever a nota do catálogo que diz que Ktor "vive num módulo só" — ela passa a distinguir o módulo que usa cliente do que usa servidor.
-- [ ] 5.5 Prover o `actual` no-op do controlador nos targets Android e iOS, no padrão de `SupportModule`.
-- [ ] 5.6 Registrar o módulo Koin da feature e agregá-lo em `appModules`; `NavGraphBuilder.mcpGraph()` no `AppNavHost`.
-- [ ] 5.7 Teste que confirma que o servidor é alcançável a partir do artefato de distribuição do desktop, e não apenas em execução de desenvolvimento.
+- [x] 5.1 Criar `feature/mcp/api` e `feature/mcp/impl` com as convenções `feature.api` e `feature.impl`, e registrá-los em `settings.gradle.kts`.
+- [x] 5.2 Declarar na `api` o controlador do servidor (`start`, `stop`, estado observável) em tipos de `:core:*` e a rota `@Serializable` da tela. **Sem entry point**: `feature-entry-points` o exige de "cada feature que expõe UI a outras features", e esta não expõe — Settings apenas navega para a rota.
+- [x] 5.3 Adicionar ao catálogo `io.modelcontextprotocol:kotlin-sdk-server:0.14.0` e um engine `ktor-server-*` em `3.4.3`, usados apenas no `jvmMain` do `impl`. Fixar a versão do SDK sem faixa — entre 0.14 e 0.15 o Ktor exigido mudou de minor.
+- [x] 5.3a Elevar no catálogo `kotlinx-serialization-json` para `1.11.0` e `kotlinx-coroutines` para `1.11.0`, que o SDK exige e o Gradle elevaria de qualquer forma. Rodar `./gradlew jvmTest --rerun-tasks` e conferir contra a linha de base **medida imediatamente antes de elevar**, nos 19 módulos reais — nunca contra o número de 1.4, que contava diretórios sem fonte. Nenhuma falha, e nenhum teste a menos.
+- [x] 5.4 Reescrever a nota do catálogo que diz que Ktor "vive num módulo só" — ela passa a distinguir o módulo que usa cliente do que usa servidor.
+- [x] 5.5 Prover o `actual` no-op do controlador nos targets Android e iOS, no padrão de `SupportModule`.
+- [x] 5.6 Registrar o módulo Koin da feature e agregá-lo em `appModules`; `NavGraphBuilder.mcpGraph()` no `AppNavHost`.
+- [x] 5.7 Teste que confirma que o servidor é alcançável a partir do artefato de distribuição do desktop, e não apenas em execução de desenvolvimento.
 
 ## 5b. Registro de atividade — tabela e migração
 
@@ -100,7 +100,7 @@
 - [ ] 7.1 DTOs planos da superfície: transação, conta, cartão, fatura, parcelamento, categoria, orçamento, recorrência. Nenhum campo de tipo de domínio, no máximo o identificador.
 - [ ] 7.2 O tipo de figura monetária da superfície: valor, moeda, e — quando consolidada — a marca de consolidação e a data da taxa.
 - [ ] 7.3 Mapper de transação que consome `deriveTransactionLabel`, `TransactionPerspective` e `figureLegUnder`, sem re-derivar nenhum dos três.
-- [ ] 7.4 Redução por `ConsolidateMoneyUseCase`, e a resposta de ausência de taxa (D11): decomposição por moeda e a limitação dita explicitamente.
+- [ ] 7.4 Redução por `ConsolidateMoneyUseCase`, e a resposta de ausência de taxa (D16): decomposição por moeda e a limitação dita explicitamente.
 - [ ] 7.5 Teste que inspeciona os DTOs da superfície e falha se algum declarar campo de tipo de domínio.
 - [ ] 7.6 Teste que apresenta a mesma transação pela tela e pela superfície do agente e exige o mesmo rótulo, a mesma perna lida e a mesma ponta denominando a figura.
 - [ ] 7.7 O envelope de erro: motivo da recusa, e o nome da operação alternativa quando o domínio oferece uma.

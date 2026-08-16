@@ -235,7 +235,7 @@ app inteiro**. Isso foi testado antes de ser proposto: com as duas elevadas no c
 1488 testes em 21 módulos passaram sem falha. A elevação entra junto com a dependência, no
 grupo 5, e não é um risco em aberto.
 
-### D11 — O que a resposta faz quando falta taxa
+### D16 — O que a resposta faz quando falta taxa
 
 `OfflineConsolidationTest` já prova que nenhum módulo no caminho de uma figura consolidada
 alcança a rede. Quando a taxa necessária não existir no acervo, a ferramenta **diz isso** e
@@ -352,7 +352,7 @@ válida; a de comportamento não foi feita, e é o grupo 14.
 - **55 ferramentas ocupam contexto do cliente** → a permissão filtra o anúncio; só-leitura expõe
   19. As descrições precisam ser boas, e escrevê-las é trabalho de primeira classe, não
   acabamento.
-- **Token em texto claro** → ver D10. Escopo limitado a loopback, revogável pelo usuário.
+- **Token em texto claro** → ver D11. Escopo limitado a loopback, revogável pelo usuário.
 - **Uma tela que exibe token e endereço é um alvo em captura de tela e compartilhamento** → o
   token fica oculto por padrão, revelado sob ação explícita.
 

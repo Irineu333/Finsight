@@ -1,5 +1,32 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
+/**
+ * Records what Compose Desktop packs into the distribution image, so a test can ask what the
+ * user actually installs instead of what the build happens to have on hand.
+ *
+ * The source is `runtimeClasspath`, the configuration `createDistributable` copies into
+ * `Finsight.app/Contents/app`: every jar there is one of these, under the same name plus the
+ * content hash the packaging step appends. Each line is the artifact's origin and its jar,
+ * separated by `|` — the origin because jars built from this repository are all named
+ * `api-jvm.jar` or `impl-jvm.jar`, and only the component id says which module they are.
+ */
+abstract class WriteDistributionManifest : DefaultTask() {
+
+    @get:Input
+    abstract val artifacts: ListProperty<String>
+
+    @get:OutputFile
+    abstract val manifest: RegularFileProperty
+
+    @TaskAction
+    fun write() {
+        manifest.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(artifacts.get().sorted().joinToString(separator = "\n", postfix = "\n"))
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.composeMultiplatform)
@@ -24,6 +51,31 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.multiplatform.settings)
+}
+
+val writeDistributionManifest = tasks.register<WriteDistributionManifest>("writeDistributionManifest") {
+    val runtimeClasspath = configurations.named("runtimeClasspath")
+    dependsOn(runtimeClasspath)
+    artifacts.set(
+        runtimeClasspath
+            .flatMap { it.incoming.artifacts.resolvedArtifacts }
+            .map { resolved ->
+                resolved.map { "${it.id.componentIdentifier.displayName}|${it.file.name}" }
+            }
+    )
+    manifest.set(layout.buildDirectory.file("generated/distribution/distribution-classpath.txt"))
+}
+
+tasks.named<Copy>("processTestResources") {
+    from(writeDistributionManifest)
+}
+
+// `./gradlew jvmTest` is the project's "all tests" command, and `kotlin("jvm")` names this
+// module's test task `test`: without the alias the desktop suite — including the guard that
+// the MCP server ships inside the distribution — sits outside the command that is supposed
+// to run everything.
+tasks.register("jvmTest") {
+    dependsOn(tasks.named("test"))
 }
 
 compose.desktop {

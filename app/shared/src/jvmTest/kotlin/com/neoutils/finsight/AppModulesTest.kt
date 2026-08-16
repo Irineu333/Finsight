@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
@@ -102,6 +103,19 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertSame(koin.get<ExchangeRateRepository>(), koin.get<IExchangeRateRepository>())
+    }
+
+    /**
+     * The MCP controller is bound by an `expect`/`actual` platform module that only the shell
+     * aggregates. Leaving `mcpModule` off `appModules` compiles on every target and fails
+     * where nothing is watching: the desktop process resolves the controller outside any
+     * composition, while starting up.
+     */
+    @Test
+    fun appModulesResolveTheMcpServerController() {
+        val koin = koinApplication { modules(appModules) }.koin
+
+        assertNotNull(koin.get<McpServerController>())
     }
 
     @Test

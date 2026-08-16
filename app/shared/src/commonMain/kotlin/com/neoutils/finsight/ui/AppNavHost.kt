@@ -10,6 +10,7 @@ import com.neoutils.finsight.ui.navigation.budgetsGraph
 import com.neoutils.finsight.ui.navigation.categoriesGraph
 import com.neoutils.finsight.ui.navigation.creditCardsGraph
 import com.neoutils.finsight.ui.navigation.dashboardGraph
+import com.neoutils.finsight.ui.navigation.mcpGraph
 import com.neoutils.finsight.ui.navigation.recurringGraph
 import com.neoutils.finsight.ui.navigation.reportGraph
 import com.neoutils.finsight.ui.navigation.settingsGraph
@@ -40,6 +41,8 @@ fun AppNavHost(
         recurringGraph()
 
         settingsGraph()
+
+        mcpGraph()
 
         supportGraph()
 

@@ -224,6 +224,63 @@ devolve a decomposição por moeda, em vez de omitir a moeda ou apresentar aprox
 O agente é livre para relatar a limitação; o que ele não pode é receber um número que parece
 consolidado e não é.
 
+### D13 — A permissão esconde a ferramenta, e por isso precisa anunciar a retenção
+
+D5 estava incompleto, e a simulação (abaixo) mostrou como. Filtrar o `tools/list` cumpre o que
+prometia — o agente não tenta o que não pode — mas produz um efeito que não estava previsto:
+para quem só conhece o app pela lista de ferramentas, **capacidade retida e capacidade
+inexistente são a mesma coisa**.
+
+Pedido a um agente com o eixo "apagar" retido: *"apaga o último lançamento"*. A resposta foi
+*"não existe ferramenta de exclusão de lançamento no servidor"* — uma afirmação falsa sobre o
+app, dita com confiança ao dono dele, que bloqueia justamente a ação que resolveria o caso.
+
+E a retenção sem anúncio empurra para o contorno: o mesmo agente relatou ter considerado usar a
+ferramenta de **edição** para zerar o valor do lançamento e "neutralizá-lo", o que deixaria um
+registro de R$ 0,00 nas listagens. Não executou, mas o caminho estava aberto — negar o verbo
+direto sem explicar por quê convida ao verbo torto.
+
+A correção tem duas partes, e nenhuma reabre o `tools/list`:
+
+1. **O handshake declara as capacidades retidas** e diz que são escolha do usuário, reversível
+   nas configurações. Declara a *capacidade*, nunca as ferramentas — não é uma segunda lista por
+   outro canal. É o canal certo porque o cliente MCP entrega as instruções da sessão ao modelo
+   antes da primeira pergunta.
+2. **As ferramentas concedidas não oferecem o efeito das retidas por composição.** Editar um
+   valor para zero passa a ser recusado: não é a remoção que o usuário pediu, e é pior do que a
+   recusa, porque some do total sem sumir do histórico.
+
+### D14 — O que a simulação mediu, e o que ela não mediu
+
+Um protótipo do servidor foi construído com as versões de D12, populado com um mês sintético, e
+entregue a um agente que **não recebeu esta proposta** — ele descobriu a superfície por
+`tools/list`, como um cliente real. Dez pedidos em linguagem de usuário.
+
+**Validado:**
+
+| Resultado | O que sustenta |
+|---|---|
+| 15 chamadas de boa-fé, **zero erro** de argumento ou schema | ferramentas nomeadas com descrição bastam — é a evidência contra a forma genérica descartada em D4 |
+| 5 dos 10 pedidos resolvidos com **uma** chamada | o agregado pronto no payload cumpre "o app calcula, não a IA" |
+| Transferência entre contas próprias e pagamento de fatura **não** entraram na despesa do mês | a armadilha que derruba a leitura ingênua não pegou |
+| Figura em duas moedas consolidada com a taxa e a data declaradas | a regra de moeda sobreviveu ao consumidor real |
+| Recusa que nomeia a alternativa encerrou a tentativa em uma chamada | *"fechou o caso rápido em vez de ficar adivinhando"* |
+
+**Corrigido por D13 e pelos requisitos novos de `mcp-tool-surface`:** a retenção invisível; a
+figura sem perímetro declarado (duas chamadas gastas só para descobrir se a dívida de cartão
+estava descontada); o período em curso comparado a um fechado sem aviso; a ordem de listagem sem
+desempate, que torna "o último que eu registrei" irrespondível; a sobreposição não documentada
+entre duas leituras de fatura; e a ferramenta genérica cuja prosa cita um tipo que o parâmetro
+recusa.
+
+**Não medido, e permanece em aberto:** o protótipo guarda dados em memória e não passa pelos use
+cases reais nem pelo razão — nada aqui prova que a regra de fatura, de parcelamento ou de
+consolidação se comporta como o app se comporta. Dois defeitos do protótipo apareceram na
+simulação e são dele, não do desenho: o parcelamento lançou as N parcelas na mesma fatura,
+enquanto `AddInstallmentUseCaseImpl` distribui pelas seguintes; e uma fatura paga apareceu com
+devido negativo, por falta das compras dela nos dados sintéticos. A avaliação de superfície é
+válida; a de comportamento não foi feita, e é o grupo 14.
+
 ## Risks / Trade-offs
 
 - ~~O SDK MCP pode não resolver contra Ktor 3.4.3 / Kotlin 2.3.10~~ → **verificado e

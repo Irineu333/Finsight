@@ -111,6 +111,86 @@ Uma recusa por identidade não encontrada SHALL dizer o que não foi encontrado.
 - **WHEN** um agente informa o identificador de algo que não existe
 - **THEN** a recusa diz qual identidade não foi encontrada, sem executar a operação
 
+### Requirement: Uma figura declara o que ela abrange
+
+Uma ferramenta que devolve uma figura agregada SHALL declarar o **perímetro** dela — o que
+entra e, quando houver ambiguidade previsível, o que fica de fora. Uma soma de saldos de contas
+e um patrimônio líquido são números diferentes e o consumidor não tem como distingui-los pelo
+valor; a descrição da ferramenta e a resposta SHALL dizer qual dos dois é.
+
+Sem isso, quem consome gasta chamadas apenas para descobrir o que já recebeu — ou, pior, relata
+o número com o significado errado.
+
+#### Scenario: Soma de contas não se confunde com patrimônio
+- **WHEN** um agente obtém o total das contas do usuário
+- **THEN** a resposta declara que dívidas de cartão não estão descontadas, e nomeia a leitura que as desconta
+
+#### Scenario: Perímetro declarado na descrição e na resposta
+- **WHEN** a descrição de uma ferramenta de figura agregada é lida
+- **THEN** ela diz o que a figura abrange, sem exigir uma chamada para descobrir
+
+### Requirement: Um período em andamento é dito em andamento
+
+Uma ferramenta que responde sobre um período SHALL declarar quando esse período **ainda não
+terminou** na data corrente do app.
+
+Um mês fechado e um mês em curso não são comparáveis como iguais, e a diferença não é
+recuperável do payload: quem recebe dois totais sem essa marca conclui que o gasto caiu, quando
+o mês apenas não acabou.
+
+#### Scenario: Mês corrente
+- **WHEN** um agente pede o resumo do mês em que o app se encontra
+- **THEN** a resposta marca o período como em andamento e informa até que data ele está apurado
+
+#### Scenario: Comparação entre um mês fechado e um em curso
+- **WHEN** dois períodos são comparados e um deles ainda não terminou
+- **THEN** a resposta marca qual é o incompleto, para que a variação não seja lida como tendência
+
+### Requirement: A ordem de uma listagem é total e determinística
+
+Uma ferramenta que devolve uma lista paginada SHALL ordená-la por um critério **total**: quando
+o critério principal empata, um desempate estável SHALL ser aplicado, de modo que duas chamadas
+iguais devolvam a mesma ordem e uma paginação não repita nem omita item.
+
+Uma listagem de lançamentos SHALL permitir ordenar por **ordem de registro**, distinta da data
+do lançamento. Um usuário que pede "o último que eu registrei" não está falando da data da
+compra — e a data, que tem resolução de dia, não responde essa pergunta.
+
+#### Scenario: Empate na data
+- **WHEN** vários lançamentos compartilham a mesma data
+- **THEN** a ordem entre eles é estável e a mesma em chamadas repetidas
+
+#### Scenario: O último registrado
+- **WHEN** um agente precisa identificar o lançamento registrado mais recentemente
+- **THEN** ele o obtém por uma ordenação oferecida pela ferramenta, sem inferir a partir de identificadores
+
+#### Scenario: Paginação não perde item
+- **WHEN** uma listagem é percorrida por páginas sucessivas
+- **THEN** nenhum item aparece duas vezes nem deixa de aparecer
+
+### Requirement: Uma ferramenta genérica enumera exatamente o que aceita
+
+A descrição de uma ferramenta discriminada por tipo SHALL nomear **exatamente** os tipos que ela
+aceita, e MUST NOT citar em texto livre um tipo que o parâmetro discriminador recusa — a regra
+vale para toda ferramenta que opere sobre mais de uma entidade por meio de um discriminador.
+
+A divergência entre a prosa e o domínio do parâmetro é invisível até a chamada falhar, e ensina
+o consumidor a desconfiar da descrição — que é o único material de que ele dispõe para escolher.
+
+#### Scenario: Prosa e parâmetro concordam
+- **WHEN** a descrição de uma ferramenta discriminada por tipo é comparada aos valores que o parâmetro aceita
+- **THEN** os dois conjuntos são idênticos
+
+### Requirement: Ferramentas com propósito distinto dizem em que diferem
+
+Duas ferramentas que devolvam informação sobreposta com recortes diferentes SHALL declarar, cada
+uma na sua descrição, qual é o seu recorte — de modo que a escolha entre elas não exija chamar
+as duas e comparar as saídas.
+
+#### Scenario: Recortes sobrepostos
+- **WHEN** duas ferramentas devolvem faturas com recortes distintos
+- **THEN** cada descrição diz qual recorte oferece, e o consumidor escolhe sem experimentar
+
 ### Requirement: A resposta é plana, e não carrega domínio
 
 Um payload devolvido por uma ferramenta SHALL conter apenas valores já resolvidos: textos,

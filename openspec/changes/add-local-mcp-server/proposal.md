@@ -14,13 +14,18 @@ consolidação de moeda.
 - **Servidor MCP embutido no `:app:desktop`**, que sobe e desce com o processo do app. Sem
   segundo binário: escuta em loopback, exige token, e a UI reage em tempo real porque a
   escrita passa pelo mesmo `AppDatabase` — o `invalidationTracker` do Room faz o resto.
-- **55 ferramentas em quatro famílias** — perguntas (agregados que o app calcula), catálogo
+- **56 ferramentas em quatro famílias** — perguntas (agregados que o app calcula), catálogo
   (listas mapeadas com o total do razão junto), registro (CRUD onde é CRUD) e operações
   (pagar, fechar, confirmar, transferir, arquivar). Levantadas em
-  `docs/mcp-tool-surface.md`, com o use case que decide cada regra.
+  `docs/mcp-tool-surface.md`, com o use case que decide cada regra. Entre elas, duas que a
+  simulação com um agente real provou faltar: **patrimônio líquido** (a soma das contas não
+  desconta a fatura aberta, e as duas figuras são indistinguíveis pelo valor) e **comparação
+  entre períodos**, hoje uma subtração que sobra para o agente.
 - **Permissões em quatro eixos** — ler, registrar e editar, apagar, operar — configuradas na
   tela do app. A permissão decide **quais ferramentas existem** no `tools/list`, não é um
-  `if` dentro de cada uma; mudá-la emite `notifications/tools/list_changed`.
+  `if` dentro de cada uma; mudá-la emite `notifications/tools/list_changed`. E o handshake
+  **declara o que está retido**: sem isso, um agente conclui que a capacidade não existe e
+  responde ao usuário que a operação é impossível — o que a simulação registrou acontecendo.
 - **Seção de configurações dedicada**, que liga/desliga o servidor, mostra o endereço e o
   token, e ensina a configurar um cliente MCP.
 - **7 use cases novos**, extraídos de ViewModels que hoje escrevem direto no repositório

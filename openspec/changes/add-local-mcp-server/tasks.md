@@ -95,6 +95,10 @@
 - [ ] 8.2 `get_category_spending`, `get_category_income`, `get_spending_breakdown` — com o grupo sem categoria como linha própria.
 - [ ] 8.3 `get_budget_progress` — compondo as três listas que `CalculateBudgetProgressUseCase` exige.
 - [ ] 8.4 `get_pending_recurring`, `get_card_overview`, `get_report_stats`.
+- [ ] 8.4a `get_net_worth` — ASSET menos LIABILITY, por moeda e consolidado. Hoje `IEntryRepository` não expõe essa leitura *"porque não tem consumidor em produção"*; o agente é esse consumidor, e `EntryDao.netWorthCents()` já existe agrupado por moeda.
+- [ ] 8.4b Comparação entre períodos em `get_month_summary` (parâmetro do mês a comparar), devolvendo as variações já calculadas — sem deixar a subtração para o agente.
+- [ ] 8.4c Toda figura agregada declara o seu perímetro, na descrição e na resposta. `get_balance` diz que a dívida de cartão não está descontada e nomeia `get_net_worth`.
+- [ ] 8.4d Todo período responde se está em andamento e até que data está apurado; uma comparação marca qual dos lados é o incompleto.
 - [ ] 8.5 Teste de que o total de um mês com transferência entre contas próprias e pagamento de fatura não os inclui.
 - [ ] 8.6 Teste de que uma figura que atravessa contas em moedas diferentes traz decomposição, consolidado e data da taxa.
 
@@ -102,6 +106,8 @@
 
 - [ ] 9.1 `list_transactions` com os filtros de período, conta, categoria, cartão e natureza, e a paginação.
 - [ ] 9.2 O agregado da listagem, vindo do razão, mais `matching` e `returned`. Teste de que ele não é a soma da página.
+- [ ] 9.2a Ordem total e determinística, com desempate estável quando a data empata, e a opção de ordenar por **ordem de registro** — sem ela, "o último que eu registrei" não é respondível, já que a data tem resolução de dia. Teste de que paginar não repete nem omite item.
+- [ ] 9.6a Cada descrição de `list_invoices` e `get_card_overview` diz o seu recorte; a escolha entre as duas não deve exigir chamar as duas e comparar as saídas.
 - [ ] 9.3 A alternância de vocabulário por perspectiva: sem conta na chamada, natureza; com conta, direção. Teste com uma transferência, nos dois modos.
 - [ ] 9.4 `get_transaction` com todas as pernas monetárias e a taxa praticada quando elas cruzam moedas.
 - [ ] 9.5 `list_accounts`, `list_cards`, `list_categories` — cada uma com a figura que a acompanha.
@@ -136,6 +142,10 @@
 - [ ] 12.2 O `tools/list` filtrado pelo eixo — a ferramenta não anunciada não aparece.
 - [ ] 12.3 Recusa na execução de ferramenta cuja permissão não foi concedida, mesmo invocada pelo nome.
 - [ ] 12.4 `notifications/tools/list_changed` ao alterar um eixo, alcançando quem já está conectado.
+- [ ] 12.4a **Declarar as capacidades retidas no handshake** (D13): quais eixos estão concedidos, quais estão retidos por escolha do usuário, e onde conceder. Nomeia a capacidade, nunca as ferramentas — não é uma segunda lista por outro canal.
+- [ ] 12.4b Recusa de ferramenta invocada pelo nome distingue "não autorizado" de "não existe", com a mesma indicação de onde conceder.
+- [ ] 12.4c Editar o valor de um lançamento para zero é recusado, nomeando a remoção e o eixo que a autoriza — sem isso, o eixo "apagar" retido tem um substituto torto que deixa registros de R$ 0,00 no histórico.
+- [ ] 12.4d Teste da situação que a simulação flagrou: com "apagar" retido, a sessão carrega a informação de que remover existe e depende de autorização.
 - [ ] 12.5 Teste dos quatro eixos como independentes: conceder um não concede outro.
 - [ ] 12.6 Teste de que só-leitura anuncia exatamente as ferramentas das famílias 1 e 2.
 

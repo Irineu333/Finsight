@@ -43,7 +43,7 @@ Duas consequências operacionais:
 
 | | |
 |---|---|
-| Ferramentas | **55**, em 4 famílias |
+| Ferramentas | **56**, em 4 famílias |
 | Use cases já públicos (`api`) | **17** |
 | Use cases a promover de `impl` → `api` | **35** |
 | Use cases a criar | **7** |
@@ -130,7 +130,7 @@ respostas é derivável de uma lista sem erro.
 | Ferramenta | Entrada | Decide | Adapta / traz |
 |---|---|---|---|
 | `get_balance` | `month?`, `account?`, `exclude_accounts?` | ✔ `CalculateBalanceUseCase` — `invoke(target, excluded)` para o geral, `forAccount(id, target)` para uma conta | consolida via ✔ `ConsolidateMoneyUseCase`; resolve nomes. **Traz:** total consolidado, o mapa por moeda, e a data da taxa usada |
-| `get_month_summary` | `month` | `IEntryRepository.assetMonthFlowsByCurrency` | **Traz:** receita, despesa, ajuste e rendimento — e a nota de que transferência e pagamento de fatura estão fora, porque o razão já os exclui |
+| `get_month_summary` | `month`, `compare_to?` | `IEntryRepository.assetMonthFlowsByCurrency` | **Traz:** receita, despesa, ajuste e rendimento — e a nota de que transferência e pagamento de fatura estão fora, porque o razão já os exclui. Com `compare_to`, traz a variação **já calculada** e marca qual dos períodos ainda está em andamento |
 | `get_category_spending` | `month` | ✔ `CalculateCategorySpendingUseCase(forYearMonth)` | ordena, resolve nomes. **Traz:** valor e participação (%) por categoria |
 | `get_category_income` | `month` | ✔ `CalculateCategoryIncomeUseCase` | idem |
 | `get_spending_breakdown` | `month`, `nature` | `IEntryRepository.totalsByDimensionInMonthByCurrency` | traduz dimensão → categoria; a chave `null` vira **"sem categoria"** explícito. **Traz:** total, participação, e o não-classificado como linha própria |
@@ -138,6 +138,7 @@ respostas é derivável de uma lista sem erro.
 | `get_pending_recurring` | `month?` | ✔ `GetPendingRecurringUseCase` | resolve conta/cartão/categoria. **Traz:** pendentes + total previsto do mês |
 | `get_card_overview` | `card?` | ⬆ `CalculateAvailableLimitUseCase(creditCard)` + ⬆ `CalculateInvoiceUseCase(invoice)` | resolve id → cartão. **Traz:** limite, usado, disponível, fatura aberta e o devido |
 | `get_report_stats` | `scope`, `from`, `to` | ⬆ `CalculateReportStatsUseCase` sobre `IEntryRepository.scopeStatsByCurrency` | resolve o escopo em ids de conta. **Traz:** receita, despesa, saldo e saldo inicial do período |
+| `get_net_worth` | `month?` | ✚ leitura por natureza — `EntryDao.netWorthCents()` já existe agrupado por moeda | ASSET − LIABILITY. **Existe porque a simulação provou faltar:** `get_balance` soma só as contas, e as duas figuras são indistinguíveis pelo valor |
 
 ---
 
@@ -229,9 +230,23 @@ ferramenta: ela decide **quais ferramentas existem** no `tools/list`.
 | Apagar | as 4 marcadas *(Apagar)* | 4 |
 | Operar | 4 | 13 |
 
-Um agente com só-leitura vê 19 ferramentas e não sabe que as outras 36 existem — não tenta,
-não erra, não gasta contexto. `ServerCapabilities.Tools(listChanged = true)` já existe no SDK
-Kotlin, então mexer no interruptor notifica o agente na hora.
+Um agente com só-leitura vê 21 ferramentas e não tenta as outras — não erra, não gasta
+contexto. `ServerCapabilities.Tools(listChanged = true)` já existe no SDK Kotlin, então mexer no
+interruptor notifica o agente na hora.
+
+**Mas ele precisa saber que há algo retido.** Numa simulação com um agente real, sobre um
+protótipo com o eixo "apagar" desligado, o pedido *"apaga o último lançamento"* produziu:
+
+> *"Não consegui. Não existe ferramenta de exclusão de lançamento no servidor."*
+
+Falso, dito com confiança ao dono do app, e bloqueando justamente a ação que resolveria — ligar
+o eixo. Esconder a ferramenta escondeu também a capacidade. O handshake da sessão passa a
+declarar **quais eixos estão retidos e onde concedê-los** — a capacidade, nunca as ferramentas,
+que seguem fora da lista.
+
+O mesmo agente relatou ter cogitado zerar o valor pela ferramenta de edição para "neutralizar" o
+lançamento. Negar o verbo direto sem dizer por quê convida ao verbo torto: editar para zero
+passa a ser recusado.
 
 ---
 

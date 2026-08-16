@@ -58,6 +58,59 @@ conectados de que a lista de ferramentas mudou, sem exigir reconexão.
 - **WHEN** o usuário revoga um eixo enquanto um cliente está conectado
 - **THEN** o cliente é notificado e as ferramentas correspondentes deixam de ser oferecidas
 
+### Requirement: O que está retido é dito, mesmo sem ser oferecido
+
+O servidor SHALL declarar, no handshake da sessão, quais eixos estão concedidos e quais estão
+**retidos**, e SHALL dizer que um eixo retido é uma escolha do usuário, reversível na tela de
+configurações do app.
+
+Filtrar o `tools/list` esconde a ferramenta, e sem esta declaração esconde também a existência
+da capacidade: um agente que não encontra como remover um lançamento conclui que o app **não
+sabe** remover, e responde ao usuário que aquilo é impossível. É uma resposta falsa, dada com
+confiança, sobre a própria configuração do usuário — e ela impede exatamente a ação que
+resolveria o caso, que é o usuário conceder o eixo.
+
+A declaração MUST NOT enumerar as ferramentas retidas nem os seus argumentos: o que se declara
+é a **capacidade** ausente e o caminho para concedê-la, não uma segunda lista de ferramentas
+por outro canal.
+
+Uma ferramenta invocada pelo nome sem a permissão correspondente SHALL recusar distinguindo
+**"não autorizado"** de **"não existe"**, com a mesma indicação de onde conceder.
+
+#### Scenario: Sessão com um eixo retido
+- **WHEN** um cliente abre sessão com o eixo "apagar" não concedido
+- **THEN** o handshake declara que remover está retido por escolha do usuário e pode ser concedido nas configurações do app
+
+#### Scenario: Agente relata a retenção em vez de negar a capacidade
+- **WHEN** o usuário pede a um agente que remova um lançamento e o eixo "apagar" está retido
+- **THEN** o agente dispõe da informação para dizer que a remoção existe e depende de autorização, em vez de responder que o app não a suporta
+
+#### Scenario: Invocação nominal sem permissão
+- **WHEN** uma ferramenta de um eixo retido é invocada pelo nome
+- **THEN** a recusa diz que a operação existe e não está autorizada — nunca que ela é desconhecida
+
+#### Scenario: A declaração não é uma segunda lista
+- **WHEN** o handshake de uma sessão com eixos retidos é inspecionado
+- **THEN** ele nomeia as capacidades retidas, sem enumerar ferramentas nem os seus argumentos
+
+### Requirement: Uma operação retida não ganha substituto torto
+
+As ferramentas dos eixos concedidos MUST NOT oferecer, por composição, o efeito prático de uma
+operação cujo eixo está retido.
+
+Em particular, uma ferramenta de edição MUST NOT aceitar valor nulo ou negativo como forma de
+anular um lançamento: o resultado seria um registro de valor zero que permanece nas listagens e
+nas contagens, o que não é a remoção que o usuário pediu e é pior do que a recusa — some do
+total sem sumir do histórico, e ninguém sabe que está lá.
+
+#### Scenario: Edição não anula por zeragem
+- **WHEN** um agente tenta alterar o valor de um lançamento para zero
+- **THEN** a alteração é recusada, com a indicação de que anular um lançamento é remoção e depende do eixo correspondente
+
+#### Scenario: Recusa não empurra para o contorno
+- **WHEN** uma remoção é recusada por falta de permissão
+- **THEN** a recusa nomeia a autorização como caminho, e não uma edição que simule o efeito
+
 ### Requirement: O estado inicial não concede escrita
 
 Antes de qualquer configuração do usuário, o servidor SHALL estar desligado. Ao ser ligado

@@ -19,9 +19,11 @@ import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.mcp.McpPermissionNotice
 import com.neoutils.finsight.mcp.McpTool
 import com.neoutils.finsight.mcp.McpToolEffect
 import com.neoutils.finsight.mcp.McpToolName
+import com.neoutils.finsight.mcp.capability
 import com.neoutils.finsight.mcp.surface.AgentFigure
 import com.neoutils.finsight.mcp.surface.AgentInstallment
 import com.neoutils.finsight.mcp.surface.AgentRefusal
@@ -292,8 +294,9 @@ internal class UpdateTransactionTool(
             "edit rewrites it from that leg. A transfer and a card payment have two monetary " +
             "legs and are refused; so are an adjustment (adjust_balance, adjust_invoice) and " +
             "one share of an instalment plan (update_installment). " +
-            "An amount of zero is refused: it is not the removal it imitates, and " +
-            "delete_transaction is."
+            "An amount of zero is refused: it is not the removal it imitates. Removal is " +
+            "delete_transaction, on the ${McpToolName.DELETE_TRANSACTION.axis.capability} " +
+            "capability."
 
     override val inputSchema = schema(
         "id" to number("The posting to edit, from list_transactions."),
@@ -327,7 +330,10 @@ internal class UpdateTransactionTool(
             return@writing refusedWith(
                 AgentRefusal(
                     reason = "An amount of zero would leave the posting in the history and out " +
-                        "of every total, which is not the removal it imitates.",
+                        "of every total, which is not the removal it imitates. Removing it is " +
+                        "`${McpToolName.DELETE_TRANSACTION.wireName}`, on the " +
+                        "${McpToolName.DELETE_TRANSACTION.axis.capability} capability — and where " +
+                        "that capability is withheld, ${McpPermissionNotice.WHERE_TO_GRANT}.",
                     tryInstead = McpToolName.DELETE_TRANSACTION.wireName,
                 ),
                 summary = summary,

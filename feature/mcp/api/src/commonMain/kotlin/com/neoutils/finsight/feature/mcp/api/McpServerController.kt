@@ -44,6 +44,21 @@ interface McpServerController {
     val token: StateFlow<String?>
 
     /**
+     * What the user has granted an agent — four independent capabilities, of which a server switched
+     * on for the first time carries only [McpPermissionAxis.READ].
+     *
+     * It outlives the process like the other three choices: a grant the user had to repeat every
+     * launch is one they would stop reading.
+     */
+    val permissions: StateFlow<Set<McpPermissionAxis>>
+
+    /**
+     * How many tools each axis grants, so the section can say what a switch does before it is
+     * flipped. Empty where there is no server, because there is nothing to grant.
+     */
+    val toolCountByAxis: Map<McpPermissionAxis, Int>
+
+    /**
      * Brings the server up **if the user has chosen to run it**, and otherwise does nothing.
      *
      * This is what the process calls when it starts: the user switches the server on once, and
@@ -74,6 +89,18 @@ interface McpServerController {
      * the client configured for the new port keeps working from then on.
      */
     suspend fun setPort(port: Int)
+
+    /**
+     * Grants or withholds one capability, and reaches whoever is already connected.
+     *
+     * The tools an axis governs stop or start being announced from this moment, and the clients with
+     * a session open are told the list changed rather than being left to find out on a reconnection
+     * that may never come.
+     *
+     * One axis per call: the four are independent, and a signature that took a set would be a shape
+     * in which granting one could carry another along.
+     */
+    suspend fun setPermission(axis: McpPermissionAxis, granted: Boolean)
 
     /** Mints a new token. The previous one stops being accepted the moment this returns. */
     suspend fun regenerateToken()

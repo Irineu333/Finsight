@@ -1,5 +1,6 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

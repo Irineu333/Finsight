@@ -51,6 +51,15 @@ internal fun RawHttp.Response.payload(): JsonObject = json.parseToJsonElement(to
 internal fun RawHttp.Response.isToolError(): Boolean =
     jsonRpc()["result"]?.jsonObject?.get("isError")?.jsonPrimitive?.boolean == true
 
+/**
+ * The instructions the handshake carried, or `null` when it carried none.
+ *
+ * The one thing a client hands the model before its first question, which is why what is *withheld*
+ * has to be said here and could not be said by a tool the model would have to think to call.
+ */
+internal fun RawHttp.Response.sessionInstructions(): String? =
+    jsonRpc()["result"]?.jsonObject?.get("instructions")?.jsonPrimitive?.content
+
 /** The tools the server announced, by name. */
 internal fun RawHttp.Response.announcedToolNames(): List<String> =
     jsonRpc()["result"]!!.jsonObject["tools"]!!.jsonArray

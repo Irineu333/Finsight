@@ -1,5 +1,6 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,14 @@ internal class UnavailableMcpServerController : McpServerController {
 
     override val token: StateFlow<String?> = MutableStateFlow(null)
 
+    /**
+     * Nothing is granted, because there is nothing to grant it to. Not even reading: a permission
+     * here would describe an agent that has no way to arrive.
+     */
+    override val permissions: StateFlow<Set<McpPermissionAxis>> = MutableStateFlow(emptySet())
+
+    override val toolCountByAxis: Map<McpPermissionAxis, Int> = emptyMap()
+
     override suspend fun start() = Unit
 
     override suspend fun stop() = Unit
@@ -31,6 +40,8 @@ internal class UnavailableMcpServerController : McpServerController {
     override suspend fun setEnabled(enabled: Boolean) = Unit
 
     override suspend fun setPort(port: Int) = Unit
+
+    override suspend fun setPermission(axis: McpPermissionAxis, granted: Boolean) = Unit
 
     override suspend fun regenerateToken() = Unit
 

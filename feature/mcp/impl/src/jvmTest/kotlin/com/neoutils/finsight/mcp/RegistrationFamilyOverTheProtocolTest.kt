@@ -1,6 +1,7 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.mcp.McpServerHarness.Companion.freePort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -151,11 +152,14 @@ class RegistrationFamilyOverTheProtocolTest {
     }
 
     /**
-     * **Editing an amount to zero is refused, and the refusal names the removal.**
+     * **Editing an amount to zero is refused, and the refusal names the removal and the capability
+     * that authorises it.**
      *
      * The contortion a withheld removal invites, and worse than the refusal it stands in for: the
-     * posting would leave every total and stay in every listing and count. Group 12 makes the
-     * permission axis announce itself; the refusal itself belongs here, beside the edit.
+     * posting would leave every total and stay in every listing and count. Naming the tool alone
+     * would not close it — the tool is exactly what an agent cannot see when the axis is withheld,
+     * so the refusal has to name the *capability* too, and where it is granted, or it points at
+     * something that is not there.
      */
     @Test
     fun `editing an amount to zero is refused, and names the removal instead`() = runTest {
@@ -170,6 +174,18 @@ class RegistrationFamilyOverTheProtocolTest {
                 response.payload().text("try_instead"),
                 "the refusal does not name what the agent was reaching for: ${response.toolText()}",
             )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                McpToolName.DELETE_TRANSACTION.axis.capability in reason,
+                "the refusal does not name the capability removing is on, so an agent that " +
+                    "cannot see the tool learns nothing it can act on: $reason",
+            )
+            assertTrue(
+                McpPermissionNotice.WHERE_TO_GRANT in reason,
+                "the refusal does not say where that capability is granted: $reason",
+            )
+
             assertEquals(
                 300.00,
                 world.transactionRepository.getTransactionById(id)!!.amount,

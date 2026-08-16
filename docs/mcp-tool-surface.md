@@ -48,7 +48,7 @@ Duas consequências operacionais:
 | Use cases a promover de `impl` → `api` | **35** |
 | Use cases a criar | **7** |
 | Sobrecargas por id a escrever | **14** (aditivas — nenhum chamador muda) |
-| Ferramentas visíveis com permissão só-leitura | **19** |
+| Ferramentas visíveis com permissão só-leitura | **20** |
 
 ---
 
@@ -186,12 +186,12 @@ correspondente, do razão.
 | `delete_budget` *(Apagar)* | `id` | ✚ **`DeleteBudgetUseCase`** — extraído de `DeleteBudgetViewModel` | |
 | `create_recurring` | `type`, `amount`, `title?`, `day_of_month`, `category?`, `account?` \| `card?` | ⬆ `SaveRecurringUseCase(id = 0, …)` | |
 | `update_recurring` | `id`, campos | ⬆ `SaveRecurringUseCase(id, …)` | mesmo use case, id não-zero |
-| `delete_recurring` | `id` | ⬆ `DeleteRecurringUseCase` | consulta ⬆ `ResolveRecurringRetirabilityUseCase` |
+| `delete_recurring` *(Apagar)* | `id` | ⬆ `DeleteRecurringUseCase` | consulta ⬆ `ResolveRecurringRetirabilityUseCase` |
 | `create_installment` | `card`, `amount`, `count`, `date`, `category?`, `title?` | ✔ `AddInstallmentUseCase(form, installments)` | as N transações são all-or-nothing, garantia do repositório |
 | `update_installment` | `id`, `count`, `total_amount` | ✚ **`UpdateInstallmentUseCase`** — hoje só `IInstallmentRepository.updateInstallment`, sem use case | |
-| `delete_installment` | `id` | ✔ `DeleteInstallmentUseCase` | |
+| `delete_installment` *(Apagar)* | `id` | ✔ `DeleteInstallmentUseCase` | |
 | `create_invoice` | `card`, `due_month` | ✔ `GetOrCreateInvoiceForMonthUseCase` ou ⬆ `CreateInvoiceUseCase(creditCard, dueMonth)` | recusa duplicata de `dueMonth` |
-| `delete_invoice` | `id` | ⬆ `DeleteFutureInvoiceUseCase` | **só a futura** (`status.isDeletable`); a recusa diz por quê |
+| `delete_invoice` *(Apagar)* | `id` | ⬆ `DeleteFutureInvoiceUseCase` | **só a futura** (`status.isDeletable`); a recusa diz por quê |
 
 ---
 
@@ -225,12 +225,12 @@ ferramenta: ela decide **quais ferramentas existem** no `tools/list`.
 
 | Eixo | Famílias | Ferramentas |
 |---|---|---|
-| Ler | 1 + 2 | 19 |
-| Registrar e editar | 3, menos os apagar | 19 |
-| Apagar | as 4 marcadas *(Apagar)* | 4 |
+| Ler | 1 + 2 | 20 |
+| Registrar e editar | 3, menos os apagar | 15 |
+| Apagar | as 8 marcadas *(Apagar)* | 8 |
 | Operar | 4 | 13 |
 
-Um agente com só-leitura vê 21 ferramentas e não tenta as outras — não erra, não gasta
+Um agente com só-leitura vê 20 ferramentas e não tenta as outras — não erra, não gasta
 contexto. `ServerCapabilities.Tools(listChanged = true)` já existe no SDK Kotlin, então mexer no
 interruptor notifica o agente na hora.
 

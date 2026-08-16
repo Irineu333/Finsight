@@ -49,6 +49,20 @@ internal class AgentActivityJournal(
             )
         }
 
+        return record(tool, result)
+    }
+
+    /**
+     * A call turned away before the tool was reached, because the permission it needs is withheld.
+     *
+     * It is kept for the same reason a refusal the domain raised is: the user's question is *why did
+     * the agent say it could not do that*, and "it asked to remove something and a switch of yours
+     * stopped it" is the answer. The tool never runs, so nothing changed — which is exactly what the
+     * entry records.
+     */
+    suspend fun refuse(tool: McpTool, refusal: McpToolResult): McpToolResult = record(tool, refusal)
+
+    private suspend fun record(tool: McpTool, result: McpToolResult): McpToolResult {
         if (tool.effect == McpToolEffect.CHANGES) {
             activity.record(
                 operation = tool.name,

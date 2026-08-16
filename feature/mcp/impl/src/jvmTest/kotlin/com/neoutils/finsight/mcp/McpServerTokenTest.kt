@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class McpServerTokenTest {
 
     private fun writingTool() = SpyTool(
-        name = "record_expense",
+        name = "create_transaction",
         effect = McpToolEffect.CHANGES,
         answer = {
             McpToolResult(

@@ -1,6 +1,7 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
 import kotlinx.serialization.json.JsonObject
 
@@ -24,6 +25,17 @@ internal interface McpTool {
 
     /** Whether calling it changes anything — the one thing that decides if it leaves a trace. */
     val effect: McpToolEffect
+
+    /**
+     * The permission that has to be granted for this tool to be announced, and for a call on it to
+     * be carried out.
+     *
+     * Read off [name] rather than declared a second time: `McpToolName` already says which axis
+     * governs each of the fifty-six, and a tool free to state its own would be free to state a
+     * different one from the surface — a removal announcing itself as recording, say, would remove
+     * under a grant the user gave for writing.
+     */
+    val axis: McpPermissionAxis get() = McpToolName.of(name).axis
 
     suspend fun call(arguments: JsonObject?): McpToolResult
 }

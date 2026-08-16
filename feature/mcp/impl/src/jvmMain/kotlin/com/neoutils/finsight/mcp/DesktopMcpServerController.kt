@@ -1,6 +1,7 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerFailure
 import com.neoutils.finsight.feature.mcp.api.McpServerState
@@ -24,8 +25,12 @@ import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.server.mcpStreamableHttp
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.ListToolsRequest
+import io.modelcontextprotocol.kotlin.sdk.types.ListToolsResult
+import io.modelcontextprotocol.kotlin.sdk.types.Method
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -55,6 +60,14 @@ import java.util.concurrent.ConcurrentHashMap
  * socket is bound, and a failure lands in [McpServerState.Failed] carrying the port — never a quiet
  * move to a free one, which would leave a configured client pointing at nothing while the app
  * reported success (design D10).
+ *
+ * **The permission decides which tools exist.** `tools/list` answers with the tools of the granted
+ * axes alone, and a call on any other is refused before the tool is reached — the announcement is a
+ * consequence of the permission, not its only application (design D5). Both read the same set at the
+ * instant of the request, so there is no registry to keep in step with the switches; and every
+ * session is told the list changed the moment the user moves one. What is withheld is still declared
+ * in the handshake, because a filtered list alone makes a withheld capability look like one the app
+ * does not have (design D13).
  */
 internal class DesktopMcpServerController(
     private val settings: McpServerSettings,
@@ -77,6 +90,10 @@ internal class DesktopMcpServerController(
     override val port: StateFlow<Int> = settings.port
 
     override val token: StateFlow<String?> = settings.token
+
+    override val permissions: StateFlow<Set<McpPermissionAxis>> = settings.permissions
+
+    override val toolCountByAxis: Map<McpPermissionAxis, Int> = McpSurface.toolCountByAxis
 
     /**
      * The scope the engine's jobs hang from, owned here rather than left global.
@@ -126,6 +143,24 @@ internal class DesktopMcpServerController(
         if (!wasUp) return@withLock
         takeDown()
         if (settings.isEnabled.value) bringUp()
+    }
+
+    /**
+     * Moves one switch and tells whoever is listening.
+     *
+     * The notification goes out **after** the choice is persisted, so a client that re-lists on
+     * hearing it reads the new answer and never the old one. It is sent outside the lifecycle lock
+     * because writing to a client's stream is not a lifecycle operation, and holding the lock across
+     * it would let a slow reader block the user switching the server off.
+     */
+    override suspend fun setPermission(axis: McpPermissionAxis, granted: Boolean) {
+        val changed = lifecycle.withLock {
+            if ((axis in settings.permissions.value) == granted) return@withLock false
+            settings.setPermission(axis, granted)
+            true
+        }
+
+        if (changed) announceToolListChanged()
     }
 
     override suspend fun regenerateToken(): Unit = lifecycle.withLock {
@@ -218,15 +253,25 @@ internal class DesktopMcpServerController(
                     tools = ServerCapabilities.Tools(listChanged = true),
                 ),
             ),
+            // Read per session, at the moment it opens, so a client that connects after the user
+            // moved a switch is told what is true now. It is the channel that reaches the model
+            // before its first question, which is what makes it the place a withheld capability can
+            // be declared at all (design D13).
+            instructionsProvider = { McpPermissionNotice.instructions(settings.permissions.value) },
         )
 
         tools.forEach { tool -> server.register(tool) }
 
         server.onConnect {
             // The only moment the session exists and is reachable: `onConnect` runs at the end of
-            // the SDK's own session setup, with the session already registered.
+            // the SDK's own session setup, with the session already registered — and before the
+            // transport hands it the first message, so the handler installed below is in place for
+            // every request the client will ever make on it.
             server.sessions.values.forEach { session ->
                 if (openSessions.putIfAbsent(session.sessionId, session) == null) {
+                    session.setRequestHandler<ListToolsRequest>(Method.Defined.ToolsList) { _, _ ->
+                        grantedToolList()
+                    }
                     session.onClose {
                         openSessions.remove(session.sessionId)
                         publish()
@@ -239,12 +284,52 @@ internal class DesktopMcpServerController(
         return server
     }
 
+    /**
+     * What the server announces: the tools of the granted axes, and no trace of the others.
+     *
+     * Computed per request rather than registered once, so a client that re-lists after being told
+     * the list changed reads the answer the switch has just produced.
+     */
+    private fun grantedToolList(): ListToolsResult {
+        val granted = settings.permissions.value
+        return ListToolsResult(
+            tools = tools
+                .filter { it.axis in granted }
+                .map { Tool(name = it.name, description = it.description, inputSchema = it.inputSchema) },
+            nextCursor = null,
+        )
+    }
+
+    /**
+     * Tells every session in progress that what it may call has changed.
+     *
+     * Without it the filtering would only reach the next connection, and a user who grants a
+     * capability to unblock the agent they are talking to would have to make them reconnect to be
+     * believed — the notification is what `listChanged` was declared for.
+     */
+    private suspend fun announceToolListChanged() {
+        openSessions.values.toList().forEach { session ->
+            // A client whose stream has already gone is not a failure of the switch: the choice is
+            // persisted either way, and the next session reads it from the handshake.
+            runCatching { session.sendToolListChanged() }
+        }
+    }
+
     private fun Server.register(tool: McpTool) = addTool(
         name = tool.name,
         description = tool.description,
         inputSchema = tool.inputSchema,
     ) { request ->
-        val result = journal.execute(tool, request.arguments)
+        // Not announced is not the same as not enforced. A tool called by name without its
+        // permission is refused here, before anything of it runs, and the refusal says the operation
+        // *exists and is not authorised* — an agent told the name is unknown reports back that the
+        // app cannot do the thing, which is false and hides the switch that would fix it.
+        val result = if (tool.axis in settings.permissions.value) {
+            journal.execute(tool, request.arguments)
+        } else {
+            journal.refuse(tool, McpPermissionNotice.refusal(tool))
+        }
+
         CallToolResult(
             content = listOf(TextContent(result.text)),
             // A refusal is the tool's own answer and not a protocol fault: the agent has to read it

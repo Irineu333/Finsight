@@ -42,6 +42,16 @@ internal class McpConversation(
         notifyInitialized()
     }
 
+    /**
+     * Holds the standalone event stream of this session open, which is where anything the server
+     * says on its own initiative arrives — a client that only posts questions never hears one.
+     */
+    fun eventStream(): SseStream = SseStream.open(
+        port = port,
+        token = token,
+        sessionId = requireNotNull(sessionId) { "the session was never initialised" },
+    )
+
     fun send(body: String): RawHttp.Response = RawHttp.post(
         port = port,
         body = body,

@@ -28,7 +28,7 @@ class AgentActivityIsOnlyWhatChangedTest {
     )
 
     private val writer = SpyTool(
-        name = "record_expense",
+        name = "create_transaction",
         effect = McpToolEffect.CHANGES,
         answer = {
             McpToolResult(

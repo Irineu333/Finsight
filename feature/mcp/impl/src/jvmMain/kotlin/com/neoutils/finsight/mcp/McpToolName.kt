@@ -1,5 +1,7 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
+
 /**
  * **Every tool this server will ever offer, and nothing else.**
  *
@@ -89,36 +91,22 @@ internal enum class McpToolName(
 
     /** The identity the agent calls it by, and the identity the activity log keeps. */
     val wireName: String = name.lowercase()
-}
 
-/**
- * The four things a user grants a agent, independently of each other.
- *
- * They are independent because they are different questions, not degrees of one: removing is not an
- * intense edit, and paying an invoice moves money between accounts, which recording does not. A
- * granted axis is what decides which tools *exist* in `tools/list` — not an `if` at the top of a
- * tool body.
- */
-internal enum class McpPermissionAxis {
+    companion object {
 
-    /** Consult figures and list what exists. The only axis a freshly enabled server grants. */
-    READ,
+        private val byWireName: Map<String, McpToolName> = entries.associateBy { it.wireName }
 
-    /** Create and alter — transactions, accounts, cards, categories, budgets, plans, templates. */
-    RECORD,
-
-    /**
-     * Remove permanently.
-     *
-     * An axis of its own, and it takes **every** `delete_*` tool of the surface with it. The
-     * requirement says "remover definitivamente" without naming an entity, and its scenario is
-     * literal: granting "record and edit" without this one means the agent *creates and alters, and
-     * does not remove*. A removal parked on the recording axis would remove under that grant.
-     */
-    REMOVE,
-
-    /** Move money, pay, close, reopen and adjust invoices, confirm and skip cycles, archive. */
-    OPERATE,
+        /**
+         * The tool a wire name denotes.
+         *
+         * It throws rather than answering `null` because the surface is closed: a name that reached
+         * the server without being one of these is a tool that was written and never decided on, and
+         * the axis governing it would be a guess. `McpSurfaceIsClosedTest` keeps that from ever
+         * being a production question, so the throw is a defect report and not a runtime path.
+         */
+        fun of(wireName: String): McpToolName = byWireName[wireName]
+            ?: error("`$wireName` is not a tool this surface decided on.")
+    }
 }
 
 /**

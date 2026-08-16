@@ -1,5 +1,7 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
+
 /**
  * **What the surface offers, and what it deliberately does not.**
  *
@@ -97,6 +99,28 @@ internal object McpSurface {
         McpToolName.ARCHIVE_ENTITY,
         McpToolName.UNARCHIVE_ENTITY,
     )
+
+    /**
+     * What each axis governs, which is the same fact [offered] already holds — read the other way
+     * round.
+     *
+     * Derived and never written down twice: the axis is a property of the tool's own name, so the
+     * grouping cannot drift from the surface the way a hand-kept table would.
+     */
+    val offeredByAxis: Map<McpPermissionAxis, Set<McpToolName>> =
+        McpPermissionAxis.entries.associateWith { axis -> offered.filterTo(mutableSetOf()) { it.axis == axis } }
+
+    /**
+     * How many tools each axis grants — the number the settings section tells the user before they
+     * flip a switch, because a switch whose effect is not stated is granted blind.
+     *
+     * The one place it is counted. Two places counting would be two answers, one edit apart.
+     */
+    val toolCountByAxis: Map<McpPermissionAxis, Int> = offeredByAxis.mapValues { (_, tools) -> tools.size }
+
+    /** The tools a set of granted axes reaches — what `tools/list` announces, as a set of names. */
+    fun offeredUnder(granted: Set<McpPermissionAxis>): Set<McpToolName> =
+        offered.filterTo(mutableSetOf()) { it.axis in granted }
 
     /** What the app can do that the surface does not reach, and why each one is out. */
     val exclusions: List<McpSurfaceExclusion> = listOf(

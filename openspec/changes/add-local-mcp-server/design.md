@@ -349,8 +349,8 @@ válida; a de comportamento não foi feita, e é o grupo 14.
 - **Agente repete chamada perdida e duplica lançamento** → reconhecido e não resolvido nesta
   mudança. O usuário vê o lançamento na tela em tempo real, o que reduz o tempo até a descoberta,
   mas não previne.
-- **55 ferramentas ocupam contexto do cliente** → a permissão filtra o anúncio; só-leitura expõe
-  19. As descrições precisam ser boas, e escrevê-las é trabalho de primeira classe, não
+- **56 ferramentas ocupam contexto do cliente** → a permissão filtra o anúncio; só-leitura expõe
+  20. As descrições precisam ser boas, e escrevê-las é trabalho de primeira classe, não
   acabamento.
 - **Token em texto claro** → ver D11. Escopo limitado a loopback, revogável pelo usuário.
 - **Uma tela que exibe token e endereço é um alvo em captura de tela e compartilhamento** → o

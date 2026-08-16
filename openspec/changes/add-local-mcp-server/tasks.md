@@ -157,16 +157,16 @@
 
 ## 12. Permissões (`mcp-permissions`)
 
-- [ ] 12.1 Os quatro eixos persistidos, com o estado inicial: servidor desligado e, ao ligar, apenas "ler".
-- [ ] 12.2 O `tools/list` filtrado pelo eixo — a ferramenta não anunciada não aparece.
-- [ ] 12.3 Recusa na execução de ferramenta cuja permissão não foi concedida, mesmo invocada pelo nome.
-- [ ] 12.4 `notifications/tools/list_changed` ao alterar um eixo, alcançando quem já está conectado.
-- [ ] 12.4a **Declarar as capacidades retidas no handshake** (D13): quais eixos estão concedidos, quais estão retidos por escolha do usuário, e onde conceder. Nomeia a capacidade, nunca as ferramentas — não é uma segunda lista por outro canal.
-- [ ] 12.4b Recusa de ferramenta invocada pelo nome distingue "não autorizado" de "não existe", com a mesma indicação de onde conceder.
-- [ ] 12.4c Editar o valor de um lançamento para zero é recusado, nomeando a remoção e o eixo que a autoriza — sem isso, o eixo "apagar" retido tem um substituto torto que deixa registros de R$ 0,00 no histórico.
-- [ ] 12.4d Teste da situação que a simulação flagrou: com "apagar" retido, a sessão carrega a informação de que remover existe e depende de autorização.
-- [ ] 12.5 Teste dos quatro eixos como independentes: conceder um não concede outro.
-- [ ] 12.6 Teste de que só-leitura anuncia exatamente as ferramentas das famílias 1 e 2.
+- [x] 12.1 Os quatro eixos persistidos, com o estado inicial: servidor desligado e, ao ligar, apenas "ler".
+- [x] 12.2 O `tools/list` filtrado pelo eixo — a ferramenta não anunciada não aparece.
+- [x] 12.3 Recusa na execução de ferramenta cuja permissão não foi concedida, mesmo invocada pelo nome.
+- [x] 12.4 `notifications/tools/list_changed` ao alterar um eixo, alcançando quem já está conectado.
+- [x] 12.4a **Declarar as capacidades retidas no handshake** (D13): quais eixos estão concedidos, quais estão retidos por escolha do usuário, e onde conceder. Nomeia a capacidade, nunca as ferramentas — não é uma segunda lista por outro canal.
+- [x] 12.4b Recusa de ferramenta invocada pelo nome distingue "não autorizado" de "não existe", com a mesma indicação de onde conceder.
+- [x] 12.4c Editar o valor de um lançamento para zero é recusado, nomeando a remoção e o eixo que a autoriza — sem isso, o eixo "apagar" retido tem um substituto torto que deixa registros de R$ 0,00 no histórico.
+- [x] 12.4d Teste da situação que a simulação flagrou: com "apagar" retido, a sessão carrega a informação de que remover existe e depende de autorização.
+- [x] 12.5 Teste dos quatro eixos como independentes: conceder um não concede outro.
+- [x] 12.6 Teste de que só-leitura anuncia exatamente as ferramentas das famílias 1 e 2.
 
 ## 13. Tela de configurações (`mcp-server`, `platform-adaptive-features`)
 

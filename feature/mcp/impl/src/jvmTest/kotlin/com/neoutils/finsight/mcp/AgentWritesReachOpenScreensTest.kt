@@ -56,7 +56,7 @@ class AgentWritesReachOpenScreensTest {
             val accountId = accountDao.insert(AccountEntity(name = "Checking", currency = "BRL"))
 
             val tool = SpyTool(
-                name = "record_expense",
+                name = "create_transaction",
                 effect = McpToolEffect.CHANGES,
                 answer = {
                     val transactionId = transactionDao.insert(

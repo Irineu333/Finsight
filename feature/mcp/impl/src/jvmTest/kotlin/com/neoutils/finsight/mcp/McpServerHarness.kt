@@ -6,6 +6,7 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.mapper.AgentActivityMapper
 import com.neoutils.finsight.database.repository.AgentActivityRepository
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.Dispatchers
 import java.io.File
@@ -29,6 +30,16 @@ internal class McpServerHarness(
     val settings: MapSettings = MapSettings(),
     tools: List<McpTool> = emptyList(),
     clock: Clock = Clock.System,
+    /**
+     * What the user has granted, stated by the test rather than inherited.
+     *
+     * All four by default, because most of this suite is about something else — the token, the
+     * perimeter, a family of tools — and a test that had to grant a capability before exercising it
+     * would be saying the permission was the subject when it was not. `null` leaves whatever the
+     * `Settings` already hold, which is how the tests about the *initial* state ask what an
+     * untouched installation grants.
+     */
+    permissions: Set<McpPermissionAxis>? = McpPermissionAxis.entries.toSet(),
 ) : AutoCloseable {
 
     /**
@@ -55,8 +66,14 @@ internal class McpServerHarness(
      */
     val tools: MutableList<McpTool> = tools.toMutableList()
 
+    private val serverSettings = McpServerSettings(settings).also { stored ->
+        permissions?.let { granted ->
+            McpPermissionAxis.entries.forEach { stored.setPermission(it, it in granted) }
+        }
+    }
+
     val controller = DesktopMcpServerController(
-        settings = McpServerSettings(settings),
+        settings = serverSettings,
         journal = AgentActivityJournal(activity),
         tools = this.tools,
     )

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.mcp.McpServerHarness.Companion.freePort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first

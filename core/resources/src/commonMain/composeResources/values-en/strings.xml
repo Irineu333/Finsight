@@ -1009,6 +1009,9 @@
     <string name="mcp_token_reveal">Show the token</string>
     <string name="mcp_token_hide">Hide the token</string>
     <string name="mcp_token_regenerate">Mint a new token</string>
+    <string name="mcp_token_regenerate_title">Mint a new token?</string>
+    <string name="mcp_token_regenerate_message">The current token stops being accepted, and whoever is connected right now is disconnected. Every client already configured needs the new token before it can connect again.</string>
+    <string name="mcp_token_regenerate_confirm">Mint and invalidate the current one</string>
     <string name="mcp_token_pending">The token is minted the first time the server comes up.</string>
     <string name="mcp_copy">Copy</string>
 

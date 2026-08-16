@@ -32,6 +32,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import com.neoutils.finsight.ui.component.FinsightSwitch
+import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.modal.regenerateToken.RegenerateTokenModal
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -402,6 +404,8 @@ private fun TokenRow(
         return
     }
 
+    val modalManager = LocalModalManager.current
+
     CopyableRow(
         label = stringResource(Res.string.mcp_token_label),
         value = token,
@@ -423,19 +427,25 @@ private fun TokenRow(
                     ),
                 )
             }
+
+            // Beside revealing and copying because all three are about this token, and behind a
+            // confirmation because only this one takes something away: the other two leave every
+            // configured client working, and this one stops them all.
+            IconButton(
+                onClick = {
+                    modalManager.show(
+                        RegenerateTokenModal(onConfirm = { onAction(McpAction.RegenerateToken) })
+                    )
+                },
+                modifier = Modifier.testTag("mcp_token_regenerate"),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Autorenew,
+                    contentDescription = stringResource(Res.string.mcp_token_regenerate),
+                )
+            }
         },
     )
-
-    TextButton(
-        onClick = { onAction(McpAction.RegenerateToken) },
-        modifier = Modifier.testTag("mcp_token_regenerate"),
-    ) {
-        Icon(imageVector = Icons.Default.Autorenew, contentDescription = null, modifier = Modifier.size(16.dp))
-        Text(
-            text = stringResource(Res.string.mcp_token_regenerate),
-            modifier = Modifier.padding(start = 8.dp),
-        )
-    }
 }
 
 /** A value the user has to give a client, with the only affordance that avoids transcribing it. */

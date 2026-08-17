@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
@@ -360,7 +361,7 @@ private fun ConnectionCard(
             Icon(
                 imageVector = Icons.Default.ContentCopy,
                 contentDescription = stringResource(Res.string.mcp_instructions_copy),
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -391,7 +392,9 @@ private fun AddressRow(
         copied = uiState.address,
         testTag = "mcp_address",
         leading = {
-            IconButton(
+            RowIconButton(
+                icon = Icons.Default.Edit,
+                contentDescription = stringResource(Res.string.mcp_port_title),
                 onClick = {
                     modalManager.show(
                         EditPortModal(
@@ -401,12 +404,7 @@ private fun AddressRow(
                     )
                 },
                 modifier = Modifier.testTag("mcp_address_edit_port"),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(Res.string.mcp_port_title),
-                )
-            }
+            )
         },
     )
 
@@ -451,38 +449,32 @@ private fun TokenRow(
         copied = uiState.token.orEmpty(),
         testTag = "mcp_token",
         leading = {
-            IconButton(
+            RowIconButton(
+                icon = if (uiState.isTokenRevealed) {
+                    Icons.Default.VisibilityOff
+                } else {
+                    Icons.Default.Visibility
+                },
+                contentDescription = stringResource(
+                    if (uiState.isTokenRevealed) Res.string.mcp_token_hide else Res.string.mcp_token_reveal
+                ),
                 onClick = { onAction(McpAction.ToggleTokenVisibility) },
                 modifier = Modifier.testTag("mcp_token_visibility"),
-            ) {
-                Icon(
-                    imageVector = if (uiState.isTokenRevealed) {
-                        Icons.Default.VisibilityOff
-                    } else {
-                        Icons.Default.Visibility
-                    },
-                    contentDescription = stringResource(
-                        if (uiState.isTokenRevealed) Res.string.mcp_token_hide else Res.string.mcp_token_reveal
-                    ),
-                )
-            }
+            )
 
             // Beside revealing and copying because all three are about this token, and behind a
             // confirmation because only this one takes something away: the other two leave every
             // configured client working, and this one stops them all.
-            IconButton(
+            RowIconButton(
+                icon = Icons.Default.Autorenew,
+                contentDescription = stringResource(Res.string.mcp_token_regenerate),
                 onClick = {
                     modalManager.show(
                         RegenerateTokenModal(onConfirm = { onAction(McpAction.RegenerateToken) })
                     )
                 },
                 modifier = Modifier.testTag("mcp_token_regenerate"),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Autorenew,
-                    contentDescription = stringResource(Res.string.mcp_token_regenerate),
-                )
-            }
+            )
         },
     )
 }
@@ -516,15 +508,37 @@ private fun CopyableRow(
 
         leading?.invoke()
 
-        IconButton(
+        RowIconButton(
+            icon = Icons.Default.ContentCopy,
+            contentDescription = stringResource(Res.string.mcp_copy),
             onClick = { copy(copied) },
             modifier = Modifier.testTag("${testTag}_copy"),
-        ) {
-            Icon(
-                imageVector = Icons.Default.ContentCopy,
-                contentDescription = stringResource(Res.string.mcp_copy),
-            )
-        }
+        )
+    }
+}
+
+/**
+ * A row's affordance: the icon, drawn smaller than the button that carries it.
+ *
+ * A row here holds up to three of them beside a value that has to stay readable, so the icon is
+ * sized down to leave room around it while the button keeps the touch target it is entitled to.
+ */
+@Composable
+private fun RowIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

@@ -21,6 +21,12 @@ internal data class AgentCard(
     @SerialName("due_day")
     val dueDay: Int,
     val limit: AgentFigure? = null,
+    /**
+     * Everything holding the limit, cycles that have not opened yet included — an instalment
+     * holds limit from the moment it is bought. It is therefore **not** what the user owes
+     * today; `get_card_overview` splits it into the cycle that is due and the cycles that are
+     * merely committed.
+     */
     val used: AgentFigure? = null,
     val available: AgentFigure? = null,
     @SerialName("is_archived")

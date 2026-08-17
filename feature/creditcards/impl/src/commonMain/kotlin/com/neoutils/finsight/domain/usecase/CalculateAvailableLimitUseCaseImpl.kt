@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 
@@ -27,21 +28,41 @@ class CalculateAvailableLimitUseCaseImpl(
         val owedByInvoice = calculateInvoiceUseCase(unpaidByCard.values.flatten())
 
         return creditCards.associate { creditCard ->
-            val totalUnpaidAmount = unpaidByCard[creditCard.id]
+            // Floored per invoice, never on the sum: an over-paid cycle owes less than
+            // nothing, and letting it net against its neighbour would report limit the
+            // card never granted.
+            val owedByStatus = unpaidByCard[creditCard.id]
                 .orEmpty()
-                .sumOf { invoice -> (owedByInvoice[invoice.id] ?: 0.0).coerceAtLeast(0.0) }
+                .groupBy { invoice -> invoice.status }
+                .mapValues { (_, invoices) ->
+                    invoices.sumOf { (owedByInvoice[it.id] ?: 0.0).coerceAtLeast(0.0) }
+                }
 
-            creditCard.id to creditCard.limitOf(totalUnpaidAmount)
+            creditCard.id to creditCard.limitOf(owedByStatus)
         }
     }
 
     /**
+     * `OPEN`, `CLOSED` and `FUTURE` exhaust what arrives here, and only because the read
+     * above states "unpaid" as `status NOT IN ('PAID', 'RETROACTIVE')`. Widening that
+     * predicate without widening this split would drop the new state out of the total
+     * silently — the two are one rule expressed in two places.
+     *
      * A card with no limit declared has no fraction to be in use: dividing by it would
      * be dividing by zero, and reporting 100% would claim a ceiling the user never set.
      */
-    private fun CreditCard.limitOf(totalUnpaidAmount: Double) = Limit(
-        totalUnpaidAmount = totalUnpaidAmount,
-        available = (limit - totalUnpaidAmount).coerceAtLeast(0.0),
-        usage = if (limit != 0.0) (totalUnpaidAmount / limit).coerceIn(0.0, 1.0) else 0.0,
-    )
+    private fun CreditCard.limitOf(owedByStatus: Map<Invoice.Status, Double>): Limit {
+        val open = owedByStatus[Invoice.Status.OPEN] ?: 0.0
+        val closed = owedByStatus[Invoice.Status.CLOSED] ?: 0.0
+        val future = owedByStatus[Invoice.Status.FUTURE] ?: 0.0
+        val committed = open + closed + future
+
+        return Limit(
+            openAmount = open,
+            closedAmount = closed,
+            futureAmount = future,
+            available = (limit - committed).coerceAtLeast(0.0),
+            usage = if (limit != 0.0) (committed / limit).coerceIn(0.0, 1.0) else 0.0,
+        )
+    }
 }

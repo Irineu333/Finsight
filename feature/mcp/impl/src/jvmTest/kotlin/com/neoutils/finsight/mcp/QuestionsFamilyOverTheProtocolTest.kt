@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -213,6 +214,71 @@ class QuestionsFamilyOverTheProtocolTest {
             assertEquals(MarchWorld.CARD_LIMIT - MarchWorld.CARD_OWED, overview.at("card", "available").amount())
             assertEquals("open", overview.at("open_invoice").text("status"))
             assertEquals(MarchWorld.CARD_OWED, overview.at("open_invoice", "owed").amount())
+        }
+    }
+
+    /**
+     * What holds a limit and what is owed today are the same number only when nothing is
+     * committed ahead — and an instalment commits ahead by design. Handing an agent one total
+     * makes it report money that is not due as if it were, so the total arrives split, and the
+     * parts have to add up to it.
+     */
+    @Test
+    fun `get_card_overview splits what holds the limit by cycle, and the parts are the whole`() =
+        runTest {
+            withWorld { _, client ->
+                val overview = client.callTool("get_card_overview").payload()["cards"]!!
+                    .jsonArray.single().jsonObject
+
+                // March holds one open cycle and nothing else, so all of it sits in one part.
+                assertEquals(MarchWorld.CARD_OWED, overview.at("open_total").amount())
+                assertEquals(0.0, overview.at("closed_total").amount())
+                assertEquals(0.0, overview.at("future_total").amount())
+
+                val committed = overview.at("committed_total").amount()
+                assertEquals(
+                    overview.at("open_total").amount()!! +
+                        overview.at("closed_total").amount()!! +
+                        overview.at("future_total").amount()!!,
+                    committed,
+                    "the total and its parts disagree, which is the one thing the split forbids",
+                )
+                assertEquals(
+                    overview.at("card", "used").amount(),
+                    committed,
+                    "`used` is the committed figure, and the two must not be able to differ",
+                )
+            }
+        }
+
+    /**
+     * The perimeter is the only material an agent has before it trusts a number. This one used to
+     * declare that future invoices were excluded while counting them, which is worse than silence.
+     */
+    @Test
+    fun `get_card_overview says its totals reach cycles that have not opened`() = runTest {
+        withWorld { _, client ->
+            val description = client.listTools()
+                .announcedDescription(McpToolName.GET_CARD_OVERVIEW.wireName)
+
+            assertTrue(
+                "not opened yet" in description || "have not opened" in description,
+                "the description does not warn that unopened cycles are counted:\n$description",
+            )
+            assertTrue(
+                "committed_total" in description &&
+                    "closed_total" in description &&
+                    "future_total" in description,
+                "the description does not name the parts the total is split into:\n$description",
+            )
+
+            val excludes = client.callTool("get_card_overview").payload()
+                .at("perimeter")["excludes"].toString()
+            assertFalse(
+                "future" in excludes,
+                "the perimeter still claims future invoices are left out, and they are not: " +
+                    excludes,
+            )
         }
     }
 

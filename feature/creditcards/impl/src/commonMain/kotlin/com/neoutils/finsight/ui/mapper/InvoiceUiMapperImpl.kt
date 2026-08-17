@@ -41,7 +41,7 @@ class InvoiceUiMapperImpl(
             id = invoice.id,
             amount = DisplayAmount.magnitude(outstandingDebt, currency, isApproximate = false),
             totalUnpaidAmount = DisplayAmount.magnitude(
-                limit.totalUnpaidAmount,
+                limit.committedAmount,
                 currency,
                 isApproximate = false,
             ),

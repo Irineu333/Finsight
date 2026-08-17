@@ -436,20 +436,35 @@ internal class LedgerInvoiceOwed(
     }
 }
 
-/** What a card's unpaid invoices owe together, and what is left of its limit. */
+/**
+ * What each of a card's unpaid cycles holds of its limit, and what is left.
+ *
+ * "Unpaid" is the production predicate — `status NOT IN ('PAID', 'RETROACTIVE')`, stated in
+ * `InvoiceDao` — because a fake that admitted a retroactive invoice would hold limit here and
+ * not in the app, and the tools would be tested against a second opinion.
+ */
 internal class LedgerAvailableLimit(
     private val cards: List<CreditCard>,
     private val invoices: List<Invoice>,
     private val owed: CalculateInvoiceUseCase,
 ) : CalculateAvailableLimitUseCase {
     override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> {
-        val unpaid = invoices.filterNot { it.status.isPaid }
+        val unpaid = invoices.filterNot { it.status.isPaid || it.status.isRetroactive }
         val amounts = owed(unpaid)
         return creditCardIds.mapNotNull { id ->
             val card = cards.firstOrNull { it.id == id } ?: return@mapNotNull null
-            val used = unpaid.filter { it.creditCard.id == id }.sumOf { amounts[it.id] ?: 0.0 }
+            fun heldBy(status: Invoice.Status) = unpaid
+                .filter { it.creditCard.id == id && it.status == status }
+                .sumOf { (amounts[it.id] ?: 0.0).coerceAtLeast(0.0) }
+
+            val open = heldBy(Invoice.Status.OPEN)
+            val closed = heldBy(Invoice.Status.CLOSED)
+            val future = heldBy(Invoice.Status.FUTURE)
+            val used = open + closed + future
             id to Limit(
-                totalUnpaidAmount = used,
+                openAmount = open,
+                closedAmount = closed,
+                futureAmount = future,
                 available = (card.limit - used).coerceAtLeast(0.0),
                 usage = if (card.limit > 0) used / card.limit else 0.0,
             )

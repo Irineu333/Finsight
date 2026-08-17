@@ -3,8 +3,8 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.CreditCard
 
 /**
- * How much of a card's limit is still spendable: what its unpaid invoices owe, what is
- * left of the limit, and the fraction of it in use.
+ * How much of a card's limit is still spendable: what holds it — split by the cycle that
+ * holds it — what is left, and the fraction in use.
  *
  * **The plural form is the one that carries the implementation**, because this figure
  * is asked of a whole list far more often than of a single card, and asking per card
@@ -41,13 +41,38 @@ interface CalculateAvailableLimitUseCase {
     suspend operator fun invoke(creditCard: CreditCard): Limit = invoke(creditCard.id)
 }
 
+/**
+ * What holds a card's limit, and what is left of it.
+ *
+ * The committed figure is **split by the cycle that holds it**, because the three are
+ * different facts about the user's money and one number cannot say which is which:
+ * [closedAmount] is what is due to be paid, [futureAmount] is what an instalment already
+ * committed to cycles that have not opened yet, and [openAmount] is what the current
+ * cycle has accrued so far. All three hold limit from the moment they are posted — that
+ * is what an instalment does — which is why [committedAmount] is their sum and is the
+ * figure [available] is taken against.
+ *
+ * Each cycle is floored at zero on its own: an over-paid one owes less than nothing, and
+ * letting it net against its neighbour would report limit the card never granted.
+ */
 data class Limit(
-    val totalUnpaidAmount: Double,
+    val openAmount: Double,
+    val closedAmount: Double,
+    val futureAmount: Double,
     val available: Double,
     val usage: Double,
 ) {
+    /** The three cycles together — everything holding the limit right now. */
+    val committedAmount: Double get() = openAmount + closedAmount + futureAmount
+
     companion object {
         /** Nothing owed, nothing available, nothing in use — what absence reads as. */
-        val NONE = Limit(totalUnpaidAmount = 0.0, available = 0.0, usage = 0.0)
+        val NONE = Limit(
+            openAmount = 0.0,
+            closedAmount = 0.0,
+            futureAmount = 0.0,
+            available = 0.0,
+            usage = 0.0,
+        )
     }
 }

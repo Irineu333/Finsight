@@ -39,8 +39,11 @@ internal class ListCardsTool(
         "Every credit card the user holds, with its identifier, its name, the currency it is " +
             "denominated in, the day it closes, the day it falls due, and its limit. " +
             "PERIMETER: this is the catalogue of cards — identities and the calendar. It names " +
-            "NO invoice: for the one open right now and what all unpaid invoices owe together " +
-            "use get_card_overview, and for a card's invoices over time use list_invoices. " +
+            "NO invoice: for the one open right now, and for what each unpaid cycle holds split " +
+            "apart, use get_card_overview; for a card's invoices over time use list_invoices. " +
+            "`used` is everything holding the limit, which includes cycles that have not opened " +
+            "yet — an instalment holds limit from the moment it is bought — so it is NOT what " +
+            "the user owes today; get_card_overview separates the two. " +
             "`used`, `available` and `limit` are three separate readings, not two plus a " +
             "subtraction. Figures are in each card's own currency and are never added across " +
             "cards: doing that is conversion, and no total here is one."
@@ -67,7 +70,7 @@ internal class ListCardsTool(
                 cards = cards.map { it.toAgentCard(limits[it.id] ?: Limit.NONE) },
                 perimeter = AgentPerimeter(
                     covers = "Every credit card the user holds, with its limit and how much of " +
-                        "it the unpaid invoices are holding.",
+                        "it the unpaid cycles are holding — the ones not yet opened included.",
                     excludes = listOfNotNull(
                         "invoices — this list names none of them",
                         "spending on a card that has not yet landed on an invoice",
@@ -90,7 +93,7 @@ internal class ListCardsTool(
         closingDay = closingDay,
         dueDay = dueDay,
         limit = figure(this.limit),
-        used = figure(limit.totalUnpaidAmount),
+        used = figure(limit.committedAmount),
         available = figure(limit.available),
         isArchived = isArchived,
     )

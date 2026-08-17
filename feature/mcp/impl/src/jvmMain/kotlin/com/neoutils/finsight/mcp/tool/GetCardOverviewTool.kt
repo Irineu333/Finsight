@@ -22,11 +22,11 @@ import kotlinx.serialization.json.JsonObject
 /**
  * **Each card's limit and the invoice standing open on it right now.**
  *
- * Its recorte, against the invoice listings of the catalogue family: this is the **card's** answer —
- * one line per card, its limit, what its unpaid invoices owe together, and the single invoice that
- * is open at this moment. It never enumerates a card's invoices, and it never reaches a closed or a
- * future one. A question about a specific invoice, or about a card's history of them, is
- * `get_invoice` and `list_invoices`.
+ * Its cut, against the invoice listings of the catalogue family: this is the **card's** answer —
+ * one line per card, its limit, what each of its unpaid cycles holds of that limit, and the single
+ * invoice that is open at this moment. It never enumerates a card's invoices: a closed or a future
+ * cycle reaches the totals, and is never named. A question about a specific invoice, or about a
+ * card's history of them, is `get_invoice` and `list_invoices`.
  *
  * Every figure is in the card's **own** currency — the one its ledger account states and never
  * changes — and nothing here consolidates: adding the limits of two cards in different currencies is
@@ -44,13 +44,18 @@ internal class GetCardOverviewTool(
     override val effect = McpToolEffect.READS
 
     override val description: String =
-        "Each credit card with its limit, how much of it is taken by unpaid invoices, how much " +
-            "is left, and the invoice open on it right now. " +
-            "PERIMETER: this answers for CARDS, one line per card, and reaches only the invoice " +
-            "that is open at this moment. Closed, future and paid invoices are not here — for " +
-            "those, and for a card's cycles over time, use list_invoices, which answers for " +
-            "INVOICES instead: one line per cycle, in any state. For one invoice in full, with " +
-            "its statement, use get_invoice. " +
+        "Each credit card with its limit, what is holding that limit, how much is left, and the " +
+            "invoice open on it right now. " +
+            "PERIMETER: this answers for CARDS, one line per card. Only the invoice open at this " +
+            "moment is named; the totals, however, reach every unpaid cycle — including ones " +
+            "that have not opened yet, because an instalment holds limit from the moment it is " +
+            "bought. Do not read `committed_total` as what the user owes today: it is split into " +
+            "`open_total`, `closed_total` and `future_total` precisely so that money already due " +
+            "is never confused with money merely committed, and it is exactly their sum. Paid " +
+            "and retroactive invoices hold no limit and are in none of them. " +
+            "For a card's cycles over time, or for any invoice that is not the open one, use " +
+            "list_invoices, which answers for INVOICES instead: one line per cycle, in any " +
+            "state. For one invoice in full, with its statement, use get_invoice. " +
             "`used`, `available` and `limit` are three separate readings, not two plus a " +
             "subtraction: what is available is what the app computes, not `limit - used`. " +
             "Figures are in each card's own currency and are never added across cards."
@@ -93,7 +98,10 @@ internal class GetCardOverviewTool(
                     AgentCardOverview(
                         card = card.toAgentCard(limit),
                         openInvoice = open?.toAgentInvoice(card, owed[open.id] ?: 0.0),
-                        unpaidTotal = card.figure(limit.totalUnpaidAmount),
+                        openTotal = card.figure(limit.openAmount),
+                        closedTotal = card.figure(limit.closedAmount),
+                        futureTotal = card.figure(limit.futureAmount),
+                        committedTotal = card.figure(limit.committedAmount),
                         // A card with no limit has no fraction of one in use: `null` says there is
                         // no answer, where `0` would claim the card is untouched.
                         limitUsage = limit.usage.takeIf { card.limit > 0.0 },
@@ -101,9 +109,12 @@ internal class GetCardOverviewTool(
                 },
                 perimeter = AgentPerimeter(
                     covers = "Every card the user holds, with the invoice open on it now and what " +
-                        "all of its unpaid invoices owe together.",
+                        "each of its unpaid cycles — open, closed and not yet opened — is " +
+                        "holding of its limit.",
                     excludes = listOf(
-                        "closed, future and already paid invoices",
+                        "already paid invoices: they hold no limit and are in none of the totals",
+                        "retroactive invoices, which the app counts as holding no limit either",
+                        "the invoices themselves — only the open one is named here",
                         "spending on a card that has not yet landed on an invoice",
                         "any total across cards — figures stay in each card's own currency",
                     ) + if (includeArchived) emptyList() else listOf("archived cards"),
@@ -124,7 +135,7 @@ internal class GetCardOverviewTool(
         closingDay = closingDay,
         dueDay = dueDay,
         limit = figure(this.limit),
-        used = figure(limit.totalUnpaidAmount),
+        used = figure(limit.committedAmount),
         available = figure(limit.available),
         isArchived = isArchived,
     )

@@ -133,16 +133,37 @@ internal data class AgentCardOverviewAnswer(
     val perimeter: AgentPerimeter,
 )
 
-/** One card, its limit and the invoice currently open on it. */
+/**
+ * One card, its limit and the invoice currently open on it.
+ *
+ * What holds the limit arrives **split by the cycle holding it**, because a single total cannot
+ * say whether money is due now or merely committed: [closedTotal] is what is waiting to be paid,
+ * [futureTotal] is what an instalment already committed to cycles that have not opened, and
+ * [openTotal] is what the current cycle has accrued. [committedTotal] is exactly their sum, and is
+ * the same figure as `card.used`.
+ */
 @Serializable
 internal data class AgentCardOverview(
     val card: AgentCard,
     /** The invoice open right now, or `null` when none is. */
     @SerialName("open_invoice")
     val openInvoice: AgentInvoice? = null,
-    /** What every unpaid invoice of this card owes together — what the limit is held against. */
-    @SerialName("unpaid_total")
-    val unpaidTotal: AgentFigure? = null,
+    /**
+     * What the open cycle holds of the limit. It is [openInvoice]`.owed` floored at zero: an
+     * over-paid cycle is owed *to* the user and holds no limit, so it reads `0` here while the
+     * invoice keeps showing the credit.
+     */
+    @SerialName("open_total")
+    val openTotal: AgentFigure? = null,
+    /** What the cycles already closed and not yet paid owe — the part that is actually due. */
+    @SerialName("closed_total")
+    val closedTotal: AgentFigure? = null,
+    /** What is committed to cycles that have not opened yet — what an instalment plan holds. */
+    @SerialName("future_total")
+    val futureTotal: AgentFigure? = null,
+    /** The three above added up: everything holding this card's limit. */
+    @SerialName("committed_total")
+    val committedTotal: AgentFigure? = null,
     /** The fraction of the limit in use, between `0` and `1`, or `null` when the card has no limit. */
     @SerialName("limit_usage")
     val limitUsage: Double? = null,

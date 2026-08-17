@@ -57,8 +57,44 @@ class CalculateAvailableLimitUseCaseTest {
 
         val limit = useCase(invoices, owed)(card)
 
-        assertEquals(960.0, limit.totalUnpaidAmount)
+        assertEquals(960.0, limit.committedAmount)
         assertEquals(40.0, limit.available)
+    }
+
+    @Test
+    fun `what holds the limit is split by the cycle holding it, and the split is the whole of it`() =
+        runTest {
+            // The three are different facts about the user's money: 100.00 is due, 250.00 is
+            // accruing now, and 600.00 is committed to cycles that have not opened. One total
+            // cannot say which is which — and read as "what is owed" it overstates by 600.00.
+            val invoices = listOf(
+                invoiceOn(1, id = 1, status = Invoice.Status.CLOSED),
+                invoiceOn(2, id = 2, status = Invoice.Status.OPEN),
+                invoiceOn(3, id = 3, status = Invoice.Status.FUTURE),
+                invoiceOn(4, id = 4, status = Invoice.Status.FUTURE),
+            )
+            val owed = mapOf(100L to 100.0, 200L to 250.0, 300L to 300.0, 400L to 300.0)
+
+            val limit = useCase(invoices, owed)(card)
+
+            assertEquals(100.0, limit.closedAmount, "what is actually due to pay")
+            assertEquals(250.0, limit.openAmount, "what the current cycle has accrued")
+            assertEquals(600.0, limit.futureAmount, "the two cycles not yet opened, together")
+            assertEquals(950.0, limit.committedAmount, "and the total is exactly their sum")
+            assertEquals(50.0, limit.available)
+        }
+
+    @Test
+    fun `a card whose cycles are all in one state leaves the other two at zero`() = runTest {
+        val invoices = listOf(invoiceOn(1, id = 1, status = Invoice.Status.FUTURE))
+        val owed = mapOf(100L to 400.0)
+
+        val limit = useCase(invoices, owed)(card)
+
+        assertEquals(0.0, limit.openAmount, "no cycle is open, and absence reads as zero")
+        assertEquals(0.0, limit.closedAmount)
+        assertEquals(400.0, limit.futureAmount)
+        assertEquals(400.0, limit.committedAmount)
     }
 
     @Test
@@ -71,7 +107,7 @@ class CalculateAvailableLimitUseCaseTest {
 
         val limit = useCase(invoices, owed)(card)
 
-        assertEquals(120.0, limit.totalUnpaidAmount, "the settled 500.00 is no longer owed")
+        assertEquals(120.0, limit.committedAmount, "the settled 500.00 is no longer owed")
         assertEquals(880.0, limit.available)
     }
 
@@ -85,7 +121,7 @@ class CalculateAvailableLimitUseCaseTest {
 
         val limit = useCase(invoices, owed)(card)
 
-        assertEquals(300.0, limit.totalUnpaidAmount)
+        assertEquals(300.0, limit.committedAmount)
         assertEquals(700.0, limit.available)
     }
 
@@ -96,7 +132,7 @@ class CalculateAvailableLimitUseCaseTest {
 
         val limit = useCase(invoices, owed)(card)
 
-        assertEquals(1_500.0, limit.totalUnpaidAmount, "what is owed is reported as it is")
+        assertEquals(1_500.0, limit.committedAmount, "what is owed is reported as it is")
         assertEquals(0.0, limit.available)
         assertEquals(1.0, limit.usage, "and usage stops at full, so no bar overflows")
     }
@@ -109,7 +145,7 @@ class CalculateAvailableLimitUseCaseTest {
 
         val limit = useCase(invoices, owed, cards = listOf(noLimit))(noLimit)
 
-        assertEquals(250.0, limit.totalUnpaidAmount)
+        assertEquals(250.0, limit.committedAmount)
         assertEquals(0.0, limit.available)
         assertEquals(0.0, limit.usage)
     }
@@ -118,7 +154,7 @@ class CalculateAvailableLimitUseCaseTest {
     fun `a card with nothing on it has all of its limit`() = runTest {
         val limit = useCase(invoices = emptyList(), owed = emptyMap())(card)
 
-        assertEquals(0.0, limit.totalUnpaidAmount)
+        assertEquals(0.0, limit.committedAmount)
         assertEquals(1_000.0, limit.available)
         assertEquals(0.0, limit.usage)
     }
@@ -230,25 +266,32 @@ private class CountingCardStore(private val cards: List<CreditCard>) : ICreditCa
     override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
-/** Counts the two shapes of the unpaid-invoice read, so the N+1 cannot come back. */
+/**
+ * Counts the two shapes of the unpaid-invoice read, so the N+1 cannot come back.
+ *
+ * "Unpaid" is the production predicate — `status NOT IN ('PAID', 'RETROACTIVE')`, stated in
+ * `InvoiceDao` — so that the split under test is fed exactly the states the app feeds it.
+ */
 private class CountingInvoiceStore(private val invoices: List<Invoice>) : IInvoiceRepository {
     var batchedReads = 0
         private set
     var perCardReads = 0
         private set
 
+    private val Invoice.isUnpaid get() = !status.isPaid && !status.isRetroactive
+
     override suspend fun getUnpaidInvoicesByCreditCards(
         creditCardIds: Collection<Long>,
     ): Map<Long, List<Invoice>> {
         batchedReads++
         return invoices
-            .filter { it.creditCard.id in creditCardIds && !it.status.isPaid }
+            .filter { it.creditCard.id in creditCardIds && it.isUnpaid }
             .groupBy { it.creditCard.id }
     }
 
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
         perCardReads++
-        return invoices.filter { it.creditCard.id == creditCardId && !it.status.isPaid }
+        return invoices.filter { it.creditCard.id == creditCardId && it.isUnpaid }
     }
 
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> =

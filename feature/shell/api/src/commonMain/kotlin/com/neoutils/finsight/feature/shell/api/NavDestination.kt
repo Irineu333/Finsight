@@ -23,7 +23,22 @@ data class NavDestination(
     val primaryTab: Boolean = false,
     /** The platform this destination's feature is restricted to, or `null` when it runs anywhere. */
     val onlyOn: FeaturePlatform? = null,
+    /**
+     * Routes that belong to this section but live in another feature's graph.
+     *
+     * A sub-destination inside this section's own graph needs no entry here — the `hierarchy` of the
+     * current destination already says whose it is. One that is reached from this section and yet is
+     * registered as a top-level graph of its own, because it is another feature module, has nothing
+     * else to say so: without this, no catalog item claims it and the selector highlights none.
+     */
+    val alsoOwns: List<NavRoute> = emptyList(),
 ) : BottomNavigationItem {
+
+    /**
+     * Every route that means "this section is active" — its own and the ones it [alsoOwns]. What the
+     * selector matches the current destination against, so no affordance matches [route] alone.
+     */
+    val routes: List<NavRoute> get() = listOf(route) + alsoOwns
 
     /** Its feature has no desktop implementation, so the desktop never offers it. */
     val mobileOnly: Boolean get() = onlyOn == FeaturePlatform.MOBILE

@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.mcp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
@@ -143,43 +144,62 @@ internal fun McpScreen(
             )
         },
     ) { padding ->
-        Column(
+        // A list, and keyed, for the sake of the switch: what it turns on is four cards arriving at
+        // once, and a list is what carries them in and out — each one fading where it belongs while
+        // the cards around it slide to make the room. The same cards in a plain column would simply
+        // be there, and the eye would have to find the section it was reading again.
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(padding),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (!uiState.isSupported) {
-                UnavailableCard()
-                return@Column
+                item(key = "unavailable") {
+                    UnavailableCard(modifier = Modifier.animateItem())
+                }
+                return@LazyColumn
             }
 
-            AboutCard()
+            item(key = "about") {
+                AboutCard(modifier = Modifier.animateItem())
+            }
 
-            EnableCard(
-                isEnabled = uiState.isEnabled,
-                onToggle = { viewModel.onAction(McpAction.SetEnabled(it)) },
-            )
+            item(key = "enable") {
+                EnableCard(
+                    isEnabled = uiState.isEnabled,
+                    onToggle = { viewModel.onAction(McpAction.SetEnabled(it)) },
+                    modifier = Modifier.animateItem(),
+                )
+            }
 
             if (uiState.showsDetails) {
-                StatusCard(
-                    uiState = uiState,
-                    onDisconnect = { viewModel.onAction(McpAction.DisconnectSessions) },
-                )
+                item(key = "status") {
+                    StatusCard(
+                        uiState = uiState,
+                        onDisconnect = { viewModel.onAction(McpAction.DisconnectSessions) },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
 
-                ConnectionCard(
-                    uiState = uiState,
-                    onAction = viewModel::onAction,
-                )
+                item(key = "connection") {
+                    ConnectionCard(
+                        uiState = uiState,
+                        onAction = viewModel::onAction,
+                        modifier = Modifier.animateItem(),
+                    )
+                }
 
-                PermissionsCard(
-                    permissions = uiState.permissions,
-                    onGrant = { axis, granted ->
-                        viewModel.onAction(McpAction.SetPermission(axis, granted))
-                    },
-                )
+                item(key = "permissions") {
+                    PermissionsCard(
+                        permissions = uiState.permissions,
+                        onGrant = { axis, granted ->
+                            viewModel.onAction(McpAction.SetPermission(axis, granted))
+                        },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
             }
 
             // The log outlives the switch: a server turned off does not erase what an agent did
@@ -187,18 +207,26 @@ internal fun McpScreen(
             // section that never ran a server there is nothing to show, which is what keeps the
             // first visit down to what the server is and the switch that starts it.
             if (uiState.showsDetails || uiState.recentActivity.isNotEmpty()) {
-                McpActivityCard(
-                    entries = uiState.recentActivity,
-                    onOpenActivity = onOpenActivity,
-                    onClear = { viewModel.onAction(McpAction.ClearActivity) },
-                )
+                item(key = "activity") {
+                    McpActivityCard(
+                        entries = uiState.recentActivity,
+                        onOpenActivity = onOpenActivity,
+                        onClear = { viewModel.onAction(McpAction.ClearActivity) },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun UnavailableCard() = SectionCard(title = stringResource(Res.string.mcp_unavailable_title)) {
+private fun UnavailableCard(
+    modifier: Modifier = Modifier,
+) = SectionCard(
+    title = stringResource(Res.string.mcp_unavailable_title),
+    modifier = modifier,
+) {
     Text(
         text = stringResource(Res.string.mcp_unavailable_description),
         style = typography.bodyMedium,
@@ -211,7 +239,9 @@ private fun UnavailableCard() = SectionCard(title = stringResource(Res.string.mc
  * process. Close the app and the surface is not merely unreachable — it does not exist.
  */
 @Composable
-private fun AboutCard() = SectionCard {
+private fun AboutCard(
+    modifier: Modifier = Modifier,
+) = SectionCard(modifier = modifier) {
     Text(
         text = stringResource(Res.string.mcp_about_body),
         style = typography.bodyMedium,
@@ -229,7 +259,8 @@ private fun AboutCard() = SectionCard {
 private fun EnableCard(
     isEnabled: Boolean,
     onToggle: (Boolean) -> Unit,
-) = SectionCard {
+    modifier: Modifier = Modifier,
+) = SectionCard(modifier = modifier) {
     SwitchRow(
         title = stringResource(Res.string.mcp_enable_title),
         description = stringResource(Res.string.mcp_enable_description),
@@ -249,7 +280,8 @@ private fun EnableCard(
 private fun StatusCard(
     uiState: McpUiState,
     onDisconnect: () -> Unit,
-) = SectionCard {
+    modifier: Modifier = Modifier,
+) = SectionCard(modifier = modifier) {
     val server = uiState.server
 
     Text(
@@ -297,7 +329,11 @@ private fun StatusCard(
 private fun ConnectionCard(
     uiState: McpUiState,
     onAction: (McpAction) -> Unit,
-) = SectionCard(title = stringResource(Res.string.mcp_instructions_title)) {
+    modifier: Modifier = Modifier,
+) = SectionCard(
+    title = stringResource(Res.string.mcp_instructions_title),
+    modifier = modifier,
+) {
     Text(
         text = stringResource(Res.string.mcp_instructions_body),
         style = typography.bodyMedium,
@@ -552,7 +588,11 @@ private fun RowIconButton(
 private fun PermissionsCard(
     permissions: List<McpPermissionUi>,
     onGrant: (McpPermissionAxis, Boolean) -> Unit,
-) = SectionCard(title = stringResource(Res.string.mcp_permissions_title)) {
+    modifier: Modifier = Modifier,
+) = SectionCard(
+    title = stringResource(Res.string.mcp_permissions_title),
+    modifier = modifier,
+) {
     Text(
         text = stringResource(Res.string.mcp_permissions_description),
         style = typography.bodyMedium,
@@ -622,10 +662,11 @@ private fun RowGap() = Spacer(modifier = Modifier.width(12.dp))
 @Composable
 private fun SectionCard(
     title: String? = null,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
     ) {
@@ -699,7 +740,8 @@ private fun McpActivityCard(
     entries: List<McpActivityUi>,
     onOpenActivity: () -> Unit,
     onClear: () -> Unit,
-) = SectionCard {
+    modifier: Modifier = Modifier,
+) = SectionCard(modifier = modifier) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = stringResource(Res.string.mcp_activity_title),

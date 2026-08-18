@@ -1,6 +1,6 @@
 # 007 — o log completo do agente faz três queries por linha, e repete a passada inteira a cada emissão
 
-**Área:** mcp (UI) · **Tipo:** performance · **Severidade:** média · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** performance · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

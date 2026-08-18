@@ -1,6 +1,6 @@
 # 006 — a bottom bar é a única affordance que não pergunta `isOffered`
 
-**Área:** shell · **Tipo:** correção (latente) · **Severidade:** baixa · **Status:** aberto
+**Área:** shell · **Tipo:** correção (latente) · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

@@ -1,6 +1,6 @@
 # 005 — o snippet de conexão mostra o token em texto claro, logo abaixo da linha que o mascara
 
-**Área:** mcp (UI) · **Tipo:** segurança · **Severidade:** média · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** segurança · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

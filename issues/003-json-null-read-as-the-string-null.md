@@ -1,6 +1,6 @@
 # 003 — um `null` JSON explícito é lido como a string de quatro caracteres `"null"`
 
-**Área:** mcp · **Tipo:** correção · **Severidade:** média · **Status:** aberto
+**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

@@ -1,6 +1,6 @@
 # 002 — `is_recurring` é descartado quando `installments > 1`, e a resposta não diz isso
 
-**Área:** mcp / transactions · **Tipo:** dados · **Severidade:** média · **Status:** aberto
+**Área:** mcp / transactions · **Tipo:** dados · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

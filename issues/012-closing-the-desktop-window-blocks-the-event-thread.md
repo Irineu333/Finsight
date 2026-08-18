@@ -1,6 +1,6 @@
 # 012 — fechar a janela do desktop bloqueia a thread de eventos do AWT no ciclo de vida do servidor
 
-**Área:** app/desktop · **Tipo:** UX · **Severidade:** baixa · **Status:** aberto
+**Área:** app/desktop · **Tipo:** UX · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

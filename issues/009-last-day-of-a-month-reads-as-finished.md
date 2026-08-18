@@ -1,6 +1,6 @@
 # 009 — o último dia do mês é lido como encerrado, um dia antes da hora
 
-**Área:** mcp · **Tipo:** correção · **Severidade:** média · **Status:** aberto
+**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

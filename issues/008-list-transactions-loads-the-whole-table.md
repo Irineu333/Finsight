@@ -1,6 +1,6 @@
 # 008 — `list_transactions` carrega a tabela inteira (e uma query de entries por linha) a cada página
 
-**Área:** mcp · **Tipo:** performance · **Severidade:** média · **Status:** aberto
+**Área:** mcp · **Tipo:** performance · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

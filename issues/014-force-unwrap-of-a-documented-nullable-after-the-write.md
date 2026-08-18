@@ -1,6 +1,6 @@
 # 014 — `toAgentTransaction(...)!!` força um nullable documentado *depois* de a escrita já ter sido aplicada
 
-**Área:** mcp · **Tipo:** robustez · **Severidade:** baixa · **Status:** aberto
+**Área:** mcp · **Tipo:** robustez · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

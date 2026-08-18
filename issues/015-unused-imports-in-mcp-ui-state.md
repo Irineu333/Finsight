@@ -1,6 +1,6 @@
 # 015 — dois imports não usados em `McpUiState`
 
-**Área:** mcp (UI) · **Tipo:** código morto · **Severidade:** trivial · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** código morto · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

@@ -1,6 +1,6 @@
 # 013 — `returned` é contado antes de as linhas não mapeáveis serem descartadas
 
-**Área:** mcp · **Tipo:** correção (latente) · **Severidade:** baixa · **Status:** aberto
+**Área:** mcp · **Tipo:** correção (latente) · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

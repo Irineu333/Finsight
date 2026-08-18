@@ -1,6 +1,6 @@
 # 004 — `TransactionForm.from` descarta categoria incompatível e `installments` fora do cartão, e a tool responde "Recorded."
 
-**Área:** mcp / model · **Tipo:** correção · **Severidade:** média · **Status:** aberto
+**Área:** mcp / model · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

@@ -1,6 +1,6 @@
 # 010 — a porta configurada não pode ser reaplicada, o que bloqueia a saída documentada de `PORT_IN_USE`
 
-**Área:** mcp (UI) · **Tipo:** UX / correção · **Severidade:** média · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** UX / correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

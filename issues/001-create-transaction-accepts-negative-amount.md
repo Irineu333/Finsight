@@ -1,6 +1,6 @@
 # 001 — `create_transaction` aceita valor negativo
 
-**Área:** mcp · **Tipo:** dados · **Severidade:** alta · **Status:** aberto
+**Área:** mcp · **Tipo:** dados · **Criticidade:** alta · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

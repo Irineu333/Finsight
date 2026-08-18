@@ -1,6 +1,6 @@
 # 011 — portas privilegiadas são oferecidas, e a falha do bind é diagnosticada como "porta em uso"
 
-**Área:** mcp · **Tipo:** UX / correção · **Severidade:** baixa · **Status:** aberto
+**Área:** mcp · **Tipo:** UX / correção · **Criticidade:** baixa · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado

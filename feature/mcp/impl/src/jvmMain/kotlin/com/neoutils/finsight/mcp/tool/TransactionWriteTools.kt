@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
 import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpPermissionNotice
 import com.neoutils.finsight.mcp.McpTool
@@ -156,6 +157,31 @@ internal class CreateTransactionTool(
             )
         }
 
+        // `TransactionForm.from` normalises by dropping what does not fit, and that is right for
+        // the sheet: its selectors never offered the combination, so the drop takes nothing the
+        // user chose. Every argument here was declared instead of offered, so the same drop answers
+        // "Recorded." for a split or a classification that never reached the ledger — and, for a
+        // card an income cannot go on, a refusal naming the `account_id` nobody gave.
+        if (type.isIncome && card != null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "A card takes expenses only: with `type` income, give `account_id` " +
+                        "and not `card_id`.",
+                ),
+                summary = summary,
+            )
+        }
+
+        if (installments > 1 && account != null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "Instalments are a card affordance: give `installments` above 1 with " +
+                        "a `card_id`, not with an `account_id`.",
+                ),
+                summary = summary,
+            )
+        }
+
         // The sheet drops the recurring mark when a purchase is split, and says why: paying in
         // instalments is already a repetition. It can drop it silently because it also stops
         // showing it. Nothing was ever shown here, so the same drop would be a template the
@@ -165,6 +191,18 @@ internal class CreateTransactionTool(
                 AgentRefusal(
                     reason = "Instalments are already a repetition: give `installments` above 1 " +
                         "or `is_recurring`, not both.",
+                ),
+                summary = summary,
+            )
+        }
+
+        if (category != null && !category.type.isAccept(type)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "`category_id` names \"${category.name}\", an " +
+                        "${category.type.name.lowercase()} category, and `type` is " +
+                        "${type.name.lowercase()}: a category classifies one direction only. " +
+                        "Give an ${type.name.lowercase()} category, or leave `category_id` out.",
                 ),
                 summary = summary,
             )
@@ -343,8 +381,9 @@ internal class UpdateTransactionTool(
         //
         // A negative amount is the same contortion by another route, and a worse one: what an
         // expense of minus forty means to a double-entry ledger is an income of forty, so the
-        // posting does not merely leave the total — it moves to the other side of it. The
-        // domain refuses zero and not this, because a screen has no field that can express it.
+        // posting does not merely leave the total — it moves to the other side of it. The domain
+        // refuses both, and this guard is not a second copy of that rule: it is here because only
+        // the tool can name `delete_transaction` as what the caller was working around.
         val amount = arguments.money("amount")
         if (amount != null && amount <= 0.0) {
             return@writing refusedWith(

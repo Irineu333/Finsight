@@ -134,6 +134,126 @@ class RegistrationFamilyOverTheProtocolTest {
     }
 
     // ------------------------------------------------------------------------------
+    // What the form would normalise away, refused instead
+    // ------------------------------------------------------------------------------
+
+    /**
+     * **A category the direction cannot accept is refused, and the refusal names the category, its
+     * kind and the direction.**
+     *
+     * `TransactionForm.from` keeps a category only while it accepts the type, which is right for the
+     * sheet: switching to income re-lists the selector, so the drop takes nothing the user chose.
+     * The category here was *declared*, and dropping it writes an income with no classification and
+     * answers "Recorded." — the agent then reports the classification it asked for, and the user
+     * finds the posting under "no category" with nothing to explain why.
+     */
+    @Test
+    fun `a category the direction does not accept is refused, naming it and both kinds`() = runTest {
+        withRegistrationWorld { world, client ->
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "create_transaction",
+                """{"type":"income","amount":1200.00,"title":"Salário","account_id":1,"category_id":1}""",
+            )
+
+            assertTrue(response.isToolError(), "an income was classified under an expense category")
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            listOf("category_id", "Mercado", "expense", "income").forEach {
+                assertTrue(
+                    it in reason,
+                    "the refusal does not name `$it`, so the agent cannot tell which end is wrong: $reason",
+                )
+            }
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count { it.title == "Salário" },
+                "the income was written, without the classification the call asked for",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+        }
+    }
+
+    /**
+     * **A split asked for on an account is refused, rather than flattened to one posting.**
+     *
+     * Instalments are a card affordance — the shares land on the following invoices — so the form
+     * forces the count back to one whenever the target is an account. Silently, here, that is a
+     * purchase the caller asked to spread over three invoices written once for the whole amount,
+     * and answered as recorded.
+     */
+    @Test
+    fun `a split on an account is refused, naming the instalments and the account`() = runTest {
+        withRegistrationWorld { world, client ->
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "create_transaction",
+                """{"type":"expense","amount":600.00,"title":"Fone","account_id":1,"installments":3}""",
+            )
+
+            assertTrue(response.isToolError(), "the split was flattened onto an account")
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "installments" in reason && "account_id" in reason,
+                "the refusal does not name both arguments, so the agent cannot tell which to change: $reason",
+            )
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count { it.title == "Fone" },
+                "the purchase was written as a single posting for the whole amount",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+        }
+    }
+
+    /**
+     * **An income aimed at a card is refused for the card, not for an account nobody named.**
+     *
+     * This pair was never written silently: the form drops the card, leaves the target on an account
+     * with no account in it, and what comes back asks for the account. The refusal is the damage —
+     * it points at `account_id`, which the call never gave and which is not what the caller got
+     * wrong, and an agent acting on it invents an account for an income that belongs nowhere near
+     * one. A card takes expenses only, and that is what the refusal has to say.
+     */
+    @Test
+    fun `an income on a card is refused for the card, not for a missing account`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "create_transaction",
+                """{"type":"income","amount":500.00,"title":"Estorno","card_id":${card.id}}""",
+            )
+
+            assertTrue(response.isToolError(), "an income was recorded on a card")
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "card_id" in reason && "account_id" in reason,
+                "the refusal does not name the arguments the caller has to change: $reason",
+            )
+            assertTrue(
+                "expenses only" in reason,
+                "the refusal does not say what the card cannot take, so it still reads as a " +
+                    "missing account: $reason",
+            )
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count { it.title == "Estorno" },
+                "the income was written anyway",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+        }
+    }
+
+    // ------------------------------------------------------------------------------
     // 10.2 — the edit, and what it cannot express
     // ------------------------------------------------------------------------------
 

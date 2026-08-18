@@ -16,12 +16,12 @@ corrompe número nenhum do ledger.
 | # | Issue | Área | Tipo |
 |---|---|---|---|
 | **MÉDIO** |
-| [004](004-transaction-form-drops-arguments-silently.md) | Categoria incompatível e `installments` fora do cartão descartados em silêncio | mcp / model | correção |
 | [005](005-connection-snippet-shows-the-token-in-clear-text.md) | O snippet de conexão mostra o token em texto claro | mcp (UI) | segurança |
 | [007](007-agent-log-runs-three-queries-per-row.md) | O log completo do agente faz três queries por linha, por emissão | mcp (UI) | performance |
 | [008](008-list-transactions-loads-the-whole-table.md) | `list_transactions` carrega a tabela inteira a cada página | mcp | performance |
 | [009](009-last-day-of-a-month-reads-as-finished.md) | O último dia do mês é lido como encerrado | mcp | correção |
 | [010](010-cannot-reapply-the-configured-port.md) | A porta configurada não pode ser reaplicada depois de um bind falho | mcp (UI) | UX |
+| [016](016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | mcp / model | correção |
 | **BAIXO** |
 | [006](006-bottom-bar-does-not-ask-is-offered.md) | A bottom bar não pergunta `isOffered` | shell | correção (latente) |
 | [011](011-privileged-ports-are-offered-and-misdiagnosed.md) | Portas privilegiadas oferecidas, falha diagnosticada como "em uso" | mcp | UX |
@@ -40,6 +40,7 @@ mudou — inclusive onde o achado estava errado.
 | [001](archive/001-create-transaction-accepts-negative-amount.md) | Valor negativo aceito na escrita, e registrado na direção oposta — cinco tools | alta | 2026-08-18 |
 | [002](archive/002-is-recurring-dropped-when-splitting.md) | `is_recurring` descartado quando `installments > 1`, em silêncio | média | 2026-08-18 |
 | [003](archive/003-json-null-read-as-the-string-null.md) | Um `null` JSON explícito é lido como a string `"null"` | média | 2026-08-18 |
+| [004](archive/004-transaction-form-drops-arguments-silently.md) | Categoria incompatível e `installments` fora do cartão descartados em silêncio | média | 2026-08-18 |
 
 ## O que decide a faixa
 

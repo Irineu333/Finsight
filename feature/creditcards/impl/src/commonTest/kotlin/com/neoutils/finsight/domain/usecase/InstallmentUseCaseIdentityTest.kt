@@ -198,6 +198,11 @@ private class RecordingTransactionDeleter : ITransactionRepository {
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction =

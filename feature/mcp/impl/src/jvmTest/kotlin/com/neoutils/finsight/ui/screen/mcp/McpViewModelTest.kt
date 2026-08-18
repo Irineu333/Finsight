@@ -549,6 +549,9 @@ class McpViewModelTest {
 
         override suspend fun getAllTransactions() = unsupported()
 
+        override suspend fun getTransactionsBetween(startDate: LocalDate, endDate: LocalDate) =
+            unsupported()
+
         override suspend fun createTransaction(intent: TransactionIntent) = unsupported()
 
         override suspend fun createTransactions(intents: List<TransactionIntent>) = unsupported()

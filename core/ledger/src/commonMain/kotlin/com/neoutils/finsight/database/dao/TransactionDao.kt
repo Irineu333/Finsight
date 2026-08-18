@@ -38,6 +38,24 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     suspend fun getAll(): List<TransactionEntity>
 
+    /**
+     * The transactions dated within the period, **both edges included**, newest first.
+     *
+     * The comparison is over the stored date, which Room writes as `yyyy-MM-dd`: its
+     * lexicographic order is its chronological one, so `BETWEEN` cuts exactly the days
+     * the caller named and neither neighbour.
+     *
+     * The order is the same total one [getAll] answers in — the day the posting is
+     * dated, then the identity the ledger assigned, which is unique by construction.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE date BETWEEN :startDate AND :endDate
+        ORDER BY date DESC, id DESC
+        """
+    )
+    suspend fun getBetween(startDate: LocalDate, endDate: LocalDate): List<TransactionEntity>
 
     @Query(
         """

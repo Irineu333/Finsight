@@ -240,6 +240,11 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = transactions.filter { it.date in startDate..endDate }
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
         transactions.mapTo(mutableSetOf()) { it.id }.apply { retainAll(ids.toSet()) }

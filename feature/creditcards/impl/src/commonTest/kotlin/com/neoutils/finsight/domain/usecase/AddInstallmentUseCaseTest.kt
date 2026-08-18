@@ -287,6 +287,11 @@ private class FakeTransactionWriter(
 
     override fun observeTransactionById(id: Long): Flow<Transaction?> = outOfScope()
     override suspend fun getAllTransactions(): List<Transaction> = outOfScope()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = outOfScope()
     override suspend fun getTransactionById(id: Long): Transaction? = outOfScope()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = outOfScope()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = outOfScope()

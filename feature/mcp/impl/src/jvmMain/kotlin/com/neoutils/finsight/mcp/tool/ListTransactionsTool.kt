@@ -30,7 +30,6 @@ import com.neoutils.finsight.mcp.surface.toAgentTransaction
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.yearMonth
 import kotlinx.serialization.json.JsonObject
 import kotlin.time.Clock
 
@@ -157,8 +156,11 @@ internal class ListTransactionsTool(
         // leg on X's account", and the ledger has no other way to say it.
         val perspective = account?.id ?: card?.accountId
 
-        val matching = transactionRepository.getAllTransactions()
-            .filter { it.date.yearMonth == month }
+        // The month is the database's cut, both edges included: the rest of the filters are
+        // derived from the legs and stay here, but they now run over a month rather than over
+        // every posting the user has ever made.
+        val matching = transactionRepository
+            .getTransactionsBetween(startDate = month.firstDay, endDate = month.lastDay)
             .filter { perspective == null || it.entries.any { leg -> leg.account.id == perspective } }
             // Decided by the single owner of what a value of the analytic axis contains, so this
             // cuts by the same rule as the one that cuts the ledger.

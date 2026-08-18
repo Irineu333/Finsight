@@ -130,6 +130,11 @@ private class RecordingTransactionsForDeclaration : com.neoutils.finsight.domain
         throw NotImplementedError()
     override suspend fun getAllTransactions(): List<com.neoutils.finsight.domain.model.Transaction> =
         throw NotImplementedError()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<com.neoutils.finsight.domain.model.Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): com.neoutils.finsight.domain.model.Transaction? =
         throw NotImplementedError()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =

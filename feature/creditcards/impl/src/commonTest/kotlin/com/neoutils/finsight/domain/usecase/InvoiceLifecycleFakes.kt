@@ -142,6 +142,11 @@ internal class RecordingTransactionWriter(
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = notUnderTest()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = notUnderTest()
     override suspend fun getAllTransactions(): List<Transaction> = notUnderTest()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = notUnderTest()
     override suspend fun getTransactionById(id: Long): Transaction? = notUnderTest()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = notUnderTest()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = notUnderTest()

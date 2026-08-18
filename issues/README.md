@@ -16,7 +16,6 @@ corrompe número nenhum do ledger.
 | # | Issue | Área | Tipo |
 |---|---|---|---|
 | **MÉDIO** |
-| [008](008-list-transactions-loads-the-whole-table.md) | `list_transactions` carrega a tabela inteira a cada página | mcp | performance |
 | [016](016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | mcp / model | correção |
 | **BAIXO** |
 | [006](006-bottom-bar-does-not-ask-is-offered.md) | A bottom bar não pergunta `isOffered` | shell | correção (latente) |
@@ -41,6 +40,7 @@ mudou — inclusive onde o achado estava errado.
 | [007](archive/007-agent-log-runs-three-queries-per-row.md) | O log completo do agente faz três queries por linha, por emissão | média | 2026-08-18 |
 | [009](archive/009-last-day-of-a-month-reads-as-finished.md) | O último dia do mês é lido como encerrado | média | 2026-08-18 |
 | [010](archive/010-cannot-reapply-the-configured-port.md) | A porta configurada não pode ser reaplicada depois de um bind falho | média | 2026-08-18 |
+| [008](archive/008-list-transactions-loads-the-whole-table.md) | `list_transactions` carrega a tabela inteira a cada página | média | 2026-08-18 |
 
 ## O que decide a faixa
 

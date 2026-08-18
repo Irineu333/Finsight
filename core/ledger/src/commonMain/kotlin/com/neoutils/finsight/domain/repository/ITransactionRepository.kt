@@ -19,6 +19,21 @@ interface ITransactionRepository {
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
     suspend fun getAllTransactions(): List<Transaction>
+
+    /**
+     * The transactions dated within [startDate]..[endDate], **both days included**,
+     * newest first.
+     *
+     * The period is the cut, and it is the database's to make: a caller that wants one
+     * month of a history filters what it asked for rather than what the user has ever
+     * recorded, so what the answer costs is what the period holds. Their legs are read
+     * in bulk beside them, so it costs no query per posting either.
+     */
+    suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction>
+
     suspend fun getTransactionById(id: Long): Transaction?
 
     /**

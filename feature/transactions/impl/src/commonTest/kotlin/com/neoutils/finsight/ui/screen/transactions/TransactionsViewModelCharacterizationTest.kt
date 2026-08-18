@@ -114,6 +114,11 @@ internal class FakeTransactionRepository(transactions: List<Transaction>) : ITra
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()

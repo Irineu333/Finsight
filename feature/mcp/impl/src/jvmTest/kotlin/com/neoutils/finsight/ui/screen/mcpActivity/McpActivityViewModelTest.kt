@@ -175,6 +175,14 @@ private class RecordingTransactions(
         return existing.map(::transaction)
     }
 
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> {
+        reads++
+        return existing.map(::transaction).filter { it.date in startDate..endDate }
+    }
+
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> {
         reads++
         return ids.intersect(existing)

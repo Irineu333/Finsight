@@ -51,7 +51,7 @@ class McpViewModel(
 
     private val recentActivity = activityRepository
         .observeRecent(SECTION_PREVIEW)
-        .mapLatest { entries -> entries.map { it.toUi(transactionRepository) } }
+        .mapLatest { entries -> entries.toUi(transactionRepository) }
 
     val uiState = combine(
         controller.state,

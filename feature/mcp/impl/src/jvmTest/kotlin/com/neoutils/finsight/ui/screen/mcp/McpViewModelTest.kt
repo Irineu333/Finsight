@@ -539,6 +539,8 @@ class McpViewModelTest {
         override suspend fun getTransactionById(id: Long): Transaction? =
             if (id in existing) Transaction(id = id, title = null, date = LocalDate(2026, 1, 1)) else null
 
+        override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = ids.intersect(existing)
+
         override fun observeAllTransactions() = unsupported()
 
         override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?) = unsupported()

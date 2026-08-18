@@ -66,6 +66,8 @@ class FakeTransactionRepository(
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): Transaction? = stored[id]
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        ids.filterTo(mutableSetOf()) { it in stored }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         created += intent
         return transaction(id = created.size.toLong())

@@ -11,10 +11,22 @@ import com.neoutils.finsight.feature.mcp.api.AgentActivity
  * opens a detail of its own: a removed posting would open an empty sheet and report a defect that
  * never happened. The entry itself is shown either way — it is testimony about the past, and what
  * it created having been removed since does not make it less true.
+ *
+ * **The question is asked once for the page.** It is one question — which of these postings are
+ * still there — and a page of five thousand rows asks it of five thousand rows, not of the ledger
+ * five thousand times.
  */
-internal suspend fun AgentActivity.toUi(
+internal suspend fun List<AgentActivity>.toUi(
     transactionRepository: ITransactionRepository,
-): McpActivityUi {
+): List<McpActivityUi> {
+    val postings = mapNotNullTo(mutableSetOf()) {
+        (it.reference?.toTarget() as? McpActivityTarget.Posting)?.transactionId
+    }
+    val alive = transactionRepository.getExistingTransactionIds(postings)
+    return map { it.toUi(alive) }
+}
+
+private fun AgentActivity.toUi(alivePostings: Set<Long>): McpActivityUi {
     val target = reference?.toTarget()
     return McpActivityUi(
         id = id,
@@ -24,7 +36,6 @@ internal suspend fun AgentActivity.toUi(
         isRefused = outcome == AgentActivity.Outcome.REFUSED,
         detail = detail,
         target = target,
-        isTargetGone = target is McpActivityTarget.Posting &&
-            transactionRepository.getTransactionById(target.transactionId) == null,
+        isTargetGone = target is McpActivityTarget.Posting && target.transactionId !in alivePostings,
     )
 }

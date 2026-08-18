@@ -9,8 +9,10 @@ import com.neoutils.finsight.domain.usecase.ClearAgentActivityUseCase
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
 import com.neoutils.finsight.ui.screen.mcp.McpActivityUi
 import com.neoutils.finsight.ui.screen.mcp.toUi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -31,8 +33,15 @@ class McpActivityViewModel(
 
     val uiState = activityRepository.observeAll()
         .mapLatest { entries ->
-            McpActivityUiState(entries = entries.map { it.toUi(transactionRepository) }, isLoading = false)
+            McpActivityUiState(entries = entries.toUi(transactionRepository), isLoading = false)
         }
+        // The whole log is mapped on every emission, and an insert or a prune is an emission.
+        // Without a context of its own the mapping would run in the collector's — `viewModelScope`,
+        // which is `Main.immediate` — so a page of five thousand rows would be mapped on the frame
+        // the screen is drawing. Named rather than inherited: `Unconfined` would run the mapping
+        // wherever the log happens to emit, which makes "off the main thread" a property of the
+        // upstream rather than a guarantee made here.
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

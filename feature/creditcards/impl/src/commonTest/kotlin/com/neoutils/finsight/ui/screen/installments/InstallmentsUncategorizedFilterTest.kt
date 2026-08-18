@@ -178,6 +178,8 @@ private class ChargeStore(private val transactions: List<Transaction>) : ITransa
 
     override suspend fun getAllTransactions(): List<Transaction> = transactions
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        transactions.mapTo(mutableSetOf()) { it.id }.apply { retainAll(ids.toSet()) }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(

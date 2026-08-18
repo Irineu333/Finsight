@@ -21,6 +21,17 @@ interface ITransactionRepository {
     suspend fun getAllTransactions(): List<Transaction>
     suspend fun getTransactionById(id: Long): Transaction?
 
+    /**
+     * Which of [ids] still name a transaction — the identities alone, not the transactions.
+     *
+     * For a caller that only has to tell what is still there from what was removed, and has a
+     * page of identities rather than one. Hydrating each of them costs a read of the row, a
+     * read of its entries and a read of the chart of accounts, and answering existence does not
+     * need any of the three; asked per identity it also makes the cost of a page grow with the
+     * page. An identity absent from the result is a transaction that is gone.
+     */
+    suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long>
+
     /** Writes the user's [intent] as a balanced set of ledger entries. */
     suspend fun createTransaction(intent: TransactionIntent): Transaction
 

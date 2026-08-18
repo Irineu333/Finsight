@@ -12,6 +12,7 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.toDomain
+import com.neoutils.finsight.database.readByIdentity
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
@@ -144,6 +145,11 @@ class TransactionRepository(
         val entity = transactionDao.getById(id) ?: return null
         return entity.toDomain(ledgerAccounts())
     }
+
+    // Deduplicated before it is asked: a repeated identity spends a host parameter and answers
+    // nothing the first one did not.
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        ids.toSet().readByIdentity(transactionDao::getExistingIds).toSet()
 
     /**
      * The facade veto, asked at the single write boundary next to `Σ = 0` (design

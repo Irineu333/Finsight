@@ -18,6 +18,17 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): TransactionEntity?
 
+    /**
+     * Which of [ids] name a row that is still there — the identities, not the rows.
+     *
+     * One host parameter is bound per identity, so the list a caller passes is bounded by
+     * SQLite's own ceiling on them. Chunking to stay under it belongs to the caller
+     * (`TransactionRepository.getExistingTransactionIds`), which is why this stays the plain
+     * query it looks like.
+     */
+    @Query("SELECT id FROM transactions WHERE id IN (:ids)")
+    suspend fun getExistingIds(ids: List<Long>): List<Long>
+
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<TransactionEntity?>
 

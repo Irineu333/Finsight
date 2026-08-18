@@ -67,6 +67,7 @@ class ConfirmCycleAtomicityTest {
         override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+        override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
         override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
         override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()

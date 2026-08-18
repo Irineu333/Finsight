@@ -190,6 +190,8 @@ internal class FakeTransactionRepository(private val transactions: List<Transact
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = transactions
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        transactions.mapTo(mutableSetOf()) { it.id }.apply { retainAll(ids.toSet()) }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) =

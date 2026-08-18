@@ -260,6 +260,41 @@ class McpViewModelTest {
         assertEquals("abcdef0123456789", state().displayedToken)
     }
 
+    /**
+     * The section is screenshotted and shared as a whole.
+     *
+     * A user opening Settings → MCP to share their screen asking for help, or to attach the section
+     * to a bug report, hands over the connection block along with the token row. A row that says
+     * `••••••••••••••••` over a block that says `Bearer <the token>` protects nothing: whoever reads
+     * that string and can reach the loopback holds every capability that was granted.
+     */
+    @Test
+    fun `the connection block hides the token the row above it hides`() = runTest {
+        val controller = FakeController(enabled = true, token = "abcdef0123456789")
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        assertFalse(
+            state().displayedConnectionSnippet.contains("abcdef0123456789"),
+            "the block handed the token to a screenshot the row above it had masked",
+        )
+        assertTrue(
+            state().connectionSnippet.contains("\"Authorization\": \"Bearer abcdef0123456789\""),
+            "copying the block gave a client something it cannot authenticate with",
+        )
+
+        viewModel.onAction(McpAction.ToggleTokenVisibility)
+
+        assertTrue(
+            state().displayedConnectionSnippet.contains("\"Authorization\": \"Bearer abcdef0123456789\""),
+            "asking to see the token left the block masked",
+        )
+        assertTrue(
+            state().connectionSnippet.contains("\"Authorization\": \"Bearer abcdef0123456789\""),
+            "copying stopped reaching the real token once it was on screen",
+        )
+    }
+
     @Test
     fun `the address is what a client is configured with`() = runTest {
         val controller = FakeController(enabled = true, port = 8500)

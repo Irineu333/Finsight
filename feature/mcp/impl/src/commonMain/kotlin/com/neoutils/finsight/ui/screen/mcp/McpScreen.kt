@@ -352,7 +352,6 @@ private fun ConnectionCard(
     )
 
     val copy = rememberCopy()
-    val instructions = connectionSnippet(address = uiState.address, token = uiState.token)
 
     Text(
         text = stringResource(Res.string.mcp_instructions_json_note),
@@ -374,7 +373,7 @@ private fun ConnectionCard(
             // or the token out of here on its own.
             SelectionContainer {
                 Text(
-                    text = instructions,
+                    text = uiState.displayedConnectionSnippet,
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
@@ -389,7 +388,7 @@ private fun ConnectionCard(
         }
 
         IconButton(
-            onClick = { copy(instructions) },
+            onClick = { copy(uiState.connectionSnippet) },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .testTag("mcp_copy_instructions"),
@@ -696,27 +695,6 @@ private fun rememberCopy(): (String) -> Unit {
     val clipboard = LocalClipboardManager.current
     return { text -> clipboard.setText(AnnotatedString(text)) }
 }
-
-/**
- * What a client has to be told, in the vocabulary of the protocol rather than of one client.
- *
- * Every line here is a term any MCP client uses — an address, a transport and an authorisation
- * header — so pasting it into whichever configuration file a client happens to have is a matter of
- * putting each value where that client keeps it.
- */
-private fun connectionSnippet(address: String, token: String?): String = """
-    {
-      "mcpServers": {
-        "finsight": {
-          "type": "http",
-          "url": "$address",
-          "headers": {
-            "Authorization": "Bearer ${token.orEmpty()}"
-          }
-        }
-      }
-    }
-""".trimIndent()
 
 private val McpPermissionAxis.titleRes
     get() = when (this) {

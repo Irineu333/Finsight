@@ -1,6 +1,6 @@
 # 005 — o snippet de conexão mostra o token em texto claro, logo abaixo da linha que o mascara
 
-**Área:** mcp (UI) · **Tipo:** segurança · **Criticidade:** média · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** segurança · **Criticidade:** média · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -61,3 +61,26 @@ valores distintos disponíveis exatamente para esse padrão, como `CopyableRow` 
 
 O `SelectionContainer` (`McpScreen.kt:375`) existe para o usuário conseguir extrair o token do bloco
 isoladamente; com a máscara aplicada, isso continua possível depois de revelar.
+## Correção aplicada
+
+A decisão subiu do `McpScreen` para o `McpUiState`, que é onde o resto do estado da tela já decide e
+onde já existe teste. São duas propriedades, o mesmo par `value`/`copied` que o `CopyableRow` já usa:
+
+- `displayedConnectionSnippet` — o que a tela desenha, com o token sob a mesma máscara da linha acima;
+- `connectionSnippet` — o que o botão copia, com o token real, revelado ou não.
+
+O `connectionSnippet(address, token)` privado do `McpScreen` deixou de existir; a montagem do bloco
+agora lê o `address` do próprio estado.
+
+Revelar continua revelando dentro do bloco, e copiar continua entregando o token real nos dois
+estados — são asserções do teste, não observação.
+
+O `SelectionContainer` segue existindo pelo motivo pelo qual foi escrito: extrair o token do bloco
+isoladamente. Com a máscara, isso passa a exigir revelar antes, que é exatamente o que esta issue
+pedia.
+
+O teste vive em `McpViewModelTest` e encoda o cenário de falha desta issue — a seção capturada num
+screenshot. A prova por `git stash` aqui só produziria erro de compilação, porque antes da correção
+não havia propriedade nenhuma onde asseverar; a prova real foi por **mutação**: com
+`displayedConnectionSnippet` lendo `token` em vez de `displayedToken`, o teste falha com *"the block
+handed the token to a screenshot the row above it had masked"*.

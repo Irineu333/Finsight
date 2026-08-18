@@ -65,6 +65,45 @@ data class McpUiState(
     val displayedToken: String? get() = token?.let { if (isTokenRevealed) it else MASK }
 
     /**
+     * The configuration block as the screen draws it, with the token under the same mask the token
+     * row applies.
+     *
+     * The block is part of the section a screenshot or a shared screen captures, so it carries the
+     * token exactly as far as the row above it does — masked until the user asks for it, and shown
+     * in full from the moment they do. A block printing the secret a few dp under the mask would
+     * leave the mask protecting nothing.
+     */
+    val displayedConnectionSnippet: String get() = connectionSnippet(displayedToken)
+
+    /**
+     * The configuration block as it is copied: the real token, whether or not it is on screen.
+     *
+     * Copying is what configuring a client takes, and a client authenticates with the token itself.
+     */
+    val connectionSnippet: String get() = connectionSnippet(token)
+
+    /**
+     * What a client has to be told, in the vocabulary of the protocol rather than of one client.
+     *
+     * Every line here is a term any MCP client uses — an address, a transport and an authorisation
+     * header — so pasting it into whichever configuration file a client happens to have is a matter
+     * of putting each value where that client keeps it.
+     */
+    private fun connectionSnippet(token: String?): String = """
+        {
+          "mcpServers": {
+            "finsight": {
+              "type": "http",
+              "url": "$address",
+              "headers": {
+                "Authorization": "Bearer ${token.orEmpty()}"
+              }
+            }
+          }
+        }
+    """.trimIndent()
+
+    /**
      * What is wrong with the address, which in practice is always its port.
      *
      * It is said **on the address row** because that is where the port is visible and where the

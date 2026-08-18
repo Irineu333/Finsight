@@ -15,7 +15,7 @@ app. As três faixas abaixo são as que têm ocupantes.
 | # | Issue | Área | Tipo |
 |---|---|---|---|
 | **ALTO** |
-| [001](001-create-transaction-accepts-negative-amount.md) | `create_transaction` aceita valor negativo | mcp | dados |
+| [001](001-create-transaction-accepts-negative-amount.md) | Valor negativo aceito na escrita, e registrado na direção oposta — cinco tools | mcp | dados |
 | **MÉDIO** |
 | [002](002-is-recurring-dropped-when-splitting.md) | `is_recurring` descartado quando `installments > 1`, em silêncio | mcp / transactions | dados |
 | [003](003-json-null-read-as-the-string-null.md) | Um `null` JSON explícito é lido como a string `"null"` | mcp | correção |
@@ -70,6 +70,35 @@ de que a resposta de `create_transaction` reporta o lançamento invertido pelo c
 omitido sem perspectiva; quem diz "expense" é o `nature`), e a de que as leituras por linha do log de
 atividade rodam na main thread (as funções suspend de DAO do Room saltam para o dispatcher do banco —
 o que fica na main é o coletor e uma retomada por linha).
+
+## Reconferência
+
+Reconferidos contra a árvore em `32310927a` em 2026-08-18, depois de o relatório dos quinze achados
+ser publicado no PR #19. Nada mudou de veredito e nada mudou de faixa; três arquivos ficaram aquém do
+que o código mostra, e dois foram reescritos:
+
+- **[001](001-create-transaction-accepts-negative-amount.md) — o achado é maior do que estava
+  registrado.** São **cinco** tools que levam um valor negativo ao ledger, não uma: somam-se
+  `create_installment`, `create_recurring`, `update_recurring` e — a mais curta de todas, sem
+  formulário nem validador no caminho — `confirm_recurring`. E a "Correção sugerida" original errava
+  os dois lados: dava `create_card` e `adjust_invoice` como desprotegidos (o primeiro **é** protegido,
+  o segundo posta a diferença e aceita um alvo negativo com razão), enquanto `update_card`,
+  `create_budget` e `update_budget` — que gravam um negativo fora do ledger — não eram mencionados. O
+  arquivo agora traz o mapa da superfície inteira, em quatro grupos.
+- **[009](009-last-day-of-a-month-reads-as-finished.md) — a divergência é entre duas KDocs, não entre
+  código e KDoc.** A da factory (`AgentPeriod.kt:38`) é a que o cálculo contradiz; a da propriedade
+  (`:29`) descreve o cálculo corretamente. Corrigir só a expressão troca qual das duas mente. A
+  correção sugerida agora move as duas.
+- **[007](007-agent-log-runs-three-queries-per-row.md) — nada a mudar.** As três queries por linha já
+  estavam registradas aqui; quem ficou aquém foi o comentário do PR, que fala em uma leitura por
+  linha.
+
+Método: cada afirmação foi lida nos arquivos e linhas citados; o `bind` em porta privilegiada
+([011](011-privileged-ports-are-offered-and-misdiagnosed.md)) foi sondado de novo com a JVM desta
+máquina, e confirma `BindException`. Nada foi executado contra o app rodando, então
+[007](007-agent-log-runs-three-queries-per-row.md) e
+[012](012-closing-the-desktop-window-blocks-the-event-thread.md) seguem sendo raciocínio sobre o
+código, não medição.
 
 ## Relacionado
 

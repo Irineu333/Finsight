@@ -2,6 +2,8 @@
 
 **Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
+**Reconferido em:** 2026-08-18, @ `32310927a` — as KDocs do tipo **discordam entre si**, e a correção
+tem de mover as duas (ver *Duas KDocs, não uma*).
 
 ## O que está errado
 
@@ -37,6 +39,23 @@ incompleteSide = when {
     …
 ```
 
+## Duas KDocs, não uma
+
+O arquivo tem **duas** descrições de `isInProgress`, e elas não dizem a mesma coisa. A da factory
+(`:38`) é a que o cálculo contradiz. A da propriedade (`AgentPeriod.kt:29`) descreve o cálculo
+**corretamente**:
+
+> Whether [to] is still in the future on the app's own clock.
+
+Ou seja, não é um caso de código contra documentação, com um lado certo e outro errado: é a
+documentação em desacordo consigo mesma, e o código seguindo uma das duas. Corrigir só a expressão
+deixa `:29` sendo a afirmação falsa que `:38` é hoje — a mesma divergência, virada do avesso.
+
+Qual das duas é a intenção fica decidido pelo KDoc da classe (`AgentPeriod.kt:11-15`), que diz para
+que o campo existe: impedir que dois totais medidos sobre janelas diferentes sejam lidos lado a lado.
+Um mês com um dia por correr é uma janela diferente. Logo `:38` enuncia a regra e `:29` descreve o
+defeito.
+
 ## Cenário de falha
 
 Em 31 de março o usuário pergunta *"como este mês se compara a fevereiro?"*. `incomplete_side` vem
@@ -51,5 +70,9 @@ a fall in spending"* — chegando um dia antes em vez de onze.
 
 `isInProgress = to >= today` nas duas factories. `measuredThrough` já lê corretamente
 (`minOf(to, today)` devolve hoje, que é o último dia de qualquer forma), então nada mais se move.
+
+Reescrever junto o KDoc da propriedade (`AgentPeriod.kt:29`) para *"whether [to] has not yet been
+reached on the app's own clock"* — ou equivalente que inclua o próprio dia. Sem isso a correção troca
+qual das duas KDocs mente, em vez de acabar com a divergência.
 
 Vale um teste fixando a fronteira: o primeiro e o último dia do mês, e o dia seguinte.

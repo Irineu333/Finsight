@@ -26,7 +26,12 @@ internal data class AgentPeriod(
     val from: LocalDate? = null,
     /** The last day the period covers, whether or not it has arrived. */
     val to: LocalDate,
-    /** Whether [to] is still in the future on the app's own clock. */
+    /**
+     * Whether [to] has still to be reached on the app's own clock, its own day included.
+     *
+     * The last day of a period is one it runs through: a month asked about on the 31st will take
+     * postings for the rest of that day, so it is not a window comparable with a month that ended.
+     */
     @SerialName("is_in_progress")
     val isInProgress: Boolean,
     /** The last day the figures actually cover: [to], or today while the period is running. */
@@ -52,7 +57,7 @@ internal data class AgentPeriod(
             month = month,
             from = null,
             to = to,
-            isInProgress = to > today,
+            isInProgress = to >= today,
             measuredThrough = minOf(to, today),
         )
 
@@ -66,7 +71,7 @@ internal data class AgentPeriod(
             month = month,
             from = from,
             to = to,
-            isInProgress = to > today,
+            isInProgress = to >= today,
             measuredThrough = minOf(to, today),
         )
     }

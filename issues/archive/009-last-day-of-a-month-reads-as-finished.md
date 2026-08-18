@@ -1,6 +1,6 @@
 # 009 — o último dia do mês é lido como encerrado, um dia antes da hora
 
-**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
+**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 **Reconferido em:** 2026-08-18, @ `32310927a` — as KDocs do tipo **discordam entre si**, e a correção
 tem de mover as duas (ver *Duas KDocs, não uma*).
@@ -76,3 +76,27 @@ reached on the app's own clock"* — ou equivalente que inclua o próprio dia. S
 qual das duas KDocs mente, em vez de acabar com a divergência.
 
 Vale um teste fixando a fronteira: o primeiro e o último dia do mês, e o dia seguinte.
+## Correção aplicada
+
+`isInProgress = to >= today` nas duas factories, e `measuredThrough` não se moveu — `minOf(to, today)`
+já devolvia o próprio dia.
+
+As **duas** KDocs foram mexidas, que era o ponto desta reconferência. A da factory (`:38`) enunciava a
+regra e o cálculo a contradizia; a da propriedade (`:29`) descrevia o cálculo corretamente, ou seja,
+descrevia o defeito. Corrigir só a expressão trocaria qual das duas mente. A da factory ficou como
+estava, porque estava certa; a da propriedade passou a dizer que o último dia é um dia que o período
+ainda percorre, e por que isso importa.
+
+## O teste veio antes
+
+`AgentPeriodTest` foi escrito antes da correção e nasceu vermelho em **exatamente três** dos oito
+casos: o último dia do mês, uma acumulação que alcança hoje e um intervalo que termina hoje. Os
+outros cinco — primeiro dia, meio do mês, dia seguinte ao fim, mês que ainda não começou, e o que
+`measuredThrough` cobre — já passavam. O teste não estava falhando por estar errado; falhava onde o
+defeito morava.
+
+Não existia teste nenhum para `AgentPeriod` antes disto, e ele alimenta **18 pontos** da superfície
+do agente. A fronteira agora está fixada nos três dias que se confundem.
+
+Suíte cheia depois da mudança: 1658 testes, nenhuma falha — nenhum dos 18 consumidores dependia do
+dia a mais.

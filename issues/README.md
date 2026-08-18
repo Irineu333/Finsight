@@ -17,7 +17,6 @@ corrompe número nenhum do ledger.
 |---|---|---|---|
 | **MÉDIO** |
 | [008](008-list-transactions-loads-the-whole-table.md) | `list_transactions` carrega a tabela inteira a cada página | mcp | performance |
-| [009](009-last-day-of-a-month-reads-as-finished.md) | O último dia do mês é lido como encerrado | mcp | correção |
 | [010](010-cannot-reapply-the-configured-port.md) | A porta configurada não pode ser reaplicada depois de um bind falho | mcp (UI) | UX |
 | [016](016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | mcp / model | correção |
 | **BAIXO** |
@@ -41,6 +40,7 @@ mudou — inclusive onde o achado estava errado.
 | [004](archive/004-transaction-form-drops-arguments-silently.md) | Categoria incompatível e `installments` fora do cartão descartados em silêncio | média | 2026-08-18 |
 | [005](archive/005-connection-snippet-shows-the-token-in-clear-text.md) | O snippet de conexão mostra o token em texto claro | média | 2026-08-18 |
 | [007](archive/007-agent-log-runs-three-queries-per-row.md) | O log completo do agente faz três queries por linha, por emissão | média | 2026-08-18 |
+| [009](archive/009-last-day-of-a-month-reads-as-finished.md) | O último dia do mês é lido como encerrado | média | 2026-08-18 |
 
 ## O que decide a faixa
 

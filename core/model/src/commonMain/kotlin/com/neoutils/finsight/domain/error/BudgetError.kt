@@ -4,6 +4,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_error_already_exist
 import com.neoutils.finsight.resources.budget_error_empty_title
 import com.neoutils.finsight.resources.budget_error_missing_base_income
+import com.neoutils.finsight.resources.budget_error_negative_limit
 import com.neoutils.finsight.resources.budget_error_not_found
 import com.neoutils.finsight.util.UiText
 
@@ -28,6 +29,16 @@ enum class BudgetError(val message: String) {
      * progress reads back for it.
      */
     MISSING_BASE_INCOME(message = "A percentage budget needs the recurring income it is a share of"),
+
+    /**
+     * The limit the budget would be measured against is below zero.
+     *
+     * It is read off the **resolved** amount, so the two kinds of limit answer alike: a
+     * `FIXED` one carries the number it was handed, and a `PERCENTAGE` one derives it
+     * from a share that may itself be negative. Spending measured against a negative
+     * limit is over it from the first cent, which is not a budget.
+     */
+    NEGATIVE_LIMIT(message = "Budget limit cannot be negative"),
 }
 
 fun BudgetError.toUiText() = when (this) {
@@ -35,4 +46,5 @@ fun BudgetError.toUiText() = when (this) {
     BudgetError.ALREADY_EXIST -> UiText.Res(Res.string.budget_error_already_exist)
     BudgetError.NOT_FOUND -> UiText.Res(Res.string.budget_error_not_found)
     BudgetError.MISSING_BASE_INCOME -> UiText.Res(Res.string.budget_error_missing_base_income)
+    BudgetError.NEGATIVE_LIMIT -> UiText.Res(Res.string.budget_error_negative_limit)
 }

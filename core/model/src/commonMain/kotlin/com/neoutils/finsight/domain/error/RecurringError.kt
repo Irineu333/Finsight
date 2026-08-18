@@ -2,8 +2,8 @@ package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_error_account_required
+import com.neoutils.finsight.resources.recurring_error_amount_not_positive
 import com.neoutils.finsight.resources.recurring_error_amount_required
-import com.neoutils.finsight.resources.recurring_error_amount_zero
 import com.neoutils.finsight.resources.recurring_error_currency_mismatch
 import com.neoutils.finsight.resources.recurring_error_invalid_day
 import com.neoutils.finsight.resources.recurring_error_not_found
@@ -22,7 +22,7 @@ enum class RecurringError(val message: String) {
     NOT_FOUND(message = "Recurring not found."),
 
     AMOUNT_REQUIRED(message = "Amount is required."),
-    AMOUNT_ZERO(message = "Amount cannot be zero."),
+    AMOUNT_NOT_POSITIVE(message = "Amount must be greater than zero."),
     TITLE_OR_CATEGORY_REQUIRED(message = "Title or category is required."),
     INVALID_DAY(message = "Day of month must be between 1 and 31."),
     ACCOUNT_REQUIRED(message = "Account is required."),
@@ -46,7 +46,7 @@ enum class RecurringError(val message: String) {
 fun RecurringError.toUiText() = when (this) {
     RecurringError.NOT_FOUND -> UiText.Res(Res.string.recurring_error_not_found)
     RecurringError.AMOUNT_REQUIRED -> UiText.Res(Res.string.recurring_error_amount_required)
-    RecurringError.AMOUNT_ZERO -> UiText.Res(Res.string.recurring_error_amount_zero)
+    RecurringError.AMOUNT_NOT_POSITIVE -> UiText.Res(Res.string.recurring_error_amount_not_positive)
     RecurringError.TITLE_OR_CATEGORY_REQUIRED -> UiText.Res(Res.string.recurring_error_title_or_category_required)
     RecurringError.INVALID_DAY -> UiText.Res(Res.string.recurring_error_invalid_day)
     RecurringError.ACCOUNT_REQUIRED -> UiText.Res(Res.string.recurring_error_account_required)

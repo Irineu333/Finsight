@@ -37,7 +37,7 @@ data class RecurringForm(
      */
     fun toRecurring(createdAt: Long): Either<RecurringError, Recurring> = either {
         ensure(amount.isNotEmpty()) { RecurringError.AMOUNT_REQUIRED }
-        ensure(amount.moneyToDouble() != 0.0) { RecurringError.AMOUNT_ZERO }
+        ensure(amount.moneyToDouble() > 0.0) { RecurringError.AMOUNT_NOT_POSITIVE }
         ensure(title.isNotEmpty() || category != null) {
             RecurringError.TITLE_OR_CATEGORY_REQUIRED
         }

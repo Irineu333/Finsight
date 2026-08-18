@@ -1,6 +1,6 @@
 # 001 — valor negativo aceito na superfície de escrita, e registrado na direção oposta
 
-**Área:** mcp · **Tipo:** dados · **Criticidade:** alta · **Status:** aberto
+**Área:** mcp · **Tipo:** dados · **Criticidade:** alta · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 **Reconferido em:** 2026-08-18, @ `32310927a` — o achado é maior do que o registrado: são **cinco**
 tools que alcançam o ledger, não uma, e a mais curta delas não passa por validador algum. O nome do
@@ -127,3 +127,40 @@ JSON, ninguém vê campo nenhum, e a tool responde "Recorded."
 reconferência de 2026-08-18 e **não constam da revisão original**. Os três últimos não corrompem
 número nenhum do ledger — por isso ficam aqui em vez de virarem issues próprias —, mas são a mesma
 omissão: um valor com sinal aceito porque nenhuma tela jamais o ofereceu.
+
+## Correção aplicada
+
+A guarda ficou no domínio, como esta issue pedia, e não uma por tool. `AmountZero` e `AMOUNT_ZERO`
+foram **ampliados** em vez de ganharem um irmão — zero e negativo são uma regra só, e dois erros para
+uma regra é a deriva que o KDoc de `RecurringForm` diz existir para impedir. Hoje se chamam
+`AmountNotPositive` e `AMOUNT_NOT_POSITIVE`, e dizem *"Amount must be greater than zero."*
+
+As cinco portas para o ledger fecham em três pontos:
+
+| Onde | Fecha |
+|---|---|
+| `ValidateTransactionFormUseCaseImpl` | `create_transaction`, `create_installment` |
+| `RecurringForm.toRecurring` | `create_recurring`, `update_recurring` |
+| `ConfirmRecurringUseCaseImpl` | `confirm_recurring` |
+
+A guarda de `confirm_recurring` fica **antes** de `getOrCreateInvoiceForMonthUseCase`: essa resolução
+abre fatura como efeito colateral deliberado fora da unidade de trabalho (design D7), e recusar
+depois dela deixaria fatura órfã para um ciclo que nunca postou. `ConfirmRecurringAmountTest` fixa
+essa ordem com um contador que também lança se for alcançado.
+
+Fora do ledger, `budgetLimit` passou a recusar o valor **resolvido** abaixo de zero — uma checagem só,
+que alcança tanto o `FIXED` que recebe o número quanto o `PERCENTAGE` que o deriva de uma fração
+negativa. O erro novo é `BudgetError.NEGATIVE_LIMIT`, com chave nos dois idiomas.
+
+### Onde esta issue estava errada
+
+`update_card` **já estava protegido**, e a issue afirmava o contrário. A leitura tinha parado em
+`UpdateCreditCardUseCaseImpl`, que de fato valida só o nome — mas o `init` de `CreditCard`
+(`core/model/.../domain/model/CreditCard.kt:40-42`) recusa `limit < 0`, e `update_card` expressa a
+edição como `card.copy(limit = ...)` (`CardWriteTools.kt:146-152`), que roda o construtor primário.
+A recusa vira `Left` antes mesmo da checagem de nome. Uma guarda no use case seria código inalcançável.
+O que ficou no lugar dela foram testes que fixam o comportamento existente — negativo recusado com
+`NEGATIVE_LIMIT` e nada chegando ao repositório, zero aceito, positivo gravado.
+
+`adjust_balance` e `adjust_invoice` não foram tocados: `AdjustBalanceUseCaseImpl` posta
+`TransactionLeg` direto, sem passar por `TransactionForm`, então o saldo-alvo negativo segue legítimo.

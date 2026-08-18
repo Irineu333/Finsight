@@ -172,6 +172,67 @@ class CreateBudgetUseCaseTest {
     }
 
     @Test
+    fun `a negative fixed limit is refused and nothing is written`() = runTest {
+        val repo = RecordingBudgetRepository()
+
+        val error = assertIs<BudgetException>(
+            useCase(repo)(
+                title = "Groceries",
+                categories = listOf(testCategory()),
+                iconKey = "shopping",
+                currency = "BRL",
+                limitType = LimitType.FIXED,
+                amount = -500.0,
+            ).leftOrNull()
+        )
+
+        assertEquals(BudgetError.NEGATIVE_LIMIT, error.error)
+        assertTrue(repo.inserted.isEmpty())
+    }
+
+    /**
+     * The check reads the **resolved** amount, which is why one check covers both kinds:
+     * a percentage limit is never handed its amount, so a negative one can only arrive
+     * through the share it is derived from.
+     */
+    @Test
+    fun `a negative share derives a negative limit, and is refused by the same rule`() = runTest {
+        val repo = RecordingBudgetRepository()
+
+        val error = assertIs<BudgetException>(
+            useCase(repo)(
+                title = "Groceries",
+                categories = listOf(testCategory()),
+                iconKey = "shopping",
+                currency = "BRL",
+                limitType = LimitType.PERCENTAGE,
+                percentage = -30.0,
+                baseIncome = testRecurring(amount = 3_000.0),
+            ).leftOrNull()
+        )
+
+        assertEquals(BudgetError.NEGATIVE_LIMIT, error.error)
+        assertTrue(repo.inserted.isEmpty())
+    }
+
+    @Test
+    fun `a limit of zero is not negative, and is not refused`() = runTest {
+        val repo = RecordingBudgetRepository()
+
+        val result = useCase(repo)(
+            title = "Groceries",
+            categories = listOf(testCategory()),
+            iconKey = "shopping",
+            currency = "BRL",
+            limitType = LimitType.FIXED,
+            amount = 0.0,
+        )
+
+        assertTrue(result.isRight())
+        assertEquals(0.0, repo.inserted.single().amount)
+    }
+
+    @Test
     fun `a blank title is refused and nothing is written`() = runTest {
         val repo = RecordingBudgetRepository()
 

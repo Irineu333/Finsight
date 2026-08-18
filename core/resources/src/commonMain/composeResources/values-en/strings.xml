@@ -26,6 +26,7 @@
     <string name="budget_error_already_exist">A budget with this title already exists.</string>
     <string name="budget_error_not_found">Budget not found.</string>
     <string name="budget_error_missing_base_income">A percentage budget needs the recurring income it is a share of.</string>
+    <string name="budget_error_negative_limit">The budget limit cannot be negative.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">Card name is required.</string>
@@ -783,7 +784,7 @@
     <!-- Recurring Errors -->
     <string name="recurring_error_not_found">Recurring not found.</string>
     <string name="recurring_error_amount_required">Amount is required.</string>
-    <string name="recurring_error_amount_zero">Amount cannot be zero.</string>
+    <string name="recurring_error_amount_not_positive">The amount must be greater than zero.</string>
     <string name="recurring_error_title_or_category_required">Provide a title or category.</string>
     <string name="recurring_error_invalid_day">Day must be between 1 and 31.</string>
     <string name="recurring_error_account_required">Account is required.</string>
@@ -963,7 +964,7 @@
     <string name="currency_error_not_found">This currency no longer exists.</string>
     <string name="recurring_error_currency_mismatch">This recurring is in another currency. Pick an account or card in the same one.</string>
     <string name="build_transaction_error_amount_required">Enter an amount.</string>
-    <string name="build_transaction_error_amount_zero">The amount cannot be zero.</string>
+    <string name="build_transaction_error_amount_not_positive">The amount must be greater than zero.</string>
     <string name="build_transaction_error_date_required">Enter a date.</string>
     <string name="build_transaction_error_date_invalid">That is not a date.</string>
     <string name="build_transaction_error_date_future">The date cannot be in the future.</string>

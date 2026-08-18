@@ -1,8 +1,9 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BudgetError
 import com.neoutils.finsight.domain.exception.BudgetException
 import com.neoutils.finsight.domain.model.LimitType
@@ -35,24 +36,38 @@ internal data class BudgetLimit(
  * A `FIXED` limit carries neither share nor base income: leaving them behind would
  * make the budget read as a fraction of something the user had already stopped
  * measuring against.
+ *
+ * A negative limit is refused, and the check reads the **resolved** amount so that both
+ * kinds answer alike: a `FIXED` one can be handed a negative number and a `PERCENTAGE`
+ * one can derive one out of a negative share.
  */
 internal fun budgetLimit(
     limitType: LimitType,
     amount: Double,
     percentage: Double?,
     baseIncome: Recurring?,
-): Either<BudgetException, BudgetLimit> = when (limitType) {
-    LimitType.FIXED -> BudgetLimit(
-        amount = amount,
-        percentage = null,
-        recurringId = null,
-    ).right()
+): Either<BudgetException, BudgetLimit> = either {
+    val limit = when (limitType) {
+        LimitType.FIXED -> BudgetLimit(
+            amount = amount,
+            percentage = null,
+            recurringId = null,
+        )
 
-    LimitType.PERCENTAGE -> baseIncome?.let {
-        BudgetLimit(
-            amount = it.amount * (percentage ?: 0.0) / 100.0,
-            percentage = percentage,
-            recurringId = it.id,
-        ).right()
-    } ?: BudgetException(BudgetError.MISSING_BASE_INCOME).left()
+        LimitType.PERCENTAGE -> {
+            val income = ensureNotNull(baseIncome) {
+                BudgetException(BudgetError.MISSING_BASE_INCOME)
+            }
+
+            BudgetLimit(
+                amount = income.amount * (percentage ?: 0.0) / 100.0,
+                percentage = percentage,
+                recurringId = income.id,
+            )
+        }
+    }
+
+    ensure(limit.amount >= 0) { BudgetException(BudgetError.NEGATIVE_LIMIT) }
+
+    limit
 }

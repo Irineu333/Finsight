@@ -72,6 +72,12 @@ class ConfirmRecurringUseCaseImpl(
         val cycleAmount = amount ?: recurring.amount
         val cycleTarget = target ?: recurring.ownTarget
 
+        // The one write of the app that reaches the ledger without a form to hold the rule,
+        // so the rule is held here. It sits before the invoice is resolved because that
+        // resolution creates one as a deliberate side effect outside the unit of work, and a
+        // refusal after it would leave an invoice behind for a cycle that never posted.
+        if (cycleAmount <= 0.0) throw RecurringException(RecurringError.AMOUNT_NOT_POSITIVE)
+
         // Blank is an absence, not the template's title: a transaction with no title of
         // its own is displayed by its category, which is the rule the whole app reads
         // titles by (`displayTitleOf`). Falling back to the template here would hand the

@@ -114,7 +114,9 @@ internal class WorldBuildTransaction(
 ) : BuildTransactionUseCase {
 
     override suspend fun invoke(form: TransactionForm): Either<Throwable, TransactionIntent> = either {
-        ensure(form.amount.moneyToDouble() != 0.0) { IllegalArgumentException("The amount cannot be zero.") }
+        ensure(form.amount.moneyToDouble() > 0.0) {
+            IllegalArgumentException("The amount must be greater than zero.")
+        }
         ensure(!form.title.isNullOrEmpty() || form.category != null) {
             IllegalArgumentException("Enter a title or pick a category.")
         }
@@ -514,15 +516,17 @@ internal class WorldCreateBudget(
         if (limitType == LimitType.PERCENTAGE) {
             ensureNotNull(baseIncome) { BudgetException(BudgetError.MISSING_BASE_INCOME) }
         }
+        val limit = if (limitType == LimitType.FIXED) {
+            amount
+        } else {
+            (baseIncome?.amount ?: 0.0) * (percentage ?: 0.0) / 100
+        }
+        ensure(limit >= 0) { BudgetException(BudgetError.NEGATIVE_LIMIT) }
         val budget = Budget(
             title = title.trim(),
             categories = categories,
             iconKey = iconKey,
-            amount = if (limitType == LimitType.FIXED) {
-                amount
-            } else {
-                (baseIncome?.amount ?: 0.0) * (percentage ?: 0.0) / 100
-            },
+            amount = limit,
             currency = currency,
             limitType = limitType,
             percentage = percentage.takeIf { limitType == LimitType.PERCENTAGE },
@@ -550,6 +554,7 @@ internal class WorldUpdateBudget(
             BudgetException(BudgetError.NOT_FOUND)
         }
         ensure(title.isNotBlank()) { BudgetException(BudgetError.EMPTY_TITLE) }
+        ensure(amount >= 0) { BudgetException(BudgetError.NEGATIVE_LIMIT) }
         catch {
             budgetRepository.update(
                 budget.copy(

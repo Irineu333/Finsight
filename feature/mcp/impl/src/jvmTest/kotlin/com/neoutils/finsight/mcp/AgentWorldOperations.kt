@@ -658,6 +658,7 @@ internal class WorldConfirmRecurring(
             .monthsUntil(yearMonth) + 1
 
         val cycleAmount = amount ?: recurring.amount
+        if (cycleAmount <= 0.0) throw RecurringException(RecurringError.AMOUNT_NOT_POSITIVE)
         val cycleTarget = target
             ?: if (recurring.creditCard != null) {
                 TransactionTarget.CREDIT_CARD

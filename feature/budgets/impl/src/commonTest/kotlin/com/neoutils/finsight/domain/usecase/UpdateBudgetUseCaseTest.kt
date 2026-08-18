@@ -134,6 +134,25 @@ class UpdateBudgetUseCaseTest {
     }
 
     @Test
+    fun `a negative limit is refused and nothing is written`() = runTest {
+        val repo = RecordingBudgetRepository(existing = listOf(budget))
+
+        val error = assertIs<BudgetException>(
+            useCase(repo)(
+                budgetId = budget.id,
+                title = budget.title,
+                categories = budget.categories,
+                iconKey = budget.iconKey,
+                limitType = LimitType.FIXED,
+                amount = -800.0,
+            ).leftOrNull()
+        )
+
+        assertEquals(BudgetError.NEGATIVE_LIMIT, error.error)
+        assertTrue(repo.updated.isEmpty())
+    }
+
+    @Test
     fun `keeping its own title is not a clash with itself`() = runTest {
         val repo = RecordingBudgetRepository(existing = listOf(budget))
 

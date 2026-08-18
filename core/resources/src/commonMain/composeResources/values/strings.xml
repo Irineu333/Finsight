@@ -27,6 +27,7 @@
     <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
     <string name="budget_error_not_found">Orçamento não encontrado.</string>
     <string name="budget_error_missing_base_income">Um orçamento em porcentagem precisa da receita recorrente da qual ele é uma fração.</string>
+    <string name="budget_error_negative_limit">O limite do orçamento não pode ser negativo.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
@@ -784,7 +785,7 @@
     <!-- Recurring Errors -->
     <string name="recurring_error_not_found">Recorrência não encontrada.</string>
     <string name="recurring_error_amount_required">O valor é obrigatório.</string>
-    <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="recurring_error_amount_not_positive">O valor deve ser maior que zero.</string>
     <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
     <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 31.</string>
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
@@ -964,7 +965,7 @@
     <string name="currency_error_not_found">Esta moeda não existe mais.</string>
     <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
     <string name="build_transaction_error_amount_required">Informe o valor.</string>
-    <string name="build_transaction_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="build_transaction_error_amount_not_positive">O valor deve ser maior que zero.</string>
     <string name="build_transaction_error_date_required">Informe a data.</string>
     <string name="build_transaction_error_date_invalid">Data inválida.</string>
     <string name="build_transaction_error_date_future">A data não pode ser futura.</string>

@@ -9,13 +9,12 @@ arquivo em vez de ter sido descartada.
 
 ## Sumário por criticidade
 
-Nenhum achado chegou a **CRÍTICO**: nada aqui corrompe dados sem que um agente peça, nem derruba o
-app. As três faixas abaixo são as que têm ocupantes.
+Nenhum achado chegou a **CRÍTICO**, e **ALTO** está vazia desde que a
+[001](archive/001-create-transaction-accepts-negative-amount.md) foi corrigida. O que resta não
+corrompe número nenhum do ledger.
 
 | # | Issue | Área | Tipo |
 |---|---|---|---|
-| **ALTO** |
-| [001](001-create-transaction-accepts-negative-amount.md) | Valor negativo aceito na escrita, e registrado na direção oposta — cinco tools | mcp | dados |
 | **MÉDIO** |
 | [002](002-is-recurring-dropped-when-splitting.md) | `is_recurring` descartado quando `installments > 1`, em silêncio | mcp / transactions | dados |
 | [003](003-json-null-read-as-the-string-null.md) | Um `null` JSON explícito é lido como a string `"null"` | mcp | correção |
@@ -32,6 +31,15 @@ app. As três faixas abaixo são as que têm ocupantes.
 | [013](013-returned-is-counted-before-unmappable-rows-are-dropped.md) | `returned` contado antes de descartar linhas não mapeáveis | mcp | correção (latente) |
 | [014](014-force-unwrap-of-a-documented-nullable-after-the-write.md) | `!!` sobre um nullable documentado, depois de a escrita ter sido aplicada | mcp | robustez |
 | [015](015-unused-imports-in-mcp-ui-state.md) | Dois imports não usados em `McpUiState` | mcp (UI) | código morto |
+
+## Corrigidas
+
+Cada uma foi para `archive/` no mesmo commit da correção, e o arquivo diz no fim o que a correção
+mudou — inclusive onde o achado estava errado.
+
+| # | Issue | Faixa | Corrigida em |
+|---|---|---|---|
+| [001](archive/001-create-transaction-accepts-negative-amount.md) | Valor negativo aceito na escrita, e registrado na direção oposta — cinco tools | alta | 2026-08-18 |
 
 ## O que decide a faixa
 
@@ -77,14 +85,16 @@ Reconferidos contra a árvore em `32310927a` em 2026-08-18, depois de o relatór
 ser publicado no PR #19. Nada mudou de veredito e nada mudou de faixa; três arquivos ficaram aquém do
 que o código mostra, e dois foram reescritos:
 
-- **[001](001-create-transaction-accepts-negative-amount.md) — o achado é maior do que estava
+- **[001](archive/001-create-transaction-accepts-negative-amount.md) — o achado é maior do que estava
   registrado.** São **cinco** tools que levam um valor negativo ao ledger, não uma: somam-se
   `create_installment`, `create_recurring`, `update_recurring` e — a mais curta de todas, sem
   formulário nem validador no caminho — `confirm_recurring`. E a "Correção sugerida" original errava
   os dois lados: dava `create_card` e `adjust_invoice` como desprotegidos (o primeiro **é** protegido,
   o segundo posta a diferença e aceita um alvo negativo com razão), enquanto `update_card`,
   `create_budget` e `update_budget` — que gravam um negativo fora do ledger — não eram mencionados. O
-  arquivo agora traz o mapa da superfície inteira, em quatro grupos.
+  arquivo agora traz o mapa da superfície inteira, em quatro grupos. *(A correção mostrou que a
+  reconferência também errou aqui: `update_card` **é** protegido — pelo `init` de `CreditCard`, não
+  pelo use case que ela leu. Está registrado no arquivo arquivado.)*
 - **[009](009-last-day-of-a-month-reads-as-finished.md) — a divergência é entre duas KDocs, não entre
   código e KDoc.** A da factory (`AgentPeriod.kt:38`) é a que o cálculo contradiz; a da propriedade
   (`:29`) descreve o cálculo corretamente. Corrigir só a expressão troca qual das duas mente. A

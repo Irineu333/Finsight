@@ -90,6 +90,49 @@ class RegistrationFamilyOverTheProtocolTest {
             }
         }
 
+    /**
+     * **Splitting a purchase and marking it recurring are refused together, rather than one of the
+     * two being dropped.**
+     *
+     * `RegisterTransactionUseCase` returns down the instalment branch before `isRecurring` is read,
+     * so the pair writes the split and opens no template. The sheet reaches that same outcome on
+     * purpose — and may, because it stops showing the mark it drops. Nothing was ever shown here, so
+     * the drop would answer "Recorded as 3 instalments" to a caller who also asked for a template,
+     * and the agent would tell the user a subscription repeats every month. It does not.
+     */
+    @Test
+    fun `instalments and a recurring mark are refused together, not silently reconciled`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+
+            val response = client.callTool(
+                "create_transaction",
+                """
+                {"type":"expense","amount":300.00,"title":"Subscription","card_id":${card.id},
+                 "installments":3,"is_recurring":true}
+                """.trimIndent().replace("\n", ""),
+            )
+
+            assertTrue(response.isToolError(), "the pair was accepted, and half of it dropped")
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "installments" in reason && "is_recurring" in reason,
+                "the refusal does not name both arguments, so the agent cannot tell which to drop: $reason",
+            )
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count { it.title == "Subscription" },
+                "the split was written anyway",
+            )
+            assertTrue(
+                world.recurringRepository.observeAllRecurring().first().isEmpty(),
+                "a template was opened anyway",
+            )
+        }
+    }
+
     // ------------------------------------------------------------------------------
     // 10.2 — the edit, and what it cannot express
     // ------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # 002 — `is_recurring` é descartado quando `installments > 1`, e a resposta não diz isso
 
-**Área:** mcp / transactions · **Tipo:** dados · **Criticidade:** média · **Status:** aberto
+**Área:** mcp / transactions · **Tipo:** dados · **Criticidade:** média · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -65,3 +65,19 @@ o descarte silencioso custa uma afirmação errada ao usuário.
 
 Alternativamente (ou além disso), tornar o descarte visível no `note` da resposta — mas a recusa é a
 escolha melhor: o agente pediu algo que o domínio não modela, e deve aprender isso em vez de inferir.
+
+## Correção aplicada
+
+A recusa, que era a opção que esta issue preferia. `CreateTransactionTool.call` recusa o par nomeando
+os dois argumentos, ao lado da recusa que já existia para `account_id` + `card_id`. A descrição da
+tool deixou de prometer os dois comportamentos no mesmo parágrafo e passou a dizer que eles são
+mutuamente exclusivos e que dar ambos é recusado.
+
+`RegisterTransactionUseCase` não foi tocado: o ramo do parcelamento retornar antes de `isRecurring`
+está certo para a sheet, que descarta a marca porque deixa de exibi-la. O que estava errado era a
+tool repetir esse descarte sem nunca ter exibido nada.
+
+O teste vive em `RegistrationFamilyOverTheProtocolTest` e passa pela rede, não pela função Kotlin —
+recusa marcada como erro de protocolo, os dois nomes na razão, nenhum lançamento no ledger e nenhum
+template aberto. Conferido que ele morde: com a guarda removida, ele é o único teste da suíte que
+falha.

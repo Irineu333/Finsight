@@ -105,7 +105,8 @@ internal class CreateTransactionTool(
             "correct a balance (adjust_balance) — those post two legs and are refused here. " +
             "With installments above 1 the purchase is split across the following invoices and " +
             "the answer carries every posting written; with is_recurring a monthly template is " +
-            "opened and this posting is its first cycle."
+            "opened and this posting is its first cycle. The two are mutually exclusive and " +
+            "giving both is refused: instalments are already a repetition."
 
     override val inputSchema = schema(
         "type" to choice("Whether money went out or came in.", TRANSACTION_TYPES.keys.toList()),
@@ -150,6 +151,20 @@ internal class CreateTransactionTool(
             return@writing refusedWith(
                 AgentRefusal(
                     reason = "A posting sits in one place: give `account_id` or `card_id`, not both.",
+                ),
+                summary = summary,
+            )
+        }
+
+        // The sheet drops the recurring mark when a purchase is split, and says why: paying in
+        // instalments is already a repetition. It can drop it silently because it also stops
+        // showing it. Nothing was ever shown here, so the same drop would be a template the
+        // caller asked for, never opened, and reported as done.
+        if (isRecurring && installments > 1) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "Instalments are already a repetition: give `installments` above 1 " +
+                        "or `is_recurring`, not both.",
                 ),
                 summary = summary,
             )

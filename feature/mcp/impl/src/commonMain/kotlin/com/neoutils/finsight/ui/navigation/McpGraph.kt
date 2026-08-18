@@ -27,7 +27,11 @@ data object McpGraph : NavGraphRoute
 @Serializable
 internal data object McpActivityRoute : NavRoute
 
-fun NavGraphBuilder.mcpGraph() {
+/**
+ * Internal to this module: the section is registered inside its host's graph, and the only caller
+ * is this feature's own entry point.
+ */
+internal fun NavGraphBuilder.mcpGraph() {
     navigation<McpGraph>(
         startDestination = McpRoute,
     ) {

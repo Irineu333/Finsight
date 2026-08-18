@@ -22,8 +22,9 @@ feature/
 | **api** | Rotas de navegação **externamente navegáveis** (data classes), interfaces de repositório, interfaces de use cases públicos, entry point de UI (`<Nome>Entry`) | Qualquer implementação |
 | **impl** | Telas, ViewModels, modais, use cases (públicos e privados), implementações de repositório, mappers, rotas de destinos internos, módulo Koin da feature | Tipos consumidos por outras features |
 
-Features: `home`, `dashboard`, `transactions`, `accounts`, `creditcards`, `categories`, `budgets`,
-`recurring`, `report`, `settings` (moeda base e acervo de taxas de câmbio) e `support`.
+Features: `shell`, `dashboard`, `transactions`, `accounts`, `creditcards`, `categories`, `budgets`,
+`recurring`, `report`, `settings` (moeda base e acervo de taxas de câmbio), `mcp` (o servidor MCP
+local, hospedado por `settings`) e `support`.
 
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
 
@@ -154,11 +155,16 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
 | **Registro de subgrafo** | `context(builder: NavGraphBuilder) fun register()` no entry point, quando uma feature **hospeda** os destinos de outra |
 
-O quarto caso existe por causa do `home`, que aninha os grafos de `dashboard` e `transactions`
-dentro do seu `navigation<HomeGraph>`. Como `impl ⊄ impl`, ele não pode chamar
-`dashboardGraph()` diretamente: pede o registro ao `DashboardEntry`. As extensions
-`NavGraphBuilder.<feature>Graph()` das features hospedadas ficam `internal`, invocadas apenas
-pelo seu próprio `<Nome>EntryImpl`.
+O quarto caso existe para uma seção que **pertence a outra** e ainda assim é módulo de feature
+próprio: o `mcp`, que o usuário alcança pelas configurações. O `settings:impl` aninha o grafo dele
+dentro do seu `navigation<SettingsGraph>` e, como `impl ⊄ impl`, não pode chamar `mcpGraph()`
+diretamente — pede o registro ao `McpEntry`. As extensions `NavGraphBuilder.<feature>Graph()` das
+features hospedadas ficam `internal`, invocadas apenas pelo seu próprio `<Nome>EntryImpl`.
+
+O que o aninhamento compra é a **hierarquia**: com o grafo do `mcp` dentro do de `settings`, toda
+tela da seção tem `SettingsGraph` na sua `hierarchy`, e o seletor da chrome (`sectionOf`) responde
+por ela sem que o catálogo declare nada. Registrar o grafo como top-level no `AppNavHost` não erra
+nenhuma navegação, mas deixa a seção sem dono para quem lê a hierarquia.
 
 O `NavGraphBuilder` é um **context parameter**, não um parâmetro comum: o receiver implícito do
 `navigation<>` o satisfaz, então o call site é só `entry.register()`, e o compilador impede que
@@ -195,18 +201,18 @@ fun NavGraphBuilder.budgetsGraph() {
     }
 }
 
-// feature/home/impl — hospeda os grafos das abas sem enxergar nenhum impl
-fun NavGraphBuilder.homeGraph() {
+// feature/settings/impl — hospeda o grafo do mcp sem enxergar o impl dele
+fun NavGraphBuilder.settingsGraph() {
     val koin = KoinPlatform.getKoin()
-    navigation<HomeGraph>(startDestination = DashboardGraph) {
-        koin.get<DashboardEntry>().register()   // NavGraphBuilder vem do contexto
-        koin.get<TransactionsEntry>().register()
+    navigation<SettingsGraph>(startDestination = SettingsRoute) {
+        koin.get<McpEntry>().register()   // NavGraphBuilder vem do contexto
+        composable<SettingsRoute> { ... }
     }
 }
 
 // :app:shared — AppNavHost: só chamadas a <nome>Graph()
 NavHost(...) {
-    homeGraph()
+    settingsGraph()   // e, dentro dele, o grafo do mcp
     supportGraph()
     budgetsGraph()
 }
@@ -225,13 +231,13 @@ que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam t
 outro módulo navegar até ele. `SupportGraph`, `ReportGraph` e `SettingsGraph` estão na `api` porque
 o dashboard abre as duas primeiras pela entrada e o `AppNavCatalog` do shell nomeia a terceira. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
 porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
-nunca o grafo. `DashboardGraph` está na `api` porque o `home:impl` o nomeia como `startDestination`
-do subgrafo de abas — o `startDestination` precisa ser um filho direto do grafo, e o filho direto é
-o subgrafo, não a tela. Uma feature que não é destino de ninguém não cria módulo `api` para hospedar
-rota alguma; o `dashboard` deixou de ser esse caso quando o `home` saiu do shell.
+nunca o grafo. `DashboardGraph` está na `api` porque o `:app:shared` o nomeia como `startDestination`
+do `NavHost` — o `startDestination` precisa ser um filho direto do grafo, e o filho direto é
+o subgrafo, não a tela. `McpGraph` fica no `impl` mesmo sendo aninhado por outra feature: quem chega
+à seção mira `McpRoute`, e o host registra o grafo pelo `McpEntry`, sem nomeá-lo.
 *Registro via Koin, só quando necessário:* o `:app:shared` enxerga os `impl` e chama as extensions
 diretamente. Uma **feature** que hospeda o grafo de outra não pode, e aí passa pelo `register()` do
-entry point. É a exceção que o `home` obriga, não a regra.
+entry point. É a exceção que o `mcp` obriga, não a regra.
 
 > **Entry point é opcional.** Uma feature só declara `<Nome>Entry` quando **outra** feature consome
 > UI dela (modal/composable). O piloto `support` não expõe modal a terceiros (seu modal é interno),

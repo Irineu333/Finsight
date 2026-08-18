@@ -10,7 +10,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.neoutils.finsight.feature.dashboard.api.DashboardGraph
 import com.neoutils.finsight.feature.dashboard.api.DashboardRoute
-import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.settings.api.SettingsRoute
 import com.neoutils.finsight.navigation.NavGraphRoute
@@ -20,15 +19,19 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/** Stands in for a section that is a feature module of its own, whose graph is top-level: the MCP one. */
+/** Stands in for a section that is a feature module of its own, hosted inside another's graph: the MCP one. */
 @Serializable
-internal data object OwnedGraph : NavGraphRoute
+internal data object HostedGraph : NavGraphRoute
+
+/** Its root screen, as the MCP section's is. */
+@Serializable
+internal data object HostedRoute : NavRoute
 
 /** A screen pushed inside it, as the agent log is pushed inside the MCP section. */
 @Serializable
-internal data object OwnedSubRoute : NavRoute
+internal data object HostedSubRoute : NavRoute
 
-/** A screen pushed inside settings, as the exchange-rate history is. */
+/** A screen pushed inside settings itself, as the exchange-rate history is. */
 @Serializable
 internal data object SettingsSubRoute : NavRoute
 
@@ -64,10 +67,10 @@ class ActiveSectionTest {
             navigation<SettingsGraph>(startDestination = SettingsRoute) {
                 composable<SettingsRoute> {}
                 composable<SettingsSubRoute> {}
-            }
-            navigation<OwnedGraph>(startDestination = McpRoute) {
-                composable<McpRoute> {}
-                composable<OwnedSubRoute> {}
+                navigation<HostedGraph>(startDestination = HostedRoute) {
+                    composable<HostedRoute> {}
+                    composable<HostedSubRoute> {}
+                }
             }
             navigation<StrangerGraph>(startDestination = StrangerRoute) {
                 composable<StrangerRoute> {}
@@ -77,28 +80,27 @@ class ActiveSectionTest {
 
     private fun item(name: String) = destinations.first { it.name == name }
 
-    private inline fun <reified G : Any, reified S : Any> screen(): NavDestination {
-        val section = requireNotNull(graph.findNode<G>() as? NavGraph) { "no such section in the graph" }
-        return requireNotNull(section.findNode<S>()) { "no such screen in the section" }
-    }
+    private inline fun <reified G : Any> NavGraph.section(): NavGraph =
+        requireNotNull(findNode<G>() as? NavGraph) { "no such section in this graph" }
+
+    private inline fun <reified S : Any> NavGraph.screen(): NavDestination =
+        requireNotNull(findNode<S>()) { "no such screen in this graph" }
 
     @Test
-    fun `the MCP server keeps settings active, the section the user opened it from`() {
+    fun `a hosted section's root keeps its host active`() {
         assertEquals(
             item("settings"),
-            destinations.sectionOf(screen<OwnedGraph, McpRoute>()),
-            "no graph in the hierarchy ties the MCP section to settings, so only the route settings " +
-                "owns answers for it — without that the selector highlighted its first item, the " +
-                "dashboard, on a screen that has nothing to do with it",
+            destinations.sectionOf(graph.section<SettingsGraph>().section<HostedGraph>().screen<HostedRoute>()),
+            "the host's graph is in the hierarchy of every screen it hosts, which is the whole point " +
+                "of hosting it: a section reached from settings is a section of settings",
         )
     }
 
     @Test
-    fun `a screen pushed inside the MCP server keeps settings active too`() {
+    fun `a screen pushed inside a hosted section keeps the host active too`() {
         assertEquals(
             item("settings"),
-            destinations.sectionOf(screen<OwnedGraph, OwnedSubRoute>()),
-            "the fallback tier resolves the section by its start destination, which is the owned route",
+            destinations.sectionOf(graph.section<SettingsGraph>().section<HostedGraph>().screen<HostedSubRoute>()),
         )
     }
 
@@ -106,7 +108,7 @@ class ActiveSectionTest {
     fun `a screen pushed inside a section keeps that section active`() {
         assertEquals(
             item("settings"),
-            destinations.sectionOf(screen<SettingsGraph, SettingsSubRoute>()),
+            destinations.sectionOf(graph.section<SettingsGraph>().screen<SettingsSubRoute>()),
         )
     }
 
@@ -114,14 +116,14 @@ class ActiveSectionTest {
     fun `a section root is its own item`() {
         assertEquals(
             item("dashboard"),
-            destinations.sectionOf(screen<DashboardGraph, DashboardRoute>()),
+            destinations.sectionOf(graph.section<DashboardGraph>().screen<DashboardRoute>()),
         )
     }
 
     @Test
     fun `a destination the catalog does not claim leaves every item unselected`() {
         assertNull(
-            destinations.sectionOf(screen<StrangerGraph, StrangerRoute>()),
+            destinations.sectionOf(graph.section<StrangerGraph>().screen<StrangerRoute>()),
             "an unclaimed screen has to select none: falling back to the first item of the bar is " +
                 "how a section with no owner came to be drawn as the dashboard",
         )

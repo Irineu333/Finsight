@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.McpEntry
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -129,6 +130,19 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertNotNull(koin.get<IAgentActivityRepository>())
+    }
+
+    /**
+     * The MCP section's graph is built inside the settings graph, which resolves the entry point
+     * that registers it while the `NavHost` is being assembled — outside any composition, and before
+     * a single screen exists. A missing binding takes the whole navigation graph down on the first
+     * frame, not just the section it belongs to.
+     */
+    @Test
+    fun appModulesResolveTheMcpEntryPoint() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<McpEntry>())
     }
 
     @Test

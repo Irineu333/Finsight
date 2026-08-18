@@ -17,8 +17,9 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
-            // The integrations group: Settings names the MCP section's route, and the platform axis
-            // that decides whether the entry point is offered at all.
+            // The integrations group: Settings hosts the MCP section — it names its route and builds
+            // its graph inside its own, through the feature's entry point — and reads the platform
+            // axis that decides whether the door into it is offered at all.
             implementation(projects.feature.mcp.api)
             implementation(projects.feature.shell.api)
 

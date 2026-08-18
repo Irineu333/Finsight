@@ -18,7 +18,6 @@ import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.dashboard.api.DashboardRoute
-import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.report.api.ReportGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -97,15 +96,10 @@ internal object AppNavCatalog : NavCatalog {
         // purpose: the two are both "about the app". The catalog is the secondary
         // door, though — the designed one is the footer of any card holding an
         // approximate figure, which appears exactly where a rate matters (design D25).
-        //
-        // The MCP server is a section of settings that the user reaches from there, and it
-        // is a feature module of its own, so its graph is a top-level one: settings owns its
-        // route here, and stays highlighted while the user is inside it.
         NavDestination(
             icon = Icons.Default.Settings,
             labelRes = Res.string.nav_settings,
             route = SettingsGraph,
-            alsoOwns = listOf(McpRoute),
         ),
         NavDestination(
             icon = Icons.Default.SupportAgent,

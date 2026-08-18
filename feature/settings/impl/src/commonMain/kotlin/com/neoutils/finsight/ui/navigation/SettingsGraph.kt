@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import com.neoutils.finsight.feature.mcp.api.McpEntry
 import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.settings.api.CurrenciesRoute
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
@@ -18,11 +19,21 @@ import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesScreen
 import com.neoutils.finsight.ui.screen.settings.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.koin.mp.KoinPlatform
 
 fun NavGraphBuilder.settingsGraph() {
+    // The graph builder's lambda is not composable, so the entry point of the section hosted below
+    // is resolved from the container directly.
+    val koin = KoinPlatform.getKoin()
+
     navigation<SettingsGraph>(
         startDestination = SettingsRoute,
     ) {
+        // The MCP server is a section of settings that happens to be a feature module of its own:
+        // its graph is built here, inside this one, so being reached from settings and being part of
+        // settings are the same fact — the one the shell's selector reads off the hierarchy.
+        koin.get<McpEntry>().register()
+
         composable<SettingsRoute> {
             val navController = LocalNavController.current
 

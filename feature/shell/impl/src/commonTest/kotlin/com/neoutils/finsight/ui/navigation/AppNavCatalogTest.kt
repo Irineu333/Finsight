@@ -1,6 +1,5 @@
 package com.neoutils.finsight.ui.navigation
 
-import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -88,22 +87,9 @@ class AppNavCatalogTest {
     }
 
     @Test
-    fun `the MCP server belongs to settings, whose graph does not contain it`() {
-        val owners = destinations.filter { McpRoute in it.alsoOwns }
-
-        assertEquals(
-            listOf("settings"),
-            owners.names,
-            "the MCP section is a feature module of its own, so its graph is top-level and no " +
-                "hierarchy ties it to settings: without this the selector highlights the first " +
-                "item of the bar, which is the dashboard",
-        )
-    }
-
-    @Test
     fun `no route is claimed by two destinations`() {
         val duplicates = destinations
-            .flatMap { it.routes }
+            .map { it.route }
             .groupingBy { it::class.simpleName }
             .eachCount()
             .filterValues { it > 1 }

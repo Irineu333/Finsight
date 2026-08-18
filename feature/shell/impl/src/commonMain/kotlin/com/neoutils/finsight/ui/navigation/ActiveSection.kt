@@ -16,9 +16,6 @@ import com.neoutils.finsight.feature.shell.api.NavDestination as CatalogDestinat
  * 2. Fallback for a sub-destination pushed inside a section (an invoice screen), whose route no item
  *    names: the item that owns the start destination of the graph it was pushed into.
  *
- * Both tiers match every route an item answers for, its own and the ones it owns from another
- * feature's graph, so a section that is a feature module of its own keeps its place in the selector.
- *
  * `null` when no item claims [destination], and then nothing is drawn as active: an item highlighted
  * for a screen that is not its own tells the user they are somewhere they are not.
  */
@@ -29,4 +26,4 @@ internal fun List<CatalogDestination>.sectionOf(destination: NavDestination?): C
             ?.findStartDestination()
             ?.let { sectionStart -> firstOrNull { item -> item.claims(sectionStart) } }
 
-private fun CatalogDestination.claims(node: NavDestination) = routes.any { node.hasRoute(it::class) }
+private fun CatalogDestination.claims(node: NavDestination) = node.hasRoute(route::class)

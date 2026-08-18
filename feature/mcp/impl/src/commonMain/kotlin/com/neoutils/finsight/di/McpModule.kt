@@ -4,6 +4,8 @@ import com.neoutils.finsight.database.mapper.AgentActivityMapper
 import com.neoutils.finsight.database.repository.AgentActivityRepository
 import com.neoutils.finsight.domain.usecase.ClearAgentActivityUseCase
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.McpEntry
+import com.neoutils.finsight.feature.mcp.impl.McpEntryImpl
 import com.neoutils.finsight.ui.screen.mcp.McpViewModel
 import com.neoutils.finsight.ui.screen.mcpActivity.McpActivityViewModel
 import org.koin.core.module.Module
@@ -31,4 +33,7 @@ val mcpModule = module {
 
     viewModel { McpViewModel(get(), get(), get(), get()) }
     viewModel { McpActivityViewModel(get(), get(), get()) }
+
+    // How settings, which hosts this section, registers its graph without seeing this module.
+    single<McpEntry> { McpEntryImpl() }
 }

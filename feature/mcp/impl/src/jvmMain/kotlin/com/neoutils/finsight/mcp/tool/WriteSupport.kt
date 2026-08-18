@@ -126,24 +126,26 @@ internal fun JsonObject?.requiredString(name: String): String =
     string(name) ?: throw BadArgument(AgentRefusal(reason = "`$name` is required."))
 
 /**
- * Whether the call **mentioned** a field at all — which is a different question from what it put
- * there.
+ * Whether the call **said** anything about a field — which is a different question from what it
+ * said.
  *
  * It exists for the one case where absence and emptiness are different intentions: a tool that
  * pre-fills from a template has to tell *"say nothing, give me the template's"* from *"this cycle
- * genuinely has none"*, and both arrive as something [string] and [long] answer `null` to.
+ * genuinely has none"*, and both arrive as something [string] and [long] answer `null` to. A key
+ * carrying an explicit `null` said nothing — that is [argument]'s decision, not a second one here.
  */
-internal fun JsonObject?.names(name: String): Boolean = this?.get(name) != null
+internal fun JsonObject?.names(name: String): Boolean = argument(name) != null
 
 /**
  * A yes-or-no the caller may leave out entirely.
  *
  * Distinct from [flag] with a default, and the distinction is what makes an edit safe: on a write
  * that carries every field, absent has to mean *keep what it has* rather than *false*, or an agent
- * changing a name would clear a flag it never mentioned.
+ * changing a name would clear a flag it never mentioned. Absent is [argument]'s sense of it, so a
+ * field carrying an explicit `null` was left out.
  */
 internal fun JsonObject?.flagOrNull(name: String): Boolean? =
-    if (this?.get(name) == null) null else flag(name, default = false)
+    if (argument(name) == null) null else flag(name, default = false)
 
 /**
  * An amount, as the agent states it: a number in the currency's own unit — `45.9`, never `4590`.
@@ -154,7 +156,7 @@ internal fun JsonObject?.flagOrNull(name: String): Boolean? =
  * the other is translation.
  */
 internal fun JsonObject?.money(name: String): Double? {
-    val raw = this?.get(name) ?: return null
+    val raw = argument(name) ?: return null
     val text = raw.toString().trim('"')
     return text.toDoubleOrNull()
         ?: throw BadArgument(AgentRefusal(reason = "`$name` must be an amount, but `$text` was given."))

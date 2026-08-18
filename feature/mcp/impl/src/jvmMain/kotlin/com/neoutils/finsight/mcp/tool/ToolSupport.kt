@@ -11,10 +11,11 @@ import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
@@ -89,17 +90,33 @@ private fun bad(name: String, expected: String, got: String): Nothing = throw Ba
     AgentRefusal(reason = "`$name` must be $expected, but `$got` was given."),
 )
 
+/**
+ * What the call put under [name], with an explicit `null` read as nothing at all.
+ *
+ * Every reader below is built on this, because *"the caller said nothing"* is one question and has
+ * to have one answer. Most clients serialise an optional field they were given nothing for as an
+ * explicit `null`, and [JsonNull] is a [JsonPrimitive] whose content is the four-character string
+ * `null` — read without this, `{"month": null}` is a month called `null`, `{"name": null}` names a
+ * category `null`, and `{"amount": null}` is an amount the tool refuses as malformed.
+ */
+internal fun JsonObject?.argument(name: String): JsonElement? =
+    this?.get(name)?.takeIf { it !is JsonNull }
+
 internal fun JsonObject?.string(name: String): String? =
-    (this?.get(name) as? JsonPrimitive)?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
+    (argument(name) as? JsonPrimitive)?.content?.takeIf { it.isNotBlank() }
 
 internal fun JsonObject?.long(name: String): Long? {
-    val raw = this?.get(name) ?: return null
+    val raw = argument(name) ?: return null
     val primitive = raw as? JsonPrimitive ?: bad(name, "a number", raw.toString())
     return primitive.content.toLongOrNull() ?: bad(name, "a number", primitive.content)
 }
 
+/**
+ * A list of identities. Absent means the caller did not narrow by them; a `null` **inside** the
+ * list is an element that names nothing, and that is a malformed list rather than an absent one.
+ */
 internal fun JsonObject?.longs(name: String): List<Long>? {
-    val raw = this?.get(name) ?: return null
+    val raw = argument(name) ?: return null
     val array = raw as? JsonArray ?: bad(name, "an array of numbers", raw.toString())
     return array.map { element ->
         (element as? JsonPrimitive)?.content?.toLongOrNull()
@@ -137,7 +154,7 @@ internal fun JsonObject?.date(name: String): LocalDate? {
 
 /** A yes-or-no argument. Absent means [default], which every caller of this states. */
 internal fun JsonObject?.flag(name: String, default: Boolean): Boolean {
-    val raw = this?.get(name) ?: return default
+    val raw = argument(name) ?: return default
     val primitive = raw as? JsonPrimitive ?: bad(name, "`true` or `false`", raw.toString())
     return primitive.content.toBooleanStrictOrNull()
         ?: bad(name, "`true` or `false`", primitive.content)

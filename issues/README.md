@@ -16,7 +16,6 @@ corrompe número nenhum do ledger.
 | # | Issue | Área | Tipo |
 |---|---|---|---|
 | **MÉDIO** |
-| [003](003-json-null-read-as-the-string-null.md) | Um `null` JSON explícito é lido como a string `"null"` | mcp | correção |
 | [004](004-transaction-form-drops-arguments-silently.md) | Categoria incompatível e `installments` fora do cartão descartados em silêncio | mcp / model | correção |
 | [005](005-connection-snippet-shows-the-token-in-clear-text.md) | O snippet de conexão mostra o token em texto claro | mcp (UI) | segurança |
 | [007](007-agent-log-runs-three-queries-per-row.md) | O log completo do agente faz três queries por linha, por emissão | mcp (UI) | performance |
@@ -40,6 +39,7 @@ mudou — inclusive onde o achado estava errado.
 |---|---|---|---|
 | [001](archive/001-create-transaction-accepts-negative-amount.md) | Valor negativo aceito na escrita, e registrado na direção oposta — cinco tools | alta | 2026-08-18 |
 | [002](archive/002-is-recurring-dropped-when-splitting.md) | `is_recurring` descartado quando `installments > 1`, em silêncio | média | 2026-08-18 |
+| [003](archive/003-json-null-read-as-the-string-null.md) | Um `null` JSON explícito é lido como a string `"null"` | média | 2026-08-18 |
 
 ## O que decide a faixa
 

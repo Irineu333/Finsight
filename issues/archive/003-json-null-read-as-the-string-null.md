@@ -1,6 +1,6 @@
 # 003 — um `null` JSON explícito é lido como a string de quatro caracteres `"null"`
 
-**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
+**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -63,3 +63,33 @@ e construir `string()`, `long()`, `flag()` e `names()` sobre ele. Essa é a deci
 explícito significa que o chamador não disse nada"* — e ela pertence ao lado do comentário em
 `ToolSupport.kt:28-29`, que já afirma que esta camada existe para não haver oito respostas
 ligeiramente diferentes sobre o que um argumento ausente significa.
+## Correção aplicada
+
+Um leitor só, `argument()`, no ponto onde o wire é lido — `string`, `long`, `longs`, `flag`, `names`,
+`flagOrNull` e `money` passaram a ser construídos sobre ele. *"O chamador não disse nada"* é uma
+pergunta, e agora tem uma resposta.
+
+**Desvio deliberado do snippet desta issue.** Ela propunha `primitive(): JsonPrimitive?`. Essa
+assinatura descarta a forma antes de os leitores a examinarem, e `{"id":[1,2]}` deixaria de responder
+*"`id` must be a number, but `[1,2]` was given"* para responder *"`id` is required"* — a recusa
+perderia o nome do defeito. `argument(): JsonElement?` toma a mesma decisão no mesmo ponto e preserva
+todas as recusas de forma.
+
+**Três leitores além dos quatro listados aqui**, cada um confirmado pela recusa real capturada com a
+correção revertida:
+
+| Leitor | O que fazia com um `null` explícito |
+|---|---|
+| `money()` | recusava como valor malformado, em vez de tratar como ausente |
+| `flagOrNull()` | lia como *presente* e delegava a `flag()`, que recusava |
+| `longs()` | recusava a **lista** nula |
+
+Um `null` **dentro** da lista (`[1,null]`) já estava certo e não foi tocado: uma lista com um elemento
+que não nomeia nada é malformada, não ausente. A distinção está na KDoc.
+
+O KDoc de `names()` dizia *"whether the call **mentioned** a field at all"*, e isso deixou de ser
+verdade — uma chave com `null` explícito passa a não mencionar nada. Foi reescrito, com a decisão
+atribuída a `argument()` em vez de repetida.
+
+Sete testes em `ExplicitNullsOverTheProtocolTest`, pela rede. Conferido que mordem: com os dois
+arquivos de produção revertidos, **os sete falham**.

@@ -47,11 +47,13 @@ import org.jetbrains.compose.resources.stringResource
  * **What is typed here is a draft until it is confirmed.** The check runs on confirmation and not
  * per keystroke, because a port applied as it is typed would rebind on "8", then "84", then "847"
  * on the way to 8477 — and each of those is a real bind against a real socket. Confirming is
- * refused while the number is not a port or is the one already in use, so the sheet never closes
- * having done nothing.
+ * refused while the number is not a port, and while it is the port the server already holds, so the
+ * sheet never closes having done nothing. After a bind that failed it holds none, and the same
+ * number becomes the retry — see [canApplyPort].
  */
 class EditPortModal(
     private val current: Int,
+    private val isFailed: Boolean,
     private val onConfirm: (Int) -> Unit,
 ) : ModalBottomSheet() {
 
@@ -64,7 +66,7 @@ class EditPortModal(
 
         val port = draft.toIntOrNull()
         val isPort = port in McpServerController.VALID_PORTS
-        val canConfirm = isPort && port != current
+        val canConfirm = canApplyPort(draft = draft, current = current, isFailed = isFailed)
 
         // Silent while the field is being filled: an error under a half-typed number is about a
         // port the user has not finished naming.
@@ -138,4 +140,17 @@ class EditPortModal(
         /** 65535 is five digits; anything longer is not a port being typed. */
         const val PORT_DIGITS = 5
     }
+}
+
+/**
+ * Whether applying the number in the field would act on anything.
+ *
+ * The port already in use is refused, because confirming it would close the sheet having done
+ * nothing. A bind that **failed** is the exception: there the port is the one the server wants and
+ * does not hold, so asking for it again is the retry [McpServerController.setPort] documents itself
+ * as — the way out of a clash the user has since resolved.
+ */
+internal fun canApplyPort(draft: String, current: Int, isFailed: Boolean): Boolean {
+    val port = draft.toIntOrNull()
+    return port in McpServerController.VALID_PORTS && (port != current || isFailed)
 }

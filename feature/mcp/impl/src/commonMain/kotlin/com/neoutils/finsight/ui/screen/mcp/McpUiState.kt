@@ -61,6 +61,14 @@ data class McpUiState(
     /** The address a client is configured with, which outlives a bind that failed. */
     val address: String get() = "http://$LOOPBACK_HOST:$port$MCP_PATH"
 
+    /**
+     * Whether the server tried to take its port and could not.
+     *
+     * It is the state in which the port in the field is the one the server wants and does not
+     * hold, so asking for it again is a retry rather than a repetition.
+     */
+    val hasFailedBind: Boolean get() = server is McpServerState.Failed
+
     /** The token as the screen shows it: masked until the user asks for it. */
     val displayedToken: String? get() = token?.let { if (isTokenRevealed) it else MASK }
 

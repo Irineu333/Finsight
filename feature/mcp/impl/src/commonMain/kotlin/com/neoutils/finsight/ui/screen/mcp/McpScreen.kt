@@ -434,6 +434,7 @@ private fun AddressRow(
                     modalManager.show(
                         EditPortModal(
                             current = uiState.port,
+                            isFailed = uiState.hasFailedBind,
                             onConfirm = { onAction(McpAction.ChangePort(it)) },
                         )
                     )

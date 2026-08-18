@@ -1,6 +1,6 @@
 # 010 — a porta configurada não pode ser reaplicada, o que bloqueia a saída documentada de `PORT_IN_USE`
 
-**Área:** mcp (UI) · **Tipo:** UX / correção · **Criticidade:** média · **Status:** aberto
+**Área:** mcp (UI) · **Tipo:** UX / correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -55,3 +55,26 @@ val canConfirm = isPort && (port != current || isFailed)
 passando a falha para o modal (ele já recebe `current: Int`). O propósito declarado da guarda — *"the
 sheet never closes having done nothing"* (`EditPortModal.kt:47-51`) — continua satisfeito: com um
 bind falho, reaplicar a mesma porta faz alguma coisa.
+## Correção aplicada
+
+`canConfirm` deixou de ser uma expressão dentro do composable e virou `canApplyPort(draft, current,
+isFailed)`, uma função pura ao lado do modal — que é o que a torna afirmável por um teste. O modal
+passou a receber `isFailed`, e a tela o lê de `McpUiState.hasFailedBind`, propriedade nova ao lado das
+outras leituras do estado do socket.
+
+A regra: recusar continua sendo o certo enquanto a porta é a que o servidor **segura**, porque
+confirmar fecharia a sheet sem fazer nada. Depois de um bind falho ele não segura nenhuma, e o mesmo
+número passa a ser a retentativa que o `setPort` documenta ser — a saída do `PORT_IN_USE` depois de o
+usuário liberar a porta.
+
+O KDoc da classe dizia que confirmar é recusado quando o número *"é o que já está em uso"*. Isso
+descrevia o defeito: a porta de um bind falho não está em uso por ninguém. Reescrito.
+
+## A sequência
+
+O comportamento antigo foi extraído **primeiro**, sem alteração, e o teste rodado contra ele: dos
+cinco casos, exatamente **um** falhou — o da porta reaplicada depois da falha. Os outros quatro
+passaram, provando que a extração não mexeu em nada. Só então a condição ganhou o `|| isFailed`.
+
+Um dos casos existe para impedir a leitura preguiçosa da regra: uma falha **não** torna um não-porta
+um porta. `"0"` com `isFailed = true` continua recusado.

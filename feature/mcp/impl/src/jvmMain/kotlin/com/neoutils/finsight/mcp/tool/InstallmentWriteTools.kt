@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpTool
 import com.neoutils.finsight.mcp.McpToolEffect
@@ -65,7 +66,10 @@ internal class CreateInstallmentTool(
         "count" to number("How many instalments to split it into. At least 2."),
         "date" to text("The day of the purchase, as `2026-03-14`. Defaults to today."),
         "title" to text("What was bought. Required unless a category is given."),
-        "category_id" to number("The category to classify it under, from list_categories."),
+        "category_id" to number(
+            "The category to classify it under, from list_categories. An expense category — a " +
+                "split is always an expense, and an income one is refused.",
+        ),
         "invoice_month" to text(
             "Which invoice the first instalment lands on, as `2026-04`. Defaults to the card's " +
                 "open invoice; the rest follow it, one per month.",
@@ -81,6 +85,25 @@ internal class CreateInstallmentTool(
         val title = arguments.string("title")
         val category = arguments.long("category_id")?.let { categoryRepository.require(it) }
 
+        val summary = "${title ?: category?.name ?: "untitled"}, $amount on ${card.name} in $count instalments"
+
+        // `TransactionForm.from` normalises by dropping what does not fit, and that is right for
+        // the sheet: its selectors never offer an income category where the direction is fixed to
+        // expense, so the drop takes nothing the user chose. The argument here was declared instead
+        // of offered, so the same drop writes every share with no classification at all under an
+        // answer that says they were recorded.
+        if (category != null && !category.type.isAccept(TransactionType.EXPENSE)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "`category_id` names \"${category.name}\", an " +
+                        "${category.type.name.lowercase()} category, and a split is always an " +
+                        "expense: a category classifies one direction only. Give an expense " +
+                        "category, or leave `category_id` out.",
+                ),
+                summary = summary,
+            )
+        }
+
         val form = TransactionForm.from(
             type = TransactionType.EXPENSE,
             amount = amount.asFormAmount(),
@@ -94,8 +117,6 @@ internal class CreateInstallmentTool(
             account = null,
             installments = count,
         )
-
-        val summary = "${title ?: category?.name ?: "untitled"}, $amount on ${card.name} in $count instalments"
 
         addInstallment(form, count).fold(
             ifLeft = { refusedBy(it, summary) },

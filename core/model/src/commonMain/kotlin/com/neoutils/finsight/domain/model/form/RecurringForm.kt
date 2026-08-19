@@ -31,11 +31,20 @@ data class RecurringForm(
      * template goes through here — a second hand-written copy of the checks is what
      * this replaces.
      *
+     * The direction settles what the template may hold, and what it cannot hold is
+     * dropped rather than carried: a card takes expenses only, and a category
+     * classifies one direction only, so an income keeps neither the card nor an
+     * expense category. A caller whose values were declared rather than chosen from a
+     * selector — one that cannot re-offer them — checks the same rule before it gets
+     * here, because to it the drop is indistinguishable from an acceptance.
+     *
      * [createdAt] is the anchor the cycle numbering is counted from, and it is the
      * caller's to decide: the clock, for a template created from the recurring form;
      * the transaction's own date, for one born out of a transaction.
      */
     fun toRecurring(createdAt: Long): Either<RecurringError, Recurring> = either {
+        val category = category?.takeIf { it.type.isAccept(type) }
+
         ensure(amount.isNotEmpty()) { RecurringError.AMOUNT_REQUIRED }
         ensure(amount.moneyToDouble() > 0.0) { RecurringError.AMOUNT_NOT_POSITIVE }
         ensure(title.isNotEmpty() || category != null) {
@@ -75,6 +84,15 @@ data class RecurringForm(
     fun isValid(): Boolean = toRecurring(createdAt = 0L).isRight()
 
     companion object {
+        /**
+         * The form as a screen holds it: of the two destinations it keeps the one
+         * [target] points at, and an income points at an account whatever the selector
+         * was left on, because that is the only place an income posts.
+         *
+         * Only the destination is settled here. Whether the direction can carry the rest
+         * of what the form holds is [toRecurring]'s, and every caller reaches it —
+         * including the ones that never pass through this.
+         */
         fun from(
             type: TransactionType,
             amount: String,
@@ -95,7 +113,7 @@ data class RecurringForm(
                 dayOfMonth = dayOfMonth,
                 account = account?.takeIf { target.isAccount },
                 creditCard = creditCard?.takeIf { target.isCreditCard },
-                category = category?.takeIf { it.type.isAccept(type) },
+                category = category,
             )
         }
     }

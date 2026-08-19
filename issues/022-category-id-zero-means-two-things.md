@@ -1,6 +1,6 @@
 # 022 — `category_id: 0` significa "sem categoria" em duas tools e "não existe" em quatro
 
-**Área:** mcp · **Tipo:** consistência de superfície · **Criticidade:** baixa · **Status:** aberto
+**Área:** mcp · **Tipo:** consistência de superfície · **Criticidade:** baixa · **Status:** aberto (metade corrigida com a 021)
 **Verificado em:** 2026-08-19, `feature/local-mcp-server`, por uma revisão adversarial da correção da
 [016](archive/016-update-transaction-drops-the-category-silently.md)
 
@@ -19,19 +19,25 @@ existe.
 | `create_transaction` | `"No category with id 0 exists."` | `TransactionWriteTools.kt:150` |
 | `create_installment` | `"No category with id 0 exists."` | `InstallmentWriteTools.kt:82` |
 | `create_recurring` | `"No category with id 0 exists."` | `RecurringWriteTools.kt:103` |
-| `update_recurring` | `"No category with id 0 exists."` | `RecurringWriteTools.kt:207` |
+| `update_recurring` | sem categoria | `RecurringWriteTools.kt` |
 
 Nas três criações a divergência tem defesa: numa criação, ausência já significa *nenhuma*, então o
-`0` não precisa existir. **`update_recurring` não tem defesa** — é a outra edição da superfície, onde
-ausência significa *mantenha*, exatamente a condição que motivou o `0`, e ali não há como limpar uma
-categoria de jeito nenhum.
+`0` não precisa existir.
+
+**A metade que não tinha defesa foi corrigida.** `update_recurring` — a outra edição da superfície,
+onde ausência significa *mantenha* — passou a ler o `0` junto com a
+[021](021-update-recurring-stores-an-incoherent-template.md), porque sem ele a recusa que aquela
+issue instalou apontaria para uma saída inexistente. São três tools lendo `NO_CATEGORY`, e as três
+são exatamente as que carregam o que a chamada não nomeia.
+
+O que resta é a pergunta de superfície abaixo, sobre as criações.
 
 ## Cenário de falha
 
-Um agente aprende o `0` lendo a descrição de `update_transaction` — *"pass 0 to leave it
-unclassified"* (`TransactionWriteTools.kt:374-377`) — e o usa em `update_recurring`, onde a mesma
-frase seria verdadeira. Recebe `"No category with id 0 exists."`, que é sobre a categoria e não sobre
-a tool, e não tem como descobrir que a operação simplesmente não existe naquela porta.
+Um agente aprende o `0` numa das três edições e o usa numa criação, onde recebe `"No category with
+id 0 exists."` — uma resposta sobre a categoria, não sobre a tool, da qual não dá para deduzir que
+ali o `0` simplesmente não é uma forma de falar. O dano é pequeno: numa criação, omitir
+`category_id` faz o que ele queria.
 
 As duas recusas de categoria incompatível também mandam o agente para saídas diferentes na mesma
 situação: `create_transaction` diz *"or leave `category_id` out"* (`:208`), `update_transaction` diz
@@ -39,6 +45,6 @@ situação: `create_transaction` diz *"or leave `category_id` out"* (`:208`), `u
 
 ## Correção sugerida
 
-O mínimo é `update_recurring` ler o `0` como as outras duas edições, e a [021](021-update-recurring-stores-an-incoherent-template.md) é onde
-essa tool já vai ser mexida. Se as criações devem ou não aceitar o `0` como sinônimo de ausência é
-uma decisão de superfície: hoje a resposta é não, e ela não está escrita em lugar nenhum.
+Só resta a decisão de superfície: se as criações devem ou não aceitar o `0` como sinônimo de
+ausência. Hoje a resposta é não, e ela não está escrita em lugar nenhum — nem nas descrições das
+tools, nem em `docs/mcp-tool-surface.md`. Escrevê-la já resolveria a maior parte do incômodo.

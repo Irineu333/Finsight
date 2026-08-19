@@ -1,5 +1,6 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.mcp.McpServerHarness.Companion.freePort
@@ -641,6 +642,210 @@ class RegistrationFamilyOverTheProtocolTest {
                 "the refusal does not say why: ${refused.toolText()}",
             )
             assertNotNull(world.invoiceRepository.getInvoiceById(openId))
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // 10.6b — the same rule, on the two tools that were left holding it
+    // ------------------------------------------------------------------------------
+
+    /**
+     * **A split classified under a category that cannot classify it is refused, not written
+     * unclassified.**
+     *
+     * An instalment plan is always an expense, so the category that does not fit is an income one.
+     * Dropped, the three postings land with no classification at all under an answer that says
+     * they were recorded — the same shape the creation and the edit already refuse.
+     */
+    @Test
+    fun `an income category on a split is refused, naming the category and the direction`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val card = world.cards.single()
+                val salary = client.callTool(
+                    "create_category",
+                    """{"name":"Salário","type":"income"}""",
+                ).payload().at("category").identity()
+
+                val response = client.callTool(
+                    "create_installment",
+                    """{"card_id":${card.id},"amount":900,"count":3,"date":"2026-03-10",
+                     "title":"Compra","category_id":$salary}""".trimIndent().replace("\n", ""),
+                )
+
+                assertTrue(
+                    response.isToolError(),
+                    "the classification was dropped and the split answered as recorded: " +
+                        response.toolText(),
+                )
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "category_id" in reason && "expense" in reason,
+                    "the refusal does not name the argument and the direction that disagree: $reason",
+                )
+
+                assertEquals(
+                    0,
+                    world.transactionRepository.getAllTransactions().count { it.title == "Compra" },
+                    "the split was written anyway",
+                )
+            }
+        }
+
+    /**
+     * **An income template aimed at a card is refused for the card.**
+     *
+     * `RecurringForm.toRecurring` nulls the card for an income and then asks for an account, so
+     * what comes back is *"Account is required."* — pointing at an argument the call never gave,
+     * which is the defect the creation of a posting already shed.
+     */
+    @Test
+    fun `an income template on a card is refused for the card, not for a missing account`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val card = world.cards.single()
+
+                val response = client.callTool(
+                    "create_recurring",
+                    """{"type":"income","amount":5000,"day_of_month":5,"title":"Estorno","card_id":${card.id}}""",
+                )
+
+                assertTrue(response.isToolError(), "an income template was opened on a card")
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "card_id" in reason && "expenses only" in reason,
+                    "the refusal points at an argument the call never gave: $reason",
+                )
+            }
+        }
+
+    /**
+     * **A template does not keep a classification its direction cannot carry.**
+     *
+     * Worse than the drop the edit of a posting used to do: nothing filters here at all, so the
+     * template is persisted as an income classified under an expense category — a shape the
+     * domain does not model — and the answer says "Edited."
+     */
+    @Test
+    fun `flipping a template's direction is refused rather than keeping the stored category`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val id = client.callTool(
+                    "create_recurring",
+                    """{"type":"expense","amount":300,"day_of_month":5,"category_id":1,"account_id":1}""",
+                ).payload().at("recurring").identity()
+
+                val response = client.callTool(
+                    "update_recurring",
+                    """{"id":$id,"type":"income"}""",
+                )
+
+                assertTrue(
+                    response.isToolError(),
+                    "an income template was stored under an expense category: ${response.toolText()}",
+                )
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "Mercado" in reason && "category_id" in reason,
+                    "the refusal names neither the classification at stake nor how to settle it: $reason",
+                )
+
+                val stored = assertNotNull(world.recurringRepository.getRecurringById(id))
+                assertEquals(
+                    TransactionType.EXPENSE,
+                    stored.type,
+                    "the template changed direction anyway",
+                )
+            }
+        }
+
+    /** The declared half of the same rule, as the creation of a posting already refuses it. */
+    @Test
+    fun `a declared category a template's direction cannot carry is refused, naming both`() =
+        runTest {
+            withRegistrationWorld { _, client ->
+                val response = client.callTool(
+                    "create_recurring",
+                    """{"type":"income","amount":5000,"day_of_month":5,"category_id":1,"account_id":1}""",
+                )
+
+                assertTrue(
+                    response.isToolError(),
+                    "the classification was dropped and the template answered as opened: " +
+                        response.toolText(),
+                )
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "category_id" in reason && "income" in reason,
+                    "the refusal does not name the argument and the direction that disagree: $reason",
+                )
+            }
+        }
+
+    /**
+     * And the way out the refusal above names: on this edit too, absence means *keep what it has*,
+     * so zero is what says the template has none.
+     */
+    @Test
+    fun `a category_id of zero lets a template change direction unclassified`() = runTest {
+        withRegistrationWorld { world, client ->
+            val id = client.callTool(
+                "create_recurring",
+                """{"type":"expense","amount":300,"day_of_month":5,"title":"Aluguel",
+                 "category_id":1,"account_id":1}""".trimIndent().replace("\n", ""),
+            ).payload().at("recurring").identity()
+
+            val response = client.callTool(
+                "update_recurring",
+                """{"id":$id,"type":"income","category_id":0}""",
+            )
+
+            assertTrue(
+                !response.isToolError(),
+                "the refusal sends the caller here, and here refuses too: ${response.toolText()}",
+            )
+
+            val stored = assertNotNull(world.recurringRepository.getRecurringById(id))
+            assertEquals(TransactionType.INCOME, stored.type)
+            assertNull(stored.category, "the classification the call gave up is still on the template")
+            assertEquals("Aluguel", stored.title, "the title moved with the classification")
+        }
+    }
+
+    /**
+     * **A template goes by its title or, having none, by its category — so the one that has only a
+     * category cannot simply give it up.**
+     *
+     * `TITLE_OR_CATEGORY_REQUIRED` is the domain's rule and the right answer: a template with
+     * neither is nameless. The refusal costs the agent one more round trip, and the alternative —
+     * promoting the category's name to a title nobody typed — is a rename the call never asked for,
+     * reported as an edit that changed only what it named.
+     */
+    @Test
+    fun `clearing the only name a template has is refused, not settled by renaming it`() = runTest {
+        withRegistrationWorld { world, client ->
+            val id = client.callTool(
+                "create_recurring",
+                """{"type":"expense","amount":300,"day_of_month":5,"category_id":1,"account_id":1}""",
+            ).payload().at("recurring").identity()
+
+            val response = client.callTool(
+                "update_recurring",
+                """{"id":$id,"category_id":0}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the template was left with no name, or given one nobody typed: ${response.toolText()}",
+            )
+
+            val stored = assertNotNull(world.recurringRepository.getRecurringById(id))
+            assertNull(stored.title, "the template was renamed by an edit that did not name a title")
+            assertEquals("Mercado", stored.category?.name, "the classification went anyway")
         }
     }
 

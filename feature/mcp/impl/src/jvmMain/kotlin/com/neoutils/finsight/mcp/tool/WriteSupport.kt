@@ -141,11 +141,12 @@ internal fun JsonObject?.names(name: String): Boolean = argument(name) != null
  * The identity no category has, and therefore how a call says *none* where absence already means
  * something else.
  *
- * `update_transaction` and `confirm_recurring` both carry what the call does not name — one from
- * the posting, the other from the template — so for them leaving `category_id` out cannot also
- * mean "no category", and an explicit `null` reads as absence too ([argument]). Zero is what those
- * two read it as, from here rather than from a constant each. A creation has no such need: absence
- * there already means none, and `0` stays an identity matching nothing.
+ * `update_transaction`, `update_recurring` and `confirm_recurring` all carry what the call does not
+ * name — from the posting, from the template it edits, from the template it is a cycle of — so for
+ * them leaving `category_id` out cannot also mean "no category", and an explicit `null` reads as
+ * absence too ([argument]). Zero is what the three read it as, from here rather than from a
+ * constant each. A creation has no such need: absence there already means none, and `0` stays an
+ * identity matching nothing.
  */
 internal const val NO_CATEGORY = 0L
 

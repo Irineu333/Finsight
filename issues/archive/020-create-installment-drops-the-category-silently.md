@@ -37,3 +37,35 @@ payload. Medido pela revisão, sobre o servidor real.
 
 A recusa que o `CreateTransactionTool` já faz (`TransactionWriteTools.kt:203-213`), nomeando a
 categoria e a direção. Não mexer em `TransactionForm.from`, pela razão da 004.
+
+## Correção aplicada
+
+A recusa que a [004](archive/004-transaction-form-drops-arguments-silently.md) instalou na criação e
+a [016](archive/016-update-transaction-drops-the-category-silently.md) na edição, agora em
+`CreateInstallmentTool.call`, antes do formulário. Com uma diferença que a tool impõe: aqui a direção
+não é parâmetro — um parcelamento é sempre despesa —, então a guarda compara contra a constante e a
+razão diz *"a split is always an expense"* em vez de nomear um `type` que a chamada não deu.
+
+O `summary` subiu para antes da guarda, sem um segundo formato: é a mesma expressão que já existia,
+lida antes porque a recusa precisa dela.
+
+A descrição do campo `category_id` no schema passou a dizer que a categoria é de despesa e que uma de
+receita é recusada. A KDoc da classe e o `description` da tool não foram tocados — o `PERIMETER` já
+dizia *"only for expenses"* e continua verdadeiro.
+
+Conferido que o teste morde: antes da correção, `create_installment` com uma categoria de receita
+respondia sucesso com `is_uncategorized: true` no payload, sob
+`"Recorded as 3 instalments, one per invoice they land on."`, e três lançamentos entravam no ledger
+sem classificação.
+
+## Onde a issue estava imprecisa
+
+Um deslize de uma linha: ela aponta a recusa modelo em `TransactionWriteTools.kt:203-213`, e o bloco
+começa em `:202`, no `if`. O resto — `InstallmentWriteTools.kt:82` sem guarda, o arquivo sem nenhuma
+ocorrência de `isAccept`, e `TransactionForm.kt:81` como o descarte — confere com o disco.
+
+## O que ficou para trás
+
+A linha de `create_transaction` em `docs/mcp-tool-surface.md:191` continua sem mencionar as recusas
+que a 004 instalou; ela documenta só as ligadas a `installments`, e ficou assimétrica com a de
+`update_transaction`. É lacuna anterior a esta issue, e a 004 já está arquivada.

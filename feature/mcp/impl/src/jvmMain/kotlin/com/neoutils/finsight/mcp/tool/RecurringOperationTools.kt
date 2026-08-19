@@ -132,7 +132,7 @@ internal class ConfirmRecurringTool(
         val title = if (arguments.names("title")) arguments.string("title") else recurring.title
         val category = if (arguments.names("category_id")) {
             arguments.requiredLong("category_id")
-                .takeIf { it != CLEARED }
+                .takeIf { it != NO_CATEGORY }
                 ?.let { categoryRepository.require(it) }
         } else {
             recurring.category
@@ -183,13 +183,6 @@ internal class ConfirmRecurringTool(
         )
     }
 
-    private companion object {
-        /**
-         * The identity no category has, and therefore the one way of saying *none* about a field
-         * whose absence already means something else.
-         */
-        const val CLEARED = 0L
-    }
 }
 
 // ----------------------------------------------------------------------------------

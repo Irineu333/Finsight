@@ -9,14 +9,14 @@ arquivo em vez de ter sido descartada.
 
 ## Sumário por criticidade
 
-Nenhum achado chegou a **CRÍTICO**, e **ALTO** está vazia desde que a
-[001](archive/001-create-transaction-accepts-negative-amount.md) foi corrigida. O que resta não
-corrompe número nenhum do ledger.
+Nenhum achado chegou a **CRÍTICO**. **ALTO** está vazia desde que a
+[001](archive/001-create-transaction-accepts-negative-amount.md) foi corrigida, e **MÉDIO** desde
+que a [016](archive/016-update-transaction-drops-the-category-silently.md) e a
+[017](archive/017-installment-opens-invoices-before-refusing.md) foram. O que resta não corrompe
+número nenhum do ledger.
 
 | # | Issue | Área | Tipo |
 |---|---|---|---|
-| **MÉDIO** |
-| [016](016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | mcp / model | correção |
 | **BAIXO** |
 | [018](018-read-by-identity-does-not-dedupe.md) | `readByIdentity` não deduplica, e sua KDoc afirma que sim | ledger | robustez (latente) |
 | [019](019-transactions-has-no-index-on-date.md) | A leitura por mês varre a tabela inteira: sem índice em `date` | ledger | performance |
@@ -44,6 +44,7 @@ mudou — inclusive onde o achado estava errado.
 | [010](archive/010-cannot-reapply-the-configured-port.md) | A porta configurada não pode ser reaplicada depois de um bind falho | média | 2026-08-18 |
 | [008](archive/008-list-transactions-loads-the-whole-table.md) | `list_transactions` carrega a tabela inteira a cada página | média | 2026-08-18 |
 | [017](archive/017-installment-opens-invoices-before-refusing.md) | `create_installment` abre até doze faturas e só então recusa o valor | média | 2026-08-18 |
+| [016](archive/016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | média | 2026-08-18 |
 
 ## O que decide a faixa
 

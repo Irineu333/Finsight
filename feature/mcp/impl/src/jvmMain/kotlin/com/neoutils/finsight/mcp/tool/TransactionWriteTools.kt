@@ -328,6 +328,11 @@ internal class CreateTransactionTool(
  *
  * Every field is carried rather than patched: what the call does not name is taken from the posting
  * as the ledger holds it now, so changing only the amount cannot blank the title by omission.
+ *
+ * That is also why a direction the posting's own category cannot classify is refused instead of
+ * written: the classification is carried, not stated, and dropping it would take from the user
+ * something the call never mentioned and the answer would report as kept. Leaving a posting
+ * unclassified stays expressible, by naming it — a `category_id` of `0`.
  */
 internal class UpdateTransactionTool(
     private val transactionRepository: ITransactionRepository,
@@ -346,6 +351,11 @@ internal class UpdateTransactionTool(
     override val description: String =
         "Change an expense or an income that was already recorded — its amount, title, date, " +
             "category, or where it posts. What is not given keeps the value it already has. " +
+            "Give at most one of account_id or card_id; a card takes expenses only, so an income " +
+            "sits in an account. A category classifies one direction only, and an edit whose " +
+            "direction the category cannot classify — the one given here, or the one the posting " +
+            "already has — is refused rather than dropping it: give a category_id that " +
+            "classifies the new direction, or 0 for no category. " +
             "PERIMETER: only a posting with a single monetary leg can be edited, because the " +
             "edit rewrites it from that leg. A transfer and a card payment have two monetary " +
             "legs and are refused; so are an adjustment (adjust_balance, adjust_invoice) and " +
@@ -361,9 +371,12 @@ internal class UpdateTransactionTool(
         "amount" to amount("The new amount, in the currency it posts in — 45.90, not 4590."),
         "date" to text("The new day, as `2026-03-14`."),
         "title" to text("The new title."),
-        "category_id" to number("The category to classify it under, from list_categories."),
+        "category_id" to number(
+            "The category to classify it under, from list_categories. Keeps the one it has when " +
+                "not given; pass 0 to leave it unclassified.",
+        ),
         "account_id" to number("Move it to this account, from list_accounts."),
-        "card_id" to number("Move it to this card, from list_cards."),
+        "card_id" to number("Move it to this card, from list_cards. Expenses only."),
         "invoice_month" to text("Move a card posting to the invoice falling due in this month, as `2026-04`."),
         required = listOf("id"),
     )
@@ -427,17 +440,73 @@ internal class UpdateTransactionTool(
         val account = namedAccount?.let { accountRepository.require(it) }
             ?: stored.sourceAccount.takeIf { card == null }
 
-        val category = arguments.long("category_id")?.let { categoryRepository.require(it) }
-            ?: stored.nominalDimensionId?.let { categoryRepository.getCategoryByDimensionId(it) }
+        val type = arguments.oneOf("type", TRANSACTION_TYPES.keys.toList())
+            ?.let { TRANSACTION_TYPES.getValue(it) }
+            ?: stored.storedType()
+
+        // `TransactionForm.from` normalises by dropping what does not fit, and that is right for
+        // the sheet: changing the direction there re-offers the selectors, so the drop takes
+        // nothing the user still believes is set. Nothing is offered here, and most of what the
+        // rewrite carries the call never named — so the same drop answers "Edited. Everything the
+        // call did not name kept the value it had." for a classification the posting no longer
+        // has, and, for an income on a card, a refusal naming the `account_id` nobody gave.
+        if (type.isIncome && card != null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "A card takes expenses only: with `type` income, give `account_id` " +
+                        "and not `card_id`.",
+                ),
+                summary = summary,
+            )
+        }
+
+        // Absent leaves the classification as it is, which is what every other field does here; a
+        // `category_id` of 0 is how the call says the posting has none, and the only way this edit
+        // takes a classification away.
+        val declaredCategory = arguments.long("category_id")
+            ?.takeIf { it != NO_CATEGORY }
+            ?.let { categoryRepository.require(it) }
+
+        val carriedCategory = stored.nominalDimensionId
+            ?.takeUnless { arguments.names("category_id") }
+            ?.let { categoryRepository.getCategoryByDimensionId(it) }
+
+        if (declaredCategory != null && !declaredCategory.type.isAccept(type)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "`category_id` names \"${declaredCategory.name}\", an " +
+                        "${declaredCategory.type.name.lowercase()} category, and `type` is " +
+                        "${type.name.lowercase()}: a category classifies one direction only. " +
+                        "Give an ${type.name.lowercase()} category, or `category_id` 0 to leave " +
+                        "the posting unclassified.",
+                ),
+                summary = summary,
+            )
+        }
+
+        // The same disagreement, reached from the other side: the category is the posting's own
+        // and the call said nothing about it, so what is wrong is not an argument but a
+        // consequence the caller did not ask for and would only find by reading the posting back.
+        if (carriedCategory != null && !carriedCategory.type.isAccept(type)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "The posting is classified under \"${carriedCategory.name}\", an " +
+                        "${carriedCategory.type.name.lowercase()} category, and `type` " +
+                        "${type.name.lowercase()} cannot keep it: a category classifies one " +
+                        "direction only. Give a `category_id` that classifies " +
+                        "${type.name.lowercase()}, or `category_id` 0 to leave the posting " +
+                        "unclassified.",
+                ),
+                summary = summary,
+            )
+        }
 
         val form = TransactionForm.from(
-            type = arguments.oneOf("type", TRANSACTION_TYPES.keys.toList())
-                ?.let { TRANSACTION_TYPES.getValue(it) }
-                ?: stored.storedType(),
+            type = type,
             amount = (amount ?: stored.amount).asFormAmount(),
             title = arguments.string("title") ?: stored.title,
             date = (arguments.date("date") ?: stored.date).asFormDate(),
-            category = category,
+            category = declaredCategory ?: carriedCategory,
             target = if (card != null) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT,
             creditCard = card,
             invoiceDueMonth = arguments.monthOrNull("invoice_month")
@@ -468,6 +537,7 @@ internal class UpdateTransactionTool(
     private fun Transaction.storedType(): TransactionType = monetaryEntries.firstOrNull()
         ?.let { deriveTransactionType(it.amount, entries) }
         ?: TransactionType.EXPENSE
+
 }
 
 // ----------------------------------------------------------------------------------

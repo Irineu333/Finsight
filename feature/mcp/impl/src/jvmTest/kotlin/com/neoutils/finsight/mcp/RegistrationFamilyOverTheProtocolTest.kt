@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -356,6 +357,162 @@ class RegistrationFamilyOverTheProtocolTest {
             )
         }
     }
+
+    /**
+     * **The stored category is not the caller's to lose in silence.**
+     *
+     * `TransactionForm.from` drops a category whose type the new direction does not accept, and
+     * that is right for the sheet: flipping the direction there re-offers the selector, so the
+     * drop takes nothing the user still believes is set. Nothing is offered here. An edit naming
+     * only `type` drops a classification the call never mentioned — and answers that everything
+     * it did not name kept the value it had.
+     */
+    @Test
+    fun `flipping the direction is refused rather than dropping the stored category`() = runTest {
+        withRegistrationWorld { world, client ->
+            val id = world.groceriesId
+            val before = world.transactionRepository.getTransactionById(id)!!.nominalDimensionId
+
+            val response = client.callTool("update_transaction", """{"id":$id,"type":"income"}""")
+
+            assertTrue(
+                response.isToolError(),
+                "the stored category was dropped and the edit answered as complete: " +
+                    response.toolText(),
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "Mercado" in reason && "category_id" in reason,
+                "the refusal names neither the classification at stake nor how to settle it, so " +
+                    "the agent cannot tell what it was about to lose: $reason",
+            )
+
+            assertEquals(
+                before,
+                world.transactionRepository.getTransactionById(id)!!.nominalDimensionId,
+                "the classification was lost anyway",
+            )
+        }
+    }
+
+    /**
+     * **A category declared beside a direction it cannot classify is refused, naming both.**
+     *
+     * The mirror of what the creation already refuses. Dropped silently, the answer reports a
+     * classification that never reached the ledger, and the agent relays it to the user.
+     */
+    @Test
+    fun `a declared category the direction cannot accept is refused, naming both`() = runTest {
+        withRegistrationWorld { world, client ->
+            val id = world.groceriesId
+            val category = world.categoryRepository.getAllCategories().single()
+
+            val response = client.callTool(
+                "update_transaction",
+                """{"id":$id,"type":"income","category_id":${category.id}}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the declared category was dropped and the edit answered as complete: " +
+                    response.toolText(),
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "category_id" in reason && "income" in reason,
+                "the refusal does not name the argument and the direction that disagree: $reason",
+            )
+        }
+    }
+
+    /**
+     * **An income moved onto a card is refused for the card, not for an account nobody named.**
+     *
+     * The same defect the creation shed: the form drops the card, leaves the target on an account
+     * with no account in it, and the refusal that comes back asks for `account_id`. An agent
+     * acting on it invents an account for a posting that belongs nowhere near one.
+     */
+    @Test
+    fun `moving an income onto a card is refused for the card, not for a missing account`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val id = world.groceriesId
+                val card = world.cards.single()
+
+                val response = client.callTool(
+                    "update_transaction",
+                    """{"id":$id,"type":"income","card_id":${card.id}}""",
+                )
+
+                assertTrue(response.isToolError(), "an income was moved onto a card")
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "card_id" in reason && "expenses only" in reason,
+                    "the refusal points at an argument the call never gave, so it reads as a " +
+                        "missing account: $reason",
+                )
+            }
+        }
+
+    /**
+     * **Erasing a classification is something the call can say, which is what makes the two
+     * refusals above a redirection rather than a dead end.**
+     *
+     * On an edit, absence means "keep what it has" — so leaving `category_id` out is the one thing
+     * that cannot also mean "none", and an explicit JSON `null` is read as absence everywhere on
+     * this surface (`ToolSupport.argument`). Zero is how the call names it, as `confirm_recurring`
+     * already spells it. Without it, a classified posting could never change direction here at
+     * all — something the app's own sheet allows.
+     */
+    @Test
+    fun `a category_id of zero changes the direction by leaving the posting unclassified`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val id = world.groceriesId
+                assertNotNull(
+                    world.transactionRepository.getTransactionById(id)!!.nominalDimensionId,
+                    "the posting under test was never classified",
+                )
+
+                val response = client.callTool(
+                    "update_transaction",
+                    """{"id":$id,"type":"income","category_id":0}""",
+                )
+
+                assertTrue(
+                    !response.isToolError(),
+                    "the refusals send the caller here, and here refuses too: ${response.toolText()}",
+                )
+                assertNull(
+                    world.transactionRepository.getTransactionById(id)!!.nominalDimensionId,
+                    "the classification the call gave up is still on the posting",
+                )
+            }
+        }
+
+    /** The same zero on its own: the classification goes, the direction stays. */
+    @Test
+    fun `a category_id of zero clears the classification without touching anything else`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val id = world.groceriesId
+
+                val response = client.callTool(
+                    "update_transaction",
+                    """{"id":$id,"category_id":0}""",
+                )
+
+                assertTrue(!response.isToolError(), "clearing was refused: ${response.toolText()}")
+
+                val edited = world.transactionRepository.getTransactionById(id)!!
+                assertNull(edited.nominalDimensionId, "the classification is still on the posting")
+                assertEquals("Mercado", edited.title, "the title moved with the classification")
+                assertEquals(300.00, edited.amount, "the amount moved with the classification")
+            }
+        }
 
     // ------------------------------------------------------------------------------
     // 10.3–10.6 — what each creation writes, and what it answers with

@@ -137,6 +137,18 @@ internal fun JsonObject?.requiredString(name: String): String =
 internal fun JsonObject?.names(name: String): Boolean = argument(name) != null
 
 /**
+ * The identity no category has, and therefore how a call says *none* about a field whose absence
+ * already means something else.
+ *
+ * Wherever absence means *keep what it has* — an edit that carries every field, a confirmation
+ * pre-filled from its template — leaving `category_id` out is the one thing that cannot also mean
+ * "no category", and an explicit `null` is read as absence too ([argument]). Zero is what the
+ * surface answers with, once, so that two tools asking the same question of the same caller cannot
+ * drift into answering it differently.
+ */
+internal const val NO_CATEGORY = 0L
+
+/**
  * A yes-or-no the caller may leave out entirely.
  *
  * Distinct from [flag] with a default, and the distinction is what makes an edit safe: on a write

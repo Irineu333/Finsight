@@ -75,9 +75,11 @@ agora lê o `address` do próprio estado.
 Revelar continua revelando dentro do bloco, e copiar continua entregando o token real nos dois
 estados — são asserções do teste, não observação.
 
-O `SelectionContainer` segue existindo pelo motivo pelo qual foi escrito: extrair o token do bloco
-isoladamente. Com a máscara, isso passa a exigir revelar antes, que é exatamente o que esta issue
-pedia.
+O `SelectionContainer` segue existindo, e o comentário acima dele foi reescrito junto: a razão que
+sobrou é extrair **o endereço** do bloco isoladamente, para quem aponta um cliente que descreve o
+transporte de outro jeito. O token não é mais uma delas — o que a seleção alcança é o que a linha de
+cima está mostrando, mascarado até ser revelado, que é exatamente o que esta issue pedia. Copiar o
+bloco continua entregando o token real.
 
 O teste vive em `McpViewModelTest` e encoda o cenário de falha desta issue — a seção capturada num
 screenshot. A prova por `git stash` aqui só produziria erro de compilação, porque antes da correção

@@ -95,8 +95,22 @@ outros cinco — primeiro dia, meio do mês, dia seguinte ao fim, mês que ainda
 `measuredThrough` cobre — já passavam. O teste não estava falhando por estar errado; falhava onde o
 defeito morava.
 
-Não existia teste nenhum para `AgentPeriod` antes disto, e ele alimenta **18 pontos** da superfície
-do agente. A fronteira agora está fixada nos três dias que se confundem.
+Não existia teste nenhum para `AgentPeriod` antes disto, e ele é chamado de **15 pontos** da
+superfície do agente, em 13 arquivos. A fronteira agora está fixada nos três dias que se confundem.
 
-Suíte cheia depois da mudança: 1658 testes, nenhuma falha — nenhum dos 18 consumidores dependia do
-dia a mais.
+## A suíte verde não era prova
+
+Suíte cheia depois da mudança: 1658 testes, nenhuma falha. Isso **não** significava que nenhum
+consumidor dependia do dia a mais — um dependia, e a suíte não tinha como ver.
+
+`GetInvoiceTool` passava `InvoiceWindow.closingDate` como `to`. `closingDate` é *o primeiro dia que a
+janela recusa*; `to` é *o último dia que o período cobre*. Dois erros de um dia que se cancelavam
+enquanto `isInProgress` era `to > today`. Fazer o mês percorrer o seu último dia removeu um dos dois e
+deixou o outro de pé: no dia do fechamento, o payload de `get_invoice` passou a dizer
+`status: "closed"` ao lado de `is_in_progress: true`, e um `measured_through` nomeando um dia em que
+nenhuma compra pode cair naquela fatura — exatamente o dia em que o usuário pergunta se a fatura já
+fechou.
+
+A suíte ficou verde porque todo caso de fronteira escrito era sobre um mês do calendário, e nenhum
+sobre uma fatura. Corrigido no commit seguinte, `af780ae9f`, que dá ao período o último dia que a
+janela admite (`InvoiceWindow.lastAdmittedDate`) e traz o teste do dia do fechamento.

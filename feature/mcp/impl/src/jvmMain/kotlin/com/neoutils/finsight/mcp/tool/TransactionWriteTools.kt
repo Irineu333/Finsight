@@ -41,10 +41,13 @@ import kotlin.time.Clock
  *
  * A form with more than one instalment is an instalment plan, a form marked as repeating opens a
  * template, and everything else is a plain posting — that dispatch belongs to
- * `RegisterTransactionUseCase`, which the app's own sheet calls, and a tool reading
- * `installments > 1` for itself would be the second copy of it. The same goes for editing: what the
- * rewrite can express is `Transaction.editObstacle`'s answer, and it is the same answer that decides
- * whether the screen offers the action at all.
+ * `RegisterTransactionUseCase`, which the app's own sheet calls, and no tool here writes a second
+ * copy of it. Where a tool does read `installments > 1` it is doing the opposite job: refusing a
+ * combination the domain does not model — instalments on an account, instalments beside a recurring
+ * mark — which the sheet never has to refuse, because its selectors never offered it. Turning away
+ * an ill-formed request is not deciding what a well-formed one becomes. The same goes for editing:
+ * what the rewrite can express is `Transaction.editObstacle`'s answer, and it is the same answer
+ * that decides whether the screen offers the action at all.
  */
 
 /** The two directions a posting can be written in from a form. */
@@ -347,7 +350,8 @@ internal class UpdateTransactionTool(
             "edit rewrites it from that leg. A transfer and a card payment have two monetary " +
             "legs and are refused; so are an adjustment (adjust_balance, adjust_invoice) and " +
             "one share of an instalment plan (update_installment). " +
-            "An amount of zero is refused: it is not the removal it imitates. Removal is " +
+            "An amount must be greater than zero: zero or less is refused, because it is not " +
+            "the removal it imitates. Removal is " +
             "delete_transaction, on the ${McpToolName.DELETE_TRANSACTION.axis.capability} " +
             "capability."
 

@@ -157,8 +157,8 @@ internal class ListTransactionsTool(
         val perspective = account?.id ?: card?.accountId
 
         // The month is the database's cut, both edges included: the rest of the filters are
-        // derived from the legs and stay here, but they now run over a month rather than over
-        // every posting the user has ever made.
+        // derived from the legs and stay here, running over that one month and not over the
+        // whole history.
         val matching = transactionRepository
             .getTransactionsBetween(startDate = month.firstDay, endDate = month.lastDay)
             .filter { perspective == null || it.entries.any { leg -> leg.account.id == perspective } }

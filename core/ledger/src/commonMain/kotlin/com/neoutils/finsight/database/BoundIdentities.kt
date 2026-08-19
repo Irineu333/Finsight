@@ -10,7 +10,7 @@ package com.neoutils.finsight.database
  *
  * Where the ceiling actually is was measured against the driver this project links against,
  * `androidx.sqlite:sqlite-bundled`: 32 766 parameters accepted, 32 767 refused with
- * `too many SQL variables`. This sits two orders of magnitude below that, and also below the
+ * `too many SQL variables`. This sits some thirty-six times below that, and also below the
  * 999 that SQLite builds older than 3.32 compile in — so the number holds even if the app ever
  * reads through a platform driver instead of the bundled one.
  */

@@ -17,7 +17,10 @@ corrompe número nenhum do ledger.
 |---|---|---|---|
 | **MÉDIO** |
 | [016](016-update-transaction-drops-the-category-silently.md) | `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado | mcp / model | correção |
+| [017](017-installment-opens-invoices-before-refusing.md) | `create_installment` abre até doze faturas e só então recusa o valor | creditcards / mcp | dados |
 | **BAIXO** |
+| [018](018-read-by-identity-does-not-dedupe.md) | `readByIdentity` não deduplica, e sua KDoc afirma que sim | ledger | robustez (latente) |
+| [019](019-transactions-has-no-index-on-date.md) | A leitura por mês varre a tabela inteira: sem índice em `date` | ledger | performance |
 | [006](006-bottom-bar-does-not-ask-is-offered.md) | A bottom bar não pergunta `isOffered` | shell | correção (latente) |
 | [011](011-privileged-ports-are-offered-and-misdiagnosed.md) | Portas privilegiadas oferecidas, falha diagnosticada como "em uso" | mcp | UX |
 | [012](012-closing-the-desktop-window-blocks-the-event-thread.md) | Fechar a janela bloqueia a thread de eventos do AWT | app/desktop | UX |
@@ -63,8 +66,9 @@ mais a separação api/impl dos use cases), e então verificadas uma a uma contr
 Das quinze levantadas:
 
 - **oito** procedem exatamente como descritas — 001, 002, 003, 004, 005, 009, 010, 015;
-- **duas** procedem e são piores do que o relatado — 007 e 008, onde uma leitura por linha se revelou
-  três queries em vez de uma;
+- **duas** procedem e são piores do que o relatado, cada uma por um motivo diferente — na 007, a
+  leitura por linha se revelou **três** queries em vez de uma; na 008, o custo por página é
+  `1 + 1 + N` — uma query de entries por linha, sobre o ledger inteiro;
 - **duas** procedem apenas como inconsistências latentes, inalcançáveis na árvore como ela está —
   006 e 013, cada uma dizendo no próprio arquivo por quê;
 - **uma** procede com o mecanismo corrigido — 011, onde o `UNAVAILABLE` previsto é na verdade
@@ -96,18 +100,18 @@ que o código mostra, e dois foram reescritos:
   arquivo agora traz o mapa da superfície inteira, em quatro grupos. *(A correção mostrou que a
   reconferência também errou aqui: `update_card` **é** protegido — pelo `init` de `CreditCard`, não
   pelo use case que ela leu. Está registrado no arquivo arquivado.)*
-- **[009](009-last-day-of-a-month-reads-as-finished.md) — a divergência é entre duas KDocs, não entre
+- **[009](archive/009-last-day-of-a-month-reads-as-finished.md) — a divergência é entre duas KDocs, não entre
   código e KDoc.** A da factory (`AgentPeriod.kt:38`) é a que o cálculo contradiz; a da propriedade
   (`:29`) descreve o cálculo corretamente. Corrigir só a expressão troca qual das duas mente. A
   correção sugerida agora move as duas.
-- **[007](007-agent-log-runs-three-queries-per-row.md) — nada a mudar.** As três queries por linha já
+- **[007](archive/007-agent-log-runs-three-queries-per-row.md) — nada a mudar.** As três queries por linha já
   estavam registradas aqui; quem ficou aquém foi o comentário do PR, que fala em uma leitura por
   linha.
 
 Método: cada afirmação foi lida nos arquivos e linhas citados; o `bind` em porta privilegiada
 ([011](011-privileged-ports-are-offered-and-misdiagnosed.md)) foi sondado de novo com a JVM desta
 máquina, e confirma `BindException`. Nada foi executado contra o app rodando, então
-[007](007-agent-log-runs-three-queries-per-row.md) e
+[007](archive/007-agent-log-runs-three-queries-per-row.md) e
 [012](012-closing-the-desktop-window-blocks-the-event-thread.md) seguem sendo raciocínio sobre o
 código, não medição.
 

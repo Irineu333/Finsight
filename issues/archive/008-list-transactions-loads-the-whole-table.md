@@ -66,7 +66,7 @@ O mês desceu para o banco e as entries passaram a ser lidas em lote:
 - `TransactionDao.getBetween(startDate, endDate)` — `WHERE date BETWEEN :startDate AND :endDate`,
   inclusivo nas duas pontas, que é exatamente o que `yearMonth ==` significava. A data é gravada como
   texto `yyyy-MM-dd`, cuja ordem lexicográfica é a cronológica.
-- `EntryDao.getByTransactionIds(...)` — as pernas de uma página numa leitura só, fatiada por
+- `EntryDao.getByTransactionIds(...)` — as pernas do mês inteiro numa leitura só, fatiada por
   `readByIdentity`/`MAX_BOUND_IDENTITIES`, a regra que a 007 estabeleceu medindo o driver real. Nenhuma
   segunda regra de fatiamento foi escrita.
 - `TransactionRepository.getTransactionsBetween(...)`, e `getAllTransactions` passou a hidratar pelo
@@ -75,8 +75,17 @@ O mês desceu para o banco e as entries passaram a ser lidas em lote:
 - `nature` e o corte por dimensão continuam em memória, porque são derivados, mas agora rodam sobre um
   mês em vez de sobre todo o histórico.
 
+A página é recortada **depois** da hidratação, na tool. A mensagem do commit `87246cbe9` diz "the
+page's legs" onde deveria dizer as do mês; mensagem de commit não se corrige, então fica dito aqui.
+
 Custo: a mesma pergunta sobre março passou de **3006 postagens hidratadas num ledger de 3006, contra
-18 num de 18**, para **6 e 6** — constante no tamanho do ledger.
+18 num de 18**, para **6 e 6** — a **hidratação** ficou constante no tamanho do ledger.
+
+A varredura não. `transactions` não tem índice em `date`, então `getBetween` ainda faz
+`SCAN transactions` e ordena por uma B-tree temporária: o SQLite continua lendo a tabela inteira, só
+não devolve mais do que o mês. Não é regressão — o `getAll()` anterior varria **e** materializava
+tudo, mais N queries —, mas o que passou a ser constante é a parte que dominava o custo, não o custo.
+A lacuna que resta está registrada na [019](../019-transactions-has-no-index-on-date.md).
 
 ## As três redes, e a ordem em que foram feitas
 

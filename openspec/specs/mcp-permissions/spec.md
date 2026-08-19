@@ -110,7 +110,7 @@ nas contagens, o que não é a remoção que o usuário pediu e é pior do que a
 total sem sumir do histórico, e ninguém sabe que está lá.
 
 #### Scenario: Edição não anula por zeragem
-- **WHEN** um agente tenta alterar o valor de um lançamento para zero
+- **WHEN** um agente tenta alterar o valor de um lançamento para zero, ou para um valor negativo
 - **THEN** a alteração é recusada, com a indicação de que anular um lançamento é remoção e depende do eixo correspondente
 
 #### Scenario: Recusa não empurra para o contorno

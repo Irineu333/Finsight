@@ -537,7 +537,6 @@ internal class UpdateTransactionTool(
     private fun Transaction.storedType(): TransactionType = monetaryEntries.firstOrNull()
         ?.let { deriveTransactionType(it.amount, entries) }
         ?: TransactionType.EXPENSE
-
 }
 
 // ----------------------------------------------------------------------------------

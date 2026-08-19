@@ -363,9 +363,10 @@ class RegistrationFamilyOverTheProtocolTest {
      *
      * `TransactionForm.from` drops a category whose type the new direction does not accept, and
      * that is right for the sheet: flipping the direction there re-offers the selector, so the
-     * drop takes nothing the user still believes is set. Nothing is offered here. An edit naming
-     * only `type` drops a classification the call never mentioned — and answers that everything
-     * it did not name kept the value it had.
+     * drop takes nothing the user still believes is set. Nothing is offered here, and the
+     * classification is carried rather than named, so an edit naming only `type` is refused: the
+     * alternative is taking something the call never mentioned, under an answer saying that
+     * everything it did not name kept its value.
      */
     @Test
     fun `flipping the direction is refused rather than dropping the stored category`() = runTest {
@@ -430,9 +431,10 @@ class RegistrationFamilyOverTheProtocolTest {
     /**
      * **An income moved onto a card is refused for the card, not for an account nobody named.**
      *
-     * The same defect the creation shed: the form drops the card, leaves the target on an account
-     * with no account in it, and the refusal that comes back asks for `account_id`. An agent
-     * acting on it invents an account for a posting that belongs nowhere near one.
+     * A card takes expenses only, and that is what the refusal has to say. Left to the form, the
+     * card is dropped and the target falls back to an account with none in it, so what comes back
+     * asks for `account_id` — an argument the call never gave, and one an agent answers by
+     * inventing an account for a posting that belongs nowhere near one.
      */
     @Test
     fun `moving an income onto a card is refused for the card, not for a missing account`() =

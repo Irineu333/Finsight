@@ -21,9 +21,10 @@ import kotlin.math.roundToLong
  * The plumbing every tool that **changes** something shares: how an act is reported, how a refusal
  * the domain raised reaches the agent, and how an identity an argument names is resolved.
  *
- * Nothing here decides anything. Every refusal below is one the domain already stated, and every
- * resolution is a lookup — which is the line `mcp-tool-surface` draws: composing, translating and
- * resolving a name into an identity are the tool's work, and what an operation *means* is not.
+ * Nothing here decides what an operation *means*. Every refusal below is one the domain already
+ * stated, and every resolution is a lookup — which is the line `mcp-tool-surface` draws: composing,
+ * translating and resolving a name into an identity are the tool's work. The one convention it owns
+ * is [NO_CATEGORY], which is a fact about the wire and not about the ledger.
  */
 
 // ----------------------------------------------------------------------------------
@@ -137,14 +138,14 @@ internal fun JsonObject?.requiredString(name: String): String =
 internal fun JsonObject?.names(name: String): Boolean = argument(name) != null
 
 /**
- * The identity no category has, and therefore how a call says *none* about a field whose absence
- * already means something else.
+ * The identity no category has, and therefore how a call says *none* where absence already means
+ * something else.
  *
- * Wherever absence means *keep what it has* — an edit that carries every field, a confirmation
- * pre-filled from its template — leaving `category_id` out is the one thing that cannot also mean
- * "no category", and an explicit `null` is read as absence too ([argument]). Zero is what the
- * surface answers with, once, so that two tools asking the same question of the same caller cannot
- * drift into answering it differently.
+ * `update_transaction` and `confirm_recurring` both carry what the call does not name — one from
+ * the posting, the other from the template — so for them leaving `category_id` out cannot also
+ * mean "no category", and an explicit `null` reads as absence too ([argument]). Zero is what those
+ * two read it as, from here rather than from a constant each. A creation has no such need: absence
+ * there already means none, and `0` stays an identity matching nothing.
  */
 internal const val NO_CATEGORY = 0L
 

@@ -9,15 +9,25 @@ arquivo em vez de ter sido descartada.
 
 ## Sumário por criticidade
 
-Nenhum achado chegou a **CRÍTICO**. **ALTO** está vazia desde que a
-[001](archive/001-create-transaction-accepts-negative-amount.md) foi corrigida, e **MÉDIO** desde
-que a [016](archive/016-update-transaction-drops-the-category-silently.md) e a
-[017](archive/017-installment-opens-invoices-before-refusing.md) foram. O que resta não corrompe
-número nenhum do ledger.
+Nenhum achado chegou a **CRÍTICO**, e **ALTO** está vazia desde que a
+[001](archive/001-create-transaction-accepts-negative-amount.md) foi corrigida. **MÉDIO** ficou vazia
+com a [016](archive/016-update-transaction-drops-the-category-silently.md) e a
+[017](archive/017-installment-opens-invoices-before-refusing.md), e voltou a ter duas no dia
+seguinte: a revisão adversarial dessas correções encontrou a mesma regra aberta em outras duas tools
+([020](020-create-installment-drops-the-category-silently.md),
+[021](021-update-recurring-stores-an-incoherent-template.md)). Nenhum achado aberto corrompe número
+do ledger — a [021](021-update-recurring-stores-an-incoherent-template.md) chega mais perto, gravando
+um template que o domínio não modela.
 
 | # | Issue | Área | Tipo |
 |---|---|---|---|
+| **MÉDIO** |
+| [020](020-create-installment-drops-the-category-silently.md) | `create_installment` descarta a categoria em silêncio, e responde "Recorded" | creditcards / mcp | correção |
+| [021](021-update-recurring-stores-an-incoherent-template.md) | `update_recurring` grava um template incoerente; `create_recurring` recusa pelo argumento errado | recurring / mcp | dados |
 | **BAIXO** |
+| [022](022-category-id-zero-means-two-things.md) | `category_id: 0` significa "sem categoria" em duas tools e "não existe" em quatro | mcp | consistência |
+| [023](023-a-refused-plan-still-leaves-an-invoice-behind.md) | Uma parcela bloqueada no meio do plano deixa a primeira fatura para trás | creditcards | dados |
+| [024](024-update-transaction-still-discards-two-arguments.md) | A edição ainda descarta `invoice_month` e `title` vazio, e recusa o cartão carregado como se fosse dado | mcp | correção |
 | [018](018-read-by-identity-does-not-dedupe.md) | `readByIdentity` não deduplica, e sua KDoc afirma que sim | ledger | robustez (latente) |
 | [019](019-transactions-has-no-index-on-date.md) | A leitura por mês varre a tabela inteira: sem índice em `date` | ledger | performance |
 | [006](006-bottom-bar-does-not-ask-is-offered.md) | A bottom bar não pergunta `isOffered` | shell | correção (latente) |

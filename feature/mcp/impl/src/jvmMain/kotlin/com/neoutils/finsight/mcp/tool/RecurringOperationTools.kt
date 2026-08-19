@@ -182,7 +182,6 @@ internal class ConfirmRecurringTool(
             reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, it.id) },
         )
     }
-
 }
 
 // ----------------------------------------------------------------------------------

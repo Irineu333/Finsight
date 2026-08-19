@@ -221,11 +221,11 @@ class AddInstallmentUseCaseTest {
     /**
      * **An amount the build refuses opens no invoice.**
      *
-     * The refusal already happens — but only once the invoices have been resolved, and resolving
-     * one creates it as a deliberate side effect outside the unit of work (design D7). Twelve
-     * invoices are opened on the card, the amount is then refused, nothing enters the ledger, and
-     * the structure stays behind for a purchase that never happened. The refusal has to come
-     * first, as `ConfirmRecurringUseCase` already makes it.
+     * Resolving an invoice creates and persists it as a deliberate side effect outside the unit
+     * of work (design D7), so the refusal belongs before the first one is resolved — where
+     * `ConfirmRecurringUseCase` also puts it. Counting the openings is what the assertion turns
+     * on: a refusal that left invoices behind for a purchase that never posted would satisfy any
+     * check reading only the result.
      */
     @Test
     fun `a non-positive amount is refused before an invoice is opened for it`() = runTest {

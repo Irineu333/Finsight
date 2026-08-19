@@ -172,7 +172,7 @@ class TransactionPeriodReadTest {
         assertEquals(
             WIDER_THAN_ONE_STATEMENT,
             transactions.count { it.entries.size == 1 },
-            "a chunk boundary either dropped a posting's legs or gave it another's",
+            "a chunk boundary dropped a posting's legs, or gave it a second one",
         )
 
         assertFailsWith<SQLiteException> {

@@ -370,7 +370,8 @@ private fun ConnectionCard(
         ) {
             // Selectable, because copying the whole block is the common case and not the only
             // one: a user pointing a client that words the transport differently needs the url
-            // or the token out of here on its own.
+            // out of here on its own. The token is masked here until it is revealed, so what
+            // selecting reaches is whatever the row above is showing.
             SelectionContainer {
                 Text(
                     text = uiState.displayedConnectionSnippet,

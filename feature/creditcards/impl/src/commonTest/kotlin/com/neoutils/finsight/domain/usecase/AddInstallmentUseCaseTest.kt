@@ -1,8 +1,11 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
+import arrow.core.left
 import arrow.core.right
+import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.error.InstallmentError
+import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Installment
@@ -17,6 +20,7 @@ import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.moneyToDouble
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.DateTimeUnit
@@ -85,13 +89,14 @@ class AddInstallmentUseCaseTest {
         transactions: FakeTransactionWriter = FakeTransactionWriter(),
         installments: FakeInstallmentStore = FakeInstallmentStore(),
         existing: List<Invoice> = emptyList(),
+        opener: FakeInvoiceOpener = FakeInvoiceOpener(existing, card),
         total: Double = 960.0,
     ) = AddInstallmentUseCaseImpl(
         transactionRepository = transactions,
         installmentRepository = installments,
         invoiceRepository = FakeInvoiceReader(existing),
         buildTransactionUseCase = FakeTransactionBuilder(total, purchaseDate),
-        getOrCreateInvoiceForMonthUseCase = FakeInvoiceOpener(existing, card),
+        getOrCreateInvoiceForMonthUseCase = opener,
     )
 
     private fun List<TransactionIntent>.cents() = map { (it.legs.single().amount * 100).roundToLong() }
@@ -213,6 +218,45 @@ class AddInstallmentUseCaseTest {
         assertTrue(writer.captured.isEmpty(), "nothing is written when one instalment cannot land")
     }
 
+    /**
+     * **An amount the build refuses opens no invoice.**
+     *
+     * The refusal already happens — but only once the invoices have been resolved, and resolving
+     * one creates it as a deliberate side effect outside the unit of work (design D7). Twelve
+     * invoices are opened on the card, the amount is then refused, nothing enters the ledger, and
+     * the structure stays behind for a purchase that never happened. The refusal has to come
+     * first, as `ConfirmRecurringUseCase` already makes it.
+     */
+    @Test
+    fun `a non-positive amount is refused before an invoice is opened for it`() = runTest {
+        val opener = FakeInvoiceOpener(emptyList(), card)
+        val writer = FakeTransactionWriter()
+        val store = FakeInstallmentStore()
+
+        val result = useCase(
+            transactions = writer,
+            installments = store,
+            opener = opener,
+            total = -300.0,
+        ).invoke(form("-300,00"), installments = 12)
+
+        val error = assertIs<BuildTransactionException>(result.leftOrNull())
+        assertEquals(BuildTransactionError.AmountNotPositive, error.error)
+        assertEquals(0, opener.calls, "invoices opened here outlive the refusal")
+        assertTrue(writer.captured.isEmpty(), "the ledger moved anyway")
+        assertNull(store.created, "an installment row was left behind")
+    }
+
+    @Test
+    fun `zero is refused by the same rule, and opens nothing either`() = runTest {
+        val opener = FakeInvoiceOpener(emptyList(), card)
+
+        val result = useCase(opener = opener, total = 0.0).invoke(form("0,00"), installments = 3)
+
+        assertTrue(result.isLeft())
+        assertEquals(0, opener.calls, "invoices opened here outlive the refusal")
+    }
+
     @Test
     fun `a write that fails takes the installment row with it`() = runTest {
         // One decision by the user, one unit of work: an installment row left behind
@@ -231,27 +275,44 @@ class AddInstallmentUseCaseTest {
 
 // --- Fakes -------------------------------------------------------------------------------------
 
+/**
+ * Stands in for the build, refusing what the real one refuses first: `ValidateTransactionFormUseCase`
+ * runs before anything is resolved, and a non-positive amount never gets past it.
+ */
 private class FakeTransactionBuilder(
     private val amount: Double,
     private val date: LocalDate,
 ) : BuildTransactionUseCase {
-    override suspend fun invoke(form: TransactionForm): Either<Throwable, TransactionIntent> =
-        TransactionIntent(
+    override suspend fun invoke(form: TransactionForm): Either<Throwable, TransactionIntent> {
+        if (form.amount.moneyToDouble() <= 0.0) {
+            return BuildTransactionException(BuildTransactionError.AmountNotPositive).left()
+        }
+        return TransactionIntent(
             title = form.title,
             date = date,
             legs = listOf(TransactionLeg(TransactionType.EXPENSE, amount, accountId = 99)),
         ).right()
+    }
 }
 
-/** Hands back what it was seeded with, and mints anything else on demand. */
+/**
+ * Hands back what it was seeded with, and mints anything else on demand — counting every call,
+ * because opening an invoice persists it (design D7) and a refusal that came later would leave it
+ * behind for a purchase that never posted.
+ */
 private class FakeInvoiceOpener(
     private val existing: List<Invoice>,
     private val creditCard: CreditCard,
 ) : GetOrCreateInvoiceForMonthUseCase {
+
+    var calls = 0
+        private set
+
     override suspend fun invoke(
         creditCardId: Long,
         targetDueMonth: YearMonth,
     ): Either<Throwable, Invoice> {
+        calls++
         val found = existing.find { it.dueMonth == targetDueMonth }
         return (found ?: Invoice(
             id = targetDueMonth.year * 100L + targetDueMonth.month.ordinal,

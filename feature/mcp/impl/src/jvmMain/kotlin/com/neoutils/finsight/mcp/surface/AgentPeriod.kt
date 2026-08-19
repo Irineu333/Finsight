@@ -27,7 +27,7 @@ internal data class AgentPeriod(
     /** The last day the period covers, whether or not it has arrived. */
     val to: LocalDate,
     /**
-     * Whether [to] has still to be reached on the app's own clock, its own day included.
+     * Whether [to] is today on the app's own clock, or still ahead of it.
      *
      * The last day of a period is one it runs through: a month asked about on the 31st will take
      * postings for the rest of that day, so it is not a window comparable with a month that ended.

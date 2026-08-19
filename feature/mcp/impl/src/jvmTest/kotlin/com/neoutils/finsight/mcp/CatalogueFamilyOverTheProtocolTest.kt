@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -289,7 +290,11 @@ class CatalogueFamilyOverTheProtocolTest {
             val payload = client.callTool("get_invoice", """{"id":1}""").payload()
 
             assertEquals("2026-02-20", payload.at("period").text("from"), "the cycle opened a month before")
-            assertEquals("2026-03-20", payload.at("period").text("to"))
+            assertEquals(
+                "2026-03-19",
+                payload.at("period").text("to"),
+                "the cycle's last day, not the closing date — a purchase on the 20th is the next one's",
+            )
             assertEquals("2026-03-28", payload.at("invoice").text("due_date"))
 
             assertEquals(MarchWorld.GROCERIES_ON_CARD + PLAN_TOTAL, payload.at("spent").amount())
@@ -304,6 +309,55 @@ class CatalogueFamilyOverTheProtocolTest {
                 "read from the card: the payment on the 13th came into it, and every purchase " +
                     "before that was charged to it",
             )
+        }
+    }
+
+    /**
+     * **The day the cycle closes** — the day the question is actually asked on.
+     *
+     * The window is half-open, so the closing day is the first day it refuses: a purchase made on
+     * it starts the next cycle. An answer that handed that day to the period would say the cycle is
+     * still taking postings, beside a status saying it closed, and would name a day the figures
+     * could never reach.
+     */
+    @Test
+    fun `get_invoice on the closing day does not answer a closed cycle as still running`() = runTest {
+        AgentWorld(today = LocalDate(2026, 3, 20)).use { world ->
+            val card = world.card(
+                id = 1,
+                accountId = MarchWorld.ACCOUNT_CARD,
+                name = "Cartão",
+                limit = MarchWorld.CARD_LIMIT,
+            )
+            world.invoice(
+                id = 1,
+                dimensionId = MarchWorld.DIMENSION_INVOICE,
+                card = card,
+                month = MarchWorld.MONTH,
+                status = Invoice.Status.CLOSED,
+            )
+
+            world.overTheProtocol { client ->
+                val payload = client.callTool("get_invoice", """{"id":1}""").payload()
+                val period = payload.at("period")
+                val closingDate = LocalDate.parse(payload.at("invoice").text("closing_date")!!)
+
+                assertEquals("closed", payload.at("invoice").text("status"))
+                assertEquals(
+                    false,
+                    period.flag("is_in_progress"),
+                    "the cycle closed today and the same payload says it is still running: $period",
+                )
+                assertTrue(
+                    LocalDate.parse(period.text("to")!!) < closingDate,
+                    "`to` is the last day the period covers, and $closingDate is the first day " +
+                        "the window refuses: $period",
+                )
+                assertTrue(
+                    LocalDate.parse(period.text("measured_through")!!) < closingDate,
+                    "the figures are said to reach a day no posting on this invoice can land on: $period",
+                )
+            }
         }
     }
 

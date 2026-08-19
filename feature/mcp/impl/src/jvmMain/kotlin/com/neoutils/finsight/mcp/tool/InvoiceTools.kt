@@ -2,6 +2,7 @@ package com.neoutils.finsight.mcp.tool
 
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.MoneyByCurrency
+import com.neoutils.finsight.domain.model.window
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -220,7 +221,9 @@ internal class GetInvoiceTool(
                 invoice = invoice.toAgentInvoice(owed),
                 period = AgentPeriod.range(
                     from = invoice.openingDate,
-                    to = invoice.closingDate,
+                    // `to` is inclusive and the window's closing date is not: the cycle's last day
+                    // is the one before it, and it is what the period runs through.
+                    to = invoice.window.lastAdmittedDate,
                     today = clock.today(),
                 ),
                 spent = invoice.figure(flows?.expense),

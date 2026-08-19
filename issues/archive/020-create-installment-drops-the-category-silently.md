@@ -2,13 +2,13 @@
 
 **Área:** creditcards / mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
 **Verificado em:** 2026-08-19, `feature/local-mcp-server`, por uma revisão adversarial das correções
-da [016](archive/016-update-transaction-drops-the-category-silently.md) e da
-[017](archive/017-installment-opens-invoices-before-refusing.md)
+da [016](016-update-transaction-drops-the-category-silently.md) e da
+[017](017-installment-opens-invoices-before-refusing.md)
 
 ## O que está errado
 
-É a mesma regra da [004](archive/004-transaction-form-drops-arguments-silently.md) e da
-[016](archive/016-update-transaction-drops-the-category-silently.md), na terceira das três tools que
+É a mesma regra da [004](004-transaction-form-drops-arguments-silently.md) e da
+[016](016-update-transaction-drops-the-category-silently.md), na terceira das três tools que
 montam um `TransactionForm`. A 004 fechou a criação, a 016 fechou a edição, e `create_installment`
 ficou aberta — apesar de ter sido a tool mexida pela 017, no mesmo dia.
 
@@ -40,8 +40,8 @@ categoria e a direção. Não mexer em `TransactionForm.from`, pela razão da 00
 
 ## Correção aplicada
 
-A recusa que a [004](archive/004-transaction-form-drops-arguments-silently.md) instalou na criação e
-a [016](archive/016-update-transaction-drops-the-category-silently.md) na edição, agora em
+A recusa que a [004](004-transaction-form-drops-arguments-silently.md) instalou na criação e
+a [016](016-update-transaction-drops-the-category-silently.md) na edição, agora em
 `CreateInstallmentTool.call`, antes do formulário. Com uma diferença que a tool impõe: aqui a direção
 não é parâmetro — um parcelamento é sempre despesa —, então a guarda compara contra a constante e a
 razão diz *"a split is always an expense"* em vez de nomear um `type` que a chamada não deu.
@@ -61,8 +61,10 @@ sem classificação.
 ## Onde a issue estava imprecisa
 
 Um deslize de uma linha: ela aponta a recusa modelo em `TransactionWriteTools.kt:203-213`, e o bloco
-começa em `:202`, no `if`. O resto — `InstallmentWriteTools.kt:82` sem guarda, o arquivo sem nenhuma
-ocorrência de `isAccept`, e `TransactionForm.kt:81` como o descarte — confere com o disco.
+começa em `:202`, no `if`. O resto foi conferido contra a árvore em `1234c4264`, antes da correção:
+`InstallmentWriteTools.kt:82` era a resolução sem guarda, o arquivo não tinha nenhuma ocorrência de
+`isAccept`, e `TransactionForm.kt:81` era o descarte. As duas primeiras deixaram de valer com a
+correção, que é o que este arquivo registra.
 
 ## O que ficou para trás
 

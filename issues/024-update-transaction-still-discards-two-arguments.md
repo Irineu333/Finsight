@@ -46,6 +46,15 @@ Nenhum dos três grava número errado no ledger. O 1 e o 2 fazem a resposta afir
 aconteceu — o defeito de faixa média da 016 — mas sobre campos que não mudam saldo, e nenhum deles
 descarta algo que o lançamento já tinha.
 
+## O mesmo defeito, replicado em `update_recurring`
+
+A [021](archive/021-update-recurring-stores-an-incoherent-template.md) copiou esta recusa para
+`update_recurring` sem a correção que o item 3 pede, e lá ela ganhou uma variante a mais: como
+aquela tool também **carrega** o `type`, a razão pode afirmar `type` income numa chamada que não deu
+`type` nenhum. Medido: `{"id":X,"card_id":1}` sobre um template de receita responde *"A card takes
+expenses only: with `type` income, give `account_id` and not `card_id`."* — dois argumentos, nenhum
+dos dois dado como a frase os descreve.
+
 ## Observação sobre cobertura
 
 Todo teste de `update_transaction` da suíte roda sobre `world.groceriesId`, que é um lançamento de

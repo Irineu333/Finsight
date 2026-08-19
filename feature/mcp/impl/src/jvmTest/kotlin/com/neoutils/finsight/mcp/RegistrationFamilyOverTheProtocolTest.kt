@@ -696,9 +696,10 @@ class RegistrationFamilyOverTheProtocolTest {
     /**
      * **An income template aimed at a card is refused for the card.**
      *
-     * `RecurringForm.toRecurring` nulls the card for an income and then asks for an account, so
-     * what comes back is *"Account is required."* — pointing at an argument the call never gave,
-     * which is the defect the creation of a posting already shed.
+     * A card takes expenses only, and the tool says so before the form is built. Left to
+     * `RecurringForm.toRecurring`, the card is nulled for an income and an account asked for
+     * instead, so what comes back names `account_id` — an argument the call never gave, and the
+     * defect the creation of a posting already shed.
      */
     @Test
     fun `an income template on a card is refused for the card, not for a missing account`() =
@@ -724,9 +725,10 @@ class RegistrationFamilyOverTheProtocolTest {
     /**
      * **A template does not keep a classification its direction cannot carry.**
      *
-     * Worse than the drop the edit of a posting used to do: nothing filters here at all, so the
-     * template is persisted as an income classified under an expense category — a shape the
-     * domain does not model — and the answer says "Edited."
+     * The refusal stands in for something worse than a drop: unfiltered, a template is *persisted*
+     * as an income classified under an expense category — a shape the domain does not model — under
+     * an answer saying the edit landed. `toRecurring` settles what the direction can carry, and the
+     * tool refuses ahead of it so the classification is not taken from a call that never named it.
      */
     @Test
     fun `flipping a template's direction is refused rather than keeping the stored category`() =
@@ -843,9 +845,143 @@ class RegistrationFamilyOverTheProtocolTest {
                 "the template was left with no name, or given one nobody typed: ${response.toolText()}",
             )
 
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "itle" in reason && "categor" in reason,
+                "the refusal is not the one about the name, so this test would pass on any other: $reason",
+            )
+
             val stored = assertNotNull(world.recurringRepository.getRecurringById(id))
             assertNull(stored.title, "the template was renamed by an edit that did not name a title")
             assertEquals("Mercado", stored.category?.name, "the classification went anyway")
+        }
+    }
+
+
+    /**
+     * **A cycle posts in one place, and the edit says so instead of choosing for the caller.**
+     *
+     * The creation of a template refuses the pair, and so does the edit of a posting. Without it
+     * here the account simply wins, the card is resolved and thrown away, and the answer reports an
+     * edit that landed — while the `card_id` went nowhere. It also makes the card refusal beside it
+     * conditional: naming an `account_id` too is enough to walk past it.
+     */
+    @Test
+    fun `an edit naming both an account and a card is refused, as the creation already refuses it`() =
+        runTest {
+            withRegistrationWorld { world, client ->
+                val card = world.cards.single()
+                val id = client.callTool(
+                    "create_recurring",
+                    """{"type":"expense","amount":300,"day_of_month":5,"title":"Aluguel","account_id":1}""",
+                ).payload().at("recurring").identity()
+
+                val response = client.callTool(
+                    "update_recurring",
+                    """{"id":$id,"account_id":2,"card_id":${card.id}}""",
+                )
+
+                assertTrue(
+                    response.isToolError(),
+                    "the card was resolved and dropped, and the edit answered as landed: " +
+                        response.toolText(),
+                )
+
+                val reason = assertNotNull(response.payload().text("reason"))
+                assertTrue(
+                    "account_id" in reason && "card_id" in reason,
+                    "the refusal does not name the two arguments the caller has to choose between: $reason",
+                )
+            }
+        }
+
+    /**
+     * **The card refusal is not conditional on how many other arguments the call carries.**
+     *
+     * With the pair refused ahead of it, `type` income beside a `card_id` is refused for the card
+     * whether or not an `account_id` came along — otherwise the way past the rule is to name one
+     * more thing.
+     */
+    @Test
+    fun `an income beside a card is refused even when an account is named too`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+            val id = client.callTool(
+                "create_recurring",
+                """{"type":"expense","amount":300,"day_of_month":5,"title":"Luz","account_id":1}""",
+            ).payload().at("recurring").identity()
+
+            val response = client.callTool(
+                "update_recurring",
+                """{"id":$id,"type":"income","card_id":${card.id},"account_id":1}""",
+            )
+
+            assertTrue(response.isToolError(), "the refusal was walked past: ${response.toolText()}")
+
+            val stored = assertNotNull(world.recurringRepository.getRecurringById(id))
+            assertEquals(TransactionType.EXPENSE, stored.type, "the template changed direction anyway")
+        }
+    }
+
+    /**
+     * **The declared half of the rule, on the edit** — the creation's counterpart is above, and
+     * this one had no test of its own.
+     */
+    @Test
+    fun `a declared category the edited direction cannot carry is refused, naming both`() = runTest {
+        withRegistrationWorld { _, client ->
+            val salary = client.callTool(
+                "create_category",
+                """{"name":"Salário","type":"income"}""",
+            ).payload().at("category").identity()
+
+            val id = client.callTool(
+                "create_recurring",
+                """{"type":"expense","amount":300,"day_of_month":5,"title":"Aluguel","account_id":1}""",
+            ).payload().at("recurring").identity()
+
+            val response = client.callTool(
+                "update_recurring",
+                """{"id":$id,"category_id":$salary}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the declared category was dropped and the edit answered as complete: " +
+                    response.toolText(),
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "category_id" in reason && "expense" in reason,
+                "the refusal does not name the argument and the direction that disagree: $reason",
+            )
+        }
+    }
+
+    /**
+     * **The refusal has to be a rule, not a wall**: a split classified under a category that fits
+     * goes through, and every share carries it.
+     */
+    @Test
+    fun `an expense category on a split is kept, on every share`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+
+            val response = client.callTool(
+                "create_installment",
+                """{"card_id":${card.id},"amount":900,"count":3,"date":"2026-03-10",
+                 "title":"Compra","category_id":1}""".trimIndent().replace("\n", ""),
+            )
+
+            assertTrue(!response.isToolError(), "a fitting category was refused: ${response.toolText()}")
+
+            val written = world.transactionRepository.getAllTransactions().filter { it.title == "Compra" }
+            assertEquals(3, written.size, "the split did not produce three postings")
+            assertTrue(
+                written.all { it.nominalDimensionId == 1L },
+                "a share landed unclassified: ${written.map { it.nominalDimensionId }}",
+            )
         }
     }
 

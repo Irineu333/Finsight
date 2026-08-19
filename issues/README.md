@@ -9,22 +9,34 @@ arquivo em vez de ter sido descartada.
 
 ## Sumário por criticidade
 
-Nenhum achado chegou a **CRÍTICO**, e **ALTO** está vazia desde a
-[001](archive/001-create-transaction-accepts-negative-amount.md). **MÉDIO** também está: uma
-categoria que a direção não classifica é agora recusada nas cinco tools que montam um formulário, e
-a regra tem um dono em cada domínio — `TransactionForm.from` para um lançamento,
-`RecurringForm.toRecurring` para um template. Foram quatro achados da mesma família, encontrados em
-três rodadas: [004](archive/004-transaction-form-drops-arguments-silently.md),
-[016](archive/016-update-transaction-drops-the-category-silently.md), e então a
-[020](archive/020-create-installment-drops-the-category-silently.md) e a
-[021](archive/021-update-recurring-stores-an-incoherent-template.md), que só apareceram quando uma
-revisão adversarial perguntou onde mais a regra estava aberta.
+Nenhum achado chegou a **CRÍTICO**. **ALTO** esteve vazia desde a
+[001](archive/001-create-transaction-accepts-negative-amount.md) e voltou a ter uma: a
+[025](025-confirm-recurring-writes-the-wrong-direction.md), que grava no razão um lançamento na
+direção oposta à que o dinheiro andou.
 
-O que resta em **BAIXO** não corrompe número nenhum do ledger.
+A regra "uma categoria classifica uma direção só" foi fechada em cinco tools, em três rodadas —
+[004](archive/004-transaction-form-drops-arguments-silently.md),
+[016](archive/016-update-transaction-drops-the-category-silently.md),
+[020](archive/020-create-installment-drops-the-category-silently.md),
+[021](archive/021-update-recurring-stores-an-incoherent-template.md) — e cada rodada foi apresentada
+como a última. **Não era.** As cinco são as tools que montam um formulário, e esse recorte é
+exatamente o que escondeu a sexta: `confirm_recurring` não monta formulário nenhum, e é a única
+escrita da superfície que chega ao razão sem um. Fechar as cinco e declarar a família encerrada foi
+o que fez o achado demorar quatro rodadas a aparecer.
+
+A lição está registrada aqui porque se repetiu: quando um achado é de uma classe, o que fecha a
+classe é procurar onde mais ela vive — não corrigir a ocorrência e reler a lista de ocorrências
+conhecidas.
 
 | # | Issue | Área | Tipo |
 |---|---|---|---|
+| **ALTO** |
+| [025](025-confirm-recurring-writes-the-wrong-direction.md) | `confirm_recurring` grava no razão um lançamento na direção errada | recurring / mcp / ledger | dados |
+| **MÉDIO** |
+| [026](026-incoherent-templates-already-stored-have-no-migration.md) | Templates incoerentes já gravados não têm migração, e três telas discordam sobre eles | recurring / database | dados |
 | **BAIXO** |
+| [027](027-update-recurring-cannot-remove-a-title.md) | `update_recurring` não consegue apagar um título, e a tool vizinha documenta o contrário | mcp | correção |
+| [028](028-architecture-tests-scan-worktrees.md) | Os testes de arquitetura varrem worktrees dentro do repo e acusam o código delas | build / testes | infraestrutura |
 | [022](022-category-id-zero-means-two-things.md) | Nas criações, `category_id: 0` não é uma forma de falar, e isso não está escrito | mcp | consistência |
 | [023](023-a-refused-plan-still-leaves-an-invoice-behind.md) | Uma parcela bloqueada no meio do plano deixa a primeira fatura para trás | creditcards | dados |
 | [024](024-update-transaction-still-discards-two-arguments.md) | A edição ainda descarta `invoice_month` e `title` vazio, e recusa o cartão carregado como se fosse dado | mcp | correção |

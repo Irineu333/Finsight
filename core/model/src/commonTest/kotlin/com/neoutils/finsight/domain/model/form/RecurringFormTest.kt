@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
@@ -56,11 +57,14 @@ class RecurringFormTest {
     /**
      * **A template cannot be persisted classified under a category that cannot classify it.**
      *
-     * `toRecurring` is where a template is validated, and it already settles the same question for
-     * the card: an income has none, whatever the form was holding. The category is the other half
-     * of that question and is answered nowhere on this path — `RecurringForm.from` filters it, and
-     * `SaveRecurringUseCaseImpl` builds the form through the constructor, so nothing filters it
-     * when a template is saved.
+     * `toRecurring` validates a template, and it settles both halves of what the direction can
+     * carry: an income has no card, whatever the form was holding, and no expense category. Every
+     * caller that persists reaches here — including the ones that build the form through its
+     * constructor rather than through `from`.
+     *
+     * The template has to come back **Right**: asserting only that the category is absent would
+     * be satisfied by a refusal, which is a different outcome and would hide this rule the day
+     * another one starts refusing first.
      */
     @Test
     fun `an income template keeps no expense category`() {
@@ -76,10 +80,36 @@ class RecurringFormTest {
             category = groceries,
         ).toRecurring(createdAt = 0L)
 
+        val persisted = assertNotNull(
+            template.getOrNull(),
+            "the template was refused rather than filtered: ${template.leftOrNull()}",
+        )
         assertNull(
-            template.getOrNull()?.category,
+            persisted.category,
             "an income template was persisted classified under an expense category",
         )
+    }
+
+    /** The other direction of the same rule, which nothing else in the suite exercises. */
+    @Test
+    fun `an expense template keeps no income category`() {
+        val salary = category(id = 2, name = "Salário", type = Category.Type.INCOME)
+
+        val template = RecurringForm(
+            type = TransactionType.EXPENSE,
+            amount = "30000",
+            title = "Aluguel",
+            dayOfMonth = "5",
+            account = account,
+            creditCard = null,
+            category = salary,
+        ).toRecurring(createdAt = 0L)
+
+        val persisted = assertNotNull(
+            template.getOrNull(),
+            "the template was refused rather than filtered: ${template.leftOrNull()}",
+        )
+        assertNull(persisted.category)
     }
 
     /** The mirror, so the rule is a rule and not a blanket drop. */

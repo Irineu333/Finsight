@@ -190,6 +190,8 @@ internal class UpdateRecurringTool(
     override val description: String =
         "Change a monthly template — its amount, title, day, category, or where it posts. " +
             "What is not given keeps the value it already has. " +
+            "Give at most one of account_id or card_id; naming both is refused rather than " +
+            "settled for you. " +
             "An income always goes to an account, so type income is refused while a card is in " +
             "play — the one named in card_id, or the one the template already posts to. A " +
             "category classifies one direction only, and an edit whose direction the category " +
@@ -212,7 +214,7 @@ internal class UpdateRecurringTool(
                 "the template has when not given; pass 0 to leave it unclassified.",
         ),
         "account_id" to number("Post the cycle through this account, from list_accounts."),
-        "card_id" to number("Charge the cycle to this card, from list_cards."),
+        "card_id" to number("Charge the cycle to this card, from list_cards. Expenses only."),
         required = listOf("id"),
     )
 
@@ -228,13 +230,23 @@ internal class UpdateRecurringTool(
         val namedAccount = arguments.long("account_id")
         val namedCard = arguments.long("card_id")
 
-        val card = namedCard?.let { creditCardRepository.require(it) }?.takeIf { namedAccount == null }
+        val summary = "recurring ${stored.label}"
+
+        if (namedAccount != null && namedCard != null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "A cycle posts in one place: give `account_id` or `card_id`, not both.",
+                ),
+                summary = summary,
+            )
+        }
+
+        val card = namedCard?.let { creditCardRepository.require(it) }
             ?: stored.creditCard.takeIf { namedAccount == null }
         val account = namedAccount?.let { accountRepository.require(it) }
             ?: stored.account.takeIf { card == null }
 
         val amount = arguments.money("amount") ?: stored.amount
-        val summary = "recurring ${stored.label}"
 
         val type = arguments.oneOf("type", RECURRING_TYPES.keys.toList())
             ?.let { RECURRING_TYPES.getValue(it) }

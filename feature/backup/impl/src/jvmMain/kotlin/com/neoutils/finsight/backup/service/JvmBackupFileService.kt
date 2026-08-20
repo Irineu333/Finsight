@@ -8,6 +8,8 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import java.awt.Component
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
@@ -95,17 +97,8 @@ class JvmBackupFileService : BackupFileService {
         }
     }
 
-    /**
-     * A candidate is opened with Room and migrated in place before anything is decided
-     * about it, and a capture only lives until it has been handed over, so both live where
-     * the system throws files away rather than beside the database one of them might come
-     * to replace.
-     */
-    private fun createPrivateFile(): File {
-        val directory = File(System.getProperty("java.io.tmpdir"), PRIVATE_DIRECTORY)
-            .apply { mkdirs() }
-        return File.createTempFile(CANDIDATE_PREFIX, CANDIDATE_SUFFIX, directory)
-    }
+    private fun createPrivateFile(): File =
+        Files.createTempFile(privateDirectory, CANDIDATE_PREFIX, CANDIDATE_SUFFIX).toFile()
 }
 
 /**
@@ -127,6 +120,37 @@ private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.caus
  */
 private val DATABASE_FILES = listOf("", "-wal", "-shm")
 
+/**
+ * A candidate is opened with Room and migrated in place before anything is decided
+ * about it, and a capture only lives until it has been handed over, so both live where
+ * the system throws files away rather than beside the database one of them might come
+ * to replace.
+ *
+ * The directory is what keeps the archive to this user, and the only thing that can:
+ * on Linux `java.io.tmpdir` is `/tmp`, shared by every account on the machine, and
+ * both flows destroy and recreate the file they are handed a path to — the capture
+ * through `VACUUM INTO`, the restore through an overwriting copy — so a mode set on
+ * the file itself is gone before it holds a byte. It is also the only cover the `-wal`
+ * and `-shm` files Room leaves beside a candidate ever get, since this service does
+ * not create them.
+ *
+ * The name is drawn rather than fixed, because `mkdirs` accepts a directory another
+ * local user made first, with whatever permissions or symlink they chose;
+ * [Files.createTempDirectory] refuses a path that exists. Made on first use, so a run
+ * that never opens the backup screen leaves nothing behind, and made once for the run
+ * rather than once per service, so that opening the screen twice does not strand an
+ * empty directory each time. It is asked to go on exit, which it can be, because
+ * everything put inside it is removed as it is finished with.
+ *
+ * No [java.nio.file.attribute.FileAttribute] is passed: the JDK already applies
+ * `rwx------` and `rw-------` where the filesystem has POSIX modes and skips them
+ * where it has none, while an explicit permission attribute would throw on Windows.
+ */
+private val privateDirectory: Path by lazy {
+    Files.createTempDirectory(PRIVATE_DIRECTORY).also { it.toFile().deleteOnExit() }
+}
+
+/** The prefix of the drawn directory name, not a name of its own. */
 private const val PRIVATE_DIRECTORY = "finsight-backup"
 private const val CANDIDATE_PREFIX = "candidate-"
 private const val CANDIDATE_SUFFIX = ".db"

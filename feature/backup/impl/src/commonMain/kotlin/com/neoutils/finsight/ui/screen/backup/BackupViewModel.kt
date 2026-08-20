@@ -20,6 +20,7 @@ import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.backupFileName
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -46,7 +48,10 @@ import kotlin.time.Instant
  * what it is handed. Neither has an owner other than this view model — `:core:database`
  * has no file API and is not getting one — so every way out of both flows removes them,
  * including the ways the user chose: a refused file, and a confirmation dismissed
- * without an answer.
+ * without an answer. Leaving the screen is one of those ways and the one that takes the
+ * most care: it cancels the scope both flows run in, and a suspending call in a `finally`
+ * does not run once its coroutine is cancelled, so every removal here is made under
+ * [NonCancellable].
  *
  * **The confirmation is only ever asked about an approved file** (`local-backup` spec).
  * The gate runs first and in full, and its refusals reach the user as one sentence each;
@@ -127,38 +132,45 @@ class BackupViewModel(
         } catch (cause: DatabaseCaptureException) {
             fail(cause.error.toBackupError())
         } finally {
-            files.discard(path)
+            withContext(NonCancellable) { files.discard(path) }
         }
     }
 
     /**
      * Copies in what the user picked, puts it through the gate, and only then has
-     * anything to ask about. A refused file is removed where it is refused: nobody is
-     * going to come back for it, and the archive in use never knew it existed.
+     * anything to ask about.
+     *
+     * The copy is this flow's until the confirmation claims it, and every other way out
+     * removes it — refused, failed, or walked away from. Nobody is coming back for it,
+     * and the archive in use never knew it existed.
      */
     private fun chooseFileToRestore(context: PlatformContext) {
         if (_uiState.value.isBusy) return
         _uiState.update { it.copy(isVerifying = true) }
 
         viewModelScope.launch {
+            var unclaimed: String? = null
             try {
                 val chosen = files.copyInChosenFile(context).fold(
                     ifLeft = { error -> fail(error); null },
                     ifRight = { it },
                 ) ?: return@launch
 
+                unclaimed = chosen
+
                 when (val verification = candidateVerifier.verify(chosen)) {
                     is CandidateVerification.Accepted -> {
                         candidatePath = chosen
+                        unclaimed = null
                         _uiState.update { it.copy(confirmation = verification.toConfirmation()) }
                     }
 
                     is CandidateVerification.Rejected -> {
-                        files.discard(chosen)
                         fail(verification.reason.toBackupError())
                     }
                 }
             } finally {
+                unclaimed?.let { withContext(NonCancellable) { files.discard(it) } }
                 _uiState.update { it.copy(isVerifying = false) }
             }
         }
@@ -185,10 +197,10 @@ class BackupViewModel(
             } catch (cause: DatabaseRestoreException) {
                 cause.error.toBackupError()
             } finally {
+                dropCandidate()
                 _uiState.update { it.copy(isRestoring = false) }
             }
 
-            dropCandidate()
             error?.let(::fail)
         }
     }
@@ -212,7 +224,7 @@ class BackupViewModel(
     private suspend fun dropCandidate() {
         val path = candidatePath ?: return
         candidatePath = null
-        files.discard(path)
+        withContext(NonCancellable) { files.discard(path) }
         _uiState.update { it.copy(confirmation = null) }
     }
 

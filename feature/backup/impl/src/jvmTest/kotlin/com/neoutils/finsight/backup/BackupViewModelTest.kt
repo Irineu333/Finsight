@@ -4,6 +4,7 @@ package com.neoutils.finsight.backup
 
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.window.WindowScope
+import androidx.lifecycle.viewModelScope
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
@@ -41,11 +42,18 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -314,6 +322,55 @@ class BackupViewModelTest {
     }
 
     /**
+     * Leaving the screen is one tap on a control nothing disables, and by then the
+     * capture has already written a complete copy of the database. What the user walked
+     * away from is not a pending operation, it is a file.
+     */
+    @Test
+    fun `leaving the screen mid-export removes the file the capture wrote`() = runTest {
+        live.seedCategory("Mercado")
+        val picker = CompletableDeferred<Unit>()
+        files.exportGate = picker
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.Export(context))
+        awaitTrue("the capture wrote a file and the picker was offered it") {
+            files.handedOut.isNotEmpty()
+        }
+        val captured = File(files.handedOut.single())
+        assertTrue(captured.exists(), "the copy this test is about")
+
+        viewModel.viewModelScope.cancel()
+        picker.complete(Unit)
+
+        awaitGone(captured)
+    }
+
+    /**
+     * The removal itself is held open, so the screen dies while it is in flight. A
+     * removal that is skipped because the scope it ran in is gone leaves the whole
+     * archive behind, which is the same file the user was told had been discarded.
+     */
+    @Test
+    fun `leaving the screen as the candidate is dropped still removes it`() = runTest {
+        live.seedCategory("Mercado")
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        viewModel.idle()
+
+        val removal = CompletableDeferred<Unit>()
+        files.discardGate = removal
+        viewModel.onAction(BackupAction.DiscardCandidate)
+        viewModel.viewModelScope.cancel()
+        removal.complete(Unit)
+
+        awaitGone(backup)
+    }
+
+    /**
      * The export's own temporary, which exists for one reason: the capture writes to a
      * path, and on two of the three platforms the destination the user picked is not one.
      *
@@ -348,6 +405,27 @@ class BackupViewModelTest {
     }
 
     /**
+     * Waits on real time, because what these tests are waiting for runs on a real
+     * dispatcher: the removal is deliberately beyond the reach of the cancelled scope,
+     * so no amount of advancing the test clock brings it forward.
+     */
+    private suspend fun awaitTrue(what: String, condition: () -> Boolean) {
+        withContext(Dispatchers.Default) {
+            try {
+                withTimeout(WAIT_MILLIS) { while (!condition()) delay(POLL_MILLIS) }
+            } catch (cause: TimeoutCancellationException) {
+                fail(what)
+            }
+        }
+    }
+
+    /** The file, and the journal it may carry, are gone. */
+    private suspend fun awaitGone(file: File) {
+        awaitTrue("${file.name} is still there") { !File(file.absolutePath).exists() }
+        assertNoDatabaseAt(file)
+    }
+
+    /**
      * A database is up to three files while it is open in write-ahead logging, and a
      * candidate is opened with Room. Asserting only the main file would pass while two
      * others were left behind.
@@ -378,6 +456,12 @@ private class FakeBackupFileService(
     /** What the file picker answers next. */
     var chosen: Either<BackupError, String?> = null.right()
 
+    /** Held open by a test that needs the picker to still be waiting on the user. */
+    var exportGate: CompletableDeferred<Unit>? = null
+
+    /** Held open by a test that needs a removal to still be in flight. */
+    var discardGate: CompletableDeferred<Unit>? = null
+
     /** Where the export ended up, standing in for what the user picked. */
     var exported: File? = null
 
@@ -392,6 +476,7 @@ private class FakeBackupFileService(
         context: PlatformContext,
     ): Either<BackupError, Boolean> {
         handedOut += sourcePath
+        exportGate?.await()
         exported = destination().also { File(sourcePath).copyTo(it, overwrite = true) }
         return true.right()
     }
@@ -399,10 +484,14 @@ private class FakeBackupFileService(
     override suspend fun newCapturePath() = real.newCapturePath()
 
     override suspend fun discard(path: String) {
+        discardGate?.await()
         discarded += path
         real.discard(path)
     }
 }
+
+private const val WAIT_MILLIS = 10_000L
+private const val POLL_MILLIS = 10L
 
 /**
  * The context a picker would be presented from. Nothing in these tests opens one, and the

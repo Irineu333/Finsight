@@ -86,7 +86,8 @@ Nenhuma. `module-architecture` já governa a criação de uma feature `api`/`imp
 
 **Shell e app**
 - `settings.gradle.kts`, `app/shared/AppNavHost.kt`, `app/shared/di/AppModules.kt` e
-  `app/ios/build.gradle.kts` (que lista as `api` em dois blocos, hoje divergentes).
+  `app/ios/build.gradle.kts` (que lista as `api` em dois blocos, `export` e `api`, ambos a
+  serem atualizados).
 
 **Plataforma**
 - `AndroidManifest.xml` mais `res/xml/data_extraction_rules.xml` e `res/xml/backup_rules.xml`

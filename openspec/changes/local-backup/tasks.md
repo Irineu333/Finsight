@@ -1,17 +1,19 @@
-## 1. Spike — confirmar a estratégia de troca a quente (Q1 do design)
+## 1. Spike — estratégia de troca a quente (Q1) — **concluído**
 
-- [ ] 1.1 Escrever um `jvmTest` em `core/database` que monte o banco com `Room.databaseBuilder` num
-  **arquivo temporário** (nunca `inMemoryDatabaseBuilder`, que usa pool de conexão única e não
-  exercita o pool 1-escritor/4-leitores do WAL)
-- [ ] 1.2 No mesmo teste: semear o banco vivo, criar um segundo `.db` com o mesmo schema e linhas
-  diferentes, e coletar um `Flow` de DAO com Turbine
-- [ ] 1.3 Executar `ATTACH` / `DELETE` / `INSERT` / `DETACH` dentro de
-  `useWriterConnection { immediateTransaction { … } }` e afirmar que o `Flow` reemite **sem
-  chamada manual a `refreshAsync()`**
-- [ ] 1.4 Medir o risco do `sync()` (design, Risks): verificar se um `Flow` que começa a ser
-  coletado imediatamente antes da troca também é notificado
-- [ ] 1.5 Registrar o resultado no `design.md`, fechando Q1 — e, se a estratégia não se confirmar,
-  parar aqui e revisar D5 antes de qualquer outra tarefa
+- [x] 1.1 `jvmTest` em `core/database` com o banco em **arquivo temporário** (nunca
+  `inMemoryDatabaseBuilder`, que usa pool de conexão única e não exercita o pool
+  1-escritor/4-leitores do WAL)
+- [x] 1.2 Semear o banco vivo, criar um segundo `.db` com o mesmo schema e linhas diferentes, e
+  coletar um `Flow` de DAO — feito com `Channel` + `withTimeout`, sem acrescentar Turbine a
+  `core/database`
+- [x] 1.3 `ATTACH` / `DELETE` / `INSERT` / `DETACH` dentro de
+  `useWriterConnection { immediateTransaction { … } }`, afirmando que o `Flow` reemite **sem
+  chamada manual a `refreshAsync()`** — confirmado
+- [x] 1.4 Medir o risco do `sync()` — **não é alcançável por API pública**; o teste passou a afirmar
+  que, qualquer que seja o lado que vença a corrida, o estado final é o restaurado
+- [x] 1.5 Resultado registrado no `design.md`, Q1 fechado
+- [ ] 1.6 Decidir o destino de `RestoreSwapSpikeTest.kt`: ele é um spike, e as tarefas 3.3, 5.6 e
+  5.7 cobrem o mesmo terreno contra a API definitiva — mantê-lo como está duplicaria a cobertura
 
 ## 2. `:core:database` — abrir um banco em caminho arbitrário
 
@@ -132,7 +134,7 @@
 - [ ] 12.1 `backupGraph()` em `app/shared/.../AppNavHost.kt`
 - [ ] 12.2 `backupModule` em `app/shared/.../di/AppModules.kt`
 - [ ] 12.3 `export(projects.feature.backup.api)` **e** `api(projects.feature.backup.api)` em
-  `app/ios/build.gradle.kts` — as duas listas, hoje divergentes
+  `app/ios/build.gradle.kts` — as duas listas
 - [ ] 12.4 Teste em `AppModulesTest`: o `backupModule` resolve
 
 ## 13. Desligar o backup automático da plataforma (D11)

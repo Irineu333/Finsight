@@ -299,6 +299,9 @@ remove-se um backup que o usuário não sabia que tinha; no iOS, um que funciona
 o usuário a esperar. Depois desta entrega, **trocar de aparelho só recupera os dados se o usuário
 tiver exportado**.
 
+A exclusão no iOS foi decidida explicitamente, com esse custo à vista: a coerência entre plataformas
+pesou mais, e o backup que se abre mão de manter é um que pode voltar incoerente.
+
 ## Risks / Trade-offs
 
 - **`InvalidationTracker.sync()` é `internal` e `useWriterConnection` não o chama.** Um `Flow` que
@@ -351,19 +354,35 @@ seguinte. Arquivos já exportados permanecem válidos e restauráveis, porque s�
 
 ## Open Questions
 
-### Q1 — O `Flow` reemite mesmo? — **spike antes da implementação**
+### Q1 — O `Flow` reemite mesmo? — **fechado, confirmado**
 
-O ponto de D5 que nenhuma leitura de código fecha. Um `jvmTest` em `core/database`, ~60 linhas, sem
-tocar em produção: semear o banco vivo, criar um segundo `.db` com o mesmo schema e linhas
-diferentes, coletar `observeAllCategories()` com Turbine (já em `libs.versions.toml:41`), executar
-`ATTACH`/`DELETE`/`INSERT`/`DETACH`, e afirmar que o `Flow` reemite **sem nenhuma chamada manual a
-`refreshAsync()`**.
+Confirmado por spike executado sobre o projeto real, em
+`core/database/src/jvmTest/.../RestoreSwapSpikeTest.kt` — três testes, cinco execuções
+consecutivas, nenhuma falha:
 
-Detalhe que faz o teste valer: `Room.databaseBuilder` em **arquivo temporário**, nunca
-`inMemoryDatabaseBuilder` — em memória o Room usa pool de conexão única e não exercita o pool
-1-escritor/4-leitores do WAL. Se passar, confirma de uma vez os três pontos de risco (o trigger
-sobrevive ao `ATTACH`, o `DELETE` sem `WHERE` dispara, o refresh automático chega) e mede o risco do
-`sync()`.
+1. **A troca por `ATTACH` invalida.** Com a coleta de `observeAllCategories()` já em andamento e a
+   primeira emissão recebida, o ciclo `ATTACH` → `DELETE` filhos→pais → `INSERT … SELECT`
+   pais→filhos → `DETACH` dentro de `useWriterConnection { immediateTransaction { … } }` produz uma
+   segunda emissão com as linhas restauradas, **sem nenhuma chamada manual a `refreshAsync()`** e
+   sem fechar o banco. D5 está verificado, não inferido.
+2. **`VACUUM INTO` produz arquivo autossuficiente.** Executado por
+   `usePrepared("VACUUM INTO ?1")` com parâmetro ligado, gera um arquivo sem `-wal`/`-shm`, com os
+   bytes mágicos, `user_version = 14` e `sqlite_sequence` preservados. D2 está verificado.
+3. **`ATTACH DATABASE ?1` aceita parâmetro ligado através do Room.** Era inferência; passou a fato.
+
+Duas observações que o spike produziu e que valem para a implementação:
+
+- **O risco do `sync()` continua aberto, e não é alcançável por API pública.** A janela que ele
+  descreve — coleta iniciada, gatilhos ainda não instalados, troca acontece — não se abre apenas
+  lançando o coletor e trocando em seguida: o coletor sequer executa a primeira consulta antes da
+  troca. O terceiro teste passou a afirmar o que de fato importa nesse caso: qualquer que seja o
+  lado que vença a corrida, o estado em que o `Flow` se assenta é o restaurado, nunca o anterior.
+  Evidência a favor de o risco ser teórico: o Room registra o observador **antes** da primeira
+  emissão, então receber a primeira emissão já implica gatilhos instalados — que é exatamente a
+  condição do teste 1.
+- **Um teste cujo último comando devolve valor falha como `InvalidTestClassError`.** `runBlocking`
+  assume o tipo do último comando, e o JUnit exige retorno `Unit`. Custou uma execução; anotado para
+  não custar outra.
 
 ### Q2 — O MIME da escrita no Android — **teste em aparelho**
 

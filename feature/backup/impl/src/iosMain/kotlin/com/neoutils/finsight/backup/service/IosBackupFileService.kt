@@ -17,6 +17,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSError
@@ -67,20 +68,32 @@ class IosBackupFileService : BackupFileService {
         suggestedName: String,
         context: PlatformContext,
     ): Either<BackupError, Boolean> {
-        val staged = withContext(Dispatchers.Default) {
-            val directory = createPrivateDirectory()
-                ?: return@withContext BackupError.EXPORT_FAILED.left()
-            copyItem(sourcePath, "$directory/$suggestedName", BackupError.EXPORT_FAILED)
-        }.getOrElse { return it.left() }
+        val directory = withContext(Dispatchers.Default) { createPrivateDirectory() }
+            ?: return BackupError.EXPORT_FAILED.left()
 
-        return context.awaitPickedUrls(BackupError.EXPORT_FAILED) {
-            UIDocumentPickerViewController(
-                forExportingURLs = listOf(NSURL.fileURLWithPath(staged)),
-                // The staged copy is this app's to keep and drop; exporting without it
-                // would move the file out from under the temporary directory instead.
-                asCopy = true,
-            )
-        }.map { it.isNotEmpty() }
+        try {
+            val staged = withContext(Dispatchers.Default) {
+                copyItem(sourcePath, "$directory/$suggestedName", BackupError.EXPORT_FAILED)
+            }.getOrElse { return it.left() }
+
+            return context.awaitPickedUrls(BackupError.EXPORT_FAILED) {
+                UIDocumentPickerViewController(
+                    forExportingURLs = listOf(NSURL.fileURLWithPath(staged)),
+                    // The staged copy is this app's to keep and drop; exporting without it
+                    // would move the file out from under the temporary directory instead.
+                    asCopy = true,
+                )
+            }.map { it.isNotEmpty() }
+        } finally {
+            // Hung off the picker having answered rather than off presenting it: the
+            // export is a copy the picker makes while it is up, so it is done reading
+            // only once it calls back — and both callbacks come through here, as does a
+            // screen that went away mid-export, which is why the removal outlives
+            // cancellation. One call takes the staged file and the directory with it.
+            withContext(NonCancellable + Dispatchers.Default) {
+                NSFileManager.defaultManager.removeItemAtPath(directory, error = null)
+            }
+        }
     }
 
     override suspend fun newCapturePath(): Either<BackupError, String> =
@@ -94,6 +107,9 @@ class IosBackupFileService : BackupFileService {
         withContext(Dispatchers.Default) {
             DATABASE_FILES.forEach { suffix ->
                 NSFileManager.defaultManager.removeItemAtPath(path + suffix, error = null)
+            }
+            privateDirectoryOf(path)?.let { directory ->
+                NSFileManager.defaultManager.removeItemAtPath(directory, error = null)
             }
         }
     }
@@ -198,7 +214,7 @@ private class BackupPickerDelegate(
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun createPrivateDirectory(): String? {
-    val path = "${NSTemporaryDirectory().trimEnd('/')}/$PRIVATE_DIRECTORY/${NSUUID().UUIDString}"
+    val path = "${privateRoot()}/${NSUUID().UUIDString}"
     val created = NSFileManager.defaultManager.createDirectoryAtPath(
         path = path,
         withIntermediateDirectories = true,
@@ -207,6 +223,25 @@ private fun createPrivateDirectory(): String? {
     )
     return path.takeIf { created }
 }
+
+/**
+ * The directory [path] lies in, when it is one of this service's own: a single level
+ * under [privateRoot], which is the only shape [createPrivateDirectory] makes.
+ *
+ * A path to discard arrives from the caller, and the directory above an arbitrary file is
+ * not this service's to remove — hence the check rather than a bare parent.
+ */
+private fun privateDirectoryOf(path: String): String? {
+    val directory = path.substringBeforeLast('/', missingDelimiterValue = "")
+    val name = directory.substringAfterLast('/')
+    val own = name.isNotEmpty() &&
+        name != "." &&
+        name != ".." &&
+        directory == "${privateRoot()}/$name"
+    return directory.takeIf { own }
+}
+
+private fun privateRoot() = "${NSTemporaryDirectory().trimEnd('/')}/$PRIVATE_DIRECTORY"
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 private fun copyItem(

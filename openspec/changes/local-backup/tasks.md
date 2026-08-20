@@ -12,8 +12,11 @@
 - [x] 1.4 Medir o risco do `sync()` — **não é alcançável por API pública**; o teste passou a afirmar
   que, qualquer que seja o lado que vença a corrida, o estado final é o restaurado
 - [x] 1.5 Resultado registrado no `design.md`, Q1 fechado
-- [ ] 1.6 Decidir o destino de `RestoreSwapSpikeTest.kt`: ele é um spike, e as tarefas 3.3, 5.6 e
-  5.7 cobrem o mesmo terreno contra a API definitiva — mantê-lo como está duplicaria a cobertura
+- [x] 1.6 Destino de `RestoreSwapSpikeTest.kt` decidido: **vive até a seção 5 e é removido lá**,
+  quando cada uma de suas três afirmações tiver equivalente contra a API definitiva — a captura em
+  3.3, a reemissão do `Flow` em 5.9 e o assentamento no estado restaurado em 5.9. Removê-lo antes
+  disso deixaria "a substituição não derruba quem observa o banco" (spec `database-snapshot`) sem
+  nenhuma evidência, que é justamente o que 5.9 passa a cobrir
 
 ## 2. `:core:database` — abrir um banco em caminho arbitrário
 
@@ -64,6 +67,10 @@
 - [ ] 5.6 Teste: falha no meio da substituição deixa o acervo anterior integralmente intacto
 - [ ] 5.7 Teste: após a substituição, os três invariantes valem
 - [ ] 5.8 Teste: uma entidade nova com FK é contemplada sem alteração no código de substituição
+- [ ] 5.9 Teste: um `Flow` de DAO em coleta reemite com o acervo restaurado, sem `refreshAsync()`
+  manual e sem fechar o banco, e as instâncias já injetadas continuam operando — a afirmação que o
+  spike de Q1 sustenta hoje, refeita contra a API definitiva
+- [ ] 5.10 Remover `RestoreSwapSpikeTest.kt` (tarefa 1.6), uma vez que 3.3 e 5.9 estejam verdes
 
 ## 6. Feature `backup` — módulos
 

@@ -207,7 +207,10 @@
 - [x] 14.2 Exportar e restaurar de ponta a ponta no desktop — **verificado pelo autor do projeto**,
   que reportou o desktop e o Android funcionando. Não foi executado por mim: exige o seletor de
   arquivo do sistema, que nenhuma automação desta suíte alcança
-- [ ] 14.3 Exportar no Android e restaurar no desktop, confirmando a portabilidade do arquivo
+- [x] 14.3 Exportar no Android e restaurar no desktop — **verificado pelo autor do projeto**, que
+  confirmou a exportação entre plataformas. É a prova que sustenta D1: o formato é o próprio banco
+  SQLite, e o `BundledSQLiteDriver` embarca a mesma SQLite nos três alvos, de modo que o arquivo
+  atravessa sem conversão
 - [ ] 14.4 Fechar Q2 do design: verificar em aparelho real se o SAF anexa extensão derivada do MIME
   ao nome sugerido, e ajustar o MIME de escrita conforme o resultado
 - [x] 14.5 Fluxo Maestro em `.maestro/flows/backup/reach.yaml`, **rodado e verde**:

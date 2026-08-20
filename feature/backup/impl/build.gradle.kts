@@ -13,6 +13,9 @@ kotlin {
             implementation(projects.core.resources)
 
             implementation(projects.feature.backup.api)
+
+            implementation(libs.arrow.core)
+            implementation(libs.kotlinx.datetime)
         }
     }
 }

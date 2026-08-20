@@ -115,19 +115,19 @@
 
 ## 7. Feature `backup` — escolha e gravação de arquivo (D9)
 
-- [ ] 7.1 Declarar em `commonMain` o serviço de arquivo — escolher um arquivo para leitura e gravar
+- [x] 7.1 Declarar em `commonMain` o serviço de arquivo — escolher um arquivo para leitura e gravar
   um arquivo — no molde de `ReportShareService`: `suspend`, `Either`, `PlatformContext`
-- [ ] 7.2 `actual` Android: `ActivityResultRegistry.register` de três argumentos, contratos
+- [x] 7.2 `actual` Android: `ActivityResultRegistry.register` de três argumentos, contratos
   `OpenDocument` e `CreateDocument`, com `unregister()` garantido e tolerância a resultado que nunca
   chega
-- [ ] 7.3 `actual` desktop: `JFileChooser.showOpenDialog` e `showSaveDialog`, no molde de
+- [x] 7.3 `actual` desktop: `JFileChooser.showOpenDialog` e `showSaveDialog`, no molde de
   `JvmReportShareService.kt`
-- [ ] 7.4 `actual` iOS: `UIDocumentPickerViewController(forOpeningContentTypes:asCopy:)`,
+- [x] 7.4 `actual` iOS: `UIDocumentPickerViewController(forOpeningContentTypes:asCopy:)`,
   **mantendo referência forte ao delegate** até a callback, e `startAccessingSecurityScopedResource`
   em `try/finally`
-- [ ] 7.5 Abrir sem filtrar por tipo (`*/*`; `UTTypeData` no iOS) — a validade é decidida pelo
+- [x] 7.5 Abrir sem filtrar por tipo (`*/*`; `UTTypeData` no iOS) — a validade é decidida pelo
   conteúdo
-- [ ] 7.6 Nomear o arquivo exportado como `finsight-backup-AAAA-MM-DD.db`
+- [x] 7.6 Nomear o arquivo exportado como `finsight-backup-AAAA-MM-DD.db`
 
 ## 8. Feature `backup` — metadados do arquivo (D8)
 

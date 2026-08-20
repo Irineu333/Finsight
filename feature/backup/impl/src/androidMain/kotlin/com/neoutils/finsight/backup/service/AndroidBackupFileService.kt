@@ -195,9 +195,9 @@ private const val EVERY_MIME_TYPE = "*/*"
 
 /**
  * A backup is bytes to everything but this app, and no registered type describes it any
- * better. The framework may append an extension of its own choosing to the offered name on
- * the strength of this, which is unverified and the one question the export still owes a
- * real device.
+ * better. Whether the framework would append an extension of its own on the strength of it
+ * was the open question this carried — measured on a real export, it does not: the file
+ * lands under the name it was offered, `finsight-backup-<date>.db`.
  */
 private const val EXPORT_MIME_TYPE = "application/octet-stream"
 

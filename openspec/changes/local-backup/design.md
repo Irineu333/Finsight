@@ -473,12 +473,16 @@ Duas observações que o spike produziu e que valem para a implementação:
   assume o tipo do último comando, e o JUnit exige retorno `Unit`. Custou uma execução; anotado para
   não custar outra.
 
-### Q2 — O MIME da escrita no Android — **teste em aparelho**
+### Q2 — O MIME da escrita no Android — **fechada, verificada em aparelho**
 
 `CreateDocument` exige MIME concreto (o construtor sem argumento está depreciado justamente porque o
-curinga "breaks the automatic handling of file extensions"). Falta confirmar, em aparelho real, se o
-SAF anexa extensão derivada do MIME ao nome sugerido. Só afeta o nome do arquivo salvo, não a
-leitura — que é por conteúdo (D10).
+curinga "breaks the automatic handling of file extensions"). A dúvida era se o SAF anexaria uma
+extensão derivada de `application/octet-stream` ao nome oferecido, produzindo algo como
+`finsight-backup-2026-08-20.db.bin`.
+
+**Não anexa.** Verificado em exportação real: o arquivo sai como `finsight-backup-2026-08-20.db` no
+Android e no desktop. O MIME de escrita fica como está, e o nome que o usuário vê é o que
+`backupFileName` monta.
 
 ### Q3 — Exportar o estado atual antes de sobrescrever?
 

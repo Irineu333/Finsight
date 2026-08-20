@@ -211,8 +211,9 @@
   confirmou a exportação entre plataformas. É a prova que sustenta D1: o formato é o próprio banco
   SQLite, e o `BundledSQLiteDriver` embarca a mesma SQLite nos três alvos, de modo que o arquivo
   atravessa sem conversão
-- [ ] 14.4 Fechar Q2 do design: verificar em aparelho real se o SAF anexa extensão derivada do MIME
-  ao nome sugerido, e ajustar o MIME de escrita conforme o resultado
+- [x] 14.4 Q2 do design fechada: o SAF **não** anexa extensão derivada do MIME. Verificado em
+  exportação real pelo autor do projeto — o arquivo sai como `finsight-backup-2026-08-20.db` no
+  Android e no desktop. O `application/octet-stream` da escrita fica como está
 - [x] 14.5 Fluxo Maestro em `.maestro/flows/backup/reach.yaml`, **rodado e verde**:
   `[Passed] backup_reach (16s)`, pelo workspace, em `finsight_e2e` (`emulator-5556`) — AVD criada
   para isto, com as sete entradas da §2.2 conferidas por serial: API 36, 1080x2400, densidade 420,

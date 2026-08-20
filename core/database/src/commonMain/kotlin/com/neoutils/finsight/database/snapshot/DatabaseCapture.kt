@@ -9,6 +9,9 @@ import androidx.sqlite.execSQL
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.exception.DatabaseCaptureError
 import com.neoutils.finsight.database.exception.DatabaseCaptureException
+import com.neoutils.finsight.database.extension.SQLITE_FULL
+import com.neoutils.finsight.database.extension.SQLITE_NOTADB
+import com.neoutils.finsight.database.extension.resultCode
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
@@ -102,10 +105,6 @@ private fun stampOrigin(
 }
 
 /**
- * `androidx.sqlite` carries the SQLite result code inside the message and nowhere else:
- * `SQLiteException` is a plain `RuntimeException(message)` on JVM and native, and an
- * alias for `android.database.SQLException` on Android, and neither exposes a code.
- *
  * The code decides wherever it can. A full disk is 13. A 26 is the destination holding
  * bytes that are not a database — the only file `VACUUM INTO` opens, so nothing else in
  * this statement can produce it. Three refusals share the code 1 and only their own
@@ -137,11 +136,3 @@ private fun SQLiteException.toStampError(): DatabaseCaptureError = when (resultC
     SQLITE_FULL -> DatabaseCaptureError.NO_SPACE
     else -> DatabaseCaptureError.UNKNOWN
 }
-
-private fun SQLiteException.resultCode(): Int? =
-    RESULT_CODE.find(message.orEmpty())?.groupValues?.get(1)?.toIntOrNull()
-
-private val RESULT_CODE = Regex("""Error code: (\d+)""")
-
-private const val SQLITE_FULL = 13
-private const val SQLITE_NOTADB = 26

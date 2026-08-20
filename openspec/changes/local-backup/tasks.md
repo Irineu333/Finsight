@@ -46,35 +46,35 @@
 
 ## 4. `:core:database` — verificação de arquivo candidato (D4)
 
-- [ ] 4.1 Promover os três `verify*` de `SQLiteConnectionGuard.kt` a uma fachada pública que receba
+- [x] 4.1 Promover os três `verify*` de `SQLiteConnectionGuard.kt` a uma fachada pública que receba
   um caminho, sem expor `SQLiteConnection` a quem chama
-- [ ] 4.2 Implementar as camadas 1 a 3 do D4 revisado: `PRAGMA integrity_check` numa conexão
+- [x] 4.2 Implementar as camadas 1 a 3 do D4 revisado: `PRAGMA integrity_check` numa conexão
   descartável aberta em `SQLITE_OPEN_READONLY` (tratando os dois desfechos — exceção **ou** linha
   diferente de `ok`), presença de `room_master_table`, e `PRAGMA user_version` entre 1 e a versão do
   schema deste app. O piso de 1 não é zelo: com `user_version = 0` o Room cria o schema e semeia, e
   o arquivo é aprovado como acervo vazio
-- [ ] 4.3 Implementar a camada 4: abrir o candidato com Room apontando para o temporário, deixando
+- [x] 4.3 Implementar a camada 4: abrir o candidato com Room apontando para o temporário, deixando
   a cadeia de migrações e o `checkIdentity` rodarem
-- [ ] 4.4 Implementar a camada 5: os três guardas de invariante sobre o candidato já migrado
-- [ ] 4.5 Garantir que toda a verificação use conexão descartável e isolada, nunca a conexão de
+- [x] 4.4 Implementar a camada 5: os três guardas de invariante sobre o candidato já migrado
+- [x] 4.5 Garantir que toda a verificação use conexão descartável e isolada, nunca a conexão de
   produção
-- [ ] 4.6 Devolver um resultado tipado que distinga as causas de recusa — em especial "versão de
+- [x] 4.6 Devolver um resultado tipado que distinga as causas de recusa — em especial "versão de
   schema mais nova que a do app" das demais
-- [ ] 4.7 Ler o carimbo de origem (`snapshot_meta`) do candidato e as contagens do acervo, tolerando
+- [x] 4.7 Ler o carimbo de origem (`snapshot_meta`) do candidato e as contagens do acervo, tolerando
   a ausência da tabela — origem anulável. As contagens atravessam a fronteira **tipadas por
   fachada**, nunca como nomes de tabela: a feature não conhece tabela alguma (D7)
-- [ ] 4.8 Testes, um por camada: arquivo que não é banco, banco corrompido, `user_version` maior,
+- [x] 4.8 Testes, um por camada: arquivo que não é banco, banco corrompido, `user_version` maior,
   identidade de schema divergente, razão desequilibrado, dimensão órfã, violação de FK
-- [ ] 4.9 Testes dos quatro arquivos que a verificação anterior aprovaria, cada um recusado com
+- [x] 4.9 Testes dos quatro arquivos que a verificação anterior aprovaria, cada um recusado com
   causa distinguível de "arquivo inválido": **arquivo de zero byte**, **banco SQLite válido sem
   tabelas**, **banco de outro aplicativo** e **`.db` principal copiado sem o `-wal`**. Sem os
   quatro, a regressão volta sem ninguém perceber — o desfecho dela é uma restauração bem-sucedida
   que apaga o acervo
-- [ ] 4.10 Teste: a verificação não cria arquivo em caminho inexistente — com as flags padrão o
+- [x] 4.10 Teste: a verificação não cria arquivo em caminho inexistente — com as flags padrão o
   `open` do SQLite **cria** o arquivo, e o arquivo criado passaria em `integrity_check` — e não
   toca o banco em uso. Note que ela *altera* o candidato por construção: a camada 4 roda a cadeia
   de migrações sobre ele, e é por isso que o D4 manda copiá-lo para um temporário antes (camada 0)
-- [ ] 4.11 Teste do lado oposto, para que 4.9 não vire uma recusa por volume: **um backup legítimo
+- [x] 4.11 Teste do lado oposto, para que 4.9 não vire uma recusa por volume: **um backup legítimo
   de um acervo vazio é aceito** — zero contas e zero transações é o estado de toda instalação nova,
   e restaurá-lo apaga tudo, que é o que restaurar significa. A verificação recusa por identidade do
   arquivo, nunca pelo tamanho do que ele contém

@@ -46,7 +46,7 @@ internal fun SQLiteConnection.unbalancedTransactions(limit: Int = 20): List<Unba
 
 /** No entry may point at a dimension that does not exist. */
 internal fun SQLiteConnection.verifyNoOrphanDimensions(stage: String) {
-    val orphans = count(
+    val orphans = scalarLong(
         """
         SELECT COUNT(*) FROM `entries` `e`
         WHERE `e`.`dimensionId` IS NOT NULL
@@ -77,15 +77,5 @@ internal fun SQLiteConnection.verifyForeignKeys(stage: String) {
         throw MigrationAbortedException(
             "$stage: foreign key violations — ${violations.take(20).joinToString()}"
         )
-    }
-}
-
-private fun SQLiteConnection.count(sql: String): Long {
-    val statement = prepare(sql)
-    try {
-        statement.step()
-        return statement.getLong(0)
-    } finally {
-        statement.close()
     }
 }

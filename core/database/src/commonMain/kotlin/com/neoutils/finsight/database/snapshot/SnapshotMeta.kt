@@ -42,4 +42,8 @@ internal object SnapshotMeta {
     /** Written once, so reading the stamp never has to choose between rows. */
     const val INSERT = "INSERT INTO `$TABLE` " +
         "(`formatVersion`, `appVersion`, `platform`, `createdAt`) VALUES (?1, ?2, ?3, ?4)"
+
+    /** The columns in the order they were declared, which is the order they are read. */
+    const val SELECT = "SELECT `formatVersion`, `appVersion`, `platform`, `createdAt` " +
+        "FROM `$TABLE` LIMIT 1"
 }

@@ -964,6 +964,7 @@
     <string name="currency_error_base_currency_not_archivable">Esta é a moeda base. Troque a moeda base antes de arquivá-la.</string>
     <string name="currency_error_not_found">Esta moeda não existe mais.</string>
     <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
+    <string name="recurring_error_category_direction_mismatch">Esta categoria é do sentido oposto ao da recorrência. Escolha uma categoria do mesmo sentido ou deixe sem categoria.</string>
     <string name="build_transaction_error_amount_required">Informe o valor.</string>
     <string name="build_transaction_error_amount_not_positive">O valor deve ser maior que zero.</string>
     <string name="build_transaction_error_date_required">Informe a data.</string>

@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpTool
 import com.neoutils.finsight.mcp.McpToolEffect
@@ -83,8 +84,10 @@ internal class ConfirmRecurringTool(
             "skip_recurring. " +
             "Everything not given follows the template, including the title and the category. To " +
             "confirm a cycle that genuinely had neither, pass an empty title or a category_id of " +
-            "0. Redirecting the cycle to an account or card in another currency is refused rather " +
-            "than converted."
+            "0. A category classifies one direction only, and a cycle whose direction the " +
+            "category cannot classify — the one given here, or the one the template already " +
+            "carries — is refused rather than posted the other way round. Redirecting the cycle " +
+            "to an account or card in another currency is refused rather than converted."
 
     override val inputSchema = schema(
         "id" to number("The template whose cycle this is, from list_recurring."),
@@ -98,8 +101,9 @@ internal class ConfirmRecurringTool(
                 "for a cycle with no title of its own.",
         ),
         "category_id" to number(
-            "How to classify this cycle, from list_categories. Follows the template when not " +
-                "given; pass 0 for a cycle with no category.",
+            "How to classify this cycle, from list_categories. It must classify the template's " +
+                "own direction. Follows the template when not given; pass 0 for a cycle with no " +
+                "category.",
         ),
         "account_id" to number("Post this cycle to another account instead, from list_accounts."),
         "card_id" to number("Post this cycle to another card instead, from list_cards."),
@@ -130,13 +134,53 @@ internal class ConfirmRecurringTool(
         // Pre-filled from the template, exactly as the app's own sheet arrives, and then passed
         // explicitly — see this class's KDoc for why `null` may not simply be forwarded.
         val title = if (arguments.names("title")) arguments.string("title") else recurring.title
-        val category = if (arguments.names("category_id")) {
+
+        val declaredCategory = if (arguments.names("category_id")) {
             arguments.requiredLong("category_id")
                 .takeIf { it != NO_CATEGORY }
                 ?.let { categoryRepository.require(it) }
         } else {
-            recurring.category
+            null
         }
+
+        val carriedCategory = recurring.category.takeUnless { arguments.names("category_id") }
+
+        // `ConfirmRecurringUseCase` refuses this, because a confirmation is the one write that
+        // reaches the ledger with no form to drop what the direction cannot carry. The refusal is
+        // repeated here for the same reason the other five tools repeat it: the domain answers
+        // which combination is wrong, and only the tool can say which argument expresses it.
+        if (declaredCategory != null && !declaredCategory.type.isAccept(recurring.type)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "`category_id` names \"${declaredCategory.name}\", an " +
+                        "${declaredCategory.type.name.lowercase()} category, and this is an " +
+                        "${recurring.type.name.lowercase()} template: a category classifies one " +
+                        "direction only. Give an ${recurring.type.name.lowercase()} category, or " +
+                        "`category_id` 0 to confirm the cycle unclassified.",
+                ),
+                summary = "confirm ${recurring.label} for ${date.yearMonth}",
+            )
+        }
+
+        // The same disagreement reached from the other side: the category is the template's own
+        // and the call said nothing about it, so no argument is wrong and the refusal has to name
+        // what the template holds. A template stored incoherent before the rule existed has no
+        // migration, so this is reachable on data that is already there.
+        if (carriedCategory != null && !carriedCategory.type.isAccept(recurring.type)) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "The template is classified under \"${carriedCategory.name}\", an " +
+                        "${carriedCategory.type.name.lowercase()} category, and it is an " +
+                        "${recurring.type.name.lowercase()} template: a category classifies one " +
+                        "direction only. Give a `category_id` that classifies " +
+                        "${recurring.type.name.lowercase()}, or `category_id` 0 to confirm this " +
+                        "cycle unclassified. Correcting the template itself is update_recurring.",
+                ),
+                summary = "confirm ${recurring.label} for ${date.yearMonth}",
+            )
+        }
+
+        val category = declaredCategory ?: carriedCategory
 
         val target = when {
             account != null -> TransactionTarget.ACCOUNT

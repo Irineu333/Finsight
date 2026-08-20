@@ -29,6 +29,13 @@ import kotlinx.datetime.LocalDate
  * The selector is what makes this unreachable by the designed path — it offers only
  * accounts of the template's own currency. This is the net behind it.
  *
+ * **A category that classifies the opposite direction is refused too.** A confirmation is
+ * the one write of the app that reaches the ledger without a form, and the nature of the
+ * contra leg is taken from the category: an expense cycle classified under an income
+ * category posts the money out of the account and onto the income nominal, balanced and
+ * unnoticeable. The refusal answers for a [category] given here and for a template whose
+ * own is incoherent alike, since both reach the ledger by the same path.
+ *
  * ### What an omitted override means
  *
  * Every override is optional, and **the meaning of leaving one out is decided inside the

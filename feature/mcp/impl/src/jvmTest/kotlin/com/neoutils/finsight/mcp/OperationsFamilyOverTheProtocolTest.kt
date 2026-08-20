@@ -1,8 +1,11 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpServerHarness.Companion.freePort
 import kotlinx.coroutines.Dispatchers
@@ -266,6 +269,185 @@ class OperationsFamilyOverTheProtocolTest {
 
             assertNull(posted.title, "the template's title was substituted back in")
             assertNull(posted.nominalDimensionId, "the template's category was substituted back in")
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // 11.5b — the one write that reaches the ledger without a form to hold the rule
+    // ------------------------------------------------------------------------------
+
+    /**
+     * **A cycle classified against its direction is refused, and the refusal names the category,
+     * its kind and the direction.**
+     *
+     * The five tools that build a form already hold `isAccept`. This one builds none: the category
+     * it forwards decides the *nature of the contra leg*, so an expense template confirmed under an
+     * income category posts `{ASSET −, INCOME +}` — the money leaves the account and the posting
+     * reads back as income, with `Σ = 0` intact and the answer saying "Confirmed".
+     *
+     * So the ledger is what is asserted, never the payload.
+     */
+    @Test
+    fun `a cycle classified against its direction is refused, naming it and both kinds`() = runTest {
+        withOperationsWorld { world, client ->
+            val salary = world.world.category(
+                id = 2,
+                dimensionId = 2,
+                name = "Salário",
+                type = Category.Type.INCOME,
+            )
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "confirm_recurring",
+                """{"id":${world.recurringId},"date":"2026-03-10","category_id":${salary.id}}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "an expense cycle was classified under an income category: ${response.toolText()}",
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            listOf("category_id", "Salário", "income", "expense").forEach {
+                assertTrue(
+                    it in reason,
+                    "the refusal does not name `$it`, so the agent cannot tell which end is " +
+                        "wrong: $reason",
+                )
+            }
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count {
+                    it.recurringId == world.recurringId
+                },
+                "the cycle was posted, in the direction opposite to the one the money moved",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+            assertTrue(
+                world.occurrences.isEmpty(),
+                "the month was recorded as handled by a cycle that never posted",
+            )
+        }
+    }
+
+    /**
+     * **The same disagreement reached from the other side: the template carries it, and the call
+     * said nothing about the category.**
+     *
+     * A template stored incoherent before the rule existed has no migration, so this is reachable
+     * on real data. Nothing here is an argument the caller gave — the tool pre-fills the category
+     * from the template — so the refusal has to say what the *template* holds, or the agent has
+     * nothing to change.
+     */
+    @Test
+    fun `a template carrying an incoherent category is refused at the cycle, not posted`() = runTest {
+        withOperationsWorld { world, client ->
+            val salary = world.world.category(
+                id = 2,
+                dimensionId = 2,
+                name = "Salário",
+                type = Category.Type.INCOME,
+            )
+            val incoherent = Recurring(
+                id = 2,
+                type = TransactionType.EXPENSE,
+                amount = 39.90,
+                title = "Legado",
+                dayOfMonth = 10,
+                category = salary,
+                account = world.world.accounts.first { it.id == world.checkingId },
+                creditCard = null,
+                // The same origin the seeded template has, so the cycle number is the same one
+                // this world's March already answers for.
+                createdAt = assertNotNull(
+                    world.recurringRepository.getRecurringById(world.recurringId),
+                ).createdAt,
+            ).also { world.world.recurringList += it }
+
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "confirm_recurring",
+                """{"id":${incoherent.id},"date":"2026-03-10"}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the template's own incoherence was carried into the ledger: ${response.toolText()}",
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            listOf("Salário", "income", "expense").forEach {
+                assertTrue(
+                    it in reason,
+                    "the refusal does not name `$it`, so the agent cannot tell what is wrong: $reason",
+                )
+            }
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count {
+                    it.recurringId == incoherent.id
+                },
+                "the cycle was posted in the direction opposite to the one the money moved",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+        }
+    }
+
+    /**
+     * **The way out both refusals name actually works.**
+     *
+     * A refusal that tells the agent what to do instead is only as good as that instruction: both
+     * of them say `category_id` 0 confirms the cycle unclassified, and an agent that follows the
+     * one it was given has to arrive somewhere. So the escape is exercised on the harder of the
+     * two — a template whose *own* category is the incoherent one, where the agent changed no
+     * argument because it gave none.
+     */
+    @Test
+    fun `the category_id of 0 both refusals name confirms the cycle unclassified`() = runTest {
+        withOperationsWorld { world, client ->
+            val salary = world.world.category(
+                id = 2,
+                dimensionId = 2,
+                name = "Salário",
+                type = Category.Type.INCOME,
+            )
+            val incoherent = Recurring(
+                id = 2,
+                type = TransactionType.EXPENSE,
+                amount = 39.90,
+                title = "Legado",
+                dayOfMonth = 10,
+                category = salary,
+                account = world.world.accounts.first { it.id == world.checkingId },
+                creditCard = null,
+                createdAt = assertNotNull(
+                    world.recurringRepository.getRecurringById(world.recurringId),
+                ).createdAt,
+            ).also { world.world.recurringList += it }
+
+            val response = client.callTool(
+                "confirm_recurring",
+                """{"id":${incoherent.id},"date":"2026-03-10","category_id":0}""",
+            )
+
+            assertTrue(
+                !response.isToolError(),
+                "the escape the refusal names is itself refused: ${response.toolText()}",
+            )
+
+            val posted = world.transactionRepository.getAllTransactions()
+                .single { it.recurringId == incoherent.id }
+
+            assertNull(posted.nominalDimensionId, "the template's incoherent category was kept")
+            assertEquals(
+                -(39.90 * CENTS).toLong(),
+                posted.entries.single { it.account.id == world.checkingId }.amount,
+                "the cycle did not leave the account: it was posted as income after all",
+            )
         }
     }
 

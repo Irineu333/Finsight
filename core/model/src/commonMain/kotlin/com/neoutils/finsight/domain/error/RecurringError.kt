@@ -4,6 +4,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_error_account_required
 import com.neoutils.finsight.resources.recurring_error_amount_not_positive
 import com.neoutils.finsight.resources.recurring_error_amount_required
+import com.neoutils.finsight.resources.recurring_error_category_direction_mismatch
 import com.neoutils.finsight.resources.recurring_error_currency_mismatch
 import com.neoutils.finsight.resources.recurring_error_invalid_day
 import com.neoutils.finsight.resources.recurring_error_not_found
@@ -41,6 +42,25 @@ enum class RecurringError(val message: String) {
      * template's currency. This is the net, never the designed path.
      */
     CURRENCY_MISMATCH(message = "The target account is in a different currency from the recurring."),
+
+    /**
+     * The cycle was classified under a category that does not classify the direction the
+     * money moved in — an expense confirmed under an income category, or the reverse.
+     *
+     * A category classifies one direction only (`isAccept`), and the nature of the contra
+     * leg is taken *from the category*: the disagreement does not fail to balance, it
+     * posts the cycle on the opposite nominal. The money leaves the account and the
+     * posting reads back as income, with `Σ = 0` intact and nothing to notice.
+     *
+     * A confirmation is the one write of the app that reaches the ledger without a form,
+     * so the refusal lives in the use case: there is no drop-what-the-direction-cannot-
+     * carry step between the caller and the posting. It answers for a declared category
+     * and for a template whose own is incoherent alike, since both reach the ledger the
+     * same way.
+     */
+    CATEGORY_DIRECTION_MISMATCH(
+        message = "The category classifies the opposite direction from the recurring.",
+    ),
 }
 
 fun RecurringError.toUiText() = when (this) {
@@ -51,4 +71,6 @@ fun RecurringError.toUiText() = when (this) {
     RecurringError.INVALID_DAY -> UiText.Res(Res.string.recurring_error_invalid_day)
     RecurringError.ACCOUNT_REQUIRED -> UiText.Res(Res.string.recurring_error_account_required)
     RecurringError.CURRENCY_MISMATCH -> UiText.Res(Res.string.recurring_error_currency_mismatch)
+    RecurringError.CATEGORY_DIRECTION_MISMATCH ->
+        UiText.Res(Res.string.recurring_error_category_direction_mismatch)
 }

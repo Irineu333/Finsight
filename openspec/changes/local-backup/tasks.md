@@ -199,7 +199,24 @@
   referenciar os dois arquivos no manifesto
 - [x] 13.4 iOS: excluir `.db`, `-wal` e `-shm` do backup do iCloud com
   `setResourceValue(true, NSURLIsExcludedFromBackupKey, null)`, reaplicando a cada gravação
-- [ ] 13.5 Verificar em aparelho ou emulador que nenhum dos dois mecanismos copia o banco
+- [x] 13.5 Verificado em emulador (`finsight_e2e`, API 36), como **experimento controlado**: mesmo
+  aparelho, mesmo comando, mesmo banco no disco, variando só o APK.
+  - **Nuvem — provado.** Com o APK do `main` (`allowBackup="true"`), `bmgr backupnow` sobre o
+    transporte local copiou **648.704 bytes** e terminou em `result: Success`. Com o APK desta
+    branch, o mesmo comando responde **`Backup is not allowed`** e não transfere nada. O controle
+    é o que dá sentido ao resultado: sem ele, "não copiou" seria indistinguível de "o backup não
+    rodou".
+  - **Transferência entre aparelhos — inconclusivo por `adb`, e registrado como tal.** O emulador
+    expõe `D2dTransport`, e sob ele o app é recusado com "Transport rejected package because it
+    wasn't able to process it at the time" — que **não** prova nada: um `bmgr backupnow --all` de
+    controle mostra que praticamente todo pacote do sistema recebe essa mesma mensagem, porque o
+    transporte não opera fora de uma migração real. A metade `<device-transfer>` continua
+    sustentada pela declaração em `data_extraction_rules.xml` e pelo parser do AOSP
+    (`FullBackup.parseNewBackupSchemeFromXmlLocked`, que devolve `isSectionPresent`), não por
+    execução.
+  - Observação que justifica a entrega inteira: no aparelho, `finsight.db` tinha **4096 bytes** e
+    `finsight.db-wal`, **494.432**. O acervo vive no journal, e é exatamente isso que o Auto Backup
+    copiava como três arquivos sem coordenação transacional entre eles.
 
 ## 14. Verificação
 

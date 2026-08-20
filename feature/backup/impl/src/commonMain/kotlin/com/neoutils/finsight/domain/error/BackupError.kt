@@ -17,7 +17,7 @@ import com.neoutils.finsight.util.UiText
  * screen has to answer in.
  *
  * It is not a mirror of what `:core:database` reports, and that is the point of it being
- * here. The database tells eight kinds of candidate and eight kinds of I/O failure apart
+ * here. The database tells nine kinds of candidate and eight kinds of I/O failure apart
  * because it is describing a file; this enum groups them by the single thing the user can
  * do next, because it is describing a way out. Two refusals that lead to the same next
  * step are one error here, and the finer finding is not lost — it stays in the message
@@ -37,8 +37,8 @@ enum class BackupError(val message: String) {
      * database, a database of some other program, one this app's schema does not
      * recognise, or one whose contents break an invariant of the ledger.
      *
-     * The six refusals behind this value land on one sentence because the user acts on
-     * all six identically — pick a different file — and because the accounting ones may
+     * The seven refusals behind this value land on one sentence because the user acts on
+     * all seven identically — pick a different file — and because the accounting ones may
      * not say more than that: a person who is told an entry does not sum to zero has been
      * handed a fact about double-entry bookkeeping instead of a way forward.
      */
@@ -117,6 +117,7 @@ fun CandidateRejection.toBackupError(): BackupError = when (this) {
     CandidateRejection.UNBALANCED_LEDGER -> BackupError.NOT_A_BACKUP
     CandidateRejection.ORPHAN_DIMENSION -> BackupError.NOT_A_BACKUP
     CandidateRejection.FOREIGN_KEY_VIOLATION -> BackupError.NOT_A_BACKUP
+    CandidateRejection.MISPLACED_DIMENSION -> BackupError.NOT_A_BACKUP
 }
 
 /** Why the export produced no file. */

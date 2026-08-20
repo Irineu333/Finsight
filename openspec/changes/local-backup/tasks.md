@@ -55,7 +55,8 @@
   o arquivo é aprovado como acervo vazio
 - [x] 4.3 Implementar a camada 4: abrir o candidato com Room apontando para o temporário, deixando
   a cadeia de migrações e o `checkIdentity` rodarem
-- [x] 4.4 Implementar a camada 5: os três guardas de invariante sobre o candidato já migrado
+- [x] 4.4 Implementar a camada 5: os guardas de invariante sobre o candidato já migrado — os
+  três com que as migrações encerram, mais o pouso da dimensão, que só o candidato verifica
 - [x] 4.5 Garantir que toda a verificação use conexão descartável e isolada, nunca a conexão de
   produção
 - [x] 4.6 Devolver um resultado tipado que distinga as causas de recusa — em especial "versão de
@@ -64,7 +65,8 @@
   a ausência da tabela — origem anulável. As contagens atravessam a fronteira **tipadas por
   fachada**, nunca como nomes de tabela: a feature não conhece tabela alguma (D7)
 - [x] 4.8 Testes, um por camada: arquivo que não é banco, banco corrompido, `user_version` maior,
-  identidade de schema divergente, razão desequilibrado, dimensão órfã, violação de FK
+  identidade de schema divergente, razão desequilibrado, dimensão órfã, violação de FK, dimensão
+  pousando em tipo de conta que sua espécie não admite
 - [x] 4.9 Testes dos quatro arquivos que a verificação anterior aprovaria, cada um recusado com
   causa distinguível de "arquivo inválido": **arquivo de zero byte**, **banco SQLite válido sem
   tabelas**, **banco de outro aplicativo** e **`.db` principal copiado sem o `-wal`**. Sem os

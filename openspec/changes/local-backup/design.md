@@ -155,8 +155,9 @@ SQLite 3.50 do driver embarcado e no Room 2.8.4 deste projeto:
   verificar.** `RoomConnectionManager.kt:117-118` chama `onCreate` quando a versão é zero, e
   `onCreate` roda `createAllTables` mais os callbacks. Medido contra este projeto: um arquivo de
   **zero byte** entregue a `getRoomDatabase` volta com **16 tabelas, `user_version = 14` e as 6
-  moedas semeadas** — e então passa por `checkIdentity` e pelos três guardas do razão, porque um
-  razão vazio soma zero, não tem dimensão órfã e não viola chave estrangeira. Seria **aprovado**, e
+  moedas semeadas** — e então passa por `checkIdentity` e pelos guardas do razão, porque um
+  razão vazio soma zero, não tem dimensão órfã, não viola chave estrangeira e não pousa
+  dimensão nenhuma. Seria **aprovado**, e
   a restauração apagaria o acervo do usuário em favor de um banco recém-criado.
 - O caso degenerado não é só o arquivo de zero byte, e por isso `page_count > 0` não basta: um banco
   SQLite **válido e sem tabelas** (4096 bytes, `page_count = 1`), um banco **de outro aplicativo**

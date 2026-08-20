@@ -40,8 +40,9 @@ corrupção contra o banco de produção.
 
 A verificação SHALL cobrir, no mínimo: a integridade estrutural do arquivo, a evidência de que ele
 foi escrito por este app, a versão de schema declarada, a passagem pela cadeia de migrações do app,
-e os invariantes do razão — soma zero de entries por transação e moeda, ausência de dimensão órfã e
-ausência de violação de chave estrangeira.
+e os invariantes do razão — soma zero de entries por transação e moeda, ausência de dimensão órfã,
+ausência de violação de chave estrangeira e dimensão pousando em tipo de conta que sua espécie
+admite.
 
 A verificação MUST NOT criar o que deveria apenas conferir: um arquivo ausente, vazio ou sem schema
 SHALL ser reprovado, nunca preenchido com um schema novo e aprovado em seguida.
@@ -93,8 +94,9 @@ MUST NOT ser copiadas do arquivo.
 
 #### Scenario: Os invariantes valem depois da troca
 - **WHEN** uma substituição conclui
-- **THEN** o banco satisfaz soma zero por transação e moeda, não tem dimensão órfã e não tem
-  violação de chave estrangeira
+- **THEN** o banco satisfaz soma zero por transação e moeda, não tem dimensão órfã, não tem
+  violação de chave estrangeira e não tem dimensão pousada em tipo de conta que sua espécie não
+  admite
 
 #### Scenario: O ponto único de escrita não é usado
 - **WHEN** as linhas do arquivo são gravadas

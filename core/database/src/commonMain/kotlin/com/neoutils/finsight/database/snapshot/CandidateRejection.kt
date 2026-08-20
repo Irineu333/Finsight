@@ -19,4 +19,5 @@ enum class CandidateRejection(val message: String) {
     UNBALANCED_LEDGER("The ledger does not sum to zero for every transaction and currency"),
     ORPHAN_DIMENSION("An entry points at a dimension the database does not hold"),
     FOREIGN_KEY_VIOLATION("The database holds rows pointing at rows that do not exist"),
+    MISPLACED_DIMENSION("An entry carries a dimension on an account type it may not land on"),
 }

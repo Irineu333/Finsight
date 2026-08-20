@@ -29,7 +29,7 @@ perder o histórico contábil, e não há como reconstruí-lo de outra fonte.
   instalações: toda PK é `@PrimaryKey(autoGenerate = true)` (`AccountEntity.kt:12`,
   `TransactionEntity.kt:30`), e mesclar seria sincronização, não backup.
 - A restauração **valida antes de tocar no banco vivo**: bytes mágicos, `integrity_check`,
-  `user_version`, cadeia de migrações do Room e os três guardas de invariante que já existem em
+  `user_version`, cadeia de migrações do Room e os guardas de invariante de
   `SQLiteConnectionGuard.kt` — tudo num arquivo temporário, em conexão descartável e isolada. Um
   arquivo reprovado não altera nada.
 - A restauração **não reinicia o app**: `ATTACH DATABASE` do arquivo validado dentro de

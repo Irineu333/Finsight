@@ -282,7 +282,79 @@ class DatabaseVerificationTest {
         assertEquals(CandidateRejection.FOREIGN_KEY_VIOLATION, rejectionOf(file))
     }
 
+    @Test
+    fun `a dimension landing on an account type it may not land on is refused`() = runBlocking {
+        val file = goodBackup("landing")
+        onFile(file) {
+            it.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Wallet', 'ASSET', 'BRL', 'wallet', 0, 0, 0, 0)"
+            )
+            it.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Groceries', 'EXPENSE', 'BRL', 'shopping', 0, 0, 0, 0)"
+            )
+            it.execSQL("INSERT INTO `dimensions` (`kind`) VALUES ('INVOICE')")
+            it.execSQL("INSERT INTO `transactions` (`title`, `date`) VALUES ('t', '2026-01-01')")
+            // The invoice dimension lands on the nominal leg, where only a category may.
+            it.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, " +
+                    "`dimensionId`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT `id` FROM `accounts` WHERE `name` = 'Groceries'), 1000, 'BRL', " +
+                    "(SELECT MAX(`id`) FROM `dimensions`)"
+            )
+            it.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT `id` FROM `accounts` WHERE `name` = 'Wallet'), -1000, 'BRL'"
+            )
+        }
+
+        assertEquals(
+            CandidateRejection.MISPLACED_DIMENSION,
+            rejectionOf(file),
+            "it sums to zero, the dimension exists and no key is broken — the landing is all " +
+                "that is wrong, and every sum by that dimension would be quietly wrong after it",
+        )
+    }
+
     // ------------------------------------------------------------ what is accepted
+
+    @Test
+    fun `a dimension landing where it belongs is accepted`() = runBlocking<Unit> {
+        val file = goodBackup("landingok")
+        onFile(file) {
+            it.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Wallet', 'ASSET', 'BRL', 'wallet', 0, 0, 0, 0)"
+            )
+            it.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Groceries', 'EXPENSE', 'BRL', 'shopping', 0, 0, 0, 0)"
+            )
+            it.execSQL("INSERT INTO `dimensions` (`kind`) VALUES ('CATEGORY')")
+            it.execSQL("INSERT INTO `transactions` (`title`, `date`) VALUES ('t', '2026-01-01')")
+            it.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, " +
+                    "`dimensionId`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT `id` FROM `accounts` WHERE `name` = 'Groceries'), 1000, 'BRL', " +
+                    "(SELECT MAX(`id`) FROM `dimensions`)"
+            )
+            it.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT `id` FROM `accounts` WHERE `name` = 'Wallet'), -1000, 'BRL'"
+            )
+        }
+
+        acceptanceOf(file)
+    }
 
     @Test
     fun `a backup this app produced is accepted, and says where it came from`() = runBlocking {

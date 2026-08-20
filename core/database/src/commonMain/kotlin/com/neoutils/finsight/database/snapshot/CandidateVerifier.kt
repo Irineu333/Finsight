@@ -12,6 +12,7 @@ import com.neoutils.finsight.database.exception.UnbalancedLedgerException
 import com.neoutils.finsight.database.extension.SQLITE_CORRUPT
 import com.neoutils.finsight.database.extension.resultCode
 import com.neoutils.finsight.database.extension.scalarLong
+import com.neoutils.finsight.database.extension.verifyDimensionLanding
 import com.neoutils.finsight.database.extension.verifyForeignKeys
 import com.neoutils.finsight.database.extension.verifyLedgerBalanced
 import com.neoutils.finsight.database.extension.verifyNoOrphanDimensions
@@ -178,16 +179,22 @@ private fun SQLiteConnection.schemaVersionRejection(): CandidateRejection? {
 }
 
 /**
- * Layer 5. The three guards every migration closes with, over the candidate, in the
- * order the migrations run them — there is no second implementation of "the ledger is
- * balanced", and this is that one.
+ * Layer 5. The invariants of the ledger, over the candidate — there is no second
+ * implementation of any of them, and these are the ones.
  *
- * The order decides what a file breaking more than one rule is refused for, and it is
- * the migrations' order rather than a new one: an entry pointing at a dimension that is
- * not there is also a foreign key violation, and naming the dimension says more.
+ * The first three are the guards every migration closes with, run in the migrations'
+ * order rather than a new one, because the order decides what a file breaking more than
+ * one rule is refused for: an entry pointing at a dimension that is not there is also a
+ * foreign key violation, and naming the dimension says more.
  *
- * They are called one at a time because the last two raise the very same exception, and
- * position is the only thing that tells them apart.
+ * The landing comes last and only here. It needs the dimension to exist and the keys to
+ * hold before its answer means anything, and a migration is the wrong place for it: a
+ * migration refusing pre-existing data leaves the user unable to open the app at all,
+ * which is worse than what it would be refusing. A candidate has somewhere to go back
+ * to — the archive it did not replace.
+ *
+ * They are called one at a time because the last three raise the very same exception,
+ * and position is the only thing that tells them apart.
  */
 private fun SQLiteConnection.ledgerRejection(): CandidateRejection? {
     try {
@@ -204,6 +211,11 @@ private fun SQLiteConnection.ledgerRejection(): CandidateRejection? {
         verifyForeignKeys(STAGE)
     } catch (cause: MigrationAbortedException) {
         return CandidateRejection.FOREIGN_KEY_VIOLATION
+    }
+    try {
+        verifyDimensionLanding(STAGE)
+    } catch (cause: MigrationAbortedException) {
+        return CandidateRejection.MISPLACED_DIMENSION
     }
     return null
 }

@@ -7,6 +7,7 @@ import androidx.sqlite.execSQL
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.exception.DatabaseRestoreError
 import com.neoutils.finsight.database.exception.DatabaseRestoreException
+import com.neoutils.finsight.database.mapper.toEntity
 import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.database.snapshot.replaceContentFrom
 import com.neoutils.finsight.domain.model.DimensionKind
@@ -226,6 +227,16 @@ class DatabaseRestoreTest {
             countInLive("SELECT COUNT(*) FROM pragma_foreign_key_check"),
             "referential integrity survived an order that was derived, not written down",
         )
+        assertEquals(
+            0L,
+            countInLive(
+                "SELECT COUNT(*) FROM `entries` `e` " +
+                    "JOIN `dimensions` `d` ON `d`.`id` = `e`.`dimensionId` " +
+                    "JOIN `accounts` `a` ON `a`.`id` = `e`.`accountId` " +
+                    "WHERE (`d`.`kind`, `a`.`type`) NOT IN (VALUES $ALLOWED_LANDINGS)"
+            ),
+            "every dimension still sits on an account type its kind may land on",
+        )
     }
 
     @Test
@@ -400,3 +411,12 @@ class DatabaseRestoreTest {
         assertEquals(listOf("Groceries"), liveCategoryNames())
     }
 }
+
+/**
+ * The `(kind, type)` pairs a leg may carry, read from [DimensionKind.landsOn] and spelled
+ * the way the chart of accounts persists them. The rule keeps its single owner in
+ * `:core:ledger`; a copy of it here is a copy that can disagree with the ledger.
+ */
+private val ALLOWED_LANDINGS = DimensionKind.entries
+    .flatMap { kind -> kind.landsOn.map { "('${'$'}{kind.name}', '${'$'}{it.toEntity().name}')" } }
+    .joinToString()

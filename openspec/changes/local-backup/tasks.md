@@ -132,7 +132,10 @@
 ## 8. Feature `backup` — metadados do arquivo (D8)
 
 - [ ] 8.1 Obter a versão do app e a plataforma sem acoplar a feature aos módulos de app, e entregá-las
-  à captura — a criação da tabela é do core (tarefa 3.5), a feature só fornece o que só ela sabe
+  à captura — a criação da tabela é do core (tarefa 3.5), a feature só fornece o que só ela sabe.
+  **Não reusar `getPlatform().name`**: ele devolve `"Android 34"`, `"Java 21.0.1"`, `"iOS 17.2"` —
+  com a versão embutida, para diagnóstico. Um carimbo assim jamais seria traduzível por um `when`
+  exaustivo na leitura. O carimbo precisa de um identificador fechado próprio
 - [ ] 8.2 Exibir a origem lida pela verificação, traduzindo-a; a feature não abre o arquivo nem fala
   SQL — não há precedente disso em `feature/` e esta entrega não abre o primeiro
 - [ ] 8.3 Teste: o carimbo não retorna ao banco numa restauração (a cobertura de criação vive em
@@ -142,18 +145,24 @@
 
 - [ ] 9.1 `BackupScreen` com dois grupos, exportar e restaurar, e a declaração do que o arquivo
   contém e do que ele não contém
+- [ ] 9.0 Promover `SettingsTileTheme` (hoje `private` em `SettingsScreen.kt`) para onde as duas
+  telas a alcancem, em vez de copiá-la — ela só configura tokens do tema e não tem nada de
+  settings; a segunda cópia é o momento de decidir isso, não a terceira
 - [ ] 9.2 Declarar na tela que o app não guarda cópias por conta própria e que a recuperação em
   outro aparelho depende do arquivo exportado
 - [ ] 9.3 `BackupViewModel` com `UiState` e `Action`, orquestrando capturar → gravar e escolher →
   validar → confirmar → substituir
 - [ ] 9.4 Modal de confirmação exibindo data, plataforma, versão do app e contagens do acervo, com o
   aviso de substituição irreversível — e só após a aprovação do arquivo
-- [ ] 9.5 Estado de "origem desconhecida" quando o arquivo não tem `backup_meta`
+- [ ] 9.5 Estado de "origem desconhecida" quando o arquivo não tem `snapshot_meta` — a tabela chama-se
+  assim desde a tarefa 3.5, e a redação anterior desta task ficou com o nome antigo
 - [ ] 9.6 `NavGraphBuilder.backupGraph()` como subgrafo `navigation<BackupGraph>`
 - [ ] 9.7 Módulo Koin da feature: `viewModel {}` para a tela, `single {}`/`factory {}` conforme o
   serviço de arquivo
-- [ ] 9.8 `Modifier.testTag` nos elementos alcançados por E2E, e `Modifier.exposeTestTags()` no
-  modal de confirmação, que é raiz de composição própria
+- [ ] 9.8 `Modifier.testTag` nos elementos alcançados por E2E. O modal **não** precisa chamar
+  `Modifier.exposeTestTags()` à mão: `ModalManager` já o aplica no `ModalBottomSheet` que toda
+  subclasse de `ModalBottomSheet` renderiza. A exigência real é o modal estender essa classe, como
+  todos os outros do app — quem se desviar disso é que perde o alcance do driver
 
 ## 10. Strings
 

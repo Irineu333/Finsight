@@ -36,13 +36,23 @@
   `user_version`, `sqlite_sequence` e `room_master_table`
 - [x] 3.4 Teste: uma transação aberta e não confirmada em outra conexão não aparece no arquivo
   capturado
+- [ ] 3.5 Carimbar a origem no arquivo já capturado, dentro da própria captura (D7, D8): criar
+  `snapshot_meta` com `formatVersion`, `appVersion`, `platform` e `createdAt` — nunca `@Entity`,
+  nunca no `AppDatabase` —, numa conexão descartável do driver, jamais reabrindo o arquivo com Room,
+  que o devolveria em WAL e com `-wal`/`-shm` ao lado. `captureInto` passa a receber a origem;
+  `schemaVersion` não é gravado, porque o `user_version` já viaja no arquivo
+- [ ] 3.6 Teste: a tabela existe no arquivo capturado, não existe no banco de produção, e o arquivo
+  capturado continua sem `-wal`/`-shm` depois de carimbado
 
 ## 4. `:core:database` — verificação de arquivo candidato (D4)
 
 - [ ] 4.1 Promover os três `verify*` de `SQLiteConnectionGuard.kt` a uma fachada pública que receba
   um caminho, sem expor `SQLiteConnection` a quem chama
-- [ ] 4.2 Implementar as camadas 1 a 3: bytes mágicos `SQLite format 3\0`, `PRAGMA integrity_check`
-  e `PRAGMA user_version` menor ou igual à versão do schema deste app
+- [ ] 4.2 Implementar as camadas 1 a 3 do D4 revisado: `PRAGMA integrity_check` numa conexão
+  descartável aberta em `SQLITE_OPEN_READONLY` (tratando os dois desfechos — exceção **ou** linha
+  diferente de `ok`), presença de `room_master_table`, e `PRAGMA user_version` entre 1 e a versão do
+  schema deste app. O piso de 1 não é zelo: com `user_version = 0` o Room cria o schema e semeia, e
+  o arquivo é aprovado como acervo vazio
 - [ ] 4.3 Implementar a camada 4: abrir o candidato com Room apontando para o temporário, deixando
   a cadeia de migrações e o `checkIdentity` rodarem
 - [ ] 4.4 Implementar a camada 5: os três guardas de invariante sobre o candidato já migrado
@@ -50,17 +60,26 @@
   produção
 - [ ] 4.6 Devolver um resultado tipado que distinga as causas de recusa — em especial "versão de
   schema mais nova que a do app" das demais
-- [ ] 4.7 Ler `backup_meta` do candidato e as contagens do acervo, tolerando a ausência da tabela
+- [ ] 4.7 Ler o carimbo de origem (`snapshot_meta`) do candidato e as contagens do acervo, tolerando
+  a ausência da tabela — origem anulável. As contagens atravessam a fronteira **tipadas por
+  fachada**, nunca como nomes de tabela: a feature não conhece tabela alguma (D7)
 - [ ] 4.8 Testes, um por camada: arquivo que não é banco, banco corrompido, `user_version` maior,
   identidade de schema divergente, razão desequilibrado, dimensão órfã, violação de FK
+- [ ] 4.9 Testes dos quatro arquivos que a verificação anterior aprovaria, cada um recusado com
+  causa distinguível de "arquivo inválido": **arquivo de zero byte**, **banco SQLite válido sem
+  tabelas**, **banco de outro aplicativo** e **`.db` principal copiado sem o `-wal`**. Sem os
+  quatro, a regressão volta sem ninguém perceber — o desfecho dela é uma restauração bem-sucedida
+  que apaga o acervo
+- [ ] 4.10 Teste: a verificação não altera o candidato e não cria arquivo em caminho inexistente
 
 ## 5. `:core:database` — substituição de conteúdo (D5, D6)
 
-- [ ] 5.1 Derivar a ordem topológica das tabelas a partir de `sqlite_master` e
-  `PRAGMA foreign_key_list`, sem lista fixa
+- [ ] 5.1 Derivar a ordem topológica das tabelas a partir do `sqlite_master` **de `main`** — nunca do
+  anexado, que traz `snapshot_meta` junto — e de `PRAGMA foreign_key_list`, sem lista fixa
 - [ ] 5.2 Implementar a substituição: `ATTACH` fora da transação, `DELETE` de filhos para pais e
   `INSERT … SELECT` de pais para filhos dentro de `immediateTransaction`, `DETACH` após o `COMMIT`
-- [ ] 5.3 Excluir `room_master_table` e `sqlite_sequence` da cópia
+- [ ] 5.3 Excluir `room_master_table` e `sqlite_sequence` da cópia, e o carimbo de origem pela mesma
+  constante que a captura usa para criá-lo
 - [ ] 5.4 Não usar `defer_foreign_keys` nem `foreign_keys = OFF` — a ordem topológica é o mecanismo
   (design, D6)
 - [ ] 5.5 Garantir o `DETACH` em `finally`, inclusive quando a transação reverte
@@ -99,11 +118,12 @@
 
 ## 8. Feature `backup` — metadados do arquivo (D8)
 
-- [ ] 8.1 Criar `backup_meta` no arquivo já capturado, com `formatVersion`, `schemaVersion`,
-  `appVersion`, `platform` e `createdAt` — nunca no `AppDatabase`
-- [ ] 8.2 Obter a versão do app e a plataforma sem acoplar a feature aos módulos de app
-- [ ] 8.3 Teste: a tabela existe no arquivo exportado, não existe no banco de produção, e não
-  retorna ao banco numa restauração
+- [ ] 8.1 Obter a versão do app e a plataforma sem acoplar a feature aos módulos de app, e entregá-las
+  à captura — a criação da tabela é do core (tarefa 3.5), a feature só fornece o que só ela sabe
+- [ ] 8.2 Exibir a origem lida pela verificação, traduzindo-a; a feature não abre o arquivo nem fala
+  SQL — não há precedente disso em `feature/` e esta entrega não abre o primeiro
+- [ ] 8.3 Teste: o carimbo não retorna ao banco numa restauração (a cobertura de criação vive em
+  `:core:database`, tarefa 3.6)
 
 ## 9. Feature `backup` — tela e fluxo
 

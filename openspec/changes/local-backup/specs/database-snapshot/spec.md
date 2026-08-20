@@ -38,10 +38,13 @@ O motivo é uma propriedade do mecanismo, não uma precaução: a corrupção de
 reportada como corrupção **da conexão**, o que faria um arquivo defeituoso disparar o tratamento de
 corrupção contra o banco de produção.
 
-A verificação SHALL cobrir, no mínimo: a assinatura de banco SQLite, a integridade estrutural do
-arquivo, a versão de schema declarada, a passagem pela cadeia de migrações do app, e os invariantes
-do razão — soma zero de entries por transação e moeda, ausência de dimensão órfã e ausência de
-violação de chave estrangeira.
+A verificação SHALL cobrir, no mínimo: a integridade estrutural do arquivo, a evidência de que ele
+foi escrito por este app, a versão de schema declarada, a passagem pela cadeia de migrações do app,
+e os invariantes do razão — soma zero de entries por transação e moeda, ausência de dimensão órfã e
+ausência de violação de chave estrangeira.
+
+A verificação MUST NOT criar o que deveria apenas conferir: um arquivo ausente, vazio ou sem schema
+SHALL ser reprovado, nunca preenchido com um schema novo e aprovado em seguida.
 
 Os invariantes do razão SHALL ser verificados pelo mesmo código que as migrações do banco já usam.
 MUST NOT existir uma segunda implementação de "o razão está equilibrado".
@@ -54,6 +57,12 @@ MUST NOT existir uma segunda implementação de "o razão está equilibrado".
 - **WHEN** os invariantes do razão são verificados num arquivo candidato
 - **THEN** são executadas as mesmas verificações aplicadas ao final das migrações de schema, e não
   uma reimplementação delas
+
+#### Scenario: Arquivo que é um banco, mas não deste app
+- **WHEN** um arquivo SQLite íntegro que não foi escrito por este app é submetido à verificação —
+  um banco sem tabelas, um banco de outro aplicativo, ou o arquivo principal de um banco cujo
+  conteúdo ficou no journal
+- **THEN** ele é reprovado, e MUST NOT ser tratado como um acervo vazio válido
 
 #### Scenario: Versão de schema além da conhecida
 - **WHEN** o arquivo declara versão de schema superior à do app

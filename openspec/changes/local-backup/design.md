@@ -130,19 +130,50 @@ arquivo (D8) antes de perguntar, e a tela diz que a restauração apaga o que es
 Cinco camadas, nesta ordem, todas antes de o banco vivo ser tocado:
 
 ```
-1. os 16 bytes mágicos "SQLite format 3\0"
-2. PRAGMA integrity_check
-3. PRAGMA user_version <= a versão do schema deste app
+0. o candidato é copiado para um temporário privado antes de qualquer coisa
+1. PRAGMA integrity_check numa conexão descartável aberta em SQLITE_OPEN_READONLY
+2. é um banco do Room: existe room_master_table
+3. PRAGMA user_version entre 1 e a versão do schema deste app
 4. abrir com Room apontando para o temporário → a cadeia de migrações roda,
    e checkIdentity valida o identity_hash (RoomConnectionManager.kt:276-296)
 5. verifyLedgerBalanced + verifyNoOrphanDimensions + verifyForeignKeys
 ```
 
-A camada 3 é o caso "backup mais novo que o app": o arquivo é portável entre plataformas, e o
-desktop não tem atualização automática, então um backup feito num Android atualizado pode chegar a
-um desktop atrasado. O Room recusaria o downgrade sozinho — `Database.kt:44-55` não chama
-`fallbackToDestructiveMigrationOnDowngrade` — mas checar antes permite dizer *por quê* em vez de
-deixar vazar um erro genérico.
+**As camadas 1 a 3 foram redesenhadas depois de medidas, e a redação anterior — bytes mágicos, e
+`user_version` apenas com teto — aprovava um arquivo que destrói o acervo.** O que foi medido, na
+SQLite 3.50 do driver embarcado e no Room 2.8.4 deste projeto:
+
+- Os **bytes mágicos não distinguem nada**. Um arquivo com a assinatura correta seguida de lixo é
+  indistinguível de um banco para quem só lê 16 bytes; `integrity_check` o recusa com `26 / file is
+  not a database`. Os dois casos em que as duas checagens divergem são justamente os casos em que a
+  assinatura erra.
+- `integrity_check` **não é a checagem cara que a assinatura evitaria**: um não-banco de 200 MB é
+  recusado em 0 ms, porque a falha está no cabeçalho de 100 bytes; um banco real de 87 MB completa
+  em 32 ms. Ele **pode lançar ou devolver uma linha diferente de `ok`**, e a implementação trata os
+  dois.
+- **`user_version = 0` é a única condição que impede o Room de *criar* o que deveria apenas
+  verificar.** `RoomConnectionManager.kt:117-118` chama `onCreate` quando a versão é zero, e
+  `onCreate` roda `createAllTables` mais os callbacks. Medido contra este projeto: um arquivo de
+  **zero byte** entregue a `getRoomDatabase` volta com **16 tabelas, `user_version = 14` e as 6
+  moedas semeadas** — e então passa por `checkIdentity` e pelos três guardas do razão, porque um
+  razão vazio soma zero, não tem dimensão órfã e não viola chave estrangeira. Seria **aprovado**, e
+  a restauração apagaria o acervo do usuário em favor de um banco recém-criado.
+- O caso degenerado não é só o arquivo de zero byte, e por isso `page_count > 0` não basta: um banco
+  SQLite **válido e sem tabelas** (4096 bytes, `page_count = 1`), um banco **de outro aplicativo**
+  (12288 bytes, `page_count = 3`) e o **`.db` principal copiado sem o `-wal`** — o arquivo que o
+  próprio D2 descreve — têm todos `integrity_check = ok` e `user_version = 0`. A camada 2 é o que os
+  separa: nenhum deles tem `room_master_table`.
+
+A camada 3 mantém o teto pelo caso "backup mais novo que o app": o arquivo é portável entre
+plataformas, e o desktop não tem atualização automática, então um backup feito num Android
+atualizado pode chegar a um desktop atrasado. O Room recusaria o downgrade sozinho —
+`Database.kt:44-55` não chama `fallbackToDestructiveMigrationOnDowngrade` — mas checar antes permite
+dizer *por quê* em vez de deixar vazar um erro genérico.
+
+**`SQLITE_OPEN_READONLY` é mecanismo, não zelo.** Com as flags default, abrir um caminho inexistente
+**cria** o arquivo, e o arquivo criado passa em `integrity_check` — a verificação fabricaria o
+próprio falso positivo. A flag também garante, pelo mecanismo e não pela disciplina, que a
+verificação não altera o candidato.
 
 **A conexão isolada não é zelo, é requisito.** O SQLite reporta corrupção de um banco anexado como
 corrupção **da conexão**, o que dispararia o handler de corrupção contra o banco de produção. O
@@ -223,8 +254,27 @@ fronteira de módulo, e é o que a *Derivation rule* do `CLAUDE.md` pede: a regr
 tem um dono só, no domínio.
 
 Dois ajustes que isso exige no core: os três `verify*` são `internal` e ganham fachada pública (sem
-expor `SQLiteConnection` a quem chama); e `getDatabaseBuilder()` fixa o nome do arquivo nos três
-`Database.<plataforma>.kt`, precisando aceitar um caminho para abrir o candidato.
+expor `SQLiteConnection` a quem chama); e `getDatabaseBuilder()` precisa aceitar um caminho para
+abrir o candidato, em vez de fixar o nome do arquivo nos três `Database.<plataforma>.kt`.
+
+**A divisão é entre o mecanismo e a fala, não entre o mecanismo e o dado.** O core não conhece
+`UiText` e não escolhe uma palavra que o usuário leia; é isso que a feature acrescenta. Tudo o que
+se grava *dentro* do arquivo continua sendo do core, inclusive o carimbo de origem de D8 — o core o
+nomeia no vocabulário dele, e é por nomenclatura, não por realocação, que a palavra "backup" fica
+fora daqui. Mover a escrita do carimbo para a feature custaria caro por três razões medidas:
+
+- Seria o **primeiro SQL cru numa feature** deste projeto. Onze módulos de feature e várias dezenas
+  de repositórios depois, não há uma só ocorrência de `prepare`, `execSQL` ou literal SQL em
+  `feature/`; `@Dao`/`@Query` existem apenas em `:core:database` e `:core:ledger`. Os sete
+  repositórios que alcançam `useWriterConnection` usam só o escopo de transação, com DAO dentro. A
+  linha nunca foi cruzada, inclusive onde teria sido conveniente.
+- O arquivo passaria a ter **dois autores e um só deles com teste**. O invariante "o arquivo
+  capturado não tem `-wal` nem `-shm`" é provado em `:core:database`; uma feature que reabrisse o
+  arquivo com Room para carimbá-lo reintroduziria WAL e quebraria o requisito com aquele teste
+  continuando verde.
+- As contagens que o modal exibe teriam de atravessar a fronteira como nomes de tabela, e a feature
+  passaria a conhecer tabelas — exatamente o que esta decisão existe para impedir. O core devolve
+  uma contagem tipada por fachada; a feature escolhe quais campos renderiza e como os traduz.
 
 Os erros ficam do lado da feature: `:core:database` já tem `exception/` próprio
 (`MigrationAbortedException`, `UnbalancedLedgerException`) e não conhece `UiText`. A feature define
@@ -237,13 +287,20 @@ decidir se aceita e insuficiente para o **usuário** decidir se quer. Num fluxo 
 irreversível, o modal precisa dizer *qual* backup é: data, plataforma de origem, versão do app.
 
 A tabela **não entra no `AppDatabase`**: uma entidade nova custaria uma migração de schema em
-produção para guardar dado que só faz sentido dentro de um arquivo. Ela é criada na exportação,
-depois do `VACUUM INTO`, direto no arquivo resultante; na restauração é lida com SQL cru e nunca
-copiada, porque a cópia é tabela a tabela.
+produção para guardar dado que só faz sentido dentro de um arquivo. Ela é criada na captura, depois
+do `VACUUM INTO`, direto no arquivo resultante; na restauração é lida com SQL cru e nunca copiada,
+porque a cópia é tabela a tabela.
 
-Campos: `formatVersion`, `schemaVersion`, `appVersion`, `platform`, `createdAt`. Os contadores que o
-modal exibe (quantas transações, contas, cartões) saem de `SELECT COUNT(*)` no arquivo já validado —
-não precisam ser gravados, e gravá-los criaria uma segunda verdade.
+**Quem escreve é quem lê, e é o core** (D7). A tabela se chama `snapshot_meta`, no vocabulário do
+pacote `database/snapshot` que a captura já habita. Um só lugar sabe seus nomes de coluna, um só
+lugar a exclui da cópia, e renomear um campo é uma mudança num arquivo — não duas, com a metade
+esquecida degradando em silêncio para "origem desconhecida" sem que nada falhe.
+
+Campos: `formatVersion`, `appVersion`, `platform`, `createdAt`. **`schemaVersion` foi retirado**: o
+`user_version` já viaja no arquivo e é preservado pelo `VACUUM INTO`, então gravá-lo de novo seria a
+segunda verdade que este mesmo parágrafo recusa para os contadores. Os contadores que o modal exibe
+(quantas transações, contas, cartões) saem de `SELECT COUNT(*)` no arquivo já validado, pelo mesmo
+motivo, e chegam à feature tipados por fachada, sem nome de tabela nenhum.
 
 O `formatVersion` parece redundante hoje, já que o formato é a própria SQLite, e é o campo que mais
 se paga: se a convenção mudar — compressão, cifra, outro recorte de tabelas —, um inteiro no arquivo
@@ -319,6 +376,13 @@ pesou mais, e o backup que se abre mão de manter é um que pode voltar incoeren
 - **O `.also { refreshAsync() }` de `useWriterConnection` só roda em sucesso.** Uma exceção no bloco
   deixa o banco no estado anterior (a transação reverte), mas sem refresh.
   → Aceitável: se a transação reverteu, não há o que invalidar.
+- **Um arquivo SQLite íntegro com `user_version = 0` é um acervo vazio disfarçado de backup.** Um
+  banco sem tabelas, um banco de outro aplicativo, o `.db` principal copiado sem o `-wal`, ou o
+  arquivo de zero byte que o seletor do Android cria antes de devolver a URI — todos passam por
+  assinatura e integridade, e o Room os trata como banco novo, criando o schema e semeando. A
+  restauração seria bem-sucedida e apagaria o acervo, irreversivelmente.
+  → As camadas 2 e 3 de D4 existem por isso: `room_master_table` presente e `user_version >= 1`.
+  Sem as duas, nenhuma outra camada recusa esse arquivo.
 - **`VACUUM INTO` exige espaço livre ≈ o tamanho do banco.**
   → Falha de I/O tratada como erro de exportação, com mensagem própria.
 - **Backup mais novo que o app**, cenário real do desktop sem atualização automática.

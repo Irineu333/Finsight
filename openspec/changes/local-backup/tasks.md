@@ -138,8 +138,9 @@
   exaustivo na leitura. O carimbo precisa de um identificador fechado próprio
 - [ ] 8.2 Exibir a origem lida pela verificação, traduzindo-a; a feature não abre o arquivo nem fala
   SQL — não há precedente disso em `feature/` e esta entrega não abre o primeiro
-- [ ] 8.3 Teste: o carimbo não retorna ao banco numa restauração (a cobertura de criação vive em
-  `:core:database`, tarefa 3.6)
+- [x] 8.3 Teste: o carimbo não retorna ao banco numa restauração — já coberto por
+  `DatabaseRestoreTest.the file's control structures are left behind`, que afirma a ausência de
+  `snapshot_meta` no banco vivo depois da troca (a cobertura de criação vive na tarefa 3.6)
 
 ## 9. Feature `backup` — tela e fluxo
 
@@ -151,7 +152,10 @@
 - [ ] 9.2 Declarar na tela que o app não guarda cópias por conta própria e que a recuperação em
   outro aparelho depende do arquivo exportado
 - [ ] 9.3 `BackupViewModel` com `UiState` e `Action`, orquestrando capturar → gravar e escolher →
-  validar → confirmar → substituir
+  validar → confirmar → substituir. **Apagar os temporários** nos dois fluxos, inclusive quando a
+  verificação recusa e quando o usuário cancela: a captura escreve num temporário privado antes de
+  ir para o destino escolhido, e o candidato é uma cópia que a verificação migra. Nenhum dos dois
+  tem dono além do ViewModel, e `:core:database` não tem API de arquivo para limpá-los
 - [ ] 9.4 Modal de confirmação exibindo data, plataforma, versão do app e contagens do acervo, com o
   aviso de substituição irreversível — e só após a aprovação do arquivo
 - [ ] 9.5 Estado de "origem desconhecida" quando o arquivo não tem `snapshot_meta` — a tabela chama-se

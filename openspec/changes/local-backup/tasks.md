@@ -176,12 +176,12 @@
 
 ## 13. Desligar o backup automático da plataforma (D11)
 
-- [ ] 13.1 `android:allowBackup="false"` em `app/android/src/main/AndroidManifest.xml`
-- [ ] 13.2 Criar `res/xml/data_extraction_rules.xml` com `<cloud-backup>` **e** `<device-transfer>`,
+- [x] 13.1 `android:allowBackup="false"` em `app/android/src/main/AndroidManifest.xml`
+- [x] 13.2 Criar `res/xml/data_extraction_rules.xml` com `<cloud-backup>` **e** `<device-transfer>`,
   ambos excluindo todos os domínios — omitir a seção habilita o modo
-- [ ] 13.3 Criar `res/xml/backup_rules.xml` no formato `<full-backup-content>` para API 24-30, e
+- [x] 13.3 Criar `res/xml/backup_rules.xml` no formato `<full-backup-content>` para API 24-30, e
   referenciar os dois arquivos no manifesto
-- [ ] 13.4 iOS: excluir `.db`, `-wal` e `-shm` do backup do iCloud com
+- [x] 13.4 iOS: excluir `.db`, `-wal` e `-shm` do backup do iCloud com
   `setResourceValue(true, NSURLIsExcludedFromBackupKey, null)`, reaplicando a cada gravação
 - [ ] 13.5 Verificar em aparelho ou emulador que nenhum dos dois mecanismos copia o banco
 

@@ -20,11 +20,11 @@
 
 ## 2. `:core:database` — abrir um banco em caminho arbitrário
 
-- [ ] 2.1 Parametrizar `getDatabaseBuilder()` por caminho nos três `Database.<plataforma>.kt`,
+- [x] 2.1 Parametrizar `getDatabaseBuilder()` por caminho nos três `Database.<plataforma>.kt`,
   mantendo o caminho atual como padrão
-- [ ] 2.2 Ajustar `DatabaseModule.<plataforma>.kt` para continuar provendo o builder de produção sem
+- [x] 2.2 Ajustar `DatabaseModule.<plataforma>.kt` para continuar provendo o builder de produção sem
   mudança de comportamento
-- [ ] 2.3 Teste: abrir um banco em caminho temporário sem afetar o de produção
+- [x] 2.3 Teste: abrir um banco em caminho temporário sem afetar o de produção
 
 ## 3. `:core:database` — captura (D2)
 

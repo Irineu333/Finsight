@@ -7,8 +7,13 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
+/**
+ * The file the app serves its own database from, in the user's document directory.
+ * Nothing is created here: the path is only spelled out, and whoever opens it decides
+ * whether it comes into being.
+ */
 @OptIn(ExperimentalForeignApi::class)
-fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
+fun defaultDatabasePath(): String {
     val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
         directory = NSDocumentDirectory,
         inDomain = NSUserDomainMask,
@@ -16,9 +21,11 @@ fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
         create = false,
         error = null
     )
-    val dbFilePath = requireNotNull(documentDirectory).path + "/finsight.db"
-    return Room.databaseBuilder<AppDatabase>(
-        name = dbFilePath,
-    )
+    return requireNotNull(documentDirectory).path + "/finsight.db"
 }
 
+fun getDatabaseBuilder(path: String = defaultDatabasePath()): RoomDatabase.Builder<AppDatabase> {
+    return Room.databaseBuilder<AppDatabase>(
+        name = path,
+    )
+}

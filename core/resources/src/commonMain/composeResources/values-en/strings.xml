@@ -871,10 +871,13 @@
     <string name="settings_screen_title">Settings</string>
     <string name="settings_group_preferences">Preferences</string>
     <string name="settings_group_currency_data">Currencies and rates</string>
+    <string name="settings_group_data">My data</string>
     <string name="settings_base_currency_title">Base currency</string>
     <string name="settings_base_currency_picker_title">Base currency</string>
     <string name="settings_exchange_rates_title">Exchange rates</string>
     <string name="settings_exchange_rates_subtitle">Register, correct or remove the rates used in conversions</string>
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_subtitle">Export your data to a file or restore it from one</string>
 
     <string name="exchange_rates_screen_title">Exchange rates</string>
     <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>

@@ -176,19 +176,19 @@
 
 ## 11. Entrada em Settings
 
-- [ ] 11.1 Adicionar `implementation(projects.feature.backup.api)` em
+- [x] 11.1 Adicionar `implementation(projects.feature.backup.api)` em
   `feature/settings/impl/build.gradle.kts`
-- [ ] 11.2 Terceiro `SettingsGroup` em `SettingsScreen.kt` com a entrada de backup, no molde dos
+- [x] 11.2 Terceiro `SettingsGroup` em `SettingsScreen.kt` com a entrada de backup, no molde dos
   `SettingsMenuLink` existentes
-- [ ] 11.3 Navegar com `LocalNavController.current.navigate(BackupRoute)`
+- [x] 11.3 Navegar com `LocalNavController.current.navigate(BackupRoute)`
 
 ## 12. Registro no shell e nos apps
 
-- [ ] 12.1 `backupGraph()` em `app/shared/.../AppNavHost.kt`
-- [ ] 12.2 `backupModule` em `app/shared/.../di/AppModules.kt`
-- [ ] 12.3 `export(projects.feature.backup.api)` **e** `api(projects.feature.backup.api)` em
+- [x] 12.1 `backupGraph()` em `app/shared/.../AppNavHost.kt`
+- [x] 12.2 `backupModule` em `app/shared/.../di/AppModules.kt`
+- [x] 12.3 `export(projects.feature.backup.api)` **e** `api(projects.feature.backup.api)` em
   `app/ios/build.gradle.kts` — as duas listas
-- [ ] 12.4 Teste em `AppModulesTest`: o `backupModule` resolve
+- [x] 12.4 Teste em `AppModulesTest`: o `backupModule` resolve
 
 ## 13. Desligar o backup automático da plataforma (D11)
 

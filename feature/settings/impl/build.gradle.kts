@@ -17,6 +17,12 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
+            // The first edge this module draws to another feature. Settings is the door
+            // to backup because backup is not a tab and holds no place in the navigation
+            // catalog, and the door only needs the route — the api, never the impl, which
+            // the dependency rules would refuse anyway.
+            implementation(projects.feature.backup.api)
+
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)

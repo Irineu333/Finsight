@@ -13,9 +13,11 @@ worse than no list, because it teaches people to skim.
 
 ## How these were found
 
-Every entry below came out of an adversarial review of the `local-backup` change, run
-before archiving it. Two reviewers read the branch independently — one for correctness and
-risk, one for architecture and conventions — with the suite green at 1311 tests.
+Most of these came out of an adversarial review of the `local-backup` change, run before
+archiving it. Two reviewers read the branch independently — one for correctness and risk,
+one for architecture and conventions — with the suite green at 1311 tests. Each entry says
+where it was found; the ones that do not name the review were found somewhere else, and
+`007` came out of fixing `003`.
 
 The review paid for itself on a defect that is already fixed and so has no file here:
 the restore copied rows with `INSERT INTO main.X SELECT * FROM candidate.X`, which matches

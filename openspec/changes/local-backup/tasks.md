@@ -71,6 +71,10 @@
   quatro, a regressão volta sem ninguém perceber — o desfecho dela é uma restauração bem-sucedida
   que apaga o acervo
 - [ ] 4.10 Teste: a verificação não altera o candidato e não cria arquivo em caminho inexistente
+- [ ] 4.11 Teste do lado oposto, para que 4.9 não vire uma recusa por volume: **um backup legítimo
+  de um acervo vazio é aceito** — zero contas e zero transações é o estado de toda instalação nova,
+  e restaurá-lo apaga tudo, que é o que restaurar significa. A verificação recusa por identidade do
+  arquivo, nunca pelo tamanho do que ele contém
 
 ## 5. `:core:database` — substituição de conteúdo (D5, D6)
 

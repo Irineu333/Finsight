@@ -148,6 +148,24 @@ class DatabaseCaptureTest {
     }
 
     @Test
+    fun `a database with nothing in it still captures as one of this app's own`() = runBlocking {
+        live.captureInto(capturedFile.absolutePath)
+
+        onFile(capturedFile) { captured ->
+            assertEquals(
+                1L,
+                captured.scalarLong(
+                    "SELECT COUNT(*) FROM `sqlite_master` WHERE `name` = 'room_master_table'"
+                ),
+                "an archive with no rows in it is still recognisably a database of this app",
+            )
+            assertEquals(14L, captured.scalarLong("PRAGMA user_version"))
+            assertEquals(0L, captured.scalarLong("SELECT COUNT(*) FROM `accounts`"))
+            assertEquals(0L, captured.scalarLong("SELECT COUNT(*) FROM `transactions`"))
+        }
+    }
+
+    @Test
     fun `an uncommitted write in another connection is left out`() = runBlocking {
         live.seed("Groceries")
 

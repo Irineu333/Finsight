@@ -93,10 +93,17 @@ db.useWriterConnection { txr ->
 }
 ```
 
-Restrições que a implementação precisa respeitar: o destino **não pode existir**; não roda dentro de
-transação; e falha se houver statement em curso **na mesma conexão** (`cannot VACUUM - SQL
-statements in progress`) — logo, não aninhar em outro `usePrepared`. Transação aberta em *outra*
-conexão do pool não atrapalha, e o snapshot exclui o que ela ainda não commitou.
+Restrições que a implementação precisa respeitar: o destino **não pode existir com conteúdo**; não
+roda dentro de transação; e falha se houver statement em curso **na mesma conexão** (`cannot VACUUM
+- SQL statements in progress`) — logo, não aninhar em outro `usePrepared`. Transação aberta em
+*outra* conexão do pool não atrapalha, e o snapshot exclui o que ela ainda não commitou.
+
+A regra do destino é mais fina do que "não pode existir", e a diferença foi medida na SQLite 3.50 —
+a que o `BundledSQLiteDriver` embarca — não deduzida: um arquivo de **zero byte é aceito** e
+sobrescrito; um arquivo com bytes que não são banco é recusado com `26 / file is not a database`; um
+banco válido e não vazio é recusado com `1 / output file already exists`. Importa na seção do
+seletor de arquivo: o `CreateDocument` do SAF cria um arquivo de zero byte antes de devolver a URI,
+de modo que a existência prévia não é, por si, o impedimento.
 
 **Alternativas recusadas.** `PRAGMA wal_checkpoint(TRUNCATE)`: o Room descarta o código de retorno
 que diria se o checkpoint foi bloqueado, e nada impede as outras quatro conexões de escreverem em
@@ -106,7 +113,8 @@ binding Kotlin para eles.
 
 O `VACUUM INTO` escreve sempre num temporário privado do app; só depois os bytes vão para o destino
 escolhido pelo usuário. Em Android e iOS o destino é um `content://`/`NSURL`, não um caminho, e no
-desktop `VACUUM INTO` recusaria o arquivo já criado pelo seletor.
+desktop `VACUUM INTO` recusaria o arquivo que o usuário mandou substituir, que é um banco com
+conteúdo.
 
 ### D3 — Restaurar substitui tudo
 

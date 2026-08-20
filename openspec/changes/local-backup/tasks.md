@@ -28,13 +28,13 @@
 
 ## 3. `:core:database` — captura (D2)
 
-- [ ] 3.1 Expor a captura do conteúdo para um caminho de destino, via
+- [x] 3.1 Expor a captura do conteúdo para um caminho de destino, via
   `useWriterConnection { usePrepared("VACUUM INTO ?1") }` com parâmetro ligado
-- [ ] 3.2 Tratar as falhas próprias do `VACUUM INTO` como erros tipados: destino já existente,
+- [x] 3.2 Tratar as falhas próprias do `VACUUM INTO` como erros tipados: destino já existente,
   ausência de espaço, statement em curso
-- [ ] 3.3 Teste: o arquivo capturado abre isoladamente, sem `-wal`/`-shm`, e preserva
+- [x] 3.3 Teste: o arquivo capturado abre isoladamente, sem `-wal`/`-shm`, e preserva
   `user_version`, `sqlite_sequence` e `room_master_table`
-- [ ] 3.4 Teste: uma transação aberta e não confirmada em outra conexão não aparece no arquivo
+- [x] 3.4 Teste: uma transação aberta e não confirmada em outra conexão não aparece no arquivo
   capturado
 
 ## 4. `:core:database` — verificação de arquivo candidato (D4)

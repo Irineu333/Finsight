@@ -45,3 +45,4 @@ Em preparação: **1.10.0-rc02**.
 | **Detalhe por pernas**          | Detalhe da transação como um card por perna monetária, sem escolher uma ponta        | Funcionalidade | 1.10.0        |
 | **Orçamentos sobrepostos**      | Uma categoria medida por quantos orçamentos o usuário quiser                         | Funcionalidade | 1.10.0        |
 | **Recorrentes sem redigitar**   | Nascer recorrente no próprio lançamento e confirmar o ciclo com título e categoria   | Funcionalidade | 1.10.0        |
+| **Backup local**                | Exportar e restaurar o acervo num arquivo, com o backup automático da plataforma desligado | Funcionalidade | 1.10.0        |

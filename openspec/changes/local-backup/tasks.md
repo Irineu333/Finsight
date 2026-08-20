@@ -203,12 +203,20 @@
 
 ## 14. Verificação
 
-- [ ] 14.1 `./gradlew jvmTest` verde
+- [x] 14.1 `./gradlew jvmTest` verde — 1310 testes, 0 falhas, contando só os módulos declarados em `settings.gradle.kts`
 - [ ] 14.2 Exportar e restaurar de ponta a ponta no desktop, conferindo que as telas refletem o novo
   acervo sem reiniciar
 - [ ] 14.3 Exportar no Android e restaurar no desktop, confirmando a portabilidade do arquivo
 - [ ] 14.4 Fechar Q2 do design: verificar em aparelho real se o SAF anexa extensão derivada do MIME
   ao nome sugerido, e ajustar o MIME de escrita conforme o resultado
-- [ ] 14.5 Fluxo Maestro em `.maestro/` cobrindo abrir a tela, exportar e recusar um arquivo
-  inválido — lendo `.maestro/README.md` §2 antes de rodar, e reportando o dispositivo usado
-- [ ] 14.6 Atualizar o `ROADMAP.md` com a linha da funcionalidade
+- [ ] 14.5 Fluxo Maestro em `.maestro/flows/backup/reach.yaml` — **escrito, não rodado**: não há
+  aparelho conectado, e o §2 do `.maestro/README.md` diz que quem roda é quem responde pelo
+  dispositivo. Falta executá-lo num `pixel_6` API 36 conforme o §2.2 e reportar o aparelho.
+  O fluxo cobre **a travessia**, não exportar nem recusar: pelo §5.1 do mesmo README, cabe em E2E
+  só o que não se responde com o sistema desmontado. Exportar e escolher arquivo saem do app para
+  o seletor do sistema, e a recusa já tem 18 testes sobre arquivos reais em `:core:database` mais
+  9 no ViewModel — inclusive o que prova que um arquivo recusado nunca chega à confirmação. O que
+  só o app montado responde é se as quatro peças que ligam a feature (rota na `api`, subgrafo no
+  `AppNavHost`, módulo em `appModules`, entrada em Settings) funcionam juntas: nenhuma delas falha
+  numa compilação, e duas falham em silêncio
+- [x] 14.6 Atualizar o `ROADMAP.md` com a linha da funcionalidade

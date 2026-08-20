@@ -250,6 +250,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
 | `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai dos seletores e continua no gasto do mês, e volta inteira |
 | `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
+| `backup/reach` | a única porta do backup abre uma feature que não tem aba nem lugar no catálogo, com as quatro peças que a ligam — rota, subgrafo, módulo e entrada — respondendo juntas |
 
 **Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
 `bottom_navigation_bar`. Itens de navegação derivam o seu da rota — `NavDestination.name` transforma

@@ -62,6 +62,12 @@ class DatabaseCaptureTest {
         )
     }
 
+    private suspend fun AppDatabase.capture(to: File) = captureInto(
+        destinationPath = to.absolutePath,
+        appVersion = "1.2.3",
+        platform = "jvm",
+    )
+
     private fun <T> onFile(file: File, block: (SQLiteConnection) -> T): T {
         val connection = BundledSQLiteDriver().open(file.absolutePath)
         return try {
@@ -95,7 +101,7 @@ class DatabaseCaptureTest {
     fun `the captured file stands alone`() = runBlocking {
         live.seed("Groceries")
 
-        live.captureInto(capturedFile.absolutePath)
+        live.capture(capturedFile)
 
         assertTrue(capturedFile.exists(), "the capture wrote the file")
         listOf("-wal", "-shm").forEach { suffix ->
@@ -120,7 +126,7 @@ class DatabaseCaptureTest {
     fun `the captured file is recognisable as this app's own`() = runBlocking {
         live.seed("Groceries")
 
-        live.captureInto(capturedFile.absolutePath)
+        live.capture(capturedFile)
 
         val liveIdentity = live.useWriterConnection { connection ->
             connection.usePrepared("SELECT `identity_hash` FROM `room_master_table`") { statement ->
@@ -149,7 +155,7 @@ class DatabaseCaptureTest {
 
     @Test
     fun `a database with nothing in it still captures as one of this app's own`() = runBlocking {
-        live.captureInto(capturedFile.absolutePath)
+        live.capture(capturedFile)
 
         onFile(capturedFile) { captured ->
             assertEquals(
@@ -166,6 +172,68 @@ class DatabaseCaptureTest {
     }
 
     @Test
+    fun `the captured file carries where it came from`() = runBlocking {
+        live.seed("Groceries")
+
+        live.capture(capturedFile)
+
+        onFile(capturedFile) { captured ->
+            assertEquals("1.2.3", captured.scalarText("SELECT `appVersion` FROM `snapshot_meta`"))
+            assertEquals("jvm", captured.scalarText("SELECT `platform` FROM `snapshot_meta`"))
+            assertEquals(
+                1L,
+                captured.scalarLong("SELECT `formatVersion` FROM `snapshot_meta`"),
+                "the format version is the file's own, not something a caller supplies",
+            )
+            assertTrue(
+                captured.scalarLong("SELECT `createdAt` FROM `snapshot_meta`") > 0,
+                "the capture stamps the instant it ran",
+            )
+            assertEquals(
+                1L,
+                captured.scalarLong("SELECT COUNT(*) FROM `snapshot_meta`"),
+                "one row, so reading it never has to choose",
+            )
+        }
+    }
+
+    @Test
+    fun `the stamp exists only in the file`() = runBlocking {
+        live.seed("Groceries")
+
+        live.capture(capturedFile)
+
+        val inProduction = live.useWriterConnection { connection ->
+            connection.usePrepared(
+                "SELECT COUNT(*) FROM `sqlite_master` WHERE `name` = 'snapshot_meta'"
+            ) { statement ->
+                statement.step()
+                statement.getLong(0)
+            }
+        }
+        assertEquals(0L, inProduction, "the live database never grows a table for this")
+    }
+
+    @Test
+    fun `stamping leaves the captured file standing alone`() = runBlocking {
+        live.seed("Groceries")
+
+        live.capture(capturedFile)
+
+        listOf("-wal", "-shm").forEach { suffix ->
+            assertFalse(
+                File(capturedFile.absolutePath + suffix).exists(),
+                "writing the stamp must not put the file back into write-ahead logging",
+            )
+        }
+        assertEquals(
+            "delete",
+            onFile(capturedFile) { it.scalarText("PRAGMA journal_mode") },
+            "the captured file keeps the journal mode VACUUM INTO gave it",
+        )
+    }
+
+    @Test
     fun `an uncommitted write in another connection is left out`() = runBlocking {
         live.seed("Groceries")
 
@@ -174,7 +242,7 @@ class DatabaseCaptureTest {
             other.execSQL("BEGIN IMMEDIATE")
             other.execSQL("INSERT INTO `dimensions` (`kind`) VALUES ('CATEGORY')")
 
-            live.captureInto(capturedFile.absolutePath)
+            live.capture(capturedFile)
 
             assertEquals(
                 1L,
@@ -195,7 +263,7 @@ class DatabaseCaptureTest {
             withTimeout(5.seconds) {
                 live.useWriterConnection { connection ->
                     connection.immediateTransaction {
-                        live.captureInto(capturedFile.absolutePath)
+                        live.capture(capturedFile)
                     }
                 }
             }
@@ -216,7 +284,7 @@ class DatabaseCaptureTest {
         capturedFile.writeBytes(byteArrayOf(1, 2, 3))
 
         val failure = assertFailsWith<DatabaseCaptureException> {
-            live.captureInto(capturedFile.absolutePath)
+            live.capture(capturedFile)
         }
 
         assertEquals(DatabaseCaptureError.DESTINATION_EXISTS, failure.error)

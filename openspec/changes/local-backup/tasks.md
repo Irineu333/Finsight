@@ -36,12 +36,12 @@
   `user_version`, `sqlite_sequence` e `room_master_table`
 - [x] 3.4 Teste: uma transação aberta e não confirmada em outra conexão não aparece no arquivo
   capturado
-- [ ] 3.5 Carimbar a origem no arquivo já capturado, dentro da própria captura (D7, D8): criar
+- [x] 3.5 Carimbar a origem no arquivo já capturado, dentro da própria captura (D7, D8): criar
   `snapshot_meta` com `formatVersion`, `appVersion`, `platform` e `createdAt` — nunca `@Entity`,
   nunca no `AppDatabase` —, numa conexão descartável do driver, jamais reabrindo o arquivo com Room,
   que o devolveria em WAL e com `-wal`/`-shm` ao lado. `captureInto` passa a receber a origem;
   `schemaVersion` não é gravado, porque o `user_version` já viaja no arquivo
-- [ ] 3.6 Teste: a tabela existe no arquivo capturado, não existe no banco de produção, e o arquivo
+- [x] 3.6 Teste: a tabela existe no arquivo capturado, não existe no banco de produção, e o arquivo
   capturado continua sem `-wal`/`-shm` depois de carimbado
 
 ## 4. `:core:database` — verificação de arquivo candidato (D4)
@@ -70,7 +70,10 @@
   tabelas**, **banco de outro aplicativo** e **`.db` principal copiado sem o `-wal`**. Sem os
   quatro, a regressão volta sem ninguém perceber — o desfecho dela é uma restauração bem-sucedida
   que apaga o acervo
-- [ ] 4.10 Teste: a verificação não altera o candidato e não cria arquivo em caminho inexistente
+- [ ] 4.10 Teste: a verificação não cria arquivo em caminho inexistente — com as flags padrão o
+  `open` do SQLite **cria** o arquivo, e o arquivo criado passaria em `integrity_check` — e não
+  toca o banco em uso. Note que ela *altera* o candidato por construção: a camada 4 roda a cadeia
+  de migrações sobre ele, e é por isso que o D4 manda copiá-lo para um temporário antes (camada 0)
 - [ ] 4.11 Teste do lado oposto, para que 4.9 não vire uma recusa por volume: **um backup legítimo
   de um acervo vazio é aceito** — zero contas e zero transações é o estado de toda instalação nova,
   e restaurá-lo apaga tudo, que é o que restaurar significa. A verificação recusa por identidade do

@@ -1,14 +1,22 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.database.snapshot
 
 import androidx.room.useWriterConnection
 import androidx.sqlite.SQLiteException
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.exception.DatabaseCaptureError
 import com.neoutils.finsight.database.exception.DatabaseCaptureException
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Writes everything this database holds into [destinationPath], as a file that opens on
- * its own.
+ * its own and says where it came from.
  *
  * Copying the database file is not an alternative: the app runs in write-ahead logging,
  * where the main file alone may not carry so much as the schema. `VACUUM INTO` leaves a
@@ -21,9 +29,18 @@ import com.neoutils.finsight.database.exception.DatabaseCaptureException
  * is holding. It also refuses a [destinationPath] that already holds a file with
  * content.
  *
- * @throws DatabaseCaptureException when SQLite refuses to write the file.
+ * [appVersion] and [platform] are the caller's to supply — this module knows the
+ * database, not the app running it — and land in [SnapshotMeta] alongside the instant
+ * of the capture. The schema version is not among them: it already travels in
+ * `user_version`, and writing it again would be a second truth about the same fact.
+ *
+ * @throws DatabaseCaptureException when SQLite refuses to write the file or to stamp it.
  */
-suspend fun AppDatabase.captureInto(destinationPath: String) {
+suspend fun AppDatabase.captureInto(
+    destinationPath: String,
+    appVersion: String,
+    platform: String,
+) {
     try {
         useWriterConnection { connection ->
             connection.usePrepared("VACUUM INTO ?1") { statement ->
@@ -33,6 +50,54 @@ suspend fun AppDatabase.captureInto(destinationPath: String) {
         }
     } catch (cause: SQLiteException) {
         throw DatabaseCaptureException(cause.toCaptureError(), cause)
+    }
+
+    withContext(Dispatchers.Default) {
+        stampOrigin(destinationPath, appVersion, platform)
+    }
+}
+
+/**
+ * Writes [SnapshotMeta] into the file the capture has just produced, over a throwaway
+ * connection straight from the driver.
+ *
+ * Room is deliberately not used here. It opens in write-ahead logging, which would put
+ * a `-wal` and a `-shm` back beside the file and undo the one property `VACUUM INTO`
+ * was chosen for; a driver connection leaves the `journal_mode = delete` the file was
+ * born with. The connection is closed in a `finally` because it is the only hold on the
+ * file, and the file is what the caller is about to hand elsewhere.
+ *
+ * A failure here leaves the file where it is: this module has no file API and is not
+ * getting one — cleaning up after a refused capture belongs to whoever chose the path.
+ *
+ * Blocking, and called on the context the database itself runs its queries on: a
+ * `suspend` capture invoked from a view model's scope must not write to disk on the
+ * caller's thread.
+ */
+private fun stampOrigin(
+    destinationPath: String,
+    appVersion: String,
+    platform: String,
+) {
+    try {
+        val connection = BundledSQLiteDriver().open(destinationPath)
+        try {
+            connection.execSQL(SnapshotMeta.CREATE)
+            val statement = connection.prepare(SnapshotMeta.INSERT)
+            try {
+                statement.bindLong(1, SnapshotMeta.FORMAT_VERSION)
+                statement.bindText(2, appVersion)
+                statement.bindText(3, platform)
+                statement.bindLong(4, Clock.System.now().toEpochMilliseconds())
+                statement.step()
+            } finally {
+                statement.close()
+            }
+        } finally {
+            connection.close()
+        }
+    } catch (cause: SQLiteException) {
+        throw DatabaseCaptureException(cause.toStampError(), cause)
     }
 }
 
@@ -52,7 +117,7 @@ suspend fun AppDatabase.captureInto(destinationPath: String) {
  */
 private fun SQLiteException.toCaptureError(): DatabaseCaptureError {
     val report = message.orEmpty()
-    val resultCode = RESULT_CODE.find(report)?.groupValues?.get(1)?.toIntOrNull()
+    val resultCode = resultCode()
     return when {
         resultCode == SQLITE_FULL -> DatabaseCaptureError.NO_SPACE
         resultCode == SQLITE_NOTADB -> DatabaseCaptureError.DESTINATION_EXISTS
@@ -61,6 +126,20 @@ private fun SQLiteException.toCaptureError(): DatabaseCaptureError {
         else -> DatabaseCaptureError.UNKNOWN
     }
 }
+
+/**
+ * A refused stamp is not a refused `VACUUM`, so it does not borrow that classification:
+ * by the time the stamp runs the destination exists and is a database of this app's own
+ * making, which is what every constant [toCaptureError] names is about. Running out of
+ * room while the row is written remains possible, and is the one worth naming.
+ */
+private fun SQLiteException.toStampError(): DatabaseCaptureError = when (resultCode()) {
+    SQLITE_FULL -> DatabaseCaptureError.NO_SPACE
+    else -> DatabaseCaptureError.UNKNOWN
+}
+
+private fun SQLiteException.resultCode(): Int? =
+    RESULT_CODE.find(message.orEmpty())?.groupValues?.get(1)?.toIntOrNull()
 
 private val RESULT_CODE = Regex("""Error code: (\d+)""")
 

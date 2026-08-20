@@ -74,6 +74,9 @@
   `open` do SQLite **cria** o arquivo, e o arquivo criado passaria em `integrity_check` — e não
   toca o banco em uso. Note que ela *altera* o candidato por construção: a camada 4 roda a cadeia
   de migrações sobre ele, e é por isso que o D4 manda copiá-lo para um temporário antes (camada 0)
+- [x] 4.12 Teste: um backup escrito por um schema anterior é **aceito**, com a cadeia de migrações
+  rodando sobre ele na camada 4 — o caminho que faz D1 preferir "o formato é o próprio banco" a um
+  dump, e que nenhum teste de migração exercita, porque todos aplicam a migração sem o Room
 - [x] 4.11 Teste do lado oposto, para que 4.9 não vire uma recusa por volume: **um backup legítimo
   de um acervo vazio é aceito** — zero contas e zero transações é o estado de toda instalação nova,
   e restaurá-lo apaga tudo, que é o que restaurar significa. A verificação recusa por identidade do

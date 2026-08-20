@@ -38,6 +38,12 @@ import kotlinx.coroutines.runBlocking
  */
 class DatabaseVerificationTest {
 
+    /**
+     * From `schemas/…/11.json`. Frozen history: a real backup of that vintage carries this
+     * in its `room_master_table`, and a fixture that carries something else is not one.
+     */
+    private val V11_IDENTITY_HASH = "c29a9c498d3075494afe693eb33874e0"
+
     private val liveFile: File = File.createTempFile("finsight-verify-live", ".db").also { it.delete() }
     private val candidates = mutableListOf<File>()
 
@@ -318,6 +324,50 @@ class DatabaseVerificationTest {
             "an older file still restores; the screen is what says the origin is unknown",
         )
         assertEquals(1L, accepted.counts.categories)
+    }
+
+    /**
+     * The reason D1 chose "the format is the database itself" over a JSON dump, exercised
+     * end to end: a file written by an older build arrives, the migration chain runs over
+     * it, and it is accepted as the v14 archive it becomes.
+     *
+     * A dump would have to recreate the DDL of its own version and let Room migrate that —
+     * which is what a `.db` already is, with one serialiser fewer in the way. Restoring it
+     * by deserialising into today's entities would skip the chain in silence, new columns
+     * taking their defaults and nobody the wiser.
+     */
+    @Test
+    fun `a backup written by an older schema is accepted, and migrated on the way in`() = runBlocking {
+        val file = candidate("v11")
+        onFile(file) { connection ->
+            V11_SCHEMA.forEach(connection::execSQL)
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `room_master_table` " +
+                    "(`id` INTEGER PRIMARY KEY, `identity_hash` TEXT)"
+            )
+            connection.execSQL(
+                "INSERT OR REPLACE INTO `room_master_table` (`id`, `identity_hash`) " +
+                    "VALUES (42, '$V11_IDENTITY_HASH')"
+            )
+            connection.execSQL("PRAGMA user_version = 11")
+        }
+
+        val accepted = acceptanceOf(file)
+
+        assertNull(accepted.origin, "a file this old predates the stamp, and is taken anyway")
+        assertEquals(
+            14L,
+            BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+                val statement = connection.prepare("PRAGMA user_version")
+                try {
+                    statement.step()
+                    statement.getLong(0)
+                } finally {
+                    statement.close()
+                }
+            },
+            "the candidate came out of the gate on this build's schema",
+        )
     }
 
     // ---------------------------------------------------------------- side effects

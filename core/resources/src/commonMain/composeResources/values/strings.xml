@@ -985,7 +985,6 @@
     <string name="backup_group_restore">Restaurar</string>
     <string name="backup_restore_title">Restaurar de um arquivo</string>
     <string name="backup_restore_subtitle">Escolha um backup exportado deste app.</string>
-    <string name="backup_restore_warning">Substitui todos os dados do app. Não pode ser desfeito.</string>
     <string name="backup_confirm_title">Restaurar backup</string>
     <string name="backup_confirm_message">Quer substituir os dados deste app pelos deste arquivo?</string>
     <string name="backup_confirm_origin_unknown">Origem desconhecida</string>

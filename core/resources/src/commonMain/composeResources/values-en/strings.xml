@@ -984,7 +984,6 @@
     <string name="backup_group_restore">Restore</string>
     <string name="backup_restore_title">Restore from a file</string>
     <string name="backup_restore_subtitle">Pick a backup exported from this app.</string>
-    <string name="backup_restore_warning">Replaces all of the app's data. It cannot be undone.</string>
     <string name="backup_confirm_title">Restore backup</string>
     <string name="backup_confirm_message">Replace the data in this app with the data in this file?</string>
     <string name="backup_confirm_origin_unknown">Unknown origin</string>

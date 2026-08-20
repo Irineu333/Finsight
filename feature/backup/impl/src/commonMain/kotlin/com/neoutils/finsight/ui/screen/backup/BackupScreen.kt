@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SaveAlt
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,7 +34,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -52,13 +50,11 @@ import com.neoutils.finsight.resources.backup_group_restore
 import com.neoutils.finsight.resources.backup_no_copies
 import com.neoutils.finsight.resources.backup_restore_subtitle
 import com.neoutils.finsight.resources.backup_restore_title
-import com.neoutils.finsight.resources.backup_restore_warning
 import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.resources.backup_screen_title
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.theme.SettingsTileTheme
-import com.neoutils.finsight.ui.theme.Warning
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -160,8 +156,6 @@ fun BackupScreen(
                             viewModel.onAction(BackupAction.ChooseFileToRestore(platformContext))
                         },
                     )
-
-                    ReplacementWarning()
                 }
             }
         }
@@ -233,27 +227,6 @@ private fun ScopeCard() {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ReplacementWarning() {
-    Row(
-        modifier = Modifier.padding(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.WarningAmber,
-            contentDescription = null,
-            tint = Warning,
-            modifier = Modifier.size(14.dp),
-        )
-        Text(
-            text = stringResource(Res.string.backup_restore_warning),
-            style = typography.bodySmall,
-            color = Warning,
-        )
     }
 }
 

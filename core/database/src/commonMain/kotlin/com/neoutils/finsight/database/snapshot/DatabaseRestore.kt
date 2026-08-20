@@ -40,12 +40,13 @@ suspend fun AppDatabase.replaceContentFrom(candidatePath: String) {
         useWriterConnection { connection ->
             connection.requireForeignKeysEnforced()
             val order = connection.copyOrder()
+            val columns = order.associateWith { connection.columnsOf(it) }
             connection.usePrepared(ATTACH) { statement ->
                 statement.bindText(1, candidatePath)
                 statement.step()
             }
             try {
-                connection.rewriteTables(order)
+                connection.rewriteTables(order, columns)
             } finally {
                 connection.execSQL(DETACH)
             }
@@ -75,14 +76,42 @@ suspend fun AppDatabase.replaceContentFrom(candidatePath: String) {
  * from an attached database, where the commit fails even though the final state is
  * consistent.
  */
-private suspend fun Transactor.rewriteTables(order: List<String>) {
+private suspend fun Transactor.rewriteTables(
+    order: List<String>,
+    columns: Map<String, List<String>>,
+) {
     immediateTransaction {
         order.asReversed().forEach { table -> execSQL("DELETE FROM `main`.`$table`") }
         order.forEach { table ->
-            execSQL("INSERT INTO `main`.`$table` SELECT * FROM `$CANDIDATE`.`$table`")
+            val named = columns.getValue(table).joinToString(", ") { "`$it`" }
+            execSQL(
+                "INSERT INTO `main`.`$table` ($named) " +
+                    "SELECT $named FROM `$CANDIDATE`.`$table`"
+            )
         }
     }
 }
+
+/**
+ * The columns of a table in `main`, named so the copy can match on them.
+ *
+ * `SELECT *` would match by position, and position is not a thing the two sides agree on:
+ * `ALTER TABLE … ADD COLUMN` appends, while creating a table from scratch writes the
+ * order the entity declares. A database that reached this version by migrating and one
+ * installed at it hold the same columns in different places — `budgets.currency` last
+ * against sixth, `exchange_rates.counterCurrency` last against third. Copying by position
+ * between them writes each value into whatever column shares its index, commits, and says
+ * nothing.
+ *
+ * Read from `main`, because `main` is the shape being written. A candidate missing one of
+ * these columns fails the statement, which is the outcome to want: the transaction rolls
+ * back and the archive is still there.
+ */
+private suspend fun PooledConnection.columnsOf(table: String): List<String> =
+    usePrepared(COLUMNS) { statement ->
+        statement.bindText(1, table)
+        buildList { while (statement.step()) add(statement.getText(0)) }
+    }
 
 /**
  * Refuses to start unless foreign keys are enforced on this connection.
@@ -194,5 +223,7 @@ private const val TABLES = """
 """
 
 private const val PARENTS = "SELECT `table` FROM pragma_foreign_key_list(?1)"
+
+private const val COLUMNS = "SELECT `name` FROM pragma_table_info(?1)"
 
 private const val FOREIGN_KEYS = "PRAGMA foreign_keys"

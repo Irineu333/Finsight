@@ -293,6 +293,74 @@ class DatabaseRestoreTest {
         )
     }
 
+    /**
+     * A file from an installation that has been upgraded, restored onto one installed
+     * fresh — the ordinary case, and the one that decides whether the copy is safe.
+     *
+     * The two are not the same shape. `ALTER TABLE … ADD COLUMN` appends, so a database
+     * that reached v14 by migrating carries `budgets.currency` last, while one created at
+     * v14 carries it sixth, where the entity declares it (`Migration11To12` and
+     * `schemas/…/14.json` disagree by construction, and `MigrationSchemaEquivalenceTest`
+     * already names this). A copy that matches columns by position writes each value into
+     * whatever column happens to sit at that index on the other side, commits, and says
+     * nothing — the period lands in the currency, the limit type lands in the period, and
+     * the archive it overwrote is already gone.
+     */
+    @Test
+    fun `a file whose columns sit in another order is copied by name`() = runBlocking {
+        // The candidate: a v11 database put through the migration chain, which is how
+        // every installation in the field arrived at v14.
+        val migrated = File(backupFile.absolutePath + ".migrated")
+        onFile(migrated) { connection ->
+            V11_SCHEMA.forEach(connection::execSQL)
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `room_master_table` " +
+                    "(`id` INTEGER PRIMARY KEY, `identity_hash` TEXT)"
+            )
+            connection.execSQL(
+                "INSERT OR REPLACE INTO `room_master_table` (`id`, `identity_hash`) " +
+                    "VALUES (42, 'c29a9c498d3075494afe693eb33874e0')"
+            )
+            connection.execSQL("PRAGMA user_version = 11")
+        }
+        val candidate = open(migrated.absolutePath)
+        try {
+            candidate.useWriterConnection { } // runs the chain, 11 → 14
+        } finally {
+            candidate.close()
+        }
+        onFile(migrated) { connection ->
+            connection.execSQL(
+                "INSERT INTO `budgets` (`iconCategoryId`, `iconKey`, `title`, `amount`, " +
+                    "`period`, `limitType`, `percentage`, `recurringId`, `createdAt`, `currency`) " +
+                    "VALUES (7, 'food', 'Mercado', 850.0, 'MONTHLY', 'PERCENTAGE', 30.0, NULL, 0, 'BRL')"
+            )
+        }
+
+        live.replaceContentFrom(migrated.absolutePath)
+
+        assertEquals(
+            "BRL",
+            live.useWriterConnection { connection ->
+                connection.usePrepared("SELECT `currency` FROM `budgets`") { statement ->
+                    statement.step()
+                    statement.getText(0)
+                }
+            },
+            "the currency of a budget is a currency, not whatever column shares its index",
+        )
+        assertEquals(
+            "MONTHLY",
+            live.useWriterConnection { connection ->
+                connection.usePrepared("SELECT `period` FROM `budgets`") { statement ->
+                    statement.step()
+                    statement.getText(0)
+                }
+            },
+        )
+        listOf("", "-wal", "-shm").forEach { File(migrated.absolutePath + it).delete() }
+    }
+
     @Test
     fun `a swap that fails halfway leaves the archive exactly as it was`() = runBlocking {
         live.seedCategory("Wallet")

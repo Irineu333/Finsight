@@ -300,6 +300,53 @@ class DatabaseVerificationTest {
         assertEquals(0L, accepted.counts.transactions)
     }
 
+    /**
+     * The counts answer "how much of what I made is in here", and the chart of accounts is
+     * not that list.
+     *
+     * A card is an account in the ledger — a `LIABILITY` one, linked to the facade row —
+     * and beyond the user's own the chart holds the system rows the write boundary creates
+     * on demand, per currency, which nothing in the app ever renders. Counting the table
+     * would tell someone with one bank account and one card that they have two accounts
+     * and one card, and it would keep climbing as they spend, with nothing having been
+     * created by them.
+     */
+    @Test
+    fun `the counts describe what the user made, not what the ledger keeps`() = runBlocking {
+        val file = goodBackup("chart")
+        onFile(file) { connection ->
+            listOf(
+                "'Wallet', 'ASSET'",
+                "'Card', 'LIABILITY'",
+                "'Expenses', 'EXPENSE'",
+                "'Income', 'INCOME'",
+                "'Opening balances', 'EQUITY'",
+                "'Conversion', 'CONVERSION'",
+            ).forEach { row ->
+                connection.execSQL(
+                    "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, " +
+                        "`isDefault`, `createdAt`, `isArchived`, `yieldsInterest`) " +
+                        "VALUES ($row, 'BRL', 'wallet', 0, 0, 0, 0)"
+                )
+            }
+            connection.execSQL(
+                "INSERT INTO `credit_cards` (`name`, `limit`, `closingDay`, `dueDay`, " +
+                    "`iconKey`, `createdAt`, `accountId`) " +
+                    "SELECT 'Card', 1000.0, 1, 10, 'card', 0, `id` " +
+                    "FROM `accounts` WHERE `type` = 'LIABILITY'"
+            )
+        }
+
+        val accepted = acceptanceOf(file)
+
+        assertEquals(
+            1L,
+            accepted.counts.accounts,
+            "six rows in the chart, one account the user opened",
+        )
+        assertEquals(1L, accepted.counts.creditCards, "and the card is counted as a card")
+    }
+
     @Test
     fun `a backup of an empty archive is accepted`() = runBlocking {
         val file = goodBackup("empty")

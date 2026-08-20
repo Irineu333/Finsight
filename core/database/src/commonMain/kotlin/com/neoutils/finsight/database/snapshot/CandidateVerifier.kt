@@ -228,8 +228,22 @@ private fun SQLiteConnection.readOrigin(): SnapshotOrigin? {
 private fun SQLiteConnection.holdsTable(name: String): Boolean =
     scalarLong("SELECT COUNT(*) FROM `sqlite_master` WHERE `name` = '$name'") > 0L
 
+/**
+ * How much of what the user made is in the file — which is not the size of the tables.
+ *
+ * The chart of accounts holds more than the accounts a person opened: a card is a
+ * `LIABILITY` account linked to its facade row, and beyond both sit the system rows the
+ * write boundary creates on demand, one set per currency in use, that nothing in the app
+ * ever renders. Counting `accounts` would tell someone with one bank account and one card
+ * that they have two accounts and one card, and the figure would climb as they spent.
+ *
+ * `ASSET` is the same line the app draws to decide what an account list shows
+ * (`AccountDao`), asked here in raw SQL because this runs over a file on a throwaway
+ * connection, with no DAO to ask. Archived accounts are counted: they are in the file and
+ * a restore brings them back, and this figure describes the file rather than a screen.
+ */
 private fun SQLiteConnection.readCounts() = ArchiveCounts(
-    accounts = scalarLong("SELECT COUNT(*) FROM `accounts`"),
+    accounts = scalarLong("SELECT COUNT(*) FROM `accounts` WHERE `type` = '$USER_ACCOUNT_TYPE'"),
     transactions = scalarLong("SELECT COUNT(*) FROM `transactions`"),
     categories = scalarLong("SELECT COUNT(*) FROM `categories`"),
     creditCards = scalarLong("SELECT COUNT(*) FROM `credit_cards`"),
@@ -249,6 +263,9 @@ private fun SQLiteException.toRejection(): CandidateRejection =
     }
 
 private const val INTEGRITY_OK = "ok"
+
+/** What an account the user opened is, in the chart that also holds cards and system rows. */
+private const val USER_ACCOUNT_TYPE = "ASSET"
 
 /**
  * Room's own bookkeeping table, where it keeps the identity of the schema it wrote. Named

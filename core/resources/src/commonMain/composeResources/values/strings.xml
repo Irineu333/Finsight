@@ -965,4 +965,11 @@
     <string name="build_transaction_error_account_required">Selecione a conta.</string>
     <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
+
+    <string name="backup_error_not_a_backup">Este arquivo não é um backup válido deste app. Escolha o arquivo que você exportou.</string>
+    <string name="backup_error_file_damaged">Este backup está danificado e não pode ser lido. Use outra cópia, se você tiver.</string>
+    <string name="backup_error_app_out_of_date">Este backup foi feito por uma versão mais nova do app. Atualize o app para restaurá-lo.</string>
+    <string name="backup_error_no_space">Não há espaço livre suficiente. Libere espaço e tente de novo.</string>
+    <string name="backup_error_export_failed">Não foi possível exportar o backup. Tente de novo.</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados continuam como estavam.</string>
 </resources>

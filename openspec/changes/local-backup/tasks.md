@@ -100,12 +100,15 @@
 
 ## 6. Feature `backup` — módulos
 
-- [ ] 6.1 Criar `feature/backup/api` com `BackupGraph` e `BackupRoute`, sob `finsight.feature.api`
-- [ ] 6.2 Criar `feature/backup/impl` sob `finsight.feature.impl`, com os source sets
+- [x] 6.1 Criar `feature/backup/api` com `BackupGraph` e `BackupRoute`, sob `finsight.feature.api`
+- [x] 6.2 Criar `feature/backup/impl` sob `finsight.feature.impl`, com os source sets
   `androidMain`/`jvmMain`/`iosMain`
-- [ ] 6.3 Registrar ambos em `settings.gradle.kts`
-- [ ] 6.4 Definir `BackupError` com `toUiText()` no `impl`, cobrindo as causas de recusa da tarefa
+- [x] 6.3 Registrar ambos em `settings.gradle.kts`
+- [x] 6.4 Definir `BackupError` com `toUiText()` no `impl`, cobrindo as causas de recusa da tarefa
   4.6 e as falhas de I/O
+- [x] 6.5 Registrar `CandidateVerifier` no `databaseModule`, com o `databasePlatformModule` provendo
+  a factory de builder por caminho — no Android ela fecha sobre o `Context`, que é a razão de a
+  factory existir em vez de a feature montar o builder
 
 ## 7. Feature `backup` — escolha e gravação de arquivo (D9)
 

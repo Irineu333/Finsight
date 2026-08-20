@@ -964,4 +964,11 @@
     <string name="build_transaction_error_account_required">Pick the account.</string>
     <string name="build_transaction_error_closed_invoice">A closed invoice takes no new spending.</string>
     <string name="build_transaction_error_closed_selection">An archived account or card takes no new transactions.</string>
+
+    <string name="backup_error_not_a_backup">This file is not a valid backup of this app. Pick the file you exported.</string>
+    <string name="backup_error_file_damaged">This backup is damaged and cannot be read. Use another copy, if you have one.</string>
+    <string name="backup_error_app_out_of_date">This backup was made by a newer version of the app. Update the app to restore it.</string>
+    <string name="backup_error_no_space">There is not enough free space. Free some up and try again.</string>
+    <string name="backup_error_export_failed">The backup could not be exported. Try again.</string>
+    <string name="backup_error_restore_failed">The backup could not be restored. Your data is unchanged.</string>
 </resources>

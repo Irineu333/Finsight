@@ -83,6 +83,21 @@ class IosBackupFileService : BackupFileService {
         }.map { it.isNotEmpty() }
     }
 
+    override suspend fun newCapturePath(): Either<BackupError, String> =
+        withContext(Dispatchers.Default) {
+            val directory = createPrivateDirectory()
+                ?: return@withContext BackupError.EXPORT_FAILED.left()
+            "$directory/$CAPTURE_NAME".right()
+        }
+
+    override suspend fun discard(path: String) {
+        withContext(Dispatchers.Default) {
+            DATABASE_FILES.forEach { suffix ->
+                NSFileManager.defaultManager.removeItemAtPath(path + suffix, error = null)
+            }
+        }
+    }
+
     /**
      * Presents a picker and suspends until it answers, as the urls it was given or as an
      * empty list when the user closed it without choosing.
@@ -177,8 +192,9 @@ private class BackupPickerDelegate(
 
 /**
  * Somewhere the app may write and the system may reclaim, one directory per call so that
- * a name already used is never a name in the way — `copyItemAtPath` refuses a destination
- * that exists, and both directions write under a name they do not get to choose.
+ * a name already used is never a name in the way — `copyItemAtPath` and `VACUUM INTO` both
+ * refuse a destination that exists, and every caller here writes under a name it does not
+ * get to choose.
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun createPrivateDirectory(): String? {
@@ -214,5 +230,13 @@ private fun copyItem(
 private fun NSError?.toBackupError(otherwise: BackupError): BackupError =
     if (this?.code == NSFileWriteOutOfSpaceError) BackupError.NO_SPACE else otherwise
 
+/**
+ * A database is up to three files while it is open in write-ahead logging, and a
+ * candidate is opened with Room. Removing the main file alone would leave the other two
+ * behind in the temporary directory.
+ */
+private val DATABASE_FILES = listOf("", "-wal", "-shm")
+
 private const val PRIVATE_DIRECTORY = "finsight-backup"
 private const val CANDIDATE_NAME = "candidate.db"
+private const val CAPTURE_NAME = "capture.db"

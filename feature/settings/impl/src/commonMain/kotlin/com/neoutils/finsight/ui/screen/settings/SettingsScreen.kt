@@ -17,14 +17,12 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -33,9 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import com.alorma.compose.settings.ui.base.internal.LocalSettingsTextStyles
-import com.alorma.compose.settings.ui.base.internal.LocalSettingsTileColors
-import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.settings_base_currency_picker_title
@@ -52,6 +47,7 @@ import com.neoutils.finsight.ui.component.CurrencyGlyphIcon
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyOption
 import com.neoutils.finsight.ui.modal.currencyPicker.CurrencyPickerModal
+import com.neoutils.finsight.ui.theme.SettingsTileTheme
 import com.neoutils.finsight.ui.util.isWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -137,30 +133,6 @@ fun SettingsScreen(
             }
         }
     }
-}
-
-/**
- * What a settings tile of this app looks like, stated once: cards on `surfaceContainer`,
- * with the accent kept for the glyph rather than spent on the title. The tiles read
- * their defaults from these two locals, so a tile added later takes the same look.
- */
-@Composable
-private fun SettingsTileTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(
-        LocalSettingsTileColors provides SettingsTileDefaults.colors(
-            containerColor = colorScheme.surfaceContainer,
-            titleColor = colorScheme.onSurface,
-            subtitleColor = colorScheme.onSurfaceVariant,
-            actionColor = colorScheme.onSurfaceVariant,
-            groupTitleColor = colorScheme.onSurfaceVariant,
-        ),
-        LocalSettingsTextStyles provides SettingsTileDefaults.textStyles(
-            groupTitleStyle = typography.labelLarge,
-            titleStyle = typography.titleMedium,
-            subtitleStyle = typography.bodyMedium,
-        ),
-        content = content,
-    )
 }
 
 @Composable

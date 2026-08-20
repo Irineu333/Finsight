@@ -1,6 +1,6 @@
 package com.neoutils.finsight.backup.service
 
-import android.app.Activity
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.result.ActivityResultLauncher
@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
  * and an obligation to leave it as clean as it was found — [awaitResult] is where that
  * obligation is discharged.
  */
-class AndroidBackupFileService : BackupFileService {
+class AndroidBackupFileService(private val appContext: Context) : BackupFileService {
 
     override suspend fun copyInChosenFile(
         context: PlatformContext,
@@ -41,7 +41,7 @@ class AndroidBackupFileService : BackupFileService {
         ) ?: return@catch null
 
         withContext(Dispatchers.IO) {
-            val destination = createPrivateFile(context.activity)
+            val destination = createPrivateFile()
             context.activity.contentResolver.openInputStream(chosen).use { source ->
                 checkNotNull(source) { "The provider opened no stream for the chosen file" }
                 destination.outputStream().use(source::copyTo)
@@ -72,6 +72,18 @@ class AndroidBackupFileService : BackupFileService {
         }
         true
     }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+
+    override suspend fun newCapturePath(): Either<BackupError, String> =
+        withContext(Dispatchers.IO) {
+            Either.catch { createPrivateFile().apply { delete() }.absolutePath }
+                .mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+        }
+
+    override suspend fun discard(path: String) {
+        withContext(Dispatchers.IO) {
+            DATABASE_FILES.forEach { suffix -> File(path + suffix).delete() }
+        }
+    }
 
     /**
      * The registry the activity already owns.
@@ -144,13 +156,14 @@ class AndroidBackupFileService : BackupFileService {
     }
 
     /**
-     * Somewhere the app may write and the system may reclaim, which is what a candidate
-     * needs to be: it is opened with Room and migrated in place, then read once and never
-     * wanted again. The cache directory is cleaned by the system, so a candidate nobody
-     * came back for is not kept forever.
+     * Somewhere the app may write and the system may reclaim, which is what both files of
+     * a backup need: a candidate is opened with Room and migrated in place, then read once
+     * and never wanted again, and a capture only lives until it has been handed over. The
+     * cache directory is cleaned by the system, so a file nobody came back for is not kept
+     * forever.
      */
-    private fun createPrivateFile(activity: Activity): File {
-        val directory = File(activity.cacheDir, PRIVATE_DIRECTORY).apply { mkdirs() }
+    private fun createPrivateFile(): File {
+        val directory = File(appContext.cacheDir, PRIVATE_DIRECTORY).apply { mkdirs() }
         return File.createTempFile(CANDIDATE_PREFIX, CANDIDATE_SUFFIX, directory)
     }
 }
@@ -187,6 +200,13 @@ private const val EVERY_MIME_TYPE = "*/*"
  * real device.
  */
 private const val EXPORT_MIME_TYPE = "application/octet-stream"
+
+/**
+ * A database is up to three files while it is open in write-ahead logging, and a
+ * candidate is opened with Room. Removing the main file alone would leave the other two
+ * behind until the system next reclaims the cache.
+ */
+private val DATABASE_FILES = listOf("", "-wal", "-shm")
 
 private const val REGISTRY_KEY_PREFIX = "backup-file-service-"
 private const val PRIVATE_DIRECTORY = "backup"

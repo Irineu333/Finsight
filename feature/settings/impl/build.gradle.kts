@@ -21,10 +21,11 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.multiplatform.settings)
 
-            // The settings tiles live here and in no other module, for the same reason
-            // Ktor does: a settings screen is the only place that renders a preference,
-            // and a component in `:core:designsystem` would offer every feature a second
-            // vocabulary of rows next to the one this app already speaks.
+            // The tiles are declared by each screen that renders them and are never
+            // re-exported: a component in `:core:designsystem` would offer every feature
+            // a second vocabulary of rows next to the one this app already speaks. What
+            // `:core:designsystem` does hold is `SettingsTileTheme`, the look the tiles
+            // are dressed in, which names no row.
             implementation(libs.compose.settings.ui.tiles)
 
             // Ktor lives here and in no other module. A `:core:network` would invite any

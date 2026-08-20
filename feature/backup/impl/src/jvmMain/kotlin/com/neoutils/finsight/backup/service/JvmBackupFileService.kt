@@ -58,6 +58,18 @@ class JvmBackupFileService : BackupFileService {
         }
     }
 
+    override suspend fun newCapturePath(): Either<BackupError, String> =
+        withContext(Dispatchers.IO) {
+            Either.catch { createPrivateFile().apply { delete() }.absolutePath }
+                .mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+        }
+
+    override suspend fun discard(path: String) {
+        withContext(Dispatchers.IO) {
+            DATABASE_FILES.forEach { suffix -> File(path + suffix).delete() }
+        }
+    }
+
     /**
      * Runs a chooser on the event dispatch thread and suspends until it closes, answering
      * null when it closes without an approval.
@@ -85,8 +97,9 @@ class JvmBackupFileService : BackupFileService {
 
     /**
      * A candidate is opened with Room and migrated in place before anything is decided
-     * about it, so it lives where the system throws files away rather than beside the
-     * database it might come to replace.
+     * about it, and a capture only lives until it has been handed over, so both live where
+     * the system throws files away rather than beside the database one of them might come
+     * to replace.
      */
     private fun createPrivateFile(): File {
         val directory = File(System.getProperty("java.io.tmpdir"), PRIVATE_DIRECTORY)
@@ -106,6 +119,13 @@ private fun Throwable.toBackupError(otherwise: BackupError): BackupError =
 private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.cause }
     .take(MAX_CAUSE_DEPTH)
     .any { cause -> cause is IOException && OUT_OF_SPACE.any { it in cause.message.orEmpty() } }
+
+/**
+ * A database is up to three files while it is open in write-ahead logging, and a
+ * candidate is opened with Room. Removing the main file alone would leave the other two
+ * behind for as long as the temporary directory lives.
+ */
+private val DATABASE_FILES = listOf("", "-wal", "-shm")
 
 private const val PRIVATE_DIRECTORY = "finsight-backup"
 private const val CANDIDATE_PREFIX = "candidate-"

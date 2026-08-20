@@ -37,4 +37,28 @@ interface BackupFileService {
         suggestedName: String,
         context: PlatformContext,
     ): Either<BackupError, Boolean>
+
+    /**
+     * A free path in this app's own temporary area for a capture to be written to.
+     *
+     * Nothing is left at it: `VACUUM INTO` writes the file itself and refuses a
+     * destination that already holds one. The capture cannot be aimed straight at what
+     * the user picked — on two of the three platforms that is not a path at all — so
+     * every export goes through here first.
+     */
+    suspend fun newCapturePath(): Either<BackupError, String>
+
+    /**
+     * Removes a private copy this service handed out, journal files and all.
+     *
+     * The journal files are the reason this takes a path rather than a file: a candidate
+     * is opened with Room, which runs in write-ahead logging, so a `-wal` and a `-shm`
+     * may sit beside it once the verification is done with it.
+     *
+     * Best effort by design. It is called on the way out of flows that have already
+     * failed, and a temporary file that survives is a temporary file — the platform
+     * reclaims it — while an exception raised here would replace the failure the caller
+     * was in the middle of reporting.
+     */
+    suspend fun discard(path: String)
 }

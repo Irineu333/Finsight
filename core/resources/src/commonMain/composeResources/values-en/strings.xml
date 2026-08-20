@@ -971,4 +971,28 @@
     <string name="backup_error_no_space">There is not enough free space. Free some up and try again.</string>
     <string name="backup_error_export_failed">The backup could not be exported. Try again.</string>
     <string name="backup_error_restore_failed">The backup could not be restored. Your data is unchanged.</string>
+
+    <string name="backup_screen_title">Backup</string>
+    <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets and recurring entries, along with the currencies and exchange rates you have recorded. Preferences of this device — such as the base currency and the dashboard layout — are left out, and each install keeps its own.</string>
+    <string name="backup_no_copies">The app keeps no copies of its own, on any platform. To get your data back on another device, you will need the file you export here.</string>
+    <string name="backup_group_export">Export</string>
+    <string name="backup_export_title">Export backup</string>
+    <string name="backup_export_subtitle">Saves a file with your data wherever you choose.</string>
+    <string name="backup_group_restore">Restore</string>
+    <string name="backup_restore_title">Restore from a file</string>
+    <string name="backup_restore_subtitle">Pick a backup exported from this app.</string>
+    <string name="backup_restore_warning">Replaces all of the app's data. It cannot be undone.</string>
+    <string name="backup_confirm_title">Restore backup</string>
+    <string name="backup_confirm_message">Replace the data in this app with the data in this file?</string>
+    <string name="backup_confirm_origin_unknown">Unknown origin</string>
+    <string name="backup_platform_android">Android</string>
+    <string name="backup_platform_desktop">Desktop</string>
+    <string name="backup_platform_ios">iPhone or iPad</string>
+    <string name="backup_confirm_accounts">Accounts</string>
+    <string name="backup_confirm_transactions">Transactions</string>
+    <string name="backup_confirm_categories">Categories</string>
+    <string name="backup_confirm_credit_cards">Cards</string>
+    <string name="backup_confirm_irreversible">This replaces everything in the app right now — there is no undo, and the previous state cannot be brought back.</string>
+    <string name="backup_confirm_cancel">Cancel</string>
+    <string name="backup_confirm_action">Restore</string>
 </resources>

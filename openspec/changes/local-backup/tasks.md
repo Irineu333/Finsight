@@ -81,22 +81,22 @@
 
 ## 5. `:core:database` — substituição de conteúdo (D5, D6)
 
-- [ ] 5.1 Derivar a ordem topológica das tabelas a partir do `sqlite_master` **de `main`** — nunca do
+- [x] 5.1 Derivar a ordem topológica das tabelas a partir do `sqlite_master` **de `main`** — nunca do
   anexado, que traz `snapshot_meta` junto — e de `PRAGMA foreign_key_list`, sem lista fixa
-- [ ] 5.2 Implementar a substituição: `ATTACH` fora da transação, `DELETE` de filhos para pais e
+- [x] 5.2 Implementar a substituição: `ATTACH` fora da transação, `DELETE` de filhos para pais e
   `INSERT … SELECT` de pais para filhos dentro de `immediateTransaction`, `DETACH` após o `COMMIT`
-- [ ] 5.3 Excluir `room_master_table` e `sqlite_sequence` da cópia, e o carimbo de origem pela mesma
+- [x] 5.3 Excluir `room_master_table` e `sqlite_sequence` da cópia, e o carimbo de origem pela mesma
   constante que a captura usa para criá-lo
-- [ ] 5.4 Não usar `defer_foreign_keys` nem `foreign_keys = OFF` — a ordem topológica é o mecanismo
+- [x] 5.4 Não usar `defer_foreign_keys` nem `foreign_keys = OFF` — a ordem topológica é o mecanismo
   (design, D6)
-- [ ] 5.5 Garantir o `DETACH` em `finally`, inclusive quando a transação reverte
-- [ ] 5.6 Teste: falha no meio da substituição deixa o acervo anterior integralmente intacto
-- [ ] 5.7 Teste: após a substituição, os três invariantes valem
-- [ ] 5.8 Teste: uma entidade nova com FK é contemplada sem alteração no código de substituição
-- [ ] 5.9 Teste: um `Flow` de DAO em coleta reemite com o acervo restaurado, sem `refreshAsync()`
+- [x] 5.5 Garantir o `DETACH` em `finally`, inclusive quando a transação reverte
+- [x] 5.6 Teste: falha no meio da substituição deixa o acervo anterior integralmente intacto
+- [x] 5.7 Teste: após a substituição, os três invariantes valem
+- [x] 5.8 Teste: uma entidade nova com FK é contemplada sem alteração no código de substituição
+- [x] 5.9 Teste: um `Flow` de DAO em coleta reemite com o acervo restaurado, sem `refreshAsync()`
   manual e sem fechar o banco, e as instâncias já injetadas continuam operando — a afirmação que o
   spike de Q1 sustenta hoje, refeita contra a API definitiva
-- [ ] 5.10 Remover `RestoreSwapSpikeTest.kt` (tarefa 1.6), uma vez que 3.3 e 5.9 estejam verdes
+- [x] 5.10 Remover `RestoreSwapSpikeTest.kt` (tarefa 1.6), uma vez que 3.3 e 5.9 estejam verdes
 
 ## 6. Feature `backup` — módulos
 

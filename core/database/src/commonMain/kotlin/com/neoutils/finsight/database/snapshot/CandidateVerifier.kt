@@ -249,5 +249,12 @@ private fun SQLiteException.toRejection(): CandidateRejection =
     }
 
 private const val INTEGRITY_OK = "ok"
-private const val ROOM_MASTER_TABLE = "room_master_table"
+
+/**
+ * Room's own bookkeeping table, where it keeps the identity of the schema it wrote. Named
+ * once because two places have to agree on it: the layer that reads it as evidence a file
+ * came from this app, and the copy that leaves it behind.
+ */
+internal const val ROOM_MASTER_TABLE = "room_master_table"
+
 private const val STAGE = "candidate verification"

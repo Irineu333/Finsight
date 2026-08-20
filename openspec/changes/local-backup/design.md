@@ -222,8 +222,8 @@ escrita corrente, não para a reconstituição de um acervo.
 
 ### D6 — A ordem de escrita é derivada, não escrita à mão
 
-`PRAGMA foreign_keys = ON` roda em toda conexão (`AppDatabase_Impl.kt:184`) e o schema v14 tem 9
-chaves estrangeiras. Um achado empírico decide a forma:
+`PRAGMA foreign_keys = ON` roda em toda conexão (`AppDatabase_Impl.kt:175`) e o schema v14 tem 14
+chaves estrangeiras, distribuídas por sete tabelas. Um achado empírico decide a forma:
 
 > `PRAGMA defer_foreign_keys = ON` **não** posterga a verificação quando a origem é
 > `INSERT INTO main.X SELECT … FROM <anexado>.X`. O `COMMIT` falha com
@@ -234,8 +234,25 @@ Logo, a escrita respeita **ordem topológica**: `DELETE` de filhos para pais, `I
 filhos, sem pragma algum. E a ordem é **derivada em tempo de execução** — `sqlite_master` para
 listar as tabelas, `PRAGMA foreign_key_list` para cada uma, ordenação topológica sobre o grafo —, em
 vez de uma lista fixa que precisaria ser lembrada a cada migração. É o mesmo princípio de D1 uma
-camada abaixo: nenhuma segunda cópia do schema. `verifyForeignKeys`, que já existe, é a rede de
-segurança caso a derivação erre.
+camada abaixo: nenhuma segunda cópia do schema.
+
+Não há conferência depois da troca, e não por economia — ela não teria o que encontrar. As duas
+fases falham de modos diferentes, e só uma depende da ordem: o `DELETE` **não** depende, porque
+`ON DELETE CASCADE` e `SET NULL` apenas antecipam remoções que o próprio laço faria, e o fazem **em
+silêncio, sem erro** — medido, só `NO ACTION` recusa; o `INSERT` depende, e aí a chave estrangeira é
+conferida ao fim de cada statement, de modo que um filho escrito antes do pai é recusado ali e a
+transação inteira reverte. Entre as duas, o acervo passa a valer o do arquivo por inteiro ou
+continua o que era — nunca algo que o arquivo não descreve.
+
+Um `foreign_key_check` ao final foi medido e recusado por não cumprir o que o justificaria: sob
+ordens embaralhadas de propósito, as execuções que **comitaram** produziram acervo idêntico ao do
+arquivo e `foreign_key_check` limpo. Ele não detecta ordem errada; detecta resultado inconsistente,
+e não há nenhum. O arquivo, além disso, já passou por `verifyForeignKeys` na verificação
+(`CandidateVerifier.kt`), de modo que a varredura releria o que ela já leu.
+
+O que uma conferência final de fato pegaria é a **premissa falhando** — `foreign_keys` desligada na
+conexão —, e isso se lê numa linha antes do `ATTACH` em vez de varrer o banco depois. É a única
+guarda que a substituição tem. Que a derivação está certa é o teste que confere, a cada build.
 
 `PRAGMA foreign_keys = OFF` antes do `BEGIN` funcionaria, e foi recusado: o pragma é **por conexão e
 persistente**, então uma exceção entre o `OFF` e o `ON` deixaria o escritor do processo com FK

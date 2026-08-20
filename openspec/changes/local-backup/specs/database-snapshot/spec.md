@@ -132,7 +132,7 @@ muito depois da alteração que a causou.
 - **WHEN** uma entidade com chave estrangeira é acrescentada ao banco numa versão futura
 - **THEN** a substituição a contempla sem qualquer alteração no código que a executa
 
-#### Scenario: A derivação é conferida
-- **WHEN** a substituição conclui
-- **THEN** a integridade referencial é verificada, de modo que uma ordem derivada incorretamente
-  seja detectada em vez de gravar um acervo inconsistente
+#### Scenario: Uma ordem derivada incorretamente não grava um acervo inconsistente
+- **WHEN** a ordem derivada põe uma tabela antes de outra da qual ela depende
+- **THEN** a substituição ou aborta e o banco volta ao conteúdo anterior, ou conclui com o conteúdo
+  do arquivo por inteiro — nunca com um estado que o arquivo não descreve

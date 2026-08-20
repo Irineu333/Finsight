@@ -18,10 +18,18 @@ O problema não é a linha existir — é que cada superfície responde uma cois
 | `list_recurring` | responde `type` e `category` que se contradizem | `ListRecurringTool.kt:118` |
 | abrir a sheet de edição | categoria **descartada em silêncio** na primeira composição | `RecurringFormModal.kt:110-112` |
 | `update_recurring` (qualquer campo) | **recusado**, culpando um `type` que a chamada não deu | `RecurringWriteTools.kt` |
-| confirmar um ciclo | **grava o lançamento incoerente no razão** | ver [025](025-confirm-recurring-writes-the-wrong-direction.md) |
+| `confirm_recurring` | **recusado**, nomeando o que o template carrega | [025](archive/025-confirm-recurring-writes-the-wrong-direction.md), corrigida |
+| confirmar pela sheet | a categoria incoerente é **oferecida**, e a confirmação é recusada com uma mensagem genérica | `ConfirmRecurringViewModel.kt:84,219-222,263-274` |
 
-A tela conserta em silêncio, a tool recusa, e o confirmar propaga para o razão. Nenhuma das três está
-errada isoladamente; juntas, não há resposta que o usuário possa acreditar.
+A tela de edição conserta em silêncio, as duas tools recusam, e a sheet de confirmação oferece o que
+o domínio recusa. Nenhuma está errada isoladamente; juntas, não há resposta que o usuário possa
+acreditar.
+
+**O razão já não é mais um dos desacordos.** Enquanto esta issue esteve aberta, confirmar um ciclo
+gravava o lançamento incoerente; a [025](archive/025-confirm-recurring-writes-the-wrong-direction.md)
+fechou isso em 2026-08-19, no use case e na tool. O que sobrou é o desacordo entre as superfícies, e
+a sheet piorou de posição: antes ela postava, agora ela oferece um caminho que termina em recusa — e
+numa mensagem que não diz qual é o problema, pela [029](029-recurring-errors-never-reach-the-user.md).
 
 ## Um caso sem saída
 
@@ -41,7 +49,10 @@ A decisão é de produto e não deveria entrar de carona numa correção de cód
 - **migrar apenas o que a leitura já corrige**, deixando a sheet e a tool concordarem com o mapper.
 
 Seja qual for, a recusa de `update_recurring` deveria nomear as duas saídas, e não só o
-`category_id: 0`.
+`category_id: 0`. E a sheet de confirmação deveria parar de oferecer a categoria incoerente:
+`offeredCategories` (`ConfirmRecurringViewModel.kt:263-274`) devolve a seleção à lista sem distinguir
+a categoria **arquivada** — que é o caso para o qual o ramo existe, e a KDoc só descreve esse — da
+**incoerente**, que o domínio agora recusa.
 
 ## Observação
 

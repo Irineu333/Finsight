@@ -5,7 +5,7 @@
 
 ## O que está errado
 
-É a mesma pergunta de ordem que a [001](archive/001-create-transaction-accepts-negative-amount.md)
+É a mesma pergunta de ordem que a [001](001-create-transaction-accepts-negative-amount.md)
 respondeu para o `confirm_recurring`, não respondida para o `create_installment`.
 
 `AddInstallmentUseCaseImpl` resolve as faturas **antes** de validar o formulário:

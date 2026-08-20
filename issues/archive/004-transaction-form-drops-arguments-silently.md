@@ -88,4 +88,4 @@ arquivo de produção revertido, os três falham e mais nenhum.
 
 `installments` não se aplica: `update_transaction` não tem esse parâmetro.
 
-Registrado como [016](../016-update-transaction-drops-the-category-silently.md).
+Registrado como [016](016-update-transaction-drops-the-category-silently.md).

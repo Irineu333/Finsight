@@ -102,6 +102,12 @@ enum class BackupError(val message: String) {
      * sends the user hunting through their files for a fault that is in the machine. It is
      * not [RESTORE_FAILED] either — that word promises the archive is unchanged after an
      * attempt on it, and here there was no attempt.
+     *
+     * The copy that has to happen before the check falls here for the same reason. A
+     * provider that opens no stream, a picker that never comes up, a private directory
+     * that cannot be made: none of them read the file, so none of them may speak about
+     * it. Only a disk with no room left is told apart, because that one the user can act
+     * on.
      */
     VERIFICATION_FAILED("The chosen file could not be checked"),
 }

@@ -60,7 +60,8 @@ class AndroidBackupFileService(private val appContext: Context) : BackupFileServ
                     }
                     destination.absolutePath
                 }
-            }.onRight { unclaimed = null }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+            }.onRight { unclaimed = null }
+                .mapLeft { it.toBackupError(BackupError.VERIFICATION_FAILED) }
         } finally {
             unclaimed?.let { withContext(NonCancellable) { discard(it) } }
         }

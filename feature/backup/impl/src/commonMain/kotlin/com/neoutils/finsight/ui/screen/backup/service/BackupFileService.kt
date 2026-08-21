@@ -29,6 +29,10 @@ interface BackupFileService {
      * A copy that is not handed back is removed here, cancellation included — the caller
      * only ever learns of a path it was given, so a copy that leaves by any other way has
      * nobody left who could [discard] it.
+     *
+     * A failure is never a word about the file. Nothing here reads what the user picked —
+     * it is carried, not opened — so the copy failing is the check not having started, and
+     * it leaves as [BackupError.VERIFICATION_FAILED]; only a full disk is told apart.
      */
     suspend fun copyInChosenFile(context: PlatformContext): Either<BackupError, String?>
 

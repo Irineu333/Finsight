@@ -1,6 +1,7 @@
 package com.neoutils.finsight.backup
 
 import com.neoutils.finsight.backup.service.JvmBackupFileService
+import com.neoutils.finsight.domain.error.BackupError
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.FileSystems
@@ -73,7 +74,14 @@ class JvmBackupFileServiceTest {
         }
     }
 
-    /** A file is made before it is copied into, so a copy that fails is a file nobody wanted. */
+    /**
+     * A file is made before it is copied into, so a copy that fails is a file nobody
+     * wanted.
+     *
+     * And the word it fails with is not about the file the user picked: nothing here
+     * opened it, so nothing here may say what it is. A copy that did not happen is a
+     * check that did not start.
+     */
     @Test
     fun `a copy that fails leaves nothing behind`() = runBlocking {
         val service = JvmBackupFileService()
@@ -83,6 +91,11 @@ class JvmBackupFileServiceTest {
         val outcome = service.copyIntoPrivateFile(File(sources(), "not-a-file.db"))
 
         assertNull(outcome.getOrNull(), "there was nothing to copy")
+        assertEquals(
+            BackupError.VERIFICATION_FAILED,
+            outcome.leftOrNull(),
+            "a copy nobody could make says nothing about what it was going to copy",
+        )
         assertEquals(before, names(directory), "the copy that did not happen took its file with it")
     }
 

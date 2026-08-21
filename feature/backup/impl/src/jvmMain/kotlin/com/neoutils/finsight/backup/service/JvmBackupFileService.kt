@@ -56,7 +56,7 @@ class JvmBackupFileService : BackupFileService {
                     unclaimed = destination.absolutePath
                     chosen.copyTo(destination, overwrite = true)
                     destination.absolutePath
-                }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+                }.mapLeft { it.toBackupError(BackupError.VERIFICATION_FAILED) }
             }.onRight { unclaimed = null }
         } finally {
             unclaimed?.let { withContext(NonCancellable) { discard(it) } }

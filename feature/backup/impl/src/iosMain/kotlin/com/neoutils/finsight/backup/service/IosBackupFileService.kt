@@ -59,7 +59,7 @@ class IosBackupFileService : BackupFileService {
     override suspend fun copyInChosenFile(
         context: PlatformContext,
     ): Either<BackupError, String?> {
-        val chosen = context.awaitPickedUrls(BackupError.NOT_A_BACKUP) {
+        val chosen = context.awaitPickedUrls(BackupError.VERIFICATION_FAILED) {
             UIDocumentPickerViewController(
                 // Data is every file that is a file, which is the point: what a candidate
                 // is gets settled by reading it, and a narrower type here would hide
@@ -73,7 +73,7 @@ class IosBackupFileService : BackupFileService {
         try {
             return withContext(Dispatchers.Default) {
                 val directory = createPrivateDirectory()
-                    ?: return@withContext BackupError.NOT_A_BACKUP.left()
+                    ?: return@withContext BackupError.VERIFICATION_FAILED.left()
                 val destination = "$directory/$CANDIDATE_NAME"
                 unclaimed = destination
                 chosen.copyIntoPrivateFile(destination)
@@ -184,8 +184,8 @@ class IosBackupFileService : BackupFileService {
     private fun NSURL.copyIntoPrivateFile(destinationPath: String): Either<BackupError, String> {
         val claimed = startAccessingSecurityScopedResource()
         try {
-            val source = path ?: return BackupError.NOT_A_BACKUP.left()
-            return copyItem(source, destinationPath, BackupError.NOT_A_BACKUP)
+            val source = path ?: return BackupError.VERIFICATION_FAILED.left()
+            return copyItem(source, destinationPath, BackupError.VERIFICATION_FAILED)
         } finally {
             if (claimed) {
                 stopAccessingSecurityScopedResource()

@@ -520,9 +520,11 @@ private fun DashboardPendingBalanceSection(
 
 /**
  * The pair always reads as a pair: both classes are rendered whatever the sources say,
- * and a class with nothing in it reads zero rather than disappearing. The header carries
- * the whole meaning of the figure — "coming in" and "going out" name a direction, and it
- * is the title that names the window they are about — so it is not optional here.
+ * and a class with nothing in it reads zero rather than disappearing.
+ *
+ * The header is the widget's own preference and, like the other flow widgets', it opens
+ * off: a fresh dashboard stacks these rows and a caption over each would be more chrome
+ * than reading. It is one toggle away for whoever wants the window named on screen.
  */
 @Composable
 private fun DashboardMonthSettlementSection(
@@ -534,7 +536,7 @@ private fun DashboardMonthSettlementSection(
 
     DashboardFlowStatsSection(
         title = stringResource(Res.string.component_month_settlement),
-        showHeader = true,
+        showHeader = variant.config.showHeader(variant.key),
         modifier = modifier,
     ) {
         BalanceCard(

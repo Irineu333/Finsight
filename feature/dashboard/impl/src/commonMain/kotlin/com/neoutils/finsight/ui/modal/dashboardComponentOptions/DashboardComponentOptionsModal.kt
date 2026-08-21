@@ -90,6 +90,7 @@ class DashboardComponentOptionsModal(
                 when (item.key) {
                     DashboardComponentType.OVERALL_BALANCE_STATS.key,
                     DashboardComponentType.CONCRETE_BALANCE_STATS.key,
+                    DashboardComponentType.MONTH_SETTLEMENT.key,
                     DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key,
                     DashboardComponentType.ACCOUNTS_OVERVIEW.key,
                     DashboardComponentType.CREDIT_CARDS_PAGER.key,

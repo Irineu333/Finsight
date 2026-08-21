@@ -34,8 +34,10 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * The settlement figure is a pair over two disjoint sources — this month's untreated
@@ -403,6 +405,24 @@ class DashboardMonthSettlementTest {
 
         assertNotNull(component)
         assertEquals(1_000.0, component.outgoing.value)
+    }
+
+    // --- The header -------------------------------------------------------------------
+
+    /** Like the other flow widgets, it opens with no caption over the two cards. */
+    @Test
+    fun `the header is off by default`() {
+        assertFalse(DashboardComponentType.MONTH_SETTLEMENT.defaultConfig.showHeader())
+        // A preference saved without the key reads the widget's own default, not `true`.
+        assertFalse(emptyMap<String, String>().showHeader(DashboardComponentType.MONTH_SETTLEMENT.key))
+    }
+
+    @Test
+    fun `the header is one preference away`() {
+        assertTrue(
+            mapOf(DashboardComponentConfig.SHOW_HEADER to "true")
+                .showHeader(DashboardComponentType.MONTH_SETTLEMENT.key),
+        )
     }
 
     private fun brl(value: Double) = MoneyByCurrency.of("BRL", value)

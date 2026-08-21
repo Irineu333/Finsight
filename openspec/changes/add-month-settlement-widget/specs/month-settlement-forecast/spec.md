@@ -18,6 +18,12 @@ qualificar por natureza um widget cujo eixo é o tempo.
 O rótulo MUST NOT afirmar futuridade — o perímetro inclui o **vencido e não liquidado**, e um
 rótulo que prometesse apenas o futuro seria afirmação falsa sobre metade do que a figura soma.
 
+O rótulo é o **nome do widget**, e o mesmo texto serve ao catálogo do modo de edição e ao cabeçalho
+na tela. *Se* o cabeçalho é exibido é a preferência de layout que `dashboard-balance-widgets` já
+governa para todo widget, e não uma decisão desta capacidade: ela nasce **desligada**, como nas
+demais figuras de fluxo do dashboard, e permanece uma opção do usuário. O que esta capacidade fixa
+é o que o rótulo diz, não onde ele aparece.
+
 #### Scenario: A figura é um par
 - **WHEN** o widget de liquidação está presente na tela
 - **THEN** ele exibe duas classes, o que ainda entra e o que ainda sai, como qualquer widget de fluxo do dashboard
@@ -29,6 +35,10 @@ rótulo que prometesse apenas o futuro seria afirmação falsa sobre metade do q
 #### Scenario: O perímetro atravessa naturezas sem qualificar-se por uma
 - **WHEN** a classe a sair soma uma recorrente de conta e uma fatura de cartão
 - **THEN** o rótulo não nomeia nem `ASSET` nem `LIABILITY`, por o perímetro não ser de natureza
+
+#### Scenario: O cabeçalho nasce desligado e continua oferecido
+- **WHEN** o widget é adicionado ou lido do layout padrão
+- **THEN** ele é exibido sem cabeçalho, e o modo de edição oferece ligá-lo como oferece nos demais widgets de fluxo
 
 ### Requirement: As duas fontes do perímetro e o que cada uma alimenta
 

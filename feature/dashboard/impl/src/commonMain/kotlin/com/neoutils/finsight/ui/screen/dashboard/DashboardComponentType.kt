@@ -55,6 +55,7 @@ enum class DashboardComponentType(
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
             DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+            DashboardComponentConfig.SHOW_HEADER to "false",
             MonthSettlementConfig.INCLUDE_RECURRING to "true",
             MonthSettlementConfig.INCLUDE_INVOICES to "true",
         ),

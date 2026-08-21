@@ -83,6 +83,8 @@ class DashboardDeprecatedWidgetTest {
 
         assertEquals(2, entry.position)
         assertEquals("true", entry.config[DashboardComponentConfig.HIDE_WHEN_EMPTY])
+        // And it arrives captionless, like the flow widget above it on the same screen.
+        assertFalse(entry.config.showHeader(entry.key))
     }
 
     @Test

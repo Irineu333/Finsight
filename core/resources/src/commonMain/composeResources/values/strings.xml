@@ -16,6 +16,7 @@
     <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou exclua-as antes de excluir.</string>
     <string name="account_error_currency_immutable">A moeda de uma conta é definida na criação e não pode ser alterada. Para corrigir, apague a conta (se ela não tiver lançamentos) e crie outra.</string>
     <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
+    <string name="account_error_cannot_delete_default">Não é possível excluir a conta padrão. Escolha outra conta como padrão antes.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>

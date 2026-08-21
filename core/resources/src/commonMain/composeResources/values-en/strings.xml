@@ -15,6 +15,7 @@
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or delete them before deleting this.</string>
     <string name="account_error_currency_immutable">An account's currency is set when it is created and cannot be changed. To correct it, delete the account (if it has no entries) and create another.</string>
     <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
+    <string name="account_error_cannot_delete_default">The default account cannot be deleted. Choose another account as the default first.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>

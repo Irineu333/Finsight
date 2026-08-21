@@ -3,6 +3,7 @@ package com.neoutils.finsight.domain.error
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_cannot_archive_default
+import com.neoutils.finsight.resources.account_error_cannot_delete_default
 import com.neoutils.finsight.resources.account_error_currency_immutable
 import com.neoutils.finsight.resources.account_error_empty_name
 import com.neoutils.finsight.resources.account_error_has_balance
@@ -56,7 +57,7 @@ fun AccountError.toUiText() = when (this) {
     AccountError.EMPTY_NAME -> UiText.Res(Res.string.account_error_empty_name)
     AccountError.ALREADY_EXIST -> UiText.Res(Res.string.account_error_already_exist)
     AccountError.NOT_FOUND -> UiText.Res(Res.string.account_error_not_found)
-    AccountError.CANNOT_DELETE_DEFAULT -> UiText.Raw(AccountError.CANNOT_DELETE_DEFAULT.message)
+    AccountError.CANNOT_DELETE_DEFAULT -> UiText.Res(Res.string.account_error_cannot_delete_default)
     AccountError.CANNOT_ARCHIVE_DEFAULT -> UiText.Res(Res.string.account_error_cannot_archive_default)
     AccountError.HAS_TRANSACTIONS -> UiText.Res(Res.string.account_error_has_transactions)
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)

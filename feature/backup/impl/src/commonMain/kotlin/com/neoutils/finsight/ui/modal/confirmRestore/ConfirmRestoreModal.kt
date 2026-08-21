@@ -186,7 +186,7 @@ private fun FileIdentityCard(confirmation: RestoreConfirmation) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             OriginHeader(confirmation.origin)

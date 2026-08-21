@@ -86,6 +86,31 @@ class DatabaseVerificationTest {
         live.captureInto(it.absolutePath, appVersion = "1.2.3", platform = "jvm")
     }
 
+    /**
+     * A file of the vintage the migration chain still has to carry, holding whatever
+     * [seed] puts in it.
+     *
+     * The identity hash is the one `schemas/…/11.json` froze, because layer 2 reads it
+     * before any migration runs: a fixture carrying anything else is refused for its
+     * identity and never reaches the chain this is here to exercise.
+     */
+    private fun v11Candidate(name: String, seed: (SQLiteConnection) -> Unit = {}): File =
+        candidate(name).also { file ->
+            onFile(file) { connection ->
+                V11_SCHEMA.forEach(connection::execSQL)
+                connection.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `room_master_table` " +
+                        "(`id` INTEGER PRIMARY KEY, `identity_hash` TEXT)"
+                )
+                connection.execSQL(
+                    "INSERT OR REPLACE INTO `room_master_table` (`id`, `identity_hash`) " +
+                        "VALUES (42, '$V11_IDENTITY_HASH')"
+                )
+                seed(connection)
+                connection.execSQL("PRAGMA user_version = 11")
+            }
+        }
+
     private fun onFile(file: File, block: (SQLiteConnection) -> Unit) {
         val connection = BundledSQLiteDriver().open(file.absolutePath)
         try {
@@ -220,6 +245,94 @@ class DatabaseVerificationTest {
         }
 
         assertEquals(CandidateRejection.SCHEMA_MISMATCH, rejectionOf(file))
+    }
+
+    /**
+     * A migration guard speaks about the content of the file, and the file is refused for
+     * what the guard found rather than for its schema. The two are not interchangeable:
+     * this file's schema is exactly the one this app expects for its version — it is what
+     * the schema holds that no build of this app would have written.
+     */
+    @Test
+    fun `an unbalanced ledger a migration finds is refused for the ledger`() = runBlocking {
+        val file = v11Candidate("v11unbalanced") { connection ->
+            connection.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Wallet', 'ASSET', 'BRL', 'wallet', 0, 0, 0, 0)"
+            )
+            connection.execSQL(
+                "INSERT INTO `transactions` (`title`, `date`) VALUES ('t', '2026-01-01')"
+            )
+            connection.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT MAX(`id`) FROM `accounts`), 1000, 'BRL'"
+            )
+        }
+
+        assertEquals(
+            CandidateRejection.UNBALANCED_LEDGER,
+            rejectionOf(file),
+            "the migration's own guard named the finding, and the name survives the layer",
+        )
+    }
+
+    @Test
+    fun `a migration that aborts over the file's content is refused as that`() = runBlocking {
+        val file = v11Candidate("v11orphan") { connection ->
+            connection.execSQL(
+                "INSERT INTO `accounts` (`name`, `type`, `currency`, `iconKey`, `isDefault`, " +
+                    "`createdAt`, `isArchived`, `yieldsInterest`) " +
+                    "VALUES ('Wallet', 'ASSET', 'BRL', 'wallet', 0, 0, 0, 0)"
+            )
+            connection.execSQL(
+                "INSERT INTO `transactions` (`title`, `date`) VALUES ('t', '2026-01-01')"
+            )
+            // Balanced, so the guard before this one has nothing to say, and pointing at
+            // a dimension the file does not hold.
+            connection.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`, " +
+                    "`dimensionId`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT MAX(`id`) FROM `accounts`), 1000, 'BRL', 999999"
+            )
+            connection.execSQL(
+                "INSERT INTO `entries` (`transactionId`, `accountId`, `amount`, `currency`) " +
+                    "SELECT (SELECT MAX(`id`) FROM `transactions`), " +
+                    "(SELECT MAX(`id`) FROM `accounts`), -1000, 'BRL'"
+            )
+        }
+
+        assertEquals(
+            CandidateRejection.MIGRATION_ABORTED,
+            rejectionOf(file),
+            "a migration refusing what it was handed is not the file declaring a schema " +
+                "this app does not know",
+        )
+    }
+
+    /**
+     * Layer 4 proves less than its name suggests, and this is the file that finds the gap.
+     *
+     * When a candidate already declares this build's schema version, Room compares the
+     * identity hash and validates nothing else, so the tables layer 5 reads are tables
+     * nobody has looked at. A file carrying the hash without them reaches raw SQL with
+     * nothing to run it against — and that is a refusal, because the file said what it was
+     * and is not it. It used to be neither: the exception left `verify()` altogether and
+     * rose through the scope of whoever called it.
+     */
+    @Test
+    fun `a file carrying this app's identity without its tables is refused`() = runBlocking {
+        live.seedCategory("Groceries")
+        val file = goodBackup("mutilated")
+        onFile(file) { it.execSQL("DROP TABLE `entries`") }
+
+        assertEquals(
+            CandidateRejection.SCHEMA_MISMATCH,
+            rejectionOf(file),
+            "a hash is a claim about the schema, and this file does not hold what it claims",
+        )
     }
 
     @Test
@@ -457,19 +570,7 @@ class DatabaseVerificationTest {
      */
     @Test
     fun `a backup written by an older schema is accepted, and migrated on the way in`() = runBlocking {
-        val file = candidate("v11")
-        onFile(file) { connection ->
-            V11_SCHEMA.forEach(connection::execSQL)
-            connection.execSQL(
-                "CREATE TABLE IF NOT EXISTS `room_master_table` " +
-                    "(`id` INTEGER PRIMARY KEY, `identity_hash` TEXT)"
-            )
-            connection.execSQL(
-                "INSERT OR REPLACE INTO `room_master_table` (`id`, `identity_hash`) " +
-                    "VALUES (42, '$V11_IDENTITY_HASH')"
-            )
-            connection.execSQL("PRAGMA user_version = 11")
-        }
+        val file = v11Candidate("v11")
 
         val accepted = acceptanceOf(file)
 

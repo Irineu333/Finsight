@@ -7,9 +7,13 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.driver.bundled.SQLITE_OPEN_READONLY
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.AppSchema
+import com.neoutils.finsight.database.exception.DatabaseVerificationError
+import com.neoutils.finsight.database.exception.DatabaseVerificationException
 import com.neoutils.finsight.database.exception.MigrationAbortedException
 import com.neoutils.finsight.database.exception.UnbalancedLedgerException
 import com.neoutils.finsight.database.extension.SQLITE_CORRUPT
+import com.neoutils.finsight.database.extension.SQLITE_FULL
+import com.neoutils.finsight.database.extension.SQLITE_IOERR
 import com.neoutils.finsight.database.extension.resultCode
 import com.neoutils.finsight.database.extension.scalarLong
 import com.neoutils.finsight.database.extension.verifyDimensionLanding
@@ -30,6 +34,12 @@ import kotlinx.coroutines.withContext
  * refuses a file that would otherwise be accepted, and being accepted means the user's
  * archive is overwritten with no way back.
  *
+ * A refusal and a failure are not the same answer and do not travel together. Every layer
+ * states its refusals as a [CandidateRejection], which is a finding about the file; a disk
+ * that fills or a device that will not read is the check itself not happening, and leaves
+ * as a [DatabaseVerificationException]. Reporting the second as the first would tell
+ * someone to pick a different file for a problem no file fixes.
+ *
  * None of it touches the database the app is serving. A corrupted file attached to a
  * live connection is reported by SQLite as corruption *of the connection*, which would
  * fire the corruption handling against production; the candidate is only ever opened on
@@ -47,6 +57,7 @@ class CandidateVerifier(
     private val openCandidate: (String) -> AppDatabase,
 ) {
 
+    /** @throws DatabaseVerificationException when the check could not be carried out. */
     suspend fun verify(candidatePath: String): CandidateVerification =
         withContext(Dispatchers.Default) {
             readFile(candidatePath)?.let { return@withContext CandidateVerification.Rejected(it) }
@@ -62,11 +73,17 @@ class CandidateVerifier(
      * that reads bytes — the verification would manufacture its own false positive. The
      * same flag makes it impossible, rather than merely unintended, for these layers to
      * alter the candidate.
+     *
+     * The machine is separated from the file here too, and it has to be: this is the layer
+     * that gets to say "there is nothing here to read as a database", and a device that
+     * refused the read says nothing of the kind. Both places a refusal can arrive ask
+     * [raiseIfMachineFailure] first, so only codes about the file reach [toRejection].
      */
     private fun readFile(candidatePath: String): CandidateRejection? {
         val connection = try {
             BundledSQLiteDriver().open(candidatePath, SQLITE_OPEN_READONLY)
         } catch (cause: SQLiteException) {
+            cause.raiseIfMachineFailure()
             return cause.toRejection()
         }
         return try {
@@ -74,6 +91,7 @@ class CandidateVerifier(
                 ?: connection.provenanceRejection()
                 ?: connection.schemaVersionRejection()
         } catch (cause: SQLiteException) {
+            cause.raiseIfMachineFailure()
             cause.toRejection()
         } finally {
             connection.close()
@@ -85,9 +103,17 @@ class CandidateVerifier(
      * migration chain and the schema identity check actually run — the writer, because
      * that is the connection a migration writes on.
      *
-     * Every failure here is the same finding stated three ways — an identity hash that is
-     * not this schema's, a migration this build does not carry, a migration that ran and
-     * aborted — and the file is refused as a database that is not of this app's schema.
+     * Three findings are told apart here, because they are three different things about
+     * the file. A guard that finds the ledger unbalanced, and a guard that aborts over
+     * anything else it was handed, are both speaking about the content, and each says so
+     * through the exception it raises; every other refusal is about the schema — an
+     * identity hash that is not this one's, a migration this build does not carry, a
+     * downgrade — and Room states all of them as an [IllegalStateException].
+     *
+     * A failure of the machine is none of the three and is not turned into one: the disk
+     * filling under a migration is [DatabaseVerificationException], as is any exception
+     * this build has no reading of. The [Exception] arm is deliberately not a refusal —
+     * an unrecognised failure is exactly the case the wide catch used to mislabel.
      */
     private suspend fun migrate(candidatePath: String): CandidateRejection? {
         val candidate = openCandidate(candidatePath)
@@ -96,8 +122,17 @@ class CandidateVerifier(
             null
         } catch (cause: CancellationException) {
             throw cause
-        } catch (cause: Exception) {
+        } catch (cause: UnbalancedLedgerException) {
+            CandidateRejection.UNBALANCED_LEDGER
+        } catch (cause: MigrationAbortedException) {
+            CandidateRejection.MIGRATION_ABORTED
+        } catch (cause: SQLiteException) {
+            cause.raiseIfMachineFailure()
+            cause.toProvenFileRejection()
+        } catch (cause: IllegalStateException) {
             CandidateRejection.SCHEMA_MISMATCH
+        } catch (cause: Exception) {
+            throw DatabaseVerificationException(DatabaseVerificationError.UNKNOWN, cause)
         } finally {
             candidate.close()
         }
@@ -111,15 +146,29 @@ class CandidateVerifier(
      * read-only connection cannot create the shared-memory file a journal left behind
      * would need. Creating what is not there is not a risk any more either — by now the
      * file has been proven to be a database of this app's own schema.
+     *
+     * "Proven" is Room's word and it is narrower than it sounds: when the file already
+     * declares this build's schema version, Room compares the identity hash and validates
+     * nothing else. So every statement below runs against tables a hash claimed and nobody
+     * read, and a file carrying the hash without the tables raises here rather than at
+     * layer 4. That is a refusal — the file said what it was and is not it — and
+     * [toProvenFileRejection] is where it is named.
      */
     private fun audit(candidatePath: String): CandidateVerification {
-        val connection = BundledSQLiteDriver().open(candidatePath)
+        val connection = try {
+            BundledSQLiteDriver().open(candidatePath)
+        } catch (cause: SQLiteException) {
+            throw DatabaseVerificationException(cause.toVerificationError(), cause)
+        }
         try {
             connection.ledgerRejection()?.let { return CandidateVerification.Rejected(it) }
             return CandidateVerification.Accepted(
                 origin = connection.readOrigin(),
                 counts = connection.readCounts(),
             )
+        } catch (cause: SQLiteException) {
+            cause.raiseIfMachineFailure()
+            return CandidateVerification.Rejected(cause.toProvenFileRejection())
         } finally {
             connection.close()
         }
@@ -263,15 +312,66 @@ private fun SQLiteConnection.readCounts() = ArchiveCounts(
 
 /**
  * A damaged database and a file that is no database at all reach the screen as different
- * sentences, so the one result code that separates them decides. Every other refusal —
- * a path that holds nothing, bytes that are not a database, a code this build does not
- * recognise — says the same thing: there is nothing here to read as a database.
+ * sentences, so the one result code that separates them decides. Every other code that
+ * gets this far — a path that holds nothing, bytes that are not a database, one this build
+ * does not recognise — says the same thing: there is nothing here to read as a database.
+ *
+ * "That gets this far" is [raiseIfMachineFailure]'s doing, and it is what makes the
+ * sentence true rather than merely convenient: a full disk and a refused read never
+ * arrive, so the fallback describes the file instead of covering for the device. What
+ * does still arrive is the code a missing path answers a read-only open with, and that
+ * one belongs here — refusing to open what is not there is the whole reason the flag
+ * is set.
  */
 private fun SQLiteException.toRejection(): CandidateRejection =
     if (resultCode() == SQLITE_CORRUPT) {
         CandidateRejection.CORRUPTED
     } else {
         CandidateRejection.NOT_A_DATABASE
+    }
+
+/**
+ * Past layer 3 the bytes have been read as a database and the file has said which app and
+ * which schema it belongs to, so what is left is either that claim failing or the machine
+ * failing, and only the first is a finding.
+ *
+ * Pages that stopped adding up between the integrity check and here keep their own name —
+ * the screen says "this copy is damaged" for it and nothing else. Every other code lands
+ * on [CandidateRejection.SCHEMA_MISMATCH], because on a file that reached this point it
+ * means the same thing however SQLite words it: `no such table: entries` and `no such
+ * column` are one generic code, and both say the schema the file claimed is not the schema
+ * it holds.
+ */
+private fun SQLiteException.toProvenFileRejection(): CandidateRejection =
+    if (resultCode() == SQLITE_CORRUPT) {
+        CandidateRejection.CORRUPTED
+    } else {
+        CandidateRejection.SCHEMA_MISMATCH
+    }
+
+/**
+ * Leaves, rather than answers, when the refusal is the machine's.
+ *
+ * Two codes describe the device and say nothing whatever about the file: there is no room
+ * left, and the read or the write did not happen. Neither is something a different file
+ * would fix, which is the only question a refusal is allowed to leave the user with.
+ */
+private fun SQLiteException.raiseIfMachineFailure() {
+    val resultCode = resultCode()
+    if (resultCode == SQLITE_FULL || resultCode == SQLITE_IOERR) {
+        throw DatabaseVerificationException(toVerificationError(), this)
+    }
+}
+
+/**
+ * A full disk is 13 and the one condition the user can act on. Everything else keeps its
+ * result code and its wording in the cause, where a log wants them.
+ */
+private fun SQLiteException.toVerificationError(): DatabaseVerificationError =
+    if (resultCode() == SQLITE_FULL) {
+        DatabaseVerificationError.NO_SPACE
+    } else {
+        DatabaseVerificationError.UNKNOWN
     }
 
 private const val INTEGRITY_OK = "ok"

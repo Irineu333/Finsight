@@ -15,6 +15,9 @@ internal fun SQLiteException.resultCode(): Int? =
 
 private val RESULT_CODE = Regex("""Error code: (\d+)""")
 
+/** The device refused a read or a write, and the file is not what is wrong. */
+internal const val SQLITE_IOERR = 10
+
 /** The bytes read are a database, and one whose pages no longer add up. */
 internal const val SQLITE_CORRUPT = 11
 

@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.database.exception.DatabaseCaptureError
 import com.neoutils.finsight.database.exception.DatabaseRestoreError
+import com.neoutils.finsight.database.exception.DatabaseVerificationError
 import com.neoutils.finsight.database.snapshot.CandidateRejection
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_error_app_out_of_date
@@ -10,6 +11,7 @@ import com.neoutils.finsight.resources.backup_error_file_damaged
 import com.neoutils.finsight.resources.backup_error_no_space
 import com.neoutils.finsight.resources.backup_error_not_a_backup
 import com.neoutils.finsight.resources.backup_error_restore_failed
+import com.neoutils.finsight.resources.backup_error_verification_failed
 import com.neoutils.finsight.util.UiText
 
 /**
@@ -17,7 +19,7 @@ import com.neoutils.finsight.util.UiText
  * screen has to answer in.
  *
  * It is not a mirror of what `:core:database` reports, and that is the point of it being
- * here. The database tells nine kinds of candidate and eight kinds of I/O failure apart
+ * here. The database tells ten kinds of candidate and ten kinds of machine failure apart
  * because it is describing a file; this enum groups them by the single thing the user can
  * do next, because it is describing a way out. Two refusals that lead to the same next
  * step are one error here, and the finer finding is not lost — it stays in the message
@@ -37,8 +39,8 @@ enum class BackupError(val message: String) {
      * database, a database of some other program, one this app's schema does not
      * recognise, or one whose contents break an invariant of the ledger.
      *
-     * The seven refusals behind this value land on one sentence because the user acts on
-     * all seven identically — pick a different file — and because the accounting ones may
+     * The eight refusals behind this value land on one sentence because the user acts on
+     * all eight identically — pick a different file — and because the accounting ones may
      * not say more than that: a person who is told an entry does not sum to zero has been
      * handed a fact about double-entry bookkeeping instead of a way forward.
      */
@@ -91,6 +93,17 @@ enum class BackupError(val message: String) {
      * with no word about the archive reads as one.
      */
     RESTORE_FAILED("The archive could not be replaced with the file's content"),
+
+    /**
+     * The file was never checked, so nothing is known about it and nothing was replaced.
+     *
+     * It is not [NOT_A_BACKUP] and the distinction is the reason it exists: a verification
+     * that could not run has found nothing about the file, and saying it is not a backup
+     * sends the user hunting through their files for a fault that is in the machine. It is
+     * not [RESTORE_FAILED] either — that word promises the archive is unchanged after an
+     * attempt on it, and here there was no attempt.
+     */
+    VERIFICATION_FAILED("The chosen file could not be checked"),
 }
 
 fun BackupError.toUiText(): UiText = when (this) {
@@ -100,6 +113,7 @@ fun BackupError.toUiText(): UiText = when (this) {
     BackupError.NO_SPACE -> UiText.Res(Res.string.backup_error_no_space)
     BackupError.EXPORT_FAILED -> UiText.Res(Res.string.backup_error_export_failed)
     BackupError.RESTORE_FAILED -> UiText.Res(Res.string.backup_error_restore_failed)
+    BackupError.VERIFICATION_FAILED -> UiText.Res(Res.string.backup_error_verification_failed)
 }
 
 /**
@@ -114,6 +128,7 @@ fun CandidateRejection.toBackupError(): BackupError = when (this) {
     CandidateRejection.NOT_FROM_THIS_APP -> BackupError.NOT_A_BACKUP
     CandidateRejection.SCHEMA_TOO_NEW -> BackupError.APP_OUT_OF_DATE
     CandidateRejection.SCHEMA_MISMATCH -> BackupError.NOT_A_BACKUP
+    CandidateRejection.MIGRATION_ABORTED -> BackupError.NOT_A_BACKUP
     CandidateRejection.UNBALANCED_LEDGER -> BackupError.NOT_A_BACKUP
     CandidateRejection.ORPHAN_DIMENSION -> BackupError.NOT_A_BACKUP
     CandidateRejection.FOREIGN_KEY_VIOLATION -> BackupError.NOT_A_BACKUP
@@ -134,4 +149,13 @@ fun DatabaseRestoreError.toBackupError(): BackupError = when (this) {
     DatabaseRestoreError.FOREIGN_KEYS_DISABLED -> BackupError.RESTORE_FAILED
     DatabaseRestoreError.CYCLIC_FOREIGN_KEYS -> BackupError.RESTORE_FAILED
     DatabaseRestoreError.UNKNOWN -> BackupError.RESTORE_FAILED
+}
+
+/**
+ * Why the gate reached no verdict at all — which is not a verdict against the file, and is
+ * the whole reason `:core:database` raises this instead of refusing.
+ */
+fun DatabaseVerificationError.toBackupError(): BackupError = when (this) {
+    DatabaseVerificationError.NO_SPACE -> BackupError.NO_SPACE
+    DatabaseVerificationError.UNKNOWN -> BackupError.VERIFICATION_FAILED
 }

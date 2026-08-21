@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.exception.DatabaseCaptureException
 import com.neoutils.finsight.database.exception.DatabaseRestoreException
+import com.neoutils.finsight.database.exception.DatabaseVerificationException
 import com.neoutils.finsight.database.snapshot.CandidateVerification
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.captureInto
@@ -38,6 +39,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -61,6 +63,14 @@ import kotlin.time.Instant
  * **The confirmation is only ever asked about an approved file** (`local-backup` spec).
  * The gate runs first and in full, and its refusals reach the user as one sentence each;
  * asking before it has run would transfer a decision the app cannot yet stand behind.
+ *
+ * **A failure reaches the user rather than the crash handler.** Everything below runs in
+ * [viewModelScope], where an exception that escapes is an uncaught crash and not a
+ * message, so each operation catches what it can name, reports whatever else it meets as
+ * the failure of the operation that met it, and rethrows [CancellationException] — the
+ * one exception that has to keep travelling, and the one every removal here is already
+ * written to survive. Removing a file is the exception that needs none: it is best effort
+ * by contract, and raises nothing to report.
  */
 class BackupViewModel(
     private val database: AppDatabase,
@@ -109,6 +119,10 @@ class BackupViewModel(
                     ifLeft = ::fail,
                     ifRight = { path -> captureInto(path, context) },
                 )
+            } catch (cause: CancellationException) {
+                throw cause
+            } catch (cause: Exception) {
+                fail(BackupError.EXPORT_FAILED)
             } finally {
                 _uiState.update { it.copy(isExporting = false) }
             }
@@ -122,6 +136,10 @@ class BackupViewModel(
      * A user who closes the save dialog has not failed at anything and is told nothing:
      * choosing nowhere arrives as `false`, on the right side of the result, and only `true`
      * is worth a word — the file left for a place this screen cannot read back from.
+     *
+     * Only the capture's own refusals are named here, because they are the only ones with
+     * a cause to read. Anything else the two calls raise leaves through [export], which
+     * reports it as the export failing — after the `finally` below has taken the file away.
      */
     private suspend fun captureInto(path: String, context: PlatformContext) {
         try {
@@ -152,6 +170,11 @@ class BackupViewModel(
      * The copy is this flow's until the confirmation claims it, and every other way out
      * removes it — refused, failed, or walked away from. Nobody is coming back for it,
      * and the archive in use never knew it existed.
+     *
+     * A gate that could not run is not a gate that said no. The file is dropped either way
+     * — nothing here can use it — but the word the user gets is about the check rather
+     * than about what they picked, because a file that was never read has been found
+     * nothing about.
      */
     private fun chooseFileToRestore(context: PlatformContext) {
         if (_uiState.value.isBusy) return
@@ -178,6 +201,12 @@ class BackupViewModel(
                         fail(verification.reason.toBackupError())
                     }
                 }
+            } catch (cause: CancellationException) {
+                throw cause
+            } catch (cause: DatabaseVerificationException) {
+                fail(cause.error.toBackupError())
+            } catch (cause: Exception) {
+                fail(BackupError.VERIFICATION_FAILED)
             } finally {
                 unclaimed?.let { withContext(NonCancellable) { files.discard(it) } }
                 _uiState.update { it.copy(isVerifying = false) }
@@ -206,8 +235,12 @@ class BackupViewModel(
             val error = try {
                 database.replaceContentFrom(path)
                 null
+            } catch (cause: CancellationException) {
+                throw cause
             } catch (cause: DatabaseRestoreException) {
                 cause.error.toBackupError()
+            } catch (cause: Exception) {
+                BackupError.RESTORE_FAILED
             } finally {
                 dropCandidate()
             }

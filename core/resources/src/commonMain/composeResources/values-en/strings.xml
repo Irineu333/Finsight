@@ -975,6 +975,7 @@
     <string name="backup_error_no_space">There is not enough free space. Free some up and try again.</string>
     <string name="backup_error_export_failed">The backup could not be exported. Try again.</string>
     <string name="backup_error_restore_failed">The backup could not be restored. Your data is unchanged.</string>
+    <string name="backup_error_verification_failed">The backup could not be checked. Try again.</string>
     <string name="backup_export_success">The backup was saved where you chose.</string>
     <string name="backup_restore_success">The data in this app is now the data in this file.</string>
 

@@ -13,6 +13,8 @@ import arrow.core.right
 import com.neoutils.finsight.backup.service.JvmBackupFileService
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.CategoryEntity
+import com.neoutils.finsight.database.exception.DatabaseVerificationError
+import com.neoutils.finsight.database.exception.DatabaseVerificationException
 import com.neoutils.finsight.database.getDatabaseBuilder
 import com.neoutils.finsight.database.getRoomDatabase
 import com.neoutils.finsight.database.snapshot.CandidateVerification
@@ -34,6 +36,7 @@ import com.neoutils.finsight.ui.screen.backup.BackupUiState
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import java.io.File
+import java.io.IOException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -66,7 +69,9 @@ import kotlinx.coroutines.test.setMain
  * [CandidateVerifier] is the real one, over real files: what these tests are about is
  * *when* the user is asked and what happens to the file afterwards, and both hang on a
  * refusal being a refusal. A stubbed verifier would answer whatever the test told it to,
- * which is the very question being asked.
+ * which is the very question being asked. It is stubbed in exactly one test, the one about
+ * a verification that could not be carried out: a disk cannot be filled on demand, and
+ * what that test is about is the answer the screen gives, not the gate arriving at it.
  *
  * What is faked is the picker — a dialog needs a window and a person — and even there the
  * two file operations that need neither are the real ones, so a temporary this app is
@@ -111,9 +116,9 @@ class BackupViewModelTest {
         }
     }
 
-    private fun viewModel() = BackupViewModel(
+    private fun viewModel(gate: CandidateVerifier = verifier) = BackupViewModel(
         database = live,
-        candidateVerifier = verifier,
+        candidateVerifier = gate,
         files = files,
         captureOrigin = origin,
         modalManager = modalManager,
@@ -282,6 +287,67 @@ class BackupViewModelTest {
         )
         assertNull(confirmation.origin, "there is nothing to say about where it came from")
         assertEquals(1L, confirmation.counts.categories, "what it holds is known either way")
+    }
+
+    /**
+     * A verification that could not be carried out has found nothing about the file, and
+     * the screen must not answer as though it had.
+     *
+     * The failure is injected where the gate opens the candidate, because that is the one
+     * step of it that touches the device on this side of the copy — and because a machine
+     * failure arriving as a [DatabaseVerificationException] rather than as a refusal is
+     * the distinction the gate exists to keep. What the user hears is about the check;
+     * before this, a full disk was reported as "this file is not a valid backup", which
+     * sends someone hunting for a file that would work when no file would.
+     */
+    @Test
+    fun `a gate that could not run is reported, and the screen survives it`() = runTest {
+        live.seedCategory("Mercado")
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        val viewModel = viewModel(
+            gate = CandidateVerifier {
+                throw DatabaseVerificationException(DatabaseVerificationError.NO_SPACE)
+            }
+        )
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        val state = viewModel.idle()
+
+        assertIs<ErrorModal>(
+            modalManager.top,
+            "an exception through viewModelScope is a crash on Android, not a message",
+        )
+        assertNull(state.confirmation, "nothing was approved, so there is nothing to ask")
+        assertEquals(
+            listOf("Mercado"),
+            live.categories(),
+            "the archive in use is exactly what it was",
+        )
+        assertEquals(
+            listOf(backup.absolutePath),
+            files.discarded,
+            "the copy is no use to anyone either way",
+        )
+    }
+
+    /**
+     * The picker is a device, and devices fail in ways this app has no type for. Whatever
+     * it raises reaches the user as the failure of the operation they started, rather than
+     * as an exception nobody is on the other side of.
+     */
+    @Test
+    fun `a picker that fails outright is reported, not thrown`() = runTest {
+        live.seedCategory("Mercado")
+        files.copyInFailure = { throw IOException("the device went away") }
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        val state = viewModel.idle()
+
+        assertIs<ErrorModal>(modalManager.top)
+        assertNull(state.confirmation)
+        assertFalse(state.isVerifying, "the screen is not left waiting on something that ended")
     }
 
     // ------------------------------------------------------------------ the answer
@@ -526,7 +592,13 @@ private class FakeBackupFileService(
     val handedOut = mutableListOf<String>()
     val discarded = mutableListOf<String>()
 
-    override suspend fun copyInChosenFile(context: PlatformContext) = chosen
+    /** Raised instead of an answer, by a test about a picker that fails outright. */
+    var copyInFailure: (() -> Nothing)? = null
+
+    override suspend fun copyInChosenFile(context: PlatformContext): Either<BackupError, String?> {
+        copyInFailure?.invoke()
+        return chosen
+    }
 
     override suspend fun copyOutCapturedFile(
         sourcePath: String,

@@ -16,6 +16,7 @@ enum class CandidateRejection(val message: String) {
     NOT_FROM_THIS_APP("The database was not written by this app"),
     SCHEMA_TOO_NEW("The database comes from a newer version of this app"),
     SCHEMA_MISMATCH("The database does not carry the schema this app expects"),
+    MIGRATION_ABORTED("A migration ran over the database and refused what it found"),
     UNBALANCED_LEDGER("The ledger does not sum to zero for every transaction and currency"),
     ORPHAN_DIMENSION("An entry points at a dimension the database does not hold"),
     FOREIGN_KEY_VIOLATION("The database holds rows pointing at rows that do not exist"),

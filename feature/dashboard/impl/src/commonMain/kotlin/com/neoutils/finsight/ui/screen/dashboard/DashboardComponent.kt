@@ -53,6 +53,20 @@ sealed interface DashboardComponent {
         override val type = DashboardComponentType.PENDING_BALANCE_STATS
     }
 
+    /**
+     * What has not settled yet and is no longer in the future: this month's untreated
+     * recurring templates, plus the invoices left to pay whose due month has arrived.
+     *
+     * The two sources are disjoint by construction — an untreated template has written no
+     * entry, so it is in no invoice's owed — which is why nothing here deduplicates.
+     */
+    data class MonthSettlement(
+        val incoming: ConsolidatedAmount,
+        val outgoing: ConsolidatedAmount,
+    ) : DashboardComponent {
+        override val type = DashboardComponentType.MONTH_SETTLEMENT
+    }
+
     data class CreditCardBalanceStats(
         val payment: ConsolidatedAmount,
         val expense: ConsolidatedAmount,
@@ -136,6 +150,7 @@ fun DashboardComponent.toViewingVariant(config: Map<String, String>): DashboardC
     is DashboardComponent.OverallBalanceStats -> DashboardComponentVariant.OverallBalanceStats.Viewing(this, config)
     is DashboardComponent.ConcreteBalanceStats -> DashboardComponentVariant.ConcreteBalanceStats.Viewing(this, config)
     is DashboardComponent.PendingBalanceStats -> DashboardComponentVariant.PendingBalanceStats.Viewing(this, config)
+    is DashboardComponent.MonthSettlement -> DashboardComponentVariant.MonthSettlement.Viewing(this, config)
     is DashboardComponent.CreditCardBalanceStats -> DashboardComponentVariant.CreditCardBalanceStats.Viewing(this, config)
     is DashboardComponent.AccountsOverview -> DashboardComponentVariant.AccountsOverview.Viewing(this, config)
     is DashboardComponent.CreditCardsPager -> DashboardComponentVariant.CreditCardsPager.Viewing(this, config)

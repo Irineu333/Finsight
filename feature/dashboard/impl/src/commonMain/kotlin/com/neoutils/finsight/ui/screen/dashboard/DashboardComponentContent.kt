@@ -133,6 +133,13 @@ internal fun DashboardComponentContent(
             )
         }
 
+        is DashboardComponentVariant.MonthSettlement -> {
+            DashboardMonthSettlementSection(
+                variant = variant,
+                modifier = modifier,
+            )
+        }
+
         is DashboardComponentVariant.CreditCardBalanceStats -> {
             DashboardCreditCardBalanceSection(
                 variant = variant,
@@ -507,6 +514,43 @@ private fun DashboardPendingBalanceSection(
             config = BalanceCardConfig.PendingExpense,
             onSeeRates = seeRates,
             amountTestTag = "dashboard_pending_expense_amount",
+        )
+    }
+}
+
+/**
+ * The pair always reads as a pair: both classes are rendered whatever the sources say,
+ * and a class with nothing in it reads zero rather than disappearing. The header carries
+ * the whole meaning of the figure — "coming in" and "going out" name a direction, and it
+ * is the title that names the window they are about — so it is not optional here.
+ */
+@Composable
+private fun DashboardMonthSettlementSection(
+    variant: DashboardComponentVariant.MonthSettlement,
+    modifier: Modifier = Modifier,
+) {
+    val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
+
+    DashboardFlowStatsSection(
+        title = stringResource(Res.string.component_month_settlement),
+        showHeader = true,
+        modifier = modifier,
+    ) {
+        BalanceCard(
+            balance = component.incoming,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.SettlementIncoming,
+            onSeeRates = seeRates,
+            amountTestTag = "dashboard_settlement_incoming_amount",
+        )
+
+        BalanceCard(
+            balance = component.outgoing,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.SettlementOutgoing,
+            onSeeRates = seeRates,
+            amountTestTag = "dashboard_settlement_outgoing_amount",
         )
     }
 }

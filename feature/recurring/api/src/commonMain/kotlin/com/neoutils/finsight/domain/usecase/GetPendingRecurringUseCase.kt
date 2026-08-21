@@ -6,22 +6,25 @@ import com.neoutils.finsight.extension.effectiveDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
-class GetPendingRecurringUseCase {
+/**
+ * The templates of [today]'s month that are still unhandled **and** whose effective day
+ * has already come — what the app calls *pending*.
+ *
+ * Pending is [GetUnhandledRecurringUseCase] plus the cut by day, and nothing else: the
+ * set of handled templates is not recomputed here, it is asked for.
+ */
+class GetPendingRecurringUseCase(
+    private val getUnhandledRecurring: GetUnhandledRecurringUseCase,
+) {
     operator fun invoke(
         recurringList: List<Recurring>,
         occurrences: List<RecurringOccurrence>,
         today: LocalDate,
-    ): List<Recurring> {
-        val handledRecurringIds = occurrences
-            .asSequence()
-            .filter { it.yearMonth == today.yearMonth }
-            .map { it.recurringId }
-            .toSet()
-
-        return recurringList.filter { recurring ->
-            !recurring.isArchived &&
-                today.yearMonth.effectiveDay(recurring.dayOfMonth) <= today.day &&
-                recurring.id !in handledRecurringIds
-        }
+    ): List<Recurring> = getUnhandledRecurring(
+        recurringList = recurringList,
+        occurrences = occurrences,
+        month = today.yearMonth,
+    ).filter { recurring ->
+        today.yearMonth.effectiveDay(recurring.dayOfMonth) <= today.day
     }
 }

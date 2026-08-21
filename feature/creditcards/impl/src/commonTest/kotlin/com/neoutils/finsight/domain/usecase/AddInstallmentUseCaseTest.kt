@@ -330,6 +330,7 @@ private class FakeInvoiceReader(private val invoices: List<Invoice>) : IInvoiceR
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = outOfScope()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = outOfScope()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = outOfScope()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = outOfScope()
     override suspend fun getAllInvoices(): List<Invoice> = outOfScope()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = outOfScope()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = outOfScope()

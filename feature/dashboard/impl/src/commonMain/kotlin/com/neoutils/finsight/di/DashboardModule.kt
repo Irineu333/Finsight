@@ -24,6 +24,7 @@ val dashboardModule = module {
             calculateCategoryIncomeUseCase = get(),
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
+            getUnhandledRecurringUseCase = get(),
             invoiceUiMapper = get(),
             entryRepository = get(),
             accountRepository = get(),

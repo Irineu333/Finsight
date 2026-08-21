@@ -21,6 +21,7 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -54,7 +55,8 @@ class DashboardAccountsOverviewTest {
             override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
         },
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(ThrowingEntryRepository, reducer()),
-        getPendingRecurringUseCase = GetPendingRecurringUseCase(),
+        getPendingRecurringUseCase = GetPendingRecurringUseCase(GetUnhandledRecurringUseCase()),
+        getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
@@ -81,7 +83,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.ACCOUNTS_OVERVIEW.key,
             input = input(accounts),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = config,
         )
         return (component as DashboardComponent.AccountsOverview).accounts
@@ -137,7 +139,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.CONCRETE_BALANCE_STATS.key,
             input = input(listOf(accountA)).copy(transactions = transactions),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.ConcreteBalanceStats
@@ -150,7 +152,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key,
             input = input(emptyList()),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.CreditCardBalanceStats
@@ -192,7 +194,7 @@ class DashboardAccountsOverviewTest {
                 today = LocalDate(2026, 7, 19),
                 targetMonth = YearMonth(2026, 3),
             ),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
 

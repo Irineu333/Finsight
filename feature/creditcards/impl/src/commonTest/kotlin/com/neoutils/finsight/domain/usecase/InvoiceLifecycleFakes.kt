@@ -100,6 +100,7 @@ internal class RecordingInvoiceStore(vararg seed: Invoice) : IInvoiceRepository 
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = notUnderTest()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = notUnderTest()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = notUnderTest()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = notUnderTest()
 }
 
 internal class SingleCardRepository(private val card: CreditCard) : ICreditCardRepository {

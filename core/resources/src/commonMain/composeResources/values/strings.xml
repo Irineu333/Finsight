@@ -571,6 +571,8 @@
     <string name="balance_card_current_invoice">Fatura Atual</string>
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
+    <string name="balance_card_settlement_incoming">A entrar</string>
+    <string name="balance_card_settlement_outgoing">A sair</string>
 
     <string name="summary_card_opening_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>
@@ -787,6 +789,7 @@
     <string name="component_balance_stats">Balanço em Contas</string>
     <string name="component_overall_balance_stats">Balanço Geral</string>
     <string name="component_pending_balance">Balanço Pendente</string>
+    <string name="component_month_settlement">A liquidar este mês</string>
     <string name="component_credit_card_balance_stats">Balanço do Cartão</string>
     <string name="component_accounts_overview">Contas</string>
     <string name="component_credit_cards">Cartões de Crédito</string>
@@ -821,6 +824,8 @@
     <string name="component_config_hide_single_account">Ocultar conta única</string>
     <string name="component_config_accounts_in_total">Contas somadas no total</string>
     <string name="component_config_hide_when_empty">Ocultar sem dados</string>
+    <string name="component_config_settlement_recurring">Recorrentes do mês</string>
+    <string name="component_config_settlement_invoices">Faturas a pagar</string>
     <string name="component_config_show_empty_state">Exibir empty state</string>
     <string name="component_config_max_categories">Máximo de categorias</string>
     <string name="component_config_days_ahead">Dias à frente</string>

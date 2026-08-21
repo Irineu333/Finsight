@@ -90,7 +90,7 @@ env:
 
 # --- And this month is settled, not owed ----------------------------------------------------------
 # The expense was paid at the same moment the template was created, so nothing about this month is
-# outstanding: neither the pending figures nor the list of recurring waiting to be confirmed.
+# outstanding: neither the settlement figures nor the list of recurring waiting to be confirmed.
 - back
 - scrollUntilVisible:
     element:
@@ -98,6 +98,6 @@ env:
     direction: UP
     timeout: 25000
 - assertNotVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertNotVisible:
     id: "dashboard_component_pending_recurring"

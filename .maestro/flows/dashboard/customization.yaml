@@ -175,8 +175,9 @@ tags:
 # two drags short and away from the list's autoscroll.
 #
 # Whether a component is on the dashboard is read as its side of the header: `above` is active,
-# `below` is not. There is no button for either direction — the bulk commands move all eleven, never
-# one — so this gesture is the only way a person adds or removes a single component.
+# `below` is not. There is no button for either direction — the bulk commands move every offered
+# component at once, never one — so this gesture is the only way a person adds or removes a single
+# component.
 - tapOn:
     id: "dashboard_empty_edit"
 - extendedWaitUntil:

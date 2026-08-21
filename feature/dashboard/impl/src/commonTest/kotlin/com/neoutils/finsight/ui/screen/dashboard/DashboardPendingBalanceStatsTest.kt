@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -52,7 +53,8 @@ class DashboardPendingBalanceStatsTest {
             override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
         },
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(NoFlowsEntryRepository, reducer()),
-        getPendingRecurringUseCase = GetPendingRecurringUseCase(),
+        getPendingRecurringUseCase = GetPendingRecurringUseCase(GetUnhandledRecurringUseCase()),
+        getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
@@ -96,7 +98,7 @@ class DashboardPendingBalanceStatsTest {
             today = LocalDate(2026, 3, 20),
             targetMonth = march,
         ),
-        context = DashboardBuilderContext(pendingRecurring = pendingRecurring),
+        context = DashboardBuilderContext(pendingRecurring = pendingRecurring, unhandledRecurring = pendingRecurring),
         config = config,
     ) as? DashboardComponent.PendingBalanceStats
 

@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -156,6 +157,7 @@ private object NoInvoices : IInvoiceRepository {
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = observeAllInvoices()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = MutableStateFlow(null)
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = observeAllInvoices()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = emptyList()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()

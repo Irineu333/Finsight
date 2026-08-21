@@ -570,6 +570,8 @@
     <string name="balance_card_current_invoice">Current Invoice</string>
     <string name="balance_card_pending_income">Pending Income</string>
     <string name="balance_card_pending_expense">Pending Expenses</string>
+    <string name="balance_card_settlement_incoming">Coming in</string>
+    <string name="balance_card_settlement_outgoing">Going out</string>
 
     <string name="summary_card_opening_balance">Initial Balance</string>
     <string name="summary_card_income">Money In</string>
@@ -786,6 +788,7 @@
     <string name="component_balance_stats">Accounts Balance</string>
     <string name="component_overall_balance_stats">Overall Balance</string>
     <string name="component_pending_balance">Pending Balance</string>
+    <string name="component_month_settlement">To settle this month</string>
     <string name="component_credit_card_balance_stats">Card Balance</string>
     <string name="component_accounts_overview">Accounts</string>
     <string name="component_credit_cards">Credit Cards</string>
@@ -820,6 +823,8 @@
     <string name="component_config_hide_single_account">Hide single account</string>
     <string name="component_config_accounts_in_total">Accounts included in the total</string>
     <string name="component_config_hide_when_empty">Hide when empty</string>
+    <string name="component_config_settlement_recurring">This month's recurring</string>
+    <string name="component_config_settlement_invoices">Invoices to pay</string>
     <string name="component_config_show_empty_state">Show empty state</string>
     <string name="component_config_max_categories">Max categories</string>
     <string name="component_config_days_ahead">Days ahead</string>

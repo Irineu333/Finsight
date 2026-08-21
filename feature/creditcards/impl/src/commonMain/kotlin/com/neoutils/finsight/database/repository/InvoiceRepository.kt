@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.datetime.YearMonth
 
 class InvoiceRepository(
     private val database: AppDatabase,
@@ -152,6 +153,22 @@ class InvoiceRepository(
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> {
         return combine(
             dao.observeUnpaidInvoices(),
+            creditCardsFlow,
+        ) { entities, creditCards ->
+            entities.mapNotNull { entity ->
+                creditCards[entity.creditCardId]?.let { creditCard ->
+                    mapper.toDomain(
+                        entity = entity,
+                        creditCard = creditCard,
+                    )
+                }
+            }
+        }
+    }
+
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> {
+        return combine(
+            dao.observeInvoicesToSettle(month),
             creditCardsFlow,
         ) { entities, creditCards ->
             entities.mapNotNull { entity ->

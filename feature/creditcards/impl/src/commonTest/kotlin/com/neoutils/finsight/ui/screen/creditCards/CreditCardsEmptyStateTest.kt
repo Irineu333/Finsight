@@ -212,6 +212,7 @@ private class FakeCreditCardRepository(private val cards: List<CreditCard>) : IC
 
 private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvoiceRepository {
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = MutableStateFlow(invoices)
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = MutableStateFlow(invoices)
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices

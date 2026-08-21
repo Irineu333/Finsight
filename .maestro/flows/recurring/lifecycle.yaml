@@ -140,8 +140,12 @@ env:
 
 # --- A recurring is not money --------------------------------------------------------------------
 # Two things are due and the balance is still zero: what the app knows it will ask for has not been
-# asked for yet. The pending row appears to say exactly that — the day-zero story asserts its
+# asked for yet. The settlement row appears to say exactly that — the day-zero story asserts its
 # absence, and this is the other half.
+#
+# That widget spans the whole month rather than only what is past its day, and it sums unpaid
+# invoices besides. Both recurrings here fall on day 1 and there is no card in this flow, so the two
+# perimeters coincide and the figures below are the templates' own.
 - back
 - scrollUntilVisible:
     element:
@@ -152,12 +156,12 @@ env:
     id: "dashboard_total_balance_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]940[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 
 - scrollUntilVisible:
@@ -226,10 +230,10 @@ env:
     id: "dashboard_income_amount"
     text: "[$]865[.,]00"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 
 # --- I skip the rent -----------------------------------------------------------------------------
@@ -267,7 +271,8 @@ env:
       id: "confirm_recurring_skip"
     timeout: 15000
 
-# Nothing is owed for this month any more, so both pending components go away — and skipping moved
+# Nothing is owed for this month any more, so the settlement row and the pending list both go away
+# — and skipping moved
 # no money: the balance is still what the salary put there, and no expense was recorded.
 # The premise for the two absences is the pair of components that surround them: the cards pager
 # (position 5) and recents (position 9) were laid out, so positions 2 and 8 were too.
@@ -279,7 +284,7 @@ env:
 - assertVisible:
     id: "dashboard_component_credit_cards_pager"
 - assertNotVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertVisible:
     id: "dashboard_total_balance_amount"
     text: "[$]865[.,]00"
@@ -438,10 +443,10 @@ env:
     id: "dashboard_income_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]0[.,]00"
 
 - scrollUntilVisible:
@@ -555,7 +560,7 @@ env:
     id: "dashboard_expenses_amount"
     text: "[$]77[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]0[.,]00"
 
 - scrollUntilVisible:

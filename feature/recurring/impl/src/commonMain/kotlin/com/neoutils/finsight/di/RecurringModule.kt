@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
@@ -51,7 +52,8 @@ val recurringModule = module {
     factory { RecurringMapper() }
     factory { RecurringOccurrenceMapper() }
 
-    factory { GetPendingRecurringUseCase() }
+    factory { GetUnhandledRecurringUseCase() }
+    factory { GetPendingRecurringUseCase(getUnhandledRecurring = get()) }
     factory {
         ResolveRecurringRetirabilityUseCase(
             recurringRepository = get(),

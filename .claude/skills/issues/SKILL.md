@@ -1,6 +1,6 @@
 ---
 name: issues
-description: Gerencia o backlog de bugs em `issues/` — registra um bug relatado, arquiva um bug corrigido ou refutado, e revalida os bugs abertos contra o código atual. Use quando o usuário relatar um defeito, quando uma correção terminar, ou quando pedirem uma revisão do que ainda está aberto.
+description: Gerencia o backlog de bugs em `issues/` — registra um bug relatado, conduz a correção de um bug do backlog, arquiva um bug corrigido ou refutado, e revalida os bugs abertos contra o código atual. Use quando o usuário relatar um defeito, quando pedir para corrigir um bug, quando uma correção terminar, ou quando pedirem uma revisão do que ainda está aberto.
 ---
 
 Um bug é **um arquivo Markdown**. Ele nasce em `issues/`, é movido para `issues/archive/`
@@ -64,6 +64,29 @@ O usuário relata um defeito.
 5. **Classifique** com a régua de `SEVERITY.md`. Não invente faixa por impressão.
 6. **Escreva** o arquivo a partir de `TEMPLATE.md`.
 
+## Modo: corrigir
+
+O usuário pede para corrigir um bug. **É o modo que garante o arquivamento** — sem ele a
+correção acontece fora do backlog, e a lista volta a mentir.
+
+1. **Localize o arquivo** em `issues/`. Se o bug não estiver registrado, siga o modo
+   *registrar* até ter cenário e âncoras: corrigir sem cenário é corrigir sem critério
+   de fechamento.
+2. **Leia o arquivo inteiro** antes de tocar no código. O cenário é o critério, as âncoras
+   são o ponto de partida, e a `## Sugestão` é um palpite de quem registrou — **não vincula**.
+3. **Corrija.** Como corrigir é decisão de quem corrige. `FIXING.md` traz o ciclo
+   recomendado — reproduzir, morder com um teste, corrigir, provar — e não é obrigatório.
+4. **Arquive**, sem exceção: siga o modo *arquivar*. A correção não está pronta enquanto
+   o arquivo estiver em `issues/`.
+
+Se a correção revelar que o cenário estava errado, **corrija o arquivo do bug antes de
+corrigir o código**. Se revelar outros defeitos, registre-os em vez de resolvê-los de
+passagem: um bug por vez é o que mantém o desfecho legível.
+
+**Bug não registrado, corrigido na hora:** não force um arquivo que nasceria e morreria na
+mesma sessão — o commit `Fix(...)` já é o registro. Registre se a correção for adiada, se o
+defeito tiver irmãos, ou se ela exigir uma decisão que alguém vá querer reler depois.
+
 ## Modo: arquivar
 
 Um bug deixou de estar aberto.
@@ -117,12 +140,6 @@ grep -l "area: creditcards" issues/*.md           # por área
 grep -rl "confirmed: no" issues/*.md              # os que ainda não foram confirmados
 grep -l "verdict: incidental" issues/archive/*.md # fecharam sem prova de regressão
 ```
-
-## Corrigir
-
-**Como corrigir é decisão de quem corrige** — a `## Sugestão` do arquivo não vincula.
-`FIXING.md` traz o ciclo recomendado (reproduzir, morder com um teste, corrigir, provar)
-e não é obrigatório. Arquivar, ao terminar, é.
 
 ## Referências
 

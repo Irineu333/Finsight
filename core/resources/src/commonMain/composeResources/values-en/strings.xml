@@ -244,6 +244,7 @@
     <string name="retire_error_has_recurring">Recurring entries depend on this category. Point them at another category or delete them before deleting this one.</string>
     <string name="retire_error_has_yielding_accounts">Accounts that yield classify their yield in this category. Turn yield off on them before deleting.</string>
     <string name="error_modal_dismiss">Got it</string>
+    <string name="success_modal_dismiss">OK</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
     <!-- Archived accounts -->
@@ -974,6 +975,8 @@
     <string name="backup_error_no_space">There is not enough free space. Free some up and try again.</string>
     <string name="backup_error_export_failed">The backup could not be exported. Try again.</string>
     <string name="backup_error_restore_failed">The backup could not be restored. Your data is unchanged.</string>
+    <string name="backup_export_success">The backup was saved where you chose.</string>
+    <string name="backup_restore_success">The data in this app is now the data in this file.</string>
 
     <string name="backup_screen_title">Backup</string>
     <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets and recurring entries, along with the currencies and exchange rates you have recorded. Preferences of this device — such as the base currency and the dashboard layout — are left out, and each install keeps its own.</string>

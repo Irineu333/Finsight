@@ -104,6 +104,29 @@ uso como parte da restauração.
   admissível
 - **THEN** ela conclui pelo mesmo caminho das demais plataformas, sem reinício
 
+### Requirement: O êxito de uma operação é dito
+
+Concluída uma exportação em que o usuário escolheu um destino, ou uma restauração, o app SHALL
+dizer que ela concluiu. Nenhuma das duas deixa na tela algo que sirva de prova: a exportação
+entrega o arquivo a um lugar que o app não lê de volta, e a restauração fecha a própria
+confirmação e devolve o usuário à mesma tela de onde partiu.
+
+Fechar o seletor sem escolher destino MUST NOT ser apresentado como êxito. Quem não salvou nada
+não falhou em nada e não realizou nada, e dizer "backup concluído" nesse caso é pior que o
+silêncio, porque afirma que existe um arquivo que não existe.
+
+#### Scenario: A exportação que salvou diz que salvou
+- **WHEN** uma exportação conclui com o usuário tendo escolhido um destino
+- **THEN** o app diz que o backup foi salvo
+
+#### Scenario: A exportação que não salvou não diz nada
+- **WHEN** o usuário fecha o seletor de destino sem escolher um
+- **THEN** o app não diz nada, nem de êxito nem de falha
+
+#### Scenario: A restauração diz que concluiu
+- **WHEN** uma restauração conclui sem erro
+- **THEN** o app diz que o acervo passou a ser o do arquivo
+
 ### Requirement: O app não delega backup à plataforma
 
 O app MUST NOT depender de mecanismos automáticos de backup do sistema operacional para preservar o

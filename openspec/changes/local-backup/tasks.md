@@ -169,6 +169,10 @@
   `Modifier.exposeTestTags()` à mão: `ModalManager` já o aplica no `ModalBottomSheet` que toda
   subclasse de `ModalBottomSheet` renderiza. A exigência real é o modal estender essa classe, como
   todos os outros do app — quem se desviar disso é que perde o alcance do driver
+- [x] 9.9 Dizer o êxito das duas operações, por `ModalManager.showSuccess` — o app só empurrava
+  recusas, e nenhuma das duas deixa na tela algo que sirva de prova. Fechar o seletor sem escolher
+  destino continua sem dizer nada: o `Boolean` do lado direito de `copyOutCapturedFile` é o que
+  separa os dois casos, e era ignorado
 
 ## 10. Strings
 

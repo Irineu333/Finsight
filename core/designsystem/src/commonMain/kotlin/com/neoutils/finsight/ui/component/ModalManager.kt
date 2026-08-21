@@ -45,6 +45,19 @@ class ModalManager {
         show(ErrorModal(message))
     }
 
+    /**
+     * States that a modal action's result is one the user cannot otherwise see.
+     *
+     * An export leaves for a place the screen does not read from, and a restore closes its
+     * own confirmation without a trace — both look identical to nothing having happened at
+     * all unless something says so. Solving that per modal meant plumbing in every
+     * ViewModel, and the ones that were missed stayed silent — so it lives here, beside
+     * [showError], where every modal already is.
+     */
+    fun showSuccess(message: UiText) {
+        show(SuccessModal(message))
+    }
+
     fun show(modal: Modal) {
         modalState.add(modal)
     }

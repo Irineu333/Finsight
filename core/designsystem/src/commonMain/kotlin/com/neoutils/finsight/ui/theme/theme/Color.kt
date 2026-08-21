@@ -35,6 +35,7 @@ val IconTint = Color(0xFF94A3B8)
 
 // Status colors
 val Success = Color(0xFF14B8A6) // Teal - Sucesso/Salvamento
+val OnSuccess = Color(0xFF0F172A) // Slate-900 - legible over Success in both themes
 val Error = Color(0xFFDC2626) // Dark red - Erros críticos
 val Warning = Color(0xFFF59E0B) // Amber - Avisos
 val Info = Color(0xFF3B82F6) // Blue - Informações

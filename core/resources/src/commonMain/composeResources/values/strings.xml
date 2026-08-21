@@ -245,6 +245,7 @@
     <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra categoria ou exclua-as antes de excluir esta.</string>
     <string name="retire_error_has_yielding_accounts">Há contas que rendem e classificam o rendimento nesta categoria. Desligue o rendimento delas antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
+    <string name="success_modal_dismiss">OK</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <!-- Archived accounts -->
@@ -975,6 +976,8 @@
     <string name="backup_error_no_space">Não há espaço livre suficiente. Libere espaço e tente de novo.</string>
     <string name="backup_error_export_failed">Não foi possível exportar o backup. Tente de novo.</string>
     <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados continuam como estavam.</string>
+    <string name="backup_export_success">O backup foi salvo onde você escolheu.</string>
+    <string name="backup_restore_success">Os dados deste app agora são os deste arquivo.</string>
 
     <string name="backup_screen_title">Backup</string>
     <string name="backup_scope">O backup contém suas contas, cartões, transações, categorias, orçamentos e recorrências, além das moedas e taxas de câmbio que você registrou. Preferências deste aparelho — como moeda base e o layout do painel — não entram, e cada instalação mantém as suas.</string>

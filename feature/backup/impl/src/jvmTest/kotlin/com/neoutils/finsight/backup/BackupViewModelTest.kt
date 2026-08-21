@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ErrorModal
+import com.neoutils.finsight.ui.component.SuccessModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.BackupAction
 import com.neoutils.finsight.ui.screen.backup.BackupUiState
@@ -164,6 +165,60 @@ class BackupViewModelTest {
         } finally {
             connection.close()
         }
+    }
+
+    // --------------------------------------------------------- what was achieved
+
+    /**
+     * The export is the one operation whose result the app cannot show: the file left
+     * for a place the app does not read, and the screen it was started from is identical
+     * before and after. Without a word, a backup that worked and a backup that never
+     * happened look the same.
+     */
+    @Test
+    fun `an export the user saved says so`() = runTest {
+        live.seedCategory("Mercado")
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.Export(context))
+        viewModel.idle()
+
+        assertIs<SuccessModal>(modalManager.top, "the file is somewhere the app cannot show")
+    }
+
+    @Test
+    fun `an export the user did not save says nothing`() = runTest {
+        live.seedCategory("Mercado")
+        files.saves = false
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.Export(context))
+        viewModel.idle()
+
+        assertNull(
+            modalManager.top,
+            "closing a picker is not a failure, and telling someone who saved nothing " +
+                "that their backup is done is worse than saying nothing at all",
+        )
+    }
+
+    /**
+     * The archive was replaced and the sheet that asked about it is gone, so the screen
+     * left behind is the one the user was already looking at. What changed is everywhere
+     * except here.
+     */
+    @Test
+    fun `a completed restore says so`() = runTest {
+        live.seedCategory("Mercado")
+        files.chosen = backupOfLive().absolutePath.right()
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        viewModel.idle()
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.settled()
+
+        assertIs<SuccessModal>(modalManager.top)
     }
 
     // ------------------------------------------------------------------ the gate
@@ -465,6 +520,9 @@ private class FakeBackupFileService(
     /** Where the export ended up, standing in for what the user picked. */
     var exported: File? = null
 
+    /** Whether the user picks a destination, or closes the save dialog. */
+    var saves: Boolean = true
+
     val handedOut = mutableListOf<String>()
     val discarded = mutableListOf<String>()
 
@@ -477,6 +535,7 @@ private class FakeBackupFileService(
     ): Either<BackupError, Boolean> {
         handedOut += sourcePath
         exportGate?.await()
+        if (!saves) return false.right()
         exported = destination().also { File(sourcePath).copyTo(it, overwrite = true) }
         return true.right()
     }

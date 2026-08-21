@@ -17,9 +17,13 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_export_success
+import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.backupFileName
+import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +37,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -115,7 +120,8 @@ class BackupViewModel(
      * whatever became of the other two.
      *
      * A user who closes the save dialog has not failed at anything and is told nothing:
-     * choosing nowhere arrives as `false`, on the right side of the result.
+     * choosing nowhere arrives as `false`, on the right side of the result, and only `true`
+     * is worth a word — the file left for a place this screen cannot read back from.
      */
     private suspend fun captureInto(path: String, context: PlatformContext) {
         try {
@@ -128,7 +134,10 @@ class BackupViewModel(
                 sourcePath = path,
                 suggestedName = backupFileName(today()),
                 context = context,
-            ).onLeft(::fail)
+            ).fold(
+                ifLeft = ::fail,
+                ifRight = { saved -> if (saved) succeed(Res.string.backup_export_success) },
+            )
         } catch (cause: DatabaseCaptureException) {
             fail(cause.error.toBackupError())
         } finally {
@@ -181,9 +190,12 @@ class BackupViewModel(
      * without closing anything — the screens go on rendering, and reflect the new archive
      * when it returns.
      *
-     * The candidate is dropped afterwards either way. A failure leaves the archive exactly
+     * The candidate is dropped afterwards either way, so the confirmation sheet is already
+     * on its way out by the time either word is said. A failure leaves the archive exactly
      * as it was, which is what the message says, and the file that was going to replace it
-     * has no second chance to offer: it would have to be picked and verified again.
+     * has no second chance to offer: it would have to be picked and verified again. The
+     * entry stays busy until that word is said — the operation is not over for the screen
+     * one step before the user hears the result of it.
      */
     private fun restore() {
         val path = candidatePath ?: return
@@ -198,10 +210,10 @@ class BackupViewModel(
                 cause.error.toBackupError()
             } finally {
                 dropCandidate()
-                _uiState.update { it.copy(isRestoring = false) }
             }
 
-            error?.let(::fail)
+            if (error != null) fail(error) else succeed(Res.string.backup_restore_success)
+            _uiState.update { it.copy(isRestoring = false) }
         }
     }
 
@@ -229,6 +241,8 @@ class BackupViewModel(
     }
 
     private fun fail(error: BackupError) = modalManager.showError(error.toUiText())
+
+    private fun succeed(message: StringResource) = modalManager.showSuccess(UiText.Res(message))
 
     private fun today(): LocalDate =
         clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

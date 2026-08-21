@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.component
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -147,6 +148,7 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
 
         val manager = LocalModalManager.current
         val modal = this
+        val dismissible = isDismissible()
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -157,6 +159,15 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
             modifier = Modifier.exposeTestTags(),
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
+            ),
+            // A refusal closes the three ways out at their source rather than ignoring the
+            // request they raise: the swipe has already played the hide animation by the time
+            // it asks, so answering "no" then leaves a sheet nobody can see over a scrim
+            // nobody can dismiss.
+            sheetGesturesEnabled = dismissible,
+            properties = ModalBottomSheetProperties(
+                shouldDismissOnBackPress = dismissible,
+                shouldDismissOnClickOutside = dismissible,
             ),
             content = {
 
@@ -181,6 +192,21 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
     override fun onDismissed() {
         viewModelStore.clear()
     }
+
+    /**
+     * Whether the user may close this sheet — the scrim, the swipe and the back press alike.
+     *
+     * Read in composition, because the answer changes while the sheet is up: a modal is built
+     * once and rendered by the manager that holds it, so a value fixed at construction would
+     * still describe the moment it was created. Dismissible unless a subclass says otherwise —
+     * a sheet the user cannot leave is the exception, and it is the exception that argues for
+     * itself.
+     *
+     * Refusing takes nothing away from the manager: [ModalManager.dismiss] still removes the
+     * modal, so whatever put the sheet up can always take it down.
+     */
+    @Composable
+    protected open fun isDismissible(): Boolean = true
 
     @Composable
     protected abstract fun ColumnScope.BottomSheetContent()

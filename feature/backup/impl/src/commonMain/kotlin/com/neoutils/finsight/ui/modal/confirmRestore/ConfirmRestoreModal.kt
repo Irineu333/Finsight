@@ -97,6 +97,20 @@ class ConfirmRestoreModal(
         onDiscard()
     }
 
+    /**
+     * The sheet stays where it is while the replacement runs.
+     *
+     * There is nothing to call off — the swap is a single transaction — so a way out would
+     * only take the spinner with it and leave the user watching the backup screen do nothing
+     * in the middle of the one operation this app cannot undo. The same reasoning already
+     * disables both buttons.
+     */
+    @Composable
+    override fun isDismissible(): Boolean {
+        val restoring by isRestoring.collectAsStateWithLifecycle()
+        return !restoring
+    }
+
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
@@ -324,9 +338,9 @@ private fun CapturedAt(createdAt: Instant) {
 }
 
 /**
- * The one place the warning gets a box of its own. On the screen the same fact is a line
- * under the entry, because there it is a property of an option; here it is the last thing
- * read before an answer that cannot be taken back.
+ * The only place the app says the operation cannot be undone, and it says it here because
+ * this is where the answer is given — under the file it is about, over the button that
+ * acts. The screen behind offers restore as an option and warns about nothing.
  */
 @Composable
 private fun IrreversibleNotice() {

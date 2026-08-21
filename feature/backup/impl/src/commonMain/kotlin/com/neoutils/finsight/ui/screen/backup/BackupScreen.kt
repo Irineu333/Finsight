@@ -71,9 +71,9 @@ import org.koin.compose.viewmodel.koinViewModel
  * states that the app keeps no copies of its own — after this feature, moving to another
  * device recovers nothing that was not exported.
  *
- * The restore entry carries its warning as a line rather than a box: here it describes an
- * option, and a filled panel would shout at someone who has not chosen anything yet. The
- * box belongs to the confirmation, where the answer is final.
+ * Neither entry warns about anything. Both are still offers at this point, and the one that
+ * cannot be taken back says so in the confirmation sheet — beside the file it is about and
+ * the button that acts, which is the moment the warning is for.
  */
 @Composable
 fun BackupScreen(

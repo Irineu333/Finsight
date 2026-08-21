@@ -25,6 +25,7 @@ import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.backupFileName
 import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -60,6 +61,13 @@ import kotlin.time.Instant
  * does not run once its coroutine is cancelled, so every removal here is made under
  * [NonCancellable].
  *
+ * **A flow lasts as long as the file it made.** The restore does not park its candidate in
+ * a field and return: one coroutine copies the file in, asks about it, waits there for the
+ * answer the sheet sends back, and replaces the archive — so the removal is one `finally`
+ * over one body, and a screen that goes away while the sheet is up runs the same way out as
+ * a screen whose user said no. A field would be a reference nothing outlives the view model
+ * to read.
+ *
  * **The confirmation is only ever asked about an approved file** (`local-backup` spec).
  * The gate runs first and in full, and its refusals reach the user as one sentence each;
  * asking before it has run would transfer a decision the app cannot yet stand behind.
@@ -85,11 +93,14 @@ class BackupViewModel(
     val uiState = _uiState.asStateFlow()
 
     /**
-     * The file the confirmation is about, held here rather than in the state: it is a
-     * path in this app's temporary area, the screen renders nothing from it, and this is
-     * the only thing that will ever delete it.
+     * The question the confirmation sheet is being asked, while it is being asked.
+     *
+     * The file is not here, and that is the point: it is a local of the flow that made it,
+     * which is still running and is what removes it. This is only how the sheet's answer
+     * reaches that flow — completed by [restore] or [discardCandidate], and gone as soon as
+     * one of them has answered, so the second tap finds nothing left to answer.
      */
-    private var candidatePath: String? = null
+    private var answer: CompletableDeferred<Boolean>? = null
 
     /**
      * The one part of the state the confirmation sheet reads. A modal is rendered outside
@@ -164,20 +175,26 @@ class BackupViewModel(
     }
 
     /**
-     * Copies in what the user picked, puts it through the gate, and only then has
-     * anything to ask about.
+     * Copies in what the user picked, puts it through the gate, asks about it, and — if
+     * the answer is yes — replaces the archive with it. One body, from the file arriving
+     * to the file being gone.
      *
-     * The copy is this flow's until the confirmation claims it, and every other way out
-     * removes it — refused, failed, or walked away from. Nobody is coming back for it,
-     * and the archive in use never knew it existed.
+     * The copy is this flow's for the whole of its life, and every way out removes it:
+     * refused, failed, replaced, dismissed, or walked away from. Nobody is coming back for
+     * it, and the archive in use never knew it existed.
      *
      * A gate that could not run is not a gate that said no. The file is dropped either way
      * — nothing here can use it — but the word the user gets is about the check rather
      * than about what they picked, because a file that was never read has been found
      * nothing about.
+     *
+     * A second run is refused while one is waiting on an answer, and that is what the
+     * [answer] arm of the guard is for: the busy flags are down while the user reads the
+     * sheet, and a second flow would ask a second question through the one field the first
+     * one is listening on.
      */
     private fun chooseFileToRestore(context: PlatformContext) {
-        if (_uiState.value.isBusy) return
+        if (_uiState.value.isBusy || answer != null) return
         _uiState.update { it.copy(isVerifying = true) }
 
         viewModelScope.launch {
@@ -192,9 +209,16 @@ class BackupViewModel(
 
                 when (val verification = candidateVerifier.verify(chosen)) {
                     is CandidateVerification.Accepted -> {
-                        candidatePath = chosen
+                        if (!awaitAnswer(verification.toConfirmation())) return@launch
+
+                        val error = replaceArchiveWith(chosen)
                         unclaimed = null
-                        _uiState.update { it.copy(confirmation = verification.toConfirmation()) }
+                        dropCandidate(chosen)
+                        if (error != null) {
+                            fail(error)
+                        } else {
+                            succeed(Res.string.backup_restore_success)
+                        }
                     }
 
                     is CandidateVerification.Rejected -> {
@@ -208,67 +232,95 @@ class BackupViewModel(
             } catch (cause: Exception) {
                 fail(BackupError.VERIFICATION_FAILED)
             } finally {
-                unclaimed?.let { withContext(NonCancellable) { files.discard(it) } }
-                _uiState.update { it.copy(isVerifying = false) }
+                unclaimed?.let { dropCandidate(it) }
+                _uiState.update { it.copy(isVerifying = false, isRestoring = false) }
             }
+        }
+    }
+
+    /**
+     * Puts the confirmation up and waits, here, for the answer the sheet sends back: true
+     * to replace the archive, false to walk away from the file.
+     *
+     * The screen stops being busy as the waiting starts. What the user asked for — pick a
+     * file and check it — is over, and holding the entries shut while somebody reads a
+     * sheet would say the app is doing something when the only thing still running is this
+     * coroutine, owning a file.
+     */
+    private suspend fun awaitAnswer(confirmation: RestoreConfirmation): Boolean {
+        val pending = CompletableDeferred<Boolean>()
+        answer = pending
+        _uiState.update { it.copy(isVerifying = false, confirmation = confirmation) }
+
+        return try {
+            pending.await()
+        } finally {
+            answer = null
         }
     }
 
     /**
      * Replaces the archive with the approved file's content, in one transaction and
      * without closing anything — the screens go on rendering, and reflect the new archive
-     * when it returns.
+     * when it returns. The failure it could not carry out is the answer, rather than an
+     * exception, because the file has to be removed and the user told either way.
      *
-     * The candidate is dropped afterwards either way, so the confirmation sheet is already
-     * on its way out by the time either word is said. A failure leaves the archive exactly
-     * as it was, which is what the message says, and the file that was going to replace it
-     * has no second chance to offer: it would have to be picked and verified again. The
-     * entry stays busy until that word is said — the operation is not over for the screen
-     * one step before the user hears the result of it.
+     * It runs under [NonCancellable] because there is nothing to call off. The swap either
+     * lands or reverts, the sheet that asked for it refuses to be dismissed while it runs,
+     * and the file is attached to the app's only writer connection until it returns — a
+     * screen that went away mid-replacement would otherwise have the removal below race a
+     * transaction still reading from the file.
+     *
+     * A failure leaves the archive exactly as it was, which is what the message says, and
+     * the file that was going to replace it has no second chance to offer: it would have to
+     * be picked and verified again. Either word is still said to a user who walked away
+     * while it ran — the modal manager is the app's, not the screen's, and an archive that
+     * has just become another one is not something to find out about by noticing.
      */
-    private fun restore() {
-        val path = candidatePath ?: return
-        if (_uiState.value.isRestoring) return
-        _uiState.update { it.copy(isRestoring = true) }
-
-        viewModelScope.launch {
-            val error = try {
-                database.replaceContentFrom(path)
-                null
-            } catch (cause: CancellationException) {
-                throw cause
-            } catch (cause: DatabaseRestoreException) {
-                cause.error.toBackupError()
-            } catch (cause: Exception) {
-                BackupError.RESTORE_FAILED
-            } finally {
-                dropCandidate()
-            }
-
-            if (error != null) fail(error) else succeed(Res.string.backup_restore_success)
-            _uiState.update { it.copy(isRestoring = false) }
-        }
+    private suspend fun replaceArchiveWith(path: String): BackupError? = try {
+        withContext(NonCancellable) { database.replaceContentFrom(path) }
+        null
+    } catch (cause: CancellationException) {
+        throw cause
+    } catch (cause: DatabaseRestoreException) {
+        cause.error.toBackupError()
+    } catch (cause: Exception) {
+        BackupError.RESTORE_FAILED
     }
 
     /**
-     * The confirmation was dismissed without an answer, and the file goes with it.
+     * The user answered yes; the flow that owns the file goes on from where it is waiting.
+     *
+     * The answer is taken before anything else happens, so a second tap has nothing left to
+     * give one with, and the entry is marked busy before the flow can resume — the
+     * operation is not over for the screen one step before the user hears the result of it.
+     */
+    private fun restore() {
+        val pending = answer ?: return
+        answer = null
+        _uiState.update { it.copy(isRestoring = true) }
+        pending.complete(true)
+    }
+
+    /**
+     * The confirmation was dismissed without an answer, and the file goes with it — the
+     * flow that was waiting on the answer is what removes it.
      *
      * A dismissal while the replacement is running is not one: it cannot be called off —
-     * the transaction either lands or reverts — and the file is still being read from, so
-     * the operation itself is what removes it when it is done.
+     * the transaction either lands or reverts — and the answer that started it has already
+     * been taken, so there is nothing here left to give.
      */
     private fun discardCandidate() {
-        if (_uiState.value.isRestoring) return
-        viewModelScope.launch { dropCandidate() }
+        val pending = answer ?: return
+        answer = null
+        pending.complete(false)
     }
 
     /**
      * The file goes first and the state second, so that the screen stops naming a
      * candidate only once there is no candidate left to name.
      */
-    private suspend fun dropCandidate() {
-        val path = candidatePath ?: return
-        candidatePath = null
+    private suspend fun dropCandidate(path: String) {
         withContext(NonCancellable) { files.discard(path) }
         _uiState.update { it.copy(confirmation = null) }
     }

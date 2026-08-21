@@ -2,6 +2,7 @@ package com.neoutils.finsight.backup
 
 import com.neoutils.finsight.backup.service.JvmBackupFileService
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,7 +11,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /**
  * Where the desktop build puts a database while it is between the archive and the file
@@ -66,5 +71,68 @@ class JvmBackupFileServiceTest {
         } finally {
             if (planted) squatted.delete()
         }
+    }
+
+    /** A file is made before it is copied into, so a copy that fails is a file nobody wanted. */
+    @Test
+    fun `a copy that fails leaves nothing behind`() = runBlocking {
+        val service = JvmBackupFileService()
+        val directory = captureDirectory()
+        val before = names(directory)
+
+        val outcome = service.copyIntoPrivateFile(File(sources(), "not-a-file.db"))
+
+        assertNull(outcome.getOrNull(), "there was nothing to copy")
+        assertEquals(before, names(directory), "the copy that did not happen took its file with it")
+    }
+
+    /**
+     * The narrow way the path is lost: the copy is a blocking call that no cancellation
+     * reaches, so it runs to the end and `withContext` raises the cancellation *instead of*
+     * returning. The file exists, and the one caller who could have removed it was never
+     * told where it is.
+     *
+     * The source is a fifo, so the copy is held inside the read rather than raced against:
+     * opening the write end returns only once the copy has opened the read end, and nothing
+     * is written until the cancellation is in. Windows has no fifo and this has nothing to
+     * say there.
+     */
+    @Test
+    fun `a copy the caller never receives is removed`() = runBlocking {
+        val source = fifo() ?: return@runBlocking
+        val service = JvmBackupFileService()
+        val directory = captureDirectory()
+        val before = names(directory)
+
+        val copy = launch(Dispatchers.IO) { service.copyIntoPrivateFile(source) }
+        val writer = withContext(Dispatchers.IO) { FileOutputStream(source) }
+
+        copy.cancel()
+        withContext(Dispatchers.IO) { writer.use { it.write(ByteArray(8)) } }
+        copy.join()
+
+        assertEquals(
+            before,
+            names(directory),
+            "a copy nobody was handed is a copy nobody can close",
+        )
+    }
+
+    /** What the private directory holds, as the only way to name files it minted itself. */
+    private fun names(directory: Path): Set<String> = directory.toFile().list().orEmpty().toSet()
+
+    /** A directory of this test's own, so a source never lands where the service works. */
+    private fun sources(): File = Files.createTempDirectory("finsight-backup-source").toFile()
+        .also { it.deleteOnExit() }
+
+    /**
+     * A pipe with a name, made by the tool that makes them — the JDK has no call for it —
+     * or null where the platform has none.
+     */
+    private fun fifo(): File? {
+        if ("posix" !in FileSystems.getDefault().supportedFileAttributeViews()) return null
+        val path = File(sources(), "fifo")
+        val made = ProcessBuilder("mkfifo", path.absolutePath).start().waitFor() == 0
+        return path.takeIf { made }?.also { it.deleteOnExit() }
     }
 }

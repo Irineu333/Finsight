@@ -14,6 +14,7 @@ import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -34,12 +35,31 @@ class JvmBackupFileService : BackupFileService {
             show = JFileChooser::showOpenDialog,
         ) ?: return null.right()
 
-        return withContext(Dispatchers.IO) {
-            Either.catch {
-                val destination = createPrivateFile()
-                chosen.copyTo(destination, overwrite = true)
-                destination.absolutePath
-            }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+        return copyIntoPrivateFile(chosen)
+    }
+
+    /**
+     * A private copy of [chosen], at a path this app may write to and lose.
+     *
+     * The copy is removed unless the path is handed back, and it is a `finally` rather than
+     * a failure path because the way it is most easily lost is not a failure: the copy runs
+     * to the end whatever the caller's scope is doing, and [withContext] then raises the
+     * cancellation instead of returning — the file exists and nobody has been told where.
+     * A caller cannot close what it was never given, and the path is minted here.
+     */
+    internal suspend fun copyIntoPrivateFile(chosen: File): Either<BackupError, String> {
+        var unclaimed: String? = null
+        try {
+            return withContext(Dispatchers.IO) {
+                Either.catch {
+                    val destination = createPrivateFile()
+                    unclaimed = destination.absolutePath
+                    chosen.copyTo(destination, overwrite = true)
+                    destination.absolutePath
+                }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+            }.onRight { unclaimed = null }
+        } finally {
+            unclaimed?.let { withContext(NonCancellable) { discard(it) } }
         }
     }
 

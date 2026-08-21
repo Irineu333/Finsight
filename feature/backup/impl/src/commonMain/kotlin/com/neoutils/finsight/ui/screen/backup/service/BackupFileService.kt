@@ -25,6 +25,10 @@ interface BackupFileService {
     /**
      * A private copy of a file the user chose, at a path this app may write to and lose,
      * or null when they chose none.
+     *
+     * A copy that is not handed back is removed here, cancellation included — the caller
+     * only ever learns of a path it was given, so a copy that leaves by any other way has
+     * nobody left who could [discard] it.
      */
     suspend fun copyInChosenFile(context: PlatformContext): Either<BackupError, String?>
 

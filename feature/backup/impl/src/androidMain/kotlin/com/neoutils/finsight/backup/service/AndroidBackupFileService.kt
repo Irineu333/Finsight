@@ -18,6 +18,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -32,23 +33,38 @@ import kotlinx.coroutines.withContext
  */
 class AndroidBackupFileService(private val appContext: Context) : BackupFileService {
 
+    /**
+     * The copy is removed unless the path is handed back, and it is a `finally` rather than
+     * a failure path because the way it is most easily lost is not a failure: the copy runs
+     * to the end whatever the caller's scope is doing, and [withContext] then raises the
+     * cancellation instead of returning — the file exists and nobody has been told where.
+     * A caller cannot close what it was never given, and the path is minted here.
+     */
     override suspend fun copyInChosenFile(
         context: PlatformContext,
-    ): Either<BackupError, String?> = Either.catch {
-        val chosen = context.registry.awaitResult(
-            contract = ActivityResultContracts.OpenDocument(),
-            input = arrayOf(EVERY_MIME_TYPE),
-        ) ?: return@catch null
+    ): Either<BackupError, String?> {
+        var unclaimed: String? = null
+        try {
+            return Either.catch {
+                val chosen = context.registry.awaitResult(
+                    contract = ActivityResultContracts.OpenDocument(),
+                    input = arrayOf(EVERY_MIME_TYPE),
+                ) ?: return@catch null
 
-        withContext(Dispatchers.IO) {
-            val destination = createPrivateFile()
-            context.activity.contentResolver.openInputStream(chosen).use { source ->
-                checkNotNull(source) { "The provider opened no stream for the chosen file" }
-                destination.outputStream().use(source::copyTo)
-            }
-            destination.absolutePath
+                withContext(Dispatchers.IO) {
+                    val destination = createPrivateFile()
+                    unclaimed = destination.absolutePath
+                    context.activity.contentResolver.openInputStream(chosen).use { source ->
+                        checkNotNull(source) { "The provider opened no stream for the chosen file" }
+                        destination.outputStream().use(source::copyTo)
+                    }
+                    destination.absolutePath
+                }
+            }.onRight { unclaimed = null }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+        } finally {
+            unclaimed?.let { withContext(NonCancellable) { discard(it) } }
         }
-    }.mapLeft { it.toBackupError(BackupError.NOT_A_BACKUP) }
+    }
 
     override suspend fun copyOutCapturedFile(
         sourcePath: String,

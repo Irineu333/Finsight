@@ -47,6 +47,15 @@ import platform.darwin.dispatch_get_main_queue
 @OptIn(ExperimentalForeignApi::class)
 class IosBackupFileService : BackupFileService {
 
+    /**
+     * The copy is removed unless the path is handed back, and it is a `finally` rather than
+     * a failure path because the way it is most easily lost is not a failure: the copy runs
+     * to the end whatever the caller's scope is doing, and [withContext] then raises the
+     * cancellation instead of returning — the file exists and nobody has been told where.
+     * A caller cannot close what it was never given, and the path is minted here. The name
+     * is settled before the copy for the same reason: [discard] takes the private directory
+     * with it, so a copy that never happened is cleaned up by the path it would have had.
+     */
     override suspend fun copyInChosenFile(
         context: PlatformContext,
     ): Either<BackupError, String?> {
@@ -60,7 +69,18 @@ class IosBackupFileService : BackupFileService {
             )
         }.getOrElse { return it.left() }.firstOrNull() ?: return null.right()
 
-        return withContext(Dispatchers.Default) { chosen.copyIntoPrivateFile() }
+        var unclaimed: String? = null
+        try {
+            return withContext(Dispatchers.Default) {
+                val directory = createPrivateDirectory()
+                    ?: return@withContext BackupError.NOT_A_BACKUP.left()
+                val destination = "$directory/$CANDIDATE_NAME"
+                unclaimed = destination
+                chosen.copyIntoPrivateFile(destination)
+            }.onRight { unclaimed = null }
+        } finally {
+            unclaimed?.let { withContext(NonCancellable) { discard(it) } }
+        }
     }
 
     override suspend fun copyOutCapturedFile(
@@ -154,19 +174,18 @@ class IosBackupFileService : BackupFileService {
     }
 
     /**
-     * A private copy of what the user chose, under a name of this app's choosing.
+     * A copy of what the user chose, at [destinationPath].
      *
      * The security scope is claimed even though `asCopy` already put the file inside the
      * sandbox: the picker is free to hand back a scoped url instead, and reading one
      * without claiming it fails. It is released in a `finally` because a scope left open is
      * a resource the system counts and does not reclaim.
      */
-    private fun NSURL.copyIntoPrivateFile(): Either<BackupError, String> {
+    private fun NSURL.copyIntoPrivateFile(destinationPath: String): Either<BackupError, String> {
         val claimed = startAccessingSecurityScopedResource()
         try {
             val source = path ?: return BackupError.NOT_A_BACKUP.left()
-            val directory = createPrivateDirectory() ?: return BackupError.NOT_A_BACKUP.left()
-            return copyItem(source, "$directory/$CANDIDATE_NAME", BackupError.NOT_A_BACKUP)
+            return copyItem(source, destinationPath, BackupError.NOT_A_BACKUP)
         } finally {
             if (claimed) {
                 stopAccessingSecurityScopedResource()

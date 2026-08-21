@@ -492,6 +492,65 @@ class BackupViewModelTest {
     }
 
     /**
+     * The gesture this is about is one tap on a control nothing disables, and by the time
+     * the sheet is up the candidate is a complete copy of the whole ledger. What the user
+     * walked away from is a question; what they left behind is a file, and nothing outside
+     * the flow that made it knows where it is.
+     */
+    @Test
+    fun `leaving the screen with the confirmation open removes the file it asks about`() = runTest {
+        live.seedCategory("Mercado")
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        assertNotNull(
+            viewModel.idle().confirmation,
+            "the file was approved and is being asked about",
+        )
+
+        viewModel.viewModelScope.cancel()
+
+        awaitGone(backup)
+        assertEquals(listOf(backup.absolutePath), files.discarded)
+        assertEquals(
+            listOf("Mercado"),
+            live.categories(),
+            "a question nobody answered replaced nothing",
+        )
+    }
+
+    /**
+     * The one operation that outlives the screen, because it is the one that cannot be
+     * called off: the swap is a single transaction reading from a file the same flow
+     * removes as soon as it returns, and the sheet that asked for it refuses to be
+     * dismissed while it runs. A screen that goes away mid-replacement finds it done.
+     */
+    @Test
+    fun `leaving the screen as the archive is replaced still replaces it`() = runTest {
+        live.seedCategory("Mercado")
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        // Taken before "Aluguel" exists, so the two archives are told apart by it.
+        live.seedCategory("Aluguel")
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        assertNotNull(viewModel.idle().confirmation)
+
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.viewModelScope.cancel()
+
+        awaitGone(backup)
+        assertEquals(
+            listOf("Mercado"),
+            live.categories(),
+            "the archive became the file's, and the row it did not hold is gone",
+        )
+    }
+
+    /**
      * The export's own temporary, which exists for one reason: the capture writes to a
      * path, and on two of the three platforms the destination the user picked is not one.
      *

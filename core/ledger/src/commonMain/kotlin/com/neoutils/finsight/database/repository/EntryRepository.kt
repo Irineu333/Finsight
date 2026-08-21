@@ -36,18 +36,10 @@ class EntryRepository(
     private fun EntryWithAccount.toDomain() = Entry(
         id = entry.id,
         transactionId = entry.transactionId,
-        account = Account(
-            id = account.id,
-            name = account.name,
-            type = account.type.toDomain(),
-            currency = account.currency,
-            iconKey = account.iconKey,
-            isDefault = account.isDefault,
-            createdAt = account.createdAt,
-            // Closure travels with the account: a leg that drops it reports every
-            // archived account as open, and the rules derived from it go quiet.
-            isArchived = account.isArchived,
-        ),
+        // Mapped by the account mapper rather than field by field: a leg that drops a
+        // field reports something false about the account it posts to — closure most of
+        // all, which every rule derived from the account reads.
+        account = account.toDomain(),
         amount = entry.amount,
         // No `currency` here: it is derived from the account, and the account is
         // hydrated whole from the join. The row's own column is what

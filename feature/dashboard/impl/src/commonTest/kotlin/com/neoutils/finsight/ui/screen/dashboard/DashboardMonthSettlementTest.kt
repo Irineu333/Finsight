@@ -55,9 +55,13 @@ class DashboardMonthSettlementTest {
     private val wallet = Account(id = 1, name = "Wallet", type = AccountType.ASSET, currency = "BRL")
     private val cardAccount = Account(id = 2, name = "Nubank", type = AccountType.LIABILITY, currency = "BRL")
     private val euroCardAccount = Account(id = 3, name = "Revolut", type = AccountType.LIABILITY, currency = "EUR")
+    private val otherCardAccount = Account(id = 4, name = "Itau", type = AccountType.LIABILITY, currency = "BRL")
 
     private val card = CreditCard(id = 1, name = "Nubank", limit = 5_000.0, closingDay = 20, dueDay = 28, accountId = 2)
     private val euroCard = CreditCard(id = 2, name = "Revolut", limit = 2_000.0, closingDay = 20, dueDay = 28, accountId = 3)
+    // Same currency as `card` on purpose: a credit that fails to offset because the two
+    // figures are in different currencies would prove nothing about the flooring.
+    private val otherCard = CreditCard(id = 3, name = "Itau", limit = 3_000.0, closingDay = 20, dueDay = 28, accountId = 4)
 
     private fun builder(entryRepository: IEntryRepository) = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = entryRepository),
@@ -75,7 +79,7 @@ class DashboardMonthSettlementTest {
                 throw NotImplementedError()
         },
         entryRepository = entryRepository,
-        accountRepository = FakeAccountRepository(listOf(wallet, cardAccount, euroCardAccount)),
+        accountRepository = FakeAccountRepository(listOf(wallet, cardAccount, euroCardAccount, otherCardAccount)),
         consolidateMoney = reducer(),
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
@@ -102,6 +106,7 @@ class DashboardMonthSettlementTest {
         creditCard: CreditCard = card,
         dimensionId: Long? = id,
         dueMonth: YearMonth = march,
+        status: Invoice.Status = Invoice.Status.CLOSED,
     ) = Invoice(
         id = id,
         creditCard = creditCard,
@@ -109,7 +114,7 @@ class DashboardMonthSettlementTest {
         openingMonth = dueMonth.plus(-2, DateTimeUnit.MONTH),
         closingMonth = dueMonth.plus(-1, DateTimeUnit.MONTH),
         dueMonth = dueMonth,
-        status = Invoice.Status.CLOSED,
+        status = status,
     )
 
     private suspend fun settlement(
@@ -247,6 +252,36 @@ class DashboardMonthSettlementTest {
     }
 
     /**
+     * A closed invoice takes no new expense, so confirming the template lands the value in
+     * the invoice that falls due later — and that one is outside the window by the very
+     * cut that defines the window. The value leaves the figure, and the figure is right to
+     * let it: it settles in a month this one does not answer for.
+     *
+     * The April invoice below owes the confirmed 50 in the ledger and is absent from
+     * `invoicesToSettle`, which is exactly what the perimeter read does with it.
+     */
+    @Test
+    fun `a confirmation pushed into a later invoice leaves the window`() = runTest {
+        val before = settlement(
+            unhandledRecurring = listOf(recurring(1, TransactionType.EXPENSE, 50.0, onCard = card)),
+            invoicesToSettle = listOf(invoice(id = 7)),
+            entryRepository = SettlementEntryRepository(mapOf(7L to brl(1_000.0))),
+        )
+        val after = settlement(
+            unhandledRecurring = emptyList(),
+            invoicesToSettle = listOf(invoice(id = 7)),
+            entryRepository = SettlementEntryRepository(
+                mapOf(7L to brl(1_000.0), 8L to brl(50.0)),
+            ),
+        )
+
+        assertNotNull(before)
+        assertNotNull(after)
+        assertEquals(1_050.0, before.outgoing.value)
+        assertEquals(1_000.0, after.outgoing.value)
+    }
+
+    /**
      * An instalment falling due this month was posted into this month's invoice when the
      * purchase was made, so it reaches the figure through the invoice and by no other
      * route — the widget has no instalment source to count it a second time.
@@ -260,6 +295,30 @@ class DashboardMonthSettlementTest {
 
         assertNotNull(component)
         assertEquals(450.0, component.outgoing.value)
+    }
+
+    /**
+     * The perimeter read lets `RETROACTIVE` through deliberately, and this is the other
+     * half of that decision: the builder asks the ledger what the invoice owes and reads
+     * the answer, so one carrying no balance adds nothing to either class — it is in the
+     * perimeter and contributes zero, which is not the same as being kept out.
+     */
+    @Test
+    fun `a retroactive invoice with no balance leaves both classes alone`() = runTest {
+        val component = settlement(
+            unhandledRecurring = listOf(recurring(1, TransactionType.INCOME, 500.0)),
+            invoicesToSettle = listOf(
+                invoice(id = 7),
+                invoice(id = 8, status = Invoice.Status.RETROACTIVE),
+            ),
+            entryRepository = SettlementEntryRepository(
+                mapOf(7L to brl(1_000.0), 8L to brl(0.0)),
+            ),
+        )
+
+        assertNotNull(component)
+        assertEquals(500.0, component.incoming.value)
+        assertEquals(1_000.0, component.outgoing.value)
     }
 
     // --- Currency ---------------------------------------------------------------------
@@ -280,11 +339,15 @@ class DashboardMonthSettlementTest {
         )
     }
 
-    /** Credit on one card is not a discount on another card's debt. */
+    /**
+     * Credit on one card is not a discount on another card's debt: the two invoices below
+     * are of different cards in the same currency, so nothing but the per-invoice floor
+     * stands between the credit and the debt. The Nubank bill is going out whole.
+     */
     @Test
-    fun `a credit balance is floored per invoice and never offsets another`() = runTest {
+    fun `a credit balance is floored per invoice and never offsets another card`() = runTest {
         val component = settlement(
-            invoicesToSettle = listOf(invoice(id = 7), invoice(id = 8, dueMonth = february)),
+            invoicesToSettle = listOf(invoice(id = 7), invoice(id = 8, creditCard = otherCard)),
             entryRepository = SettlementEntryRepository(
                 mapOf(7L to brl(1_000.0), 8L to brl(-250.0)),
             ),

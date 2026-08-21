@@ -50,6 +50,8 @@
 - [x] 7.3 Configuração: ambas ligadas por padrão; classe estruturalmente zerada continua exibida; duas fontes desligadas exibem zero e o widget permanece mesmo com `hide_when_empty`
 - [x] 7.4 `hide_when_empty` ainda oculta quando as fontes ligadas nada têm no mês
 - [x] 7.5 Parcela do mês contada uma vez só, pela fatura
+- [x] 7.6 Retroativa sem saldo: está no perímetro e contribui zero, sem mover nenhuma das duas classes
+- [x] 7.7 Confirmação que aterrissa na fatura de vencimento posterior: o valor sai da figura, pelo corte de vencimento
 
 ## 8. E2E (Maestro)
 
@@ -61,4 +63,4 @@
 - [x] 9.1 `./gradlew jvmTest` — suíte inteira verde, com a saída lida
 - [x] 9.2 Conferir que `DashboardBalanceWidgetsCatalogTest` e `DashboardComponentModesTest` continuam válidos com o enum novo e o flag de depreciação
 - [x] 9.3 Rodar os fluxos afetados no AVD exigido por `.maestro/README.md` §2 e reportar em que device a execução aconteceu — `--include-tags dashboard,recurring` (os quatro fluxos que este change toca), 4/4 verdes em `finsight_e2e` (API 36, `pixel_6`, en-US, `nokeys`). Os outros dez fluxos da suíte não foram rodados.
-- [x] 9.4 `openspec validate --change add-month-settlement-widget --strict`
+- [x] 9.4 `openspec validate add-month-settlement-widget --strict` — o nome da change é posicional; `--change` é opção de `status`/`instructions` e o `validate` a recusa

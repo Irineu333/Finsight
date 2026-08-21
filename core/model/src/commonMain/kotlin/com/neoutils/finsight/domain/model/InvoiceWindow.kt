@@ -2,8 +2,10 @@ package com.neoutils.finsight.domain.model
 
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.safeOnDay
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minus
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
@@ -26,6 +28,17 @@ data class InvoiceWindow(
 
     /** The first day the window no longer admits — it belongs to the next invoice. */
     val closingDate get() = closingMonth.safeOnDay(closingDay)
+
+    /**
+     * The last day the window admits — the day before [closingDate].
+     *
+     * The same span said the other way round: `[openingDate, closingDate)` and
+     * `[openingDate, lastAdmittedDate]` cover the same days. It exists so that a caller owing an
+     * **inclusive** end — a period, a report, a prose range — takes it from here instead of
+     * subtracting a day of its own, or handing on [closingDate] and naming a day this window
+     * refuses.
+     */
+    val lastAdmittedDate get() = closingDate.minus(1, DateTimeUnit.DAY)
 
     operator fun contains(date: LocalDate) = date >= openingDate && date < closingDate
 

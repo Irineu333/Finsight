@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.ui.component.FinsightSwitch
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_config_include_income_by_category
 import com.neoutils.finsight.resources.report_config_include_spending_by_category
@@ -43,17 +44,9 @@ fun SectionsCard(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
-            Switch(
+            FinsightSwitch(
                 checked = includeSpendingByCategory,
                 onCheckedChange = onToggleSpendingByCategory,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = colorScheme.primary,
-                    checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
-                    checkedBorderColor = colorScheme.primary,
-                    uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = colorScheme.surfaceVariant,
-                    uncheckedBorderColor = colorScheme.outline,
-                ),
             )
         }
         if (showIncomeByCategory) {
@@ -73,17 +66,9 @@ fun SectionsCard(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
-                Switch(
+                FinsightSwitch(
                     checked = includeIncomeByCategory,
                     onCheckedChange = onToggleIncomeByCategory,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorScheme.primary,
-                        checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
-                        checkedBorderColor = colorScheme.primary,
-                        uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                        uncheckedTrackColor = colorScheme.surfaceVariant,
-                        uncheckedBorderColor = colorScheme.outline,
-                    ),
                 )
             }
         }
@@ -103,17 +88,9 @@ fun SectionsCard(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
-            Switch(
+            FinsightSwitch(
                 checked = includeTransactionList,
                 onCheckedChange = onToggleTransactionList,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = colorScheme.primary,
-                    checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
-                    checkedBorderColor = colorScheme.primary,
-                    uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = colorScheme.surfaceVariant,
-                    uncheckedBorderColor = colorScheme.outline,
-                ),
             )
         }
     }

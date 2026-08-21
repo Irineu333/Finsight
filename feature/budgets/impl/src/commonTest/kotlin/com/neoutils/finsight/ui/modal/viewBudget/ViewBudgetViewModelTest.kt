@@ -91,7 +91,13 @@ class ViewBudgetViewModelTest {
             accountId: Long?,
         ): Flow<List<Transaction>> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+        override suspend fun getTransactionsBetween(
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ): List<Transaction> = throw NotImplementedError()
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+        override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
         override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
         override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
         override suspend fun updateTransaction(
@@ -153,6 +159,7 @@ class ViewBudgetViewModelTest {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

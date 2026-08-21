@@ -115,26 +115,50 @@ class RemoteSourceIsNeverReadTest {
      * The reciprocal half, and the structural one: a `:core:network` was rejected precisely
      * so that "only one module may reach the network" would be a fact about the module
      * graph rather than a matter of discipline (design D11). This is that fact, checked.
+     *
+     * Ktor is named by two modules, at opposite ends of the wire, and the ends are not
+     * interchangeable. A **client** anywhere but the rate source is a figure that can be made
+     * to wait on a host, which is the whole risk. A **server** is the app being reached on
+     * the loopback interface of the machine it already runs on: it calls nothing and waits
+     * on nothing, so it carries none of that risk — and it earns no licence to hold a
+     * client. Each end has exactly one owner, and the owners are different modules.
      */
     @Test
-    fun `no module outside the settings feature declares Ktor`() {
-        val ktor = Regex("""ktor""", RegexOption.IGNORE_CASE)
-        val owner = "feature/settings/impl/build.gradle.kts"
+    fun `the Ktor client and the Ktor server each live in one module, and not the same one`() {
+        val clientOwner = "feature/settings/impl/build.gradle.kts"
+        val serverOwner = "feature/mcp/impl/build.gradle.kts"
 
-        val found = repoRoot.walkTopDown()
+        val declaringKtor = repoRoot.walkTopDown()
             .onEnter { it.name != "build" && it.name != ".git" }
             .filter { it.isFile && it.name == "build.gradle.kts" }
-            .filter { ktor.containsMatchIn(it.readText()) }
-            .map { it.relativeTo(repoRoot).invariantSeparatorsPath }
-            .toSet()
+            .associate { it.relativeTo(repoRoot).invariantSeparatorsPath to it.readText() }
+            .filterValues { Regex("""ktor""", RegexOption.IGNORE_CASE).containsMatchIn(it) }
 
         assertEquals(
-            setOf(owner),
-            found,
-            "Ktor left the one module that may hold it. The restriction is the module " +
-                "graph, not discipline: a second module with a client is an invitation " +
-                "for a figure to wait on one.\n" +
-                (found - setOf(owner)).joinToString("\n") { "  NEW: $it" },
+            setOf(clientOwner, serverOwner),
+            declaringKtor.keys,
+            "Ktor left the two modules that may hold it.\n" +
+                (declaringKtor.keys - setOf(clientOwner, serverOwner))
+                    .joinToString("\n") { "  NEW: $it" },
+        )
+
+        assertEquals(
+            setOf(clientOwner),
+            declaringKtor.filterValues {
+                Regex("""ktor[.-]client""", RegexOption.IGNORE_CASE).containsMatchIn(it)
+            }.keys,
+            "A second module holds a Ktor client. The restriction is the module graph, not " +
+                "discipline: a client outside the rate source is an invitation for a figure " +
+                "to wait on a host.",
+        )
+
+        assertEquals(
+            setOf(serverOwner),
+            declaringKtor.filterValues {
+                Regex("""ktor[.-]server""", RegexOption.IGNORE_CASE).containsMatchIn(it)
+            }.keys,
+            "A second module holds a Ktor server. The app listens in one place, and that " +
+                "place is the feature the user switches on.",
         )
     }
 }

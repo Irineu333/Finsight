@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
@@ -73,25 +75,37 @@ class ConfirmRecurringOverridesTest {
 
     private val date = LocalDate(2026, 3, 5)
 
-    private fun useCase(occurrences: RecordingIntents) = ConfirmRecurringUseCase(
+    private fun useCase(occurrences: RecordingIntents) = ConfirmRecurringUseCaseImpl(
+        recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = object : GetOrCreateInvoiceForMonthUseCase {
-            override suspend fun invoke(creditCard: CreditCard, targetDueMonth: YearMonth) =
+            override suspend fun invoke(creditCardId: Long, targetDueMonth: YearMonth) =
                 throw NotImplementedError("every card test here passes the invoice in")
         },
         accountRepository = StubAccounts(listOf(account, cardAccount)),
+        clock = StoppedClock(),
     )
 
+    /**
+     * What an omitted override means is decided inside the use case, and it is not one
+     * rule but two: an omitted amount or destination asks for the cycle the template
+     * describes, while an omitted title or category asks for nothing at all. Both are
+     * things the user can erase, and substituting the template's back in would return
+     * what they had just removed.
+     */
     @Test
-    fun `confirming without overrides writes the template's own title and category`() = runTest {
-        val occurrences = RecordingIntents()
+    fun `an omitted amount and destination come from the template, an omitted title and category do not`() =
+        runTest {
+            val occurrences = RecordingIntents()
 
-        val result = useCase(occurrences)(recurring = template, date = date)
+            val result = useCase(occurrences)(recurring = template, date = date)
 
-        assertTrue(result.isRight())
-        assertEquals("Netflix", occurrences.recorded?.title)
-        assertEquals(streaming.dimensionId, occurrences.recorded?.contra?.dimensionId)
-    }
+            assertTrue(result.isRight())
+            assertEquals(template.amount, occurrences.recorded?.legs?.single()?.amount)
+            assertEquals(account.id, occurrences.recorded?.legs?.single()?.accountId)
+            assertNull(occurrences.recorded?.title)
+            assertNull(occurrences.recorded?.contra?.dimensionId)
+        }
 
     @Test
     fun `an overridden title and category reach the transaction`() = runTest {

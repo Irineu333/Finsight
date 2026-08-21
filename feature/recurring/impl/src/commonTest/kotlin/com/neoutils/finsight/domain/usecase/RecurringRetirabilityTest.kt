@@ -17,7 +17,7 @@ class RecurringRetirabilityTest {
     private fun resolver(
         hasTransaction: Boolean = false,
         hasBudget: Boolean = false,
-    ) = ResolveRecurringRetirabilityUseCase(
+    ) = ResolveRecurringRetirabilityUseCaseImpl(
         recurringRepository = FakeRecurringRepository(hasTransaction = hasTransaction),
         budgetRepository = FakeBudgetRepository(hasBudget = hasBudget),
     )
@@ -55,16 +55,17 @@ class RecurringRetirabilityTest {
 
     @Test
     fun `delete is refused with the typed error when the recurring is in use`() = runTest {
-        val repository = FakeRecurringRepository(hasTransaction = true)
-        val useCase = DeleteRecurringUseCase(
+        val target = recurring()
+        val repository = FakeRecurringRepository(stored = listOf(target), hasTransaction = true)
+        val useCase = DeleteRecurringUseCaseImpl(
             repository = repository,
-            resolveRetirability = ResolveRecurringRetirabilityUseCase(
+            resolveRetirability = ResolveRecurringRetirabilityUseCaseImpl(
                 recurringRepository = repository,
                 budgetRepository = FakeBudgetRepository(),
             ),
         )
 
-        val error = useCase(recurring()).leftOrNull()
+        val error = useCase(target).leftOrNull()
 
         assertEquals(
             RecurringRetireError.HAS_TRANSACTIONS,
@@ -75,16 +76,16 @@ class RecurringRetirabilityTest {
 
     @Test
     fun `delete goes through when the recurring is deletable`() = runTest {
-        val repository = FakeRecurringRepository()
-        val useCase = DeleteRecurringUseCase(
+        val target = recurring()
+        val repository = FakeRecurringRepository(stored = listOf(target))
+        val useCase = DeleteRecurringUseCaseImpl(
             repository = repository,
-            resolveRetirability = ResolveRecurringRetirabilityUseCase(
+            resolveRetirability = ResolveRecurringRetirabilityUseCaseImpl(
                 recurringRepository = repository,
                 budgetRepository = FakeBudgetRepository(),
             ),
         )
 
-        val target = recurring()
         assertTrue(useCase(target).isRight())
         assertEquals(listOf(target), repository.deleted)
     }

@@ -102,6 +102,13 @@ class BaseCurrencyReachTest {
         "feature/transactions/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/transactions/TransactionsViewModel.kt",
         "feature/dashboard/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/dashboard/DashboardViewModel.kt",
         "feature/report/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/screen/report/viewer/ReportViewerViewModel.kt",
+        // The fourth such surface, and the first that is not a screen: the agent's listing of a
+        // month with no account named states one figure per posting, so it tie-breaks by the same
+        // owner the three above consume — or the same operation would read as one figure on the
+        // screen and another to the agent, which is the divergence nobody ever sees side by side.
+        // The tools themselves never name the preference: it reaches them as a plain code, which
+        // is what keeps the reach one file rather than one per tool.
+        "feature/mcp/impl/src/jvmMain/kotlin/com/neoutils/finsight/mcp/McpToolDependencies.kt",
         // The settings feature owns the preference: it implements it, states it, and
         // names it as the direction rates are stored in.
         "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/database/repository/BaseCurrencyRepository.kt",

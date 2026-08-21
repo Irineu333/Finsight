@@ -50,7 +50,8 @@ interface ICategoryRepository {
      */
     suspend fun existsByName(name: String, ignoreId: Long): Boolean
 
-    suspend fun insert(category: Category)
+    /** Inserts the category with its dimension, and answers the identity it was given. */
+    suspend fun insert(category: Category): Long
 
     /**
      * Inserts many categories with their dimensions in a single transaction, so a

@@ -1,6 +1,8 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
+import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
@@ -55,13 +57,18 @@ class ConfirmRecurringCurrencyTest {
 
     private val date = LocalDate(2026, 3, 5)
 
-    private fun useCase(occurrences: RecordingOccurrences) = ConfirmRecurringUseCase(
+    private fun useCase(
+        occurrences: RecordingOccurrences,
+        template: Recurring = this.template,
+    ) = ConfirmRecurringUseCaseImpl(
+        recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = object : GetOrCreateInvoiceForMonthUseCase {
-            override suspend fun invoke(creditCard: CreditCard, targetDueMonth: YearMonth) =
+            override suspend fun invoke(creditCardId: Long, targetDueMonth: YearMonth) =
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = FakeAccountRepository(listOf(reais, dollars, dollarCardAccount)),
+        clock = StoppedClock(),
     )
 
     @Test
@@ -113,7 +120,11 @@ class ConfirmRecurringCurrencyTest {
         val occurrences = RecordingOccurrences()
         val orphan = template.copy(account = null)
 
-        val result = useCase(occurrences)(recurring = orphan, date = date, account = dollars)
+        val result = useCase(occurrences, template = orphan)(
+            recurring = orphan,
+            date = date,
+            account = dollars,
+        )
 
         assertTrue(result.isRight())
         assertEquals(dollars.id, occurrences.recorded?.legs?.single()?.accountId)

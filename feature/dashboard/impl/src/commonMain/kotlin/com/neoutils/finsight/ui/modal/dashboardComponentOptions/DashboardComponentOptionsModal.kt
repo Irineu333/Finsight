@@ -20,8 +20,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import com.neoutils.finsight.ui.component.FinsightSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -435,21 +434,10 @@ private fun DashboardConfigToggleRow(
             }
         }
 
-        Switch(
+        FinsightSwitch(
             checked = checked,
             enabled = enabled,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = colorScheme.primary,
-                checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
-                checkedBorderColor = colorScheme.primary,
-                uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                uncheckedTrackColor = colorScheme.surfaceVariant,
-                uncheckedBorderColor = colorScheme.outline,
-                disabledCheckedThumbColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                disabledCheckedTrackColor = colorScheme.surfaceVariant,
-                disabledCheckedBorderColor = colorScheme.outlineVariant,
-            ),
         )
     }
 }

@@ -8,6 +8,7 @@ import com.neoutils.finsight.database.migration.Migration10To11
 import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
 import com.neoutils.finsight.database.migration.Migration13To14
+import com.neoutils.finsight.database.migration.Migration14To15
 import com.neoutils.finsight.database.migration.Migration7To10
 import java.io.File
 import kotlin.test.AfterTest
@@ -119,6 +120,7 @@ class MigrationLedgerReadParityTest {
             Migration11To12(),
             Migration12To13(baseCurrency = "BRL"),
             Migration13To14(testSeeding()),
+            Migration14To15,
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)

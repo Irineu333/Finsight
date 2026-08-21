@@ -34,6 +34,11 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status NOT IN ('PAID', 'RETROACTIVE') ORDER BY openingMonth DESC")
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<InvoiceEntity>
 
+    // The batched form of the query above, and deliberately a copy of its predicate:
+    // "unpaid" is stated in SQL, and the two statements are the only expression of it.
+    @Query("SELECT * FROM invoices WHERE creditCardId IN (:creditCardIds) AND status NOT IN ('PAID', 'RETROACTIVE') ORDER BY openingMonth DESC")
+    suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): List<InvoiceEntity>
+
     @Query("SELECT * FROM invoices WHERE status NOT IN ('PAID', 'RETROACTIVE') ORDER BY openingMonth DESC")
     fun observeUnpaidInvoices(): Flow<List<InvoiceEntity>>
 

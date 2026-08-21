@@ -32,7 +32,7 @@ class ValidateTransactionFormUseCaseImpl(
         }
 
         ensure(form.amount.isNotEmpty()) { BuildTransactionError.AmountRequired }
-        ensure(form.amount.moneyToDouble() != 0.0) { BuildTransactionError.AmountZero }
+        ensure(form.amount.moneyToDouble() > 0.0) { BuildTransactionError.AmountNotPositive }
         ensure(form.date.isNotEmpty()) { BuildTransactionError.DateRequired }
 
         ensure(!form.title.isNullOrEmpty() || form.category != null) {

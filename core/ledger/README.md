@@ -213,7 +213,7 @@ val devido = entryRepository.dimensionOwedByCurrency(faturaId).singleOrNull()
 `singleOrNull()` devolve `CurrencyAmount` — o valor **e** a moeda —, para que a
 denominação não precise ser buscada em outro lugar e não possa divergir.
 
-### Somar dois resultados por moeda é do razão
+### Somar ou subtrair dois resultados por moeda é do razão
 
 `asset.expense + liability.expense` é aritmética sobre saldos, não conversão. O dono é
 `MoneyByCurrency.plus`, e é a única implementação:
@@ -221,6 +221,10 @@ denominação não precise ser buscada em outro lugar e não possa divergir.
 ```kotlin
 val total = assetFlows.expense + liabilityFlows.expense   // cada moeda com a sua
 ```
+
+A diferença entre dois períodos é a mesma aritmética na outra direção, e tem o mesmo dono,
+`MoneyByCurrency.minus`. Uma moeda presente em qualquer um dos lados aparece no resultado:
+o que apareceu ou sumiu entre as duas leituras vira termo, não desaparece.
 
 **Nunca** em linha na feature, e nunca na camada de consolidação, que responde só por
 conversão entre moedas.
@@ -267,9 +271,12 @@ Por moeda — **toda** leitura que atravessa contas, e **toda** leitura por dime
 | Totais por dimensão num período, vistos de um conjunto de contas | `totalsByDimensionByCurrency(nominalType, start, end, siblingAccountIds)` |
 | Os mesmos totais, escopados a sub-razões | `totalsByDimensionInScopeByCurrency(nominalType, scopeDimensionIds)` |
 | Receita/despesa/saldo/saldo inicial de um escopo (relatório) | `scopeStatsByCurrency(scopeAccountIds, start, end)` |
+| Patrimônio (`Σ ASSET + Σ LIABILITY`, sem as contas de conversão) | `netWorthByCurrency()` |
 
-O patrimônio (`Σ ASSET − Σ LIABILITY`, por moeda, sem as contas de conversão) **não** é
-membro desta interface: vive em `EntryDao.netWorthCents()`, que é onde ele tem chamador.
+O patrimônio é **soma**, não subtração: o passivo é armazenado em crédito, então somar as
+duas naturezas já é "o que se tem menos o que se deve" no sinal do próprio razão. Ele é uma
+leitura **diferente** de `balanceUpToByCurrency`, que responde só por `ASSET` e até um mês —
+confundir as duas é relatar a dívida de cartão como se não fosse devida.
 
 Valores voltam na **unidade maior** (reais), não em centavos. `adjustment` é signed; os
 demais são magnitudes positivas.

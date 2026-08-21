@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -71,6 +72,8 @@ class ViewCreditCardViewModelTest {
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+            creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
         override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
         override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
@@ -104,7 +107,7 @@ class ViewCreditCardViewModelTest {
         creditCardRepository = creditCardRepository,
         accountRepository = FakeCardAccountRepository(),
         invoiceRepository = invoiceRepository,
-        unarchiveCreditCard = UnarchiveCreditCardUseCase(creditCardRepository),
+        unarchiveCreditCard = UnarchiveCreditCardUseCaseImpl(creditCardRepository),
         crashlytics = FakeCrashlytics(),
     )
 

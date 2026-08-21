@@ -19,10 +19,14 @@
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
     <string name="category_error_already_exist">A category with this name already exists.</string>
+    <string name="category_error_not_found">Category not found.</string>
 
     <!-- Budget errors -->
     <string name="budget_error_empty_title">Budget title cannot be empty.</string>
     <string name="budget_error_already_exist">A budget with this title already exists.</string>
+    <string name="budget_error_not_found">Budget not found.</string>
+    <string name="budget_error_missing_base_income">A percentage budget needs the recurring income it is a share of.</string>
+    <string name="budget_error_negative_limit">The budget limit cannot be negative.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">Card name is required.</string>
@@ -50,6 +54,10 @@
     <string name="ledger_error_closed_removal_account">This account is archived. Deleting this transaction would give it a balance back, and an archived account cannot be settled.</string>
     <string name="ledger_error_closed_removal_credit_card">This card is archived. Deleting this transaction would give it a balance back, and an archived card cannot be settled.</string>
     <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
+    <string name="transaction_error_not_found">Transaction not found.</string>
+    <string name="transaction_error_multiple_monetary_legs">This transaction moves money in two places and cannot be edited here.</string>
+    <string name="transaction_error_is_adjustment">An adjustment is not edited as an ordinary transaction.</string>
+    <string name="transaction_error_installment_share">One share is not edited on its own; edit the installment.</string>
     <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
     <string name="ledger_action_error_generic">Something went wrong. Try again in a moment.</string>
 
@@ -58,6 +66,9 @@
     <string name="installment_error_blocked_invoice">One of the installments coincides with a blocked invoice.</string>
     <string name="installment_error_missing_credit_card">Select a card to register the installment.</string>
     <string name="installment_error_missing_invoice">Select an invoice to register the installment.</string>
+    <string name="installment_error_not_found">Installment not found.</string>
+    <string name="installment_error_non_positive_count">The number of instalments must be greater than zero.</string>
+    <string name="installment_error_non_positive_total">The installment total must be greater than zero.</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
@@ -771,8 +782,9 @@
     <string name="report_output_error_unknown">An unexpected error occurred.</string>
 
     <!-- Recurring Errors -->
+    <string name="recurring_error_not_found">Recurring not found.</string>
     <string name="recurring_error_amount_required">Amount is required.</string>
-    <string name="recurring_error_amount_zero">Amount cannot be zero.</string>
+    <string name="recurring_error_amount_not_positive">The amount must be greater than zero.</string>
     <string name="recurring_error_title_or_category_required">Provide a title or category.</string>
     <string name="recurring_error_invalid_day">Day must be between 1 and 31.</string>
     <string name="recurring_error_account_required">Account is required.</string>
@@ -951,8 +963,9 @@
     <string name="currency_error_base_currency_not_archivable">This is the base currency. Change the base currency before archiving it.</string>
     <string name="currency_error_not_found">This currency no longer exists.</string>
     <string name="recurring_error_currency_mismatch">This recurring is in another currency. Pick an account or card in the same one.</string>
+    <string name="recurring_error_category_direction_mismatch">This category classifies the opposite direction from the recurring. Pick one that classifies the same direction, or leave the cycle unclassified.</string>
     <string name="build_transaction_error_amount_required">Enter an amount.</string>
-    <string name="build_transaction_error_amount_zero">The amount cannot be zero.</string>
+    <string name="build_transaction_error_amount_not_positive">The amount must be greater than zero.</string>
     <string name="build_transaction_error_date_required">Enter a date.</string>
     <string name="build_transaction_error_date_invalid">That is not a date.</string>
     <string name="build_transaction_error_date_future">The date cannot be in the future.</string>
@@ -964,4 +977,75 @@
     <string name="build_transaction_error_account_required">Pick the account.</string>
     <string name="build_transaction_error_closed_invoice">A closed invoice takes no new spending.</string>
     <string name="build_transaction_error_closed_selection">An archived account or card takes no new transactions.</string>
+    <string name="mcp_server_error_port_in_use">The MCP server did not start: port %1$d is already held by another program. Pick another port in the server settings.</string>
+    <string name="mcp_server_error_unavailable">The MCP server did not start: port %1$d could not be listened on. Pick another port in the server settings.</string>
+
+    <string name="settings_group_integrations">Integrations</string>
+    <string name="mcp_settings_title">MCP server</string>
+    <string name="mcp_settings_subtitle">Let an AI agent read and post in the app</string>
+
+    <string name="mcp_screen_title">MCP server</string>
+    <string name="mcp_about_body">A local MCP server lets an AI agent running on this machine read your finances and post for you, with the tools you grant it. It listens on 127.0.0.1 only and demands a token.</string>
+    <string name="mcp_app_open_note">The server exists only while the app is open: close Finsight and nothing is listening, so no agent reaches your data.</string>
+    <string name="mcp_enable_title">Enable the server</string>
+    <string name="mcp_enable_description">The choice holds for the next launches of the app — you enable it once.</string>
+    <string name="mcp_unavailable_title">Not available on this platform</string>
+    <string name="mcp_unavailable_description">The MCP server needs a process holding a local socket, which only the desktop app has.</string>
+
+    <string name="mcp_status_stopped">Off</string>
+    <string name="mcp_status_running">Up on 127.0.0.1:%1$d</string>
+    <string name="mcp_status_failed">Enabled, and not up</string>
+    <string name="mcp_status_no_client">No client connected right now</string>
+    <string name="mcp_status_clients">Clients with a session open right now: %1$d</string>
+    <string name="mcp_disconnect_sessions">End the sessions</string>
+
+    <string name="mcp_port_label">Port</string>
+    <string name="mcp_port_helper">The client is configured against this port; moving it means reconfiguring the client.</string>
+    <string name="mcp_port_apply">Apply the port</string>
+    <string name="mcp_port_error_invalid">Enter a port number between 1 and 65535.</string>
+    <string name="mcp_port_error_in_use">Port %1$d is already held by another program. Pick another one.</string>
+    <string name="mcp_port_error_unavailable">Port %1$d could not be listened on. Pick another one.</string>
+
+    <string name="mcp_address_label">Address</string>
+    <string name="mcp_token_label">Token</string>
+    <string name="mcp_token_reveal">Show the token</string>
+    <string name="mcp_token_hide">Hide the token</string>
+    <string name="mcp_instructions_json_note">Most clients accept the configuration below. The format is their convention, not the protocol's — if yours uses another, build it from the address and token above.</string>
+    <string name="mcp_port_title">Change the port</string>
+    <string name="mcp_token_regenerate">Mint a new token</string>
+    <string name="mcp_token_regenerate_title">Mint a new token?</string>
+    <string name="mcp_token_regenerate_message">The current token stops being accepted, and whoever is connected right now is disconnected. Every client already configured needs the new token before it can connect again.</string>
+    <string name="mcp_token_regenerate_confirm">Mint and invalidate the current one</string>
+    <string name="mcp_token_pending">The token is minted the first time the server comes up.</string>
+    <string name="mcp_copy">Copy</string>
+
+    <string name="mcp_instructions_title">How to connect a client</string>
+    <string name="mcp_instructions_body">Any client that speaks the MCP protocol connects — there is no official one. Point it at the address below, over HTTP (streamable) transport, and have it send the token in the Authorization header.</string>
+    <string name="mcp_instructions_stdio_note">Clients that only speak stdio need a third-party adapter: the transport here is HTTP on the loopback interface, not standard input and output.</string>
+    <string name="mcp_instructions_copy">Copy the instructions</string>
+
+    <string name="mcp_permissions_title">What the agent may do</string>
+    <string name="mcp_permissions_description">Each axis is an independent question: granting one grants nothing else. What is withheld is not even announced to the agent.</string>
+    <string name="mcp_permission_read_title">Read</string>
+    <string name="mcp_permission_read_description">Read balances and list postings, accounts, cards, categories, budgets and recurrings.</string>
+    <string name="mcp_permission_record_title">Record and edit</string>
+    <string name="mcp_permission_record_description">Create and alter postings, accounts, cards, categories, budgets, instalment plans and recurrings.</string>
+    <string name="mcp_permission_remove_title">Remove</string>
+    <string name="mcp_permission_remove_description">Permanently remove what exists — postings, accounts, cards, categories, budgets, instalment plans, recurrings and future invoices.</string>
+    <string name="mcp_permission_operate_title">Operate</string>
+    <string name="mcp_permission_operate_description">Move money and life cycle: transfer, adjust a balance, pay, close, reopen and adjust invoices, confirm and skip cycles, archive and unarchive.</string>
+    <string name="mcp_permission_granted_count">%1$d tools granted</string>
+    <string name="mcp_permission_withheld_count">%1$d tools withheld</string>
+
+    <string name="mcp_activity_title">Recent activity</string>
+    <string name="mcp_activity_see_all">See all</string>
+    <string name="mcp_activity_history_title">Agent activity</string>
+    <string name="mcp_activity_outcome_refused">Refused</string>
+    <string name="mcp_activity_empty_title">Nothing recorded yet</string>
+    <string name="mcp_activity_empty_description">Every write, operation and refusal by an agent shows up here. Queries do not — they change nothing.</string>
+    <string name="mcp_activity_reference_gone">What this entry created no longer exists.</string>
+    <string name="mcp_activity_clear">Clear</string>
+    <string name="mcp_activity_clear_title">Clear the log?</string>
+    <string name="mcp_activity_clear_message">The entries go and no posting changes: the log is the trace of what was done, not the accounting. Discarding an entry does not undo the operation it describes.</string>
+    <string name="mcp_activity_clear_confirm">Clear the log</string>
 </resources>

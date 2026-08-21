@@ -18,6 +18,7 @@ val appModules: List<Module> = listOf(
     dashboardModule,
     categoriesModule,
     creditCardsModule,
+    mcpModule,
     transactionsModule,
     accountsModule,
     budgetsModule,

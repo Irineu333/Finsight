@@ -175,6 +175,9 @@ class EntryRepository(
         )
     }
 
+    override suspend fun netWorthByCurrency(): MoneyByCurrency =
+        entryDao.netWorthCents().toMoney { it.total }
+
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,
         startDate: LocalDate,

@@ -39,7 +39,8 @@ class BalanceAdjustmentSignTest {
             Entry(transactionId = INCOME_ID, account = salary, amount = -cents),
         )
 
-        AdjustBalanceUseCase(
+        AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )(targetBalance = target, adjustmentDate = date, account = account).getOrNull()

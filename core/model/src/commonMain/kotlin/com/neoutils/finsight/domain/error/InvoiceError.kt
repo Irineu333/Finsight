@@ -27,7 +27,7 @@ sealed class InvoiceError(val message: String) {
     data object OverlappingInvoice : InvoiceError("Invoice period overlaps with existing invoice")
 
     // Pay
-    data object CannotPayOpenInvoice : InvoiceError("Only closed invoices can be paid")
+    data object CannotPayOpenInvoice : InvoiceError("Only a closed or retroactive invoice can be paid")
     data object PaymentDateBeforeClosing : InvoiceError("Payment date cannot be before closing date")
     data object PaymentDateAfterDue : InvoiceError("Payment date cannot be after due date")
     data object PaymentDateInFuture : InvoiceError("Payment date cannot be in the future")

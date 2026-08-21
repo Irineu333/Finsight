@@ -21,6 +21,8 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -42,6 +44,7 @@ class CreditCardsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
+    private val calculateAvailableLimit: CalculateAvailableLimitUseCase,
     private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
 
@@ -145,6 +148,11 @@ class CreditCardsViewModel(
             )
         }
 
+        // One read for the whole pager, not one per card: asking card by card inside
+        // the loop is what made this screen cost N invoice queries plus N ledger
+        // reads (design D7).
+        val limits = calculateAvailableLimit(creditCards.map { it.id })
+
         val cards = creditCards.map { creditCard ->
             val cardInvoices = invoices[creditCard.id].orEmpty()
             val invoice = cardInvoices.currentUnpaid()
@@ -157,7 +165,11 @@ class CreditCardsViewModel(
                 dueDay = creditCard.dueDay,
                 limit = creditCard.limit,
                 invoiceUi = invoice?.let {
-                    invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
+                    invoiceUiMapper.toUi(
+                        invoice = it,
+                        cardInvoices = cardInvoices,
+                        limit = limits[creditCard.id] ?: Limit.NONE,
+                    )
                 },
                 mustPreserve = entryRepository.hasEntries(creditCard.accountId) ||
                     recurringRepository.hasRecurringForCreditCard(creditCard.id),

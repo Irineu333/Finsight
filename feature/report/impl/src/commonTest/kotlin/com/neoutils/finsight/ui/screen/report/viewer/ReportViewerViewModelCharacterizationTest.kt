@@ -35,6 +35,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCaseImpl
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
@@ -110,7 +111,7 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(listOf(account)),
             creditCardRepository = fakes.creditCardRepository(),
             invoiceRepository = fakes.invoiceRepository(),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+            calculateReportStatsUseCase = CalculateReportStatsUseCaseImpl(
                 entryRepository = fakes.entryRepository(
                     stats = brlStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
                 ),
@@ -193,7 +194,7 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(listOf(cardLiability)),
             creditCardRepository = fakes.creditCardRepository(listOf(card)),
             invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+            calculateReportStatsUseCase = CalculateReportStatsUseCaseImpl(
                 entryRepository = fakes.entryRepository(),
                 accountRepository = fakes.accountRepository(listOf(cardLiability)),
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
@@ -242,7 +243,13 @@ private class Fakes {
         override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
         override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+        override suspend fun getTransactionsBetween(
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ): List<Transaction> = throw NotImplementedError()
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+        override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
         override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
         override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
         override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
@@ -294,6 +301,9 @@ private class Fakes {
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getUnpaidInvoicesByCreditCards(
+            creditCardIds: Collection<Long>,
+        ): Map<Long, List<Invoice>> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
         override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
         override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
@@ -351,6 +361,7 @@ private class Fakes {
             flows[dimensionId] ?: DimensionFlowsByCurrency.zero
 
         override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+        override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
         override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
         override suspend fun totalsByDimensionByCurrency(
             nominalType: AccountType,

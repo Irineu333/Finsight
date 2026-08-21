@@ -72,8 +72,10 @@ class ViewCategoryViewModel(
         )
         val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
         // Whether deleting is refused (so the screen offers archiving instead) is one
-        // rule with a single owner — the same one DeleteCategoryUseCase consumes.
-        val retirability = resolveRetirability(category)
+        // rule with a single owner — the same one DeleteCategoryUseCase consumes. A
+        // category that vanished between the read above and this question resolves to
+        // nothing, and the screen offers the conservative action.
+        val retirability = resolveRetirability(category).getOrNull()
         ViewCategoryUiState.Content(
             category = category,
             retireAction = retireActionOf(retirability !is CategoryRetirability.Deletable),

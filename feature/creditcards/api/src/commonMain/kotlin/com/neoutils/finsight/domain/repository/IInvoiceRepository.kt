@@ -14,6 +14,15 @@ interface IInvoiceRepository {
     suspend fun getAllInvoices(): List<Invoice>
     suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice>
+
+    /**
+     * The unpaid invoices of each card in [creditCardIds], keyed by card — the batched
+     * [getUnpaidInvoicesByCreditCard] a surface answering about many cards needs. A card
+     * with no unpaid invoice is absent from the map, and N cards cost one read, not N.
+     */
+    suspend fun getUnpaidInvoicesByCreditCards(
+        creditCardIds: Collection<Long>,
+    ): Map<Long, List<Invoice>>
     suspend fun getOpenInvoice(creditCardId: Long): Invoice?
     suspend fun getInvoiceById(id: Long): Invoice?
     /**

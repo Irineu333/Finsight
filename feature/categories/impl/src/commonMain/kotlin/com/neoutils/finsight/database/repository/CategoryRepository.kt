@@ -69,13 +69,15 @@ class CategoryRepository(
      * category — would let a category exist without one, which every reader would
      * then have to special-case.
      */
-    override suspend fun insert(category: Category) {
+    override suspend fun insert(category: Category): Long {
+        var id = 0L
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val dimensionId = dimensionDao.emit(DimensionKind.CATEGORY)
-                dao.insert(mapper.toEntity(category).copy(dimensionId = dimensionId))
+                id = dao.insert(mapper.toEntity(category).copy(dimensionId = dimensionId))
             }
         }
+        return id
     }
 
     /**

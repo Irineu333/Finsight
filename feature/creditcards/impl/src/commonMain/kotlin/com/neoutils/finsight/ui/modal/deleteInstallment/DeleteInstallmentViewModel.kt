@@ -36,7 +36,7 @@ class DeleteInstallmentViewModel(
                 categoryRepository.getCategoryByDimensionId(dimensionId)
             }
             ?.name
-        deleteInstallmentUseCase(installment, transactions).onRight {
+        deleteInstallmentUseCase(installment).onRight {
             analytics.logEvent(DeleteInstallments(installment, categoryName))
             modalManager.dismissAll()
         }.onLeft {

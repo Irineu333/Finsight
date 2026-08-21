@@ -16,6 +16,8 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.InvoiceUi
 import kotlinx.coroutines.flow.Flow
@@ -53,8 +55,15 @@ class DashboardOverallBalanceStatsTest {
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FlowsEntryRepository(asset, liability), reducer()),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
-                throw NotImplementedError()
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
+                emptyMap()
         },
         entryRepository = FlowsEntryRepository(asset, liability),
         accountRepository = FakeAccountRepository(),
@@ -211,6 +220,7 @@ private class FlowsEntryRepository(
     private val asset: AssetMonthFlowsByCurrency,
     private val liability: LiabilityMonthFlowsByCurrency,
 ) : IEntryRepository {
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = asset
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = liability
 

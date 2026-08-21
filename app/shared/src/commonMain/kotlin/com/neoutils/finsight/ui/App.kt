@@ -12,15 +12,20 @@ import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
+import com.neoutils.finsight.feature.mcp.api.McpServerController
+import com.neoutils.finsight.feature.mcp.api.McpServerState
+import com.neoutils.finsight.feature.mcp.api.toUiText
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.ProvideNavController
 import com.neoutils.finsight.ui.component.DetailPaneHost
 import com.neoutils.finsight.ui.component.FormattingLocalsHost
+import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.ui.screen.home.ChromeHost
 import com.neoutils.finsight.ui.theme.FinsightTheme
 import com.neoutils.finsight.ui.util.exposeTestTags
+import kotlinx.coroutines.flow.filterIsInstance
 import org.koin.compose.koinInject
 
 @Composable
@@ -29,6 +34,8 @@ fun App() {
     val crashlytics = koinInject<Crashlytics>()
     val authService = koinInject<AuthService>()
     val syncExchangeRates = koinInject<SyncExchangeRatesUseCase>()
+    val mcpServer = koinInject<McpServerController>()
+    val modalManager = koinInject<ModalManager>()
 
     // The app's cross-cutting, fired and forgotten — and forgotten means the app opens
     // whether or not it succeeds. Resolving the id fails for reasons that have nothing to
@@ -60,6 +67,24 @@ fun App() {
     // they watch; this is a state change of the app, and nobody awaits it.
     LaunchedEffect(Unit) {
         syncExchangeRates.whenDue().collect { syncExchangeRates() }
+    }
+
+    // **The one background failure in this app that has to interrupt.** A server the user switched
+    // on and that did not come up shows its symptom somewhere else entirely — the agent will not
+    // connect — and the person who has to act is the only one nobody tells. Waiting for a visit to
+    // the server section would mean waiting for the user to suspect the app in the first place.
+    //
+    // This is the opposite call from the rate upkeep above, and deliberately: a quotation that did
+    // not arrive changes nothing the user asked for, while a socket that did not bind silently
+    // withdraws something they switched on. It is also the only channel in the app that reaches
+    // whoever is not looking at the screen that owns the subject.
+    //
+    // Every failure is announced, including one that repeats, because each is a separate attempt
+    // that did not come up.
+    LaunchedEffect(Unit) {
+        mcpServer.state
+            .filterIsInstance<McpServerState.Failed>()
+            .collect { failure -> modalManager.showError(failure.toUiText()) }
     }
 
     FinsightTheme {

@@ -86,9 +86,8 @@ class RecurringRepository(
     override suspend fun hasTransactionForRecurring(recurringId: Long) =
         dao.existsTransactionFor(recurringId)
 
-    override suspend fun insert(recurring: Recurring) {
+    override suspend fun insert(recurring: Recurring): Long =
         dao.insert(mapper.toEntity(recurring))
-    }
 
     /**
      * The template and its first cycle are one unit of work, for the reason spelled

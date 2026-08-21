@@ -8,6 +8,7 @@ import com.neoutils.finsight.database.migration.Migration10To11
 import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
 import com.neoutils.finsight.database.migration.Migration13To14
+import com.neoutils.finsight.database.migration.Migration14To15
 import com.neoutils.finsight.database.migration.Migration7To10
 import java.io.File
 import kotlin.test.AfterTest
@@ -51,6 +52,7 @@ class MigrationSchemaEquivalenceTest {
             Migration11To12(),
             Migration12To13(baseCurrency = "BRL"),
             Migration13To14(testSeeding()),
+            Migration14To15,
         )
 
         // Room runs the migrations and validates the result against the entities on
@@ -59,6 +61,8 @@ class MigrationSchemaEquivalenceTest {
 
         assertEquals(emptyList(), database.transactionDao().getAll())
         assertEquals(emptyList(), database.exchangeRateDao().getByCurrency("USD"))
+        // The activity log arrives created and empty, however far back the device started.
+        assertEquals(0, database.agentActivityDao().count())
         database.close()
     }
 
@@ -74,6 +78,7 @@ class MigrationSchemaEquivalenceTest {
             Migration11To12(),
             Migration12To13(baseCurrency = "BRL"),
             Migration13To14(testSeeding()),
+            Migration14To15,
         )
 
         // The identity-hash check that would otherwise fail on the device: the rate
@@ -82,6 +87,7 @@ class MigrationSchemaEquivalenceTest {
         // has to satisfy a column the entity declares in the middle of its list.
         database.accountDao().getAllLedgerAccounts()
         assertEquals(emptyList(), database.exchangeRateDao().getByCurrency("USD"))
+        assertEquals(0, database.agentActivityDao().count())
         database.close()
     }
 
@@ -96,6 +102,7 @@ class MigrationSchemaEquivalenceTest {
             Migration11To12(),
             Migration12To13(baseCurrency = "BRL"),
             Migration13To14(testSeeding()),
+            Migration14To15,
         )
 
         // The identity-hash check for the pair: `counterCurrency`, appended by ALTER,
@@ -104,6 +111,7 @@ class MigrationSchemaEquivalenceTest {
         // declares — name for name, column for column.
         database.accountDao().getAllLedgerAccounts()
         assertEquals(emptyList(), database.exchangeRateDao().getByCurrency("USD"))
+        assertEquals(0, database.agentActivityDao().count())
         database.close()
     }
 

@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalTime::class)
 package com.neoutils.finsight
 
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -11,6 +12,9 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,11 +46,12 @@ class FakeCrashlytics : Crashlytics {
 }
 
 class FakeRecurringRepository(
+    stored: List<Recurring> = emptyList(),
     private val hasTransaction: Boolean = false,
     private val updateFailure: Throwable? = null,
 ) : IRecurringRepository {
 
-    val all = MutableStateFlow<List<Recurring>>(emptyList())
+    val all = MutableStateFlow(stored)
     private val byId = MutableSharedFlow<Recurring?>(replay = 1)
 
     val updated = mutableListOf<Recurring>()
@@ -114,4 +119,15 @@ class FakeAccountRepository(
     override suspend fun update(account: Account) = throw NotImplementedError()
     override suspend fun delete(account: Account) = throw NotImplementedError()
     override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+}
+
+/**
+ * A clock that does not move, so two calls that are the same operation stamp the same
+ * instant — the reading off the system made them differ whenever they straddled a
+ * millisecond.
+ */
+internal class StoppedClock(
+    private val instant: Instant = Instant.fromEpochMilliseconds(1_767_225_600_000),
+) : Clock {
+    override fun now(): Instant = instant
 }

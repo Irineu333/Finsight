@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.SaveRecurringUseCaseImpl
 import com.neoutils.finsight.recurring
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +66,7 @@ class RecurringFormViewModelTest {
         override suspend fun archive(id: Long) = Unit
         override suspend fun unarchive(id: Long) = Unit
         override suspend fun existsByName(name: String, ignoreId: Long): Boolean = false
-        override suspend fun insert(category: Category) = Unit
+        override suspend fun insert(category: Category) = 0L
         override suspend fun insertAll(categories: List<Category>) = Unit
         override suspend fun update(category: Category) = Unit
         override suspend fun delete(category: Category) = Unit
@@ -112,15 +112,15 @@ class RecurringFormViewModelTest {
     }
 
     private fun submitEditOf(isArchived: Boolean): FakeRecurringRepository {
-        val repository = FakeRecurringRepository()
         val editing = recurring(id = 7L, isArchived = isArchived).copy(account = account)
+        val repository = FakeRecurringRepository(stored = listOf(editing))
 
         val vm = RecurringFormViewModel(
             recurring = editing,
             categoryRepository = categoryRepository,
             accountRepository = accountRepository,
             creditCardRepository = creditCardRepository,
-            saveRecurringUseCase = SaveRecurringUseCase(repository),
+            saveRecurringUseCase = SaveRecurringUseCaseImpl(repository),
             modalManager = ModalManager(),
             analytics = analytics,
             crashlytics = FakeCrashlytics(),

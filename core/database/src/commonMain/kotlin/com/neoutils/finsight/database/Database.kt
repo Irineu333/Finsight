@@ -7,6 +7,7 @@ import com.neoutils.finsight.database.migration.Migration10To11
 import com.neoutils.finsight.database.migration.Migration11To12
 import com.neoutils.finsight.database.migration.Migration12To13
 import com.neoutils.finsight.database.migration.Migration13To14
+import com.neoutils.finsight.database.migration.Migration14To15
 import com.neoutils.finsight.database.migration.Migration1To2
 import com.neoutils.finsight.database.migration.Migration2To3
 import com.neoutils.finsight.database.migration.Migration3To4
@@ -48,6 +49,7 @@ fun getRoomDatabase(
             Migration11To12(relabelCurrency),
             Migration12To13(baseCurrency),
             Migration13To14(currencySeeding),
+            Migration14To15,
         )
         .addCallback(CurrencySeedingCallback(currencySeeding))
         .setDriver(BundledSQLiteDriver())

@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.usecase.impliedRate
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOrNull
+import com.neoutils.finsight.extension.editObstacle
 import com.neoutils.finsight.ui.model.TransactionLegTarget
 import com.neoutils.finsight.ui.model.TransactionLegUi
 import com.neoutils.finsight.ui.model.toTransactionLegs
@@ -134,15 +135,14 @@ sealed interface ViewTransactionUiState {
         val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
 
         /**
-         * Derived edit gate, gate by gate (design D2): not an adjustment, exactly
-         * one monetary leg, no installment, and not frozen. The invoice-status gate
-         * (CLOSED/PAID blocks edit *and* delete) is applied one level up.
+         * Derived edit gate (design D2): whatever stops the rewrite from expressing this
+         * transaction, plus not being frozen. The three obstacles — more than one monetary
+         * leg, an adjustment, one share of an installment — are read from
+         * `Transaction.editObstacle`, the single owner `UpdateTransactionUseCase` refuses by,
+         * so the screen cannot come to offer what the operation would turn down. The
+         * invoice-status gate (CLOSED/PAID blocks edit *and* delete) is applied one level up.
          */
-        val isEditable: Boolean =
-            label != TransactionLabel.ADJUSTMENT &&
-                transaction.monetaryEntries.size == 1 &&
-                transaction.installmentId == null &&
-                isChangeable
+        val isEditable: Boolean = transaction.editObstacle == null && isChangeable
 
         val isRemovable: Boolean = isChangeable
     }

@@ -1,33 +1,37 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
+import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.datetime.YearMonth
 
-/**
- * Finds the invoice a target month already has, or has [CreateInvoiceUseCase] make it.
- *
- * What is its own is the lookup and the refusal of an invoice closed to new spending.
- * Classifying the created invoice is not: that rule has a single owner, in the creation
- * itself, which is what makes an invoice born from a transaction indistinguishable from
- * one born from the user's gesture.
- */
 class GetOrCreateInvoiceForMonthUseCaseImpl(
+    private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val createInvoiceUseCase: CreateInvoiceUseCase,
 ) : GetOrCreateInvoiceForMonthUseCase {
-    override suspend operator fun invoke(
-        creditCard: CreditCard,
+
+    override suspend fun invoke(
+        creditCardId: Long,
         targetDueMonth: YearMonth
     ): Either<Throwable, Invoice> = either {
+        // Resolved before the lookup: an id that matches no card would otherwise find
+        // no invoice and go on to create one for a card that does not exist.
+        ensureNotNull(
+            catch { creditCardRepository.getCreditCardById(creditCardId) }.bind()
+        ) {
+            InvoiceException(InvoiceError.CreditCardNotFound)
+        }
+
         val existingInvoice = invoiceRepository
-            .getInvoicesByCreditCard(creditCard.id)
+            .getInvoicesByCreditCard(creditCardId)
             .find { it.dueMonth == targetDueMonth }
 
         if (existingInvoice != null) {
@@ -41,6 +45,6 @@ class GetOrCreateInvoiceForMonthUseCaseImpl(
             return@either existingInvoice
         }
 
-        createInvoiceUseCase(creditCard, targetDueMonth).bind()
+        createInvoiceUseCase(creditCardId, targetDueMonth).bind()
     }
 }

@@ -25,10 +25,10 @@ class AccountCurrencyImmutabilityTest {
 
     private val account = Account(id = 1, name = "Nubank", currency = "BRL")
 
-    private fun useCase(repository: RecordingAccounts) = UpdateAccountUseCase(
+    private fun useCase(repository: RecordingAccounts) = UpdateAccountUseCaseImpl(
         repository = repository,
         validateAccountName = ValidateAccountNameUseCase(repository),
-        setDefaultAccount = SetDefaultAccountUseCase(repository),
+        setDefaultAccount = SetDefaultAccountUseCaseImpl(repository),
     )
 
     @Test

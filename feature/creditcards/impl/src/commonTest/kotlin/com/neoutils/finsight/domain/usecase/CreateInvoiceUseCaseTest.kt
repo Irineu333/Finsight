@@ -23,7 +23,7 @@ class CreateInvoiceUseCaseTest {
     fun `month due before the open invoice is born retroactive`() = runTest {
         // OPEN due 2026-02.
         val store = RecordingInvoiceStore(testInvoice())
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val invoice = createInvoice(testCard(), YearMonth(2026, 1)).getOrNull()
 
@@ -33,7 +33,7 @@ class CreateInvoiceUseCaseTest {
     @Test
     fun `month due after the open invoice is born future`() = runTest {
         val store = RecordingInvoiceStore(testInvoice())
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val invoice = createInvoice(testCard(), YearMonth(2026, 3)).getOrNull()
 
@@ -47,7 +47,7 @@ class CreateInvoiceUseCaseTest {
         val store = RecordingInvoiceStore(
             testInvoice(openingMonth = YearMonth(2026, 6))
         )
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val invoice = createInvoice(testCard(), YearMonth(2026, 8)).getOrNull()
 
@@ -58,7 +58,7 @@ class CreateInvoiceUseCaseTest {
     @Test
     fun `a month that already has an invoice is refused`() = runTest {
         val store = RecordingInvoiceStore(testInvoice())
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val failure = createInvoice(testCard(), YearMonth(2026, 2)).leftOrNull()
 
@@ -70,7 +70,7 @@ class CreateInvoiceUseCaseTest {
     @Test
     fun `without an open invoice there is no way to classify`() = runTest {
         val store = RecordingInvoiceStore(testInvoice(status = Invoice.Status.PAID))
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val failure = createInvoice(testCard(), YearMonth(2026, 5)).leftOrNull()
 
@@ -82,7 +82,7 @@ class CreateInvoiceUseCaseTest {
     @Test
     fun `the window written is the card's own, and never opens`() = runTest {
         val store = RecordingInvoiceStore(testInvoice())
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store)
 
         val invoice = createInvoice(testCard(), YearMonth(2026, 4)).getOrNull()
 
@@ -104,7 +104,7 @@ class CreateInvoiceUseCaseTest {
         val store = RecordingInvoiceStore(
             testInvoice(card = card, openingMonth = YearMonth(2026, 1))
         )
-        val createInvoice = CreateInvoiceUseCase(store)
+        val createInvoice = CreateInvoiceUseCaseImpl(SingleCardRepository(card), store)
 
         val invoice = createInvoice(card, YearMonth(2026, 4)).getOrNull()
 
@@ -123,12 +123,13 @@ class CreateInvoiceUseCaseTest {
         val card = testCard()
 
         val byGestureStore = RecordingInvoiceStore(testInvoice())
-        val byGesture = CreateInvoiceUseCase(byGestureStore)(card, YearMonth(2026, 5)).getOrNull()
+        val byGesture = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), byGestureStore)(card, YearMonth(2026, 5)).getOrNull()
 
         val byTransactionStore = RecordingInvoiceStore(testInvoice())
         val byTransaction = GetOrCreateInvoiceForMonthUseCaseImpl(
+            creditCardRepository = SingleCardRepository(testCard()),
             invoiceRepository = byTransactionStore,
-            createInvoiceUseCase = CreateInvoiceUseCase(byTransactionStore),
+            createInvoiceUseCase = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), byTransactionStore),
         )(card, YearMonth(2026, 5)).getOrNull()
 
         assertEquals(byGesture?.openingMonth, byTransaction?.openingMonth)
@@ -141,8 +142,9 @@ class CreateInvoiceUseCaseTest {
     fun `an existing open month is returned to the transaction, not created again`() = runTest {
         val store = RecordingInvoiceStore(testInvoice())
         val getOrCreate = GetOrCreateInvoiceForMonthUseCaseImpl(
+            creditCardRepository = SingleCardRepository(testCard()),
             invoiceRepository = store,
-            createInvoiceUseCase = CreateInvoiceUseCase(store),
+            createInvoiceUseCase = CreateInvoiceUseCaseImpl(SingleCardRepository(testCard()), store),
         )
 
         val invoice = getOrCreate(testCard(), YearMonth(2026, 2)).getOrNull()

@@ -7,7 +7,7 @@ import com.neoutils.finsight.FakeCrashlytics
 import com.neoutils.finsight.FakeRecurringRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.Event
-import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCaseImpl
 import com.neoutils.finsight.recurring
 import com.neoutils.finsight.ui.component.Modal
 import com.neoutils.finsight.ui.component.ModalManager
@@ -34,6 +34,8 @@ import kotlin.test.assertTrue
 class UnarchiveRecurringViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
+
+    private val archived = recurring(isArchived = true)
 
     @BeforeTest
     fun setup() = Dispatchers.setMain(dispatcher)
@@ -63,8 +65,8 @@ class UnarchiveRecurringViewModelTest {
         analytics: Analytics,
         crashlytics: FakeCrashlytics,
     ) = UnarchiveRecurringViewModel(
-        recurring = recurring(isArchived = true),
-        unarchiveRecurringUseCase = UnarchiveRecurringUseCase(repository),
+        recurring = archived,
+        unarchiveRecurringUseCase = UnarchiveRecurringUseCaseImpl(repository),
         modalManager = manager,
         analytics = analytics,
         crashlytics = crashlytics,
@@ -72,7 +74,7 @@ class UnarchiveRecurringViewModelTest {
 
     @Test
     fun `confirming clears the flag and logs the event and closes the sheet`() = runTest(dispatcher) {
-        val repository = FakeRecurringRepository()
+        val repository = FakeRecurringRepository(stored = listOf(archived))
         val manager = ModalManager()
         val analytics = FakeAnalytics()
         val crashlytics = FakeCrashlytics()
@@ -90,7 +92,7 @@ class UnarchiveRecurringViewModelTest {
     @Test
     fun `a failure is recorded and neither logs the event nor closes the sheet`() = runTest(dispatcher) {
         val failure = IllegalStateException("write failed")
-        val repository = FakeRecurringRepository(updateFailure = failure)
+        val repository = FakeRecurringRepository(stored = listOf(archived), updateFailure = failure)
         val manager = ModalManager()
         val analytics = FakeAnalytics()
         val crashlytics = FakeCrashlytics()

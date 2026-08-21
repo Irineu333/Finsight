@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.naturalBalanceOf
@@ -39,7 +40,8 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `re-adjusting a balance rewrites the adjustment from the ledger`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
@@ -65,7 +67,8 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `a same-day cross-currency transfer is not rewritten as the adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
@@ -87,7 +90,8 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `adjusting on two dates produces one adjustment on each`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
@@ -106,7 +110,8 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `re-adjusting back to the original value removes that date's adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
@@ -126,7 +131,8 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `altering the past propagates to the present without rewriting the adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
@@ -233,6 +239,30 @@ class LedgerStore(private val account: Account) {
         .toMap()
 }
 
+/** The chart as the use case resolves it: the accounts that exist, and nothing else. */
+class KnownAccounts(private vararg val accounts: Account) : IAccountRepository {
+    override suspend fun getAccountById(accountId: Long): Account? =
+        accounts.firstOrNull { it.id == accountId }
+
+    override suspend fun getAllAccounts(): List<Account> = accounts.toList()
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts.toList())
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts.toList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts.toList())
+    override suspend fun getAllLedgerAccounts(): List<Account> = accounts.toList()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts.toList())
+    override fun observeAccountById(accountId: Long): Flow<Account?> =
+        flowOf(accounts.firstOrNull { it.id == accountId })
+
+    override suspend fun getDefaultAccount(): Account? = accounts.firstOrNull { it.isDefault }
+    override fun observeDefaultAccount(): Flow<Account?> = flowOf(accounts.firstOrNull { it.isDefault })
+    override suspend fun getAccountCount(): Int = accounts.size
+    override suspend fun hasYieldingAccount(): Boolean = accounts.any { it.yieldsInterest }
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+}
+
 class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionRepository {
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         val transactionId = ledger.create(intent.date, intent.legs)
@@ -276,7 +306,13 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
 }
 
 class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
@@ -300,6 +336,7 @@ class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 class UnarchiveAccountUseCaseTest {
 
-    private class RecordingAccountRepository : IAccountRepository {
+    private class RecordingAccountRepository(private vararg val rows: Account) : IAccountRepository {
         val reopened = mutableListOf<Long>()
         override suspend fun reopen(accountId: Long) { reopened += accountId }
         override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
@@ -21,7 +21,7 @@ class UnarchiveAccountUseCaseTest {
         override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
         override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
-        override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
+        override suspend fun getAccountById(accountId: Long): Account? = rows.firstOrNull { it.id == accountId }
         override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
         override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
@@ -34,10 +34,10 @@ class UnarchiveAccountUseCaseTest {
 
     @Test
     fun `unarchive reopens the account by its id and returns Right`() = runTest {
-        val repository = RecordingAccountRepository()
         val account = Account(id = 7, name = "Wallet", type = AccountType.ASSET, isArchived = true, currency = "BRL")
+        val repository = RecordingAccountRepository(account)
 
-        val result = UnarchiveAccountUseCase(repository)(account)
+        val result = UnarchiveAccountUseCaseImpl(repository)(account)
 
         assertTrue(result.isRight())
         assertEquals(listOf(7L), repository.reopened)

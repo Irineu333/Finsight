@@ -13,6 +13,9 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.McpEntry
+import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
@@ -104,6 +107,44 @@ class AppModulesTest {
         assertSame(koin.get<ExchangeRateRepository>(), koin.get<IExchangeRateRepository>())
     }
 
+    /**
+     * The MCP controller is bound by an `expect`/`actual` platform module that only the shell
+     * aggregates. Leaving `mcpModule` off `appModules` compiles on every target and fails
+     * where nothing is watching: the desktop process resolves the controller outside any
+     * composition, while starting up.
+     */
+    @Test
+    fun appModulesResolveTheMcpServerController() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<McpServerController>())
+    }
+
+    /**
+     * The activity log is bound in the same feature module as the controller but closes over the
+     * database instead of a socket, so it can be missing while the controller resolves fine. The
+     * section that reads it resolves it outside composition, like everything else here.
+     */
+    @Test
+    fun appModulesResolveTheAgentActivityLog() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<IAgentActivityRepository>())
+    }
+
+    /**
+     * The MCP section's graph is built inside the settings graph, which resolves the entry point
+     * that registers it while the `NavHost` is being assembled — outside any composition, and before
+     * a single screen exists. A missing binding takes the whole navigation graph down on the first
+     * frame, not just the section it belongs to.
+     */
+    @Test
+    fun appModulesResolveTheMcpEntryPoint() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<McpEntry>())
+    }
+
     @Test
     fun appModulesResolveTheNavCatalog() {
         val koin = koinApplication { modules(appModules) }.koin
@@ -114,9 +155,12 @@ class AppModulesTest {
     }
 
     /**
-     * The catalog is the single source of truth projected into the desktop rail (`!mobileOnly`), the
-     * mobile bottom bar (`primaryTab`) and the mobile grid (`!primaryTab`). Guard those projections
-     * and the persistence-key uniqueness the dashboard grid relies on.
+     * The catalog is the single source of truth projected into the rail (`isOffered`), the mobile
+     * bottom bar (`primaryTab`) and the mobile grid (`!primaryTab`). Guard those projections and the
+     * persistence-key uniqueness the dashboard grid relies on.
+     *
+     * `isOffered` is the platform axis and it points both ways: a destination with no desktop
+     * implementation and one that exists only on the desktop are both answered by it.
      */
     @Test
     fun navCatalogProjectionsAreConsistent() {
@@ -126,17 +170,17 @@ class AppModulesTest {
         // Exactly two primary tabs feed the mobile bottom bar.
         assertEquals(2, destinations.count { it.primaryTab })
 
-        // A primary tab is never mobile-only (tabs exist on every form factor).
-        assertTrue(destinations.none { it.primaryTab && it.mobileOnly })
+        // A primary tab is restricted to no platform (tabs exist on every form factor).
+        assertTrue(destinations.none { it.primaryTab && it.onlyOn != null })
 
-        // The desktop rail excludes mobile-only destinations.
-        val railCount = destinations.count { !it.mobileOnly }
-        assertEquals(destinations.size - destinations.count { it.mobileOnly }, railCount)
+        // The rail carries what this platform offers, and nothing it does not.
+        val railCount = destinations.count { it.isOffered }
+        assertEquals(destinations.size - destinations.count { !it.isOffered }, railCount)
 
-        // Support is now supported on desktop: it is not mobile-only and appears in the rail projection.
+        // Support is now supported on desktop: it is restricted to no platform and is in the rail.
         val support = destinations.single { it.route == SupportGraph }
         assertTrue(!support.mobileOnly)
-        assertTrue(destinations.filter { !it.mobileOnly }.contains(support))
+        assertTrue(destinations.filter { it.isOffered }.contains(support))
 
         // Settings sits immediately before Support: the two are both "about the app",
         // and Support's KDoc records being last on purpose.

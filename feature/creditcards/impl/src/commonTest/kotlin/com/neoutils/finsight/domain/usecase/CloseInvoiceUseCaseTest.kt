@@ -34,12 +34,12 @@ class CloseInvoiceUseCaseTest {
         today: LocalDate = LocalDate(2026, 2, 20),
     ): CloseInvoiceUseCase {
         val clock = StoppedClock(today)
-        val calculate = CalculateInvoiceUseCase(FakeEntryRepository(owed))
-        return CloseInvoiceUseCase(
+        val calculate = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed))
+        return CloseInvoiceUseCaseImpl(
             invoiceRepository = store,
             calculateInvoiceUseCase = calculate,
-            payInvoiceUseCase = PayInvoiceUseCase(store, clock),
-            openInvoiceUseCase = OpenInvoiceUseCase(store, SingleCardRepository(card), clock),
+            payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), clock),
+            openInvoiceUseCase = OpenInvoiceUseCaseImpl(store, SingleCardRepository(card), clock),
         )
     }
 

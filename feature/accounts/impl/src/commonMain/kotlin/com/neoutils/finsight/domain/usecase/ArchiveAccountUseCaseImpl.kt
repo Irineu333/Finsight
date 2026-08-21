@@ -6,15 +6,22 @@ import arrow.core.left
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 
 class ArchiveAccountUseCaseImpl(
+    private val accountRepository: IAccountRepository,
     private val accountDao: AccountDao,
     private val entryRepository: IEntryRepository,
 ) : ArchiveAccountUseCase {
 
-    override suspend fun invoke(account: Account): Either<Throwable, Unit> {
+    override suspend fun invoke(accountId: Long): Either<Throwable, Unit> {
+        // Resolved here and not received: the guards below decide on the account as it
+        // is at this instant, so a screen that loaded it minutes ago cannot archive an
+        // account that has since become the default or taken on a balance.
+        val account = accountRepository.getAccountById(accountId)
+            ?: return AccountException(AccountError.NOT_FOUND).left()
+
         // The default account must never be retired: the app must always have one, and
         // archiving it would leave none. The user resolves the *role* first, electing
         // another default (`SetDefaultAccountUseCase`), just as they resolve the balance

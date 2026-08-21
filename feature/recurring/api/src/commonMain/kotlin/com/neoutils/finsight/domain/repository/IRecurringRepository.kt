@@ -31,7 +31,14 @@ interface IRecurringRepository {
      * guards that decide whether the recurring may be deleted or must be archived.
      */
     suspend fun hasTransactionForRecurring(recurringId: Long): Boolean
-    suspend fun insert(recurring: Recurring)
+    /**
+     * Writes a new template and answers the identity the store gave it.
+     *
+     * The identity is answered rather than dropped because a caller that cannot name what it
+     * just created cannot report it either — and the surface that writes one from outside has
+     * nothing else to point the requester at.
+     */
+    suspend fun insert(recurring: Recurring): Long
 
     /**
      * Creates a template and posts [firstCycle] as its cycle 1 — the template, the

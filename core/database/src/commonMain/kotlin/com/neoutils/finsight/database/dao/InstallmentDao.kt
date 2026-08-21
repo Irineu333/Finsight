@@ -22,6 +22,9 @@ interface InstallmentDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE installmentId = :installmentId")
     suspend fun countTransactions(installmentId: Long): Int
 
+    @Query("SELECT id FROM transactions WHERE installmentId = :installmentId")
+    suspend fun transactionIds(installmentId: Long): List<Long>
+
     @Query(
         """
         UPDATE transactions

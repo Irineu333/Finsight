@@ -19,7 +19,33 @@ interface ITransactionRepository {
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
     suspend fun getAllTransactions(): List<Transaction>
+
+    /**
+     * The transactions dated within [startDate]..[endDate], **both days included**,
+     * newest first.
+     *
+     * The period is the cut, and it is the database's to make: a caller that wants one
+     * month of a history filters what it asked for rather than what the user has ever
+     * recorded, so what the answer costs is what the period holds. Their legs are read
+     * in bulk beside them, so it costs no query per posting either.
+     */
+    suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction>
+
     suspend fun getTransactionById(id: Long): Transaction?
+
+    /**
+     * Which of [ids] still name a transaction — the identities alone, not the transactions.
+     *
+     * For a caller that only has to tell what is still there from what was removed, and has a
+     * page of identities rather than one. Hydrating each of them costs a read of the row, a
+     * read of its entries and a read of the chart of accounts, and answering existence does not
+     * need any of the three; asked per identity it also makes the cost of a page grow with the
+     * page. An identity absent from the result is a transaction that is gone.
+     */
+    suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long>
 
     /** Writes the user's [intent] as a balanced set of ledger entries. */
     suspend fun createTransaction(intent: TransactionIntent): Transaction
@@ -32,23 +58,21 @@ interface ITransactionRepository {
     suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction>
 
     /**
-     * Rewrites the transaction's row and its ledger legs from the edited [leg].
+     * Rewrites the transaction's row and its ledger legs from [leg] and its [contra].
      *
-     * ⚠️ Takes a **single** leg: the rewrite deletes every old entry and rebuilds
-     * from this one (plus a synthesized contra leg). That is only correct for a
-     * transaction with exactly one monetary leg — an expense or an income — which is
-     * why editing is offered only when `ViewTransactionUiState.isEditable` holds
-     * (`monetaryEntries.size == 1`, not an adjustment, no installment). A transfer or
-     * a card payment has two monetary legs; routing one through here would drop the
-     * second silently. Any future support for editing those must change this shape.
-     */
-    /**
-     * Rewrites the transaction from [leg] and its [contra].
+     * ⚠️ Takes a **single** leg: the rewrite deletes every old entry and rebuilds from
+     * this one plus the contra. That is only correct for a transaction with exactly one
+     * monetary leg — an expense or an income. A transfer or a card payment has two, and
+     * routing one through here would drop the second silently. What the rewrite can
+     * express is decided by `Transaction.editObstacle`, the single owner both the screen
+     * and `UpdateTransactionUseCase` read: the screen to decide whether to offer the
+     * edit, the use case to refuse it. Any future support for editing those must change
+     * this shape.
      *
-     * [contra] has no default on purpose: a rewrite deletes the old entries, so a
-     * caller that forgets it turns a one-sided intent into an unbalanced write —
-     * refused at the boundary, with the edit silently rolled back. Defaulting it to
-     * `null` let exactly that compile.
+     * [contra] has no default on purpose: a rewrite deletes the old entries, so a caller
+     * that forgets it turns a one-sided intent into an unbalanced write — refused at the
+     * boundary, with the edit silently rolled back. Defaulting it to `null` let exactly
+     * that compile.
      */
     suspend fun updateTransaction(
         id: Long,

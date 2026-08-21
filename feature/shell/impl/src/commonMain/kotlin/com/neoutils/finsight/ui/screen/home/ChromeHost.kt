@@ -39,9 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -59,6 +56,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.ui.component.NavigationRailBar
 import com.neoutils.finsight.ui.component.OverlayPriority
+import com.neoutils.finsight.ui.navigation.sectionOf
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import com.neoutils.finsight.ui.util.isWideWindow
 import org.jetbrains.compose.resources.stringResource
@@ -76,23 +74,15 @@ fun ChromeHost(
     val chromeController = rememberChromeStateHolder()
 
     val destinations = navCatalog.destinations
-    val railItems = destinations.filter { !it.mobileOnly }
+    // The platform decides, in both directions: what has no desktop backing stays out of the rail,
+    // and what only the desktop can run stays out of every mobile affordance.
+    val railItems = destinations.filter { it.isOffered }
     val bottomItems = destinations.filter { it.primaryTab }
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = currentBackStackEntry?.destination
 
-    // The active section, resolved in two tiers so the selector highlights correctly on any screen:
-    // 1. Exact route match against the hierarchy — handles section roots and sibling destinations that
-    //    share a graph but are distinct rail items (e.g. Credit Cards vs Installments).
-    // 2. Fallback for pushed sub-destinations (e.g. an invoice screen), whose route is not in the
-    //    catalog: match the catalog item that owns the current section's start destination.
-    val selectedItem = destinations.firstOrNull { item ->
-        destination?.hierarchy?.any { it.hasRoute(item.route::class) } == true
-    } ?: destination?.hierarchy
-        ?.firstNotNullOfOrNull { it as? NavGraph }
-        ?.findStartDestination()
-        ?.let { sectionStart -> destinations.firstOrNull { sectionStart.hasRoute(it.route::class) } }
+    val selectedItem = destinations.sectionOf(destination)
 
     val isOnPrimaryTab = selectedItem?.primaryTab == true
 
@@ -151,7 +141,7 @@ fun ChromeHost(
                     ) {
                         BottomNavigationBar(
                             items = bottomItems,
-                            selectedItem = selectedItem ?: bottomItems.first(),
+                            selectedItem = selectedItem,
                             onItemSelected = onItemSelected,
                         )
                     }
@@ -184,7 +174,7 @@ fun ChromeHost(
                     ) {
                         NavigationRailBar(
                             items = railItems,
-                            selectedItem = selectedItem ?: railItems.first(),
+                            selectedItem = selectedItem,
                             onItemSelected = onItemSelected,
                             header = {
                                 chromeTransition.AnimatedVisibility(

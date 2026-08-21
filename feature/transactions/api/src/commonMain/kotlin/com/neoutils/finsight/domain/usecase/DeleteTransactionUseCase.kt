@@ -12,5 +12,21 @@ import com.neoutils.finsight.domain.model.Transaction
  * repository directly, so a failure had nowhere to be reported.
  */
 interface DeleteTransactionUseCase {
-    suspend operator fun invoke(transaction: Transaction): Either<Throwable, Unit>
+
+    /**
+     * The canonical form, and the one that carries the implementation.
+     *
+     * The transaction is resolved **when the operation runs**, so an identity that
+     * matches nothing is refused with `TransactionError.NOT_FOUND` and nothing is
+     * removed — rather than reaching the repository, which deletes by id and cannot
+     * tell "already gone" from "never existed".
+     */
+    suspend operator fun invoke(transactionId: Long): Either<Throwable, Unit>
+
+    /**
+     * The convenience for a caller that already holds the transaction. It extracts
+     * the identity and delegates — not another rule, so not another implementation.
+     */
+    suspend operator fun invoke(transaction: Transaction): Either<Throwable, Unit> =
+        invoke(transaction.id)
 }

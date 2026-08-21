@@ -66,9 +66,10 @@ class InvoiceAdjustmentSignTest {
             )
         }
 
-        AdjustInvoiceUseCase(
+        AdjustInvoiceUseCaseImpl(
+            invoiceRepository = RecordingInvoiceStore(invoice),
             transactionRepository = FakeTransactionRepository(ledger),
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         )(invoice = invoice, target = target, adjustmentDate = date).getOrNull()
 
         val (id, entries) = ledger.entriesByTransaction

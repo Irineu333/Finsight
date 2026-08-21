@@ -14,6 +14,7 @@ kotlin {
             api(projects.core.navigation)
             implementation(projects.core.designsystem)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.arrow.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutinesTest)

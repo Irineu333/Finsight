@@ -11,20 +11,20 @@ class ArchiveRecurringUseCaseTest {
 
     @Test
     fun `archiving writes the flag`() = runTest {
-        val repository = FakeRecurringRepository()
+        val target = recurring()
+        val repository = FakeRecurringRepository(stored = listOf(target))
 
-        assertTrue(ArchiveRecurringUseCase(repository)(recurring()).isRight())
+        assertTrue(ArchiveRecurringUseCaseImpl(repository)(target).isRight())
 
         assertEquals(listOf(true), repository.updated.map { it.isArchived })
     }
 
     @Test
     fun `unarchiving clears the flag and is refused by no invariant`() = runTest {
-        val repository = FakeRecurringRepository()
+        val target = recurring(isArchived = true)
+        val repository = FakeRecurringRepository(stored = listOf(target))
 
-        assertTrue(
-            UnarchiveRecurringUseCase(repository)(recurring(isArchived = true)).isRight()
-        )
+        assertTrue(UnarchiveRecurringUseCaseImpl(repository)(target).isRight())
 
         assertEquals(listOf(false), repository.updated.map { it.isArchived })
     }

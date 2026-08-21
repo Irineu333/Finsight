@@ -257,7 +257,7 @@ class LedgerEntryWriter(
      *
      * The currency is part of the identity, so there are two nominals **per currency
      * in use** rather than two in the whole app. `CLOSED_ACCOUNT`/`CLOSED_CARD`,
-     * artefacts of the `v7 → v9` upgrade, are not touched: they exist in BRL and
+     * artefacts of the `v7 → v10` upgrade, are not touched: they exist in BRL and
      * simply become the BRL ones, with no migration.
      *
      * Like GnuCash's trading accounts, these are created by the bookkeeper and are

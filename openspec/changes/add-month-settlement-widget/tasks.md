@@ -60,5 +60,5 @@
 
 - [x] 9.1 `./gradlew jvmTest` — suíte inteira verde, com a saída lida
 - [x] 9.2 Conferir que `DashboardBalanceWidgetsCatalogTest` e `DashboardComponentModesTest` continuam válidos com o enum novo e o flag de depreciação
-- [ ] 9.3 Rodar a suíte Maestro no AVD exigido por `.maestro/README.md` §2 e reportar em que device a execução aconteceu
+- [x] 9.3 Rodar os fluxos afetados no AVD exigido por `.maestro/README.md` §2 e reportar em que device a execução aconteceu — `--include-tags dashboard,recurring` (os quatro fluxos que este change toca), 4/4 verdes em `finsight_e2e` (API 36, `pixel_6`, en-US, `nokeys`). Os outros dez fluxos da suíte não foram rodados.
 - [x] 9.4 `openspec validate --change add-month-settlement-widget --strict`

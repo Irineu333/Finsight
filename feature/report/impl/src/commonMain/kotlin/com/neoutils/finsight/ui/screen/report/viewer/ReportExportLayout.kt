@@ -25,6 +25,13 @@ import kotlin.math.roundToInt
 import kotlin.time.Clock
 
 data class ReportExportStrings(
+    /**
+     * The BCP-47 tag of the language every string below was resolved in.
+     *
+     * It is read from the resources alongside them, so the document cannot declare one
+     * language and be written in another.
+     */
+    val languageTag: String,
     val title: String,
     val generatedAtPrefix: String,
     val summaryBalance: String,
@@ -163,8 +170,9 @@ fun ReportViewerUiState.Content.toReportLayout(
     }
 
     return ReportLayout(
+        languageTag = strings.languageTag,
         title = strings.title,
-        generatedAtLabel = "${strings.generatedAtPrefix}: ${generatedAtDate.toString()}",
+        generatedAtLabel = "${strings.generatedAtPrefix}: ${dateFormats.formatFullDate(generatedAtDate)}",
         context = ReportContext(
             badge = perspectiveBadgeText,
             label = perspectiveLabel,

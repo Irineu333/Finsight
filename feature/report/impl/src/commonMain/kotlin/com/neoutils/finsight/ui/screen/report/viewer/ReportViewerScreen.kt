@@ -129,6 +129,7 @@ private fun ReportViewerContent(
     val navController = LocalNavController.current
 
     val exportStrings = ReportExportStrings(
+        languageTag = stringResource(Res.string.app_language_tag),
         title = stringResource(Res.string.report_viewer_title),
         generatedAtPrefix = stringResource(Res.string.report_output_generated_at),
         summaryBalance = stringResource(Res.string.report_viewer_summary_balance),

@@ -12,7 +12,7 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
     override fun render(layout: ReportLayout): ReportDocument {
         val html = buildString {
             appendLine("<!doctype html>")
-            appendLine("<html lang=\"en\">")
+            appendLine("<html lang=\"${layout.languageTag.escapeHtml()}\">")
             appendLine("<head>")
             appendLine("<meta charset=\"utf-8\" />")
             appendLine("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />")

@@ -179,6 +179,7 @@ class ReportExportFootnoteTest {
     }
 
     private val strings = ReportExportStrings(
+        languageTag = "en",
         title = "Report",
         generatedAtPrefix = "Generated at",
         summaryBalance = "Balance",

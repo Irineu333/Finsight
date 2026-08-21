@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The BCP-47 tag of this file's language, for whatever has to declare it -->
+    <string name="app_language_tag">en</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>

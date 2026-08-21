@@ -3,7 +3,9 @@ package com.neoutils.finsight.database.extension
 import androidx.sqlite.SQLiteConnection
 import com.neoutils.finsight.database.exception.MigrationAbortedException
 import com.neoutils.finsight.database.exception.UnbalancedLedgerException
+import com.neoutils.finsight.database.mapper.toEntity
 import com.neoutils.finsight.database.model.UnbalancedTransaction
+import com.neoutils.finsight.domain.model.DimensionKind
 
 /**
  * Verifies `Σ entries = 0` for every `(transactionId, currency)` pair, the single
@@ -46,7 +48,7 @@ internal fun SQLiteConnection.unbalancedTransactions(limit: Int = 20): List<Unba
 
 /** No entry may point at a dimension that does not exist. */
 internal fun SQLiteConnection.verifyNoOrphanDimensions(stage: String) {
-    val orphans = count(
+    val orphans = scalarLong(
         """
         SELECT COUNT(*) FROM `entries` `e`
         WHERE `e`.`dimensionId` IS NOT NULL
@@ -55,6 +57,47 @@ internal fun SQLiteConnection.verifyNoOrphanDimensions(stage: String) {
     )
     if (orphans != 0L) {
         throw MigrationAbortedException("$stage: $orphans entry(ies) carry a dimension that does not exist")
+    }
+}
+
+/**
+ * A dimension may only sit on a leg posting to an account of a nature its kind accepts.
+ * Its violation is the silent one: an invoice dimension on a nominal leg breaks no key
+ * and still sums to zero — it only makes every total by that dimension wrong.
+ *
+ * The rule is not restated here. [DimensionKind.landsOn] is read for the pairs it allows,
+ * spelled the way the chart of accounts persists them by the single mapper that owns that
+ * spelling, and SQL is asked for an entry whose pair is not among them. Reading the file's
+ * text as enums would be the same rule twice and would raise on the first `kind` a
+ * hand-edited file invents; a pair nobody allows is refused for free.
+ */
+internal fun SQLiteConnection.verifyDimensionLanding(stage: String) {
+    val allowed = DimensionKind.entries
+        .flatMap { kind -> kind.landsOn.map { "('${kind.name}', '${it.toEntity().name}')" } }
+        .joinToString()
+    val statement = prepare(
+        """
+        SELECT `e`.`id`, `d`.`kind`, `a`.`type`
+        FROM `entries` `e`
+        JOIN `dimensions` `d` ON `d`.`id` = `e`.`dimensionId`
+        JOIN `accounts` `a` ON `a`.`id` = `e`.`accountId`
+        WHERE (`d`.`kind`, `a`.`type`) NOT IN (VALUES $allowed)
+        LIMIT 20
+        """
+    )
+    val offenders = mutableListOf<String>()
+    try {
+        while (statement.step()) {
+            offenders += "entry ${statement.getLong(0)}: " +
+                "${statement.getText(1)} on ${statement.getText(2)}"
+        }
+    } finally {
+        statement.close()
+    }
+    if (offenders.isNotEmpty()) {
+        throw MigrationAbortedException(
+            "$stage: dimension(s) landing where they may not — ${offenders.joinToString()}"
+        )
     }
 }
 
@@ -77,15 +120,5 @@ internal fun SQLiteConnection.verifyForeignKeys(stage: String) {
         throw MigrationAbortedException(
             "$stage: foreign key violations — ${violations.take(20).joinToString()}"
         )
-    }
-}
-
-private fun SQLiteConnection.count(sql: String): Long {
-    val statement = prepare(sql)
-    try {
-        statement.step()
-        return statement.getLong(0)
-    } finally {
-        statement.close()
     }
 }

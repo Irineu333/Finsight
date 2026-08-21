@@ -245,6 +245,7 @@
     <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra categoria ou exclua-as antes de excluir esta.</string>
     <string name="retire_error_has_yielding_accounts">Há contas que rendem e classificam o rendimento nesta categoria. Desligue o rendimento delas antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
+    <string name="success_modal_dismiss">OK</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <!-- Archived accounts -->
@@ -872,10 +873,13 @@
     <string name="settings_screen_title">Configurações</string>
     <string name="settings_group_preferences">Preferências</string>
     <string name="settings_group_currency_data">Moedas e taxas</string>
+    <string name="settings_group_data">Meus dados</string>
     <string name="settings_base_currency_title">Moeda base</string>
     <string name="settings_base_currency_picker_title">Moeda base</string>
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>
     <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_subtitle">Exporte seus dados para um arquivo ou restaure a partir de um</string>
 
     <string name="exchange_rates_screen_title">Taxas de câmbio</string>
     <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
@@ -965,4 +969,37 @@
     <string name="build_transaction_error_account_required">Selecione a conta.</string>
     <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
+
+    <string name="backup_error_not_a_backup">Este arquivo não é um backup válido deste app. Escolha o arquivo que você exportou.</string>
+    <string name="backup_error_file_damaged">Este backup está danificado e não pode ser lido. Use outra cópia, se você tiver.</string>
+    <string name="backup_error_app_out_of_date">Este backup foi feito por uma versão mais nova do app. Atualize o app para restaurá-lo.</string>
+    <string name="backup_error_no_space">Não há espaço livre suficiente. Libere espaço e tente de novo.</string>
+    <string name="backup_error_export_failed">Não foi possível exportar o backup. Tente de novo.</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados continuam como estavam.</string>
+    <string name="backup_error_verification_failed">Não foi possível verificar o backup. Tente de novo.</string>
+    <string name="backup_export_success">O backup foi salvo onde você escolheu.</string>
+    <string name="backup_restore_success">Os dados deste app agora são os deste arquivo.</string>
+
+    <string name="backup_screen_title">Backup</string>
+    <string name="backup_scope">O backup contém suas contas, cartões, transações, categorias, orçamentos e recorrências, além das moedas e taxas de câmbio que você registrou. Preferências deste aparelho — como moeda base e o layout do painel — não entram, e cada instalação mantém as suas.</string>
+    <string name="backup_no_copies">O app não guarda cópias por conta própria, em nenhuma plataforma. Para recuperar seus dados em outro aparelho, você vai precisar do arquivo que exportar aqui.</string>
+    <string name="backup_group_export">Exportar</string>
+    <string name="backup_export_title">Exportar backup</string>
+    <string name="backup_export_subtitle">Salva um arquivo com seus dados onde você escolher.</string>
+    <string name="backup_group_restore">Restaurar</string>
+    <string name="backup_restore_title">Restaurar de um arquivo</string>
+    <string name="backup_restore_subtitle">Escolha um backup exportado deste app.</string>
+    <string name="backup_confirm_title">Restaurar backup</string>
+    <string name="backup_confirm_message">Quer substituir os dados deste app pelos deste arquivo?</string>
+    <string name="backup_confirm_origin_unknown">Origem desconhecida</string>
+    <string name="backup_platform_android">Android</string>
+    <string name="backup_platform_desktop">Computador</string>
+    <string name="backup_platform_ios">iPhone ou iPad</string>
+    <string name="backup_confirm_accounts">Contas</string>
+    <string name="backup_confirm_transactions">Transações</string>
+    <string name="backup_confirm_categories">Categorias</string>
+    <string name="backup_confirm_credit_cards">Cartões</string>
+    <string name="backup_confirm_irreversible">Isso substitui tudo o que está no app agora — não é possível desfazer nem recuperar o estado anterior.</string>
+    <string name="backup_confirm_cancel">Cancelar</string>
+    <string name="backup_confirm_action">Restaurar</string>
 </resources>

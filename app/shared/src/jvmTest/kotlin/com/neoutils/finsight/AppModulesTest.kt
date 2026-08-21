@@ -4,6 +4,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.snapshot.CandidateVerifier
+import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
@@ -102,6 +104,36 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertSame(koin.get<ExchangeRateRepository>(), koin.get<IExchangeRateRepository>())
+    }
+
+    /**
+     * The verifier stands between a file the user picked and their entire archive, and it
+     * is resolved outside any Composable. A missing binding would not fail the build — it
+     * would crash the first restore anyone attempted, which is the single moment in this
+     * app where failing is least affordable.
+     *
+     * It closes only if the platform module also provides a way to build a database over
+     * an arbitrary path: on Android that factory has to close over a `Context`, which is
+     * why it exists at all instead of the feature assembling the builder itself.
+     */
+    @Test
+    fun appModulesResolveTheCandidateVerifier() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<CandidateVerifier>())
+    }
+
+    /**
+     * The backup feature is reached from settings, not from the navigation catalog, so
+     * nothing in the graph proves it was aggregated. A missing `backupModule` would
+     * compile, render the entry, and crash on the first tap — the file picker is what the
+     * screen cannot be built without.
+     */
+    @Test
+    fun appModulesResolveTheBackupFeature() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<BackupFileService>())
     }
 
     @Test

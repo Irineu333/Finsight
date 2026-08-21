@@ -1,6 +1,7 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.DatabaseBuilderFactory
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
@@ -15,6 +16,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
+import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.LegacyRelabel
 import com.neoutils.finsight.domain.model.SeededBaseCurrency
@@ -58,6 +60,29 @@ val databaseModule = module {
     single<DimensionDao> { get<AppDatabase>().dimensionDao() }
     single<ExchangeRateDao> { get<AppDatabase>().exchangeRateDao() }
     single<CurrencyDao> { get<AppDatabase>().currencyDao() }
+
+    // The verifier opens the candidate with Room, because running the migration chain
+    // and the schema identity check over it *is* the verification — so it is assembled
+    // from the same three things the database above is, and from a way to aim Room at a
+    // path that is not this app's own file. That factory comes from the platform module
+    // because on Android it has to close over a `Context`.
+    //
+    // Never the production database: this is a second, throwaway instance over the
+    // candidate, and the file it opens is a copy the caller is willing to lose.
+    single {
+        val buildOver = get<DatabaseBuilderFactory>()
+        val relabelCurrency = get<LegacyRelabel>().currency()
+        val baseCurrency = get<SeededBaseCurrency>().code()
+        val currencySeeding = get<CurrencySeeding>()
+        CandidateVerifier { path ->
+            getRoomDatabase(
+                builder = buildOver(path),
+                relabelCurrency = relabelCurrency,
+                baseCurrency = baseCurrency,
+                currencySeeding = currencySeeding,
+            )
+        }
+    }
 }
 
 expect val databasePlatformModule: Module

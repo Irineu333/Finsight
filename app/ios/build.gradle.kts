@@ -30,6 +30,7 @@ kotlin {
             export(projects.core.resources)
             export(projects.core.ui)
             export(projects.feature.accounts.api)
+            export(projects.feature.backup.api)
             export(projects.feature.budgets.api)
             export(projects.feature.categories.api)
             export(projects.feature.creditcards.api)
@@ -62,6 +63,7 @@ kotlin {
             api(projects.core.ui)
 
             api(projects.feature.accounts.api)
+            api(projects.feature.backup.api)
             api(projects.feature.budgets.api)
             api(projects.feature.categories.api)
             api(projects.feature.creditcards.api)

@@ -33,6 +33,21 @@ import com.neoutils.finsight.database.entity.RecurringEntity
 import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 
+/**
+ * What this build knows about the shape of its own database.
+ */
+object AppSchema {
+
+    /**
+     * The schema version this app can open.
+     *
+     * The annotation below reads it, and so does the gate that refuses a candidate file
+     * declaring a version this build does not know. Written once, so a migration raises
+     * it in one place.
+     */
+    const val VERSION = 14
+}
+
 @Database(
     entities = [
         TransactionEntity::class,
@@ -50,7 +65,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         ExchangeRateEntity::class,
         CurrencyEntity::class,
     ],
-    version = 14,
+    version = AppSchema.VERSION,
     exportSchema = true
 )
 @TypeConverters(Converters::class, LedgerConverters::class)

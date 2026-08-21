@@ -44,9 +44,13 @@ fun CurrencyGlyph(
     }
 }
 
-/** The same box as [CurrencyGlyph], holding an icon instead of a symbol. */
+/**
+ * The same box as [CurrencyGlyph], holding an icon instead of a symbol — and saying
+ * nothing about currency, which is why it is not named after one: settings leads every
+ * one of its rows with this box, and only one of those rows is about a currency.
+ */
 @Composable
-fun CurrencyGlyphIcon(
+fun GlyphIcon(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     size: Int = 48,

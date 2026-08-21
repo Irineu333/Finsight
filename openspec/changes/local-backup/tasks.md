@@ -226,7 +226,9 @@
 
 ## 14. Verificação
 
-- [x] 14.1 `./gradlew jvmTest` verde — 1311 testes, 0 falhas, contando só os módulos declarados em `settings.gradle.kts`
+- [x] 14.1 `./gradlew jvmTest` verde — 0 falhas, contando só os módulos declarados em
+  `settings.gradle.kts`. A contagem não fica registrada aqui: ela sobe a cada teste que a entrega
+  acrescenta, e um número anotado envelhece sem que nada falhe
 - [x] 14.2 Exportar e restaurar de ponta a ponta no desktop — **verificado pelo autor do projeto**,
   que reportou o desktop e o Android funcionando. Não foi executado por mim: exige o seletor de
   arquivo do sistema, que nenhuma automação desta suíte alcança

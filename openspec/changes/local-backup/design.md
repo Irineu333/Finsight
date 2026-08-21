@@ -261,9 +261,16 @@ desligada até o app morrer.
 
 ### D7 — `:core:database` sabe do banco; a feature sabe do backup
 
-`:core:database` ganha três operações, e **a palavra "backup" não aparece nele**: capturar o próprio
-conteúdo num arquivo, verificar um arquivo candidato, substituir o próprio conteúdo. São capacidades
-de um banco. `feature/backup` é quem chama isso de backup, porque backup é conceito de produto.
+`:core:database` ganha três operações, e **nenhum identificador dele nomeia "backup"**: capturar o
+próprio conteúdo num arquivo, verificar um arquivo candidato, substituir o próprio conteúdo. São
+capacidades de um banco. `feature/backup` é quem chama isso de backup, porque backup é conceito de
+produto.
+
+A propriedade é sobre nomes, e é assim que ela pode valer: a palavra aparece na prosa de alguns KDoc
+— e aparece por obrigação em `Database.ios.kt`, onde o que se descreve é o backup *da plataforma*,
+cuja própria API se chama `NSURLIsExcludedFromBackupKey`. Proibir o substantivo em texto explicativo
+custaria clareza sem comprar fronteira nenhuma; o que a fronteira precisa é que nada em
+`:core:database` se *chame* backup, e nada se chama.
 
 A consequência que motiva a divisão: **a feature não conhece nenhuma tabela**. Se conhecesse — a
 lista das 14, a ordem de FK, quais tabelas internas pular —, cada entidade nova exigiria lembrar de

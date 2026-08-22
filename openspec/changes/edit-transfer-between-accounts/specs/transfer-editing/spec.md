@@ -38,9 +38,31 @@ Toda validação que a criação aplica SHALL valer integralmente na correção:
 
 O formulário de transferência SHALL oferecer apenas contas, de modo que corrigir uma transferência MUST NOT poder transformá-la em despesa, receita, ajuste ou pagamento de fatura. A impossibilidade é da forma do formulário, e não de uma guarda que alguém precise lembrar de escrever.
 
+O que o formulário exibe em modo de correção SHALL ser o que a operação registra, e MUST NOT ser substituído por sugestão alguma. O acervo de taxas oferece um valor de destino provável enquanto o usuário cria uma transferência; numa correção esse valor já existe e é fato, de modo que a sugestão MUST NOT sobrescrevê-lo nem apagá-lo quando não houver observação daquela data.
+
+Trocada a moeda de uma das pontas durante a correção, o valor que estava no campo SHALL ser retirado — dígitos denominados numa moeda não sobrevivem sob o símbolo de outra.
+
+O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação carrega e o formulário não oferece SHALL ser preservado pela correção.
+
 #### Scenario: O formulário de correção chega preenchido
 - **WHEN** o usuário abre a correção de uma transferência já registrada
 - **THEN** as duas contas, o valor e a data aparecem como a operação os registra hoje
+
+#### Scenario: A sugestão do acervo não substitui o valor registrado
+- **WHEN** o usuário abre a correção de uma transferência entre moedas e o acervo tem uma observação daquele par e daquela data
+- **THEN** o campo exibe o valor que a operação registra, e não o que a observação implica
+
+#### Scenario: A ausência de observação não apaga o valor registrado
+- **WHEN** o usuário abre a correção de uma transferência entre moedas e o acervo nada tem a dizer sobre aquela data
+- **THEN** o campo continua exibindo o valor que a operação registra
+
+#### Scenario: Trocar a moeda de destino retira o valor do campo
+- **WHEN** o usuário, corrigindo uma transferência, aponta o destino para uma conta de outra moeda
+- **THEN** o valor que estava no campo de destino é retirado, e não permanece sob o símbolo da moeda nova
+
+#### Scenario: A correção preserva o que o formulário não oferece
+- **WHEN** o usuário corrige uma transferência que carrega um título
+- **THEN** o título permanece como estava, porque o formulário não o exibe e não o pediu
 
 #### Scenario: Uma correção com valor zero é recusada
 - **WHEN** o usuário tenta corrigir uma transferência para valor zero ou negativo

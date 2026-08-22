@@ -21,10 +21,16 @@
 ## 1. As validações da transferência ganham dono único
 
 - [ ] 1.1 Criar `ValidateTransferUseCase` em `feature/accounts/impl/domain/usecase/`, recebendo origem, destino, valor, valor de destino e data, e devolvendo `Either<TransferError, Unit>` — as cinco regras hoje embutidas em `TransferBetweenAccountsUseCase`: valor > 0, valor de destino > 0 quando informado, contas distintas, data não futura, e as duas contas existentes. Reusa `TransferError` como está; nenhum caso de erro novo.
-- [ ] 1.2 Fazer `TransferBetweenAccountsUseCase` consumir o validador e **remover** as validações em linha, preservando byte a byte o erro devolvido em cada caso — a criação não muda de comportamento neste grupo.
-- [ ] 1.3 Registrar `ValidateTransferUseCase` como `factory {}` em `AccountsModule` e injetá-lo em `TransferBetweenAccountsUseCase`.
-- [ ] 1.4 Escrever `ValidateTransferUseCaseTest` cobrindo as cinco recusas e o caminho feliz.
-- [ ] 1.5 Verificar que a suíte existente de transferência continua verde sem alteração: `./gradlew jvmTest`.
+- [ ] 1.2 Injetar `Clock` no validador e remover a propriedade de topo `currentDate` que lê `Clock.System` (design D10). O relógio passa a ser o mesmo que o formulário e o seletor de data já usam.
+- [ ] 1.3 Fazer `TransferBetweenAccountsUseCase` consumir o validador e **remover** as validações em linha, preservando byte a byte o erro devolvido em cada caso — a criação não muda de comportamento neste grupo.
+- [ ] 1.4 Registrar `ValidateTransferUseCase` como `factory {}` em `AccountsModule`, com `clock = get()`, e injetá-lo em `TransferBetweenAccountsUseCase`.
+- [ ] 1.5 Escrever `ValidateTransferUseCaseTest` cobrindo as cinco recusas e o caminho feliz, com relógio fixo — o que a propriedade de topo não permitia.
+- [ ] 1.6 Verificar que a suíte existente de transferência continua verde sem alteração: `./gradlew jvmTest`.
+
+## 1b. A perna de destino ganha dono no razão
+
+- [ ] 1b.1 Acrescentar `List<Entry>.destinationLeg()` a `core/ledger/extension/Ledger.kt`, espelhando `sourceLeg()`: filtra `ASSET` e devolve a perna de valor **positivo**. O filtro por `ASSET` é o que exclui a perna de conversão de resíduo positivo (design D7); o KDoc diz isso, sem narrar a mudança.
+- [ ] 1b.2 Estender `LedgerTest` provando que, numa transferência entre moedas com as quatro pernas, `destinationLeg()` devolve a conta de destino e nunca a de conversão.
 
 ## 2. A reescrita passa a aceitar o conjunto de pernas
 
@@ -41,6 +47,7 @@
 ## 3. O caso de uso de correção
 
 - [ ] 3.1 Criar `UpdateTransferUseCase` em `feature/accounts/impl/domain/usecase/`, recebendo o id da transação além dos mesmos parâmetros da criação, consumindo `ValidateTransferUseCase` e escrevendo por `updateTransaction` com as duas pernas (`EXPENSE` na origem, `INCOME` no destino, `contra = null`). Devolve `Either<TransferException, Unit>`, no molde do caso de uso de criação.
+- [ ] 3.1b Passar `title = transaction.title` na escrita, e **não** `null`: o formulário não oferece título, e reescrever a linha com `null` apagaria em silêncio um título que a tela não mostra (design D11).
 - [ ] 3.2 Colher a taxa pela mesma chamada a `HarvestExchangeRateUseCase` que a criação faz, depois da escrita e sem desfazê-la em caso de falha. **Não** consultar nem remover observação alguma do acervo (design D5).
 - [ ] 3.3 Registrar `UpdateTransferUseCase` como `factory {}` em `AccountsModule`.
 - [ ] 3.4 Escrever `UpdateTransferUseCaseTest`: correção de valor em moeda única; correção trocando a conta de destino; correção de data; correção atravessando moedas; e as cinco recusas, provando que valem iguais às da criação.
@@ -48,18 +55,27 @@
 
 ## 4. O formulário ganha o modo de correção
 
-- [ ] 4.1 Parametrizar `TransferBetweenAccountsModal` pela transação a corrigir (`transaction: Transaction? = null`), mantendo a conta inicial como está para o caminho de criação.
-- [ ] 4.2 Em `TransferBetweenAccountsViewModel`, derivar `isEditMode = transaction != null` e semear origem, destino, valor, valor de destino e data a partir das pernas da transação — a origem é a perna negativa, o destino a positiva, cada valor na moeda da sua conta.
+- [ ] 4.1 Dar a `TransferBetweenAccountsModal` dois construtores públicos sobre um privado — `(sourceAccount: Account)` para criar e `(transaction: Transaction)` para corrigir —, de modo que nenhum chamador consiga enunciar um estado inválido (design D8). Em modo de correção a conta de origem **não** é parâmetro: vem de `sourceLeg()`.
+- [ ] 4.2 Em `TransferBetweenAccountsViewModel`, derivar `isEditMode` do parâmetro recebido e semear origem (`sourceLeg()`), destino (`destinationLeg()`), valor, valor de destino e data a partir da transação, cada valor formatado na moeda da sua própria conta.
+- [ ] 4.2b Semear os três `TextFieldState` do modal (`amount`, `destinationAmount`, `date`) com os valores da transação em modo de correção, em vez do estado vazio e da data de hoje que a criação usa.
 - [ ] 4.3 Rotear o `Submit` para `UpdateTransferUseCase` em modo de correção e para `TransferBetweenAccountsUseCase` em modo de criação, mantendo o tratamento de erro e o `dismiss` atuais.
 - [ ] 4.4 Acrescentar `transfer_edit_title` aos **dois** arquivos de strings (`values/strings.xml` em pt e `values-en/strings.xml` em en) e usá-lo no cabeçalho quando `isEditMode`. O botão continua sendo um só.
 - [ ] 4.5 Acrescentar o evento `EditTransferBetweenAccounts` a `core/analytics` (`event/Accounts.kt`), ao lado de `TransferBetweenAccounts`, e emiti-lo na correção bem-sucedida.
 - [ ] 4.6 Verificar que o formulário em modo de correção continua sem oferecer categoria, cartão ou escolha de natureza — a impossibilidade de mudar a natureza é da forma, não de guarda.
 - [ ] 4.7 Escrever teste de ViewModel: a semeadura reflete a transação; a submissão em modo de correção chama o caso de uso de correção e não o de criação.
 
+## 4b. O campo do valor de destino aprende o que é um valor gravado
+
+- [ ] 4b.1 Dar a `CounterpartAmountField` (`core/ui`) a noção do valor **pré-existente**, o terceiro tipo de número que ela ainda não distingue da oferta e da digitação (design D9).
+- [ ] 4b.2 Ajustar o efeito de sincronização para que um valor pré-existente **não seja sobrescrito** pela sugestão do acervo — nem pelo ramo que escreve a observação do dia, nem pelo `clearText()` do ramo que não tem o que oferecer, que hoje apagaria o valor gravado.
+- [ ] 4b.3 Manter a retirada do valor pré-existente quando a **moeda do campo muda**, pela mesma razão que a oferta é retirada: os dígitos de uma moeda não sobrevivem sob o símbolo de outra.
+- [ ] 4b.4 Escrever teste de composição cobrindo os três casos: abrir uma correção sem observação do dia preserva o valor gravado; abrir com observação do dia preserva o valor gravado; trocar a conta de destino retira-o.
+- [ ] 4b.5 Verificar que a criação continua idêntica — sem valor pré-existente, o componente se comporta como hoje, oferta e retirada incluídas.
+
 ## 5. O caminho até o formulário, sem violar `impl ⊄ impl`
 
-- [ ] 5.1 Acrescentar `transferModal(transaction: Transaction? = null): Modal` a `AccountsEntry` (`feature/accounts/api`), no molde do `accountFormModal` já existente.
-- [ ] 5.2 Implementá-lo em `AccountsEntryImpl` devolvendo `TransferBetweenAccountsModal(...)`.
+- [ ] 5.1 Acrescentar `editTransferModal(transaction: Transaction): Modal` a `AccountsEntry` (`feature/accounts/api`) — **um só** membro, sem parâmetro opcional: quem atravessa a fronteira é apenas a correção, já que a criação nasce no `AccountsScreen`, dentro do próprio módulo (design D8).
+- [ ] 5.2 Implementá-lo em `AccountsEntryImpl` devolvendo `TransferBetweenAccountsModal(transaction)`.
 - [ ] 5.3 Verificar que `AccountsEntry` continua declarado como `single<AccountsEntry>` em `AccountsModule` e que `feature/transactions/impl` alcança a modal por `koinInject`, sem nomear `feature/accounts/impl`.
 
 ## 6. O gate se abre

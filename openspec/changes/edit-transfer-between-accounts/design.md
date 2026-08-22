@@ -122,6 +122,60 @@ O caso dominante — corrigir um dígito — se resolve sozinho. Os demais deixa
 
 A transferência herda isso sem regra nova, e a tela já tem a mensagem: `view_transaction_archived_message` é exibida no lugar dos botões quando `!isChangeable`. A consequência é deliberada e foi confirmada: uma transferência para conta arquivada depois não se edita nem se apaga.
 
+### D7 — A perna de destino ganha dono no razão, ao lado da de origem
+
+Semear o formulário exige as duas pontas. O razão tem dono para uma só: `sourceLeg()` — a perna `ASSET` de valor **negativo**, com o critério nomeado e não implícito. Não há nada para o destino.
+
+Resolver isso dentro do ViewModel seria reimplementar no consumidor uma regra derivável do domínio, que a regra de derivação do projeto atribui a um dono único. `destinationLeg()` entra em `core/ledger` espelhando `sourceLeg()`: a perna `ASSET` de valor **positivo**.
+
+O filtro por `ASSET` não é detalhe. Uma transferência entre moedas tem quatro pernas — duas `ASSET` e duas `CONVERSION` —, e a de conversão de resíduo positivo é indistinguível da conta de destino para quem procurar apenas "a perna positiva". Filtrar por `ASSET` primeiro, como `sourceLeg` já faz, exclui a conversão por construção em vez de por cuidado.
+
+**Alternativa considerada e recusada:** derivar o destino como "a perna monetária que não é a de origem". Funciona para a transferência e quebra para o pagamento de fatura, cuja segunda perna monetária é `LIABILITY` — um dono no razão não pode valer só para o chamador que o pediu.
+
+### D8 — O ponto de entrada expõe apenas a correção, e o modal ganha dois construtores
+
+A proposta descrevia `transferModal(transaction: Transaction? = null)`, no molde de `accountFormModal(account: Account? = null)`. **Não serve.** O paralelo é falso: criar uma conta não exige nada, mas `TransferBetweenAccountsModal` recebe `sourceAccount: Account` obrigatório e não-nulo, porque a criação nasce apontando para uma conta. Um único membro com tudo nulo aceitaria os dois estados inválidos — sem conta e sem transação, ou com ambas.
+
+Quem atravessa a fronteira é só a **correção**: a criação nasce no `AccountsScreen`, dentro do mesmo módulo, e nunca precisou do entry point. Então `AccountsEntry` ganha **um** membro, `editTransferModal(transaction: Transaction): Modal`, sem parâmetro opcional e sem estado inexprimível.
+
+O modal passa a ter dois construtores públicos sobre um privado, de modo que cada chamador só consiga enunciar um modo válido:
+
+```
+TransferBetweenAccountsModal(sourceAccount: Account)   → criação
+TransferBetweenAccountsModal(transaction: Transaction) → correção
+```
+
+Em modo de correção a conta de origem não é parâmetro: ela é `sourceLeg()`, e pedi-la ao chamador abriria a porta para ela discordar da transação.
+
+### D9 — Um valor gravado não é uma sugestão, e o campo precisa saber a diferença
+
+`CounterpartAmountField` já distingue dois tipos de número: o que o app ofereceu (`offered`, lembrado) e o que o usuário digitou. Ele retira o primeiro quando a moeda muda e nunca sobrescreve o segundo. A correção introduz um **terceiro**: o valor gravado, que não é oferta nem digitação, e que o componente hoje trata mal nos dois sentidos.
+
+Sem mudança, o efeito que sincroniza a sugestão faz duas coisas erradas ao abrir uma correção cruzada:
+
+1. **Apaga.** Quando não existe observação da mesma data, o ramo `else` chama `state.clearText()` — e o valor que a operação registra desaparece da tela antes de o usuário ver.
+2. **Sobrescreve numa corrida.** O valor semeado chega do ViewModel, que hidrata as contas por fluxo; se o efeito rodar antes, `state.text` está vazio, `typedOver` é `false`, e a sugestão do acervo ocupa o campo no lugar do que foi gravado.
+
+E um terceiro, na direção oposta: trocada a conta de destino, o efeito compara com `offered` (nulo), conclui `typedOver` e **preserva** os dígitos gravados sob o símbolo da moeda nova — o defeito que o próprio KDoc do componente descreve para a oferta, agora com o valor gravado no lugar.
+
+O componente passa a receber o valor pré-existente explicitamente. A regra fica: um valor gravado **não é sobrescrito** pela sugestão (como a digitação) e **é retirado** quando a moeda do campo muda (como a oferta).
+
+**Alternativa considerada e recusada:** passar `suggestion = null` em modo de correção. Não resolve — sem sugestão o efeito cai justamente no ramo que limpa o campo.
+
+**Alternativa considerada e recusada:** um campo próprio para a correção. Duplicaria a composição que já carrega a taxa implícita, o rótulo e o placeholder datado, e as duas divergiriam.
+
+### D10 — O validador recebe o relógio, em vez de ler o do sistema
+
+A regra "a data não pode ser futura" hoje lê um `Clock.System` global, declarado como propriedade de topo em `TransferBetweenAccountsUseCase`. O formulário que a alimenta lê outro relógio — o injetado, `koinInject<Clock>()` —, que é também o que limita o seletor de data e o que o resto do app usa.
+
+Extraído o validador, ele passa a ser o dono da regra, e recebe o `Clock` por injeção. Não é mudança de comportamento — os dois relógios coincidem em produção —, é o que impede que a fronteira e o formulário discordem sobre "hoje" e o que torna a regra testável sem relógio real.
+
+### D11 — A correção preserva o título que o formulário não mostra
+
+`updateTransaction` reescreve a linha inteira, título incluído, e o formulário de transferência não tem campo de título — a criação grava `null`. Passar `null` na correção seria correto para toda transferência que este app cria, e destrutivo para qualquer uma que tenha título por outra via.
+
+A correção passa `transaction.title`, preservando o que existe. Apagar em silêncio um dado que a tela não mostra é a forma mais barata de perder informação, e escrever o que não se ofereceu é escrever em nome do usuário.
+
 ## Risks / Trade-offs
 
 - **[Reescrever uma transferência cruzada apaga quatro pernas e grava quatro]** → A reescrita e a atualização da linha compartilham uma única transação de escrita (`useWriterConnection { immediateTransaction { … } }`), como já compartilham hoje; uma falha no meio não deixa a operação sem pernas. O caminho de quatro pernas não é novo — é o que a criação cruzada já executa.
@@ -142,4 +196,13 @@ O caminho antigo continua válido durante todo o percurso — apagar e recriar u
 
 ## Open Questions
 
-Nenhuma pendente. As três que a exploração levantou foram fechadas: o pagamento de fatura fica fora do escopo (D1); as validações seguem o molde de validador extraído do projeto (D4); e a taxa colhida não é revogada pela correção (D5). O comportamento da conta arquivada foi confirmado como desejado (D6).
+As três que a exploração levantou foram fechadas: pagamento de fatura fora do escopo (D1), validador extraído no molde do projeto (D4), taxa não revogada pela correção (D5), e o congelamento por conta arquivada confirmado como desejado (D6).
+
+Uma varredura posterior, contra o código em disco, encontrou cinco questões que a primeira leitura não tinha enunciado — todas de implementação, todas fechadas em D7 a D11: a perna de destino não tinha dono no razão; a assinatura proposta para o ponto de entrada não servia para os dois modos; o campo do valor de destino apaga ou sobrescreve um valor gravado; o validador leria um relógio diferente do que o formulário usa; e a correção apagaria um título que não mostra.
+
+Duas coisas foram verificadas e **não** são questões:
+
+- **Uma transferência nunca carrega metadados de recorrência ou de parcelamento.** `ConfirmRecurringUseCase` escreve sempre uma perna monetária mais a contra, nos dois ramos (conta e cartão), então nenhuma transferência nasce por esse caminho. `updateTransaction` atualiza apenas título e data da linha, deixando essas colunas intactas de qualquer forma.
+- **O evento de analytics tem par natural.** `TransferBetweenAccounts` é um `object` sem parâmetros, e o padrão `Create*`/`Edit*` já existe ao lado (`CreateAccount`/`EditAccount`).
+
+Resta uma limitação conhecida, herdada e **fora do escopo**: nada recusa um segundo envio enquanto o primeiro está em voo. É o defeito já registrado no backlog como `no-write-refuses-a-second-submit-while-the-first-is-in-flight`, comum a todos os formulários de escrita do app. A correção de transferência nasce com ele como todo o resto, e resolvê-lo aqui só para um formulário criaria uma exceção sem dono.

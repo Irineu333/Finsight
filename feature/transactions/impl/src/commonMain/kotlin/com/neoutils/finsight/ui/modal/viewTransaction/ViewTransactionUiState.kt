@@ -134,15 +134,39 @@ sealed interface ViewTransactionUiState {
         val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
 
         /**
-         * Derived edit gate, gate by gate (design D2): not an adjustment, exactly
-         * one monetary leg, no installment, and not frozen. The invoice-status gate
-         * (CLOSED/PAID blocks edit *and* delete) is applied one level up.
+         * Derived edit gate: the gates that hold for every operation first, then a
+         * decision **by label**. The invoice-status gate (CLOSED/PAID blocks edit
+         * *and* delete) is applied one level up.
+         *
+         * The label is what decides, and not a leg count that serves two purposes at
+         * once: the count kept the transfer out *and* the card payment, so relaxing
+         * it to admit the first would have admitted the second in silence.
          */
-        val isEditable: Boolean =
-            label != TransactionLabel.ADJUSTMENT &&
-                transaction.monetaryEntries.size == 1 &&
-                transaction.installmentId == null &&
-                isChangeable
+        val isEditable: Boolean = isChangeable &&
+            transaction.installmentId == null &&
+            when (label) {
+                // Edited through the transaction form, which states one money leg —
+                // a shape with two is not what that form knows how to write.
+                TransactionLabel.EXPENSE, TransactionLabel.INCOME ->
+                    transaction.monetaryEntries.size == 1
+
+                // Two monetary legs, and the transfer form states both. A transfer
+                // **between currencies** arrives here under the same label: its
+                // conversion legs are not monetary and do not change what it is.
+                TransactionLabel.TRANSFER -> true
+
+                // Named although the `else` below would refuse it too. While the gate
+                // read "exactly one monetary leg", the payment stayed out by the same
+                // effect that kept the transfer out; admitting the transfer leaves
+                // that count saying nothing about the payment, so what keeps it out
+                // has to be said rather than inherited — otherwise "out of scope"
+                // quietly becomes "we forgot".
+                TransactionLabel.PAYMENT -> false
+
+                // The adjustment today, and any nature that comes to exist tomorrow:
+                // born outside editing, and it enters only by being named above.
+                else -> false
+            }
 
         val isRemovable: Boolean = isChangeable
     }

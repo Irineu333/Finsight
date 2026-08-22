@@ -113,7 +113,7 @@ private class RecordingTransactionsForDeclaration : com.neoutils.finsight.domain
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: com.neoutils.finsight.domain.model.TransactionLeg,
+        legs: List<com.neoutils.finsight.domain.model.TransactionLeg>,
         contra: com.neoutils.finsight.domain.model.ContraLeg?,
     ) { touched += "updated" }
 

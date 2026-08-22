@@ -16,5 +16,8 @@ object AdjustAccountBalance : Event("adjust_account_balance")
 
 object TransferBetweenAccounts : Event("transfer_between_accounts")
 
+/** A transfer corrected in place, as opposed to deleted and registered again. */
+object EditTransferBetweenAccounts : Event("edit_transfer_between_accounts")
+
 /** A yield launched on an account — a transaction, not a balance adjustment (D1). */
 object LaunchYield : Event("launch_yield")

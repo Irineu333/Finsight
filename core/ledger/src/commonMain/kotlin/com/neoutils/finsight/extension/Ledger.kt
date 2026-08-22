@@ -90,6 +90,22 @@ fun List<Entry>.nominalLeg(): Entry? = firstOrNull { it.account.type.isNominal }
 fun List<Entry>.sourceLeg(): Entry? = filter { it.account.type == AccountType.ASSET }
     .let { assets -> assets.firstOrNull { it.amount < 0 } ?: assets.minByOrNull { it.amount } }
 
+/**
+ * The money-in `ASSET` leg — where a movement arrived, when it arrived somewhere.
+ *
+ * The counterpart of [sourceLeg], with the same criterion read the other way: the
+ * `ASSET` leg of **positive** value. `null` when no leg is one, which is every
+ * operation that has no destination account — an expense, a card purchase.
+ *
+ * **Filtering by `ASSET` is what makes the reading correct**, not a narrowing of
+ * convenience. An operation that crosses currencies carries four legs — two `ASSET`
+ * and two `CONVERSION` — and the conversion leg holding the positive residue is
+ * indistinguishable from the destination account to anything that looks only for "the
+ * positive leg". The type filter excludes it by construction.
+ */
+fun List<Entry>.destinationLeg(): Entry? =
+    firstOrNull { it.account.type == AccountType.ASSET && it.amount > 0 }
+
 /** True when the entries balance to zero for every currency present. */
 fun List<Entry>.isBalanced(): Boolean =
     groupBy { it.currency }.all { (_, entries) -> entries.sumOf { it.amount } == 0L }

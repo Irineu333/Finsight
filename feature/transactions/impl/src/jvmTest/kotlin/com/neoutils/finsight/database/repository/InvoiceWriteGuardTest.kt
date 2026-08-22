@@ -263,7 +263,7 @@ class InvoiceWriteGuardTest {
                 id = spend.id,
                 title = "Moved",
                 date = LocalDate(2026, 3, 6),
-                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = other.id),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = other.id)),
                 contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         }
@@ -313,7 +313,7 @@ class InvoiceWriteGuardTest {
                 id = purchase.id,
                 title = "Moved",
                 date = LocalDate(2026, 3, 6),
-                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = payer.id),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = payer.id)),
                 contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         }

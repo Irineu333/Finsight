@@ -2,7 +2,9 @@ package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.util.dayMonthYear
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -82,6 +84,44 @@ class TransferSubmitEnablementTest {
                 destinationAmount = "",
                 isCrossCurrency = false,
                 date = date,
+                sourceAccount = nubank,
+                destinationAccount = itau,
+                today = today,
+            )
+        )
+    }
+
+    // --- The two refusals the button reaches before the write does ---
+    //
+    // ValidateTransferUseCase owns what makes a transfer admissible, and refuses both of
+    // these when a submission arrives. The button refuses them earlier, so the user never
+    // reaches an error dialog for something the form could see: a disabled button is the
+    // form declining to offer what it can tell will not be accepted, which is a decision
+    // about affordance and not a second statement of the rule.
+
+    @Test
+    fun `the same account on both ends is not submittable`() {
+        assertFalse(
+            isValidTransfer(
+                amount = "R$ 550,00",
+                destinationAmount = "",
+                isCrossCurrency = false,
+                date = date,
+                sourceAccount = nubank,
+                destinationAccount = nubank,
+                today = today,
+            )
+        )
+    }
+
+    @Test
+    fun `a date after the caller's today is not submittable`() {
+        assertFalse(
+            isValidTransfer(
+                amount = "R$ 550,00",
+                destinationAmount = "",
+                isCrossCurrency = false,
+                date = dayMonthYear.format(today.plus(1, DateTimeUnit.DAY)),
                 sourceAccount = nubank,
                 destinationAccount = itau,
                 today = today,

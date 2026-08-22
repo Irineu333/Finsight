@@ -213,7 +213,7 @@ class ConfirmRecurringViewModel(
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
             // Blank is an absence, not the template's title: a transaction with no title
             // of its own is displayed by its category, which is the rule the whole app
-            // reads titles by (`displayTitleOf`). Falling back to the template here would
+            // reads titles by (`displayTitleOrNull`). Falling back to the template here would
             // hand the user a name they had just erased.
             title = title.trim().takeIf { it.isNotBlank() },
             category = selectedCategory.value,

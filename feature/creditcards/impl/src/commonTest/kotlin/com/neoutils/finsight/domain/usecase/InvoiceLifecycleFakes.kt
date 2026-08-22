@@ -139,7 +139,7 @@ internal class RecordingTransactionWriter(
     override suspend fun getAllTransactions(): List<Transaction> = notUnderTest()
     override suspend fun getTransactionById(id: Long): Transaction? = notUnderTest()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = notUnderTest()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = notUnderTest()
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = notUnderTest()
     override suspend fun deleteTransactionById(id: Long) = notUnderTest()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = notUnderTest()
 }

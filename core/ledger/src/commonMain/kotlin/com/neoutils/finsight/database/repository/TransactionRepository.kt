@@ -257,7 +257,7 @@ class TransactionRepository(
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) {
         // An edit has two sides, and both are changes to an invoice: the one losing
@@ -271,11 +271,12 @@ class TransactionRepository(
         // here objected.
         ensureClosedAccountsKeepTheirBalance(id)
         // Editing is never the payment that settles a closed invoice; that exception
-        // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
-        ensureDimensionsAccept(
-            dimensionIds = setOfNotNull(leg.dimensionId),
-            settlesALiability = false,
-        )
+        // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too) — and
+        // that answer is *derived* from the natures of the accounts being posted to,
+        // the same way creation derives it. A literal here would be an answer nobody
+        // computed, correct only for as long as the shapes that reach this method
+        // happen to make it so.
+        ensureDimensionsAccept(legs)
 
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
         // failure never leaves the transaction with its old legs deleted and no new ones.
@@ -286,7 +287,7 @@ class TransactionRepository(
                     title = title,
                     date = date,
                 )
-                ledgerEntryWriter.rewriteEntries(id, listOf(leg), contra)
+                ledgerEntryWriter.rewriteEntries(id, legs, contra)
             }
         }
     }

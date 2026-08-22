@@ -279,7 +279,7 @@ class EditTransactionViewModel(
                     id = transaction.id,
                     title = intent.title,
                     date = intent.date,
-                    leg = intent.legs.first(),
+                    legs = intent.legs,
                     contra = intent.contra,
                 )
             }

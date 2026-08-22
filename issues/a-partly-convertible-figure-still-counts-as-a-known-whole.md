@@ -2,6 +2,7 @@
 area: model
 severity: medium
 type: data
+version: 1.10.0
 ---
 
 # Figura meio conversível recebe magnitude cheia, e o todo continua declarado conhecido

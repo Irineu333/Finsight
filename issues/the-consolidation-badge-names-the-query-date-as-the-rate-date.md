@@ -2,6 +2,7 @@
 area: transversal
 severity: medium
 type: ux
+version: 1.10.0
 ---
 
 # O selo de consolidação anuncia a data da consulta como se fosse a data da taxa aplicada

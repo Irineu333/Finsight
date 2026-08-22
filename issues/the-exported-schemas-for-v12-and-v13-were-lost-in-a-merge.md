@@ -2,6 +2,7 @@
 area: transversal
 severity: low
 type: data
+version: 1.10.0
 ---
 
 # Os schemas exportados de v12 e v13 sumiram, e a fixture de v12 perdeu a âncora

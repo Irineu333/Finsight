@@ -2,6 +2,7 @@
 area: accounts
 severity: high
 type: ux
+version: 1.10.0
 ---
 
 # Digitar na data do ajuste de saldo troca o formulário por um spinner que não volta

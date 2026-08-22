@@ -2,6 +2,7 @@
 area: settings
 severity: low
 type: data
+version: 1.10.0
 ---
 
 # O estado da sincronização de taxas usa delimitadores que o código de moeda pode conter

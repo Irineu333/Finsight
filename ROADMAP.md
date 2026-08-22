@@ -17,13 +17,13 @@ Em preparação: **1.10.0-rc02**.
 | **Categorias**                  | Gestão com ícones e acompanhamento de gastos                                          | Funcionalidade | 1.0.0         |
 | **Base arquitetural**           | Clean Architecture + MVI/MVVM, Compose Multiplatform, Room, Arrow (Either)            | Arquitetura    | 1.0.0         |
 | **iOS via XcodeGen**            | Geração do projeto iOS por XcodeGen                                                   | Arquitetura    | 1.0.0         |
-| **Orçamentos (Budgets)**        | Progresso de gasto por categoria                                                      | Funcionalidade | 1.1.0         |
-| **i18n**                        | Suporte a inglês, Compose Resources e moeda por locale                                | Arquitetura    | 1.2.0         |
+| **Orçamentos (Budgets)**        | Progresso de gasto por categoria                                                      | Funcionalidade | 1.2.0         |
+| **i18n**                        | Suporte a inglês, Compose Resources e moeda por locale                                | Arquitetura    | 1.3.0         |
 | **Recorrentes**                 | Transações recorrentes (confirmar/pular/parar/reativar)                               | Funcionalidade | 1.4.0         |
 | **Relatórios**                  | Seletor de período, exportação HTML e impressão nativa                                | Funcionalidade | 1.5.0         |
 | **Budget percentual**           | Limite percentual atrelado a uma receita recorrente                                   | Funcionalidade | 1.5.0         |
-| **Dashboard personalizável**    | Modo de edição: adicionar/remover/reordenar e configurar componentes                  | Funcionalidade | 1.6.0 → 1.7.0 |
 | **Suporte in-app**              | Reporte de problemas via chat, com Firebase Firestore como backend                    | Funcionalidade | 1.6.0         |
+| **Dashboard personalizável**    | Modo de edição: adicionar/remover/reordenar e configurar componentes                  | Funcionalidade | 1.7.0         |
 | **Telemetria**                  | Analytics e Crashlytics (Firebase)                                                    | Arquitetura    | 1.8.0         |
 | **Modularização**               | `core:*`, feature `api`/`impl`, split `app/{shared,android,desktop,ios}`              | Arquitetura    | 1.9.0         |
 | **Navegação adaptativa**        | Navigation rail + detail pane conforme a largura da janela                            | Funcionalidade | 1.9.0         |

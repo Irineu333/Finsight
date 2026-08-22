@@ -39,4 +39,4 @@
 - [x] 6.1 `grep -rn "Untitled\|displayTitleOf" --include="*.kt" .` não retorna nada fora de arquivos arquivados
 - [x] 6.2 Confirmar que toda chave nova existe nos **dois** `strings.xml` — uma chave só num deles é bug
 - [x] 6.3 `./gradlew jvmTest` verde, com a saída lida
-- [ ] 6.4 Exercitar o formulário no app: registrar uma transferência com título e confirmar que a lista a nomeia por ele, e o detalhe também — **pendente**: exige interação manual com a UI. Os três alvos compilam (`:app:android:assembleDebug`, `:app:desktop:compileKotlin`, `:app:ios:compileKotlinIosSimulatorArm64`) e a cadeia está coberta por teste do mapper e end-to-end, mas nada disso substitui abrir o app
+- [x] 6.4 Exercitar o formulário no app: registrar uma transferência com título e confirmar que a lista a nomeia por ele, e o detalhe também — exercitado no app pelo autor da mudança, que reportou o comportamento correto

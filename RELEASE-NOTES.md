@@ -450,18 +450,12 @@ projeto vazio (22/11/2025).
 
 ## Notas sobre a reconstrução deste histórico
 
-- **Não há tags git no repositório.** As fronteiras entre versões foram obtidas dos commits
-  que alteram `versionName`/`versionCode`, e a pertinência de cada commit a uma versão foi
-  decidida por ancestralidade (`git merge-base --is-ancestor`), não por data — várias
-  features foram escritas em branch e mescladas depois do bump seguinte.
-- **Dois `versionCode` não aparecem em nenhum commit**: o 21 (entre 1.6.0 e 1.7.0-rc02) e o
-  26 (entre 1.7.1 e 1.8.0). Também não há commit de `1.7.0-rc01` nem de `1.8.0-rc01`.
-- **Divergência com o `ROADMAP.md`.** O roadmap atribui **Orçamentos** à 1.1.0 e **i18n** à
-  1.2.0. Pela ancestralidade dos commits, Orçamentos saiu na **1.2.0** (o branch
-  `feature/budgets` foi mesclado depois do bump da 1.1.0) e i18n saiu na **1.3.0**. O KDoc
-  de `Migration1To2` (`core/database/.../migration/Migration1To2.kt:12`) confirma:
-  "Shipped in 1.2.0".
-- As versões de esquema do banco citadas em cada seção vêm do KDoc de cada migração em
-  `core/database/src/commonMain/kotlin/com/neoutils/finsight/database/migration/`, que
-  registra em que release ela saiu. O app declara hoje a versão **14**
-  (`AppDatabase.kt:53`).
+- O repositório nunca teve tags. As fronteiras entre versões vêm dos commits que alteram
+`versionName`/`versionCode`, e cada commit foi atribuído a uma versão por ancestralidade,
+não por data — várias features foram escritas em branch e mescladas depois do bump
+seguinte, e as datas de autoria deste repositório foram reescritas em algum momento.
+- O desktop larga o sufixo de release candidate de propósito: `packageVersion` não o aceita
+(`.claude/skills/bump-version/SKILL.md:22`).
+- As faixas de esquema do banco vêm do KDoc de cada migração em
+`core/database/src/commonMain/kotlin/com/neoutils/finsight/database/migration/`. O app
+declara hoje a versão **14**.

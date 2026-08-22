@@ -104,6 +104,10 @@ fun AmountField(
  * show the rate the two of them imply. Zero means "not stated yet".
  * @param suggestion what the archive implies, or `null` when it has nothing to say —
  * between two non-base currencies it always has nothing, deliberately.
+ * @param recordedAmount what the operation **already** records on this side, when the
+ * form is correcting one instead of registering it. It is the third kind of number this
+ * field handles: neither an offer nor a keystroke, and it obeys one rule of each — never
+ * written over by a suggestion, always withdrawn when the currency changes.
  */
 @Composable
 fun CounterpartAmountField(
@@ -116,6 +120,7 @@ fun CounterpartAmountField(
     suggestion: CrossCurrencyAmountSuggestion?,
     date: LocalDate,
     modifier: Modifier = Modifier,
+    recordedAmount: Double? = null,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -134,10 +139,33 @@ fun CounterpartAmountField(
     // tells the app's number from the user's, and only the app's is withdrawn.
     var offered by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(visible, currency, sameDay, suggestion?.amount) {
+    // The currency a recorded value is denominated in: the one this field is first
+    // composed with, because a correction opens on the operation's own destination.
+    // Point the other end at a different currency and the recorded value stops being
+    // one — the same withdrawal an offer gets, for the same reason.
+    val recordedCurrency = remember { currency }
+    val recorded = recordedAmount
+        ?.takeIf { currency == recordedCurrency }
+        ?.let { formatter.format(it, currency) }
+
+    LaunchedEffect(visible, currency, sameDay, suggestion?.amount, recorded) {
         if (!visible) {
             state.clearText()
             offered = null
+            return@LaunchedEffect
+        }
+
+        // A recorded value is fact, not offer, and the two ways this effect used to
+        // destroy it are both refused here: the branch that writes the day's
+        // observation, and the branch that clears the field when there is none.
+        //
+        // It is put *back* when a pass with the field hidden emptied it, and it is
+        // remembered as the app's own text — which is what makes the currency change
+        // withdraw it rather than leave its digits under a new symbol. Typed over, it
+        // stops being the app's, exactly like an offer.
+        if (recorded != null) {
+            if (state.text.isEmpty()) state.setTextAndPlaceCursorAtEnd(recorded)
+            if (state.text.toString() == recorded) offered = recorded
             return@LaunchedEffect
         }
 

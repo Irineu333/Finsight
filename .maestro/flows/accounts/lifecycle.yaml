@@ -7,6 +7,7 @@ env:
   NEW_ACCOUNT: "E2E Savings"
   INCOME_TITLE: "E2E Bonus"
   INCOME_DIGITS: "37500"
+  TRANSFER_TYPO_DIGITS: "15550"
   TRANSFER_DIGITS: "12550"
   YIELD_DIGITS: "4075"
 ---
@@ -189,8 +190,13 @@ env:
     id: "account_retire_label"
     text: "Delete"
 
-# --- I move some of it to the wallet -------------------------------------------------------------
-# Opened from the account in view, so it is the source; the destination is picked by name.
+# --- I move some of it to the wallet, and get the amount wrong -----------------------------------
+# Opened from the account in view, so it is the source; the destination is picked by name. The
+# figure typed here is a typo — $155.50 — and the act below corrects it **in place**, which is the
+# only path in the app that rewrites two monetary legs at once. Doing it as a mistake-then-fix
+# rather than as an extra transfer is what leaves every figure downstream untouched: after the
+# correction the account holds the same $249.50 it would have held had the typo never happened,
+# and that identity is the claim.
 - tapOn:
     id: "account_transfer"
 - extendedWaitUntil:
@@ -212,7 +218,7 @@ env:
 - tapOn:
     id: "transfer_amount"
 - waitForAnimationToEnd
-- inputText: ${TRANSFER_DIGITS}
+- inputText: ${TRANSFER_TYPO_DIGITS}
 - hideKeyboard
 - tapOn:
     id: "transfer_save"
@@ -221,7 +227,91 @@ env:
       id: "transfer_save"
     timeout: 15000
 
+# The typo is on the ledger, and both accounts already believe it: $375.00 − $155.50.
+- extendedWaitUntil:
+    visible: ${NEW_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_balance_amount"
+    text: "[$]219[.,]50"
+
+# --- I correct it without deleting it ------------------------------------------------------------
+# A transfer used to have no way back: the detail offered no edit, and the only remedy was to
+# delete the operation and register another. It is corrected here, and it stays the same operation.
+- scrollUntilVisible:
+    element:
+      id: "transaction_card_title"
+      text: "Transfer"
+    direction: DOWN
+    centerElement: true
+    timeout: 25000
+- tapOn:
+    id: "transaction_card_title"
+    text: "Transfer"
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_edit"
+    timeout: 15000
+- assertVisible:
+    id: "view_transaction_amount"
+    text: "[$]155[.,]50"
+- tapOn:
+    id: "view_transaction_edit"
+
+# The form that corrects a transfer is the form that wrote it, and it opens over the operation's
+# own two ends — not empty, and not on whichever account the app would have defaulted to. Nothing
+# below this screen proves that: the seeding reads the ledger's own source and destination legs.
+- extendedWaitUntil:
+    visible:
+      id: "transfer_save"
+    timeout: 15000
+- assertVisible:
+    id: "transfer_source_account"
+    text: ${NEW_ACCOUNT}
+- assertVisible:
+    id: "transfer_destination_account"
+    text: "Wallet"
+- assertVisible:
+    id: "transfer_amount"
+    text: ".*155[.,]50.*"
+
+# Erased before retyping: the money field appends digits rather than replacing them, so typing
+# over $155.50 would read as $15,550.00.
+- tapOn:
+    id: "transfer_amount"
+- waitForAnimationToEnd
+- eraseText: 20
+- inputText: ${TRANSFER_DIGITS}
+- assertVisible:
+    id: "transfer_amount"
+    text: ".*125[.,]50.*"
+- hideKeyboard
+- tapOn:
+    id: "transfer_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "transfer_save"
+    timeout: 15000
+
+# Saving returns to the detail sheet, which re-reads the operation instead of echoing the form —
+# and it is the *same* operation, corrected, not a second one standing beside the first.
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_amount"
+      text: "[$]125[.,]50"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "view_transaction_edit"
+    timeout: 15000
+
 # --- Each account tells its own side of it -------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      id: "account_balance_amount"
+    direction: UP
+    timeout: 25000
 - extendedWaitUntil:
     visible: ${NEW_ACCOUNT}
     timeout: 15000

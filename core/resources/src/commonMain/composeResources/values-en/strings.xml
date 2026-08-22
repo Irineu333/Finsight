@@ -480,11 +480,13 @@
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transfer between accounts</string>
+    <string name="transfer_edit_title">Edit transfer</string>
     <string name="transfer_source_account_label">Source account</string>
     <string name="transfer_destination_account_label">Destination account</string>
     <string name="transfer_amount_label">Amount</string>
     <string name="transfer_date_label">Date</string>
     <string name="transfer_confirm">Transfer</string>
+    <string name="transfer_edit_confirm">Save</string>
 
     <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
     <string name="cross_currency_leaves_label">Leaves %1$s</string>

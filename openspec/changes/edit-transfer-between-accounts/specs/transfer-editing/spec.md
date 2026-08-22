@@ -30,7 +30,9 @@ A transferência entre moedas SHALL ser corrigível pelo mesmo caminho e sob as 
 
 ### Requirement: Criar e corrigir uma transferência usam o mesmo formulário e as mesmas regras
 
-O sistema SHALL oferecer a correção de uma transferência pelo **mesmo formulário** que a cria, distinguindo os dois modos apenas pelo que anuncia — o título — e não pelo que oferece. Um formulário próprio para corrigir seria uma segunda gramática para a mesma operação, e as duas divergiriam.
+O sistema SHALL oferecer a correção de uma transferência pelo **mesmo formulário** que a cria, distinguindo os dois modos apenas pelo que **anuncia** — o título e o verbo do único botão — e não pelo que oferece. Um formulário próprio para corrigir seria uma segunda gramática para a mesma operação, e as duas divergiriam.
+
+O verbo do botão SHALL nomear o que a confirmação faz naquele modo. "Transferir" é o que a criação faz; uma correção grava uma operação cujo dinheiro já se moveu, e oferecer o mesmo verbo ali afirma um segundo movimento que não vai acontecer. O botão continua sendo **um só** — o que muda é a palavra, não a quantidade de comandos.
 
 Em modo de correção o formulário SHALL vir preenchido com o que a operação diz hoje: as duas contas, os dois valores quando as moedas diferem, e a data.
 
@@ -43,6 +45,10 @@ O que o formulário exibe em modo de correção SHALL ser o que a operação reg
 Trocada a moeda de uma das pontas durante a correção, o valor que estava no campo SHALL ser retirado — dígitos denominados numa moeda não sobrevivem sob o símbolo de outra.
 
 O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação carrega e o formulário não oferece SHALL ser preservado pela correção.
+
+#### Scenario: O botão de confirmar nomeia o que a confirmação faz
+- **WHEN** o usuário abre a correção de uma transferência já registrada
+- **THEN** o único botão do formulário oferece salvar, e não transferir
 
 #### Scenario: O formulário de correção chega preenchido
 - **WHEN** o usuário abre a correção de uma transferência já registrada

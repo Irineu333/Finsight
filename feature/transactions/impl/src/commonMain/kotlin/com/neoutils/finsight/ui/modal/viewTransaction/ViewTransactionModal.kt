@@ -29,6 +29,7 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
@@ -379,6 +380,10 @@ class ViewTransactionModal(
     ) {
 
         val manager = LocalModalManager.current
+        // The transfer form lives in the accounts feature, which owns the operation.
+        // It is reached through that feature's public entry point, because one
+        // implementation may not name another.
+        val accountsEntry = koinInject<AccountsEntry>()
 
         // Deleting is hidden, not disabled, when it would strand a balance on an
         // archived account: the same reason the invoice branch above hides both.
@@ -415,7 +420,17 @@ class ViewTransactionModal(
         if (uiState.isEditable) {
                 OutlinedButton(
                     onClick = {
-                        manager.show(EditTransactionModal(uiState.transaction))
+                        // Which form corrects an operation follows from what the
+                        // operation *is*. A transfer states two accounts and two
+                        // amounts; the transaction form states a type, a target and a
+                        // category, and none of those exists on a transfer.
+                        manager.show(
+                            if (uiState.label == TransactionLabel.TRANSFER) {
+                                accountsEntry.editTransferModal(uiState.transaction)
+                            } else {
+                                EditTransactionModal(uiState.transaction)
+                            }
+                        )
                     },
                     modifier = Modifier
                         .weight(1f)

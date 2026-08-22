@@ -51,3 +51,5 @@ Em preparação: **1.10.0-rc02**.
 | **Filtro sem categoria**        | As cinco listas que filtram por categoria recortam também o que não tem nenhuma       | Funcionalidade | 1.10.0        |
 | **A liquidar este mês**         | Recorrentes do mês e faturas por pagar somadas em "A entrar" e "A sair"               | Funcionalidade | 1.10.0        |
 | **Backlog de bugs**             | Bugs como arquivos em `issues/`, com regra de entrada, correção e arquivamento        | Arquitetura    | 1.10.0        |
+| **Backup em arquivo**           | Exportar o banco para um arquivo e restaurá-lo em outro dispositivo, sem servidor     | Funcionalidade | Planejado     |
+| **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade | Planejado     |

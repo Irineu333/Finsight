@@ -2,13 +2,13 @@
 
 ## Purpose
 
-A transferência entre contas como operação **corrigível no lugar**: o mesmo formulário que a cria também a corrige, distinguindo os dois modos apenas pelo que anuncia; as duas pontas, os dois valores e a data como campos livres, porque nenhum deles é identidade da operação; e as validações da criação valendo integralmente na correção, com dono único. A correção preserva a identidade da transação — as pernas são reescritas, a operação continua sendo a mesma — e a transferência **entre moedas** entra pela mesma porta, completada com pernas de conversão pela fronteira de escrita (`balanced-ledger`). Do que já existe ela herda, sem regra própria, o congelamento de uma perna sobre conta arquivada (`account-lifecycle`) e a taxa colhida que a correção não revoga (`currency-consolidation`).
+A transferência entre contas como operação **corrigível no lugar**: o mesmo formulário que a cria também a corrige, distinguindo os dois modos apenas pelo que anuncia; as duas pontas, os dois valores, a data e o título que a nomeia como campos livres, porque nenhum deles é identidade da operação; e as validações da criação valendo integralmente na correção, com dono único. A correção preserva a identidade da transação — as pernas são reescritas, a operação continua sendo a mesma — e a transferência **entre moedas** entra pela mesma porta, completada com pernas de conversão pela fronteira de escrita (`balanced-ledger`). Do que já existe ela herda, sem regra própria, o congelamento de uma perna sobre conta arquivada (`account-lifecycle`) e a taxa colhida que a correção não revoga (`currency-consolidation`).
 
 ## Requirements
 
 ### Requirement: A transferência entre contas é corrigível no lugar
 
-Uma transferência entre contas SHALL poder ser corrigida sem ser apagada e refeita. A correção SHALL alcançar tudo o que define a operação — conta de origem, conta de destino, valor que sai, valor que chega e data —, e MUST NOT congelar nenhum desses campos: nenhum deles é identidade da operação, e travar qualquer um obrigaria a apagar e refazer justamente o caso que este requisito existe para dispensar.
+Uma transferência entre contas SHALL poder ser corrigida sem ser apagada e refeita. A correção SHALL alcançar tudo o que define a operação — conta de origem, conta de destino, valor que sai, valor que chega, data e o título que a nomeia —, e MUST NOT congelar nenhum desses campos: nenhum deles é identidade da operação, e travar qualquer um obrigaria a apagar e refazer justamente o caso que este requisito existe para dispensar.
 
 A correção SHALL preservar a identidade da transação. As pernas são reescritas, mas a operação continua sendo a mesma — o que a distingue de apagar e recriar, que produz uma operação nova.
 
@@ -26,6 +26,10 @@ A transferência entre moedas SHALL ser corrigível pelo mesmo caminho e sob as 
 - **WHEN** o usuário corrige a data de uma transferência já registrada
 - **THEN** a operação passa a pertencer à nova data em toda leitura que a alcança
 
+#### Scenario: Corrigir o título de uma transferência
+- **WHEN** o usuário corrige o título de uma transferência já registrada
+- **THEN** a operação passa a ser nomeada pelo novo título em toda leitura que a alcança, e continua sendo a mesma operação
+
 #### Scenario: Corrigir uma transferência entre moedas
 - **WHEN** o usuário corrige o valor que chega numa transferência entre contas de moedas diferentes
 - **THEN** a operação é reescrita com as duas pernas monetárias e as pernas de conversão que a completam, e cada moeda continua somando zero
@@ -36,21 +40,23 @@ A transferência entre moedas SHALL ser corrigível pelo mesmo caminho e sob as 
 
 ### Requirement: Criar e corrigir uma transferência usam o mesmo formulário e as mesmas regras
 
-O sistema SHALL oferecer a correção de uma transferência pelo **mesmo formulário** que a cria, distinguindo os dois modos apenas pelo que **anuncia** — o título e o verbo do único botão — e não pelo que oferece. Um formulário próprio para corrigir seria uma segunda gramática para a mesma operação, e as duas divergiriam.
+O sistema SHALL oferecer a correção de uma transferência pelo **mesmo formulário** que a cria, distinguindo os dois modos apenas pelo que **anuncia** — o cabeçalho e o verbo do único botão — e não pelo que oferece. Um formulário próprio para corrigir seria uma segunda gramática para a mesma operação, e as duas divergiriam.
 
 O verbo do botão SHALL nomear o que a confirmação faz naquele modo. "Transferir" é o que a criação faz; uma correção grava uma operação cujo dinheiro já se moveu, e oferecer o mesmo verbo ali afirma um segundo movimento que não vai acontecer. O botão continua sendo **um só** — o que muda é a palavra, não a quantidade de comandos.
 
-Em modo de correção o formulário SHALL vir preenchido com o que a operação diz hoje: as duas contas, os dois valores quando as moedas diferem, e a data.
+O formulário SHALL oferecer um **título opcional** para a operação, nos seus dois modos. Uma transferência acontece por razões diferentes, e sem onde registrá-la duas transferências de mesmo valor entre as mesmas contas ficam indistinguíveis. O título MUST NOT ser exigido: quem não tem razão a registrar não é impedido de transferir, e nenhuma validação da submissão passa a depender dele.
+
+Em modo de correção o formulário SHALL vir preenchido com o que a operação diz hoje: as duas contas, os dois valores quando as moedas diferem, a data e o título.
 
 Toda validação que a criação aplica SHALL valer integralmente na correção: o valor que sai SHALL ser maior que zero; o valor que chega, quando informado, SHALL ser maior que zero; a conta de origem SHALL ser diferente da de destino; a data MUST NOT ser futura; e as duas contas SHALL existir. Essas regras SHALL ter um dono único, e MUST NOT ser reimplementadas por cada um dos dois caminhos — uma cópia divergiria da outra sem que nada acusasse.
 
-O formulário de transferência SHALL oferecer apenas contas, de modo que corrigir uma transferência MUST NOT poder transformá-la em despesa, receita, ajuste ou pagamento de fatura. A impossibilidade é da forma do formulário, e não de uma guarda que alguém precise lembrar de escrever.
+O formulário de transferência SHALL oferecer apenas contas, de modo que corrigir uma transferência MUST NOT poder transformá-la em despesa, receita, ajuste ou pagamento de fatura. A impossibilidade é da forma do formulário, e não de uma guarda que alguém precise lembrar de escrever. Oferecer um título MUST NOT abrir essa porta: um nome não classifica a operação nem lhe dá eixo analítico.
 
 O que o formulário exibe em modo de correção SHALL ser o que a operação registra, e MUST NOT ser substituído por sugestão alguma. O acervo de taxas oferece um valor de destino provável enquanto o usuário cria uma transferência; numa correção esse valor já existe e é fato, de modo que a sugestão MUST NOT sobrescrevê-lo nem apagá-lo quando não houver observação daquela data.
 
 Trocada a moeda de uma das pontas durante a correção, o valor que estava no campo SHALL ser retirado — dígitos denominados numa moeda não sobrevivem sob o símbolo de outra.
 
-O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação carrega e o formulário não oferece SHALL ser preservado pela correção.
+O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação carrega e o formulário não oferece SHALL ser preservado pela correção. Em contrapartida, o que ele **exibe** SHALL ser gravado como o usuário o deixou, inclusive vazio: um campo apagado numa tela que o mostra é intenção declarada, e não perda silenciosa.
 
 #### Scenario: O botão de confirmar nomeia o que a confirmação faz
 - **WHEN** o usuário abre a correção de uma transferência já registrada
@@ -58,7 +64,19 @@ O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação car
 
 #### Scenario: O formulário de correção chega preenchido
 - **WHEN** o usuário abre a correção de uma transferência já registrada
-- **THEN** as duas contas, o valor e a data aparecem como a operação os registra hoje
+- **THEN** as duas contas, o valor, a data e o título aparecem como a operação os registra hoje
+
+#### Scenario: Registrar uma transferência com título
+- **WHEN** o usuário registra uma transferência informando um título
+- **THEN** a operação é gravada com esse título, e toda superfície que a nomeia passa a exibi-lo
+
+#### Scenario: Registrar uma transferência sem título
+- **WHEN** o usuário registra uma transferência deixando o título em branco
+- **THEN** a submissão é oferecida e a operação é gravada sem título, nomeada pela sua forma
+
+#### Scenario: Apagar o título de uma transferência
+- **WHEN** o usuário corrige uma transferência apagando o título que ela tinha
+- **THEN** a operação passa a não ter título, porque o campo estava à vista e foi esvaziado deliberadamente
 
 #### Scenario: A sugestão do acervo não substitui o valor registrado
 - **WHEN** o usuário abre a correção de uma transferência entre moedas e o acervo tem uma observação daquele par e daquela data
@@ -73,8 +91,8 @@ O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação car
 - **THEN** o valor que estava no campo de destino é retirado, e não permanece sob o símbolo da moeda nova
 
 #### Scenario: A correção preserva o que o formulário não oferece
-- **WHEN** o usuário corrige uma transferência que carrega um título
-- **THEN** o título permanece como estava, porque o formulário não o exibe e não o pediu
+- **WHEN** o usuário corrige uma transferência que carrega um dado que o formulário não exibe
+- **THEN** esse dado permanece como estava, porque o formulário não o exibiu e não o pediu
 
 #### Scenario: Uma correção com valor zero é recusada
 - **WHEN** o usuário tenta corrigir uma transferência para valor zero ou negativo

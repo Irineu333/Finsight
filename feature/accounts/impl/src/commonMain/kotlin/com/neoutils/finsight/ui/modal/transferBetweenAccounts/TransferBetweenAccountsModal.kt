@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.usecase.transferRuleBroken
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.destinationLeg
 import com.neoutils.finsight.extension.moneyToDouble
@@ -304,14 +305,21 @@ class TransferBetweenAccountsModal private constructor(
  * Whether the form may be submitted — and, when the transfer crosses currencies, that
  * **both** amounts were stated.
  *
+ * Two questions, and only one of them is the form's. What a **field** says is: it is
+ * empty, or it does not parse, or a selector holds nothing yet — none of which is a rule
+ * about transfers, because a field that states nothing has nothing to judge. What makes
+ * a transfer **admissible** belongs to [transferRuleBroken], and is consulted here rather
+ * than restated: a button enabled by its own copy of the rule is a button that will one
+ * day offer a write the boundary refuses.
+ *
  * Covering the second field is the validation change easiest to forget (design D26), and
  * it is what makes the write boundary's same-sign guard unreachable by any path a user
  * can walk: in a form where one field is "leaves" and the other "arrives", the residues
  * oppose each other by construction, so the only way to reach that refusal is a zero —
- * which this refuses first.
+ * which the rule refuses first.
  *
- * Top-level and `internal` so the rule can be exercised without a screen — with [today]
- * handed in, because the layer that owns a clock is the one that reads it.
+ * Top-level and `internal` so it can be exercised without a screen — with [today] handed
+ * in, because the layer that owns a clock is the one that reads it.
  */
 internal fun isValidTransfer(
     amount: String,
@@ -323,15 +331,21 @@ internal fun isValidTransfer(
     today: LocalDate,
 ): Boolean {
     if (amount.isEmpty()) return false
-    if (amount.moneyToDouble() <= 0.0) return false
-    if (isCrossCurrency && destinationAmount.moneyToDouble() <= 0.0) return false
     if (date.isEmpty()) return false
     if (sourceAccount == null || destinationAccount == null) return false
-    if (sourceAccount.id == destinationAccount.id) return false
 
     val parsedDate = runCatching {
         dayMonthYear.parse(date)
     }.getOrElse { return false }
 
-    return parsedDate <= today
+    return transferRuleBroken(
+        sourceAccountId = sourceAccount.id,
+        destinationAccountId = destinationAccount.id,
+        amount = amount.moneyToDouble(),
+        date = parsedDate,
+        today = today,
+        // A second figure exists only where the two ends are denominated differently.
+        // Single-currency, there is nothing to state and nothing to judge.
+        destinationAmount = destinationAmount.moneyToDouble().takeIf { isCrossCurrency },
+    ) == null
 }

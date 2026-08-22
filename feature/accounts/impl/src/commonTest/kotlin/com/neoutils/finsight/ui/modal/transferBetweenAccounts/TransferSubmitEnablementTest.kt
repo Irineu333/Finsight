@@ -2,7 +2,9 @@ package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.util.dayMonthYear
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -82,6 +84,43 @@ class TransferSubmitEnablementTest {
                 destinationAmount = "",
                 isCrossCurrency = false,
                 date = date,
+                sourceAccount = nubank,
+                destinationAccount = itau,
+                today = today,
+            )
+        )
+    }
+
+    // --- The rules the button no longer states for itself ---
+    //
+    // What makes a transfer admissible has one owner, and the button consults it rather
+    // than keeping a copy. These two prove the consultation happens: neither refusal is
+    // written anywhere in the form, so a button that had drifted from the rule would
+    // offer a write the boundary refuses.
+
+    @Test
+    fun `the same account on both ends is not submittable`() {
+        assertFalse(
+            isValidTransfer(
+                amount = "R$ 550,00",
+                destinationAmount = "",
+                isCrossCurrency = false,
+                date = date,
+                sourceAccount = nubank,
+                destinationAccount = nubank,
+                today = today,
+            )
+        )
+    }
+
+    @Test
+    fun `a date after the caller's today is not submittable`() {
+        assertFalse(
+            isValidTransfer(
+                amount = "R$ 550,00",
+                destinationAmount = "",
+                isCrossCurrency = false,
+                date = dayMonthYear.format(today.plus(1, DateTimeUnit.DAY)),
                 sourceAccount = nubank,
                 destinationAccount = itau,
                 today = today,

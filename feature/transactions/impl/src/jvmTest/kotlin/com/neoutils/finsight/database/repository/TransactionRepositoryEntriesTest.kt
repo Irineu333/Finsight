@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.database.entity.DimensionEntity
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -37,6 +38,8 @@ import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * End-to-end proof of task 2.7 against a real in-memory Room database: the
@@ -362,6 +365,98 @@ class TransactionRepositoryEntriesTest {
 
         assertEquals(emptyList(), guard.writes)
         assertEquals(-8000L, repository.getTransactionById(created.id)!!.entries.first { it.account.id == 1L }.amount)
+    }
+
+    @Test
+    fun `rewriting a crossing back into one currency leaves no conversion leg behind`() = runTest {
+        // The completion is a property of the intent being written, not of the state
+        // it replaces: point both ends at one currency and there is no residue, so
+        // there is nothing for a conversion account to receive. The rewrite deletes
+        // every old entry, so the conversion legs the crossing had are not amended
+        // down to zero — they cease to exist.
+        val source = asset(1, "Nubank", "BRL")
+        val chase = asset(2, "Chase", "USD")
+        val inter = asset(3, "Inter", "BRL")
+        val repository = repository(listOf(source, chase, inter))
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = null,
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+                ),
+            )
+        )
+        assertEquals(4, created.entries.size)
+
+        repository.updateTransaction(
+            id = created.id,
+            title = null,
+            date = LocalDate(2026, 3, 10),
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 550.0, accountId = 3),
+            ),
+            contra = null,
+        )
+
+        val edited = repository.getTransactionById(created.id)!!
+        assertEquals(2, edited.entries.size, "only the two monetary legs are left")
+        assertTrue(
+            edited.entries.none { it.account.type == AccountType.CONVERSION },
+            "a rewrite that crosses nothing has no residue to post",
+        )
+        assertEquals(setOf("BRL"), edited.entries.map { it.currency }.toSet())
+        assertEquals(0L, edited.entries.sumOf { it.amount })
+        assertEquals(-55000L, edited.entries.first { it.account.id == 1L }.amount)
+        assertEquals(55000L, edited.entries.first { it.account.id == 3L }.amount)
+    }
+
+    @Test
+    fun `a rewrite that fails after the old legs are gone leaves the operation as it was`() = runTest {
+        // The row update and the ledger rewrite share one write transaction, and this
+        // is the failure that would tell them apart: the legs are deleted first, and
+        // the refusal comes from the boundary *after* that, with the new date already
+        // written. Either the whole correction lands or none of it does — a
+        // transaction stranded with no legs is not a state the ledger has a reading for.
+        val source = asset(1, "Nubank", "BRL")
+        val destination = asset(2, "Inter", "BRL")
+        val repository = repository(listOf(source, destination))
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = "Rent",
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 2),
+                ),
+            )
+        )
+
+        assertFailsWith<UnbalancedTransactionException> {
+            repository.updateTransaction(
+                id = created.id,
+                title = "Rent, corrected",
+                date = LocalDate(2026, 3, 11),
+                // One currency and a residue left over: refused inside the boundary,
+                // which the old legs have already been deleted to reach.
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 2),
+                ),
+                contra = null,
+            )
+        }
+
+        val untouched = repository.getTransactionById(created.id)!!
+        assertEquals("Rent", untouched.title)
+        assertEquals(LocalDate(2026, 3, 10), untouched.date)
+        assertEquals(2, untouched.entries.size, "the legs it had are still the legs it has")
+        assertEquals(-5000L, untouched.entries.first { it.account.id == 1L }.amount)
+        assertEquals(5000L, untouched.entries.first { it.account.id == 2L }.amount)
     }
 
 }

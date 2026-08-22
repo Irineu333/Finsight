@@ -616,16 +616,13 @@ private fun CardActions(
             // One command, and the invoice in view is only what it opens on: the verb
             // comes from the state, resolved by the mapper.
             if (invoiceUi.canPay) {
-                Button(
-                    onClick = {
-                        modalManager.show(InvoicePaymentModal(invoiceUi.id))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("credit_card_pay_invoice"),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(12.dp),
-                ) {
+                val openPayment = { modalManager.show(InvoicePaymentModal(invoiceUi.id)) }
+
+                val payModifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("credit_card_pay_invoice")
+
+                val payContent: @Composable RowScope.() -> Unit = {
                     Icon(
                         imageVector = Icons.Default.Payment,
                         contentDescription = null,
@@ -635,7 +632,40 @@ private fun CardActions(
                     Text(
                         text = stringResource(invoiceUi.payLabel),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (invoiceUi.paySettles) {
+                            FontWeight.Bold
+                        } else {
+                            FontWeight.Medium
+                        }
+                    )
+                }
+
+                // Solid emphasis is the screen's recommendation, and only settling the
+                // invoice earns it: paying part of one is something the user may do, not
+                // something the card is asking for.
+                if (invoiceUi.paySettles) {
+                    Button(
+                        onClick = openPayment,
+                        modifier = payModifier,
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(12.dp),
+                        content = payContent,
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = openPayment,
+                        modifier = payModifier,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorScheme.primary
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(
+                                colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                        ),
+                        contentPadding = PaddingValues(12.dp),
+                        content = payContent,
                     )
                 }
             }

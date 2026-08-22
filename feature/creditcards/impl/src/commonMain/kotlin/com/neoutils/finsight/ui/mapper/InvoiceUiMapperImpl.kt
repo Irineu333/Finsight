@@ -64,6 +64,7 @@ class InvoiceUiMapperImpl(
             isEditable = status.isEditable,
             canPay = invoice.acceptsPayment,
             payLabel = invoice.paymentLabel,
+            paySettles = invoice.acceptsFullSettlement,
             statusColor = status.color,
             statusLabel = status.toUiText(),
         )

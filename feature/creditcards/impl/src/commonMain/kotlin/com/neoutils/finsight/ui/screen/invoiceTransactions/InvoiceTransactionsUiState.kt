@@ -109,6 +109,11 @@ data class InvoiceTransactionsUiState(
          */
         val canPay: Boolean = false,
         val payLabel: StringResource = Res.string.invoice_payment_pay,
+        /**
+         * Whether paying discharges the invoice. A discharge is the action this screen
+         * recommends and gives its solid emphasis to; a part-payment stays outlined.
+         */
+        val paySettles: Boolean = false,
     ) {
         val invoiceId = invoice.id
         val status = invoice.status

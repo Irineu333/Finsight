@@ -39,6 +39,14 @@ data class InvoiceUi(
      * spending, "pay" once it has ended. Meaningful only where [canPay] holds.
      */
     val payLabel: StringResource,
+    /**
+     * Whether paying discharges the invoice, rather than taking a part of what it owes.
+     *
+     * A discharge is the action the screen recommends and gives its solid emphasis to; a
+     * part-payment is optional and stays outlined. The fact is the domain's, the emphasis
+     * is the surface's.
+     */
+    val paySettles: Boolean,
     val statusColor: Color,
     val statusLabel: StringResource,
 )

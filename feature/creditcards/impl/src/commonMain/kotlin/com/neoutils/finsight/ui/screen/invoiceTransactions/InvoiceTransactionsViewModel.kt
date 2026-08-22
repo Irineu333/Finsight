@@ -242,6 +242,7 @@ class InvoiceTransactionsViewModel(
                     canReopen = invoice.isReopenable(invoices),
                     canPay = invoice.acceptsPayment,
                     payLabel = invoice.paymentLabel,
+                    paySettles = invoice.acceptsFullSettlement,
                 )
             },
             selectedInvoiceIndex = index,

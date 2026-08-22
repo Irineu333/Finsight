@@ -137,25 +137,11 @@ class InvoicePaymentModal(
                         .padding(bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    // One head, and it is the verb: it already names the mode in force,
+                    // so a line under it saying the same thing is a second title.
                     Text(
                         text = stringResource(state.label),
                         style = MaterialTheme.typography.headlineSmall,
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // The sheet says what this mode does, and never states as fixed a
-                    // rule that holds for one state only.
-                    Text(
-                        text = stringResource(
-                            if (state.settles) {
-                                Res.string.invoice_payment_full_message
-                            } else {
-                                Res.string.invoice_payment_partial_message
-                            }
-                        ),
-                        fontSize = 14.sp,
-                        color = colorScheme.onSurfaceVariant,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))

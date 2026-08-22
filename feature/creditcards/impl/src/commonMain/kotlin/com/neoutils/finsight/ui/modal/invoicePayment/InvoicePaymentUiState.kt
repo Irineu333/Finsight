@@ -39,7 +39,13 @@ sealed interface InvoicePaymentUiState {
          */
         val settles = selectedInvoice?.acceptsFullSettlement == true
 
-        /** The verb the sheet titles itself and confirms with — the same one the surfaces show. */
+        /**
+         * The verb the sheet confirms with — the same one the surfaces show.
+         *
+         * It lives on the button and nowhere above it: the head names the operation and
+         * holds still, so choosing an invoice never rewrites what sits over the selector
+         * that chose it. What the button says is what pressing it will do.
+         */
         val label: StringResource = selectedInvoice?.paymentLabel ?: Res.string.invoice_payment_pay
 
         /**

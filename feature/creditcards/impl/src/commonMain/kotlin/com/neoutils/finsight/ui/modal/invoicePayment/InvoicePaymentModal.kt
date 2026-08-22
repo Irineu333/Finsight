@@ -137,11 +137,21 @@ class InvoicePaymentModal(
                         .padding(bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    // One head, and it is the verb: it already names the mode in force,
-                    // so a line under it saying the same thing is a second title.
+                    // The head names the operation, not the mode, and stands still while
+                    // the selectors below it change: a field must not rewrite what sits
+                    // above it. The verb that says what will actually happen is on the
+                    // confirm button, at the end, where the choice has been made.
                     Text(
-                        text = stringResource(state.label),
+                        text = stringResource(Res.string.invoice_payment_title),
                         style = MaterialTheme.typography.headlineSmall,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(Res.string.invoice_payment_message),
+                        fontSize = 14.sp,
+                        color = colorScheme.onSurfaceVariant,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))

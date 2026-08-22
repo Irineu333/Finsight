@@ -462,8 +462,11 @@
     <string name="invoice_error_cannot_reopen">Only the latest closed invoice can be reopened.</string>
 
     <!-- Invoice Payment Modal -->
-    <!-- The verb is derived from the invoice's state and names the command on every
-         surface that offers it, the sheet's own title and its confirm button. -->
+    <!-- The head names the operation and holds still; the verb is derived from the
+         invoice's state and names the command on every surface that offers it, and the
+         sheet's confirm button. -->
+    <string name="invoice_payment_title">Invoice Payment</string>
+    <string name="invoice_payment_message">Choose the invoice and the account that pays it.</string>
     <string name="invoice_payment_advance">Advance Payment</string>
     <string name="invoice_payment_pay">Pay Invoice</string>
     <string name="invoice_payment_amount_label">Payment Amount</string>

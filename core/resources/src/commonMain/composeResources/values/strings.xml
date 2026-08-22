@@ -463,8 +463,11 @@
     <string name="invoice_error_cannot_reopen">Só a última fatura fechada pode ser reaberta.</string>
 
     <!-- Invoice Payment Modal -->
-    <!-- The verb is derived from the invoice's state and names the command on every
-         surface that offers it, the sheet's own title and its confirm button. -->
+    <!-- The head names the operation and holds still; the verb is derived from the
+         invoice's state and names the command on every surface that offers it, and the
+         sheet's confirm button. -->
+    <string name="invoice_payment_title">Pagamento de Fatura</string>
+    <string name="invoice_payment_message">Escolha a fatura e a conta que paga por ela.</string>
     <string name="invoice_payment_advance">Antecipar Pagamento</string>
     <string name="invoice_payment_pay">Pagar Fatura</string>
     <string name="invoice_payment_amount_label">Valor do Pagamento</string>

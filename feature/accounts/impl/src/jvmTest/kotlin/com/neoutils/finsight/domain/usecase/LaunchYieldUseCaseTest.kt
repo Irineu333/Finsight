@@ -143,7 +143,7 @@ private class RecordingTransactions : ITransactionRepository {
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) { updated += id }
 

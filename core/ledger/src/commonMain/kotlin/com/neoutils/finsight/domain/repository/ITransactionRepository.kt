@@ -32,18 +32,12 @@ interface ITransactionRepository {
     suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction>
 
     /**
-     * Rewrites the transaction's row and its ledger legs from the edited [leg].
+     * Rewrites the transaction's row and its ledger legs from [legs] and [contra].
      *
-     * ⚠️ Takes a **single** leg: the rewrite deletes every old entry and rebuilds
-     * from this one (plus a synthesized contra leg). That is only correct for a
-     * transaction with exactly one monetary leg — an expense or an income — which is
-     * why editing is offered only when `ViewTransactionUiState.isEditable` holds
-     * (`monetaryEntries.size == 1`, not an adjustment, no installment). A transfer or
-     * a card payment has two monetary legs; routing one through here would drop the
-     * second silently. Any future support for editing those must change this shape.
-     */
-    /**
-     * Rewrites the transaction from [leg] and its [contra].
+     * The rewrite deletes every old entry and rebuilds from the set given, which is
+     * the same vocabulary [createTransaction] accepts: an operation with two monetary
+     * legs — a transfer — states both, and the boundary completes and balances the
+     * intent exactly as it does on creation, conversion legs included.
      *
      * [contra] has no default on purpose: a rewrite deletes the old entries, so a
      * caller that forgets it turns a one-sided intent into an unbalanced write —
@@ -54,7 +48,7 @@ interface ITransactionRepository {
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     )
 

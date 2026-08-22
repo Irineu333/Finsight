@@ -98,7 +98,7 @@ class ViewBudgetViewModelTest {
             id: Long,
             title: String?,
             date: LocalDate,
-            leg: TransactionLeg,
+            legs: List<TransactionLeg>,
             contra: ContraLeg?,
         ) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()

@@ -184,7 +184,7 @@ private class ChargeStore(private val transactions: List<Transaction>) : ITransa
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) = throw NotImplementedError()
 

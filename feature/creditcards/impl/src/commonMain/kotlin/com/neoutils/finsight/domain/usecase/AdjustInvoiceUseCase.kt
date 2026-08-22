@@ -79,11 +79,13 @@ class AdjustInvoiceUseCase(
                 id = existingTransaction.id,
                 title = existingTransaction.title,
                 date = existingTransaction.date,
-                leg = TransactionLeg(
-                    type = TransactionType.ADJUSTMENT,
-                    amount = newAmount,
-                    accountId = invoice.creditCard.accountId,
-                    dimensionId = invoice.dimensionId,
+                legs = listOf(
+                    TransactionLeg(
+                        type = TransactionType.ADJUSTMENT,
+                        amount = newAmount,
+                        accountId = invoice.creditCard.accountId,
+                        dimensionId = invoice.dimensionId,
+                    ),
                 ),
                 contra = ContraLeg(AccountType.EQUITY),
             )

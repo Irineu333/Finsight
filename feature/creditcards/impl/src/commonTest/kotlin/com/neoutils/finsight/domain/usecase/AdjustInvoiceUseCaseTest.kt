@@ -189,9 +189,9 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> =
         intents.map { createTransaction(it) }
 
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) {
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) {
         ledger.dateByTransaction[id] = date
-        ledger.write(id, listOf(leg))
+        ledger.write(id, legs)
     }
 
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }

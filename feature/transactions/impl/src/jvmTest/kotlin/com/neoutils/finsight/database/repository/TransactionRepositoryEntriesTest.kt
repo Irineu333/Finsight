@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.LedgerWrite
 import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionType
@@ -52,16 +53,26 @@ class TransactionRepositoryEntriesTest {
 
     @AfterTest fun tearDown() = db.close()
 
-    private fun repository(accounts: List<Account>) = TransactionRepository(
+    private fun repository(
+        accounts: List<Account>,
+        writeGuard: DimensionWriteGuard = DimensionWriteGuard.None,
+    ) = TransactionRepository(
         database = db,
         transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
         accountDao = db.accountDao(),
-        writeGuard = DimensionWriteGuard.None,
+        writeGuard = writeGuard,
         removalHook = TransactionRemovalHook.None,
         transactionMapper = TransactionMapper(),
         ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.dimensionDao()),
     )
+
+    private suspend fun asset(id: Long, name: String, currency: String): Account {
+        db.accountDao().insert(
+            AccountEntity(id = id, name = name, type = AccountEntity.Type.ASSET, currency = currency),
+        )
+        return Account(id = id, name = name, type = AccountType.ASSET, currency = currency)
+    }
 
     @Test
     fun `getTransactionById hydrates the transaction's ledger entries`() = runTest {
@@ -171,7 +182,7 @@ class TransactionRepositoryEntriesTest {
             id = created.id,
             title = "Groceries, corrected",
             date = LocalDate(2026, 3, 11),
-            leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1),
+            legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1)),
             contra = ContraLeg(AccountType.EXPENSE, dimensionId = 7),
         )
 
@@ -182,6 +193,175 @@ class TransactionRepositoryEntriesTest {
         assertEquals(-8000L, edited.entries.first { it.account.id == 1L }.amount)
         // The classification survives the rewrite: it travels in the contra leg now.
         assertEquals(7L, edited.entries.first { it.account.id == 10L }.dimensionId)
+    }
+
+    @Test
+    fun `rewriting a two-legged operation replaces both legs and stays balanced`() = runTest {
+        // The shape the single-leg signature made inexprimible: a transfer states both
+        // ends, and the rewrite has to carry both. Stating one and letting the boundary
+        // synthesize the other would move the money somewhere nobody chose.
+        val source = asset(1, "Nubank", "BRL")
+        val destination = asset(2, "Inter", "BRL")
+        val repository = repository(listOf(source, destination))
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = null,
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 2),
+                ),
+            )
+        )
+
+        repository.updateTransaction(
+            id = created.id,
+            title = null,
+            date = LocalDate(2026, 3, 11),
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 80.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        val edited = repository.getTransactionById(created.id)!!
+        assertEquals(LocalDate(2026, 3, 11), edited.date)
+        assertEquals(2, edited.entries.size, "the old legs are gone, not kept alongside the new")
+        assertEquals(0L, edited.entries.sumOf { it.amount })
+        assertEquals(-8000L, edited.entries.first { it.account.id == 1L }.amount)
+        assertEquals(8000L, edited.entries.first { it.account.id == 2L }.amount)
+    }
+
+    @Test
+    fun `rewriting across currencies rebuilds a conversion leg per currency`() = runTest {
+        val source = asset(1, "Nubank", "BRL")
+        val destination = asset(2, "Chase", "USD")
+        val repository = repository(listOf(source, destination))
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = null,
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 550.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2),
+                ),
+            )
+        )
+        assertEquals(4, created.entries.size)
+
+        repository.updateTransaction(
+            id = created.id,
+            title = null,
+            date = LocalDate(2026, 3, 10),
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 600.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 110.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        val edited = repository.getTransactionById(created.id)!!
+        assertEquals(4, edited.entries.size, "two monetary legs and one conversion leg per currency")
+        assertEquals(-60000L, edited.entries.first { it.account.id == 1L }.amount)
+        assertEquals(11000L, edited.entries.first { it.account.id == 2L }.amount)
+
+        val byCurrency = edited.entries.groupBy { it.currency }
+        assertEquals(setOf("BRL", "USD"), byCurrency.keys)
+        byCurrency.forEach { (currency, entries) ->
+            assertEquals(0L, entries.sumOf { it.amount }, "$currency must sum to zero")
+        }
+
+        val conversion = edited.entries.filter { it.account.type == AccountType.CONVERSION }
+        assertEquals(2, conversion.size)
+        assertEquals(setOf("BRL", "USD"), conversion.map { it.currency }.toSet())
+        assertEquals(60000L, conversion.first { it.currency == "BRL" }.amount)
+        assertEquals(-11000L, conversion.first { it.currency == "USD" }.amount)
+    }
+
+    @Test
+    fun `a rewrite tells the guard whether it settles a liability, deriving it from the legs`() = runTest {
+        // The value used to be the literal `false`, whatever the legs said. It is now
+        // derived from the natures of the accounts posted to — the same derivation
+        // creation uses — so this write reports `true` where the constant reported
+        // `false`. The transaction is created *without* a dimension so that the only
+        // question the guard is ever asked is the one about the new legs.
+        val payer = asset(1, "Nubank", "BRL")
+        db.accountDao().insert(
+            AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY, currency = "BRL"),
+        )
+        db.dimensionDao().insert(DimensionEntity(id = 7, kind = DimensionKind.INVOICE))
+        val card = Account(id = 2, name = "Card", type = AccountType.LIABILITY, currency = "BRL")
+
+        val guard = RecordingWriteGuard()
+        val repository = repository(listOf(payer, card), writeGuard = guard)
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = null,
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 2),
+                ),
+            )
+        )
+        guard.writes.clear()
+
+        repository.updateTransaction(
+            id = created.id,
+            title = null,
+            date = LocalDate(2026, 3, 10),
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 60.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 60.0, accountId = 2, dimensionId = 7),
+            ),
+            contra = null,
+        )
+
+        assertEquals(1, guard.writes.size)
+        assertEquals(setOf(7L), guard.writes.single().dimensionIds)
+        assertEquals(true, guard.writes.single().settlesALiability)
+    }
+
+    @Test
+    fun `a transfer rewrite reaches the guard with nothing to veto`() = runTest {
+        // Two `ASSET` legs derive `settlesALiability = false`, which is what the
+        // constant said too — so the transfer rewrite passes exactly as before. It
+        // carries no dimension either (a category lands on a nominal leg, an invoice
+        // on a liability one), so the guard is not consulted at all.
+        val source = asset(1, "Nubank", "BRL")
+        val destination = asset(2, "Inter", "BRL")
+        val guard = RecordingWriteGuard()
+        val repository = repository(listOf(source, destination), writeGuard = guard)
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = null,
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(
+                    TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
+                    TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 2),
+                ),
+            )
+        )
+        guard.writes.clear()
+
+        repository.updateTransaction(
+            id = created.id,
+            title = null,
+            date = LocalDate(2026, 3, 10),
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 80.0, accountId = 2),
+            ),
+            contra = null,
+        )
+
+        assertEquals(emptyList(), guard.writes)
+        assertEquals(-8000L, repository.getTransactionById(created.id)!!.entries.first { it.account.id == 1L }.amount)
     }
 
 }
@@ -274,4 +454,9 @@ internal class FakeAccountRepository(private val accounts: List<Account>) : IAcc
     override suspend fun delete(account: Account) = throw NotImplementedError()
     override suspend fun reopen(accountId: Long) = throw NotImplementedError()
 
+}
+
+private class RecordingWriteGuard : DimensionWriteGuard {
+    val writes = mutableListOf<LedgerWrite>()
+    override suspend fun ensureAccepts(write: LedgerWrite) { writes += write }
 }

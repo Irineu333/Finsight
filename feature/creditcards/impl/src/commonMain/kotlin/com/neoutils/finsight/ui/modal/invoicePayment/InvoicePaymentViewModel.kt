@@ -20,6 +20,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CrossCurrencyAmountSuggestion
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
 import com.neoutils.finsight.extension.combine
@@ -102,11 +103,8 @@ class InvoicePaymentViewModel(
 
     // Read reactively rather than resolved once: another screen may close the cycle
     // while this sheet is open, and the mode follows the invoice.
-    private val selectedInvoice = kotlinx.coroutines.flow.combine(
-        payableInvoices,
-        selectedInvoiceId,
-    ) { invoices, id ->
-        invoices.firstOrNull { it.id == id }
+    private val selectedInvoice = selectedInvoiceId.flatMapLatest { id ->
+        payableInvoices.map { invoices -> invoices.firstOrNull { it.id == id } }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -167,34 +165,20 @@ class InvoicePaymentViewModel(
     ) { cards, selectedCard, invoices, accounts, account, owed, date, stated ->
         if (owed == null) return@combine InvoicePaymentUiState.Loading
 
-        val selected = account ?: accounts.firstOrNull { it.isDefault }
-        val settles = owed.invoice?.acceptsFullSettlement == true
-
-        InvoicePaymentUiState.Content(
+        val content = InvoicePaymentUiState.Content(
             creditCards = cards,
             selectedCreditCard = selectedCard,
             invoices = invoices,
             selectedInvoice = owed.invoice,
             accounts = accounts,
-            selectedAccount = selected,
+            selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
             outstandingDebt = owed.amount,
             invoiceCurrency = owed.currency,
             date = date,
             today = currentDate,
-            // The archive is asked what the *card's* side costs in the paying account's
-            // currency — never the other way round. In the discharging mode that side is
-            // what is owed; otherwise it is what the user stated.
-            suggestion = if (owed.currency != null && selected != null) {
-                suggestCrossCurrencyAmount(
-                    amount = if (settles) owed.amount else stated,
-                    from = owed.currency,
-                    to = selected.currency,
-                    on = runCatching { dayMonthYear.parse(date) }.getOrDefault(currentDate),
-                )
-            } else {
-                null
-            },
         )
+
+        content.copy(suggestion = suggestionFor(content, stated))
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -229,6 +213,31 @@ class InvoicePaymentViewModel(
                 account = action.account,
             )
         }
+    }
+
+    /**
+     * What the archive implies leaves the paying account.
+     *
+     * It is asked what the **card's** side costs in the account's currency, never the
+     * other way round: in the discharging mode that side is what is owed, otherwise it is
+     * what the user stated. Both the mode and the disagreement between the two ends come
+     * from the state, which is where they are decided.
+     */
+    private suspend fun suggestionFor(
+        content: InvoicePaymentUiState.Content,
+        stated: Double,
+    ): CrossCurrencyAmountSuggestion? {
+        if (!content.isCrossCurrency) return null
+
+        val currency = content.invoiceCurrency ?: return null
+        val payer = content.selectedAccount ?: return null
+
+        return suggestCrossCurrencyAmount(
+            amount = if (content.settles) content.outstandingDebt else stated,
+            from = currency,
+            to = payer.currency,
+            on = runCatching { dayMonthYear.parse(content.date) }.getOrDefault(currentDate),
+        )
     }
 
     /**

@@ -39,8 +39,6 @@ data class InvoiceUi(
      * spending, "pay" once it has ended. Meaningful only where [canPay] holds.
      */
     val payLabel: StringResource,
-    /** Whether paying discharges the invoice, rather than taking a part of what it owes. */
-    val paySettles: Boolean,
     val statusColor: Color,
     val statusLabel: StringResource,
 )

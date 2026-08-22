@@ -385,12 +385,14 @@ env:
     id: "credit_card_available_limit"
     text: "[$]2[.,]000[.,]00"
 
-# It is a different invoice, and the commands say which: it offers closing, because this one was
-# never closed — the jump cleared its closing date too, a month after the one it replaced — and
-# that is the point: the offer moved to the new invoice with it. Paying stands beside it, as it
-# does on every invoice a payment may name; what changed with the invoice is what it opens on.
-- assertVisible:
-    id: "credit_card_close_invoice"
+# It is a different invoice, and the two figures above say so: nothing owed and the whole limit
+# back, where the one just paid owed $70.00. What the command adds is that the payment followed it
+# — every invoice a payment may name offers it, and this one does.
+#
+# Closing is deliberately not asserted here. Whether the replacement cycle has closed depends on
+# the day the suite runs: the card closes on the 10th, and the 45-day jump clears the first closing
+# from any day but the second one only from about half of them. The assertion that used to stand
+# here read that coin flip as a claim about the app.
 - assertVisible:
     id: "credit_card_pay_invoice"
 

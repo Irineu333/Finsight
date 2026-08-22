@@ -33,7 +33,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) �
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~30 minutos** para 15 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~31 minutos** para 15 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -452,8 +452,8 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~29 minutos e 14 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais os 39s do
-fluxo mais novo, medido sozinho). Ao estourar,
+**Orçamento: ~31 minutos e 15 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais o 1m52 do
+fluxo mais novo, medido dentro da suíte). Ao estourar,
 corta-se ou funde-se — o teto não sobe por reflexo. Cada fluxo novo compete com os existentes pelo
 tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto muda**.
 
@@ -461,7 +461,7 @@ tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto mud
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**O precedente.** O teto subiu quatro vezes, e cada uma fica registrada porque é ela que autoriza a
+**O precedente.** O teto subiu cinco vezes, e cada uma fica registrada porque é ela que autoriza a
 próxima recusa. Nenhuma tirou um fluxo em troca; todas entraram pelo mesmo argumento — cobrir uma
 travessia que nenhuma camada abaixo alcança:
 
@@ -472,6 +472,7 @@ travessia que nenhuma camada abaixo alcança:
 | ~21 → ~23 | `dashboard/customization` | 1m42 | O único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um** componente também — os comandos em massa movem os onze ou nenhum. Nenhuma camada monta o editor e a tela que lê o resultado |
 | ~25 → ~28 | `currency/lifecycle` | 2m53 | O **segundo campo de valor**, único controle do app que nasce da discordância entre dois seletores: o arquivo o pré-preenche e digitar por cima retira a oferta. Ele existia no código sem fluxo nenhum — `transfer_destination_amount` era peso morto. E a **fronteira da consolidação**, que exige a tela de contas e o dashboard montados ao mesmo tempo sob **duas** moedas base: a mesma escrita exata de um lado e aproximada do outro. Nenhuma camada abaixo monta duas telas, e é a fronteira que a feature inteira existe para não quebrar |
 | ~28 → ~29 | `recurring/from_transaction` | 39s | O que a marca de recorrência no lançamento **impede**: sem a ocorrência escrita junto, o mês recém-pago volta como pendente e o usuário lança a mesma despesa duas vezes no razão. A afirmação é uma ausência em duas telas — a recorrência existe na lista e o dashboard não cobra o mês —, e ausência em duas telas ao mesmo tempo nenhuma camada abaixo monta |
+| ~29 → ~31 | `creditcards/retroactive_payment` | 1m52 | A jornada que a unificação do pagamento abre, e que nenhuma camada abaixo monta: uma fatura de um mês que já passou — criada, dotada do que aquele ciclo devia e paga pela mesma porta das demais — atravessando o menu de contexto, a criação, o ajuste e o pagamento em sequência. E a **ausência** que a fecha: paga até zerar, o comando de pagamento continua oferecido, que é a interface dizendo que a fatura não foi quitada. Fora de `creditcards/lifecycle` porque as figuras daquele fluxo são asseridas adiante: gastar dinheiro dentro dele moveria a aritmética, e uma falha aqui passaria a se ler como falha lá |
 | ~23 → ~25 | `categories/lifecycle` | 2m19–2m22 | O ciclo de aposentadoria da dimensão, que `budgets/lifecycle` só atravessa de raspão: o comando trocar de *Delete* para *Archive* porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção certa — o seletor de transação deixa de oferecê-la no instante em que o dashboard continua somando o que ela gastou |
 
 Duas recusas vêm no mesmo pacote, e valem como precedente igual. A aritmética do arrasto **não** é

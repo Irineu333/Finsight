@@ -69,15 +69,15 @@
 
 ## 7. Os fluxos Maestro alcançam o sheet novo
 
-- [ ] 7.1 Reescrever `.maestro/flows/creditcards/lifecycle.yaml` para os ids do sheet unificado, no lugar de `credit_card_advance_payment`, `advance_payment_*` e `pay_invoice_*`.
-- [ ] 7.2 Reescrever a parte correspondente de `.maestro/flows/report/lifecycle.yaml`, que alcança o adiantamento para produzir o dado do relatório.
-- [ ] 7.3 Acrescentar ao fluxo de cartões a jornada que não existia: pagar parcialmente uma fatura retroativa e conferir que o devido cai e o status permanece.
-- [ ] 7.4 Reinstalar o debug (`./gradlew :app:android:installDebug`) e rodar a suíte no AVD exigido pelo `.maestro/README.md` §2 — as sete verificações `adb` antes de rodar —, reportando em qual dispositivo a execução aconteceu.
+- [x] 7.1 Reescrever `.maestro/flows/creditcards/lifecycle.yaml` para os ids do sheet unificado, no lugar de `credit_card_advance_payment`, `advance_payment_*` e `pay_invoice_*`.
+- [x] 7.2 Reescrever a parte correspondente de `.maestro/flows/report/lifecycle.yaml`, que alcança o adiantamento para produzir o dado do relatório.
+- [x] 7.3 Acrescentar ao fluxo de cartões a jornada que não existia: pagar parcialmente uma fatura retroativa e conferir que o devido cai e o status permanece.
+- [x] 7.4 Reinstalar o debug (`./gradlew :app:android:installDebug`) e rodar a suíte no AVD exigido pelo `.maestro/README.md` §2 — as sete verificações `adb` antes de rodar —, reportando em qual dispositivo a execução aconteceu.
 
 ## 8. Verificação final
 
-- [ ] 8.1 `./gradlew jvmTest` verde.
-- [ ] 8.2 `./gradlew :app:android:assembleDebug` verde.
-- [ ] 8.3 Exercitar à mão o caminho que a mudança abre: fatura `RETROACTIVE` com saldo → pagamento parcial → o devido cai e o status permanece → fechar → `PAID` pelo fechamento (`CloseInvoiceUseCase:64`), sem um segundo pagamento.
-- [ ] 8.4 Conferir que a linha de adiantamentos do resumo da fatura (`InvoiceTransactionsUiState.InvoiceSummary.advancePayment`) contabiliza o pagamento de uma retroativa sem alteração de código — ela deriva dos fluxos por dimensão do razão, não do status.
-- [ ] 8.5 `openspec validate unify-invoice-payment --strict` verde.
+- [x] 8.1 `./gradlew jvmTest` verde.
+- [x] 8.2 `./gradlew :app:android:assembleDebug` verde.
+- [x] 8.3 Exercitar à mão o caminho que a mudança abre: fatura `RETROACTIVE` com saldo → pagamento parcial → o devido cai e o status permanece → fechar → `PAID` pelo fechamento (`CloseInvoiceUseCase:64`), sem um segundo pagamento.
+- [x] 8.4 Conferir que a linha de adiantamentos do resumo da fatura (`InvoiceTransactionsUiState.InvoiceSummary.advancePayment`) contabiliza o pagamento de uma retroativa sem alteração de código — ela deriva dos fluxos por dimensão do razão, não do status.
+- [x] 8.5 `openspec validate unify-invoice-payment --strict` verde.

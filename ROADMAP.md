@@ -5,6 +5,8 @@ App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multi
 Produção atual: **1.9.0**. 
 Em preparação: **1.10.0-rc02**.
 
+## Entregue
+
 | Nome                            | Descrição                                                                             | Tipo           | Versão        |
 |---------------------------------|---------------------------------------------------------------------------------------|----------------|---------------|
 | **Dashboard**                   | Visão geral de saldo, resumo de cartões e lista de contas                             | Funcionalidade | 1.0.0         |
@@ -51,5 +53,12 @@ Em preparação: **1.10.0-rc02**.
 | **Filtro sem categoria**        | As cinco listas que filtram por categoria recortam também o que não tem nenhuma       | Funcionalidade | 1.10.0        |
 | **A liquidar este mês**         | Recorrentes do mês e faturas por pagar somadas em "A entrar" e "A sair"               | Funcionalidade | 1.10.0        |
 | **Backlog de bugs**             | Bugs como arquivos em `issues/`, com regra de entrada, correção e arquivamento        | Arquitetura    | 1.10.0        |
-| **Backup em arquivo**           | Exportar o banco para um arquivo e restaurá-lo em outro dispositivo, sem servidor     | Funcionalidade | Planejado     |
-| **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade | Planejado     |
+
+## Planejado
+
+Nada começado: sem change em `openspec/` e sem código no repositório.
+
+| Nome                            | Descrição                                                                             | Tipo           |
+|---------------------------------|---------------------------------------------------------------------------------------|----------------|
+| **Backup em arquivo**           | Exportar o banco para um arquivo e restaurá-lo em outro dispositivo, sem servidor     | Funcionalidade |
+| **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade |

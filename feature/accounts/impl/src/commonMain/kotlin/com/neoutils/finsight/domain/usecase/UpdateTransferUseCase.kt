@@ -31,6 +31,10 @@ class UpdateTransferUseCase(
     /**
      * @param destinationAmount what arrives, when it is not what left. `null` means the
      * two ends are the same number — the whole of the mono-currency case.
+     * @param title what the operation is to be called from now on, and `null` for no
+     * name at all. Deliberately without a default: the form shows this field, so what
+     * arrives here is a statement about it — and a caller that omitted it would be
+     * erasing a name rather than leaving it alone.
      */
     suspend operator fun invoke(
         transactionId: Long,
@@ -38,6 +42,7 @@ class UpdateTransferUseCase(
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
+        title: String?,
         destinationAmount: Double? = null,
     ): Either<TransferException, Unit> = either {
         val (sourceAccount, destinationAccount) = validateTransfer(
@@ -48,19 +53,18 @@ class UpdateTransferUseCase(
             destinationAmount = destinationAmount,
         ).mapLeft { TransferException(it) }.bind()
 
-        val transaction = transactionRepository.getTransactionById(transactionId)
-        ensureNotNull(transaction) { TransferException(TransferError.Unknown) }
+        // Read only to refuse correcting an operation that is not there — nothing of it
+        // is carried forward: every field the correction writes comes from the form.
+        ensureNotNull(transactionRepository.getTransactionById(transactionId)) {
+            TransferException(TransferError.Unknown)
+        }
 
         val arriving = destinationAmount ?: amount
 
         catch {
             transactionRepository.updateTransaction(
                 id = transactionId,
-                // The row is rewritten whole, title included, and the transfer form has
-                // no title field. Writing `null` would silently erase a title the screen
-                // never showed and never asked about (design D11), so what is there is
-                // carried over untouched.
-                title = transaction.title,
+                title = title,
                 date = date,
                 legs = listOf(
                     TransactionLeg(

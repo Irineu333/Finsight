@@ -196,6 +196,8 @@ class ReportExportFootnoteTest {
         transactionPayment = "Payment",
         transactionBalanceAdjustment = "Balance adjustment",
         transactionInvoiceAdjustment = "Invoice adjustment",
+        transactionExpense = "Expense",
+        transactionIncome = "Income",
         uncategorized = UNCATEGORIZED,
         columnCategory = "Category",
         columnTransaction = "Transaction",

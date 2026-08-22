@@ -34,6 +34,9 @@ class TransferBetweenAccountsUseCase(
      * @param destinationAmount what arrives, when it is not what left. `null` means the
      * two ends are the same number, which is the whole of the mono-currency case and
      * stays byte-identical to what it was.
+     * @param title why the money moved, as the user stated it, and `null` when they had
+     * nothing to state. It names the operation and classifies nothing: a transfer has no
+     * analytic axis, and a title does not give it one.
      */
     suspend operator fun invoke(
         sourceAccountId: Long,
@@ -41,6 +44,7 @@ class TransferBetweenAccountsUseCase(
         amount: Double,
         date: LocalDate,
         destinationAmount: Double? = null,
+        title: String? = null,
     ): Either<TransferException, Transaction> = either {
         val (sourceAccount, destinationAccount) = validateTransfer(
             sourceAccountId = sourceAccountId,
@@ -59,7 +63,7 @@ class TransferBetweenAccountsUseCase(
         val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
-                    title = null,
+                    title = title,
                     date = date,
                     legs = listOf(
                         TransactionLeg(

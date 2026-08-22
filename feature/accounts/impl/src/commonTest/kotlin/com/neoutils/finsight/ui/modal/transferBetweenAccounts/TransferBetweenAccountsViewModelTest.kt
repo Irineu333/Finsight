@@ -56,6 +56,16 @@ class TransferBetweenAccountsViewModelTest {
 
     private val accounts = listOf(nubank, inter, chase)
 
+    private val titledTransfer = Transaction(
+        id = 7,
+        title = "Reserva de emergência",
+        date = LocalDate(2026, 3, 4),
+        entries = listOf(
+            Entry(transactionId = 7, account = nubank, amount = -55000),
+            Entry(transactionId = 7, account = chase, amount = 10000),
+        ),
+    )
+
     private val crossCurrencyTransfer = Transaction(
         id = 42,
         title = null,
@@ -139,6 +149,7 @@ class TransferBetweenAccountsViewModelTest {
                     amount = 600.0,
                     destinationAmount = 110.0,
                     date = today,
+                    title = "",
                 )
             )
             advanceUntilIdle()
@@ -168,6 +179,7 @@ class TransferBetweenAccountsViewModelTest {
                     amount = 80.0,
                     destinationAmount = 0.0,
                     date = today,
+                    title = "",
                 )
             )
             advanceUntilIdle()
@@ -210,6 +222,101 @@ class TransferBetweenAccountsViewModelTest {
                 assertEquals(today, expectMostRecentItem().suggestion?.asOf)
             }
         }
+
+    @Test
+    fun `registering with a title writes it on the operation`() = runTest(dispatcher) {
+        val transactions = RewriteRecordingTransactions()
+        val viewModel = viewModel(transactions)
+
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(inter))
+            advanceUntilIdle()
+            viewModel.onAction(
+                TransferBetweenAccountsAction.Submit(
+                    amount = 500.0,
+                    destinationAmount = 0.0,
+                    date = today,
+                    title = "  Reserva de emergência  ",
+                )
+            )
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Trimmed, and in one place: what surrounds a name is not part of it.
+        assertEquals("Reserva de emergência", transactions.created.single().title)
+    }
+
+    @Test
+    fun `registering without a title leaves the operation unnamed`() = runTest(dispatcher) {
+        val transactions = RewriteRecordingTransactions()
+        val viewModel = viewModel(transactions)
+
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(inter))
+            advanceUntilIdle()
+            viewModel.onAction(
+                TransferBetweenAccountsAction.Submit(
+                    amount = 80.0,
+                    destinationAmount = 0.0,
+                    date = today,
+                    title = "   ",
+                )
+            )
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Blank is an absence, not a name made of spaces.
+        assertEquals(null, transactions.created.single().title)
+    }
+
+    @Test
+    fun `correcting the title writes the new one`() = runTest(dispatcher) {
+        val transactions = RewriteRecordingTransactions(listOf(titledTransfer))
+        val viewModel = viewModel(transactions, titledTransfer)
+
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            viewModel.onAction(
+                TransferBetweenAccountsAction.Submit(
+                    amount = 550.0,
+                    destinationAmount = 100.0,
+                    date = today,
+                    title = "Acerto com o Pedro",
+                )
+            )
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals("Acerto com o Pedro", transactions.rewrites.single().title)
+    }
+
+    @Test
+    fun `emptying the title on a correction removes it`() = runTest(dispatcher) {
+        val transactions = RewriteRecordingTransactions(listOf(titledTransfer))
+        val viewModel = viewModel(transactions, titledTransfer)
+
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            viewModel.onAction(
+                TransferBetweenAccountsAction.Submit(
+                    amount = 550.0,
+                    destinationAmount = 100.0,
+                    date = today,
+                    title = "",
+                )
+            )
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // The field was on screen and was cleared: that is a statement, not a loss.
+        assertEquals(null, transactions.rewrites.single().title)
+    }
 }
 
 private object MuteAnalytics : Analytics {

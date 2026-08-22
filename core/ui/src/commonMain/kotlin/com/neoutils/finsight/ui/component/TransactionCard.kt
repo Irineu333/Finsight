@@ -30,6 +30,8 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_card_balance_adjustment
+import com.neoutils.finsight.resources.transaction_card_expense
+import com.neoutils.finsight.resources.transaction_card_income
 import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
 import com.neoutils.finsight.resources.transaction_card_payment
 import com.neoutils.finsight.resources.transaction_card_transfer
@@ -119,16 +121,11 @@ fun TransactionCard(
                 }
             }
 
-            val paymentLabel = stringResource(Res.string.transaction_card_payment)
-            val transferLabel = stringResource(Res.string.transaction_card_transfer)
-            val balanceAdjustLabel = stringResource(Res.string.transaction_card_balance_adjustment)
-            val invoiceAdjustLabel = stringResource(Res.string.transaction_card_invoice_adjustment)
-
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = transaction.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = transaction.displayTitle(),
                     modifier = Modifier.testTag("transaction_card_title"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -154,19 +151,34 @@ fun TransactionCard(
     }
 }
 
-private fun TransactionUi.displayTitle(
-    paymentLabel: String,
-    transferLabel: String,
-    balanceAdjustLabel: String,
-    invoiceAdjustLabel: String,
-): String {
-    val baseTitle = when {
-        label == TransactionLabel.PAYMENT -> paymentLabel
-        label == TransactionLabel.TRANSFER -> transferLabel
-        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> balanceAdjustLabel
-        label == TransactionLabel.ADJUSTMENT && isCardTarget -> invoiceAdjustLabel
-        else -> title
-    }
+/**
+ * The name of the operation: its title, then its category, then its form.
+ *
+ * [TransactionUi.title] already answers the first two links — one owner, shared with
+ * every other surface that names an operation. What is decided here is the third, and it
+ * is this surface's to decide: a list item names the operation on its own, so it says
+ * what the operation *is*, where a detail header that already announced the nature says
+ * instead what the header did not.
+ *
+ * The form is a total function over [TransactionLabel], which is derived from the account
+ * types of the entries — so there is always a third link, and no generic fallback.
+ */
+@Composable
+private fun TransactionUi.displayTitle(): String {
+    val baseTitle = title ?: stringResource(
+        when (label) {
+            TransactionLabel.PAYMENT -> Res.string.transaction_card_payment
+            TransactionLabel.TRANSFER -> Res.string.transaction_card_transfer
+            TransactionLabel.ADJUSTMENT -> if (isCardTarget) {
+                Res.string.transaction_card_invoice_adjustment
+            } else {
+                Res.string.transaction_card_balance_adjustment
+            }
+
+            TransactionLabel.EXPENSE -> Res.string.transaction_card_expense
+            TransactionLabel.INCOME -> Res.string.transaction_card_income
+        }
+    )
 
     return installmentLabel?.let { "$baseTitle • $it" } ?: baseTitle
 }

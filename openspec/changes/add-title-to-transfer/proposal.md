@@ -17,9 +17,10 @@ o título seria digitado e nunca exibido.
 - O formulário de transferência ganha um campo de **título opcional**, nos seus dois modos
   (registrar e corrigir), e os dois use cases passam a gravá-lo.
 - A precedência de nomeação — **título > categoria > forma** — passa a valer em toda superfície
-  que nomeia uma operação, e não só no detalhe. O card da lista é invertido para segui-la.
+  que nomeia uma operação, e não só no detalhe. O card da lista e o documento exportado são
+  invertidos para segui-la.
 - O literal de reserva `"Untitled"` é **removido**. Ele é texto em inglês num app pt/en, e é
-  alcançável hoje apenas porque o card invertido intercepta antes de chegar nele — inverter a
+  inalcançável hoje apenas porque o card invertido intercepta antes de chegar nele — inverter a
   cadeia sem fornecer o terceiro elo o tornaria visível na tela mais usada do app.
 - `displayTitleOf` é aposentada em favor de `displayTitleOrNull`, que já existe e já é a dona
   dos dois primeiros elos. Cada superfície passa a declarar o seu terceiro elo.
@@ -53,16 +54,24 @@ o título seria digitado e nunca exibido.
 **Nomeação**
 - `core/model/.../extension/DisplayTitle.kt` — `displayTitleOf` e o literal removidos
 - `core/ui/.../component/TransactionCard.kt:157-171` — cadeia invertida
-- `core/model/.../domain/model/Recurring.kt:17` — invariante afirmado
+- `core/model/.../domain/model/Recurring.kt:17` — invariante afirmado, e
+  `form/RecurringForm.kt:41` alinhado a ele (`isNotBlank`, título aparado)
 - `feature/creditcards/impl/.../mapper/InstallmentUiMapper.kt:58` — terceiro elo próprio
+- `feature/report/impl/.../viewer/ReportExportLayout.kt:224-232` — o documento exportado, quinta
+  superfície que nomeia uma operação, com a mesma cadeia invertida do card
 
 **Strings**
 - `core/resources/.../values/strings.xml` e `values-en/strings.xml` — a chave do campo novo,
-  e a forma da parcela
+  a forma da parcela, e a forma do gasto e da receita (o terceiro elo que faltava ao card)
 
 **Testes**
 - `app/shared/.../ComposeAppCommonTest.kt:15,52` — dois testes que fixam um estado que o
   dono da regra impede, e que passam a provar que a violação falha
-- `feature/accounts/impl/.../TransferBetweenAccountsViewModelTest.kt`
+- `feature/accounts/impl/.../TransferBetweenAccountsViewModelTest.kt` e
+  `UpdateTransferUseCaseTest.kt` — o teste que fixava a preservação do título passa a provar
+  que a correção grava o que o formulário diz
 - `app/shared/.../EditTransferEndToEndTest.kt`
+- `core/ui/.../TransactionUiNamingTest.kt` e
+  `feature/creditcards/impl/.../InstallmentUiNamingTest.kt` — a precedência e a ausência sem
+  literal de reserva
 - `.maestro/flows/accounts/lifecycle.yaml` — o campo novo é opcional e alcançado por `id:`

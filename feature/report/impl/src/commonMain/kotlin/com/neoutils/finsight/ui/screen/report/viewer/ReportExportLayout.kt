@@ -48,6 +48,8 @@ data class ReportExportStrings(
     val transactionPayment: String,
     val transactionBalanceAdjustment: String,
     val transactionInvoiceAdjustment: String,
+    val transactionExpense: String,
+    val transactionIncome: String,
     /**
      * The name of the unclassified line, resolved before the export runs — the document
      * is built outside the `@Composable` world, so every string it prints arrives here
@@ -221,13 +223,26 @@ private fun SpendingSubject.exportLabel(strings: ReportExportStrings): String = 
     SpendingSubject.Uncategorized -> strings.uncategorized
 }
 
+/**
+ * The name of the operation in the document: its title, then its category, then its form.
+ *
+ * The same precedence the list reads by — [TransactionUi.title] answers the first two
+ * links, and the third is the document's, which names each line on its own exactly as a
+ * list item does. An exported report that disagreed with the screen it was exported from
+ * would be the same operation under two names.
+ */
 private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
-    return when {
-        label == TransactionLabel.PAYMENT -> strings.transactionPayment
-        label == TransactionLabel.TRANSFER -> strings.transactionTransfer
-        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> strings.transactionBalanceAdjustment
-        label == TransactionLabel.ADJUSTMENT && isCardTarget -> strings.transactionInvoiceAdjustment
-        else -> title
+    return title ?: when (label) {
+        TransactionLabel.PAYMENT -> strings.transactionPayment
+        TransactionLabel.TRANSFER -> strings.transactionTransfer
+        TransactionLabel.ADJUSTMENT -> if (isCardTarget) {
+            strings.transactionInvoiceAdjustment
+        } else {
+            strings.transactionBalanceAdjustment
+        }
+
+        TransactionLabel.EXPENSE -> strings.transactionExpense
+        TransactionLabel.INCOME -> strings.transactionIncome
     }
 }
 

@@ -146,6 +146,8 @@ private fun ReportViewerContent(
         transactionPayment = stringResource(Res.string.transaction_card_payment),
         transactionBalanceAdjustment = stringResource(Res.string.transaction_card_balance_adjustment),
         transactionInvoiceAdjustment = stringResource(Res.string.transaction_card_invoice_adjustment),
+        transactionExpense = stringResource(Res.string.transaction_card_expense),
+        transactionIncome = stringResource(Res.string.transaction_card_income),
         uncategorized = stringResource(Res.string.category_spending_uncategorized),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),

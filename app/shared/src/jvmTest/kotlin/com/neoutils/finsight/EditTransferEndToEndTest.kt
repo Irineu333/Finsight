@@ -63,6 +63,7 @@ class EditTransferEndToEndTest {
                 destinationAccountId = chase.id,
                 amount = 600.0,
                 date = day,
+                title = null,
                 destinationAmount = 110.0,
             ).onLeft { error("the correction was refused: $it") }
 
@@ -126,6 +127,7 @@ class EditTransferEndToEndTest {
                 destinationAccountId = chase.id,
                 amount = 550.0,
                 date = earlier,
+                title = null,
                 destinationAmount = 110.0,
             ).onLeft { error("the correction was refused: $it") }
 
@@ -145,6 +147,63 @@ class EditTransferEndToEndTest {
                 5.0,
                 requireNotNull(archive.rateAsOf("USD", earlier)).rate,
                 absoluteTolerance = 1e-9,
+            )
+        }
+
+    @Test
+    fun `the correction writes the title the form shows, emptied included`() =
+        runApp(baseCurrency = "BRL") {
+            val nubank = account("Nubank", currency = "BRL", isDefault = true)
+            val savings = account("Poupança", currency = "BRL")
+            income(nubank, amount = 1_000.0, date = day)
+
+            val registered = get<TransferBetweenAccountsUseCase>()(
+                sourceAccountId = nubank.id,
+                destinationAccountId = savings.id,
+                amount = 200.0,
+                date = day,
+                title = "Reserva de emergência",
+            ).getOrNull() ?: error("the transfer was refused")
+
+            assertEquals(
+                "Reserva de emergência",
+                requireNotNull(transactions.getTransactionById(registered.id)).title,
+                "a title stated on registration must reach the ledger",
+            )
+
+            get<UpdateTransferUseCase>()(
+                transactionId = registered.id,
+                sourceAccountId = nubank.id,
+                destinationAccountId = savings.id,
+                amount = 200.0,
+                date = day,
+                title = "Acerto com o Pedro",
+            ).onLeft { error("the correction was refused: $it") }
+
+            assertEquals(
+                "Acerto com o Pedro",
+                requireNotNull(transactions.getTransactionById(registered.id)).title,
+            )
+
+            // The field is on screen, so clearing it is a statement about the operation
+            // and not a value the form failed to carry over.
+            get<UpdateTransferUseCase>()(
+                transactionId = registered.id,
+                sourceAccountId = nubank.id,
+                destinationAccountId = savings.id,
+                amount = 200.0,
+                date = day,
+                title = null,
+            ).onLeft { error("the correction was refused: $it") }
+
+            assertEquals(
+                null,
+                requireNotNull(transactions.getTransactionById(registered.id)).title,
+            )
+            // Still one operation, and still a transfer: naming it changed nothing else.
+            assertEquals(
+                TransactionLabel.TRANSFER,
+                entries.getEntriesByTransaction(registered.id).deriveTransactionLabel(),
             )
         }
 }

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.displayTitleOrNull
 
 data class Recurring(
     val id: Long = 0,
@@ -14,7 +14,19 @@ data class Recurring(
     val createdAt: Long,
     val isArchived: Boolean = false,
 ) {
-    val label get() = displayTitleOf(title, category)
+    /**
+     * What the template is called: its own title, or the name of its category.
+     *
+     * There is no third link to invent, and none is needed: `RecurringForm.toRecurring`
+     * is the single owner of "a template has a title or a category", every write goes
+     * through it, and archiving only copies a flag onto a row that already passed. So the
+     * absence is asserted rather than papered over with a name the user never chose — the
+     * day a new write path skips that owner, this is what says so, instead of a screen
+     * quietly reading wrong.
+     */
+    val label
+        get() = displayTitleOrNull(title, category)
+            ?: error("A recurring has a title or a category (RecurringForm.toRecurring).")
 
     /**
      * Whether the money still has somewhere to move through.

@@ -65,6 +65,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 80.0,
             date = today,
+            title = null,
         )
 
         assertTrue(result.isRight())
@@ -91,6 +92,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = chase.id,
             amount = 550.0,
             date = today,
+            title = null,
             destinationAmount = 100.0,
         )
 
@@ -109,6 +111,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 50.0,
             date = LocalDate(2026, 3, 1),
+            title = null,
         )
 
         assertEquals(LocalDate(2026, 3, 1), transactions.rewrites.single().date)
@@ -125,6 +128,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = chase.id,
             amount = 550.0,
             date = today,
+            title = null,
             destinationAmount = 100.0,
         )
 
@@ -140,8 +144,13 @@ class UpdateTransferUseCaseTest {
         assertTrue(rates.removed.isEmpty(), "a correction revokes no observation")
     }
 
+    /**
+     * The form shows the title, so the correction writes what it says — a name changed,
+     * and a name cleared alike. Carrying the stored one forward was right only while the
+     * screen had no field for it; now it would ignore what the user typed.
+     */
     @Test
-    fun `a correction preserves the title the form never showed`() = runTest {
+    fun `a correction writes the title it was given`() = runTest {
         val titled = transfer.copy(title = "Rent, moved across")
         val transactions = RewriteRecordingTransactions(listOf(titled))
 
@@ -151,9 +160,27 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 80.0,
             date = today,
+            title = "Reserva de emergência",
         )
 
-        assertEquals("Rent, moved across", transactions.rewrites.single().title)
+        assertEquals("Reserva de emergência", transactions.rewrites.single().title)
+    }
+
+    @Test
+    fun `a correction with no title leaves the operation unnamed`() = runTest {
+        val titled = transfer.copy(title = "Rent, moved across")
+        val transactions = RewriteRecordingTransactions(listOf(titled))
+
+        useCase(transactions)(
+            transactionId = titled.id,
+            sourceAccountId = nubank.id,
+            destinationAccountId = inter.id,
+            amount = 80.0,
+            date = today,
+            title = null,
+        )
+
+        assertEquals(null, transactions.rewrites.single().title)
     }
 
     @Test
@@ -180,6 +207,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 550.0,
             date = today,
+            title = null,
         )
 
         assertEquals(1, transactions.rewrites.size)
@@ -199,6 +227,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 0.0,
             date = today,
+            title = null,
         ).leftOrNull()
 
         assertEquals(TransferError.InvalidAmount, error?.error)
@@ -215,6 +244,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = chase.id,
             amount = 550.0,
             date = today,
+            title = null,
             destinationAmount = 0.0,
         ).leftOrNull()
 
@@ -232,6 +262,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = nubank.id,
             amount = 80.0,
             date = today,
+            title = null,
         ).leftOrNull()
 
         assertEquals(TransferError.SameAccount, error?.error)
@@ -248,6 +279,7 @@ class UpdateTransferUseCaseTest {
             destinationAccountId = inter.id,
             amount = 80.0,
             date = LocalDate(2026, 3, 11),
+            title = null,
         ).leftOrNull()
 
         assertEquals(TransferError.FutureDate, error?.error)
@@ -266,6 +298,7 @@ class UpdateTransferUseCaseTest {
                 destinationAccountId = inter.id,
                 amount = 80.0,
                 date = today,
+                title = null,
             ).leftOrNull()?.error,
         )
         assertEquals(
@@ -276,6 +309,7 @@ class UpdateTransferUseCaseTest {
                 destinationAccountId = 99,
                 amount = 80.0,
                 date = today,
+                title = null,
             ).leftOrNull()?.error,
         )
         assertTrue(transactions.rewrites.isEmpty())

@@ -67,7 +67,14 @@ sealed class InstallmentsUiState {
 data class InstallmentUi(
     val installmentId: Long,
     val latestTransactionDate: LocalDate,
-    val title: String,
+    /**
+     * What the instalment is called by what it carries — the title of its first
+     * transaction, or its category's name — and `null` when it carries neither.
+     *
+     * Naming that absence is the screen's, not the mapper's: an instalment has a form of
+     * its own, and this DTO does not resolve localized text.
+     */
+    val title: String?,
     val categoryName: String?,
     val categoryIcon: CategoryLazyIcon?,
     val categoryType: Category.Type?,

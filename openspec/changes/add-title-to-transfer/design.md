@@ -14,18 +14,25 @@ As superfícies que nomeiam uma operação hoje não concordam entre si:
 | **Card da lista** | `TransactionCard.kt:163-169` | **forma → título → categoria** |
 | Card de parcelamento | `InstallmentUiMapper.kt:58` | título → categoria → `"Untitled"` |
 | Recorrência | `Recurring.kt:17` | título → categoria → `"Untitled"` |
+| **Documento exportado** | `ReportExportLayout.kt:224-232` | **forma → título → categoria** |
 
 A spec `transaction-detail:171-183` já enuncia a regra correta e a justifica. Nenhuma spec
-cobre a lista, e é lá que a cadeia está invertida.
+cobre a lista nem o documento exportado, e é neles que a cadeia está invertida — o documento
+copia a cadeia do card linha por linha, com os mesmos quatro rótulos de forma.
 
 Um fato apurado contra o código em disco governa o resto deste documento: **`"Untitled"` é
 inalcançável hoje, e é o card invertido que o torna inalcançável.** As únicas transações que
 nascem sem título e sem categoria são as que use cases escrevem — transferência, ajuste de
 saldo, ajuste de fatura, pagamento de fatura —, e são exatamente as quatro que o `when` do card
-intercepta antes do `else`. Nos demais caminhos o segundo elo é garantido:
-`ValidateTransactionFormUseCaseImpl.kt:38` para o formulário de transação,
-`RecurringForm.kt:41` para a recorrência, e `DeleteCategoryUseCase` recusa apagar uma categoria
-que tenha qualquer dependente, de modo que nenhuma linha perde a sua categoria depois.
+intercepta antes do `else`. Nos demais caminhos o segundo elo é exigido por
+`ValidateTransactionFormUseCaseImpl.kt:38` no formulário de transação, por `RecurringForm.kt:41`
+na recorrência e por `ConfirmRecurringModal.kt:325-326` na confirmação, e `DeleteCategoryUseCase`
+recusa apagar uma categoria que tenha qualquer dependente, de modo que nenhuma linha perde a sua
+categoria depois.
+
+Dessas exigências **só a da recorrência é do domínio**: as outras duas habilitam um botão e nada
+recusa a escrita (D5, D7). Inverter a cadeia sem dar forma a `EXPENSE` e `INCOME` deixaria a tela
+mais usada do app sem terceiro elo justamente onde a garantia é mais fraca.
 
 ## Goals / Non-Goals
 
@@ -33,7 +40,7 @@ que tenha qualquer dependente, de modo que nenhuma linha perde a sua categoria d
 - Dar à transferência um título opcional, gravado tanto na criação quanto na correção.
 - Fazer da precedência **título > categoria > forma** uma regra única, válida em toda superfície
   que nomeia uma operação.
-- Remover `"Untitled"` por prova de inalcançabilidade, e não por otimismo.
+- Remover `"Untitled"` dando a cada superfície um terceiro elo real, e não por otimismo.
 - Deixar cada superfície declarar o seu terceiro elo, em vez de herdar um literal genérico.
 
 **Non-Goals:**
@@ -100,23 +107,35 @@ Isto espelha o detalhe, que já divide a responsabilidade assim
 (`ViewTransactionUiState.kt:70` guarda `String?`, `ViewTransactionModal` fornece a forma). As
 duas superfícies passam a concordar não só na precedência, mas em onde cada metade da regra mora.
 
+O documento exportado é o terceiro consumidor de `TransactionUi.title`, encontrado pelo
+compilador ao torná-lo anulável, e segue o mesmo desenho: `ReportExportStrings` já carrega os
+rótulos de forma resolvidos antes do export, e `exportTitle` inverte a cadeia como o card. Um
+relatório que nomeasse a operação de outro jeito seria a mesma operação sob dois nomes.
+
 **Alternativa considerada:** o mapper devolver `UiText` com o terceiro elo já escolhido
 (`UiText.Raw` para título e categoria, `UiText.Res` para a forma), deixando o card só renderizar.
 Põe toda a decisão no mapper, o que agrada a `presentation-mapping:23`. Recusada porque o
 terceiro elo do card e o do detalhe são textos diferentes, então o mapper teria de saber para
 qual superfície está mapeando — que é o acoplamento que o DTO plano existe para evitar.
 
-### D5 — `"Untitled"` é removido por prova, não por substituição
-
-Depois de D4, nenhum caminho o alcança:
-
-- `EXPENSE`/`INCOME`: o segundo elo é garantido pelo validador do formulário, e a categoria não
-  desaparece depois.
-- `TRANSFER`/`PAYMENT`/`ADJUSTMENT`: o terceiro elo existe sempre, porque a forma é derivada dos
-  tipos de conta das pernas (`deriveTransactionLabel`) — enum fechado, nunca ausente.
+### D5 — `"Untitled"` é removido porque toda superfície passa a ter terceiro elo
 
 O literal é texto em inglês num app que existe em pt e en (`DisplayTitle.kt:16-19`, que o
 descreve como "deixado como estava; é uma decisão separada"). Esta é a decisão separada.
+
+Ele sai porque cada superfície passa a declarar o seu terceiro elo, e não porque nenhum caminho
+o alcança. **A forma é sempre conhecida**: `TransactionLabel` é derivado dos tipos de conta das
+pernas (`deriveTransactionLabel`) sobre um enum fechado, então o `when` do card é uma função
+total e nunca cai num último recurso.
+
+`EXPENSE`/`INCOME` recebem a sua forma como as demais, e **não** um invariante afirmado. A
+garantia de que um gasto tem título ou categoria é apenas de tela, exatamente como a do
+parcelamento em D7: `ValidateTransactionFormUseCase` só alimenta `canSubmit`,
+`BuildTransactionUseCase` não a valida, e `ConfirmRecurringUseCase` também não —
+`ConfirmRecurringModal.kt:325-326` a exige no botão, não no domínio. Apurado ao aplicar a
+mudança; a redação anterior deste ponto tratava essa garantia como do domínio e contradizia
+D7. As chaves são `transaction_card_expense` e `transaction_card_income`, e o documento
+exportado as reusa.
 
 ### D6 — Onde o invariante é do domínio e está provado, afirma-se
 
@@ -133,6 +152,11 @@ verificada, não presumida:
   então nenhuma linha jamais pôde ser gravada violando-a.
 - Nenhuma migração inventa recorrências: `Migration3To4.kt:100` é `INSERT … SELECT` sobre linhas
   existentes.
+
+Uma fresta foi fechada para que o invariante fosse verdadeiro e não quase verdadeiro: o dono da
+regra dizia `title.isNotEmpty()`, enquanto quem lê o nome descarta o branco (`isNotBlank`). Um
+título só de espaços satisfazia o dono e falhava na leitura. `toRecurring` passa a exigir
+`isNotBlank` e a gravar o título aparado — a regra e a leitura dela deixam de discordar.
 
 Então `label` lança em vez de mascarar. Não é programação defensiva: é a declaração executável de
 um invariante que outro módulo sustenta, e que falha alto e cedo no dia em que um caminho novo o
@@ -198,9 +222,9 @@ em ordem: são uma. As tarefas as mantêm no mesmo passo por isso, e não por co
   deixá-lo produzir uma tela em inglês. Mitigação adicional: os dois testes convertidos fixam o
   invariante em vez de fixar o mascaramento.
 
-- **[`TransactionUi.title` e `InstallmentUi.title` viram anuláveis]** → Um consumidor cada
-  (`TransactionCard.kt:131`, `InstallmentsScreen.kt:510`). O compilador acusa os dois, e nenhum
-  outro DTO é tocado.
+- **[`TransactionUi.title` e `InstallmentUi.title` viram anuláveis]** → Três consumidores ao
+  todo (`TransactionCard.kt:131`, `InstallmentsScreen.kt:510` e `ReportExportLayout.kt:230`, este
+  último apurado pelo compilador ao aplicar). Nenhum outro DTO é tocado.
 
 - **[Uma transferência antiga continua sem título]** → Nenhuma migração de dados é feita, e nenhuma
   seria correta: inventar um título para uma operação passada seria escrever em nome do usuário.

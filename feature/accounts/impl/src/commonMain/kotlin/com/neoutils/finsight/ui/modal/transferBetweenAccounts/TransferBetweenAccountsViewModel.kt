@@ -117,6 +117,7 @@ class TransferBetweenAccountsViewModel(
                 amount = action.amount,
                 destinationAmount = action.destinationAmount,
                 date = action.date,
+                title = action.title,
             )
         }
     }
@@ -137,6 +138,7 @@ class TransferBetweenAccountsViewModel(
         amount: Double,
         destinationAmount: Double,
         date: LocalDate,
+        title: String,
     ) = viewModelScope.launch {
         val sourceAccount = uiState.value.selectedSourceAccount ?: return@launch
         val destinationAccount = uiState.value.selectedDestinationAccount ?: return@launch
@@ -145,6 +147,10 @@ class TransferBetweenAccountsViewModel(
         // moves one figure, and stating it twice would be the form inventing a rate of 1.
         val arriving = destinationAmount.takeIf { uiState.value.isCrossCurrency }
 
+        // Blank is an absence and not a name, and this is the one place that says so —
+        // the field carries text, the operation carries a title or nothing.
+        val statedTitle = title.trim().takeIf { it.isNotEmpty() }
+
         val result = if (transaction != null) {
             updateTransferUseCase(
                 transactionId = transaction.id,
@@ -152,6 +158,7 @@ class TransferBetweenAccountsViewModel(
                 destinationAccountId = destinationAccount.id,
                 amount = amount,
                 date = date,
+                title = statedTitle,
                 destinationAmount = arriving,
             )
         } else {
@@ -161,6 +168,7 @@ class TransferBetweenAccountsViewModel(
                 amount = amount,
                 date = date,
                 destinationAmount = arriving,
+                title = statedTitle,
             )
         }
 

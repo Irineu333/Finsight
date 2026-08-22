@@ -94,6 +94,7 @@ import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_uncategorized
+import com.neoutils.finsight.resources.installment_card_installment
 import com.neoutils.finsight.resources.installments_create
 import com.neoutils.finsight.resources.installments_current_installment
 import com.neoutils.finsight.resources.installments_delete
@@ -507,7 +508,11 @@ private fun InstallmentSummaryCard(
 
                     Column {
                         Text(
-                            text = ui.title,
+                            // Title, then category, then form — and the form of an
+                            // instalment is that it is one. The card already shows "1/12"
+                            // beside it, so "Instalment" says more there than "Expense".
+                            text = ui.title
+                                ?: stringResource(Res.string.installment_card_installment),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,

@@ -196,6 +196,7 @@
     <string name="installments_remaining">Restante</string>
     <string name="installments_status_active">Ativo</string>
     <string name="installments_status_completed">Concluído</string>
+    <string name="installment_card_installment">Parcelamento</string>
     <string name="installments_filter_category">Categoria</string>
     <string name="installments_filter_category_all">Todas</string>
     <string name="installments_filter_type">Tipo</string>
@@ -482,6 +483,7 @@
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transferir entre contas</string>
     <string name="transfer_edit_title">Corrigir transferência</string>
+    <string name="transfer_title_label">Título</string>
     <string name="transfer_source_account_label">Conta de origem</string>
     <string name="transfer_destination_account_label">Conta de destino</string>
     <string name="transfer_amount_label">Valor</string>
@@ -597,6 +599,8 @@
     <string name="transaction_card_payment">Pagamento de Fatura</string>
     <string name="transaction_card_balance_adjustment">Ajuste de Saldo</string>
     <string name="transaction_card_invoice_adjustment">Ajuste de Fatura</string>
+    <string name="transaction_card_expense">Despesa</string>
+    <string name="transaction_card_income">Receita</string>
 
     <string name="target_selector_account">Conta</string>
     <string name="target_selector_credit_card">Cartão de Crédito</string>

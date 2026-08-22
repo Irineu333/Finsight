@@ -100,6 +100,8 @@ class ReportExportDocumentLanguageTest {
         transactionPayment = "Payment",
         transactionBalanceAdjustment = "Balance adjustment",
         transactionInvoiceAdjustment = "Invoice adjustment",
+        transactionExpense = "Expense",
+        transactionIncome = "Income",
         uncategorized = "Uncategorized",
         columnCategory = "Category",
         columnTransaction = "Transaction",

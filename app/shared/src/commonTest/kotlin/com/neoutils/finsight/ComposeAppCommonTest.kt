@@ -5,14 +5,20 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class ComposeAppCommonTest {
 
+    /**
+     * A template with neither a title nor a category cannot be written — `RecurringForm`
+     * is the single owner of that rule and every write path goes through it. So reading
+     * one is a state that should not exist, and the read says so instead of handing the
+     * screen a name the user never chose.
+     */
     @Test
-    fun recurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
+    fun recurringLabelRefusesToNameATemplateThatHasNeitherTitleNorCategory() {
         val recurring = Recurring(
             type = TransactionType.EXPENSE,
             amount = 10.0,
@@ -24,7 +30,7 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Untitled", recurring.label)
+        assertFailsWith<IllegalStateException> { recurring.label }
     }
 
     @Test
@@ -49,7 +55,7 @@ class ComposeAppCommonTest {
     }
 
     @Test
-    fun transactionRecurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
+    fun transactionRecurringLabelRefusesTheSameStateItsInstanceRefuses() {
         val recurring = Recurring(
             type = TransactionType.EXPENSE,
             amount = 10.0,
@@ -61,6 +67,8 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Untitled • 1", TransactionRecurring(instance = recurring, cycleNumber = 1).label)
+        assertFailsWith<IllegalStateException> {
+            TransactionRecurring(instance = recurring, cycleNumber = 1).label
+        }
     }
 }

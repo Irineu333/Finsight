@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -108,6 +109,7 @@ class TransferBetweenAccountsModal private constructor(
         val date = rememberTextFieldState(
             dayMonthYear.format(transaction?.date ?: currentDate),
         )
+        val title = rememberTextFieldState(transaction?.title.orEmpty())
 
         val source = uiState.selectedSourceAccount ?: sourceAccount
         val destination = uiState.selectedDestinationAccount
@@ -150,6 +152,27 @@ class TransferBetweenAccountsModal private constructor(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // First, as in the transaction form: the field that names the operation
+                // reads better opening it than appended after the date.
+                OutlinedTextField(
+                    state = title,
+                    label = {
+                        Text(text = stringResource(Res.string.transfer_title_label))
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("transfer_title"),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 AccountSelector(
                     selectedAccount = uiState.selectedSourceAccount,
@@ -260,6 +283,7 @@ class TransferBetweenAccountsModal private constructor(
                                 amount = amount.text.toString().moneyToDouble(),
                                 destinationAmount = destinationAmount.text.toString().moneyToDouble(),
                                 date = dayMonthYear.parse(date.text.toString()),
+                                title = title.text.toString(),
                             )
                         )
                     },

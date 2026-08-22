@@ -195,6 +195,7 @@
     <string name="installments_remaining">Remaining</string>
     <string name="installments_status_active">Active</string>
     <string name="installments_status_completed">Completed</string>
+    <string name="installment_card_installment">Installment</string>
     <string name="installments_filter_category">Category</string>
     <string name="installments_filter_category_all">All</string>
     <string name="installments_filter_type">Type</string>
@@ -481,6 +482,7 @@
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transfer between accounts</string>
     <string name="transfer_edit_title">Edit transfer</string>
+    <string name="transfer_title_label">Title</string>
     <string name="transfer_source_account_label">Source account</string>
     <string name="transfer_destination_account_label">Destination account</string>
     <string name="transfer_amount_label">Amount</string>
@@ -596,6 +598,8 @@
     <string name="transaction_card_payment">Invoice Payment</string>
     <string name="transaction_card_balance_adjustment">Balance Adjustment</string>
     <string name="transaction_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="transaction_card_expense">Expense</string>
+    <string name="transaction_card_income">Income</string>
 
     <string name="target_selector_account">Account</string>
     <string name="target_selector_credit_card">Credit Card</string>

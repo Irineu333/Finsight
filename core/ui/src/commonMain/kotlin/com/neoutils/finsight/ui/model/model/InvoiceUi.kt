@@ -29,6 +29,18 @@ data class InvoiceUi(
     val isClosed: Boolean,
     val isRetroactive: Boolean,
     val isEditable: Boolean,
+    /**
+     * Whether this invoice has a payment to offer at all. A surface reads it instead of
+     * enumerating statuses, so what is offered cannot drift from what the domain permits.
+     */
+    val canPay: Boolean,
+    /**
+     * The verb that names that payment — "advance" only while the cycle is still taking
+     * spending, "pay" once it has ended. Meaningful only where [canPay] holds.
+     */
+    val payLabel: StringResource,
+    /** Whether paying discharges the invoice, rather than taking a part of what it owes. */
+    val paySettles: Boolean,
     val statusColor: Color,
     val statusLabel: StringResource,
 )

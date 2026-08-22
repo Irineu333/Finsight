@@ -33,7 +33,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) �
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~29 minutos** para 14 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~30 minutos** para 15 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -79,7 +79,7 @@ Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
    estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
 2. **Conferir as sete linhas da §2.2 à mão, antes do run**, e **reinstalar o APK de debug**. Menos
    de um minuto, contra 28 de resultado que não vale nada.
-3. **Reportar em que aparelho rodou.** Um "13/13 verde" sem o aparelho ao lado não é um resultado,
+3. **Reportar em que aparelho rodou.** Um "15/15 verde" sem o aparelho ao lado não é um resultado,
    é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
 4. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
    respondida com dados, não usada como explicação de saída.
@@ -190,7 +190,7 @@ aponta para dentro:
 
 | Comando | O que acontece |
 |---|---|
-| `maestro test .maestro` | Workspace: os 14 fluxos, com as animações desligadas pelo `config.yaml` |
+| `maestro test .maestro` | Workspace: os 15 fluxos, com as animações desligadas pelo `config.yaml` |
 | `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
 | `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
 | `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
@@ -234,6 +234,10 @@ acabou de criar — dois fluxos criam cartões com limites diferentes, e a afirm
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
 então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
 
+`creditcards` é a exceção, e a razão é aritmética: as figuras de `lifecycle` são escolhidas para que
+nenhuma repita os dígitos de outra, e todas são asseridas adiante. Gastar dinheiro dentro dela move
+essa conta, e uma falha da jornada retroativa passaria a se ler como falha da história do cartão.
+
 | Fluxo | A afirmação pela qual ele existe |
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
@@ -243,6 +247,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
+| `creditcards/retroactive_payment` | um ciclo passado se regulariza pela mesma porta das demais faturas, e pagá-lo até zerar não o quita — `PAID` continua sendo consequência do fechamento |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `recurring/from_transaction` | uma despesa lançada abre a recorrência da qual ela é o primeiro ciclo — e o mês que ela acabou de pagar não volta a ser cobrado |
@@ -260,7 +265,7 @@ Um id é um `Modifier.testTag` do Compose, e ele só chega ao Maestro porque a r
 publica as tags na árvore de acessibilidade, via `Modifier.exposeTestTags()` (`core/designsystem` —
 `ui/util/ExposeTestTags`). **Uma raiz precisa aderir explicitamente, e uma folha modal, um diálogo ou
 um popup são raízes próprias.** Hoje aderem: o `Surface` do `App`, o `ModalBottomSheet`, o painel de
-detalhe e dois `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
+detalhe e três `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
 invisíveis sem nenhum erro que explique o porquê.
 
 ## 4. Quando um teste fica vermelho

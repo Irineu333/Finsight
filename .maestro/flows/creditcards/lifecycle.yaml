@@ -196,24 +196,26 @@ env:
 - assertVisible: ${SPEND_TITLE}
 
 # --- I pay $50.00 of it early --------------------------------------------------------------------
-# The account is the default one, already selected by the modal; only the amount is this flow's to
-# type. The date defaults to today, which the invoice's open period contains.
+# One command, whatever state the invoice is in, and it opens on the invoice in view: card, invoice
+# and account arrive selected, so only the amount is this flow's to type. The invoice is still open,
+# which is what makes the amount the user's at all — a closed one states it instead. The date
+# defaults to today, which the invoice's open period contains.
 - tapOn:
-    id: "invoice_advance_payment"
+    id: "invoice_pay_invoice"
 - extendedWaitUntil:
     visible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 - tapOn:
-    id: "advance_payment_amount"
+    id: "invoice_payment_amount"
 - waitForAnimationToEnd
 - inputText: ${ADVANCE_DIGITS}
 - hideKeyboard
 - tapOn:
-    id: "advance_payment_confirm"
+    id: "invoice_payment_confirm"
 - extendedWaitUntil:
     notVisible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 
 # What was spent is untouched — an early payment settles debt, it does not unspend anything — and
@@ -330,8 +332,9 @@ env:
       id: "close_invoice_confirm"
     timeout: 15000
 
-# The card stays on this invoice — it is the oldest one still unpaid — and now offers to settle it
-# instead of to close it. Closing is spent: a closed invoice cannot be closed twice.
+# The card stays on this invoice — it is the oldest one still unpaid — and what closing spends is
+# the offer to close: a closed invoice cannot be closed twice. Paying is offered either way, so the
+# transition is read on the offer that went, and on what the sheet says of itself below.
 - extendedWaitUntil:
     visible:
       id: "credit_card_pay_invoice"
@@ -343,27 +346,29 @@ env:
     text: "[$]70[.,]00"
 
 # --- I pay it ------------------------------------------------------------------------------------
-# The amount is the invoice's, not the user's: the modal states what is owed and does not accept a
-# different figure. Asserting it here is asserting that the debt reached the payment intact.
+# The same command as before the close, and the sheet it opens is in the other mode: the amount is
+# the invoice's, not the user's — stated, not typed. Asserting it here says two things at once, that
+# a closed invoice only takes the whole of what it owes, and that the debt reached the payment
+# intact.
 - tapOn:
     id: "credit_card_pay_invoice"
 - extendedWaitUntil:
     visible:
-      id: "pay_invoice_confirm"
+      id: "invoice_payment_confirm"
     timeout: 15000
 - assertVisible:
-    id: "pay_invoice_amount"
+    id: "invoice_payment_amount"
     text: "[$]70[.,]00"
 # And which account settles it. The dashboard balance below drops by exactly this payment, but with
 # more than one account on the app that consequence stops naming the account — here it is named.
 - assertVisible:
-    id: "pay_invoice_account"
+    id: "invoice_payment_account"
     text: "Wallet"
 - tapOn:
-    id: "pay_invoice_confirm"
+    id: "invoice_payment_confirm"
 - extendedWaitUntil:
     notVisible:
-      id: "pay_invoice_confirm"
+      id: "invoice_payment_confirm"
     timeout: 15000
 
 # --- Paying opened the next invoice --------------------------------------------------------------
@@ -380,13 +385,14 @@ env:
     id: "credit_card_available_limit"
     text: "[$]2[.,]000[.,]00"
 
-# It is a different invoice, and the commands say which: nothing to settle, because this one was
-# never closed. It does offer closing — the jump cleared its closing date too, a month after the
-# one it replaced — and that is the point: the offer moved to the new invoice with it.
-- assertNotVisible:
-    id: "credit_card_pay_invoice"
+# It is a different invoice, and the commands say which: it offers closing, because this one was
+# never closed — the jump cleared its closing date too, a month after the one it replaced — and
+# that is the point: the offer moved to the new invoice with it. Paying stands beside it, as it
+# does on every invoice a payment may name; what changed with the invoice is what it opens on.
 - assertVisible:
     id: "credit_card_close_invoice"
+- assertVisible:
+    id: "credit_card_pay_invoice"
 
 # --- And the account paid for it -----------------------------------------------------------------
 # $500.00 earned, less $50.00 advanced and $70.00 settled.

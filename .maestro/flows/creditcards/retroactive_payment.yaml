@@ -1,0 +1,249 @@
+appId: com.neoutils.finsight
+name: creditcards_retroactive_payment
+tags:
+  - creditcards
+  - ledger
+env:
+  CARD_NAME: "E2E Retro Card"
+  CARD_LIMIT_DIGITS: "200000"
+  CARD_CLOSING_DAY: "10"
+  CARD_DUE_DAY: "20"
+  INCOME_TITLE: "E2E Payday"
+  INCOME_DIGITS: "50000"
+  # What the past cycle turns out to have owed, declared as a balance rather than spent: the
+  # cycle is over, so there is no purchase left to make inside it.
+  RETRO_BALANCE_DIGITS: "40000"
+  FIRST_PAYMENT_DIGITS: "15000"
+  REST_PAYMENT_DIGITS: "25000"
+---
+# A past cycle being regularized: an invoice for a month that already went by, carrying what it
+# turns out to have owed, paid down in two goes.
+#
+# This is the journey the app had no way through. The domain has always counted a retroactive
+# invoice as a debtor — the month's settlement forecast adds it up — while every screen offered
+# only closing, so the debt could be seen and never paid. What this flow walks is the offer
+# arriving: the same one command every other invoice gets, in the mode a cycle still taking
+# spending is paid in.
+#
+# It also walks the invariant that comes with it: paying a retroactive invoice **does not settle
+# it**. Paid down to nothing it is still retroactive, still closable, still not `PAID` — and that
+# is asserted on the offers, because an invoice that had been settled would have withdrawn them.
+#
+# Kept apart from `creditcards/lifecycle` on purpose: that flow's figures are chosen so no two
+# share their digits, and every one of them is asserted downstream. Money spent inside it would
+# have moved that arithmetic, and a failure here would then read as a failure there.
+#
+# The figures: $500.00 earned, $400.00 owed by the past cycle, $150.00 then $250.00 paid, leaving
+# $100.00 in the account and a card that owes nothing.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Money to pay with ---------------------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+
+# --- A card, and with it the one invoice a new card gets -----------------------------------------
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: creditCards
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/create_credit_card.yaml
+    env:
+      NAME: ${CARD_NAME}
+      LIMIT: ${CARD_LIMIT_DIGITS}
+      CLOSING_DAY: ${CARD_CLOSING_DAY}
+      DUE_DAY: ${CARD_DUE_DAY}
+- extendedWaitUntil:
+    visible:
+      id: "credit_card_invoice_amount"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+
+# --- An invoice for a month that already went by -------------------------------------------------
+# Two months back from the one the card opened on, so the whole of its cycle — and therefore every
+# date its payment may carry — is in the past. The status is derived, never chosen: a due month
+# before the open invoice's makes it retroactive.
+- tapOn:
+    id: "credit_card_card"
+- extendedWaitUntil:
+    visible:
+      id: "screen_invoice_transactions"
+    timeout: 15000
+- tapOn:
+    id: "invoice_transactions_more_options"
+- extendedWaitUntil:
+    visible:
+      id: "invoice_transactions_create_invoice"
+    timeout: 15000
+- tapOn:
+    id: "invoice_transactions_create_invoice"
+- extendedWaitUntil:
+    visible:
+      id: "create_invoice_month"
+    timeout: 15000
+- tapOn:
+    id: "create_invoice_previous_month"
+- tapOn:
+    id: "create_invoice_previous_month"
+- tapOn:
+    id: "create_invoice_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "create_invoice_confirm"
+    timeout: 15000
+
+# The screen went to the invoice it just created, and it is empty — declaring what it owes is the
+# next gesture, not part of creating it.
+- extendedWaitUntil:
+    visible:
+      id: "invoice_total_amount"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_total_amount"
+    text: "[$]0[.,]00"
+
+# --- What the past cycle turns out to have owed --------------------------------------------------
+# Declared as a balance: the cycle is over, so there is no purchase left to make inside it, and
+# adjusting is the gesture the app offers for exactly that.
+- tapOn:
+    id: "invoice_total_amount"
+- extendedWaitUntil:
+    visible:
+      id: "edit_invoice_balance_amount"
+    timeout: 15000
+- tapOn:
+    id: "edit_invoice_balance_amount"
+- waitForAnimationToEnd
+- eraseText
+- inputText: ${RETRO_BALANCE_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "edit_invoice_balance_save"
+- extendedWaitUntil:
+    notVisible:
+      id: "edit_invoice_balance_save"
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible:
+      id: "invoice_total_amount"
+      text: "[$]400[.,]00"
+    timeout: 15000
+
+# --- $150.00 of it, paid -------------------------------------------------------------------------
+# The same command every invoice offers, opening on this one. It is still taking spending as far as
+# the domain is concerned, so the amount is the user's to state and the date lands inside the past
+# cycle — both of which the sheet decides from the status alone.
+- tapOn:
+    id: "invoice_pay_invoice"
+- extendedWaitUntil:
+    visible:
+      id: "invoice_payment_amount"
+    timeout: 15000
+- tapOn:
+    id: "invoice_payment_amount"
+- waitForAnimationToEnd
+- inputText: ${FIRST_PAYMENT_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "invoice_payment_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "invoice_payment_amount"
+    timeout: 15000
+
+# The debt fell by what was paid, and the payment is on the invoice's own summary — the line that
+# derives from the ledger's flows through this invoice's dimension, with no status consulted.
+- extendedWaitUntil:
+    visible:
+      id: "invoice_total_amount"
+      text: "[$]250[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_advance_payments_amount"
+    text: "[+][$]150[.,]00"
+
+# And nothing about the invoice moved: it still offers the payment, which a settled one would have
+# withdrawn.
+- assertVisible:
+    id: "invoice_pay_invoice"
+
+# --- And the rest ---------------------------------------------------------------------------------
+# Paid to nothing, and *still* not settled: `PAID` is reachable only from `CLOSED`, or from the
+# closing that settles an invoice owing nothing. Paying is not a third way in.
+- tapOn:
+    id: "invoice_pay_invoice"
+- extendedWaitUntil:
+    visible:
+      id: "invoice_payment_amount"
+    timeout: 15000
+- tapOn:
+    id: "invoice_payment_amount"
+- waitForAnimationToEnd
+- inputText: ${REST_PAYMENT_DIGITS}
+- hideKeyboard
+- tapOn:
+    id: "invoice_payment_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "invoice_payment_amount"
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible:
+      id: "invoice_total_amount"
+      text: "[$]0[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "invoice_advance_payments_amount"
+    text: "[+][$]400[.,]00"
+
+# --- The status held, and the offer says so ------------------------------------------------------
+# The command is still there on an invoice that owes nothing, and that is the assertion: what an
+# invoice offers comes from its status alone, and a settled one offers no payment at all. So this
+# invoice is not settled — paid to nothing and still retroactive, with closing left as the only
+# gesture that would settle it.
+- assertVisible:
+    id: "invoice_pay_invoice"
+
+# --- The card is square again --------------------------------------------------------------------
+# The cards screen stands on the open invoice, not on this one: `observeUnpaidInvoices` excludes
+# retroactive invoices, so the debt just paid was never in the figure it shows. That divergence is
+# older than this flow and has an issue of its own
+# (`retroactive-invoice-debt-is-invisible-to-the-available-limit`); asserted here as what the screen
+# does say, so the day it starts saying the other thing this flow notices.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_credit_cards"
+    timeout: 15000
+- assertVisible:
+    id: "credit_card_invoice_amount"
+    text: "[$]0[.,]00"
+- assertVisible:
+    id: "credit_card_available_limit"
+    text: "[$]2[.,]000[.,]00"
+
+# --- And the account really paid for it ----------------------------------------------------------
+# $500.00 earned, less the $400.00 that went to the card in two goes. A card payment is not a
+# category expense, so it is the balance that carries it.
+- back
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]100[.,]00"

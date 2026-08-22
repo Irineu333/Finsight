@@ -11,19 +11,19 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Pays part of an open invoice ahead of time.
+ * Pays part of what an invoice owes, leaving its status untouched.
+ *
+ * The invoices that accept this are the ones still taking spending — `OPEN` and
+ * `RETROACTIVE` — because only an invoice without a final figure can be paid in part.
+ * `Invoice.acceptsPartialPayment` is the owner of that rule, and the guard below is what
+ * makes it a permission and not merely an offer.
  *
  * **[amount] is in the card's currency and always has been**, and that is what makes the
  * ceiling below correct: `amount <= currentBillAmount` compares two figures denominated
@@ -32,11 +32,9 @@ import kotlin.time.ExperimentalTime
  * all, because comparing it to the invoice would be comparing two currencies.
  */
 class AdvanceInvoicePaymentUseCase(
-    private val transactionRepository: ITransactionRepository,
+    private val writeInvoicePayment: WriteInvoicePaymentUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
-    private val accountRepository: IAccountRepository,
     private val clock: Clock,
 ) {
 
@@ -68,6 +66,14 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.NotFound)
         }
 
+        // Before the date window, so a refusal names the real reason: a closed invoice
+        // is not refused because of *when* it is being paid but because of *what* it
+        // accepts. The offer and the permission read the same predicate, so a screen
+        // that starts calling this cannot inherit the permission silently.
+        ensure(invoice.acceptsPartialPayment) {
+            InvoiceException(InvoiceError.InvoiceNotPartiallyPayable)
+        }
+
         ensure(date >= invoice.openingDate && date <= invoice.closingDate) {
             InvoiceException(InvoiceError.DateOutsideInvoicePeriod)
         }
@@ -88,48 +94,14 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.AmountExceedsInvoice)
         }
 
-        val leaving = paidAmount ?: amount
-
-        val transaction = catch {
-            transactionRepository.createTransaction(
-                TransactionIntent(
-                    title = null,
-                    date = date,
-                    legs = listOf(
-                        // The money leaves the account undimensioned; only the card's
-                        // leg carries the invoice's sub-ledger, or the two would
-                        // cancel it out.
-                        TransactionLeg(
-                            type = TransactionType.EXPENSE,
-                            amount = leaving,
-                            accountId = account.id,
-                        ),
-                        TransactionLeg(
-                            type = TransactionType.INCOME,
-                            amount = amount,
-                            accountId = invoice.creditCard.accountId,
-                            dimensionId = invoice.dimensionId,
-                        ),
-                    ),
-                )
+        catch {
+            writeInvoicePayment(
+                invoice = invoice,
+                account = account,
+                leaving = paidAmount ?: amount,
+                settling = amount,
+                date = date,
             )
         }.bind()
-
-        // The rate this payment applied, written to the archive and never to the
-        // transaction (design D11).
-        catch {
-            val cardCurrency = accountRepository.getAccountById(invoice.creditCard.accountId)?.currency
-            if (cardCurrency != null) {
-                harvestExchangeRate(
-                    sourceAmount = leaving,
-                    sourceCurrency = account.currency,
-                    targetAmount = amount,
-                    targetCurrency = cardCurrency,
-                    date = date,
-                )
-            }
-        }
-
-        transaction
     }
 }

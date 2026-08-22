@@ -24,6 +24,7 @@ import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -61,11 +62,18 @@ val useCaseModules = module {
         )
     }
 
+    // The shape an invoice payment takes in the ledger — one owner, both modes.
     factory {
-        PayInvoicePaymentUseCase(
+        WriteInvoicePaymentUseCase(
+            transactionRepository = get(),
             harvestExchangeRate = get(),
             accountRepository = get(),
-            transactionRepository = get(),
+        )
+    }
+
+    factory {
+        PayInvoicePaymentUseCase(
+            writeInvoicePayment = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
@@ -74,9 +82,7 @@ val useCaseModules = module {
 
     factory {
         AdvanceInvoicePaymentUseCase(
-            harvestExchangeRate = get(),
-            accountRepository = get(),
-            transactionRepository = get(),
+            writeInvoicePayment = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             clock = get(),

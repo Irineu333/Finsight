@@ -18,6 +18,23 @@ fun Invoice.Status.toUiText(): StringResource = when (this) {
 }
 
 /**
+ * The verb that names the payment this invoice offers.
+ *
+ * "Advance" only while the cycle is still taking spending, because only there is there
+ * something to anticipate; once it has ended — and a past cycle ended longer ago still —
+ * it is simply paying. One owner, read by every surface that offers the command and by
+ * the sheet that carries it out, so the wording cannot drift from the mode.
+ *
+ * Meaningful only where `Invoice.acceptsPayment` holds.
+ */
+val Invoice.paymentLabel: StringResource
+    get() = if (acceptsFullSettlement) {
+        Res.string.invoice_payment_pay
+    } else {
+        Res.string.invoice_payment_advance
+    }
+
+/**
  * How an invoice names itself: the month it is due in, and what state it is in.
  *
  * Takes the two facts rather than the invoice, so a surface that carries them flat —

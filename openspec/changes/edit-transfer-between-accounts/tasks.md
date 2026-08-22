@@ -92,4 +92,4 @@
 - [x] 7.2 Escrever o caso de ponta a ponta em que a correção **muda a data**, provando que a observação anterior permanece na data antiga e a nova é registrada na data nova.
 - [x] 7.3 Verificar que nenhuma chave de string ficou em apenas um dos dois arquivos de idioma.
 - [x] 7.4 Rodar a suíte completa: `./gradlew jvmTest`.
-- [ ] 7.5 Acrescentar (ou estender) um fluxo Maestro em `.maestro/` que corrige o valor de uma transferência e confere o saldo das duas contas — lendo `.maestro/README.md` §2 antes de executar, e reportando em que dispositivo a execução aconteceu.
+- [x] 7.5 Acrescentar (ou estender) um fluxo Maestro em `.maestro/` que corrige o valor de uma transferência e confere o saldo das duas contas — lendo `.maestro/README.md` §2 antes de executar, e reportando em que dispositivo a execução aconteceu.

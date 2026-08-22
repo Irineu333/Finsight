@@ -62,3 +62,10 @@ Nada começado: sem change em `openspec/` e sem código no repositório.
 |---------------------------------|---------------------------------------------------------------------------------------|----------------|
 | **Backup em arquivo**           | Exportar o banco para um arquivo e restaurá-lo em outro dispositivo, sem servidor     | Funcionalidade |
 | **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade |
+| **Sincronização**               | O mesmo razão em mais de um dispositivo, sem exportar e importar à mão                | Funcionalidade |
+| **Open Finance**                | Lançamentos e saldos vindos do banco pelo Open Finance, em vez de digitados           | Funcionalidade |
+| **Assistente de IA**            | Perguntar sobre as próprias finanças e lançar em linguagem natural, no app            | Funcionalidade |
+| **Cofrinhos**                   | Reservar parte do saldo de uma conta para um fim, sem tirá-lo da conta                | Funcionalidade |
+| **Criptomoedas**                | Cripto como moeda de conta, com as casas decimais e a cotação que ela exige           | Funcionalidade |
+| **Saldo guardado**              | A conta mostra o que está guardado à parte do que resta livre para gastar             | Funcionalidade |
+| **Metas**                       | Objetivo de valor com prazo, medido pelo que já foi guardado para ele                 | Funcionalidade |

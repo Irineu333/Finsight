@@ -91,12 +91,13 @@ class TransferSubmitEnablementTest {
         )
     }
 
-    // --- The rules the button no longer states for itself ---
+    // --- The two refusals the button reaches before the write does ---
     //
-    // What makes a transfer admissible has one owner, and the button consults it rather
-    // than keeping a copy. These two prove the consultation happens: neither refusal is
-    // written anywhere in the form, so a button that had drifted from the rule would
-    // offer a write the boundary refuses.
+    // ValidateTransferUseCase owns what makes a transfer admissible, and refuses both of
+    // these when a submission arrives. The button refuses them earlier, so the user never
+    // reaches an error dialog for something the form could see: a disabled button is the
+    // form declining to offer what it can tell will not be accepted, which is a decision
+    // about affordance and not a second statement of the rule.
 
     @Test
     fun `the same account on both ends is not submittable`() {

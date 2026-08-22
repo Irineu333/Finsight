@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
 import com.neoutils.finsight.extension.destinationLeg
+import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,14 +24,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class TransferBetweenAccountsViewModel(
     initialSourceAccount: Account,
@@ -43,6 +39,12 @@ class TransferBetweenAccountsViewModel(
     private val updateTransferUseCase: UpdateTransferUseCase,
     private val suggestCrossCurrencyAmount: SuggestCrossCurrencyAmountUseCase,
     accountRepository: IAccountRepository,
+    /**
+     * The app's own clock, and not the system's: the form bounds its date picker by it
+     * and the rule that refuses a future date is stated against it, so a third reading
+     * of "today" here is one the two of them could disagree with.
+     */
+    clock: Clock,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -58,7 +60,7 @@ class TransferBetweenAccountsViewModel(
     private val selectedSourceAccount = MutableStateFlow(initialSourceAccount)
     private val selectedDestinationAccount = MutableStateFlow(initialDestinationAccount)
     private val amount = MutableStateFlow(transaction?.amount ?: 0.0)
-    private val date = MutableStateFlow(transaction?.date ?: currentDate)
+    private val date = MutableStateFlow(transaction?.date ?: clock.today())
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),

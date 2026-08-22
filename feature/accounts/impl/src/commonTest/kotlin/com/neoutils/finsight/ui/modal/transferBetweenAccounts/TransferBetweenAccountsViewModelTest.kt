@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.usecase.ClockOn
 import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
@@ -68,8 +69,8 @@ class TransferBetweenAccountsViewModelTest {
     private fun viewModel(
         transactions: RewriteRecordingTransactions,
         transaction: Transaction? = null,
+        rates: RecordingRates = RecordingRates(),
     ): TransferBetweenAccountsViewModel {
-        val rates = RecordingRates()
         val validate = ValidateTransferUseCase(
             accountRepository = StaticAccounts(accounts),
             clock = ClockOn(today),
@@ -89,6 +90,7 @@ class TransferBetweenAccountsViewModelTest {
             ),
             suggestCrossCurrencyAmount = SuggestCrossCurrencyAmountUseCase(rates),
             accountRepository = StaticAccounts(accounts),
+            clock = ClockOn(today),
             modalManager = ModalManager(),
             analytics = MuteAnalytics,
             crashlytics = MuteCrashlytics,
@@ -177,6 +179,37 @@ class TransferBetweenAccountsViewModelTest {
         assertEquals(inter.id, intent.legs[1].accountId)
         assertTrue(transactions.rewrites.isEmpty())
     }
+
+    @Test
+    fun `a registration opens on the app's clock, which is the one the rule reads`() =
+        runTest(dispatcher) {
+            // The archive is read as of the operation's date, and the observation seeded
+            // here exists on one day only. It reaches the state only if the date the form
+            // opens on is the injected clock's — the same one that bounds the picker and
+            // that the future-date refusal is stated against. The system's calendar would
+            // answer some other day, and the suggestion would be absent.
+            val rates = RecordingRates(
+                existing = listOf(
+                    ExchangeRate(
+                        currency = "BRL",
+                        counterCurrency = "USD",
+                        date = today,
+                        rate = 0.2,
+                        source = ExchangeRate.Source.DERIVED,
+                    ),
+                ),
+            )
+            val viewModel = viewModel(RewriteRecordingTransactions(), rates = rates)
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(chase))
+                viewModel.onAction(TransferBetweenAccountsAction.ChangeAmount(550.0))
+                advanceUntilIdle()
+
+                assertEquals(today, expectMostRecentItem().suggestion?.asOf)
+            }
+        }
 }
 
 private object MuteAnalytics : Analytics {

@@ -215,6 +215,7 @@ val accountsModule = module {
             updateTransferUseCase = get(),
             suggestCrossCurrencyAmount = get(),
             accountRepository = get(),
+            clock = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

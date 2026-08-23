@@ -57,6 +57,37 @@ escreve o código.
 - **WHEN** o usuário tenta datar um pagamento fora da janela de liquidação da fatura selecionada
 - **THEN** o formulário não oferece essa data e não a aceita, sem sinalizar divergência alguma
 
+### Requirement: Abrir o formulário não altera a data
+
+Ao abrir um formulário de **lançamento**, a data SHALL ser hoje e a fatura SHALL ser a aberta do
+cartão — adicionar transação, adicionar parcelamento e ajustar fatura. A recolocação disparada
+por essa seleção inicial SHALL ser um no-op, porque hoje pertence à janela da fatura aberta por
+definição.
+
+A seleção automática do único cartão disponível MUST NOT produzir efeito visível sobre a data.
+
+No **pagamento** a fatura ao abrir é a que lhe foi nomeada, e não a aberta do cartão, e a data
+SHALL ser a projeção de hoje na janela de liquidação dessa fatura. Onde a janela contém hoje a
+abertura continua sem efeito visível; onde ela está inteiramente no passado — uma fatura
+`RETROACTIVE` — a data ao abrir SHALL ser anterior a hoje. Não é a hierarquia falhando: é a
+janela sendo limite, que é o que distingue o pagamento do lançamento.
+
+#### Scenario: Formulário aberto mostra hoje
+- **WHEN** o modal de adicionar transação é aberto com alvo cartão e há uma fatura aberta
+- **THEN** o campo de data exibe hoje, inalterado
+
+#### Scenario: Cartão único selecionado automaticamente
+- **WHEN** existe um só cartão e ele é selecionado sem ação do usuário
+- **THEN** a data permanece hoje
+
+#### Scenario: Abrir o pagamento de uma fatura cujo ciclo contém hoje
+- **WHEN** o pagamento é aberto sobre uma fatura `OPEN` que ainda está dentro do seu ciclo
+- **THEN** o campo de data exibe hoje, inalterado
+
+#### Scenario: Abrir o pagamento de uma fatura retroativa data no passado
+- **WHEN** o pagamento é aberto sobre uma fatura `RETROACTIVE` cujo ciclo se encerrou há dois meses
+- **THEN** o campo de data exibe uma data dentro daquele ciclo, anterior a hoje
+
 ### Requirement: O escopo da hierarquia é o lançamento novo
 
 A recolocação SHALL valer nos formulários de **criação** — adicionar transação, adicionar

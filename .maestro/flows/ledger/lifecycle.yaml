@@ -3,6 +3,10 @@ name: ledger_lifecycle
 tags:
   - ledger
 env:
+  # The seeded account's name is a translated resource (`account_default_name`), so naming it is
+  # naming copy. It is declared once here rather than spelled at each use: the device is fixed to
+  # English (README §2.2), and a rewording is then this one line instead of a hunt.
+  DEFAULT_ACCOUNT: "Wallet"
   INCOME_TITLE: "E2E Salary"
   INCOME_DIGITS: "50000"
   EXPENSE_TITLE: "E2E Coffee"
@@ -289,7 +293,7 @@ env:
 # which is the one that proves the selection took.
 - assertVisible:
     id: "edit_transaction_account"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "edit_transaction_account"
 - extendedWaitUntil:
@@ -358,7 +362,9 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
-- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_name"
+    text: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]500[.,]00"

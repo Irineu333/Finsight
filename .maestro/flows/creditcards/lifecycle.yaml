@@ -4,6 +4,10 @@ tags:
   - creditcards
   - ledger
 env:
+  # The seeded account's name is a translated resource (`account_default_name`), so naming it is
+  # naming copy. It is declared once here rather than spelled at each use: the device is fixed to
+  # English (README §2.2), and a rewording is then this one line instead of a hunt.
+  DEFAULT_ACCOUNT: "Wallet"
   CARD_NAME: "E2E Card"
   # Past the invoice's closing date from any day the suite runs on: a card created today closes
   # between 1 and ~40 days out, depending on where in the month "today" falls.
@@ -363,7 +367,7 @@ env:
 # more than one account on the app that consequence stops naming the account — here it is named.
 - assertVisible:
     id: "invoice_payment_account"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "invoice_payment_confirm"
 - extendedWaitUntil:

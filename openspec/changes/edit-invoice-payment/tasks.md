@@ -41,6 +41,8 @@
 - [x] 4.9 Passar `excluding` ao ler o devido em modo de correção, para que o teto exibido seja o de 1.1.
 - [x] 4.10 Rotear a submissão para `UpdateAdvanceInvoicePaymentUseCase` em modo de correção.
 - [x] 4.11 Resolver o parâmetro novo com `getOrNull()` em `CreditCardsModule`, como `AccountsModule` faz com a transação da transferência.
+- [x] 4.12 Abrir `selectedAccount` já na conta que a operação registra, e não apenas em `preselect()`: a perna a traz hidratada, enquanto cartão e fatura só chegam por busca. Sem isso o estado substitui pela conta **padrão** no intervalo, e o campo de contrapartida — que retira o que exibe quando a moeda muda — descarta o valor registrado assim que a conta verdadeira chega, aceitando no lugar a sugestão do acervo. Fazer `preselect()` só refinar, sem derrubar a conta quando o plano de contas nada responde.
+- [x] 4.13 Teste: em modo de correção a conta pagadora é a da operação **antes de qualquer busca responder**, as buscas depois só refinam, e uma criação continua abrindo na conta padrão.
 
 ## 5. O que a superfície anuncia
 

@@ -102,7 +102,24 @@ class InvoicePaymentViewModel(
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedInvoiceId = MutableStateFlow<Long?>(null)
-    private val selectedAccount = MutableStateFlow<Account?>(null)
+
+    /**
+     * The paying account, opened on the one the operation records.
+     *
+     * **It is seeded here rather than only in [preselect] because the sheet is read
+     * before that lands.** The leg already carries its account hydrated, so a correction
+     * knows the payer without asking anything; the card and the invoice do not have that
+     * luxury — a leg names them by identity, and resolving those takes repositories.
+     * Left empty until the lookup returns, the state would stand in the **default**
+     * account meanwhile, and a form denominated in a currency that is about to be
+     * replaced withdraws what it shows on the currency changing: exactly the figure a
+     * cross-currency correction opens on.
+     *
+     * `sourceLeg` filters by `ASSET` before it looks at the sign, which is what separates
+     * the paying account from the conversion leg holding the negative residue of a
+     * payment between currencies.
+     */
+    private val selectedAccount = MutableStateFlow(transaction?.entries?.sourceLeg()?.account)
 
     /**
      * Whether the sheet is still showing the operation exactly as it is recorded.
@@ -310,6 +327,9 @@ class InvoicePaymentViewModel(
      * `LIABILITY` leg's account, the invoice *is* that leg's dimension, and the paying
      * account *is* the outgoing `ASSET` leg's. Turning those identities into facades is
      * this view model's business and not the sheet's, because it takes repositories.
+     *
+     * The paying account is the one of the three that needs no lookup to be *known*, so
+     * [selectedAccount] already opens on it; what happens here is only the refinement.
      */
     private suspend fun preselect(transaction: Transaction) {
         val settlementLeg = transaction.entries.liabilityLeg()
@@ -327,15 +347,16 @@ class InvoicePaymentViewModel(
             ?.firstOrNull { it.dimensionId == settlementLeg.dimensionId }
             ?.id
 
-        // `sourceLeg` filters by `ASSET` before it looks at the sign, which is what
-        // separates the paying account from the conversion leg holding the negative
-        // residue of a payment between currencies. Re-read from the chart so the
-        // selection is the same instance the selector lists.
-        selectedAccount.value = transaction.entries
+        // The account the leg carries is the right one already; this re-reads it from
+        // the chart so the selection is the same instance the selector lists. Only a
+        // reading that found something replaces it — an account the chart cannot answer
+        // for is not a reason to drop the payer the operation names.
+        transaction.entries
             .sourceLeg()
             ?.account
             ?.id
             ?.let { accountRepository.getAccountById(it) }
+            ?.let { selectedAccount.value = it }
     }
 
     /**

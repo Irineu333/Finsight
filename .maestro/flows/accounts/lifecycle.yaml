@@ -4,6 +4,11 @@ tags:
   - accounts
   - ledger
 env:
+  # The seeded account's name is a translated resource (`account_default_name`), so naming it is
+  # naming copy. It is declared once here rather than spelled at each use: the device is fixed to
+  # English (README §2.2), and a rewording is then this one line instead of a hunt.
+  DEFAULT_ACCOUNT: "Wallet"
+  TRIAL_ACCOUNT: "E2E Scratch"
   NEW_ACCOUNT: "E2E Savings"
   INCOME_TITLE: "E2E Bonus"
   INCOME_DIGITS: "37500"
@@ -12,8 +17,14 @@ env:
   YIELD_DIGITS: "4075"
 ---
 # An account from its creation to its retirement: created, funded, money moved to the seeded one,
-# declared to earn and then earning, and finally emptied by a balance adjustment and archived. The
-# figures are chosen so every one of them is distinct: $375.00 in, $125.50 across, leaving $249.50
+# declared to earn and then earning, and finally emptied by a balance adjustment and archived.
+#
+# A scratch account opens the story and is deleted straight away. It is the same claim seen from
+# its other end — retirement is deletion while nothing points at the row, and archiving once
+# something does — and it costs the arithmetic below nothing, because an account deleted empty
+# leaves no entry behind.
+#
+# The figures are chosen so every one of them is distinct: $375.00 in, $125.50 across, leaving $249.50
 # on the new account and $125.50 on the seeded one — and $375.00 in total, because a transfer
 # between two assets moves money without creating or destroying any. That last one is the claim
 # worth the emulator time.
@@ -43,6 +54,56 @@ env:
       id: "screen_accounts"
     timeout: 15000
 
+# --- An account nothing ever touched is deleted, not archived ------------------------------------
+# Which of delete and archive the screen offers is `retireActionOf(hasMovement)`, and this is its
+# `false` branch — taken, not merely read: a command asserted enabled and never pressed proves the
+# label, not the deed. The row leaves the database, which the pager shows by having nothing left to
+# turn to; the story's own account is created afterwards, so this one costs the tail nothing.
+- runFlow:
+    file: ../../subflows/create_account.yaml
+    env:
+      NAME: ${TRIAL_ACCOUNT}
+- extendedWaitUntil:
+    visible:
+      id: "account_name"
+      text: ${DEFAULT_ACCOUNT}
+    timeout: 15000
+- swipe:
+    from:
+      id: "account_card"
+    direction: LEFT
+    duration: 400
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ${TRIAL_ACCOUNT}
+    timeout: 15000
+- assertVisible:
+    id: "account_retire_label"
+    text: "Delete"
+- assertVisible:
+    id: "account_retire"
+    enabled: true
+- tapOn:
+    id: "account_retire"
+- extendedWaitUntil:
+    visible:
+      id: "delete_account_confirm"
+    timeout: 15000
+- tapOn:
+    id: "delete_account_confirm"
+
+# The seeded account is the only page again. Asserted on the node that renders a name — the pager
+# holds one account at a time, so the absence is read where the presence was read four steps above.
+- extendedWaitUntil:
+    visible:
+      id: "account_name"
+      text: ${DEFAULT_ACCOUNT}
+    timeout: 15000
+- assertNotVisible:
+    id: "account_name"
+    text: ${TRIAL_ACCOUNT}
+
+# --- I create the account this story is about ----------------------------------------------------
 - runFlow:
     file: ../../subflows/create_account.yaml
     env:
@@ -56,7 +117,7 @@ env:
 - extendedWaitUntil:
     visible:
       id: "account_name"
-      text: "Wallet"
+      text: ${DEFAULT_ACCOUNT}
     timeout: 15000
 - swipe:
     from:
@@ -71,8 +132,10 @@ env:
     id: "account_balance_amount"
     text: "[$]0[.,]00"
 
-# An account with nothing on it can simply be deleted, and the screen says so. Which of delete and
-# archive is offered is `retireActionOf(hasMovement)`, and this is its `false` branch.
+# The "before" of a before-and-after on one account: with no movement yet it is offered deletion,
+# and once it has history the same button offers archiving instead (asserted further down). The
+# branch itself was taken by the scratch account above; what this pair adds is that the offer
+# *changes under the same row*, which one account read twice is the only way to state.
 - assertVisible:
     id: "account_retire_label"
     text: "Delete"
@@ -162,7 +225,7 @@ env:
 - extendedWaitUntil:
     visible:
       id: "account_name"
-      text: "Wallet"
+      text: ${DEFAULT_ACCOUNT}
     timeout: 15000
 - swipe:
     from:
@@ -209,12 +272,12 @@ env:
 - tapOn:
     id: "transfer_destination_account"
 - extendedWaitUntil:
-    visible: "Wallet"
+    visible: ${DEFAULT_ACCOUNT}
     timeout: 10000
-- tapOn: "Wallet"
+- tapOn: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "transfer_destination_account"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "transfer_amount"
 - waitForAnimationToEnd
@@ -270,7 +333,7 @@ env:
     text: ${NEW_ACCOUNT}
 - assertVisible:
     id: "transfer_destination_account"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "transfer_amount"
     text: ".*155[.,]50.*"
@@ -331,7 +394,7 @@ env:
 - extendedWaitUntil:
     visible:
       id: "account_name"
-      text: "Wallet"
+      text: ${DEFAULT_ACCOUNT}
     timeout: 15000
 - assertVisible:
     id: "account_balance_amount"
@@ -362,7 +425,9 @@ env:
     direction: DOWN
     centerElement: true
     timeout: 25000
-- assertVisible: "Transfer"
+- assertVisible:
+    id: "transaction_card_title"
+    text: "Transfer"
 
 - tapOn:
     id: "nav_item_transactions"
@@ -370,7 +435,9 @@ env:
     visible:
       id: "screen_transactions"
     timeout: 15000
-- assertVisible: "Transfer"
+- assertVisible:
+    id: "transaction_card_title"
+    text: "Transfer"
 - assertVisible: ${INCOME_TITLE}
 
 # The two sides of the transfer read through the report belong to `report/lifecycle`: scoping a
@@ -398,7 +465,7 @@ env:
 - extendedWaitUntil:
     visible:
       id: "account_name"
-      text: "Wallet"
+      text: ${DEFAULT_ACCOUNT}
     timeout: 15000
 - swipe:
     from:
@@ -634,13 +701,13 @@ env:
 # The pager holds only the seeded account now, and its balance is what the transfer left it — the
 # archive retired an account, it did not take its money with it.
 - extendedWaitUntil:
-    visible: "Wallet"
+    visible: ${DEFAULT_ACCOUNT}
     timeout: 15000
 # Read on the node that renders an account's name, not as loose text: a bare `assertNotVisible` of
 # the name would also pass on a screen that failed to compose at all.
 - assertVisible:
     id: "account_name"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - assertNotVisible:
     id: "account_name"
     text: ${NEW_ACCOUNT}

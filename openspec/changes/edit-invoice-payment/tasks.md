@@ -75,5 +75,5 @@
 - [x] 9.1 Rodar `./gradlew jvmTest` e ler a saída.
 - [x] 9.2 Confirmar que `:core:ledger` não foi tocado — nem a fronteira de escrita, nem `InvoiceWriteGuard`, nem `IEntryRepository`.
 - [x] 9.3 Confirmar que nenhum caminho novo leva a `PAID` nem sai dele.
-- [ ] 9.4 Exercitar no app: corrigir valor, conta, data e fatura de um parcial; verificar que a fatura anterior recupera o valor e a nova o desconta.
-- [ ] 9.5 Exercitar no app: corrigir um parcial entre moedas e conferir que a taxa exibida no detalhe é a que o formulário mostrava.
+- [x] 9.4 Exercitar no app: corrigir valor, conta, data e fatura de um parcial; verificar que a fatura anterior recupera o valor e a nova o desconta.
+- [x] 9.5 Exercitar no app: corrigir um parcial entre moedas e conferir que a taxa exibida no detalhe é a que o formulário mostrava.

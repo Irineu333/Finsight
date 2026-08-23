@@ -473,6 +473,11 @@
     <string name="invoice_payment_max">Max</string>
     <string name="invoice_payment_date_label">Payment Date</string>
     <string name="invoice_payment_no_debt">This invoice has nothing to pay.</string>
+    <!-- Correcting a payment already registered: the mode is fixed from the moment the
+         sheet opens, so the head names it and the button says what confirming does —
+         the money already moved, and neither "advance" nor "pay" is true of it. -->
+    <string name="invoice_payment_edit_title">Edit payment</string>
+    <string name="invoice_payment_edit_confirm">Save</string>
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transfer between accounts</string>

@@ -20,4 +20,6 @@ object DeleteFutureInvoice : Event("delete_future_invoice")
 
 object AdvanceInvoicePayment : Event("advance_invoice_payment")
 
+object EditAdvanceInvoicePayment : Event("edit_advance_invoice_payment")
+
 object AdjustInvoiceBalance : Event("adjust_invoice_balance")

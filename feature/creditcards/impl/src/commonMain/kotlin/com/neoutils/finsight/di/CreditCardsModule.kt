@@ -201,8 +201,12 @@ val creditCardsModule = module {
             // Optional: the sheet names the invoice it pays, so opening it without one
             // is a legitimate way in.
             initialInvoiceId = it.getOrNull(),
+            // Optional for the other reason: the operation exists only in the mode that
+            // corrects one, and registering a payment has none to pass.
+            transaction = it.getOrNull(),
             payInvoicePaymentUseCase = get(),
             advanceInvoicePaymentUseCase = get(),
+            updateAdvanceInvoicePaymentUseCase = get(),
             calculateInvoiceUseCase = get(),
             suggestCrossCurrencyAmount = get(),
             creditCardRepository = get(),

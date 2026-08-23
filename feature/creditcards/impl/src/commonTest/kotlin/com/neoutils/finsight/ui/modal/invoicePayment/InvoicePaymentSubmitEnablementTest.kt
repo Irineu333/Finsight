@@ -180,6 +180,68 @@ class InvoicePaymentSubmitEnablementTest {
         )
     }
 
+    // -- Correcting a payment already registered ---------------------------------------
+
+    @Test
+    fun `a correction confirms above what the invoice currently owes`() {
+        // The invoice was spent R$ 800 and R$ 300 of it are already paid by this very
+        // operation, so it currently owes R$ 500. The ceiling the form is judged by
+        // leaves that operation out and is R$ 800, which is what makes R$ 700 a
+        // correction rather than a refusal.
+        assertTrue(
+            canSubmitInvoicePayment(
+                amount = "R$ 700,00",
+                paidAmount = "",
+                isCrossCurrency = false,
+                settles = false,
+                date = inCycle,
+                window = cycle,
+                outstandingDebt = 800.0,
+            )
+        )
+
+        assertFalse(
+            canSubmitInvoicePayment(
+                amount = "R$ 900,00",
+                paidAmount = "",
+                isCrossCurrency = false,
+                settles = false,
+                date = inCycle,
+                window = cycle,
+                outstandingDebt = 800.0,
+            )
+        )
+    }
+
+    @Test
+    fun `a correction pointed at another invoice is judged by that invoice's ceiling`() {
+        // Nothing is left out there: the operation settled nothing on that invoice, so
+        // the ceiling is simply what it owes — R$ 120.
+        assertTrue(
+            canSubmitInvoicePayment(
+                amount = "R$ 120,00",
+                paidAmount = "",
+                isCrossCurrency = false,
+                settles = false,
+                date = inCycle,
+                window = cycle,
+                outstandingDebt = 120.0,
+            )
+        )
+
+        assertFalse(
+            canSubmitInvoicePayment(
+                amount = "R$ 300,00",
+                paidAmount = "",
+                isCrossCurrency = false,
+                settles = false,
+                date = inCycle,
+                window = cycle,
+                outstandingDebt = 120.0,
+            )
+        )
+    }
+
     @Test
     fun `a retroactive invoice confirms a part of it, dated inside its own past cycle`() {
         assertTrue(

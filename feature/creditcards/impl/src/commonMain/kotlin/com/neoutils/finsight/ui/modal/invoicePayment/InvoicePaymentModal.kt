@@ -24,9 +24,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.extension.sourceLeg
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.CounterpartAmountField
@@ -38,30 +41,47 @@ import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
+import kotlin.math.abs
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Paying an invoice — the only sheet that does, whatever state the invoice is in.
+ * Paying an invoice, in its two modes: registering a payment and correcting one.
+ *
+ * They are the same form and differ only in what the sheet announces — the head and the
+ * verb of its single button — so there is one of them rather than two grammars for one
+ * operation. The two modes are reached by two constructors over a private one, and that
+ * is the point: neither of them can be handed a state that does not mean anything.
  *
  * [invoiceId] is a **pre-selection**, not the subject: opened from an invoice in view it
  * arrives with that one chosen, and opened without context it lets the user choose. What
  * is owed is read from whichever invoice is selected, so switching invoice re-denominates
  * and re-bounds the form instead of leaving a stale figure behind.
  *
+ * In correction the invoice is **not** a parameter either. The operation's leg carries a
+ * dimension, and turning that into an invoice is identity → facade, which takes a
+ * repository: the view model resolves it, and this sheet does not try to.
+ *
  * The amount field means one thing throughout — how much of this invoice is being paid
  * now. What changes with the mode is whether it accepts typing (design D6).
  */
-class InvoicePaymentModal(
-    private val invoiceId: Long? = null,
+class InvoicePaymentModal private constructor(
+    private val invoiceId: Long?,
+    private val transaction: Transaction?,
 ) : ModalBottomSheet() {
+
+    /** Registering a payment: an invoice may be named, and nothing more. */
+    constructor(invoiceId: Long? = null) : this(invoiceId, transaction = null)
+
+    /** Correcting one: every field the sheet opens on is read off the operation. */
+    constructor(transaction: Transaction) : this(invoiceId = null, transaction = transaction)
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<InvoicePaymentViewModel> {
-            parametersOf(invoiceId)
+            parametersOf(invoiceId, transaction)
         }
 
         val uiState by viewModel.uiState.collectAsState()
@@ -83,7 +103,19 @@ class InvoicePaymentModal(
             }
 
             is InvoicePaymentUiState.Content -> {
-                val amount = rememberTextFieldState()
+                // What the operation records, each end read in the currency of its own
+                // account. A correction opens on facts, not on an empty form.
+                val recordedSettlement = transaction?.entries?.liabilityLeg()
+                val recordedLeaving = transaction?.entries
+                    ?.sourceLeg()
+                    ?.takeIf { it.currency != recordedSettlement?.currency }
+                    ?.let { abs(it.amount) / 100.0 }
+
+                val amount = rememberTextFieldState(
+                    recordedSettlement
+                        ?.let { formatter.format(abs(it.amount) / 100.0, it.currency) }
+                        .orEmpty(),
+                )
                 val paidAmount = rememberTextFieldState()
 
                 // An editing buffer, not the form: it reports to the ViewModel, which
@@ -121,7 +153,14 @@ class InvoicePaymentModal(
                     state.selectedInvoice?.id,
                     state.settles,
                     state.debtAmount,
+                    state.showsRecordedOperation,
                 ) {
+                    // Opening a correction is not a stated intention; switching card or
+                    // invoice is (design D4). While the sheet still shows the operation
+                    // as recorded, the figures on screen are facts and withdrawing them
+                    // would evaporate what the correction opened on.
+                    if (state.showsRecordedOperation) return@LaunchedEffect
+
                     paidAmount.clearText()
 
                     if (state.settles && state.debtAmount != null) {
@@ -144,7 +183,7 @@ class InvoicePaymentModal(
                     // above it. The verb that says what will actually happen is on the
                     // confirm button, at the end, where the choice has been made.
                     Text(
-                        text = stringResource(Res.string.invoice_payment_title),
+                        text = stringResource(state.headline),
                         style = MaterialTheme.typography.headlineSmall,
                     )
 
@@ -273,6 +312,11 @@ class InvoicePaymentModal(
                         date = runCatching { dayMonthYear.parse(dateState.text.toString()) }
                             .getOrDefault(state.today),
                         modifier = Modifier.testTag("invoice_payment_paid_amount"),
+                        // A fact while the sheet still names the operation it corrects,
+                        // and an offer again the moment it names another invoice — the
+                        // field is what withdraws it, by the same rule that withdraws a
+                        // suggestion when the currency changes.
+                        recordedAmount = recordedLeaving?.takeIf { state.showsRecordedOperation },
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

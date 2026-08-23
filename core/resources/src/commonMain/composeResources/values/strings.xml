@@ -474,6 +474,11 @@
     <string name="invoice_payment_max">Máx</string>
     <string name="invoice_payment_date_label">Data do Pagamento</string>
     <string name="invoice_payment_no_debt">Esta fatura não tem nada a pagar.</string>
+    <!-- Correcting a payment already registered: the mode is fixed from the moment the
+         sheet opens, so the head names it and the button says what confirming does —
+         the money already moved, and neither "antecipar" nor "pagar" is true of it. -->
+    <string name="invoice_payment_edit_title">Corrigir pagamento</string>
+    <string name="invoice_payment_edit_confirm">Salvar</string>
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transferir entre contas</string>

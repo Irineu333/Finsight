@@ -7,7 +7,10 @@ import com.neoutils.finsight.domain.usecase.CrossCurrencyAmountSuggestion
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.paymentLabel
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_payment_edit_confirm
+import com.neoutils.finsight.resources.invoice_payment_edit_title
 import com.neoutils.finsight.resources.invoice_payment_pay
+import com.neoutils.finsight.resources.invoice_payment_title
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 
@@ -31,22 +34,57 @@ sealed interface InvoicePaymentUiState {
         val today: LocalDate,
         /** What the rate archive implies leaves the account, when it has anything to say. */
         val suggestion: CrossCurrencyAmountSuggestion? = null,
+        /**
+         * Whether this sheet is correcting an operation instead of registering one. It
+         * is fixed from the moment the sheet opens and never follows a selection.
+         */
+        val isEditMode: Boolean = false,
+        /**
+         * Whether the form is still showing the operation exactly as it is recorded —
+         * true from the opening of a correction until the user switches card or invoice.
+         * Opening preserves, switching recalculates (design D4).
+         */
+        val showsRecordedOperation: Boolean = false,
     ) : InvoicePaymentUiState {
 
         /**
-         * Whether this payment discharges the invoice. The state decides it, and nothing
-         * else does — not the screen that opened the sheet nor the button that did.
+         * Whether this payment discharges the invoice. The state decides it for an
+         * operation that does not exist yet, and nothing else does — not the screen that
+         * opened the sheet nor the button that did.
+         *
+         * An operation **already written** has the mode it has: correcting a partial
+         * payment is reaffirming a partial payment, and no invoice this sheet then
+         * offers could turn it into a discharge anyway. Saying so here rather than
+         * relying on that is what keeps the two facts from having to agree.
          */
-        val settles = selectedInvoice?.acceptsFullSettlement == true
+        val settles = !isEditMode && selectedInvoice?.acceptsFullSettlement == true
 
         /**
          * The verb the sheet confirms with — the same one the surfaces show.
          *
          * It lives on the button and nowhere above it: the head names the operation and
          * holds still, so choosing an invoice never rewrites what sits over the selector
-         * that chose it. What the button says is what pressing it will do.
+         * that chose it. What the button says is what pressing it will do — and on a
+         * correction the money has already moved, so neither "advance" nor "pay" is true
+         * of it.
          */
-        val label: StringResource = selectedInvoice?.paymentLabel ?: Res.string.invoice_payment_pay
+        val label: StringResource = when {
+            isEditMode -> Res.string.invoice_payment_edit_confirm
+            else -> selectedInvoice?.paymentLabel ?: Res.string.invoice_payment_pay
+        }
+
+        /**
+         * What the head announces — the operation, never the selection.
+         *
+         * The mode is the one thing it follows, and the mode is fixed from the opening,
+         * so the head still holds still while the selectors below it change. Without
+         * this a sheet titled "invoice payment" with every field already filled in would
+         * read as a payment merely suggested, and confirming it as creating a second.
+         */
+        val headline: StringResource = when {
+            isEditMode -> Res.string.invoice_payment_edit_title
+            else -> Res.string.invoice_payment_title
+        }
 
         /**
          * Whether the paying account is denominated differently from the card. Derived

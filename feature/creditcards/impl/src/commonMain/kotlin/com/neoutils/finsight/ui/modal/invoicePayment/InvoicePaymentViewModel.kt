@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdvanceInvoicePayment
+import com.neoutils.finsight.domain.analytics.event.EditAdvanceInvoicePayment
 import com.neoutils.finsight.domain.analytics.event.PayInvoice
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.error.ClosedAccountException
@@ -15,6 +16,7 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -23,7 +25,10 @@ import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CrossCurrencyAmountSuggestion
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.extension.liabilityLeg
+import com.neoutils.finsight.extension.sourceLeg
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.ledger_action_error_generic
@@ -43,20 +48,29 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Paying an invoice, whatever state it is in.
+ * Paying an invoice, whatever state it is in — and correcting a payment already made.
  *
  * The sheet **names** the invoice it pays instead of inheriting it from the screen that
  * opened it: card and invoice are chosen here, and [initialInvoiceId] is only a
  * pre-selection. What is owed is read from the invoice currently selected, because a
  * figure received ready-made would describe another invoice the moment the user switches.
  *
- * The state decides the mode — a part of what is owed, or the whole of it — and which use
- * case writes it. Neither is a flag on this class.
+ * On a payment that does not exist yet the state decides the mode — a part of what is
+ * owed, or the whole of it — and which use case writes it. Neither is a flag on this
+ * class. An operation **already written** has the mode it has: correcting a partial
+ * payment is reaffirming a partial payment, and [transaction] is the only thing that
+ * tells the two apart.
  */
 class InvoicePaymentViewModel(
     private val initialInvoiceId: Long?,
+    /**
+     * The operation being corrected, and `null` while one is being registered. It is
+     * the only thing that tells the two modes apart — the form itself is the same.
+     */
+    private val transaction: Transaction?,
     private val payInvoicePaymentUseCase: PayInvoicePaymentUseCase,
     private val advanceInvoicePaymentUseCase: AdvanceInvoicePaymentUseCase,
+    private val updateAdvanceInvoicePaymentUseCase: UpdateAdvanceInvoicePaymentUseCase,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val suggestCrossCurrencyAmount: SuggestCrossCurrencyAmountUseCase,
     private val creditCardRepository: ICreditCardRepository,
@@ -70,15 +84,44 @@ class InvoicePaymentViewModel(
 
     private val currentDate get() = clock.today()
 
+    private val isEditMode = transaction != null
+
+    /**
+     * Which invoices this operation may name — the domain's predicate, read through the
+     * mode rather than enumerated as statuses.
+     *
+     * A payment that does not exist yet may name any invoice that takes one, and the
+     * state then decides the mode. A correction may name only the invoices that take a
+     * **partial** payment: pointing it at a closed one would write a discharge that
+     * nothing marks `PAID`, since marking belongs to the payment that settles and a
+     * correction is not it. The write boundary is not where that is refused — it accepts
+     * the write, by it settling a liability.
+     */
+    private val offered: (Invoice) -> Boolean =
+        if (isEditMode) Invoice::acceptsPartialPayment else Invoice::acceptsPayment
+
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedInvoiceId = MutableStateFlow<Long?>(null)
     private val selectedAccount = MutableStateFlow<Account?>(null)
+
+    /**
+     * Whether the sheet is still showing the operation exactly as it is recorded.
+     *
+     * Opening a correction is not a stated intention; switching card or invoice is
+     * (design D4). Until the user switches, the date the operation affirms stands and
+     * the figures it records are the ones on screen; from the switch on, the date is
+     * repositioned in the window that now applies and the figures are withdrawn. A
+     * registration is never showing a record, so it is false throughout.
+     */
+    private val showsRecordedOperation = MutableStateFlow(isEditMode)
 
     /** What the user stated, in the card's currency — only the partial mode reads it. */
     private val statedAmount = MutableStateFlow(0.0)
 
     /** The date as the form holds it: text, because that is what the field edits. */
-    private val date = MutableStateFlow(dayMonthYear.format(currentDate))
+    private val date = MutableStateFlow(
+        dayMonthYear.format(transaction?.date ?: currentDate)
+    )
 
     private val creditCards = creditCardRepository.observeAllCreditCards()
 
@@ -92,7 +135,7 @@ class InvoicePaymentViewModel(
             ?.let { card ->
                 invoiceRepository
                     .observeInvoicesByCreditCard(card.id)
-                    .map { invoices -> invoices.filter(Invoice::acceptsPayment) }
+                    .map { invoices -> invoices.filter(offered) }
             }
             ?: flowOf(emptyList())
     }.stateIn(
@@ -118,7 +161,11 @@ class InvoicePaymentViewModel(
     private val owed = selectedInvoice.map { invoice ->
         Owed(
             invoice = invoice,
-            amount = invoice?.let { calculateInvoiceUseCase(it) } ?: 0.0,
+            // The operation being corrected leaves its own contribution out: it already
+            // reduced the figure it is about to state again, and a ceiling counting it
+            // would refuse the correction that raises it. On an invoice it never touched
+            // there is nothing to leave out, so one formula covers both.
+            amount = invoice?.let { calculateInvoiceUseCase(it, excluding = transaction?.id) } ?: 0.0,
             currency = invoice?.let {
                 accountRepository.getAccountById(it.creditCard.accountId)?.currency
             },
@@ -131,15 +178,17 @@ class InvoicePaymentViewModel(
 
     init {
         viewModelScope.launch {
-            val initial = initialInvoiceId?.let { invoiceRepository.getInvoiceById(it) }
-            val cards = creditCardRepository.getAllCreditCards()
+            transaction?.let { preselect(it) } ?: run {
+                val initial = initialInvoiceId?.let { invoiceRepository.getInvoiceById(it) }
+                val cards = creditCardRepository.getAllCreditCards()
 
-            selectCreditCard(
-                creditCard = initial
-                    ?.let { invoice -> cards.firstOrNull { it.id == invoice.creditCard.id } }
-                    ?: cards.firstOrNull(),
-                preselected = initial?.takeIf { it.acceptsPayment }?.id,
-            )
+                selectCreditCard(
+                    creditCard = initial
+                        ?.let { invoice -> cards.firstOrNull { it.id == invoice.creditCard.id } }
+                        ?: cards.firstOrNull(),
+                    preselected = initial?.takeIf(offered)?.id,
+                )
+            }
         }
 
         // The invoice governs the date. This collector reads the selected invoice and
@@ -148,6 +197,10 @@ class InvoicePaymentViewModel(
         viewModelScope.launch {
             selectedInvoice.collect { invoice ->
                 invoice ?: return@collect
+                // Opening preserves: a correction arrives with a date the operation
+                // affirms, and there is nothing to place. A registration has none, so
+                // today's day is placed in the window.
+                if (showsRecordedOperation.value) return@collect
                 date.value = dayMonthYear.format(settlementDateFor(invoice, date.value))
             }
         }
@@ -162,7 +215,8 @@ class InvoicePaymentViewModel(
         owed,
         date,
         statedAmount,
-    ) { cards, selectedCard, invoices, accounts, account, owed, date, stated ->
+        showsRecordedOperation,
+    ) { cards, selectedCard, invoices, accounts, account, owed, date, stated, showsRecorded ->
         if (owed == null) return@combine InvoicePaymentUiState.Loading
 
         val content = InvoicePaymentUiState.Content(
@@ -176,6 +230,8 @@ class InvoicePaymentViewModel(
             invoiceCurrency = owed.currency,
             date = date,
             today = currentDate,
+            isEditMode = isEditMode,
+            showsRecordedOperation = showsRecorded,
         )
 
         content.copy(suggestion = suggestionFor(content, stated))
@@ -188,10 +244,12 @@ class InvoicePaymentViewModel(
     fun onAction(action: InvoicePaymentAction) {
         when (action) {
             is InvoicePaymentAction.SelectCreditCard -> viewModelScope.launch {
+                showsRecordedOperation.value = false
                 selectCreditCard(action.creditCard)
             }
 
             is InvoicePaymentAction.SelectInvoice -> {
+                showsRecordedOperation.value = false
                 selectedInvoiceId.value = action.invoice.id
             }
 
@@ -241,6 +299,46 @@ class InvoicePaymentViewModel(
     }
 
     /**
+     * The selections a correction opens on, established **directly**.
+     *
+     * It deliberately does not go through [selectCreditCard]: that path clears the
+     * invoice before assuming the new card, which is right for a switch and destructive
+     * for an opening — the value and the date the sheet opened on would evaporate before
+     * anyone saw them (design D7).
+     *
+     * The facades come from the legs the ledger already names them by: the card *is* the
+     * `LIABILITY` leg's account, the invoice *is* that leg's dimension, and the paying
+     * account *is* the outgoing `ASSET` leg's. Turning those identities into facades is
+     * this view model's business and not the sheet's, because it takes repositories.
+     */
+    private suspend fun preselect(transaction: Transaction) {
+        val settlementLeg = transaction.entries.liabilityLeg()
+
+        val card = settlementLeg
+            ?.account
+            ?.id
+            ?.let { accountId ->
+                creditCardRepository.getAllCreditCards().firstOrNull { it.accountId == accountId }
+            }
+
+        selectedCreditCard.value = card
+        selectedInvoiceId.value = card
+            ?.let { invoiceRepository.getInvoicesByCreditCard(it.id) }
+            ?.firstOrNull { it.dimensionId == settlementLeg.dimensionId }
+            ?.id
+
+        // `sourceLeg` filters by `ASSET` before it looks at the sign, which is what
+        // separates the paying account from the conversion leg holding the negative
+        // residue of a payment between currencies. Re-read from the chart so the
+        // selection is the same instance the selector lists.
+        selectedAccount.value = transaction.entries
+            .sourceLeg()
+            ?.account
+            ?.id
+            ?.let { accountRepository.getAccountById(it) }
+    }
+
+    /**
      * Card governs invoice: the invoice is **cleared first**, so that no pair of the new
      * card with the old card's invoice is ever observed — that pair names a window
      * neither selection stands for, and the date would be placed in it before being
@@ -252,7 +350,7 @@ class InvoicePaymentViewModel(
         selectedInvoiceId.value = preselected ?: creditCard?.let { card ->
             invoiceRepository
                 .getInvoicesByCreditCard(card.id)
-                .firstOrNull(Invoice::acceptsPayment)
+                .firstOrNull(offered)
                 ?.id
         }
     }
@@ -284,17 +382,28 @@ class InvoicePaymentViewModel(
         // what leaves the account *is* what settles the invoice.
         val leaving = paidAmount.takeIf { state.isCrossCurrency }
 
-        // The state chose the mode, so it chooses the use case and the event with it —
-        // the two intentions stay distinguishable even behind a single door.
-        val result = if (state.settles) {
-            payInvoicePaymentUseCase(
+        // The mode chose the use case and the event with it — the intentions stay
+        // distinguishable even behind a single door. A correction has its own, and it is
+        // never the discharging one: the operation was written as a part and is
+        // reaffirmed as a part.
+        val result = when {
+            transaction != null -> updateAdvanceInvoicePaymentUseCase(
+                transactionId = transaction.id,
+                invoiceId = invoice.id,
+                amount = amount,
+                date = on,
+                account = paying,
+                paidAmount = leaving,
+            )
+
+            state.settles -> payInvoicePaymentUseCase(
                 invoiceId = invoice.id,
                 date = on,
                 account = paying,
                 paidAmount = leaving,
             )
-        } else {
-            advanceInvoicePaymentUseCase(
+
+            else -> advanceInvoicePaymentUseCase(
                 invoiceId = invoice.id,
                 amount = amount,
                 date = on,
@@ -307,7 +416,13 @@ class InvoicePaymentViewModel(
             crashlytics.recordException(it)
             modalManager.showError(it.toUiMessage())
         }.onRight {
-            analytics.logEvent(if (state.settles) PayInvoice else AdvanceInvoicePayment)
+            analytics.logEvent(
+                when {
+                    isEditMode -> EditAdvanceInvoicePayment
+                    state.settles -> PayInvoice
+                    else -> AdvanceInvoicePayment
+                }
+            )
             modalManager.dismissAll()
         }
     }

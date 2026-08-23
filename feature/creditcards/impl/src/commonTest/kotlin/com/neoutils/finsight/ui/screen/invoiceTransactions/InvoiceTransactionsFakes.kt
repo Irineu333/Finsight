@@ -118,6 +118,13 @@ internal class FakeCategoryRepository : ICategoryRepository {
 internal class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
     private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency> = emptyMap(),
+    /**
+     * The legs of the operations a test names, for the reads that ask what one
+     * transaction contributes. An unnamed transaction has no legs here, which is a
+     * fact and not a gap: "this operation has nothing on that invoice" is exactly the
+     * answer the ceiling of a correction that switched invoices is computed from.
+     */
+    private val entriesByTransactionId: Map<Long, List<Entry>> = emptyMap(),
 ) : IEntryRepository {
     // An invoice's figure holds one currency, by the card facade's guarantee — the
     // fake answers in the shape the ledger really answers in, so the reduction the
@@ -134,7 +141,8 @@ internal class FakeEntryRepository(
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long) =
         flowsByInvoiceId[dimensionId]
             ?: com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency.zero
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> =
+        entriesByTransactionId[transactionId].orEmpty()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()

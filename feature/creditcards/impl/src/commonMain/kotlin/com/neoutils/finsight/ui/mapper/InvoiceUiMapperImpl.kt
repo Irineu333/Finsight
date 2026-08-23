@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.extension.paymentLabel
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.model.InvoiceUi
@@ -61,6 +62,9 @@ class InvoiceUiMapperImpl(
             isClosed = status.isClosed,
             isRetroactive = status.isRetroactive,
             isEditable = status.isEditable,
+            canPay = invoice.acceptsPayment,
+            payLabel = invoice.paymentLabel,
+            paySettles = invoice.acceptsFullSettlement,
             statusColor = status.color,
             statusLabel = status.toUiText(),
         )

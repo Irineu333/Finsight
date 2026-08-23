@@ -24,6 +24,7 @@ import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.legUnder
 import com.neoutils.finsight.ui.model.toTransactionUi
+import com.neoutils.finsight.extension.paymentLabel
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -239,6 +240,9 @@ class InvoiceTransactionsViewModel(
                     closingDate = invoice.closingDate,
                     isClosable = invoice.isClosableOn(currentDate),
                     canReopen = invoice.isReopenable(invoices),
+                    canPay = invoice.acceptsPayment,
+                    payLabel = invoice.paymentLabel,
+                    paySettles = invoice.acceptsFullSettlement,
                 )
             },
             selectedInvoiceIndex = index,

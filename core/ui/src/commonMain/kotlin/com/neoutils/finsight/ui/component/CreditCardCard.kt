@@ -58,8 +58,11 @@ sealed class CreditCardCardVariant {
     data class Dashboard(
         val onClick: () -> Unit,
         val onCloseInvoice: () -> Unit,
+        /**
+         * Paying the invoice — one command, whatever state it is in. What the command is
+         * called comes from [InvoiceUi.payLabel]; this only says what it does.
+         */
         val onPayInvoice: () -> Unit,
-        val onAdvancePayment: () -> Unit,
         val onEditAmount: () -> Unit,
     ) : CreditCardCardVariant()
 
@@ -330,11 +333,12 @@ fun CreditCardCard(
                 }
 
                 if (variant is CreditCardCardVariant.Dashboard) {
+                    // Both facts are resolved by the mapper: this component consumes the
+                    // domain's rules, it does not re-derive them.
                     val canCloseInvoice = invoiceUi?.isClosable == true
-                    val canPayInvoice = invoiceUi?.isClosed == true
-                    val canAdvanceInvoice = invoiceUi?.isOpen == true
+                    val payable = invoiceUi?.takeIf { it.canPay }
 
-                    if (canCloseInvoice || canPayInvoice || canAdvanceInvoice) {
+                    if (canCloseInvoice || payable != null) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -361,7 +365,7 @@ fun CreditCardCard(
                                 }
                             }
 
-                            if (canPayInvoice) {
+                            if (payable != null) {
                                 OutlinedButton(
                                     onClick = variant.onPayInvoice,
                                     modifier = Modifier.fillMaxWidth(),
@@ -375,27 +379,7 @@ fun CreditCardCard(
                                     ),
                                 ) {
                                     Text(
-                                        text = stringResource(Res.string.dashboard_credit_card_pay_invoice),
-                                        fontSize = 14.sp,
-                                    )
-                                }
-                            }
-
-                            if (canAdvanceInvoice) {
-                                OutlinedButton(
-                                    onClick = variant.onAdvancePayment,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = colorScheme.primary,
-                                    ),
-                                    border = BorderStroke(
-                                        width = 1.dp,
-                                        color = colorScheme.primary.copy(alpha = 0.5f),
-                                    ),
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.dashboard_credit_card_advance),
+                                        text = stringResource(payable.payLabel),
                                         fontSize = 14.sp,
                                     )
                                 }

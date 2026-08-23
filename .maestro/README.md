@@ -33,7 +33,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) �
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~29 minutos** para 14 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~31 minutos** para 15 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -79,7 +79,7 @@ Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
    estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
 2. **Conferir as sete linhas da §2.2 à mão, antes do run**, e **reinstalar o APK de debug**. Menos
    de um minuto, contra 28 de resultado que não vale nada.
-3. **Reportar em que aparelho rodou.** Um "13/13 verde" sem o aparelho ao lado não é um resultado,
+3. **Reportar em que aparelho rodou.** Um "15/15 verde" sem o aparelho ao lado não é um resultado,
    é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
 4. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
    respondida com dados, não usada como explicação de saída.
@@ -190,7 +190,7 @@ aponta para dentro:
 
 | Comando | O que acontece |
 |---|---|
-| `maestro test .maestro` | Workspace: os 14 fluxos, com as animações desligadas pelo `config.yaml` |
+| `maestro test .maestro` | Workspace: os 15 fluxos, com as animações desligadas pelo `config.yaml` |
 | `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
 | `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
 | `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
@@ -234,6 +234,10 @@ acabou de criar — dois fluxos criam cartões com limites diferentes, e a afirm
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
 então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
 
+`creditcards` é a exceção, e a razão é aritmética: as figuras de `lifecycle` são escolhidas para que
+nenhuma repita os dígitos de outra, e todas são asseridas adiante. Gastar dinheiro dentro dela move
+essa conta, e uma falha da jornada retroativa passaria a se ler como falha da história do cartão.
+
 | Fluxo | A afirmação pela qual ele existe |
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
@@ -243,6 +247,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
 | `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
+| `creditcards/retroactive_payment` | um ciclo passado se regulariza pela mesma porta das demais faturas, e pagá-lo até zerar não o quita — `PAID` continua sendo consequência do fechamento |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `recurring/from_transaction` | uma despesa lançada abre a recorrência da qual ela é o primeiro ciclo — e o mês que ela acabou de pagar não volta a ser cobrado |
@@ -260,7 +265,7 @@ Um id é um `Modifier.testTag` do Compose, e ele só chega ao Maestro porque a r
 publica as tags na árvore de acessibilidade, via `Modifier.exposeTestTags()` (`core/designsystem` —
 `ui/util/ExposeTestTags`). **Uma raiz precisa aderir explicitamente, e uma folha modal, um diálogo ou
 um popup são raízes próprias.** Hoje aderem: o `Surface` do `App`, o `ModalBottomSheet`, o painel de
-detalhe e dois `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
+detalhe e três `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
 invisíveis sem nenhum erro que explique o porquê.
 
 ## 4. Quando um teste fica vermelho
@@ -447,8 +452,8 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~29 minutos e 14 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais os 39s do
-fluxo mais novo, medido sozinho). Ao estourar,
+**Orçamento: ~31 minutos e 15 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais o 1m52 do
+fluxo mais novo, medido dentro da suíte). Ao estourar,
 corta-se ou funde-se — o teto não sobe por reflexo. Cada fluxo novo compete com os existentes pelo
 tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto muda**.
 
@@ -456,7 +461,7 @@ tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto mud
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**O precedente.** O teto subiu quatro vezes, e cada uma fica registrada porque é ela que autoriza a
+**O precedente.** O teto subiu cinco vezes, e cada uma fica registrada porque é ela que autoriza a
 próxima recusa. Nenhuma tirou um fluxo em troca; todas entraram pelo mesmo argumento — cobrir uma
 travessia que nenhuma camada abaixo alcança:
 
@@ -467,6 +472,7 @@ travessia que nenhuma camada abaixo alcança:
 | ~21 → ~23 | `dashboard/customization` | 1m42 | O único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um** componente também — os comandos em massa movem os onze ou nenhum. Nenhuma camada monta o editor e a tela que lê o resultado |
 | ~25 → ~28 | `currency/lifecycle` | 2m53 | O **segundo campo de valor**, único controle do app que nasce da discordância entre dois seletores: o arquivo o pré-preenche e digitar por cima retira a oferta. Ele existia no código sem fluxo nenhum — `transfer_destination_amount` era peso morto. E a **fronteira da consolidação**, que exige a tela de contas e o dashboard montados ao mesmo tempo sob **duas** moedas base: a mesma escrita exata de um lado e aproximada do outro. Nenhuma camada abaixo monta duas telas, e é a fronteira que a feature inteira existe para não quebrar |
 | ~28 → ~29 | `recurring/from_transaction` | 39s | O que a marca de recorrência no lançamento **impede**: sem a ocorrência escrita junto, o mês recém-pago volta como pendente e o usuário lança a mesma despesa duas vezes no razão. A afirmação é uma ausência em duas telas — a recorrência existe na lista e o dashboard não cobra o mês —, e ausência em duas telas ao mesmo tempo nenhuma camada abaixo monta |
+| ~29 → ~31 | `creditcards/retroactive_payment` | 1m52 | A jornada que a unificação do pagamento abre, e que nenhuma camada abaixo monta: uma fatura de um mês que já passou — criada, dotada do que aquele ciclo devia e paga pela mesma porta das demais — atravessando o menu de contexto, a criação, o ajuste e o pagamento em sequência. E a **ausência** que a fecha: paga até zerar, o comando de pagamento continua oferecido, que é a interface dizendo que a fatura não foi quitada. Fora de `creditcards/lifecycle` porque as figuras daquele fluxo são asseridas adiante: gastar dinheiro dentro dele moveria a aritmética, e uma falha aqui passaria a se ler como falha lá |
 | ~23 → ~25 | `categories/lifecycle` | 2m19–2m22 | O ciclo de aposentadoria da dimensão, que `budgets/lifecycle` só atravessa de raspão: o comando trocar de *Delete* para *Archive* porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção certa — o seletor de transação deixa de oferecê-la no instante em que o dashboard continua somando o que ela gastou |
 
 Duas recusas vêm no mesmo pacote, e valem como precedente igual. A aritmética do arrasto **não** é

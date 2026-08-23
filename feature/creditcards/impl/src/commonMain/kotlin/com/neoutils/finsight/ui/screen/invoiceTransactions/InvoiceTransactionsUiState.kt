@@ -14,6 +14,9 @@ import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
 import com.neoutils.finsight.extension.DisplayAmount
 import kotlinx.datetime.YearMonth
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_payment_pay
+import org.jetbrains.compose.resources.StringResource
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
@@ -99,6 +102,18 @@ data class InvoiceTransactionsUiState(
         val closingDate: LocalDate,
         val isClosable: Boolean,
         val canReopen: Boolean = false,
+        /**
+         * Whether this invoice has a payment to offer, and the verb that names it —
+         * resolved from the domain's predicate, beside [isClosable] and [canReopen], so
+         * the screen reads a fact rather than re-deciding a rule from the status.
+         */
+        val canPay: Boolean = false,
+        val payLabel: StringResource = Res.string.invoice_payment_pay,
+        /**
+         * Whether paying discharges the invoice. A discharge is the action this screen
+         * recommends and gives its solid emphasis to; a part-payment stays outlined.
+         */
+        val paySettles: Boolean = false,
     ) {
         val invoiceId = invoice.id
         val status = invoice.status

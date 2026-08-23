@@ -1,46 +1,33 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
-import arrow.core.raise.ensure
-import arrow.core.raise.ensureNotNull
-import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
- * Pays part of an open invoice ahead of time.
+ * Pays part of what an invoice owes, leaving its status untouched.
+ *
+ * The invoices that accept this are the ones still taking spending — `OPEN` and
+ * `RETROACTIVE` — because only an invoice without a final figure can be paid in part.
+ * `Invoice.acceptsPartialPayment` is the owner of that rule, and
+ * [ValidateInvoicePaymentUseCase] is what makes it a permission and not merely an offer:
+ * it owns every rule this operation is admissible by, and [UpdateAdvanceInvoicePaymentUseCase]
+ * reads the same one, so registering a payment and correcting one cannot drift apart.
  *
  * **[amount] is in the card's currency and always has been**, and that is what makes the
- * ceiling below correct: `amount <= currentBillAmount` compares two figures denominated
- * the same way. When the paying account is denominated differently the caller adds
+ * ceiling correct: it is compared to what the invoice owes, two figures denominated the
+ * same way. When the paying account is denominated differently the caller adds
  * [paidAmount], which is what leaves the *account* — and that side carries no ceiling at
  * all, because comparing it to the invoice would be comparing two currencies.
  */
 class AdvanceInvoicePaymentUseCase(
-    private val transactionRepository: ITransactionRepository,
-    private val invoiceRepository: IInvoiceRepository,
-    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
-    private val accountRepository: IAccountRepository,
-    private val clock: Clock,
+    private val writeInvoicePayment: WriteInvoicePaymentUseCase,
+    private val validateInvoicePayment: ValidateInvoicePaymentUseCase,
 ) {
-
-    private val currentDate get() = clock.today()
 
     /**
      * @param amount how much of the invoice is being settled, in the **card's** currency.
@@ -54,82 +41,22 @@ class AdvanceInvoicePaymentUseCase(
         account: Account,
         paidAmount: Double? = null,
     ): Either<Throwable, Transaction> = either {
-        ensure(amount > 0) {
-            InvoiceException(InvoiceError.NegativeAmount)
-        }
+        // No operation to leave out of the ceiling: this one does not exist yet.
+        val (invoice) = validateInvoicePayment(
+            invoiceId = invoiceId,
+            amount = amount,
+            date = date,
+            paidAmount = paidAmount,
+        ).mapLeft { InvoiceException(it) }.bind()
 
-        ensure(paidAmount == null || paidAmount > 0) {
-            InvoiceException(InvoiceError.NegativeAmount)
-        }
-
-        val invoice = invoiceRepository.getInvoiceById(invoiceId)
-
-        ensureNotNull(invoice) {
-            InvoiceException(InvoiceError.NotFound)
-        }
-
-        ensure(date >= invoice.openingDate && date <= invoice.closingDate) {
-            InvoiceException(InvoiceError.DateOutsideInvoicePeriod)
-        }
-
-        ensure(date <= currentDate) {
-            InvoiceException(InvoiceError.DateInFuture)
-        }
-
-        val currentBillAmount = calculateInvoiceUseCase(invoice)
-
-        ensure(currentBillAmount > 0.0) {
-            InvoiceException(InvoiceError.InvoiceNotInDebt)
-        }
-
-        // The ceiling holds over the card's side only. The account's side is free,
-        // because a limit on it would be a limit expressed in the wrong currency.
-        ensure(amount <= currentBillAmount) {
-            InvoiceException(InvoiceError.AmountExceedsInvoice)
-        }
-
-        val leaving = paidAmount ?: amount
-
-        val transaction = catch {
-            transactionRepository.createTransaction(
-                TransactionIntent(
-                    title = null,
-                    date = date,
-                    legs = listOf(
-                        // The money leaves the account undimensioned; only the card's
-                        // leg carries the invoice's sub-ledger, or the two would
-                        // cancel it out.
-                        TransactionLeg(
-                            type = TransactionType.EXPENSE,
-                            amount = leaving,
-                            accountId = account.id,
-                        ),
-                        TransactionLeg(
-                            type = TransactionType.INCOME,
-                            amount = amount,
-                            accountId = invoice.creditCard.accountId,
-                            dimensionId = invoice.dimensionId,
-                        ),
-                    ),
-                )
+        catch {
+            writeInvoicePayment(
+                invoice = invoice,
+                account = account,
+                leaving = paidAmount ?: amount,
+                settling = amount,
+                date = date,
             )
         }.bind()
-
-        // The rate this payment applied, written to the archive and never to the
-        // transaction (design D11).
-        catch {
-            val cardCurrency = accountRepository.getAccountById(invoice.creditCard.accountId)?.currency
-            if (cardCurrency != null) {
-                harvestExchangeRate(
-                    sourceAmount = leaving,
-                    sourceCurrency = account.currency,
-                    targetAmount = amount,
-                    targetCurrency = cardCurrency,
-                    date = date,
-                )
-            }
-        }
-
-        transaction
     }
 }

@@ -34,11 +34,48 @@ data class Invoice(
         else -> false
     }
 
+    /**
+     * Whether this invoice may be marked `PAID`.
+     *
+     * `RETROACTIVE` belongs here because a past cycle that owes nothing is settled by
+     * closing it (`CloseInvoiceUseCase`), which marks it paid while it is still
+     * retroactive. It is the domain's own question — *who may become `PAID`* — and not
+     * the one a screen asks before offering a payment; for that, see [acceptsPayment].
+     */
     val isPayable get() = when(status) {
         Status.CLOSED -> true
         Status.RETROACTIVE -> true
         else -> false
     }
+
+    /**
+     * Whether this invoice takes a payment of an amount the user states, capped at what
+     * it owes, leaving its status untouched.
+     *
+     * An invoice that still receives spending has no final figure to settle, so what is
+     * paid into it is a part and never a discharge.
+     */
+    val acceptsPartialPayment get() = when (status) {
+        Status.OPEN -> true
+        Status.RETROACTIVE -> true
+        else -> false
+    }
+
+    /**
+     * Whether this invoice takes only the whole of what it owes, and is discharged by it.
+     *
+     * A closed invoice has a final figure, which is what makes a partial amount
+     * inexpressible here rather than merely unoffered.
+     */
+    val acceptsFullSettlement get() = status == Status.CLOSED
+
+    /**
+     * Whether this invoice takes a payment at all — the single filter every surface that
+     * offers one reads, and the one that decides which invoices a payment may name.
+     *
+     * `FUTURE` is out because its cycle has not begun and `PAID` because it is frozen.
+     */
+    val acceptsPayment get() = acceptsPartialPayment || acceptsFullSettlement
 
     /**
      * Fatura fechável na data [date]: além do status permitir ([isClosable]), a data de

@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_navigator_label
 import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.ui.util.optionalTestTag
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
@@ -33,6 +34,10 @@ fun InvoiceMonthNavigator(
     onNavigate: (YearMonth) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",
+    // Names the step, not the field: a flow that walks the calendar has to say which
+    // direction it walked. Only the backward step carries one, because it is the only one
+    // a flow drives; the forward step gets its own the day one does.
+    previousTestTag: String? = null,
 ) {
     OutlinedTextField(
         value = selection.toLabel(),
@@ -56,7 +61,8 @@ fun InvoiceMonthNavigator(
                 IconButton(
                     onClick = {
                         onNavigate(selection.dueMonth.minusMonth())
-                    }
+                    },
+                    modifier = Modifier.optionalTestTag(previousTestTag),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,

@@ -2,12 +2,15 @@ package com.neoutils.finsight.ui.modal.viewTransaction
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionInstallment
 import com.neoutils.finsight.domain.model.TransactionLabel
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -46,6 +49,7 @@ class ViewTransactionGatesTest {
     private fun content(
         entries: List<Entry>,
         installment: TransactionInstallment? = null,
+        invoice: Invoice? = null,
     ) = ViewTransactionUiState.Content(
         transaction = Transaction(
             id = 1L,
@@ -56,6 +60,31 @@ class ViewTransactionGatesTest {
             installmentNumber = installment?.number,
         ),
         installment = installment,
+        invoice = invoice,
+    )
+
+    /** The invoice a payment names, in whichever state the gate is being read against. */
+    private fun invoice(status: Invoice.Status) = Invoice(
+        id = 1,
+        creditCard = CreditCard(
+            id = 1,
+            name = "Card",
+            limit = 1_000.0,
+            closingDay = 5,
+            dueDay = 15,
+            accountId = 2,
+        ),
+        dimensionId = 1,
+        openingMonth = YearMonth(2026, 1),
+        closingMonth = YearMonth(2026, 2),
+        dueMonth = YearMonth(2026, 2),
+        status = status,
+    )
+
+    /** The two monetary legs a payment has: out of an account, into the card. */
+    private val paymentEntries = listOf(
+        entry(AccountType.ASSET, -10_000, id = 1),
+        entry(AccountType.LIABILITY, 10_000, id = 2),
     )
 
     @Test
@@ -131,18 +160,74 @@ class ViewTransactionGatesTest {
     }
 
     @Test
-    fun paymentIsNotEditable_byDeclaration() {
-        // Out of scope by declaration, and no longer by leg count: a payment has the
-        // same two monetary legs a transfer has, and the transfer is now editable.
+    fun partialPaymentIsEditable_labelGate() {
+        // Two monetary legs, like a transfer, and admitted by the domain's predicate
+        // over the invoice it names — not by that count, which says nothing here.
         val content = content(
-            entries = listOf(
-                entry(AccountType.ASSET, -10_000, id = 1),
-                entry(AccountType.LIABILITY, 10_000, id = 2),
-            ),
+            entries = paymentEntries,
+            invoice = invoice(Invoice.Status.OPEN),
         )
         assertEquals(TransactionLabel.PAYMENT, content.label)
         assertEquals(2, content.transaction.monetaryEntries.size)
+        assertTrue(content.isEditable)
+        assertTrue(content.isRemovable)
+    }
+
+    @Test
+    fun paymentOnClosedInvoiceIsFrozen_invoiceGate() {
+        // A closed invoice takes no partial payment, so it takes no correction of one.
+        // Deleting is withdrawn one level up, by the very same invoice status.
+        val content = content(
+            entries = paymentEntries,
+            invoice = invoice(Invoice.Status.CLOSED),
+        )
         assertFalse(content.isEditable)
+        assertFalse(
+            content.invoice?.status?.isEditable == true,
+            "the status gate that hides deleting too",
+        )
+    }
+
+    @Test
+    fun paymentOnPaidInvoiceIsFrozen_invoiceGate() {
+        // The discharge itself: a paid invoice is history liquidated, and neither
+        // action is offered over it.
+        val content = content(
+            entries = paymentEntries,
+            invoice = invoice(Invoice.Status.PAID),
+        )
+        assertFalse(content.isEditable)
+        assertFalse(content.invoice?.status?.isEditable == true)
+    }
+
+    @Test
+    fun paymentOnArchivedAccountIsFrozen_changeGate() {
+        // The gate that holds for every operation runs first: an archived leg freezes
+        // the payment as it freezes anything else, without a rule of its own.
+        val content = content(
+            entries = listOf(
+                entry(AccountType.ASSET, -10_000, id = 1, isArchived = true),
+                entry(AccountType.LIABILITY, 10_000, id = 2),
+            ),
+            invoice = invoice(Invoice.Status.OPEN),
+        )
+        assertFalse(content.isChangeable)
+        assertFalse(content.isEditable)
+        assertFalse(content.isRemovable)
+    }
+
+    @Test
+    fun paymentOnArchivedCardIsFrozen_changeGate() {
+        val content = content(
+            entries = listOf(
+                entry(AccountType.ASSET, -10_000, id = 1),
+                entry(AccountType.LIABILITY, 10_000, id = 2, isArchived = true),
+            ),
+            invoice = invoice(Invoice.Status.OPEN),
+        )
+        assertFalse(content.isChangeable)
+        assertFalse(content.isEditable)
+        assertFalse(content.isRemovable)
     }
 
     @Test

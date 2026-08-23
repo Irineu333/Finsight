@@ -680,20 +680,14 @@ private fun DashboardCreditCardsSection(
                                     }
                                 }
                             },
+                            // One command, whatever state the invoice is in: the card
+                            // renders the verb the mapper resolved, and the sheet opens
+                            // on the invoice in view.
                             onPayInvoice = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    if (domainInvoice != null && bill != null) {
+                                    bill?.let {
                                         modalManager.show(
-                                            creditCardsEntry.payInvoiceModal(invoice = domainInvoice, currentBillAmount = bill.amount)
-                                        )
-                                    }
-                                }
-                            },
-                            onAdvancePayment = {
-                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    if (domainInvoice != null && bill != null) {
-                                        modalManager.show(
-                                            creditCardsEntry.advancePaymentModal(invoice = domainInvoice, currentBillAmount = bill.amount)
+                                            creditCardsEntry.invoicePaymentModal(invoiceId = it.id)
                                         )
                                     }
                                 }

@@ -14,7 +14,6 @@ import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.impl.CreditCardsEntryImpl
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
-import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.createInvoice.CreateInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
@@ -23,7 +22,7 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
+import com.neoutils.finsight.ui.modal.invoicePayment.InvoicePaymentViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finsight.ui.modal.viewCreditCard.ViewCreditCardViewModel
 import com.neoutils.finsight.ui.screen.archived.ArchivedCreditCardsViewModel
@@ -198,35 +197,31 @@ val creditCardsModule = module {
         )
     }
     viewModel {
-        PayInvoiceViewModel(
-            invoiceId = it.get(),
-            invoiceRepository = get(),
+        InvoicePaymentViewModel(
+            // Optional: the sheet names the invoice it pays, so opening it without one
+            // is a legitimate way in.
+            initialInvoiceId = it.getOrNull(),
+            // Optional for the other reason: the operation exists only in the mode that
+            // corrects one, and registering a payment has none to pass.
+            transaction = it.getOrNull(),
             payInvoicePaymentUseCase = get(),
-            payInvoiceUseCase = get(),
+            advanceInvoicePaymentUseCase = get(),
+            updateAdvanceInvoicePaymentUseCase = get(),
             calculateInvoiceUseCase = get(),
             suggestCrossCurrencyAmount = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
             accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            clock = get(),
         )
     }
     viewModel {
         CloseInvoiceViewModel(
             invoiceId = it.get(),
             closeInvoiceUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-    viewModel {
-        AdvancePaymentViewModel(
-            invoiceId = it.get(),
-            advanceInvoicePaymentUseCase = get(),
-            suggestCrossCurrencyAmount = get(),
-            invoiceRepository = get(),
-            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

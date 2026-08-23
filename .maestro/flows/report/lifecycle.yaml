@@ -114,9 +114,11 @@ env:
       CARD: ${CARD_NAME}
 
 # Paid from the credit cards screen rather than from inside the invoice: it is the offer a user
-# meets first, and it reaches the same modal. The account arrives already selected — the default
-# one — and that is asserted rather than assumed, because "$20.00 left the Wallet" below is only a
-# claim about this payment if this payment came from the Wallet.
+# meets first, and it is the same sheet either way — one command per surface, opening on the
+# invoice in view. The invoice is still open, so the amount is this flow's to state. The account
+# arrives already selected — the default one — and that is asserted rather than assumed, because
+# "$20.00 left the Wallet" below is only a claim about this payment if this payment came from the
+# Wallet.
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -127,29 +129,29 @@ env:
     timeout: 15000
 - scrollUntilVisible:
     element:
-      id: "credit_card_advance_payment"
+      id: "credit_card_pay_invoice"
     direction: DOWN
     centerElement: true
     timeout: 20000
 - tapOn:
-    id: "credit_card_advance_payment"
+    id: "credit_card_pay_invoice"
 - extendedWaitUntil:
     visible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 - assertVisible:
-    id: "advance_payment_account"
+    id: "invoice_payment_account"
     text: "Wallet"
 - tapOn:
-    id: "advance_payment_amount"
+    id: "invoice_payment_amount"
 - waitForAnimationToEnd
 - inputText: ${ADVANCE_DIGITS}
 - hideKeyboard
 - tapOn:
-    id: "advance_payment_confirm"
+    id: "invoice_payment_confirm"
 - extendedWaitUntil:
     notVisible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 
 # --- The Wallet: what it earned, and everything that left it -------------------------------------

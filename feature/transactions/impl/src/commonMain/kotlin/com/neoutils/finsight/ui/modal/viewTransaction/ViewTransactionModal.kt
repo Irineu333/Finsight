@@ -204,21 +204,12 @@ class ViewTransactionModal(
                         color = uiState.label.color()
                     )
 
-                    // A transfer and a payment ordinarily carry neither title nor
-                    // category, and are named by what they *are* — which is a fact of
-                    // their form, not a reserve literal standing in for an absence.
-                    // The name says what the nature above it does not: the two lines
-                    // are read together, so "transferência / entre contas" is the whole
-                    // sentence and repeating the first word in the second would waste
-                    // the line.
-                    //
-                    // An expense, an income or an adjustment with neither has no such
-                    // name, and the line is omitted rather than invented.
-                    val fallbackTitle = when (uiState.label) {
-                        TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
-                        TransactionLabel.TRANSFER -> stringResource(Res.string.view_transaction_title_transfer)
-                        else -> null
-                    }
+                    // The title the operation has, or — when it has none — the name of
+                    // the form it has, which is the one rule's ([fallbackTitleFor]).
+                    val fallbackTitle = fallbackTitleFor(
+                        label = uiState.label,
+                        isCardTarget = uiState.isCardTarget,
+                    )?.let { stringResource(it) }
 
                     (uiState.displayTitle ?: fallbackTitle)?.let { title ->
                         Spacer(modifier = Modifier.height(4.dp))

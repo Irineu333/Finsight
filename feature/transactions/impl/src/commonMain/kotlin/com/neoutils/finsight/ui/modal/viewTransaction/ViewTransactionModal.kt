@@ -49,6 +49,7 @@ import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.stringUiText
 import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -204,17 +205,13 @@ class ViewTransactionModal(
                         color = uiState.label.color()
                     )
 
-                    // The title the operation has, or — when it has none — the name of
-                    // the form it has, which is the one rule's ([fallbackTitleFor]).
-                    val fallbackTitle = fallbackTitleFor(
-                        label = uiState.label,
-                        isCardTarget = uiState.isCardTarget,
-                    )?.let { stringResource(it) }
-
-                    (uiState.displayTitle ?: fallbackTitle)?.let { title ->
+                    // The whole name, resolved by the one rule and rendered as it comes:
+                    // the header decides nothing about it beyond having asked for the
+                    // register that sits beside a nature.
+                    uiState.name?.let { name ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = title,
+                            text = stringUiText(name),
                             style = MaterialTheme.typography.titleMedium,
                             color = colorScheme.onSurface,
                             maxLines = 2,

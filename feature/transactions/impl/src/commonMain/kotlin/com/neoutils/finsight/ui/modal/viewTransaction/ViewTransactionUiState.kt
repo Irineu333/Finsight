@@ -10,9 +10,11 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.usecase.impliedRate
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOrNull
+import com.neoutils.finsight.extension.operationNameBesideNature
 import com.neoutils.finsight.ui.model.TransactionLegTarget
 import com.neoutils.finsight.ui.model.TransactionLegUi
 import com.neoutils.finsight.ui.model.toTransactionLegs
+import com.neoutils.finsight.util.UiText
 import kotlin.math.abs
 
 sealed interface ViewTransactionUiState {
@@ -62,15 +64,26 @@ sealed interface ViewTransactionUiState {
         /** The transaction's nature (title/colour/icon), derived from the entries. */
         val label: TransactionLabel = transaction.label
 
-        /**
-         * The title the transaction has — its own, or its category's — and `null` when
-         * it has neither, which is the ordinary case of a transfer and of a payment.
-         * The header then says only what the operation *is*.
-         */
-        val displayTitle: String? = displayTitleOrNull(transaction.title, category)
-
         val date = transaction.date
         val isCardTarget = transaction.hasLiabilityLeg
+
+        /**
+         * What the header calls this operation: its title, its category's name, or the
+         * name of its form — the one chain ([operationNameBesideNature]), asked in the
+         * register of a surface that has already announced the nature just above it.
+         *
+         * `null` only where the form has nothing the nature did not already say, which
+         * is an expense or an income carrying neither title nor category. The header
+         * omits the line rather than repeating itself.
+         *
+         * Declared after [isCardTarget] it reads: property initializers run in
+         * declaration order, and above it the flag would still be `false`.
+         */
+        val name: UiText? = operationNameBesideNature(
+            displayTitle = displayTitleOrNull(transaction.title, category),
+            label = label,
+            isCardTarget = isCardTarget,
+        )
 
         /**
          * One card per monetary leg, from the one owner of that mapping — the verb,

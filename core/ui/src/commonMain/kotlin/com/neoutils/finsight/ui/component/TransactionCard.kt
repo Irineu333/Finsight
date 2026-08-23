@@ -28,18 +28,12 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.transaction_card_balance_adjustment
-import com.neoutils.finsight.resources.transaction_card_expense
-import com.neoutils.finsight.resources.transaction_card_income
-import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
-import com.neoutils.finsight.resources.transaction_card_payment
-import com.neoutils.finsight.resources.transaction_card_transfer
+import com.neoutils.finsight.extension.operationName
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TransactionCard(
@@ -152,32 +146,23 @@ fun TransactionCard(
 }
 
 /**
- * The name of the operation: its title, then its category, then its form.
+ * The name of the operation, plus the instalment it belongs to.
  *
- * [TransactionUi.title] already answers the first two links — one owner, shared with
- * every other surface that names an operation. What is decided here is the third, and it
- * is this surface's to decide: a list item names the operation on its own, so it says
- * what the operation *is*, where a detail header that already announced the nature says
- * instead what the header did not.
+ * The name is the one rule's ([operationName]), asked in the register a list item needs:
+ * it names the operation on its own, saying what the operation *is*, where a detail
+ * header that already announced the nature says instead what the header did not.
  *
- * The form is a total function over [TransactionLabel], which is derived from the account
- * types of the entries — so there is always a third link, and no generic fallback.
+ * What is this surface's alone is the suffix — the instalment is a fact of the row, not
+ * of the operation's name.
  */
 @Composable
 private fun TransactionUi.displayTitle(): String {
-    val baseTitle = title ?: stringResource(
-        when (label) {
-            TransactionLabel.PAYMENT -> Res.string.transaction_card_payment
-            TransactionLabel.TRANSFER -> Res.string.transaction_card_transfer
-            TransactionLabel.ADJUSTMENT -> if (isCardTarget) {
-                Res.string.transaction_card_invoice_adjustment
-            } else {
-                Res.string.transaction_card_balance_adjustment
-            }
-
-            TransactionLabel.EXPENSE -> Res.string.transaction_card_expense
-            TransactionLabel.INCOME -> Res.string.transaction_card_income
-        }
+    val baseTitle = stringUiText(
+        operationName(
+            displayTitle = title,
+            label = label,
+            isCardTarget = isCardTarget,
+        )
     )
 
     return installmentLabel?.let { "$baseTitle • $it" } ?: baseTitle

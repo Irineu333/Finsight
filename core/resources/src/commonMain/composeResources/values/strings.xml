@@ -524,8 +524,6 @@
     <string name="view_transaction_nature_payment">Pagamento</string>
     <string name="view_transaction_nature_adjustment">Ajuste</string>
     <string name="view_transaction_title_transfer">Entre Contas</string>
-    <string name="view_transaction_title_balance_adjustment">Ajuste de Saldo</string>
-    <string name="view_transaction_title_invoice_adjustment">Ajuste de Fatura</string>
     <string name="view_transaction_leg_verb_adjusted">Ajustou</string>
     <string name="view_transaction_leg_verb_left">Saiu de</string>
     <string name="view_transaction_leg_verb_entered">Entrou em</string>

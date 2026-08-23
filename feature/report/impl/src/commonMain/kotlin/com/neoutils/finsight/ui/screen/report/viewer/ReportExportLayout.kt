@@ -7,6 +7,7 @@ import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.degradedTerm
 import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.extension.formatTerms
+import com.neoutils.finsight.extension.operationName
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
@@ -19,6 +20,8 @@ import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionGroup
 import com.neoutils.finsight.domain.model.TransactionItem
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.UiText
+import org.jetbrains.compose.resources.StringResource
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
@@ -44,12 +47,15 @@ data class ReportExportStrings(
     val sectionSpendingByCategory: String,
     val sectionIncomeByCategory: String,
     val sectionTransactions: String,
-    val transactionTransfer: String,
-    val transactionPayment: String,
-    val transactionBalanceAdjustment: String,
-    val transactionInvoiceAdjustment: String,
-    val transactionExpense: String,
-    val transactionIncome: String,
+    /**
+     * Every name an operation's form can have, resolved before the export runs.
+     *
+     * The document names a line by the same rule the list does ([operationName]), and
+     * that rule answers with a resource — which this world cannot resolve on demand. So
+     * it arrives resolved, keyed by the resource itself: the mapping from a nature to a
+     * name stays where it has one owner, and what is carried here is only its output.
+     */
+    val operationForms: Map<StringResource, String>,
     /**
      * The name of the unclassified line, resolved before the export runs — the document
      * is built outside the `@Composable` world, so every string it prints arrives here
@@ -224,27 +230,20 @@ private fun SpendingSubject.exportLabel(strings: ReportExportStrings): String = 
 }
 
 /**
- * The name of the operation in the document: its title, then its category, then its form.
+ * The name of the operation in the document, from the one rule ([operationName]) and in
+ * the same register a list item asks for: each line names itself.
  *
- * The same precedence the list reads by — [TransactionUi.title] answers the first two
- * links, and the third is the document's, which names each line on its own exactly as a
- * list item does. An exported report that disagreed with the screen it was exported from
- * would be the same operation under two names.
+ * An exported report that disagreed with the screen it was exported from would be the
+ * same operation under two names — which is why the document consumes the rule rather
+ * than restating it, and resolves what it answers against strings gathered in advance.
  */
-private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
-    return title ?: when (label) {
-        TransactionLabel.PAYMENT -> strings.transactionPayment
-        TransactionLabel.TRANSFER -> strings.transactionTransfer
-        TransactionLabel.ADJUSTMENT -> if (isCardTarget) {
-            strings.transactionInvoiceAdjustment
-        } else {
-            strings.transactionBalanceAdjustment
-        }
-
-        TransactionLabel.EXPENSE -> strings.transactionExpense
-        TransactionLabel.INCOME -> strings.transactionIncome
+private fun TransactionUi.exportTitle(strings: ReportExportStrings): String =
+    when (val name = operationName(displayTitle = title, label = label, isCardTarget = isCardTarget)) {
+        is UiText.Raw -> name.value
+        // Present by construction: the map is built from every cell of the same table.
+        is UiText.Res -> strings.operationForms.getValue(name.res)
+        is UiText.ResWithArgs -> error("An operation's name takes no arguments")
     }
-}
 
 /**
  * The tone reads the sign off the very value that will be printed, so text and color

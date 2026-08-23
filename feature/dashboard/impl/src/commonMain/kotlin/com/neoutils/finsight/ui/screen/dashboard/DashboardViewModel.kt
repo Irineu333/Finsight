@@ -241,7 +241,7 @@ class DashboardViewModel(
             )
         }
         dashboardPreferencesRepository.save(prefs)
-        analytics.logEvent(SaveDashboardLayout(editing.activeItems.joinToString(",") { it.key }))
+        analytics.logEvent(SaveDashboardLayout(editing.activeItems.map { it.key }))
         editingState.value = null
     }
 

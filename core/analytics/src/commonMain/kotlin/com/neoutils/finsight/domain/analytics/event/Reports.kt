@@ -1,10 +1,14 @@
 package com.neoutils.finsight.domain.analytics.event
 
 import com.neoutils.finsight.domain.analytics.Event
+import com.neoutils.finsight.domain.analytics.putList
 
 class GenerateReport(params: Map<String, String>) : Event("generate_report", params) {
-    constructor(target: String, sections: String) : this(
-        mapOf("target" to target, "sections" to sections)
+    constructor(target: String, sections: List<String>) : this(
+        buildMap {
+            put("target", target)
+            putList("sections", sections)
+        }
     )
 }
 

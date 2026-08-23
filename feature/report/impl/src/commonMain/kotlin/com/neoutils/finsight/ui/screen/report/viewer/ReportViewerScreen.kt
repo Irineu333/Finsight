@@ -318,13 +318,7 @@ private fun ReportViewerContent(
                                             .animateItem()
                                             .padding(horizontal = 16.dp),
                                         onClick = {
-                                            when {
-                                                transactionUi.direction.isAdjustment -> detailController.show(
-                                                    transactionsEntry.viewAdjustmentModal(transactionUi.id)
-                                                )
-
-                                                else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                            }
+                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                         },
                                     )
                                 }

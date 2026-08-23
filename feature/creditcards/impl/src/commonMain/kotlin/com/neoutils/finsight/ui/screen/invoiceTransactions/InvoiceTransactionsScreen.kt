@@ -409,15 +409,7 @@ private fun InvoiceTransactionsContent(
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
-                                    when (transactionUi.direction) {
-                                        TransactionType.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                        }
-
-                                        else -> {
-                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                        }
-                                    }
+                                    detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                 }
                             )
                         }

@@ -316,10 +316,10 @@ private fun DashboardRecentsSection(
                     ),
                 onClick = {
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
-                        when {
-                            isLastWithFade -> openTransactions(null, null)
-                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                            else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
+                        if (isLastWithFade) {
+                            openTransactions(null, null)
+                        } else {
+                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                         }
                     }
                 },

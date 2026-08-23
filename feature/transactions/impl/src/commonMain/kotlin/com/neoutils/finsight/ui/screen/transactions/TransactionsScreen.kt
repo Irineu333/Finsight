@@ -34,7 +34,6 @@ import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.SummaryCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import com.neoutils.finsight.util.LocalDateFormats
@@ -178,11 +177,7 @@ private fun TransactionsContent(
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
-                                    detailController.show(ViewAdjustmentModal(transactionUi.id))
-                                } else {
-                                    detailController.show(ViewTransactionModal(transactionUi.id))
-                                }
+                                detailController.show(ViewTransactionModal(transactionUi.id))
                             }
                         )
                     }

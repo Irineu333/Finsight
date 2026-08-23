@@ -24,8 +24,10 @@ import kotlinx.datetime.LocalDate
  * it survives the transaction being deleted (design D11, D27). When the two ends are
  * denominated alike the quotient says nothing and nothing is archived.
  *
- * Owning the shape here is what keeps the two payment modes from drifting: a form
- * written twice diverges without anything accusing it.
+ * Owning the shape here is what keeps the ways in from drifting: registering a payment
+ * and correcting one state the same two legs, and a form written twice diverges without
+ * anything accusing it. What differs between them is only whether the legs are created
+ * or rewritten — [invoke] and [rewrite] — and neither is a branch inside the shape.
  */
 class WriteInvoicePaymentUseCase(
     private val transactionRepository: ITransactionRepository,
@@ -47,25 +49,92 @@ class WriteInvoicePaymentUseCase(
             TransactionIntent(
                 title = null,
                 date = date,
-                legs = listOf(
-                    TransactionLeg(
-                        type = TransactionType.EXPENSE,
-                        amount = leaving,
-                        accountId = account.id,
-                    ),
-                    TransactionLeg(
-                        type = TransactionType.INCOME,
-                        amount = settling,
-                        accountId = invoice.creditCard.accountId,
-                        dimensionId = invoice.dimensionId,
-                    ),
+                legs = legsOf(
+                    invoice = invoice,
+                    account = account,
+                    leaving = leaving,
+                    settling = settling,
                 ),
             )
         )
 
-        // Harvesting is a side note on a payment that already landed: a card whose
-        // account cannot be read still leaves the ledger correct, only the archive
-        // poorer.
+        harvest(invoice, account, leaving, settling, date)
+
+        return transaction
+    }
+
+    /**
+     * The same shape, written over an operation that already exists.
+     *
+     * The legs are rebuilt from scratch and the transaction keeps its identity, which is
+     * what separates a correction from deleting and registering another one.
+     *
+     * @param title what the operation goes on being called. The payment form does not
+     * show this field, so what it does not exhibit it does not erase — the caller passes
+     * on what the transaction carries rather than `null` out of habit.
+     */
+    suspend fun rewrite(
+        transactionId: Long,
+        title: String?,
+        invoice: Invoice,
+        account: Account,
+        leaving: Double,
+        settling: Double,
+        date: LocalDate,
+    ) {
+        transactionRepository.updateTransaction(
+            id = transactionId,
+            title = title,
+            date = date,
+            legs = legsOf(
+                invoice = invoice,
+                account = account,
+                leaving = leaving,
+                settling = settling,
+            ),
+            // Two monetary legs are stated in full, so there is nothing left for the
+            // boundary to complete by difference — beyond the conversion residue, which
+            // it posts itself and must never carry the invoice's dimension.
+            contra = null,
+        )
+
+        harvest(invoice, account, leaving, settling, date)
+    }
+
+    private fun legsOf(
+        invoice: Invoice,
+        account: Account,
+        leaving: Double,
+        settling: Double,
+    ) = listOf(
+        TransactionLeg(
+            type = TransactionType.EXPENSE,
+            amount = leaving,
+            accountId = account.id,
+        ),
+        TransactionLeg(
+            type = TransactionType.INCOME,
+            amount = settling,
+            accountId = invoice.creditCard.accountId,
+            dimensionId = invoice.dimensionId,
+        ),
+    )
+
+    /**
+     * The rate this payment applied, observed from its own two ends after the write.
+     *
+     * Harvesting is a side note on a payment that already landed: a card whose account
+     * cannot be read still leaves the ledger correct, only the archive poorer. A
+     * correction harvests the rate it applies and revokes nothing — same pair, same date
+     * and same origin is the same key, and the archive replaces it by itself.
+     */
+    private suspend fun harvest(
+        invoice: Invoice,
+        account: Account,
+        leaving: Double,
+        settling: Double,
+        date: LocalDate,
+    ) {
         runCatching {
             val cardCurrency = accountRepository
                 .getAccountById(invoice.creditCard.accountId)
@@ -81,7 +150,5 @@ class WriteInvoicePaymentUseCase(
                 )
             }
         }
-
-        return transaction
     }
 }

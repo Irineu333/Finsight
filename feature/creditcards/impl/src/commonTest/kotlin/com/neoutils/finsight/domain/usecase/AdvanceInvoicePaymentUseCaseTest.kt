@@ -44,9 +44,11 @@ class AdvanceInvoicePaymentUseCaseTest {
             harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
             accountRepository = FakeCardAccountRepository(),
         ),
-        invoiceRepository = store,
-        calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),
-        clock = StoppedClock(today),
+        validateInvoicePayment = ValidateInvoicePaymentUseCase(
+            invoiceRepository = store,
+            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),
+            clock = StoppedClock(today),
+        ),
     )
 
     @Test

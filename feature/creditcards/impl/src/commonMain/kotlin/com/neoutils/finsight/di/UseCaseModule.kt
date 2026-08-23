@@ -23,7 +23,9 @@ import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
 import org.koin.dsl.module
 
@@ -80,12 +82,28 @@ val useCaseModules = module {
         )
     }
 
+    // Every rule a partial payment is admissible by — one owner, and both modes read
+    // it, so registering one and correcting one cannot drift apart.
     factory {
-        AdvanceInvoicePaymentUseCase(
-            writeInvoicePayment = get(),
+        ValidateInvoicePaymentUseCase(
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             clock = get(),
+        )
+    }
+
+    factory {
+        AdvanceInvoicePaymentUseCase(
+            writeInvoicePayment = get(),
+            validateInvoicePayment = get(),
+        )
+    }
+
+    factory {
+        UpdateAdvanceInvoicePaymentUseCase(
+            writeInvoicePayment = get(),
+            validateInvoicePayment = get(),
+            transactionRepository = get(),
         )
     }
 

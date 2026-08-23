@@ -46,9 +46,20 @@ recusa também o parcial que as outras três liberam.
 
 ### D1 — Um formulário, dois modos, distinguidos pela presença da operação
 
-`InvoicePaymentModal(transaction: Transaction?)`, e no ViewModel a mesma coisa: `transaction` é a
-**única** coisa que separa os dois modos, exatamente como em `TransferBetweenAccountsViewModel`
-(`isEditMode = transaction != null`). Não há flag booleana e não há um segundo formulário.
+`transaction` é a **única** coisa que separa os dois modos, exatamente como em
+`TransferBetweenAccountsViewModel` (`isEditMode = transaction != null`). Não há flag booleana e não
+há um segundo formulário.
+
+O modal expõe isso com construtor privado e dois construtores públicos — um por modo — como
+`TransferBetweenAccountsModal` já faz. Koin recebe os dois parâmetros e resolve o do modo ausente
+com `getOrNull()`, como `AccountsModule` já faz.
+
+Com **uma** diferença do molde, e ela precisa ser dita porque é o oposto do que a transferência
+faz. Lá o construtor de correção deriva a conta de origem da própria transação
+(`transaction.entries.sourceLeg()?.account`), porque uma conta está hidratada na perna. Aqui a
+fatura **não** está: a perna carrega um `dimensionId`, e transformá-lo numa `Invoice` é resolver
+identidade → facade, o que exige repositório. O modal não pode fazê-lo e não deve tentar; quem
+resolve a fatura pela dimensão é o ViewModel, na abertura.
 
 *Alternativa considerada:* um `EditInvoicePaymentModal` próprio. Recusada pela mesma razão que
 `transfer-editing` a recusou — seria uma segunda gramática para a mesma operação, e as duas
@@ -154,10 +165,19 @@ de `createTransaction`, e a identidade da transação preservada — as pernas s
 operação continua sendo a mesma.
 
 As validações não são copiadas. Hoje elas vivem inline em `AdvanceInvoicePaymentUseCase`; a
-transferência já resolveu isso extraindo `ValidateTransferUseCase`, e é o mesmo movimento aqui: um
-validador compartilhado pelos dois, ou os dois divergem sem que nada acuse — que é exatamente o que
-`invoice-settlement` proíbe ao dizer que a regra *"MUST NOT ser reimplementada por cada um dos dois
-caminhos"*.
+transferência já resolveu isso extraindo `ValidateTransferUseCase`, e é o mesmo movimento aqui:
+`ValidateInvoicePaymentUseCase` devolvendo `Either<InvoiceError, ValidatedInvoicePayment>`, com a
+`Invoice` resolvida dentro — porque *"esta fatura existe"* é uma das regras que ele verifica, e um
+chamador que a lesse de novo repetiria a busca cuja falha o validador já nomeou. É a justificativa
+que `ValidatedTransfer` documenta para devolver as duas contas.
+
+Ou um validador compartilhado, ou os dois caminhos divergem sem que nada acuse — que é exatamente o
+que `invoice-settlement` proíbe ao dizer que a regra *"MUST NOT ser reimplementada por cada um dos
+dois caminhos"*.
+
+O escopo do validador é o pagamento **parcial**, nos seus dois modos. `PayInvoicePaymentUseCase`
+não passa a consumi-lo: a quitação tem regras próprias (`acceptsFullSettlement`, o valor que é o
+devido em vez de ser limitado por ele) e está fora desta change.
 
 A forma da escrita continua com dono único em `WriteInvoicePaymentUseCase`, que passa a servir
 também à reescrita.
@@ -183,11 +203,46 @@ uma correção, que evaporaria o valor e a data pré-preenchidos.
 A abertura em modo de correção estabelece cartão e fatura diretamente, sem atravessar o caminho da
 troca. É D4 aplicado ao mecanismo.
 
+O que ela preenche vem dos donos que o razão já tem para essa leitura, e não de entries escolhidas
+a dedo:
+
+```
+entries.liabilityLeg()   →  o valor que liquida a fatura, na moeda do cartão,
+                            e o dimensionId que resolve qual fatura é
+entries.sourceLeg()      →  a conta pagadora e o que saiu dela
+```
+
+`sourceLeg()` filtra por `ASSET` antes de olhar o sinal, o que importa aqui: num pagamento entre
+moedas há pernas de conversão, e a que segura o resíduo negativo é indistinguível da conta pagadora
+para quem procurar apenas "a perna negativa".
+
 ### D8 — O que o formulário não exibe, ele preserva
 
 `updateTransaction` exige `title` explícito, sem default, e o pagamento grava `title = null` hoje. A
 correção passa adiante o título que a transação carrega, em vez de `null` por hábito —
 `transfer-editing` já enuncia a regra: *"O formulário MUST NOT apagar o que ele não exibe."*
+
+### D9 — O cabeçalho anuncia o modo, e o subtítulo não precisa mudar
+
+O cabeçalho passa a nomear a correção — "Corrigir pagamento" no lugar de "Pagamento de Fatura" —,
+como `transfer-editing` faz ("Transferir entre contas" → "Corrigir transferência").
+
+Isto **não** contradiz a decisão recente de deixar o cabeçalho parado. O que aquela decisão retirou
+foi a dependência entre o cabeçalho e a **seleção**: o head não pode ser reescrito pelo campo
+abaixo dele, porque o seletor é onde a escolha é feita e a linha acima já teria anunciado o
+resultado. O modo não é uma seleção — é fixo desde a abertura e não muda enquanto o sheet vive.
+O head continua parado; o que ele nomeia é que passa a distinguir as duas operações.
+
+Sem isso, um sheet intitulado "Pagamento de Fatura" com todos os campos preenchidos se lê como um
+pagamento novo já sugerido, e confirmar pareceria criar um segundo.
+
+O **subtítulo** não muda: "Escolha a fatura e a conta que paga por ela" continua verdadeiro na
+correção, justamente porque D2 mantém a fatura e a conta escolhíveis. Uma string a menos, e a que
+sobra não mente em nenhum dos dois modos.
+
+O botão ganha chave própria — `invoice_payment_edit_confirm` = "Salvar" —, e não reaproveita a da
+transferência: o projeto tem uma chave de "Salvar" por formulário, dez delas, e reusar uma de outra
+feature acoplaria as duas por um recurso.
 
 ## Risks / Trade-offs
 

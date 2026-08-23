@@ -38,6 +38,10 @@ A forma que a correção grava SHALL ser a mesma que a criação grava, com o me
 
 O sistema SHALL oferecer a correção de um pagamento pelo **mesmo formulário** que o cria, distinguindo os dois modos apenas pelo que **anuncia** — o cabeçalho e o verbo do único botão — e não pelo que oferece. Um formulário próprio para corrigir seria uma segunda gramática para a mesma operação, e as duas divergiriam.
 
+O cabeçalho SHALL nomear a correção quando o formulário estiver corrigindo. Um formulário que se anunciasse como o de um pagamento novo, com todos os campos já preenchidos, se leria como um pagamento sugerido, e confirmá-lo pareceria criar um segundo. O cabeçalho SHALL continuar sem depender de nenhuma seleção do formulário: o modo é fixo desde a abertura, e é só ele que o decide.
+
+A linha que descreve o que o formulário pede MUST NOT ser duplicada por modo enquanto valer para os dois. Ela SHALL descrever o que o formulário oferece, e o formulário oferece o mesmo nos dois modos.
+
 O verbo do botão SHALL nomear o que a confirmação faz naquele modo. "Antecipar" e "pagar" são o que a criação faz; uma correção grava uma operação cujo dinheiro já se moveu, e oferecer o mesmo verbo ali afirma um segundo movimento que não vai acontecer. Em modo de correção o botão SHALL oferecer **salvar**, e continua sendo **um só** — o que muda é a palavra, não a quantidade de comandos.
 
 Toda validação que a criação aplica SHALL valer integralmente na correção: o valor SHALL ser maior que zero e não maior que o devido; o valor que sai da conta, quando as duas pontas diferem, SHALL ser maior que zero e não SHALL ter teto, porque um teto ali seria um limite exprimido na moeda errada; a data SHALL pertencer à janela de liquidação da fatura selecionada; a fatura SHALL existir e SHALL aceitar pagamento parcial. Essas regras SHALL ter um dono único, e MUST NOT ser reimplementadas por cada um dos dois caminhos — uma cópia divergiria da outra sem que nada acusasse.
@@ -49,6 +53,14 @@ O formulário MUST NOT apagar o que ele não exibe. Um dado que a operação car
 #### Scenario: O botão de confirmar nomeia o que a confirmação faz
 - **WHEN** o usuário abre a correção de um pagamento já registrado
 - **THEN** o único botão do formulário oferece salvar, e não antecipar nem pagar
+
+#### Scenario: O cabeçalho nomeia a correção
+- **WHEN** o usuário abre a correção de um pagamento já registrado
+- **THEN** o cabeçalho anuncia a correção, e não o registro de um pagamento
+
+#### Scenario: O cabeçalho não segue a seleção
+- **WHEN** o usuário troca o cartão ou a fatura dentro de uma correção
+- **THEN** o cabeçalho continua o mesmo, porque o modo não mudou
 
 #### Scenario: Uma correção com valor zero é recusada
 - **WHEN** o usuário tenta corrigir um pagamento para valor zero ou negativo

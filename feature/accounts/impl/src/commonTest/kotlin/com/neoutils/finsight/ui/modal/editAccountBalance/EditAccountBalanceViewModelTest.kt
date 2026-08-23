@@ -160,6 +160,79 @@ class EditAccountBalanceViewModelTest {
     }
 
     /**
+     * Every intermediate state of typing a date is text that does not parse, so a form
+     * that only exists while the date parses is a form that cannot be typed into.
+     * `Loading` means the account has not been read yet — never "what you typed so far
+     * is not a date".
+     */
+    @Test
+    fun `a date still being typed keeps the form and leaves the reference value where it was`() =
+        runTest(dispatcher) {
+            val ledger = seededLedger()
+            val viewModel = viewModel(ledger, closingBalanceDateOf(YearMonth(2026, 8), today))
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                assertEquals(
+                    140.0,
+                    (expectMostRecentItem() as EditAccountBalanceUiState.Content).currentBalance,
+                )
+
+                // Deleting `11/08/2026` one character at a time, then typing another date
+                // back: nothing in between is a date.
+                listOf("11/08/202", "11/08/20", "11/08/2", "11/08/", "2", "28/02/202").forEach { typed ->
+                    viewModel.onAction(EditAccountBalanceAction.ChangeDate(typed))
+                    advanceUntilIdle()
+
+                    val state = expectMostRecentItem() as EditAccountBalanceUiState.Content
+                    assertEquals(typed, state.date)
+                    assertEquals(140.0, state.currentBalance)
+                }
+
+                viewModel.onAction(EditAccountBalanceAction.ChangeDate("28/02/2026"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem() as EditAccountBalanceUiState.Content
+                assertEquals(100.0, state.currentBalance)
+            }
+        }
+
+    /**
+     * The difference the form shows is applied to the date that produced it. A date left
+     * mid-typing does not move that date, and does not silently drop the adjustment.
+     */
+    @Test
+    fun `submitting while the date is still being typed writes on the reference date`() =
+        runTest(dispatcher) {
+            val ledger = seededLedger()
+            val viewModel = viewModel(ledger, closingBalanceDateOf(YearMonth(2026, 8), today))
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onAction(EditAccountBalanceAction.ChangeDate("28/02/2026"))
+                advanceUntilIdle()
+                val state = expectMostRecentItem() as EditAccountBalanceUiState.Content
+                assertEquals(100.0, state.currentBalance)
+
+                viewModel.onAction(EditAccountBalanceAction.ChangeDate("28/02/202"))
+                advanceUntilIdle()
+                assertEquals(
+                    100.0,
+                    (expectMostRecentItem() as EditAccountBalanceUiState.Content).currentBalance,
+                )
+
+                viewModel.onAction(EditAccountBalanceAction.Submit(targetBalance = 175.0))
+                advanceUntilIdle()
+
+                assertEquals(
+                    mapOf(LocalDate(2026, 2, 28) to 75.0),
+                    ledger.adjustmentsByDate(),
+                )
+            }
+        }
+
+    /**
      * No entry point reaches anything another could not: the shortcut is a date, and
      * nothing else.
      */

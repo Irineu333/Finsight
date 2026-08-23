@@ -3,6 +3,7 @@ area: accounts
 severity: high
 type: ux
 version: 1.10.0
+verdict: fixed
 ---
 
 # Digitar na data do ajuste de saldo troca o formulário por um spinner que não volta
@@ -62,3 +63,33 @@ travada carregando. O único jeito de sair é fechar e reabrir, e nada em tela d
 Guardar no ViewModel o último `LocalDate` válido, como a transferência faz, e deixar o
 texto ser estado da UI. `Loading` deveria significar "ainda não li o saldo", não "o que
 você digitou não parseia". Não vinculante.
+
+## Desfecho
+
+**Causa real** — a data era texto no ViewModel e o valor de referência era lido dela, então
+"o que se digitou ainda não é uma data" e "ainda não li o saldo" eram o mesmo estado. A
+sugestão original acertou o remédio; o que ela não viu é que `submit()` lia o texto uma
+segunda vez e desistia em silêncio quando ele não parseava — o mesmo defeito, num caminho
+que o cenário não visita.
+
+**Mudança** — `EditAccountBalanceViewModel` passa a ter dois campos com donos distintos:
+`date`, o texto que o campo edita, e `adjustmentDate`, a última data que esse texto foi —
+que só se move quando `ChangeDate` parseia. `currentBalance` combina com `adjustmentDate`,
+então não volta a ser `null` por causa do que se digita, e `Loading` recupera o único
+sentido que lhe resta, dito no KDoc: a conta ainda não foi lida. `submit()` escreve em
+`adjustmentDate.value` — a data em que o saldo de referência foi lido — em vez de reparsear
+o texto, o que mantém a diferença exibida igual à escrita também aqui.
+
+O modal não mudou: com o ramo `Content` de pé, o campo de data e o `LaunchedEffect` que o
+reporta deixam de sair da composição.
+
+**Prova** — dois testes em `EditAccountBalanceViewModelTest`: apagar `11/08/2026` caractere
+a caractere mantém o estado em `Content` com o saldo de referência em 140, e digitar
+`28/02/2026` o move para 100; submeter com o texto em `28/02/202` grava 75 em 28/02/2026,
+em vez de nada. Vermelhos antes — `ClassCastException` de `Loading` para `Content`, e
+nenhum lançamento no razão —, verdes depois; verificado restaurando o ViewModel antigo
+contra a versão final dos testes. `./gradlew jvmTest` verde: 1416 testes, 0 falhas somando
+os relatórios de todos os módulos. `:feature:accounts:impl:compileDebugKotlinAndroid`
+compilando.
+
+**Commit** — `Fix(Accounts): keep the balance form on screen while the date is typed`

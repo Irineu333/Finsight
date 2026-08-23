@@ -51,14 +51,16 @@ class EditAccountBalanceViewModel(
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
 
-    // The date as the form holds it: text, because that is what the field edits. A date
-    // still being typed parses to nothing and the reference value stays where it was.
+    // The date as the form holds it: text, because that is what the field edits.
     private val date = MutableStateFlow(dayMonthYear.format(initialDate))
 
-    private val adjustmentDate = date.map { it.toLocalDateOrNull() }
+    // The date the adjustment happens on: the last text that was a date. Every state of
+    // a date being typed parses to nothing, so a form that followed the text would have
+    // no date for as long as the user is typing one.
+    private val adjustmentDate = MutableStateFlow(initialDate)
 
     private val currentBalance = combine(selectedAccount, adjustmentDate) { selected, on ->
-        if (selected == null || on == null) return@combine null
+        if (selected == null) return@combine null
         // One account, one currency — the account's. Nothing is consolidated here, and
         // the balance is read on the very date the adjustment will be written to.
         calculateBalanceUseCase.forAccount(accountId = selected.id, target = on)
@@ -103,6 +105,7 @@ class EditAccountBalanceViewModel(
 
             is EditAccountBalanceAction.ChangeDate -> {
                 date.value = action.date
+                action.date.toLocalDateOrNull()?.let { adjustmentDate.value = it }
             }
 
             is EditAccountBalanceAction.Submit -> {
@@ -113,11 +116,12 @@ class EditAccountBalanceViewModel(
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
         val account = selectedAccount.value ?: return@launch
-        val on = date.value.toLocalDateOrNull() ?: return@launch
 
         adjustBalanceUseCase(
             targetBalance = targetBalance,
-            adjustmentDate = on,
+            // The date the reference value was read on, which is the one the displayed
+            // difference was measured against.
+            adjustmentDate = adjustmentDate.value,
             account = account,
         ).onLeft {
             when (it) {

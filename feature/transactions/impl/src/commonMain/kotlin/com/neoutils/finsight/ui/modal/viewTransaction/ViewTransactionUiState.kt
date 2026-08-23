@@ -155,13 +155,14 @@ sealed interface ViewTransactionUiState {
                 // conversion legs are not monetary and do not change what it is.
                 TransactionLabel.TRANSFER -> true
 
-                // Named although the `else` below would refuse it too. While the gate
-                // read "exactly one monetary leg", the payment stayed out by the same
-                // effect that kept the transfer out; admitting the transfer leaves
-                // that count saying nothing about the payment, so what keeps it out
-                // has to be said rather than inherited — otherwise "out of scope"
-                // quietly becomes "we forgot".
-                TransactionLabel.PAYMENT -> false
+                // Two monetary legs as well, and the payment form states both. What
+                // decides is the domain's own predicate over the invoice the operation
+                // names: an invoice that still takes a partial payment takes the
+                // correction of one too. The discharge of a closed invoice is history
+                // liquidated and stays out by the same predicate — this reads it rather
+                // than enumerating statuses, and the invoice-status gate one level up
+                // withdraws both actions there anyway.
+                TransactionLabel.PAYMENT -> invoice?.acceptsPartialPayment == true
 
                 // The adjustment today, and any nature that comes to exist tomorrow:
                 // born outside editing, and it enters only by being named above.

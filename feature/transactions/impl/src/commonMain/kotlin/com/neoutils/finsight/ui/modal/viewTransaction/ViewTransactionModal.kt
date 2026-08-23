@@ -32,6 +32,7 @@ import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
@@ -45,7 +46,6 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.TransactionLegCard
 import com.neoutils.finsight.ui.component.TransactionLegConnector
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
-import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.dayMonthYear
@@ -380,10 +380,12 @@ class ViewTransactionModal(
     ) {
 
         val manager = LocalModalManager.current
-        // The transfer form lives in the accounts feature, which owns the operation.
-        // It is reached through that feature's public entry point, because one
-        // implementation may not name another.
+        // The transfer form lives in the accounts feature and the invoice payment form
+        // in the cards feature, each owning its operation. They are reached through
+        // those features' public entry points, because one implementation may not name
+        // another.
         val accountsEntry = koinInject<AccountsEntry>()
+        val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         // Deleting is hidden, not disabled, when it would strand a balance on an
         // archived account: the same reason the invoice branch above hides both.
@@ -420,16 +422,12 @@ class ViewTransactionModal(
         if (uiState.isEditable) {
                 OutlinedButton(
                     onClick = {
-                        // Which form corrects an operation follows from what the
-                        // operation *is*. A transfer states two accounts and two
-                        // amounts; the transaction form states a type, a target and a
-                        // category, and none of those exists on a transfer.
                         manager.show(
-                            if (uiState.label == TransactionLabel.TRANSFER) {
-                                accountsEntry.editTransferModal(uiState.transaction)
-                            } else {
-                                EditTransactionModal(uiState.transaction)
-                            }
+                            editFormFor(
+                                transaction = uiState.transaction,
+                                accountsEntry = accountsEntry,
+                                creditCardsEntry = creditCardsEntry,
+                            )
                         )
                     },
                     modifier = Modifier

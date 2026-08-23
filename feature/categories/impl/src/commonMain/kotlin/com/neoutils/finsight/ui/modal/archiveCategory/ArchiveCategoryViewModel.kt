@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.error.toRetireUiMessage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.DeleteCategory
+import com.neoutils.finsight.domain.analytics.event.ArchiveCategory
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
@@ -21,7 +21,7 @@ class ArchiveCategoryViewModel(
 
     fun archiveCategory() = viewModelScope.launch {
         archiveCategoryUseCase(category).onRight {
-            analytics.logEvent(DeleteCategory(category))
+            analytics.logEvent(ArchiveCategory(category))
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)

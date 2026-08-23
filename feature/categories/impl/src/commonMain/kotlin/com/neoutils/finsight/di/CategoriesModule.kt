@@ -130,6 +130,7 @@ val categoriesModule = module {
             unarchiveCategory = get(),
             consolidateMoney = get(),
             observeConsolidationChanges = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }

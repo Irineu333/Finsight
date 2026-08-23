@@ -8,7 +8,7 @@ import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
+import com.neoutils.finsight.domain.analytics.event.ArchiveCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.CreditCard
@@ -60,7 +60,7 @@ class ArchiveCreditCardViewModel(
 
     fun archiveCreditCard() = viewModelScope.launch {
         archiveCreditCardUseCase(creditCard).onRight {
-            analytics.logEvent(DeleteCreditCard)
+            analytics.logEvent(ArchiveCreditCard)
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)

@@ -243,6 +243,7 @@ val creditCardsModule = module {
             accountRepository = get(),
             invoiceRepository = get(),
             unarchiveCreditCard = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }
@@ -265,6 +266,7 @@ val creditCardsModule = module {
             entryRepository = get(),
             recurringRepository = get(),
             unarchiveCreditCard = get(),
+            analytics = get(),
             crashlytics = get(),
             clock = get(),
         )

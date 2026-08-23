@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.viewAccount
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -19,6 +21,7 @@ class ViewAccountViewModel(
     private val accountId: Long,
     private val accountRepository: IAccountRepository,
     private val unarchiveAccount: UnarchiveAccountUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -57,7 +60,10 @@ class ViewAccountViewModel(
         viewModelScope.launch {
             val account = accountRepository.getAccountById(accountId) ?: return@launch
             unarchiveAccount(account)
-                .onRight { _events.send(ViewAccountEvent.Dismiss) }
+                .onRight {
+                    analytics.logEvent(UnarchiveAccount)
+                    _events.send(ViewAccountEvent.Dismiss)
+                }
                 .onLeft { crashlytics.recordException(it) }
         }
     }

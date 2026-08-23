@@ -10,7 +10,13 @@ class EditAccount(params: Map<String, String>) : Event("edit_account", params) {
     constructor(isDefault: Boolean) : this(mapOf("is_default" to isDefault.toString()))
 }
 
+/** The row is gone. Retiring one that must be preserved is [ArchiveAccount] instead. */
 object DeleteAccount : Event("delete_account")
+
+/** Retired but kept, and reversible by [UnarchiveAccount] — not a deletion. */
+object ArchiveAccount : Event("archive_account")
+
+object UnarchiveAccount : Event("unarchive_account")
 
 object AdjustAccountBalance : Event("adjust_account_balance")
 

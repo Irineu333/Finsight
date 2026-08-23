@@ -15,6 +15,8 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveCreditCard
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.DisplayAmount
@@ -53,6 +55,7 @@ class InvoiceTransactionsViewModel(
     private val entryRepository: IEntryRepository,
     private val recurringRepository: IRecurringRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
     private val clock: Clock,
 ) : ViewModel() {
@@ -331,7 +334,9 @@ class InvoiceTransactionsViewModel(
             // domain model sits in observable state.
             InvoiceTransactionsAction.Unarchive -> {
                 val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return@launch
-                unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
+                unarchiveCreditCard(creditCard)
+                    .onRight { analytics.logEvent(UnarchiveCreditCard) }
+                    .onLeft { crashlytics.recordException(it) }
             }
         }
     }

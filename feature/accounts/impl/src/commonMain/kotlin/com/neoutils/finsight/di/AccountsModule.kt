@@ -199,6 +199,7 @@ val accountsModule = module {
             accountId = it.get(),
             accountRepository = get(),
             unarchiveAccount = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }

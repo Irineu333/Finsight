@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewCategory
 
+import com.neoutils.finsight.RecordingAnalytics
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -170,6 +171,7 @@ class ViewCategoryViewModelTest {
     private fun viewModel(
         categoryRepository: FakeCategoryRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
+        analytics: RecordingAnalytics = RecordingAnalytics(),
         entryRepository: FakeEntryRepository = FakeEntryRepository(),
         recurringRepository: IRecurringRepository = FakeRecurringRepository(),
         budgetRepository: IBudgetRepository = FakeBudgetRepository(),
@@ -195,6 +197,7 @@ class ViewCategoryViewModelTest {
             baseCurrencyRepository = FakeBaseCurrencyRepository(),
             exchangeRateRepository = FakeExchangeRateRepository(),
         ),
+        analytics = analytics,
         crashlytics = crashlytics,
     )
 
@@ -331,7 +334,8 @@ class ViewCategoryViewModelTest {
     @Test
     fun `the unarchive action unarchives the shown category`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
-        val vm = viewModel(categoryRepository = repository)
+        val analytics = RecordingAnalytics()
+        val vm = viewModel(categoryRepository = repository, analytics = analytics)
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 5L, isArchived = true))
@@ -341,6 +345,7 @@ class ViewCategoryViewModelTest {
             runCurrent()
 
             assertEquals(listOf(5L), repository.unarchived)
+            assertEquals(listOf("unarchive_category"), analytics.events.map { it.name })
         }
     }
 

@@ -4,6 +4,8 @@ package com.neoutils.finsight.ui.modal.viewCategory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveCategory
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.CategoryRetirability
@@ -41,6 +43,7 @@ class ViewCategoryViewModel(
     private val unarchiveCategory: UnarchiveCategoryUseCase,
     private val consolidateMoney: ConsolidateMoneyUseCase,
     private val observeConsolidationChanges: ObserveConsolidationChangesUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -111,7 +114,9 @@ class ViewCategoryViewModel(
     private fun unarchive() {
         val category = (uiState.value as? ViewCategoryUiState.Content)?.category ?: return
         viewModelScope.launch {
-            unarchiveCategory(category).onLeft { crashlytics.recordException(it) }
+            unarchiveCategory(category)
+                .onRight { analytics.logEvent(UnarchiveCategory(category)) }
+                .onLeft { crashlytics.recordException(it) }
         }
     }
 }

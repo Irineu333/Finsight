@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.viewCreditCard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.extension.currencyOf
@@ -24,6 +26,7 @@ class ViewCreditCardViewModel(
     private val accountRepository: IAccountRepository,
     invoiceRepository: IInvoiceRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -65,7 +68,10 @@ class ViewCreditCardViewModel(
         viewModelScope.launch {
             val creditCard = creditCardRepository.getCreditCardById(cardId) ?: return@launch
             unarchiveCreditCard(creditCard)
-                .onRight { _events.send(ViewCreditCardEvent.Dismiss) }
+                .onRight {
+                    analytics.logEvent(UnarchiveCreditCard)
+                    _events.send(ViewCreditCardEvent.Dismiss)
+                }
                 .onLeft { crashlytics.recordException(it) }
         }
     }

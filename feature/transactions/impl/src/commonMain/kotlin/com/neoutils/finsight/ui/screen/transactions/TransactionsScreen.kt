@@ -343,6 +343,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedSubject != null,
         onClick = { expanded = true },
+        modifier = Modifier.testTag("transactions_filter_category"),
         label = { Text(label) },
         trailingIcon = {
             Icon(
@@ -427,6 +428,7 @@ private fun TypeFilterChip(
     FilterChip(
         selected = selectedLabel != null,
         onClick = { expanded = true },
+        modifier = Modifier.testTag("transactions_filter_type"),
         label = {
             Text(
                 selectedLabel
@@ -480,6 +482,7 @@ private fun RecurringFilterChip(
     FilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleRecurring(!enabled)) },
+        modifier = Modifier.testTag("transactions_filter_recurring"),
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
         },
@@ -494,6 +497,7 @@ private fun InstallmentFilterChip(
     FilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleInstallment(!enabled)) },
+        modifier = Modifier.testTag("transactions_filter_installment"),
         label = {
             Text(stringResource(Res.string.transactions_filter_installment))
         },
@@ -510,6 +514,7 @@ private fun TargetFilterChip(
     FilterChip(
         selected = selectedTarget != null,
         onClick = { expanded = true },
+        modifier = Modifier.testTag("transactions_filter_target"),
         label = {
             Text(
                 when (selectedTarget) {

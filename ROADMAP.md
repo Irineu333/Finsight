@@ -3,7 +3,7 @@
 App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multiplatform.
 
 Produção atual: **1.9.0**. 
-Em preparação: **1.10.0-rc02**.
+Em preparação: **1.10.0-rc03**.
 
 ## Entregue
 
@@ -53,6 +53,10 @@ Em preparação: **1.10.0-rc02**.
 | **Filtro sem categoria**        | As cinco listas que filtram por categoria recortam também o que não tem nenhuma       | Funcionalidade | 1.10.0        |
 | **A liquidar este mês**         | Recorrentes do mês e faturas por pagar somadas em "A entrar" e "A sair"               | Funcionalidade | 1.10.0        |
 | **Backlog de bugs**             | Bugs como arquivos em `issues/`, com regra de entrada, correção e arquivamento        | Arquitetura    | 1.10.0        |
+| **Transferência editável**      | Corrigir uma transferência no lugar, pelo mesmo formulário que a registrou            | Funcionalidade | 1.10.0        |
+| **Título na transferência**     | A transferência guarda o motivo do movimento, sob a cadeia título > categoria > forma | Funcionalidade | 1.10.0        |
+| **Pagamento de fatura único**   | Um formulário que nomeia a fatura; o estado decide o modo, e a retroativa é pagável   | Funcionalidade | 1.10.0        |
+| **Pagamento corrigível**        | Corrigir um pagamento parcial de fatura no lugar, sem apagar e refazer                | Funcionalidade | 1.10.0        |
 
 ## Planejado
 

@@ -10,15 +10,14 @@ alcançáveis a partir do commit que subiu a versão e não alcançáveis a part
 é isso que decide em qual release uma mudança saiu, e não a data em que ela foi escrita.
 Os release candidates aparecem quando a mudança entrou por um deles.
 
-Estado atual: **1.9.0** em produção, **1.10.0-rc02** em preparação, com trabalho já
-mesclado depois do rc02.
+Estado atual: **1.9.0** em produção, **1.10.0-rc03** em preparação.
 
 ---
 
 ## 1.10.0 — em preparação
 
-Ciclo aberto desde 08/08/2026. `versionCode` 31 (rc01) e 32 (rc02); o desktop já empacota
-como `1.10.0`. Esquema do banco: **10 → 14**.
+Ciclo aberto desde 08/08/2026. `versionCode` 31 (rc01), 32 (rc02) e 33 (rc03); o desktop
+já empacota como `1.10.0`. Esquema do banco: **10 → 14**.
 
 A versão em que o app deixou de ser mono-moeda.
 
@@ -104,7 +103,7 @@ A versão em que o app deixou de ser mono-moeda.
 - A área de toque de uma categoria ficou contida na linha que a mostra.
 - O id do usuário pode não resolver sem abortar o app.
 
-### Depois do rc02 — ainda sem build
+### Novidades (rc03)
 
 - **Gasto sem categoria**: o não classificado ganhou linha e fatia próprias na quebra por
   categoria, no dashboard e no relatório, lendo a própria natureza.
@@ -112,12 +111,47 @@ A versão em que o app deixou de ser mono-moeda.
   também o que não tem nenhuma, e a oferecer a opção só quando ela encontra algo.
 - **A liquidar este mês**: novo widget somando recorrentes do mês e faturas por pagar em
   "A entrar" e "A sair", com cabeçalho opcional.
+- **Transferência corrigível**: uma transferência passou a ser corrigida no lugar, pelo
+  mesmo formulário que a registrou, em vez de apagada e refeita. As duas pontas, o valor,
+  o valor de destino e a data são corrigíveis, e a transferência entre moedas entra pela
+  mesma porta. O portão de edição parou de contar pernas monetárias e passou a nomear
+  rótulos — o pagamento de fatura, que ficava de fora pela contagem, passou a ficar por
+  declaração própria. No razão, a reescrita de uma transação passou a aceitar a mesma
+  lista de pernas que a criação sempre aceitou.
+- **Título na transferência**: a transferência passou a dizer por que o dinheiro se moveu.
+  Com o campo veio a cadeia de nomeação — título, depois categoria, depois forma — valendo
+  em toda superfície que nomeia uma operação, o card da lista e o documento exportado
+  incluídos. O literal de reserva `"Untitled"`, inglês num app pt/en, foi removido.
+- **Pagamento de fatura unificado**: um único formulário que nomeia a fatura que paga —
+  seletor de cartão, de fatura e de conta pagadora —, com o estado da fatura decidindo o
+  modo: aberta ou retroativa aceita pagamento parcial; fechada aceita apenas a quitação
+  total. A **fatura retroativa passou a ser pagável**, fechando a lacuna em que o app
+  somava a dívida na previsão do mês e não oferecia caminho para pagá-la. A regra de quem
+  aceita pagamento ganhou dono único no domínio, no lugar das quatro superfícies que
+  reenumeravam status por conta própria, e o campo de valor passou a oferecer o teto em
+  vez de pedir que ele fosse digitado.
+- **Correção de pagamento parcial**: um pagamento parcial de fatura passou a ser corrigido
+  no lugar, pelo mesmo formulário que o registra. O modo é fixo na correção — corrigir um
+  parcial é reafirmar um parcial —, e o teto do valor passou a desconsiderar a própria
+  operação: um parcial de R$ 300 numa fatura de R$ 800 pode ser corrigido para R$ 700, o
+  que o devido corrente recusava. A quitação total continua história liquidada, sem
+  correção e sem remoção.
 - **Backlog de bugs** em `issues/`, com regra de entrada, correção e arquivamento, e uma
-  skill que o conduz.
-- Correções: o seletor de mês só marca o mês quando o ano também bate; a hidratação de uma
-  perna usa o mapper dono da conta; a recusa da conta padrão fala na língua do usuário; o
-  Suporte decide o vazio pelo escopo que está na tela; o documento exportado do relatório
-  diz em que língua foi escrito.
+  skill que o conduz. A auditoria de tratamento de erro migrou para ele, e os bugs que o
+  próprio ciclo introduziu passaram a dizer em que versão nasceram.
+- **Notas de versão e roadmap** reconstruídos a partir dos commits que os sustentam, com o
+  que foi entregue separado do que é apenas desejado.
+- Suíte E2E: décimo quinto fluxo, o do pagamento de uma fatura retroativa.
+
+### Correções (rc03)
+
+- O seletor de mês só marca o mês quando o ano também bate.
+- A hidratação de uma perna usa o mapper dono da conta.
+- A recusa da conta padrão fala na língua do usuário.
+- O Suporte decide o vazio pelo escopo que está na tela.
+- O documento exportado do relatório diz em que língua foi escrito.
+- O formulário de ajuste de saldo fica na tela enquanto a data é digitada, em vez de dar
+  lugar a um spinner a cada tecla.
 
 ---
 

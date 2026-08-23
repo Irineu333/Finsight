@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +35,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_cards_archived_empty
 import com.neoutils.finsight.resources.credit_cards_archived_title
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.modal.viewCreditCard.ViewCreditCardModal
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -44,7 +47,12 @@ fun ArchivedCreditCardsScreen(
     onNavigateBack: () -> Unit = {},
     viewModel: ArchivedCreditCardsViewModel = koinViewModel(),
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("archived_credit_cards")
+    }
 
     ArchivedCreditCardsContent(
         uiState = uiState,

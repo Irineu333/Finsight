@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.viewCurrency
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveCurrency
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
@@ -31,6 +33,7 @@ class ViewCurrencyViewModel(
     baseCurrencyRepository: IBaseCurrencyRepository,
     private val deleteCurrency: DeleteCurrencyUseCase,
     private val archiveCurrency: ArchiveCurrencyUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -80,6 +83,7 @@ class ViewCurrencyViewModel(
             // swaps back on its own.
             ViewCurrencyAction.Unarchive -> viewModelScope.launch {
                 archiveCurrency.unarchive(code)
+                    .onRight { analytics.logEvent(UnarchiveCurrency(code)) }
             }
         }
     }

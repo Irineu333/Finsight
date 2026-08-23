@@ -4,6 +4,10 @@ package com.neoutils.finsight.ui.modal.exchangeRateForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateExchangeRate
+import com.neoutils.finsight.domain.analytics.event.DeleteExchangeRate
+import com.neoutils.finsight.domain.analytics.event.EditExchangeRate
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
@@ -43,6 +47,7 @@ class ExchangeRateFormViewModel(
     private val exchangeRateRepository: IExchangeRateRepository,
     private val currencyRepository: ICurrencyRepository,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val base = baseCurrencyRepository.observe().value
@@ -130,6 +135,12 @@ class ExchangeRateFormViewModel(
                     source = ExchangeRate.Source.USER,
                 )
             )
+            analytics.logEvent(
+                when {
+                    state.isEditing -> EditExchangeRate(state.from, state.to)
+                    else -> CreateExchangeRate(state.from, state.to)
+                }
+            )
             modalManager.dismissAll()
         }
     }
@@ -138,6 +149,7 @@ class ExchangeRateFormViewModel(
         val rate = existing ?: return
         viewModelScope.launch {
             exchangeRateRepository.remove(rate)
+            analytics.logEvent(DeleteExchangeRate(rate.currency, rate.counterCurrency))
             modalManager.dismissAll()
         }
     }

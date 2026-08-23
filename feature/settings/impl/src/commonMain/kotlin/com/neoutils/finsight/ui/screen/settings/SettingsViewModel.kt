@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.screen.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.SwitchBaseCurrency
 import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
@@ -25,6 +27,7 @@ class SettingsViewModel(
     // preference over what the app offers, and it is never conditioned on a rate
     // reaching the currency chosen.
     currencyRepository: ICurrencyRepository,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     // Observed rather than read once, and it is the mechanism in use now rather than
@@ -43,6 +46,7 @@ class SettingsViewModel(
         when (action) {
             is SettingsAction.SwitchBaseCurrency -> viewModelScope.launch {
                 baseCurrencyRepository.set(action.code)
+                analytics.logEvent(SwitchBaseCurrency(action.code))
             }
         }
     }

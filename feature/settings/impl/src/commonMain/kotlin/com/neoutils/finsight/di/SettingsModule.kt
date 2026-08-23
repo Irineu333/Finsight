@@ -109,7 +109,13 @@ val settingsModule = module {
     }
     single<IRemoteRateSource> { FrankfurterRateSource(client = get()) }
 
-    viewModel { SettingsViewModel(baseCurrencyRepository = get(), currencyRepository = get()) }
+    viewModel {
+        SettingsViewModel(
+            baseCurrencyRepository = get(),
+            currencyRepository = get(),
+            analytics = get(),
+        )
+    }
 
     viewModel {
         ExchangeRatesViewModel(
@@ -134,6 +140,7 @@ val settingsModule = module {
             exchangeRateRepository = get(),
             currencyRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -151,6 +158,7 @@ val settingsModule = module {
             baseCurrencyRepository = get(),
             deleteCurrency = get(),
             archiveCurrency = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }
@@ -160,6 +168,7 @@ val settingsModule = module {
             code = it.get(),
             deleteCurrency = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -168,6 +177,7 @@ val settingsModule = module {
             code = it.get(),
             archiveCurrency = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -176,6 +186,7 @@ val settingsModule = module {
             existing = it.getOrNull<CurrencyInfo>(),
             saveCurrency = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 }

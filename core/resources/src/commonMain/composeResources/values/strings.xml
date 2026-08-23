@@ -471,6 +471,7 @@
     <string name="invoice_payment_advance">Antecipar Pagamento</string>
     <string name="invoice_payment_pay">Pagar Fatura</string>
     <string name="invoice_payment_amount_label">Valor do Pagamento</string>
+    <string name="invoice_payment_max">Máx</string>
     <string name="invoice_payment_date_label">Data do Pagamento</string>
     <string name="invoice_payment_no_debt">Esta fatura não tem nada a pagar.</string>
 

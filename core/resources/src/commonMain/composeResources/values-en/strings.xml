@@ -470,6 +470,7 @@
     <string name="invoice_payment_advance">Advance Payment</string>
     <string name="invoice_payment_pay">Pay Invoice</string>
     <string name="invoice_payment_amount_label">Payment Amount</string>
+    <string name="invoice_payment_max">Max</string>
     <string name="invoice_payment_date_label">Payment Date</string>
     <string name="invoice_payment_no_debt">This invoice has nothing to pay.</string>
 

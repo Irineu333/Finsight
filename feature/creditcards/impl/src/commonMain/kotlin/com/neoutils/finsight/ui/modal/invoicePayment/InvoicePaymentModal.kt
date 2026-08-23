@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.invoicePayment
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,6 +17,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -215,6 +217,37 @@ class InvoicePaymentModal(
                         ),
                         readOnly = state.settles,
                         enabled = !state.settles,
+                        // The ceiling, offered instead of typed. Only where the amount is
+                        // the user's to state and there is something to state — a sheet
+                        // that already shows the whole has nothing to fill in, and one
+                        // with nothing owed would fill in a zero.
+                        trailingIcon = state.debtAmount
+                            ?.takeIf { !state.settles && state.hasDebt }
+                            ?.let { owed ->
+                                {
+                                    // A clickable word, not a button: `TextButton` carries
+                                    // its own 58x40dp minimum from the inside, which no
+                                    // padding from the outside can undo — and inside a
+                                    // field's trailing slot that block reaches well past
+                                    // the label, taking presses meant for the field.
+                                    Text(
+                                        text = stringResource(Res.string.invoice_payment_max),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colorScheme.primary,
+                                        modifier = Modifier
+                                            .padding(end = 12.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable {
+                                                amount.setTextAndPlaceCursorAtEnd(
+                                                    formatter.format(owed)
+                                                )
+                                            }
+                                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                                            .testTag("invoice_payment_max"),
+                                    )
+                                }
+                            },
                         supportingText = if (state.selectedInvoice != null && !state.hasDebt) {
                             { Text(text = stringResource(Res.string.invoice_payment_no_debt)) }
                         } else null,

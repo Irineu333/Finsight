@@ -14,7 +14,6 @@ env:
   # cycle is over, so there is no purchase left to make inside it.
   RETRO_BALANCE_DIGITS: "40000"
   FIRST_PAYMENT_DIGITS: "15000"
-  REST_PAYMENT_DIGITS: "25000"
 ---
 # A past cycle being regularized: an invoice for a month that already went by, carrying what it
 # turns out to have owed, paid down in two goes.
@@ -180,8 +179,12 @@ env:
     id: "invoice_pay_invoice"
 
 # --- And the rest ---------------------------------------------------------------------------------
-# Paid to nothing, and *still* not settled: `PAID` is reachable only from `CLOSED`, or from the
-# closing that settles an invoice owing nothing. Paying is not a third way in.
+# Taken from the field's own offer rather than typed: what is left is exactly the ceiling, which is
+# what that offer fills in. Asserting the figure it produced is asserting that the ceiling the sheet
+# offers is the debt the invoice actually carries — the same number the summary shows above.
+#
+# Paid to nothing, the invoice is *still* not settled: `PAID` is reachable only from `CLOSED`, or
+# from the closing that settles an invoice owing nothing. Paying is not a third way in.
 - tapOn:
     id: "invoice_pay_invoice"
 - extendedWaitUntil:
@@ -189,10 +192,11 @@ env:
       id: "invoice_payment_amount"
     timeout: 15000
 - tapOn:
-    id: "invoice_payment_amount"
+    id: "invoice_payment_max"
 - waitForAnimationToEnd
-- inputText: ${REST_PAYMENT_DIGITS}
-- hideKeyboard
+- assertVisible:
+    id: "invoice_payment_amount"
+    text: "[$]250[.,]00"
 - tapOn:
     id: "invoice_payment_confirm"
 - extendedWaitUntil:

@@ -1,10 +1,12 @@
 ## 1. Razão — a série mensal (D1)
 
 - [ ] 1.1 Adicionar em `EntryDao` a consulta que agrupa as entries de uma dimensão por
-      `substr(o.date, 1, 7)` e por moeda, com a projeção correspondente (mês, moeda, total)
+      `substr(o.date, 1, 7)` e por moeda, com a projeção correspondente (mês, moeda, total),
+      filtrando pelo corte superior (D11)
 - [ ] 1.2 Declarar o membro em `IEntryRepository` no vocabulário do razão — dimensão e mês,
-      nunca categoria — devolvendo por moeda, com KDoc explicando por que mês sem movimento
-      não vira linha zero
+      nunca categoria — recebendo o corte superior como parâmetro e devolvendo por moeda, com
+      KDoc explicando por que mês sem movimento não vira linha zero e por que o corte não é
+      derivado de relógio
 - [ ] 1.3 Implementar em `EntryRepository`, convertendo centavos pela mesma via das demais
       leituras, sem sinal próprio
 - [ ] 1.4 Atualizar os ~26 fakes de `IEntryRepository` nos testes; os que não exercitam a
@@ -13,6 +15,8 @@
       (mês, moeda), e mês sem entry não aparece
 - [ ] 1.6 Teste de razão: o total de um mês pela série coincide com
       `dimensionBalanceInMonthByCurrency` daquele mês
+- [ ] 1.7 Teste de razão: com entries em meses posteriores ao corte, a série devolve os meses
+      até o corte inclusive e nenhum posterior
 
 ## 2. Domínio — janela, média e variação (D2, D3, D4, D5, D6)
 
@@ -20,27 +24,32 @@
       mês corrente, figuras da janela (média e total) com o número de meses, variação, e a
       variante de estado da categoria
 - [ ] 2.2 Declarar `CalculateCategoryOverviewUseCase` em `feature/categories/api`
-- [ ] 2.3 Implementar em `feature/categories/impl` o cálculo da janela:
+- [ ] 2.3 Ler a série com corte superior no **mês corrente**, de modo que nenhum lançamento
+      futuro alcance figura alguma (D11)
+- [ ] 2.4 Implementar em `feature/categories/impl` o cálculo da janela:
       `min(12, meses fechados desde o primeiro lançamento)`, com o primeiro lançamento tirado
-      da própria série
-- [ ] 2.4 Somar e dividir os meses da janela **por moeda**, antes de qualquer conversão, e
+      da própria série — já cortada, portanto nunca um mês futuro
+- [ ] 2.5 Somar e dividir os meses da janela **por moeda**, antes de qualquer conversão, e
       consolidar cada figura uma única vez com `on` = último dia da janela
-- [ ] 2.5 Consolidar a figura do mês corrente com `on` = último dia do mês corrente
-- [ ] 2.6 Calcular a variação por `comparativeMagnitudes` sobre `{mês corrente, média}` com
+- [ ] 2.6 Consolidar a figura do mês corrente com `on` = último dia do mês corrente
+- [ ] 2.7 Calcular a variação por `comparativeMagnitudes` sobre `{mês corrente, média}` com
       data única, devolvendo ausência — nunca `0%` — quando a média é zero, quando não há mês
       fechado com lançamento, ou quando `magnitudeOf` devolve `null`
-- [ ] 2.7 Resolver a variante de estado: arquivada, sem lançamento algum, sem mês fechado com
+- [ ] 2.8 Resolver a variante de estado: arquivada, sem lançamento algum, sem mês fechado com
       lançamento, ou ativa
-- [ ] 2.8 Para a categoria arquivada, produzir o total histórico completo e o intervalo de
-      datas coberto, em vez da figura do mês corrente
-- [ ] 2.9 Registrar o caso de uso no módulo Koin de categories
-- [ ] 2.10 Testes: janela cheia (12), janela encurtada (categoria jovem), mês sem lançamento
+- [ ] 2.9 Para a categoria arquivada, produzir o total histórico e o intervalo de datas, do
+      primeiro ao **último lançamento** — nunca a data do arquivamento, que não existe (D10)
+- [ ] 2.10 Registrar o caso de uso no módulo Koin de categories
+- [ ] 2.11 Testes: janela cheia (12), janela encurtada (categoria jovem), mês sem lançamento
       contando como zero no divisor, e `média × meses = total` exato
-- [ ] 2.11 Testes: o mês corrente não entra na janela; um mês em duas moedas não é reduzido
+- [ ] 2.12 Testes: o mês corrente não entra na janela; um mês em duas moedas não é reduzido
       pelo razão
-- [ ] 2.12 Testes: cada um dos três casos de ausência de variação, e nenhum deles produzindo
+- [ ] 2.13 Testes: cada um dos três casos de ausência de variação, e nenhum deles produzindo
       `0%`
-- [ ] 2.13 Testes: cada variante de estado devolve a figura de destaque correta
+- [ ] 2.14 Testes: cada variante de estado devolve a figura de destaque correta
+- [ ] 2.15 Testes de lançamento futuro: parcelas em meses posteriores não entram no mês
+      corrente, não entram na janela, não contam no número de meses declarado, e não estendem
+      o intervalo da categoria arquivada
 
 ## 3. Strings
 
@@ -107,5 +116,8 @@
       categoria sem lançamento, categoria arquivada
 - [ ] 7.4 Exercitar o caso multi-moeda: categoria com gastos em duas moedas, com e sem taxa
       registrada, conferindo que a variação some em vez de virar `0%`
+- [ ] 7.5 Exercitar o caso das parcelas: compra parcelada numa categoria, conferindo que
+      apenas a parcela do mês corrente aparece nas figuras; depois arquivar a categoria com
+      parcelas pendentes e conferir que o intervalo não termina no futuro
 - [ ] 7.5 Rodar a suíte Maestro conforme `.maestro/README.md` §2, reportando em que
       dispositivo a corrida aconteceu

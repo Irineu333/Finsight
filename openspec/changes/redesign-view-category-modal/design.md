@@ -157,6 +157,47 @@ arquivada resolve normalmente: a lista já observa `observeAllCategoriesIncludin
 Sem seletor de mês, "transações no mês" não tem mês. Ela sobrevive como legenda do total da
 janela, não como linha própria — e é a janela que a delimita, como todas as demais figuras.
 
+### D10 — O intervalo da categoria arquivada termina no último lançamento
+
+A pergunta parecia ser uma escolha entre a data do último lançamento e a do arquivamento, e
+não é: **o arquivamento não tem data**. `Category` carrega `isArchived: Boolean` e nada mais,
+e `CategoryEntity` diz que o fechamento de uma categoria "vive aqui e em nenhum outro lugar".
+Não existe `archivedAt` para ler.
+
+Adotar a data do arquivamento significaria coluna nova, migração de `AppDatabase` e um valor
+que nenhuma linha existente teria — tudo isso para uma legenda. Desproporcional.
+
+Fica a data do **último lançamento**, que sai de graça da série mensal — é a última linha, a
+mesma leitura que já produz todo o resto. E é a leitura mais útil das duas: o intervalo
+descreve o dinheiro, não a gestão dele.
+
+### D11 — O futuro fica fora de todas as figuras, por corte na própria leitura
+
+Lançamentos com data futura **existem e são comuns**: `ValidateTransactionFormUseCase`
+recusa data futura no formulário, mas `AddInstallmentUseCaseImpl` cria cada parcela com
+`base.date.plus(index, MONTH)`. Uma compra em 12x produz onze transações futuras, e a perna
+nominal de cada uma carrega a dimensão da categoria. A série de uma categoria usada no cartão
+tem meses futuros povoados.
+
+Nenhuma das três figuras os quer. Um mês futuro não é fechado nem é o corrente; uma média que
+o incluísse não seria média de nada; e o "histórico" de uma categoria arquivada terminando
+numa data que ainda não chegou é uma contradição em texto — um caso alcançável, porque
+`hasEntriesForDimension` não filtra data e uma categoria com parcelas pendentes só pode ser
+arquivada, nunca excluída.
+
+A regra portanto é: **o futuro não entra em figura nenhuma**, incluindo o total histórico da
+categoria arquivada e a data que fecha o seu intervalo.
+
+Onde ela mora é a parte que importa. A leitura da série recebe um **corte superior** como
+parâmetro, exatamente como `accountBalanceUpTo(accountId, target)` já faz para o saldo
+escalar: o razão não decide período nenhum, e quem decide a janela passa o corte. O chamador
+passa o mês corrente.
+
+*Alternativa considerada:* ler tudo e filtrar acima. Rejeitada por duas razões — traz linhas
+para descartar, e deixaria cada consumidor futuro da série livre para esquecer o filtro, que
+é como duas telas passam a discordar sobre a mesma categoria. Como parâmetro, o corte é uma
+pergunta que a leitura obriga a responder.
+
 ## Risks / Trade-offs
 
 - **Um membro novo em `IEntryRepository` obriga ~26 fakes de teste a acompanhá-lo** → é
@@ -181,17 +222,16 @@ janela, não como linha própria — e é a janela que a delimita, como todas as
   `view_category_transaction_count` deixa de ser mensal. As asserções precisam ser reescritas
   junto com a mudança, não depois, ou passam a verde afirmando outra coisa.
 
-- **A série mensal de uma categoria muito antiga cresce sem limite** → a consulta agrupa
-  todos os meses existentes. Mitigação: a janela é aplicada acima, e o volume é uma linha por
-  (mês, moeda) — irrelevante nesta ordem de grandeza. Se um dia deixar de ser, o corte por
-  data entra na própria consulta.
+- **A série mensal de uma categoria muito antiga cresce sem limite** → o corte superior de
+  D11 já a limita pelo topo, e o volume restante é uma linha por (mês, moeda). Se um dia o
+  passado remoto pesar, o corte inferior entra pela mesma porta, sem mudar quem decide.
+
+- **Uma categoria com parcelas pendentes mostra menos do que a pessoa já se comprometeu a
+  pagar** → é a consequência aceita de D11: as parcelas futuras existem, aparecem na lista de
+  lançamentos e não entram em nenhuma das figuras. Uma quarta figura ("comprometido em
+  parcelas futuras") responderia isso e é exatamente o tipo de acréscimo que este redesenho
+  recusou. Fica registrado como candidato próprio, não como omissão.
 
 ## Open Questions
 
-- A categoria arquivada mostra o intervalo de datas do histórico. A data final é a do último
-  lançamento ou a do arquivamento? As duas diferem quando se arquiva uma categoria meses
-  depois do último gasto, e a primeira descreve o dinheiro enquanto a segunda descreve a
-  gestão.
-- Um lançamento **futuro** entra em qual figura? A série o traz num mês que ainda não chegou,
-  que não é fechado nem é o corrente. A leitura natural é excluí-lo da janela e do mês, mas
-  isso precisa ser dito em algum lugar antes de alguém descobrir por acidente.
+Nenhuma. As duas que existiam foram resolvidas contra o código, em D10 e D11.

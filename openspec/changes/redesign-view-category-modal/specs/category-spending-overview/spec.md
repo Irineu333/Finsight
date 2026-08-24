@@ -65,6 +65,33 @@ sem período declarado não responde nem a "é muito?" nem a "desde quando?".
 - **WHEN** a média e o total da janela são exibidos
 - **THEN** multiplicar a média pelo número de meses declarado reproduz o total exibido
 
+### Requirement: Nenhuma figura inclui lançamento com data futura
+
+Toda figura do detalhe SHALL cobrir apenas lançamentos com data até o fim do mês corrente.
+Um lançamento com data posterior MUST NOT entrar na figura do mês corrente, na janela, na
+média, no total, nem no total histórico de uma categoria arquivada.
+
+Lançamentos futuros são estado ordinário: uma compra parcelada registra hoje as parcelas dos
+meses seguintes, e a perna nominal de cada uma carrega a dimensão da categoria. Um mês futuro
+não é fechado nem é o corrente, e uma média que o incluísse não seria média de período algum.
+
+O mês que determina o encurtamento da janela SHALL ser o do primeiro lançamento **até o fim
+do mês corrente**, pela mesma regra.
+
+#### Scenario: Parcelas futuras fora do mês corrente
+- **WHEN** uma compra parcelada registra parcelas nos meses seguintes na categoria
+- **THEN** a figura do mês corrente contém apenas a parcela deste mês
+
+#### Scenario: Parcelas futuras fora da janela e da média
+- **WHEN** a categoria tem lançamentos em meses posteriores ao corrente
+- **THEN** eles não entram no total nem na média da janela, e o número de meses declarado não
+  os conta
+
+#### Scenario: Histórico de arquivada não alcança o futuro
+- **WHEN** o detalhe de uma categoria arquivada com parcelas futuras pendentes é aberto
+- **THEN** o total histórico cobre apenas até o fim do mês corrente, e o intervalo de datas
+  MUST NOT terminar numa data que ainda não chegou
+
 ### Requirement: O mês corrente se anuncia como parcial
 
 A figura do mês corrente SHALL vir acompanhada de significante textual dizendo que o mês
@@ -158,6 +185,13 @@ acompanhado do intervalo de datas que ele cobre. Uma categoria arquivada não te
 corrente com significado, e exibir o mês dela produz uma figura zerada e uma variação de
 -100% que não descrevem nada.
 
+O intervalo SHALL ir do primeiro ao **último lançamento** da categoria, e MUST NOT ser
+delimitado pela data em que ela foi arquivada. O intervalo é uma afirmação sobre o dinheiro,
+e não sobre quando a categoria saiu da lista; arquivar meses depois do último gasto não
+acrescenta período nenhum ao histórico. O sistema tampouco registra quando uma categoria foi
+arquivada — o fechamento é um booleano —, de modo que a outra leitura não é apenas menos útil:
+não existe.
+
 Para uma categoria **sem nenhum lançamento**, o detalhe MUST NOT exibir figura zerada em
 destaque. Ele SHALL exibir estado vazio com texto explicando que os lançamentos aparecerão
 quando houver, porque um zero em destaque é lido como falha e não como ausência.
@@ -170,6 +204,10 @@ quando houver, porque um zero em destaque é lido como falha e não como ausênc
 - **WHEN** o detalhe de uma categoria arquivada é aberto
 - **THEN** a figura de destaque é o total histórico completo, acompanhado do intervalo de
   datas coberto, e a figura do mês corrente não é exibida em destaque
+
+#### Scenario: O intervalo não é delimitado pelo arquivamento
+- **WHEN** uma categoria foi arquivada meses depois do seu último lançamento
+- **THEN** o intervalo termina na data daquele último lançamento, e não na do arquivamento
 
 #### Scenario: Categoria sem lançamento
 - **WHEN** o detalhe de uma categoria sem nenhum lançamento é aberto

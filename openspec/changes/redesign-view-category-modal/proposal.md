@@ -25,8 +25,11 @@ navegar mês a mês para que "o normal" apareça.
 - Um **atalho para a lista de transações**, já filtrada por aquela categoria, substitui a
   navegação temporal removida — "quanto gastei em março" continua alcançável, num só lugar
   do app em vez de dois.
+- Nenhuma figura inclui **lançamento com data futura**. Uma compra parcelada registra hoje as
+  parcelas dos meses seguintes, e elas não são gasto de mês fechado nem do mês corrente.
 - O razão ganha uma leitura de **série mensal por dimensão**: um total por (mês, moeda) numa
-  consulta. Ela é a base das três figuras e substitui as duas leituras mensais de hoje.
+  consulta, com corte superior escolhido por quem chama. Ela é a base das três figuras e
+  substitui as duas leituras mensais de hoje.
 
 Explicitamente **fora** deste escopo, por serem tela e não modal: gráfico de tendência,
 fatia da categoria no mês, barra de orçamento e lista de lançamentos embutida.

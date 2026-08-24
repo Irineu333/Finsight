@@ -15,6 +15,15 @@ A assinatura SHALL ser expressa em vocabulário de razão — dimensão e mês �
 nomear categoria, orçamento ou fatura. Traduzir a fachada para a identidade da dimensão
 pertence a quem é dono da fachada.
 
+A leitura SHALL aceitar um **corte superior** por mês, e SHALL devolver apenas os meses até
+ele, inclusive. O corte é parâmetro de quem chama, como já é no acumulado escalar de uma
+conta: o razão MUST NOT decidir período, e MUST NOT conhecer a noção de "mês corrente" nem
+consultar relógio algum.
+
+O corte existe porque entries com data futura são um estado ordinário do razão — uma compra
+parcelada as produz — e uma leitura que as trouxesse sem que o chamador pudesse dizer até
+onde quer ler deixaria cada consumidor livre para filtrar por conta própria, ou esquecer.
+
 Um mês sem nenhuma entry da dimensão MUST NOT aparecer na resposta como total zero: um
 agregado agrupado não tem linha vazia, e a ausência de linha é a resposta honesta a "não
 houve movimento". Quem precisa de zeros na janela os supre acima do razão, onde a janela é
@@ -45,3 +54,13 @@ Uma dimensão não tem moeda própria, e o razão MUST NOT reduzir duas moedas a
 - **WHEN** o total de uma dimensão num mês é obtido pela série mensal e pela leitura daquele
   mês isolado
 - **THEN** os dois resultados coincidem, porque derivam do mesmo agregado
+
+#### Scenario: O corte superior exclui os meses posteriores
+- **WHEN** a série é solicitada com corte num mês, e a dimensão tem entries em meses
+  posteriores a ele
+- **THEN** a resposta traz os meses até o corte, inclusive, e nenhum posterior
+
+#### Scenario: O razão não conhece "hoje"
+- **WHEN** a leitura da série é declarada
+- **THEN** ela recebe o corte como parâmetro, e MUST NOT derivá-lo de relógio nem presumir o
+  mês corrente

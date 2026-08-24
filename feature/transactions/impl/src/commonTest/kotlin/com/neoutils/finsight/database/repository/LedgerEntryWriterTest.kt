@@ -491,6 +491,7 @@ private class FakeEntryDao : EntryDao {
         inserted.filterNot { it.accountId in excludedAccountIds }.groupedByCurrency()
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
         inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
+    override suspend fun dimensionMonthlySeries(dimensionId: Long, untilYearMonth: String): List<com.neoutils.finsight.database.dao.MonthCurrencyTotal> = throw NotImplementedError()
     override suspend fun dimensionNaturalBalance(dimensionId: Long): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
         inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
     override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> =

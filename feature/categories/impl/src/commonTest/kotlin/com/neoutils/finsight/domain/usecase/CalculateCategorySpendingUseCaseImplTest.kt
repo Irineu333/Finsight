@@ -425,6 +425,7 @@ private class FakeEntryRepository(
         nominalType: AccountType,
     ): Map<Long?, MoneyByCurrency> = totals[nominalType].orEmpty()
 
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
         throw NotImplementedError()
 

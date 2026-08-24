@@ -236,6 +236,7 @@ internal class LedgerEntryRepository(
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = notUnderTest()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = notUnderTest()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = notUnderTest()
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = notUnderTest()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = notUnderTest()
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = notUnderTest()
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = notUnderTest()

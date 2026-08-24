@@ -83,6 +83,17 @@ class EntryRepository(
     ): MoneyByCurrency =
         entryDao.dimensionBalanceInMonth(dimensionId, month.toString()).toMoney { it.total }
 
+    override suspend fun dimensionMonthlySeriesByCurrency(
+        dimensionId: Long,
+        upTo: YearMonth,
+    ): Map<YearMonth, MoneyByCurrency> = entryDao
+        .dimensionMonthlySeries(dimensionId, upTo.toString())
+        // The query already orders by month, so grouping preserves that order and the
+        // series is consumed the way it reads. Cents become a figure through the same
+        // single path every other read here takes.
+        .groupBy { YearMonth.parse(it.yearMonth) }
+        .mapValues { (_, rows) -> rows.toMoney { it.total } }
+
     override suspend fun accountFlows(
         month: YearMonth,
         accountId: Long,

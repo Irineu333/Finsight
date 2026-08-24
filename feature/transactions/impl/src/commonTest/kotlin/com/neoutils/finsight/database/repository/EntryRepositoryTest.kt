@@ -84,6 +84,7 @@ private class FakeReadEntryDao(
         excludedAccountIds: Collection<Long>,
     ): List<CurrencyTotal> = rows(byType.getValue(type), byTypeUsd)
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<CurrencyTotal> = rows(inMonth)
+    override suspend fun dimensionMonthlySeries(dimensionId: Long, untilYearMonth: String): List<com.neoutils.finsight.database.dao.MonthCurrencyTotal> = throw NotImplementedError()
     override suspend fun dimensionNaturalBalance(dimensionId: Long): List<CurrencyTotal> = rows(invoice)
     override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> =
         dimensionIds.map { com.neoutils.finsight.database.dao.DimensionCurrencyTotal(it, LEGACY_CURRENCY, invoice) }

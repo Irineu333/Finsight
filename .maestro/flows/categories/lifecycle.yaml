@@ -24,8 +24,10 @@ env:
 # matrix of refusals that produces "must archive" (`ResolveCategoryRetirabilityUseCaseTest`), and
 # the per-filter sectioning (`CategoriesViewModelTest`). One instance of each swap is E2E's share.
 #
-# The figures — $0.00, $63.40 and $21.75, and the counts 0 and 1 — share no digits, so no assertion
-# can pass by reading a neighbour.
+# The figures — $63.40 and $21.75 — share no digits, so no assertion can pass by reading a
+# neighbour. There is no $0.00 to read any more: a category with nothing posted to it states an
+# absence in words rather than a zero, and the detail no longer counts transactions in a month,
+# because without a month selector "transactions this month" has no month.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -70,12 +72,14 @@ env:
     visible:
       id: "category_retire_label"
     timeout: 15000
+# With nothing posted to it there is no figure to state, and a zero in the highlight would
+# read as a failure rather than as an absence — so the detail says so in words instead.
 - assertVisible:
+    id: "view_category_empty"
+- assertNotVisible:
+    id: "view_category_month_amount"
+- assertNotVisible:
     id: "view_category_total_amount"
-    text: "[$]0[.,]00"
-- assertVisible:
-    id: "view_category_transaction_count"
-    text: "0"
 - assertVisible:
     id: "category_retire_label"
     text: "Delete"
@@ -138,12 +142,20 @@ env:
     visible:
       id: "category_retire_label"
     timeout: 15000
+# The money lands in the current month, which is the highlight while the category is live.
+# `launch_fresh` wipes the database, so this category has no closed month behind it at all:
+# there is no window to average over, and the variation says why in words instead of
+# spelling a `0%` nobody measured.
 - assertVisible:
-    id: "view_category_total_amount"
+    id: "view_category_month_amount"
     text: "[$]63[.,]40"
+- assertNotVisible:
+    id: "view_category_total_amount"
 - assertVisible:
-    id: "view_category_transaction_count"
-    text: "1"
+    id: "view_category_variation"
+# The command that replaces the period control this detail no longer has, above the fold.
+- assertVisible:
+    id: "view_category_transactions"
 - assertVisible:
     id: "category_retire_label"
     text: "Archive"
@@ -169,9 +181,13 @@ env:
     timeout: 15000
 - assertNotVisible:
     id: "category_retire"
+# Archived, the current month says nothing about it, so the highlight swaps to the whole
+# history — the one figure that still answers something. Same money, different claim.
 - assertVisible:
     id: "view_category_total_amount"
     text: "[$]63[.,]40"
+- assertNotVisible:
+    id: "view_category_month_amount"
 - back
 
 # --- It leaves the active view without leaving the database --------------------------------------
@@ -421,4 +437,60 @@ env:
 - waitForAnimationToEnd
 - assertVisible:
     id: "add_transaction_category"
+    text: ${CATEGORY}
+
+# --- The detail hands the time question to the screen that answers it ----------------------------
+# The period control is gone from the detail; this command is what replaces it, and the claim is
+# that the list comes up already cut — nothing is selected on the list itself here.
+#
+# It is exercised last because it is the only act that leaves the detail for another screen, and
+# because it is only falsifiable now: both rows exist, and $21.75 was never classified, so a cut
+# that did not happen would leave it on screen.
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: "add_transaction_title"
+    timeout: 15000
+# `back` returns the dashboard wherever the last scroll left it, so this climbs before descending.
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: categories
+- extendedWaitUntil:
+    visible:
+      id: "screen_categories"
+    timeout: 15000
+- tapOn:
+    id: "category_card_name"
+    text: ${CATEGORY}
+- extendedWaitUntil:
+    visible:
+      id: "view_category_transactions"
+    timeout: 15000
+- tapOn:
+    id: "view_category_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+# What the category classified is there; what it did not, is gone. Both read on the node that
+# renders a title, so a match elsewhere on the screen cannot answer for either.
+- assertVisible:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: ${LOOSE_TITLE}
+# And the control says by what — the cut is not a second mechanism sitting beside it.
+- assertVisible:
+    id: "transactions_filter_category"
     text: ${CATEGORY}

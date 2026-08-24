@@ -239,6 +239,7 @@ private class MonthBalances(
     private val balances: Map<Long, Double>,
     private val multi: Map<Long, Map<String, Double>> = emptyMap(),
 ) : IEntryRepository {
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
         if (month == this.month) {
             multi[dimensionId]

@@ -48,6 +48,20 @@ data class DimensionCurrencyTotal(
 ) : CurrencyScoped
 
 /**
+ * One month's share of a per-month grouped aggregate (cents), in one currency.
+ *
+ * [yearMonth] is the `yyyy-MM` the entries fell in — the same cut every monthly read
+ * of this DAO makes, only projected instead of filtered. A month with no entry has no
+ * row, exactly as a currency with no entry has none: a grouped aggregate has no empty
+ * row, and whoever needs zeros in a window supplies them where the window is decided.
+ */
+data class MonthCurrencyTotal(
+    val yearMonth: String,
+    override val currency: String,
+    val total: Long,
+) : CurrencyScoped
+
+/**
  * The per-account, per-period money flows (cents) an account screen shows, derived
  * from the ledger and classified by the transaction's counter-legs — the ledger
  * equivalent of the legacy `AccountUi` sums:
@@ -267,6 +281,32 @@ interface EntryDao {
         dimensionId: Long,
         yearMonth: String,
     ): List<CurrencyTotal>
+
+    /**
+     * The same aggregate as [dimensionBalanceInMonth], grouped **by month** instead of
+     * filtered to one: a dimension's whole series in a single read, per month and per
+     * currency. A window of N months costs one query, not N.
+     *
+     * [untilYearMonth] is the upper cut, inclusive, and it is a parameter because entries
+     * dated in the future are an ordinary state of the ledger — a purchase in instalments
+     * writes them. The ledger decides no period and knows no "current month": what to read
+     * up to is the caller's to say, exactly as it is for the scalar accumulated balance.
+     *
+     * `ORDER BY` is part of the read, not decoration: the series is consumed in month
+     * order, and SQL row order is otherwise no promise.
+     */
+    @Query(
+        "SELECT substr(o.date, 1, 7) AS yearMonth, e.currency AS currency, " +
+            "COALESCE(SUM(e.amount), 0) AS total FROM entries e " +
+            "JOIN transactions o ON o.id = e.transactionId " +
+            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) <= :untilYearMonth " +
+            "GROUP BY substr(o.date, 1, 7), e.currency " +
+            "ORDER BY substr(o.date, 1, 7)"
+    )
+    suspend fun dimensionMonthlySeries(
+        dimensionId: Long,
+        untilYearMonth: String,
+    ): List<MonthCurrencyTotal>
 
     /**
      * Per-dimension totals of the nominal legs of a given nature within a single month

@@ -5,6 +5,9 @@ package com.neoutils.finsight.ui.modal.viewCategory
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.*
@@ -16,22 +19,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.util.optionalTestTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.CategoryOverview
+import com.neoutils.finsight.domain.model.SpendingVariation
 import com.neoutils.finsight.extension.ConsolidatedAmount
+import com.neoutils.finsight.extension.toPercentageString
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
+import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.component.MoneyText
-import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OutlinedActionButton
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryModal
@@ -39,14 +46,27 @@ import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.model.displayColor
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.view_category_above_average
+import com.neoutils.finsight.resources.view_category_below_average
 import com.neoutils.finsight.resources.view_category_edit
+import com.neoutils.finsight.resources.view_category_empty
+import com.neoutils.finsight.resources.view_category_history_range
+import com.neoutils.finsight.resources.view_category_month_average
+import com.neoutils.finsight.resources.view_category_partial_month
+import com.neoutils.finsight.resources.view_category_see_transactions
+import com.neoutils.finsight.resources.view_category_this_month
 import com.neoutils.finsight.resources.view_category_total_received
 import com.neoutils.finsight.resources.view_category_total_spent
-import com.neoutils.finsight.resources.view_category_transactions_month
 import com.neoutils.finsight.resources.view_category_type_expense
 import com.neoutils.finsight.resources.view_category_type_income
 import com.neoutils.finsight.resources.view_category_unarchive
+import com.neoutils.finsight.resources.view_category_variation_no_history
+import com.neoutils.finsight.resources.view_category_variation_no_scale
+import com.neoutils.finsight.resources.view_category_variation_zero_average
+import com.neoutils.finsight.resources.view_category_window_total
+import kotlin.math.abs
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -87,7 +107,7 @@ class ViewCategoryModal(
             ViewCategoryUiState.Error -> DetailErrorState()
             is ViewCategoryUiState.Content -> ContentBody(
                 uiState = state,
-                onAction = viewModel::onAction,
+                detailController = detailController,
             )
         }
     }
@@ -95,17 +115,9 @@ class ViewCategoryModal(
     @Composable
     private fun ContentBody(
         uiState: ViewCategoryUiState.Content,
-        onAction: (ViewCategoryAction) -> Unit,
+        detailController: DetailPaneController,
     ) {
         val navController = LocalNavController.current
-
-        val isIncome = uiState.category.type.isIncome
-        val typeLabel = stringResource(
-            if (isIncome) Res.string.view_category_type_income else Res.string.view_category_type_expense
-        )
-        val totalLabel = stringResource(
-            if (isIncome) Res.string.view_category_total_received else Res.string.view_category_total_spent
-        )
 
         Column(
             modifier = Modifier
@@ -114,73 +126,221 @@ class ViewCategoryModal(
                 .padding(bottom = 16.dp)
         ) {
 
-            MonthSelector(
-                selectedYearMonth = uiState.selectedYearMonth,
-                onPreviousMonth = {
-                    onAction(ViewCategoryAction.PreviousMonth)
+            Header(uiState = uiState, onSeeRates = { navController.navigate(ExchangeRatesRoute) })
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            when (val overview = uiState.overview) {
+                CategoryOverview.Empty -> EmptyBody()
+                is CategoryOverview.Active -> ActiveBody(uiState = uiState, overview = overview)
+                is CategoryOverview.Archived -> ArchivedBody(uiState = uiState, overview = overview)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // The command that replaces the period control removed from this surface:
+            // "how much did I spend on this in March" stays answerable, on the screen
+            // that already answers it. It sits above the fold, before the body scrolls.
+            FilledTonalButton(
+                onClick = {
+                    // Dismissed first, as every detail that leaves for another screen
+                    // does: the sheet is not part of where the command leads.
+                    detailController.dismiss()
+                    navController.navigate(TransactionsRoute(filterCategoryId = uiState.category.id))
                 },
-                onNextMonth = {
-                    onAction(ViewCategoryAction.NextMonth)
-                },
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("view_category_transactions"),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_category_see_transactions),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun Header(uiState: ViewCategoryUiState.Content, onSeeRates: () -> Unit) {
+        val isIncome = uiState.category.type.isIncome
+        val typeLabel = stringResource(
+            if (isIncome) Res.string.view_category_type_income else Res.string.view_category_type_expense
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CategoryIconBox(
+                category = uiState.category,
+                modifier = Modifier.size(64.dp),
+                contentPadding = PaddingValues(16.dp),
+                shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.width(16.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CategoryIconBox(
-                    category = uiState.category,
-                    modifier = Modifier.size(64.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    shape = RoundedCornerShape(16.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = typeLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = uiState.category.displayColor
                 )
 
-                Spacer(Modifier.width(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = typeLabel,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = uiState.category.displayColor
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = uiState.category.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = colorScheme.onSurface
-                    )
-                }
-
-                // A category is a dimension, not an account: its entries may sit in several
-                // currencies, so the month's total is a consolidated figure like any other
-                // (design D13). It read as one without ever being able to say so.
-                ConsolidationBadge(
-                    figures = listOf(uiState.totalAmount),
-                    onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                Text(
+                    text = uiState.category.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colorScheme.onSurface
                 )
             }
 
+            // A category is a dimension, not an account: its entries may sit in several
+            // currencies, so every figure here is a consolidated one (design D13). The
+            // badge answers for all of them at once — it is one mark about one surface.
+            ConsolidationBadge(
+                figures = uiState.overview.figures,
+                onSeeRates = onSeeRates,
+            )
+        }
+    }
+
+    /**
+     * A live category: the current month in the highlight, announced as unfinished, and
+     * read against the window below it.
+     */
+    @Composable
+    private fun ActiveBody(
+        uiState: ViewCategoryUiState.Content,
+        overview: CategoryOverview.Active,
+    ) {
+        FigureRow(
+            label = stringResource(Res.string.view_category_this_month),
+            amount = overview.currentMonth.amount,
+            caption = stringResource(
+                Res.string.view_category_partial_month,
+                overview.currentMonth.elapsedDay,
+                overview.currentMonth.daysInMonth,
+            ),
+            valueColor = uiState.category.displayColor,
+            valueTestTag = "view_category_month_amount",
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Variation(overview.variation)
+
+        overview.window?.let { window ->
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(
-                label = totalLabel,
-                amount = uiState.totalAmount,
-                valueColor = uiState.category.displayColor,
-                valueTestTag = "view_category_total_amount",
+            FigureRow(
+                label = stringResource(Res.string.view_category_month_average, window.months),
+                amount = window.average,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            DetailRow(
-                label = stringResource(Res.string.view_category_transactions_month),
-                value = uiState.transactionCount.toString(),
-                valueTestTag = "view_category_transaction_count",
+            FigureRow(
+                label = stringResource(Res.string.view_category_window_total, window.months),
+                amount = window.total,
+                valueTestTag = TOTAL_TEST_TAG,
             )
         }
+    }
+
+    /**
+     * An archived category: the current month says nothing about it, so the whole history
+     * takes the highlight, over the range it covers.
+     */
+    @Composable
+    private fun ArchivedBody(
+        uiState: ViewCategoryUiState.Content,
+        overview: CategoryOverview.Archived,
+    ) {
+        val formats = LocalDateFormats.current
+        FigureRow(
+            label = stringResource(
+                if (uiState.category.type.isIncome) Res.string.view_category_total_received
+                else Res.string.view_category_total_spent
+            ),
+            amount = overview.total,
+            caption = stringResource(
+                Res.string.view_category_history_range,
+                formats.yearMonth.format(overview.firstMonth),
+                formats.yearMonth.format(overview.lastMonth),
+            ),
+            valueColor = uiState.category.displayColor,
+            valueTestTag = TOTAL_TEST_TAG,
+        )
+    }
+
+    /** Nothing was ever posted here. A zero in the highlight would read as a failure. */
+    @Composable
+    private fun EmptyBody() {
+        Text(
+            text = stringResource(Res.string.view_category_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .testTag("view_category_empty"),
+        )
+    }
+
+    /**
+     * How the month stands against the average — **in words**, with an arrow beside them.
+     *
+     * Never in the income/expense colours: those two already mean one thing each in every
+     * other surface, and painting "spent less" green on an expense category would make the
+     * same colour say two things on one screen. The text alone carries the direction, so
+     * nothing is lost when the arrow is not read.
+     */
+    @Composable
+    private fun Variation(variation: SpendingVariation) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (variation is SpendingVariation.Measured) {
+                Icon(
+                    imageVector = if (variation.isAbove) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            Text(
+                text = variationText(variation),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("view_category_variation"),
+            )
+        }
+    }
+
+    @Composable
+    private fun variationText(variation: SpendingVariation): String = when (variation) {
+        is SpendingVariation.Measured -> stringResource(
+            if (variation.isAbove) Res.string.view_category_above_average
+            else Res.string.view_category_below_average,
+            (abs(variation.fraction) * PERCENT).toPercentageString(),
+        )
+
+        is SpendingVariation.Absent -> stringResource(
+            when (variation) {
+                SpendingVariation.Absent.ZERO_AVERAGE -> Res.string.view_category_variation_zero_average
+                SpendingVariation.Absent.NO_CLOSED_MONTH -> Res.string.view_category_variation_no_history
+                SpendingVariation.Absent.NO_COMMON_SCALE -> Res.string.view_category_variation_no_scale
+            }
+        )
     }
 
     @Composable
@@ -242,25 +402,39 @@ class ViewCategoryModal(
     }
 
     /**
-     * The money variant of [DetailRow]. A figure may have more than one term, so it
-     * goes through the single renderer rather than being turned into a string here.
+     * A `label → figure` line, with the period the figure covers stated under the label.
+     *
+     * The caption is not decoration: a figure whose period is not said answers neither
+     * "is that a lot?" nor "since when?".
      */
     @Composable
-    private fun DetailRow(
+    private fun FigureRow(
         label: String,
         amount: ConsolidatedAmount,
+        caption: String? = null,
         valueColor: Color = colorScheme.onSurface,
         valueTestTag: String? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = colorScheme.onSurfaceVariant
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colorScheme.onSurfaceVariant
+                )
+                caption?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             MoneyText(
                 figure = amount,
                 style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
@@ -269,28 +443,31 @@ class ViewCategoryModal(
         }
     }
 
-    @Composable
-    private fun DetailRow(
-        label: String,
-        value: String,
-        valueColor: Color = colorScheme.onSurface,
-        valueTestTag: String? = null,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = valueColor,
-                modifier = Modifier.optionalTestTag(valueTestTag),
-            )
-        }
+    private companion object {
+        /**
+         * The **total** figure of the detail, whichever total the state has to show: the
+         * window's while the category is live, the whole history once it is archived. One
+         * slot, never two at a time, so the name says what the surface is asserting.
+         */
+        const val TOTAL_TEST_TAG = "view_category_total_amount"
+
+        const val PERCENT = 100.0
     }
 }
+
+/**
+ * Every money figure this state puts on screen, for the one mark that answers for all of
+ * them. It is derived here rather than listed at the call site so a figure added to a
+ * variant cannot quietly escape the badge.
+ */
+private val CategoryOverview.figures: List<ConsolidatedAmount>
+    get() = when (this) {
+        CategoryOverview.Empty -> emptyList()
+        is CategoryOverview.Active -> listOfNotNull(
+            currentMonth.amount,
+            window?.average,
+            window?.total,
+        )
+
+        is CategoryOverview.Archived -> listOf(total)
+    }

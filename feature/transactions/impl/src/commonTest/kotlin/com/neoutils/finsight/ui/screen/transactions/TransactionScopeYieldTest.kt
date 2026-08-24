@@ -84,7 +84,7 @@ class TransactionScopeYieldTest {
         transactions: List<Transaction>,
         yieldCategoryExists: Boolean = true,
     ) = TransactionsViewModel(
-        filterLabel = null, filterTarget = null,
+        filterLabel = null, filterTarget = null, filterCategoryId = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = YieldAwareCategories(yieldCategory.takeIf { yieldCategoryExists }),
         installmentRepository = NoInstallments,

@@ -216,6 +216,7 @@ class BudgetClosedCategoryTest {
 
 /** The one ledger read the budget use case makes; anything else is out of scope. */
 private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRepository {
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
         balances[dimensionId]
             ?.let { com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", it) }

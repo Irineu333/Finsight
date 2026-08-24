@@ -52,8 +52,9 @@ import com.neoutils.finsight.ui.theme.Transfer as TransferColor
 fun TransactionsScreen(
     categoryLabel: TransactionLabel? = null,
     target: TransactionTarget? = null,
+    filterCategoryId: Long? = null,
     viewModel: TransactionsViewModel = koinViewModel {
-        parametersOf(categoryLabel, target)
+        parametersOf(categoryLabel, target, filterCategoryId)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

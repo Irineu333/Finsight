@@ -543,7 +543,18 @@
     <string name="view_category_type_expense">Expense</string>
     <string name="view_category_total_received">Total Received</string>
     <string name="view_category_total_spent">Total Spent</string>
-    <string name="view_category_transactions_month">Transactions this Month</string>
+    <string name="view_category_this_month">This month</string>
+    <string name="view_category_partial_month">day %1$d of %2$d</string>
+    <string name="view_category_month_average">Monthly average (%1$d months)</string>
+    <string name="view_category_window_total">%1$d-month total</string>
+    <string name="view_category_above_average">%1$s above average</string>
+    <string name="view_category_below_average">%1$s below average</string>
+    <string name="view_category_variation_zero_average">No basis for comparison: the period average is zero</string>
+    <string name="view_category_variation_no_history">No history to compare against yet</string>
+    <string name="view_category_variation_no_scale">No rate places these currencies on one scale</string>
+    <string name="view_category_history_range">from %1$s to %2$s</string>
+    <string name="view_category_see_transactions">See transactions</string>
+    <string name="view_category_empty">No transactions in this category. Figures appear here as soon as there are.</string>
     <string name="view_category_edit">Edit</string>
     <string name="view_category_unarchive">Unarchive</string>
 

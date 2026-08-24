@@ -75,7 +75,7 @@ class TransactionsViewModelCharacterizationTest {
         // (Σ the account's signed legs 100 − 30 + 40 − 80). Month-wide card payment = 80.
         // Month-wide asset flows: income 100, expense 30, adjustment 40.
         val vm = TransactionsViewModel(
-            filterLabel = null, filterTarget = null,
+            filterLabel = null, filterTarget = null, filterCategoryId = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,

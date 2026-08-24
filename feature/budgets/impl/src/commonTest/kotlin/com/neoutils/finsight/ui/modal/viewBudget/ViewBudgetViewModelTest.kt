@@ -134,6 +134,7 @@ class ViewBudgetViewModelTest {
     )
 
     private class FakeEntryRepository : IEntryRepository {
+        override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
         override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
             com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", 0.0)
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()

@@ -490,7 +490,8 @@ env:
 - assertNotVisible:
     id: "transaction_card_title"
     text: ${LOOSE_TITLE}
-# And the control says by what — the cut is not a second mechanism sitting beside it.
+# And the control says by what — the cut is not a second mechanism sitting beside it. Read on
+# the node that renders the word: the chip's own node carries no text.
 - assertVisible:
-    id: "transactions_filter_category"
+    id: "transactions_filter_category_label"
     text: ${CATEGORY}

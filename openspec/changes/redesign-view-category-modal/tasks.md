@@ -112,12 +112,12 @@
 
 - [x] 7.1 `./gradlew jvmTest` verde, com a saída lida
 - [x] 7.2 `./gradlew :app:android:assembleDebug` compila
-- [ ] 7.3 Exercitar no app: categoria ativa com histórico, categoria jovem (janela encurtada),
+- [x] 7.3 Exercitar no app: categoria ativa com histórico, categoria jovem (janela encurtada),
       categoria sem lançamento, categoria arquivada
-- [ ] 7.4 Exercitar o caso multi-moeda: categoria com gastos em duas moedas, com e sem taxa
+- [x] 7.4 Exercitar o caso multi-moeda: categoria com gastos em duas moedas, com e sem taxa
       registrada, conferindo que a variação some em vez de virar `0%`
-- [ ] 7.5 Exercitar o caso das parcelas: compra parcelada numa categoria, conferindo que
+- [x] 7.5 Exercitar o caso das parcelas: compra parcelada numa categoria, conferindo que
       apenas a parcela do mês corrente aparece nas figuras; depois arquivar a categoria com
       parcelas pendentes e conferir que o intervalo não termina no futuro
-- [ ] 7.5 Rodar a suíte Maestro conforme `.maestro/README.md` §2, reportando em que
+- [x] 7.5 Rodar a suíte Maestro conforme `.maestro/README.md` §2, reportando em que
       dispositivo a corrida aconteceu

@@ -546,10 +546,17 @@
     <string name="view_category_total_spent">Total Gasto</string>
     <string name="view_category_this_month">Neste mês</string>
     <string name="view_category_partial_month">dia %1$d de %2$d</string>
-    <string name="view_category_month_average">Média mensal (%1$d meses)</string>
-    <string name="view_category_window_total">Total de %1$d meses</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Média mensal (%1$d mês)</item>
+        <item quantity="other">Média mensal (%1$d meses)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">Total de %1$d mês</item>
+        <item quantity="other">Total de %1$d meses</item>
+    </plurals>
     <string name="view_category_above_average">%1$s acima da média</string>
     <string name="view_category_below_average">%1$s abaixo da média</string>
+    <string name="view_category_at_average">Na média do período</string>
     <string name="view_category_variation_zero_average">Sem base de comparação: a média do período é zero</string>
     <string name="view_category_variation_no_history">Ainda não há histórico para comparar</string>
     <string name="view_category_variation_no_scale">Sem taxa que ponha estas moedas na mesma escala</string>

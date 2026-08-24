@@ -545,10 +545,17 @@
     <string name="view_category_total_spent">Total Spent</string>
     <string name="view_category_this_month">This month</string>
     <string name="view_category_partial_month">day %1$d of %2$d</string>
-    <string name="view_category_month_average">Monthly average (%1$d months)</string>
-    <string name="view_category_window_total">%1$d-month total</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Monthly average (%1$d month)</item>
+        <item quantity="other">Monthly average (%1$d months)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">%1$d-month total</item>
+        <item quantity="other">%1$d-month total</item>
+    </plurals>
     <string name="view_category_above_average">%1$s above average</string>
     <string name="view_category_below_average">%1$s below average</string>
+    <string name="view_category_at_average">In line with the period average</string>
     <string name="view_category_variation_zero_average">No basis for comparison: the period average is zero</string>
     <string name="view_category_variation_no_history">No history to compare against yet</string>
     <string name="view_category_variation_no_scale">No rate places these currencies on one scale</string>

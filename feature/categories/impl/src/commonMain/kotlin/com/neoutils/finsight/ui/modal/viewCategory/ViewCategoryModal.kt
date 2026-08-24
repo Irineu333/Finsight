@@ -49,6 +49,7 @@ import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.view_category_above_average
+import com.neoutils.finsight.resources.view_category_at_average
 import com.neoutils.finsight.resources.view_category_below_average
 import com.neoutils.finsight.resources.view_category_edit
 import com.neoutils.finsight.resources.view_category_empty
@@ -67,6 +68,7 @@ import com.neoutils.finsight.resources.view_category_variation_no_scale
 import com.neoutils.finsight.resources.view_category_variation_zero_average
 import com.neoutils.finsight.resources.view_category_window_total
 import kotlin.math.abs
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -240,14 +242,22 @@ class ViewCategoryModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             FigureRow(
-                label = stringResource(Res.string.view_category_month_average, window.months),
+                label = pluralStringResource(
+                    Res.plurals.view_category_month_average,
+                    window.months,
+                    window.months,
+                ),
                 amount = window.average,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             FigureRow(
-                label = stringResource(Res.string.view_category_window_total, window.months),
+                label = pluralStringResource(
+                    Res.plurals.view_category_window_total,
+                    window.months,
+                    window.months,
+                ),
                 amount = window.total,
                 valueTestTag = TOTAL_TEST_TAG,
             )
@@ -309,7 +319,7 @@ class ViewCategoryModal(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (variation is SpendingVariation.Measured) {
+            if (variation is SpendingVariation.Measured && !variation.isAtAverage) {
                 Icon(
                     imageVector = if (variation.isAbove) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
                     contentDescription = null,
@@ -328,11 +338,15 @@ class ViewCategoryModal(
 
     @Composable
     private fun variationText(variation: SpendingVariation): String = when (variation) {
-        is SpendingVariation.Measured -> stringResource(
-            if (variation.isAbove) Res.string.view_category_above_average
-            else Res.string.view_category_below_average,
-            (abs(variation.fraction) * PERCENT).toPercentageString(),
-        )
+        is SpendingVariation.Measured -> if (variation.isAtAverage) {
+            stringResource(Res.string.view_category_at_average)
+        } else {
+            stringResource(
+                if (variation.isAbove) Res.string.view_category_above_average
+                else Res.string.view_category_below_average,
+                (abs(variation.fraction) * PERCENT).toPercentageString(),
+            )
+        }
 
         is SpendingVariation.Absent -> stringResource(
             when (variation) {

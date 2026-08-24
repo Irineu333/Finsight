@@ -92,9 +92,18 @@ data class SpendingWindow(
  */
 sealed interface SpendingVariation {
 
-    /** [fraction] is signed and relative to the average: `0.23` is 23% above it. */
+    /**
+     * [fraction] is signed and relative to the average: `0.23` is 23% above it.
+     *
+     * Landing exactly **on** the average is an ordinary reading, not a curiosity: a
+     * purchase in fixed instalments spends the same amount every month, and so does a
+     * confirmed recurring. Saying "0% below" of it asserts a direction that is not
+     * there, which is why the third case is named rather than folded into one of the
+     * other two.
+     */
     data class Measured(val fraction: Double) : SpendingVariation {
         val isAbove: Boolean get() = fraction > 0.0
+        val isAtAverage: Boolean get() = fraction == 0.0
     }
 
     /**

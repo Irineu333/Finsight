@@ -31,6 +31,7 @@ import kotlinx.datetime.plusMonth
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
@@ -191,6 +192,20 @@ class CalculateCategoryOverviewUseCaseTest {
         assertEquals(200.0, sole(checkNotNull(overview.window).average))
         assertTrue(abs(variation.fraction - 0.2) < 1e-9)
         assertTrue(variation.isAbove)
+    }
+
+    @Test
+    fun `a month landing exactly on the average claims no direction`() = runTest {
+        // Ordinary, not a curiosity: a purchase in fixed instalments spends the same
+        // amount every month, so the month and the average coincide exactly.
+        val series = brl(now.minus(2) to 30.0, now.minus(1) to 30.0, now to 30.0)
+
+        val overview = assertIs<CategoryOverview.Active>(useCase(series)(category()))
+        val variation = assertIs<SpendingVariation.Measured>(overview.variation)
+
+        assertEquals(0.0, variation.fraction)
+        assertTrue(variation.isAtAverage)
+        assertFalse(variation.isAbove, "neither above nor below is the honest reading")
     }
 
     @Test

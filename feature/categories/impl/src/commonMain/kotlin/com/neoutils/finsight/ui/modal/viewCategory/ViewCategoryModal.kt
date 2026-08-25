@@ -197,11 +197,14 @@ class ViewCategoryModal(
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // The proportions the transaction detail uses, not the 64dp the budget and
+            // recurring sheets still carry: at that size the icon competes with the name
+            // beside it, on a sheet whose subject is the figures below.
             CategoryIconBox(
                 category = uiState.category,
-                modifier = Modifier.size(64.dp),
-                contentPadding = PaddingValues(16.dp),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier.size(52.dp),
+                contentPadding = PaddingValues(13.dp),
+                shape = RoundedCornerShape(14.dp)
             )
 
             Spacer(Modifier.width(16.dp))

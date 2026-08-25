@@ -107,8 +107,15 @@ sealed interface SpendingVariation {
     }
 
     /**
-     * There is no answer, and which non-answer it is gets said in words. None of these
-     * is ever rendered as `0%`: zero is an assertion.
+     * There is no answer, and the detail states none: no percentage, no arrow, and no
+     * sentence saying that an answer is missing. Such a sentence would occupy the very
+     * line the answer would have taken in order to report that it does not exist, which
+     * is noise wearing the shape of information. An absence is shown by absence.
+     *
+     * Which non-answer it is stays named here even so, because it is a fact about the
+     * category rather than a string for a surface: it is what a test asserts on, and what
+     * keeps an unreachable rate from being mistaken for an average of zero. None of the
+     * three is ever rendered as `0%` — zero is an assertion too.
      */
     enum class Absent : SpendingVariation {
         /** The window's average is zero — dividing by it is not an infinite rise. */

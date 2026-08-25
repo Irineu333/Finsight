@@ -110,10 +110,6 @@ class EntryRepository(
         )
     }
 
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int {
-        return entryDao.dimensionEntryCountInMonth(dimensionId, month.toString())
-    }
-
     override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency =
         // Liability entries are stored negative (credit); owed reads positive.
         entryDao.dimensionNaturalBalance(dimensionId).toMoney(negated = true) { it.total }

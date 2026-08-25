@@ -520,14 +520,6 @@ interface EntryDao {
         yieldDimensionId: Long?,
     ): List<AssetMonthTotals>
 
-    /** Number of entries carrying a dimension within a month (yyyy-MM). */
-    @Query(
-        "SELECT COUNT(*) FROM entries e " +
-            "JOIN transactions o ON o.id = e.transactionId " +
-            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) = :yearMonth"
-    )
-    suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int
-
     /**
      * Net worth per currency = Σ ASSET + LIABILITY natural balances (liabilities are
      * stored negative).

@@ -95,7 +95,13 @@ não é uma figura, e comparar dois números postos em escalas diferentes é que
 percentual sem significado — misturando variação de gasto com variação cambial.
 
 `magnitudeOf` devolve `null` quando nada da figura pôde ser posto na escala. Esse `null`
-propaga até a UI como ausência de variação, com o motivo dito em texto. Nunca vira `0%`.
+propaga até a UI como ausência de variação — sem percentual, sem seta e **sem frase dizendo
+que não há resposta**. Texto que explica a ausência de informação dispensável é ruído: ocupa
+a linha que a resposta ocuparia, para informar que ela não existe. A ausência mostra-se pela
+ausência. Nunca vira `0%`.
+
+O motivo continua nomeado, mas no domínio — variante do resultado, não string de tela. É o
+que o teste afirma, e o que impede uma taxa inalcançável de ser lida como média zero.
 
 ### D4 — A janela encurta com a idade da categoria, e o rótulo declara o número real
 
@@ -152,10 +158,16 @@ do `ViewModel` que já observa o repositório.
 Um id que não resolve para categoria alguma abre a lista no estado neutro. Categoria
 arquivada resolve normalmente: a lista já observa `observeAllCategoriesIncludingClosed`.
 
-### D9 — A contagem de lançamentos deixa de ser mensal
+### D9 — A contagem de lançamentos sai
 
-Sem seletor de mês, "transações no mês" não tem mês. Ela sobrevive como legenda do total da
-janela, não como linha própria — e é a janela que a delimita, como todas as demais figuras.
+Sem seletor de mês, "transações no mês" não tem mês. E, redelimitada pela janela, ela não
+responde nada que as três figuras já não respondam melhor: quantas linhas somaram um total
+é ruído ao lado do total, e quem quer as linhas tem o comando que abre a lista.
+
+Sai por inteiro, portanto — nem linha própria, nem legenda. Com ela sai
+`dimensionEntryCountInMonth`, do `EntryDao` à `IEntryRepository`: o detalhe era o seu único
+chamador, e uma leitura sem chamador é superfície que ainda obriga todo fake do razão a
+respondê-la.
 
 ### D10 — O intervalo da categoria arquivada termina no último lançamento
 
@@ -209,8 +221,10 @@ pergunta que a leitura obriga a responder.
   — onde o histórico completo é a única leitura que resta — passa a mostrá-lo em destaque.
 
 - **A variação some com mais frequência do que um percentual apareceria** → média zero,
-  categoria nova e escala indisponível todas produzem ausência. Mitigação: cada caso diz o
-  motivo em texto. Um `0%` seria mais bonito e falso.
+  categoria nova e escala indisponível todas produzem ausência. Mitigação: a linha some
+  inteira, em vez de existir para dizer que não tem resposta — e o motivo fica nomeado no
+  domínio, onde o teste o lê. Um `0%` seria mais bonito e falso; uma frase explicando que
+  não há resposta seria ruído no lugar dele.
 
 - **Comparar um mês parcial contra uma média de meses fechados enviesa para baixo** → o viés
   existe e não é removível sem projetar o mês. Mitigação: o mês anuncia-se parcial com dia e

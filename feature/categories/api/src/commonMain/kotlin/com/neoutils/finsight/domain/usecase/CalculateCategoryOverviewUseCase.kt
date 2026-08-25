@@ -145,7 +145,8 @@ class CalculateCategoryOverviewUseCase(
      * scales of different dates, their difference would mix a change in spending with a
      * change in exchange rate.
      *
-     * A missing magnitude propagates as an absence with its reason, and never as `0%`.
+     * A missing magnitude propagates as an absence — named here, rendered nowhere — and
+     * never as `0%`.
      */
     private suspend fun variationOf(
         currentMoney: MoneyByCurrency,

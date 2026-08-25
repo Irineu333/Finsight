@@ -238,9 +238,6 @@ interface IEntryRepository {
         yieldDimensionId: Long? = null,
     ): AccountFlows
 
-    /** Number of ledger entries carrying [dimensionId] within [month]. */
-    suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int
-
     /** Amount owed on a sub-ledger (positive), per currency, from the entries carrying its dimension. */
     suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency
 

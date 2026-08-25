@@ -143,7 +143,6 @@ class ViewCategoryViewModelTest {
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger

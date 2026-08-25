@@ -17,6 +17,11 @@
       `dimensionBalanceInMonthByCurrency` daquele mês
 - [x] 1.7 Teste de razão: com entries em meses posteriores ao corte, a série devolve os meses
       até o corte inclusive e nenhum posterior
+- [x] 1.8 Acrescentar a série mensal à tabela de leituras por moeda de `core/ledger/README.md`,
+      ao lado das demais leituras por dimensão
+- [x] 1.9 Remover `dimensionEntryCountInMonth` do `EntryDao`, da `IEntryRepository` e do
+      `EntryRepository`, com os fakes que a implementavam e o teste de consulta que só ela
+      exercitava: o detalhe era o seu único chamador, e a contagem sai por inteiro (D9)
 
 ## 2. Domínio — janela, média e variação (D2, D3, D4, D5, D6)
 
@@ -54,11 +59,14 @@
 ## 3. Strings
 
 - [x] 3.1 Adicionar em `values/strings.xml` (pt) as chaves: rótulo da média com nº de meses,
-      rótulo do total com nº de meses, mês parcial com dia e total de dias, acima/abaixo da
-      média, e os três motivos de ausência de variação
+      rótulo do total com nº de meses, mês parcial com dia e total de dias, e acima/abaixo/na
+      média. **Nenhuma chave para os motivos de ausência de variação:** onde não há resposta
+      não há linha, e uma frase dizendo isso ocuparia a linha da resposta para informar que
+      ela não existe (D3)
 - [x] 3.2 Adicionar as mesmas chaves em `values-en/strings.xml`
 - [x] 3.3 Adicionar a string do comando que abre os lançamentos da categoria, nos dois idiomas
-- [x] 3.4 Adicionar a string do estado vazio da categoria sem lançamento, nos dois idiomas
+- [x] 3.4 Conferir que o estado vazio tampouco ganha string: a categoria sem lançamento não
+      exibe figura nem frase sobre não haver nenhuma
 - [x] 3.5 Adicionar a string do intervalo de datas da categoria arquivada, nos dois idiomas
 - [x] 3.6 Conferir que nenhuma chave nova existe em apenas um dos dois arquivos
 
@@ -88,22 +96,28 @@
       `observeConsolidationChanges()` como gatilho de releitura
 - [x] 5.4 Renderizar a figura de destaque conforme a variante, com o mês corrente anunciado
       como parcial (dia e total de dias)
-- [x] 5.5 Renderizar a variação com significante textual e indicador de direção, **sem** as
-      cores de receita e despesa; e renderizar o motivo quando ela não existe
+- [x] 5.5 Renderizar a variação com significante textual, indicador de direção e o par de
+      severidade do tema, **sem** as cores de receita e despesa; e omitir a linha por inteiro
+      quando ela não existe — sem percentual, sem seta e sem frase no lugar dela
 - [x] 5.6 Renderizar as duas figuras da janela com o nº de meses declarado no rótulo
-- [x] 5.7 Renderizar o estado vazio da categoria sem lançamento, sem figura zerada em destaque
+- [x] 5.7 Não renderizar nada para a categoria sem lançamento: nem figura zerada, nem texto,
+      nem o comando dos lançamentos, que abriria uma lista vazia
 - [x] 5.8 Adicionar o comando que navega para `TransactionsRoute(filterCategoryId = …)`,
       visível sem rolagem
 - [x] 5.9 Manter as ações no rodapé fixado; `DetailActions()` não muda de lugar
-- [x] 5.10 Rever os `testTag`: `view_category_total_amount` passa a nomear o total da janela;
-      decidir e aplicar as tags do mês corrente, da variação e do comando de lançamentos
+- [x] 5.10 Rever os `testTag`: `view_category_total_amount` passa a nomear o total que o
+      estado tem a mostrar — o da janela enquanto a categoria vive, o histórico depois de
+      arquivada, um de cada vez; decidir e aplicar as tags do mês corrente, da variação e do
+      comando de lançamentos
 - [x] 5.11 Atualizar `ViewCategoryViewModelTest` para o novo estado, sem deslocamento de mês
 
 ## 6. E2E (Maestro)
 
 - [x] 6.1 Reescrever em `.maestro/flows/categories/lifecycle.yaml` as asserções sobre
-      `view_category_total_amount`, que passa a afirmar o total da janela
-- [x] 6.2 Substituir a asserção de `view_category_transaction_count`, que deixa de ser mensal
+      `view_category_total_amount`, que passa a afirmar o total do estado em que a categoria
+      está — e a sua ausência onde não há janela fechada atrás dela
+- [x] 6.2 Retirar a asserção de `view_category_transaction_count`: a contagem não é
+      redelimitada pela janela, ela sai (D9)
 - [x] 6.3 Acrescentar asserção sobre o comando que abre os lançamentos da categoria
 - [x] 6.4 Conferir que todo elemento novo alcançado por `id:` está sob um `testTag` cuja raiz
       de composição chama `Modifier.exposeTestTags()`
@@ -119,5 +133,5 @@
 - [x] 7.5 Exercitar o caso das parcelas: compra parcelada numa categoria, conferindo que
       apenas a parcela do mês corrente aparece nas figuras; depois arquivar a categoria com
       parcelas pendentes e conferir que o intervalo não termina no futuro
-- [x] 7.5 Rodar a suíte Maestro conforme `.maestro/README.md` §2, reportando em que
+- [x] 7.6 Rodar a suíte Maestro conforme `.maestro/README.md` §2, reportando em que
       dispositivo a corrida aconteceu

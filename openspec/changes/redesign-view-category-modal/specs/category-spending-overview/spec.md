@@ -120,15 +120,23 @@ Um único mês anterior pode ser atípico, e usá-lo como régua transforma o de
 desvio de todos os meses seguintes. A média é uma base estável, e é sobre ela que a
 pergunta "estou gastando mais do que o normal" tem resposta.
 
-A variação MUST NOT existir quando não há resposta. Ela SHALL ser omitida, com significante
-textual dizendo por quê, em cada um destes casos:
+A variação MUST NOT existir quando não há resposta. Ela SHALL ser **omitida por inteiro** —
+sem percentual, sem indicador e **sem texto declarando a ausência** — em cada um destes casos:
 
 - a média da janela é zero, porque dividir por zero não é aumento infinito;
 - a categoria não tem nenhum mês fechado com lançamento, de modo que não há base;
 - as figuras não podem ser postas numa escala comum, porque alguma delas carrega moeda que
   nenhuma taxa alcança.
 
-Um percentual MUST NOT ser exibido como `0%` em nenhum desses casos: zero é uma afirmação.
+Um percentual MUST NOT ser exibido como `0%` em nenhum desses casos: zero é uma afirmação. E
+uma frase dizendo que não há resposta é uma afirmação também — ocupa a linha que a variação
+ocuparia, para informar que ela não existe. A ausência se mostra pela ausência: onde não há
+resposta, não há linha.
+
+Quando o mês corrente coincide **exatamente** com a média, a variação existe e é zero — o que
+não é nenhum dos casos acima. Ela SHALL ser dita como coincidência com a média, e MUST NOT
+afirmar direção alguma: uma compra parcelada gasta o mesmo todo mês, de modo que a igualdade
+exata é leitura ordinária e não curiosidade de arredondamento.
 
 #### Scenario: Gasto acima da média
 - **WHEN** o mês corrente acumula valor superior à média da janela
@@ -137,35 +145,44 @@ Um percentual MUST NOT ser exibido como `0%` em nenhum desses casos: zero é uma
 
 #### Scenario: Média zero
 - **WHEN** a média da janela é zero
-- **THEN** nenhum percentual é exibido, e um texto informa que não há base de comparação
+- **THEN** nenhuma variação é exibida, e nenhum texto ocupa o lugar dela
 
 #### Scenario: Categoria criada no mês corrente
 - **WHEN** a categoria não possui nenhum mês fechado com lançamento
-- **THEN** nenhum percentual é exibido, e um texto informa que ainda não há histórico para
-  comparar
+- **THEN** nenhuma variação é exibida, e nenhum texto ocupa o lugar dela
+
+#### Scenario: Mês exatamente na média
+- **WHEN** o mês corrente coincide exatamente com a média da janela
+- **THEN** a variação é dita como coincidência com a média, sem seta e sem afirmar que o mês
+  está acima ou abaixo dela
 
 #### Scenario: Escala comum indisponível
 - **WHEN** o mês corrente ou a janela carrega moeda que nenhuma taxa alcança
-- **THEN** nenhum percentual é exibido, e o motivo é dito em texto
+- **THEN** nenhuma variação é exibida, e o motivo MUST NOT ser dito em texto
 
 ### Requirement: A variação não se expressa pelas cores de natureza
 
 A variação SHALL ser expressa por **significante textual**, acompanhada de indicador de
-direção. Ela MUST NOT usar as cores que o app reserva a receita e a despesa.
+direção e de cor. Ela MUST NOT usar as cores que o app reserva a receita e a despesa.
 
 As duas cores já têm significado fixo em toda a interface. Pintar de verde "gastou menos"
 numa categoria de despesa faz a mesma cor dizer duas coisas na mesma tela, e o usuário não
 tem como saber qual delas está lendo.
 
+A proibição é sobre **aquelas duas cores**, e não sobre cor. A variação SHALL usar o par de
+severidade do tema — atenção para o mês que corre acima da própria média, informação para o
+que corre abaixo —, que sinaliza sem reivindicar natureza nenhuma. Texto, seta e cor SHALL
+concordar, de modo que a leitura sobreviva a qualquer um dos três isolado.
+
 #### Scenario: Queda de gasto em categoria de despesa
 - **WHEN** o mês corrente de uma categoria de despesa está abaixo da média
-- **THEN** a variação é dita em texto com indicador de direção, e MUST NOT ser pintada com
-  a cor reservada a receita
+- **THEN** a variação é dita em texto com indicador de direção e cor de severidade, e MUST
+  NOT ser pintada com a cor reservada a receita
 
 #### Scenario: Alta de gasto em categoria de despesa
 - **WHEN** o mês corrente de uma categoria de despesa está acima da média
-- **THEN** a variação é dita em texto com indicador de direção, e MUST NOT ser pintada com
-  a cor reservada a despesa
+- **THEN** a variação é dita em texto com indicador de direção e cor de severidade, e MUST
+  NOT ser pintada com a cor reservada a despesa
 
 #### Scenario: A direção sobrevive sem cor
 - **WHEN** a variação é exibida
@@ -193,8 +210,10 @@ arquivada — o fechamento é um booleano —, de modo que a outra leitura não 
 não existe.
 
 Para uma categoria **sem nenhum lançamento**, o detalhe MUST NOT exibir figura zerada em
-destaque. Ele SHALL exibir estado vazio com texto explicando que os lançamentos aparecerão
-quando houver, porque um zero em destaque é lido como falha e não como ausência.
+destaque — um zero em destaque é lido como falha e não como ausência. Ele MUST NOT exibir
+texto no lugar dela tampouco: uma frase dizendo que não há nada é ela própria uma afirmação,
+e ocupa a linha que a figura ocuparia para informar que a figura não existe. A ausência se
+mostra pela ausência.
 
 #### Scenario: Categoria ativa
 - **WHEN** o detalhe de uma categoria não arquivada e com lançamentos é aberto
@@ -211,7 +230,7 @@ quando houver, porque um zero em destaque é lido como falha e não como ausênc
 
 #### Scenario: Categoria sem lançamento
 - **WHEN** o detalhe de uma categoria sem nenhum lançamento é aberto
-- **THEN** nenhuma figura zerada é exibida em destaque, e um estado vazio explica a ausência
+- **THEN** nenhuma figura é exibida, zerada ou não, e nenhum texto explica a ausência
 
 ### Requirement: O detalhe leva aos lançamentos daquela categoria
 
@@ -222,11 +241,19 @@ Ele é o que impede que a remoção do controle de período seja perda de funç�
 "quanto gastei nisto em março" continua respondível, na superfície que já sabe respondê-la,
 em vez de em duas.
 
+O comando MUST NOT ser oferecido quando a categoria não tem lançamento algum: ele abriria uma
+lista vazia, e um comando que promete nada a encontrar é oferta falsa. Ele acompanha as
+figuras — onde não há figura, não há comando.
+
 #### Scenario: Abrir os lançamentos da categoria
 - **WHEN** o comando é acionado no detalhe de uma categoria
 - **THEN** a lista de lançamentos abre com o eixo analítico já recortado por aquela
   categoria, sem que o usuário precise selecioná-la
 
 #### Scenario: O comando é alcançável
-- **WHEN** o detalhe de uma categoria é aberto
+- **WHEN** o detalhe de uma categoria com lançamentos é aberto
 - **THEN** o comando está visível sem rolagem
+
+#### Scenario: Sem lançamento, sem comando
+- **WHEN** o detalhe de uma categoria sem nenhum lançamento é aberto
+- **THEN** o comando não é oferecido

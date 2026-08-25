@@ -25,9 +25,10 @@ env:
 # the per-filter sectioning (`CategoriesViewModelTest`). One instance of each swap is E2E's share.
 #
 # The figures — $63.40 and $21.75 — share no digits, so no assertion can pass by reading a
-# neighbour. There is no $0.00 to read any more: a category with nothing posted to it states an
-# absence in words rather than a zero, and the detail no longer counts transactions in a month,
-# because without a month selector "transactions this month" has no month.
+# neighbour. There is no $0.00 to read any more: a category with nothing posted to it states no
+# figure at all — not a zero and not a sentence about there being none — and the detail no longer
+# counts transactions in a month, because without a month selector "transactions this month" has
+# no month.
 
 - runFlow: ../../subflows/launch_fresh.yaml
 
@@ -72,14 +73,17 @@ env:
     visible:
       id: "category_retire_label"
     timeout: 15000
-# With nothing posted to it there is no figure to state, and a zero in the highlight would
-# read as a failure rather than as an absence — so the detail says so in words instead.
-- assertVisible:
-    id: "view_category_empty"
+# With nothing posted to it the detail states no figure — and says nothing about there being
+# none, either. An absence is shown by absence, so what is asserted here is what is *not* on
+# screen, the command included: a list cut by this category would come up empty.
 - assertNotVisible:
     id: "view_category_month_amount"
 - assertNotVisible:
     id: "view_category_total_amount"
+- assertNotVisible:
+    id: "view_category_variation"
+- assertNotVisible:
+    id: "view_category_transactions"
 - assertVisible:
     id: "category_retire_label"
     text: "Delete"
@@ -144,14 +148,15 @@ env:
     timeout: 15000
 # The money lands in the current month, which is the highlight while the category is live.
 # `launch_fresh` wipes the database, so this category has no closed month behind it at all:
-# there is no window to average over, and the variation says why in words instead of
-# spelling a `0%` nobody measured.
+# there is no window to average over and nothing to compare it against.
 - assertVisible:
     id: "view_category_month_amount"
     text: "[$]63[.,]40"
 - assertNotVisible:
     id: "view_category_total_amount"
-- assertVisible:
+# No closed month behind it, so there is no base to compare against — and no sentence saying
+# so either.
+- assertNotVisible:
     id: "view_category_variation"
 # The command that replaces the period control this detail no longer has, above the fold.
 - assertVisible:

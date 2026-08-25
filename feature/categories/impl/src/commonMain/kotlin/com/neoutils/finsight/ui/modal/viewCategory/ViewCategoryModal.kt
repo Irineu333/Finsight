@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.util.optionalTestTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +45,7 @@ import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryModal
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
@@ -52,7 +53,6 @@ import com.neoutils.finsight.resources.view_category_above_average
 import com.neoutils.finsight.resources.view_category_at_average
 import com.neoutils.finsight.resources.view_category_below_average
 import com.neoutils.finsight.resources.view_category_edit
-import com.neoutils.finsight.resources.view_category_empty
 import com.neoutils.finsight.resources.view_category_history_range
 import com.neoutils.finsight.resources.view_category_month_average
 import com.neoutils.finsight.resources.view_category_partial_month
@@ -63,9 +63,6 @@ import com.neoutils.finsight.resources.view_category_total_spent
 import com.neoutils.finsight.resources.view_category_type_expense
 import com.neoutils.finsight.resources.view_category_type_income
 import com.neoutils.finsight.resources.view_category_unarchive
-import com.neoutils.finsight.resources.view_category_variation_no_history
-import com.neoutils.finsight.resources.view_category_variation_no_scale
-import com.neoutils.finsight.resources.view_category_variation_zero_average
 import com.neoutils.finsight.resources.view_category_window_total
 import kotlin.math.abs
 import org.jetbrains.compose.resources.pluralStringResource
@@ -130,43 +127,65 @@ class ViewCategoryModal(
 
             Header(uiState = uiState, onSeeRates = { navController.navigate(ExchangeRatesRoute) })
 
-            Spacer(modifier = Modifier.height(20.dp))
+            // An absence is shown by absence. A category nothing was posted to states no
+            // figure and says nothing about there being none — and it offers no command
+            // either, because the list it leads to would come up empty. That is why the
+            // command lives *inside* the figures block: it cannot outlive them.
+            val openTransactions = {
+                // Dismissed first, as every detail that leaves for another screen does:
+                // the sheet is not part of where the command leads.
+                detailController.dismiss()
+                navController.navigate(TransactionsRoute(filterCategoryId = uiState.category.id))
+            }
 
             when (val overview = uiState.overview) {
-                CategoryOverview.Empty -> EmptyBody()
-                is CategoryOverview.Active -> ActiveBody(uiState = uiState, overview = overview)
-                is CategoryOverview.Archived -> ArchivedBody(uiState = uiState, overview = overview)
-            }
+                CategoryOverview.Empty -> Unit
 
-            Spacer(modifier = Modifier.height(20.dp))
+                is CategoryOverview.Active -> Figures(openTransactions) {
+                    ActiveBody(uiState = uiState, overview = overview)
+                }
 
-            // The command that replaces the period control removed from this surface:
-            // "how much did I spend on this in March" stays answerable, on the screen
-            // that already answers it. It sits above the fold, before the body scrolls.
-            FilledTonalButton(
-                onClick = {
-                    // Dismissed first, as every detail that leaves for another screen
-                    // does: the sheet is not part of where the command leads.
-                    detailController.dismiss()
-                    navController.navigate(TransactionsRoute(filterCategoryId = uiState.category.id))
-                },
-                shape = RoundedCornerShape(12.dp),
-                contentPadding = PaddingValues(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("view_category_transactions"),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.view_category_see_transactions),
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                is CategoryOverview.Archived -> Figures(openTransactions) {
+                    ArchivedBody(uiState = uiState, overview = overview)
+                }
             }
+        }
+    }
+
+    /**
+     * The figures, and under them the command that replaces the period control this
+     * surface no longer has: "how much did I spend on this in March" stays answerable, on
+     * the screen that already answers it, and above the fold before the body scrolls.
+     */
+    @Composable
+    private fun Figures(
+        onOpenTransactions: () -> Unit,
+        content: @Composable () -> Unit,
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        content()
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        FilledTonalButton(
+            onClick = onOpenTransactions,
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("view_category_transactions"),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(Res.string.view_category_see_transactions),
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 
@@ -290,55 +309,56 @@ class ViewCategoryModal(
         )
     }
 
-    /** Nothing was ever posted here. A zero in the highlight would read as a failure. */
-    @Composable
-    private fun EmptyBody() {
-        Text(
-            text = stringResource(Res.string.view_category_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .testTag("view_category_empty"),
-        )
-    }
-
     /**
-     * How the month stands against the average — **in words**, with an arrow beside them.
+     * How the month stands against the average: words, an arrow, and a colour — the three
+     * agreeing, so the reading survives whichever of them a person actually takes in.
      *
-     * Never in the income/expense colours: those two already mean one thing each in every
-     * other surface, and painting "spent less" green on an expense category would make the
-     * same colour say two things on one screen. The text alone carries the direction, so
-     * nothing is lost when the arrow is not read.
+     * The colour is **never** the app's income or expense colour. Those two already mean
+     * one thing each on every other surface, and painting "spent less" green on an expense
+     * category would make the same green say two things on one screen. What is used
+     * instead is the severity pair — amber for the month that runs above its own average,
+     * blue for the one that runs below — which says "pay attention here" without claiming
+     * a nature the figure does not have. The text alone still carries the direction, so
+     * nothing is lost where the colour is not seen.
+     *
+     * When there is no answer, this renders nothing at all: an absence is shown by
+     * absence, not by a sentence about it.
      */
     @Composable
     private fun Variation(variation: SpendingVariation) {
+        if (variation !is SpendingVariation.Measured) return
+
+        val tint = when {
+            variation.isAtAverage -> colorScheme.onSurfaceVariant
+            variation.isAbove -> Warning
+            else -> Info
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (variation is SpendingVariation.Measured && !variation.isAtAverage) {
+            if (!variation.isAtAverage) {
                 Icon(
                     imageVector = if (variation.isAbove) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
                     contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
+                    tint = tint,
                     modifier = Modifier.size(14.dp),
                 )
             }
             Text(
                 text = variationText(variation),
                 style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium,
+                color = tint,
                 modifier = Modifier.testTag("view_category_variation"),
             )
         }
     }
 
     @Composable
-    private fun variationText(variation: SpendingVariation): String = when (variation) {
-        is SpendingVariation.Measured -> if (variation.isAtAverage) {
+    private fun variationText(variation: SpendingVariation.Measured): String =
+        if (variation.isAtAverage) {
             stringResource(Res.string.view_category_at_average)
         } else {
             stringResource(
@@ -347,15 +367,6 @@ class ViewCategoryModal(
                 (abs(variation.fraction) * PERCENT).toPercentageString(),
             )
         }
-
-        is SpendingVariation.Absent -> stringResource(
-            when (variation) {
-                SpendingVariation.Absent.ZERO_AVERAGE -> Res.string.view_category_variation_zero_average
-                SpendingVariation.Absent.NO_CLOSED_MONTH -> Res.string.view_category_variation_no_history
-                SpendingVariation.Absent.NO_COMMON_SCALE -> Res.string.view_category_variation_no_scale
-            }
-        )
-    }
 
     @Composable
     override fun DetailActions() {
@@ -438,6 +449,11 @@ class ViewCategoryModal(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyLarge,
+                    // Medium rather than the style's own Normal: at `bodyLarge` this row
+                    // read lighter than the same row on every other detail sheet, which
+                    // sets its value in SemiBold. Both halves are lifted a step, together,
+                    // so the three surfaces go on reading alike.
+                    fontWeight = FontWeight.Medium,
                     color = colorScheme.onSurfaceVariant
                 )
                 caption?.let {
@@ -451,7 +467,10 @@ class ViewCategoryModal(
             Spacer(modifier = Modifier.width(12.dp))
             MoneyText(
                 figure = amount,
-                style = MaterialTheme.typography.titleMedium.copy(color = valueColor),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = valueColor,
+                    fontWeight = FontWeight.SemiBold,
+                ),
                 modifier = Modifier.optionalTestTag(valueTestTag),
             )
         }

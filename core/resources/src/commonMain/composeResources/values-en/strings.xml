@@ -556,12 +556,8 @@
     <string name="view_category_above_average">%1$s above average</string>
     <string name="view_category_below_average">%1$s below average</string>
     <string name="view_category_at_average">In line with the period average</string>
-    <string name="view_category_variation_zero_average">No basis for comparison: the period average is zero</string>
-    <string name="view_category_variation_no_history">No history to compare against yet</string>
-    <string name="view_category_variation_no_scale">No rate places these currencies on one scale</string>
     <string name="view_category_history_range">from %1$s to %2$s</string>
     <string name="view_category_see_transactions">See transactions</string>
-    <string name="view_category_empty">No transactions in this category. Figures appear here as soon as there are.</string>
     <string name="view_category_edit">Edit</string>
     <string name="view_category_unarchive">Unarchive</string>
 

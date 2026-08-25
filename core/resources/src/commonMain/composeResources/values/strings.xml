@@ -557,12 +557,8 @@
     <string name="view_category_above_average">%1$s acima da média</string>
     <string name="view_category_below_average">%1$s abaixo da média</string>
     <string name="view_category_at_average">Na média do período</string>
-    <string name="view_category_variation_zero_average">Sem base de comparação: a média do período é zero</string>
-    <string name="view_category_variation_no_history">Ainda não há histórico para comparar</string>
-    <string name="view_category_variation_no_scale">Sem taxa que ponha estas moedas na mesma escala</string>
     <string name="view_category_history_range">de %1$s a %2$s</string>
     <string name="view_category_see_transactions">Ver lançamentos</string>
-    <string name="view_category_empty">Nenhum lançamento nesta categoria. Os valores aparecem aqui assim que houver.</string>
     <string name="view_category_edit">Editar</string>
     <string name="view_category_unarchive">Desarquivar</string>
 

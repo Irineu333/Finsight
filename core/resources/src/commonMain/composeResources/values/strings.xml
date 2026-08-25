@@ -544,7 +544,21 @@
     <string name="view_category_type_expense">Despesa</string>
     <string name="view_category_total_received">Total Recebido</string>
     <string name="view_category_total_spent">Total Gasto</string>
-    <string name="view_category_transactions_month">Transações no Mês</string>
+    <string name="view_category_this_month">Neste mês</string>
+    <string name="view_category_partial_month">dia %1$d de %2$d</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Média mensal (%1$d mês)</item>
+        <item quantity="other">Média mensal (%1$d meses)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">Total de %1$d mês</item>
+        <item quantity="other">Total de %1$d meses</item>
+    </plurals>
+    <string name="view_category_above_average">%1$s acima da média</string>
+    <string name="view_category_below_average">%1$s abaixo da média</string>
+    <string name="view_category_at_average">Na média do período</string>
+    <string name="view_category_history_range">de %1$s a %2$s</string>
+    <string name="view_category_see_transactions">Ver lançamentos</string>
     <string name="view_category_edit">Editar</string>
     <string name="view_category_unarchive">Desarquivar</string>
 

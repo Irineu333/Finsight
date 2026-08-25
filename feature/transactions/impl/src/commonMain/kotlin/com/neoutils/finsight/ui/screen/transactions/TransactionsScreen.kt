@@ -52,8 +52,9 @@ import com.neoutils.finsight.ui.theme.Transfer as TransferColor
 fun TransactionsScreen(
     categoryLabel: TransactionLabel? = null,
     target: TransactionTarget? = null,
+    filterCategoryId: Long? = null,
     viewModel: TransactionsViewModel = koinViewModel {
-        parametersOf(categoryLabel, target)
+        parametersOf(categoryLabel, target, filterCategoryId)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -344,7 +345,11 @@ private fun CategoryFilterChip(
         selected = selectedSubject != null,
         onClick = { expanded = true },
         modifier = Modifier.testTag("transactions_filter_category"),
-        label = { Text(label) },
+        // The tag on the chip cannot answer for the word inside it — the chip's own node
+        // carries no text. When what the control *says* is the claim ("the list opened
+        // cut by this category"), the assertion has to read the node that renders it, the
+        // same way `category_retire_label` does for the retire button.
+        label = { Text(label, modifier = Modifier.testTag("transactions_filter_category_label")) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,

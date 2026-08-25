@@ -462,7 +462,6 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String, yieldDimensionId: Long?): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun dimensionPeriodTotals(dimensionId: Long): List<com.neoutils.finsight.database.dao.DimensionPeriodTotals> = throw NotImplementedError()
     override suspend fun liabilityMonthTotals(yearMonth: String): List<com.neoutils.finsight.database.dao.LiabilityMonthTotals> = throw NotImplementedError()
@@ -491,6 +490,7 @@ private class FakeEntryDao : EntryDao {
         inserted.filterNot { it.accountId in excludedAccountIds }.groupedByCurrency()
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
         inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
+    override suspend fun dimensionMonthlySeries(dimensionId: Long, untilYearMonth: String): List<com.neoutils.finsight.database.dao.MonthCurrencyTotal> = throw NotImplementedError()
     override suspend fun dimensionNaturalBalance(dimensionId: Long): List<com.neoutils.finsight.database.dao.CurrencyTotal> =
         inserted.filter { it.dimensionId == dimensionId }.groupedByCurrency()
     override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionCurrencyTotal> =

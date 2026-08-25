@@ -104,15 +104,6 @@ class AccountPeriodTotalsQueryTest {
         assertEquals(emptyList(), entryDao.assetMonthTotals("2026-03", yieldDimensionId = null))
     }
 
-    @Test
-    fun `entry count per category counts the month's legs carrying its dimension`() = runTest {
-        seed()
-
-        assertEquals(1, entryDao.dimensionEntryCountInMonth(10, "2026-01"))
-        assertEquals(1, entryDao.dimensionEntryCountInMonth(20, "2026-01"))
-        assertEquals(0, entryDao.dimensionEntryCountInMonth(10, "2026-03"))
-    }
-
     // --- the month-wide asset totals are per currency (task 4.4) ---
 
     @Test

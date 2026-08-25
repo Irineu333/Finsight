@@ -34,6 +34,7 @@ fun NavGraphBuilder.transactionsGraph() {
                 TransactionsScreen(
                     categoryLabel = route.filterLabel,
                     target = route.filterTarget,
+                    filterCategoryId = route.filterCategoryId,
                 )
             }
         }

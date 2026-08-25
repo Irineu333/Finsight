@@ -543,7 +543,21 @@
     <string name="view_category_type_expense">Expense</string>
     <string name="view_category_total_received">Total Received</string>
     <string name="view_category_total_spent">Total Spent</string>
-    <string name="view_category_transactions_month">Transactions this Month</string>
+    <string name="view_category_this_month">This month</string>
+    <string name="view_category_partial_month">day %1$d of %2$d</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Monthly average (%1$d month)</item>
+        <item quantity="other">Monthly average (%1$d months)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">%1$d-month total</item>
+        <item quantity="other">%1$d-month total</item>
+    </plurals>
+    <string name="view_category_above_average">%1$s above average</string>
+    <string name="view_category_below_average">%1$s below average</string>
+    <string name="view_category_at_average">In line with the period average</string>
+    <string name="view_category_history_range">from %1$s to %2$s</string>
+    <string name="view_category_see_transactions">See transactions</string>
     <string name="view_category_edit">Edit</string>
     <string name="view_category_unarchive">Unarchive</string>
 

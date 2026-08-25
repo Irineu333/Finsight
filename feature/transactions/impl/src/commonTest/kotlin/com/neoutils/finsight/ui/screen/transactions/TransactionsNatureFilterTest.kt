@@ -63,7 +63,7 @@ class TransactionsNatureFilterTest {
     private val transactions = listOf(expense, income, transfer, payment, adjustment)
 
     private fun viewModel(filterLabel: TransactionLabel? = null) = TransactionsViewModel(
-        filterLabel = filterLabel, filterTarget = null,
+        filterLabel = filterLabel, filterTarget = null, filterCategoryId = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,

@@ -256,8 +256,6 @@ class ViewCategoryModal(
             valueTestTag = "view_category_month_amount",
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
         Variation(overview.variation)
 
         overview.window?.let { window ->
@@ -330,6 +328,11 @@ class ViewCategoryModal(
     @Composable
     private fun Variation(variation: SpendingVariation) {
         if (variation !is SpendingVariation.Measured) return
+
+        // The gap belongs to this line and travels with it. Left outside, it stayed
+        // behind when the line did not render, and the sheet showed a band of nothing
+        // where the absence was supposed to be invisible.
+        Spacer(modifier = Modifier.height(12.dp))
 
         val tint = when {
             variation.isAtAverage -> colorScheme.onSurfaceVariant

@@ -849,6 +849,9 @@ private fun RecurringCard(
  * deleted or archived, and the template cannot post at all. It used to be a swap of
  * `onSurfaceVariant` for `outline`, sixty lines under a comment saying colour alone does
  * not carry state. It is now a glyph and a sentence.
+ *
+ * The glyph and the tone are what say *unusable*; the words go on saying **which** source,
+ * for as long as there is one to name (see [sourceName]).
  */
 @Composable
 private fun SourceLine(recurring: Recurring) {
@@ -861,8 +864,11 @@ private fun SourceLine(recurring: Recurring) {
 
     if (!recurring.hasUsableSource) {
         icon = Icons.Outlined.LinkOff
-        text = stringResource(Res.string.recurring_source_unusable)
         color = Warning
+        // The sentence is the last resort, not the branch's answer: it speaks only for the
+        // source that is gone, because a source that is merely archived still has a name
+        // and the name is what tells two identical labels apart.
+        text = recurring.sourceName() ?: stringResource(Res.string.recurring_source_unusable)
     } else {
         color = colorScheme.onSurfaceVariant
         if (creditCard != null) {
@@ -893,6 +899,23 @@ private fun SourceLine(recurring: Recurring) {
         )
     }
 }
+
+/**
+ * What the row calls the template's source — `null` only when there is nothing left to
+ * call it.
+ *
+ * **Archived and removed are two absences, and the row used to read them as one.** Both
+ * make `Recurring.hasUsableSource` false, and the unusable branch never reached a name, so
+ * two "Aluguel" in two archived banks read identically — losing precisely the distinction
+ * the row exists to make. A removed source is `null` on both sides (the foreign key is
+ * `SET_NULL`) and genuinely has no name; an archived one exists, is named, and archiving is
+ * offered to the user as reversible — it may take away the path to the account, never the
+ * account's name.
+ *
+ * The card comes first, as everywhere else that resolves a template's source: it is the
+ * more specific of the two, and a template that names one is denominated by it.
+ */
+internal fun Recurring.sourceName(): String? = creditCard?.name ?: account?.name
 
 /** The glyph of the nature, the one the transaction list already uses for it. */
 private val Recurring.directionIcon: ImageVector

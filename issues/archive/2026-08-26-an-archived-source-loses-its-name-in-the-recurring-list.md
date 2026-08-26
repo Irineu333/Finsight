@@ -3,6 +3,7 @@ area: recurring
 severity: medium
 type: ux
 version: 1.10.0
+verdict: fixed
 ---
 
 # A linha da recorrência troca o nome da origem arquivada por "Origem indisponível"
@@ -52,3 +53,29 @@ em vez de apagar apenas o caminho até ele.
 Separar os dois casos dentro do ramo falso: havendo origem, exibir o nome dela com o glifo e o
 tom `Warning` que já afirmam o estado; não havendo, manter `recurring_source_unusable`. Não
 vinculante.
+
+## Desfecho
+
+**Causa real** — a do relato, confirmada no código: `SourceLine()` decide o texto por
+`hasUsableSource`, e o ramo falso nunca alcançava um nome. O que faltava não era um caso a
+mais, era a distinção entre as duas ausências que aquele booleano funde. A removida é `null`
+dos dois lados — a foreign key é `SET_NULL` — e de fato não tem nome a dar; a arquivada
+existe, é nomeada, e o arquivamento é oferecido ao usuário como reversível: pode tirar o
+caminho até a conta, nunca o nome dela.
+
+**Mudança** — nasceu `Recurring.sourceName()`, dona da pergunta "como esta origem se chama",
+e o ramo falso passou a lê-la: havendo nome, é ele que aparece; não havendo,
+`recurring_source_unusable` fala. A frase deixou de ser a resposta do ramo e virou o último
+recurso. O glifo `LinkOff` e o tom `Warning` não mudaram — eles é que afirmam *não posta*, e
+continuam afirmando isso nos dois casos, de modo que nada aqui passou a depender de cor.
+
+**Prova** — `SourceNameTest` fixa os cinco casos: conta arquivada e cartão arquivado seguem
+nomeados, a origem removida devolve `null`, duas "Aluguel" em bancos arquivados diferentes
+respondem nomes diferentes (o cenário do spec que a linha deixava de satisfazer), e o cartão
+responde antes da conta. Suíte: `./gradlew jvmTest --rerun-tasks` verde, 1488 testes em 249
+classes, nenhuma falha.
+
+**O que continua fora** — o caso em que o **cartão existe e a conta dele não**: ali
+`hasUsableSource` é verdadeiro, a linha desenha o nome do cartão com glifo e tom normais, e a
+figura mesmo assim sai `***`, sem que nada explique. É outro defeito, de outra origem, e não
+foi tocado aqui.

@@ -1,6 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.model
 
 import com.neoutils.finsight.extension.displayTitleOrNull
+import com.neoutils.finsight.extension.toYearMonth
+import kotlinx.datetime.YearMonth
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 data class Recurring(
     val id: Long = 0,
@@ -27,6 +33,35 @@ data class Recurring(
     val label
         get() = displayTitleOrNull(title, category)
             ?: error("A recurring has a title or a category (RecurringForm.toRecurring).")
+
+    /**
+     * The month the series begins in — its **cycle 1**.
+     *
+     * `createdAt` is the anchor the cycle numbering is counted from (`RecurringForm.toRecurring`),
+     * and this is that anchor read as a month, so that whoever asks "does this template have a
+     * cycle in month X" and whoever numbers that cycle answer from the same expression. A
+     * template born out of a past transaction is anchored on the transaction's date, so its
+     * origin is that month and not the day it was typed.
+     *
+     * Before it there is nothing: no cycle to confirm, to skip, or to be waiting for.
+     */
+    val originMonth: YearMonth
+        get() = Instant.fromEpochMilliseconds(createdAt).toYearMonth()
+
+    /**
+     * Whether this template has a cycle in [month] **at all** — before asking whether
+     * anything was recorded for it.
+     *
+     * Two conditions, and they fail in opposite directions of time. The series has begun
+     * ([originMonth] is cycle 1, and there is no cycle 0); and it has not been archived,
+     * which stops it generating cycles in any month, past ones included — archiving is a
+     * statement about the template, not about a date.
+     *
+     * It is one member because the two callers that need it must not answer differently:
+     * the projection of a month and the counter of that same month are the same set,
+     * seen once as money and once as a count.
+     */
+    fun generatesCycleIn(month: YearMonth): Boolean = !isArchived && originMonth <= month
 
     /**
      * Whether the money still has somewhere to move through.

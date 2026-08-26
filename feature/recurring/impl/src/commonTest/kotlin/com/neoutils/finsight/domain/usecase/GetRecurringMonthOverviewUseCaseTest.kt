@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.FakeRecurringOccurrenceRepository
@@ -9,9 +11,12 @@ import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.recurring
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
 
 /**
  * **The two halves of a month, and what neither of them can hold.**
@@ -139,6 +144,22 @@ class GetRecurringMonthOverviewUseCaseTest {
         // exists to account for.
         assertEquals(MoneyByCurrency.zero, overview.forecastExpense)
         assertEquals(MoneyByCurrency.of("BRL", 50.0), overview.forecastIncome)
+    }
+
+    @Test
+    fun `a month before the template existed carries neither figure nor count`() = runTest {
+        // The month selector of the card reaches any year; the series does not.
+        val bornInAugust = recurring(id = 1L, amount = 380.0).copy(
+            createdAt = LocalDate(2026, 8, 1)
+                .atStartOfDayIn(TimeZone.currentSystemDefault())
+                .toEpochMilliseconds(),
+        )
+
+        val overview = useCase(listOf(bornInAugust), emptyList(), YearMonth(2026, 3), inReais)
+
+        assertEquals(MoneyByCurrency.zero, overview.forecastExpense)
+        assertEquals(0, overview.total)
+        assertEquals(0, overview.handled)
     }
 
     @Test

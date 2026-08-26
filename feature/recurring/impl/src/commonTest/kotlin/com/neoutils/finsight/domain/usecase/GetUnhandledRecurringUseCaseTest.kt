@@ -1,11 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.recurring
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
 
 /**
  * The predicate answers about the **month**, never about the day: a template still due
@@ -78,6 +83,38 @@ class GetUnhandledRecurringUseCaseTest {
         )
 
         assertEquals(listOf(active.id), unhandled.map { it.id })
+    }
+
+    /** The anchor `createdAt` names, read the same way the cycle numbering reads it. */
+    private fun bornIn(month: YearMonth) = recurring(
+        id = 3L,
+        createdAt = LocalDate(month.year, month.month, 1)
+            .atStartOfDayIn(TimeZone.currentSystemDefault())
+            .toEpochMilliseconds(),
+    )
+
+    @Test
+    fun `a template is not unhandled in a month before its own origin`() {
+        // The series begins in the month its anchor falls in — that is the month
+        // `ConfirmRecurringUseCase` numbers 1. There is no cycle 0 to be unhandled for.
+        val unhandled = useCase(
+            recurringList = listOf(bornIn(july)),
+            occurrences = emptyList(),
+            month = YearMonth(2026, 6),
+        )
+
+        assertEquals(emptyList(), unhandled.map { it.id })
+    }
+
+    @Test
+    fun `the origin month itself is the first the template is unhandled for`() {
+        val unhandled = useCase(
+            recurringList = listOf(bornIn(july)),
+            occurrences = emptyList(),
+            month = july,
+        )
+
+        assertEquals(listOf(3L), unhandled.map { it.id })
     }
 
     @Test

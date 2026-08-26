@@ -91,22 +91,23 @@ class GetRecurringMonthOverviewUseCase(
         }
 
         // The counter is about the templates the month can still ask something of, which
-        // is the same set the forecast is drawn from — so "handled" is the complement of
-        // what its owner returned, not a second predicate that could disagree with it.
-        val active = recurringList.filterNot { it.isArchived }
-        val activeIds = active.mapTo(mutableSetOf()) { it.id }
+        // is the same set the forecast is drawn from — so it asks the same member the
+        // forecast's owner asks, and "handled" is the complement of what that owner
+        // returned. Neither half gets a predicate of its own to disagree with.
+        val ofTheMonth = recurringList.filter { it.generatesCycleIn(month) }
+        val idsOfTheMonth = ofTheMonth.mapTo(mutableSetOf()) { it.id }
 
         return RecurringMonthOverview(
             settledExpense = settled.expense,
             settledIncome = settled.income,
             forecastExpense = forecastExpense,
             forecastIncome = forecastIncome,
-            handled = active.size - unhandled.size,
-            total = active.size,
+            handled = ofTheMonth.size - unhandled.size,
+            total = ofTheMonth.size,
             skipped = occurrences.count {
                 it.yearMonth == month &&
                     it.status == RecurringOccurrence.Status.SKIPPED &&
-                    it.recurringId in activeIds
+                    it.recurringId in idsOfTheMonth
             },
             undenominated = undenominated,
         )

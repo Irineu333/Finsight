@@ -44,6 +44,11 @@ respondido por superfície alguma fora do dashboard, cujo componente é desligá
   card onde o terceiro estado é representável, e é também a única leitura livre de moeda que o
   card oferece.
 
+- **Cada metade do card se dobra, e a que não tem movimento abre dobrada.** Duas linhas de
+  `R$ 0,00` são altura gasta para afirmar uma ausência, e a metade vazia é quase sempre a que
+  o usuário não está perguntando — o fato no começo de um mês, a projeção no fim dele. O
+  rótulo permanece dos dois jeitos: o que se dobra é a figura, nunca o nome do que ela mede.
+
 - **O card carrega um seletor de mês próprio e não obedece ao filtro da lista.** Sob o recorte
   de arquivadas, "ainda não lançado" é estruturalmente vazio; sob os recortes de despesa ou
   receita, o card teria de apagar uma das duas linhas — mudar de **forma** enquanto a lista

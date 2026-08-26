@@ -130,7 +130,11 @@
       falta, e não a taxa que falta (D13)
 - [x] 6.5 `recurring_card_monthly_amount` removida dos dois arquivos, junto com o seu único
       consumidor
-- [x] 6.6 Paridade conferida: 809 chaves em cada arquivo, nenhuma exclusiva de um lado
+- [x] 6.6 `recurring_summary_expand` e `recurring_summary_collapse` nos dois arquivos, como
+      `contentDescription` da seta do bloco dobrável: para que lado ela aponta não pode ser a
+      única coisa que diz o estado
+- [x] 6.7 Paridade conferida: 807 `<string>` mais 4 `<plurals>` em cada arquivo, nenhuma
+      chave exclusiva de um lado (conferido por diff das chaves, não por contagem)
 
 ## 7. A linha da lista (D1, D2, D3, D4, D5)
 
@@ -152,8 +156,15 @@
       com elipse, então nem o rótulo longo nem o nome de cartão longo mudam a altura. O
       vão entre as duas linhas é o mesmo nos dois lados (`ROW_LINE_GAP`), para a linha ler
       como uma grade e não como duas pilhas encostadas
+- [x] 7.9 A origem **arquivada** volta a ser nomeada. `hasUsableSource` é falso tanto para a
+      removida quanto para a arquivada, e o ramo falso de `SourceLine` não chegava a ler um
+      nome — duas "Aluguel" em bancos arquivados diferentes liam idêntico, perdendo
+      exatamente a distinção pela qual a linha existe. O glifo `LinkOff` e o tom `Warning`
+      seguem afirmando que ela não posta; `recurring_source_unusable` passa a falar só pela
+      origem que sumiu, que é a única sem nome a dar (a foreign key é `SET_NULL`). A regra
+      saiu para `Recurring.sourceName()`, e `SourceNameTest` a fixa
 
-## 8. O card de resumo (D11, D12, D14)
+## 8. O card de resumo (D11, D12, D14, D15)
 
 - [x] 8.1 `feature:settings:api` declarado em `feature/recurring/impl/build.gradle.kts`
 - [x] 8.2 O card compõe chip de mês, dois blocos rotulados com duas figuras cada, e o
@@ -169,6 +180,17 @@
       `recurring_card_amount`
 - [x] 8.7 Fato e projeção se distinguem pela legenda do bloco, pela ordem e por um degrau
       de tamanho (18sp bold → 16sp semibold), mantendo a cor de natureza nas quatro figuras
+- [x] 8.8 Cada metade virou bloco dobrável, e a que não tem movimento abre dobrada (D15). O
+      rótulo permanece nos dois estados — o que se dobra é a figura, e um card que escondesse
+      a palavra junto teria encolhido por um motivo invisível. O estado inicial é rederivado
+      só quando aquele bloco cruza entre ter e não ter movimento (`rememberSaveable(holdsNothing)`),
+      sem o que o bloco recém-aberto se dobraria de novo à primeira troca de mês
+- [x] 8.9 O predicado subiu para `ConsolidatedAmount.isZero`, ao lado da figura, e
+      `BalanceOverviewFactory.orNullIfZero()` passou a consumi-lo em vez da sua própria
+      leitura: duas superfícies perguntavam "isto afirma movimento?" à mão, e a resposta
+      certa é sobre **todos** os termos, não sobre o primeiro
+- [x] 8.10 Teste: `HoldsNothingTest` fixa a leitura por todos os termos —
+      `R$ 0,00 + US$ 50,00` é um mês com dinheiro dentro, e um bloco assim não abre dobrado
 
 ## 9. A estrutura da tela (D11)
 

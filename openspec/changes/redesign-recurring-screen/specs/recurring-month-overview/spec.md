@@ -25,6 +25,45 @@ O bloco do fato SHALL vir **antes** do bloco da projeção.
 - **WHEN** o mês tem R$ 1.240,00 de despesa fixa lançada e R$ 380,00 de despesa fixa ainda não lançada
 - **THEN** os dois valores aparecem em blocos distintos, e nenhuma superfície do card os apresenta como um único total
 
+### Requirement: Uma metade sem nada sob o rótulo abre dobrada
+
+Cada um dos dois blocos SHALL poder ser dobrado, e um bloco cujas duas figuras não afirmam
+movimento algum SHALL abrir **dobrado**.
+
+Duas linhas de `R$ 0,00` são o card tomando espaço para afirmar uma ausência, e o bloco
+vazio é quase sempre o que o usuário não está perguntando: o fato no começo de um mês, a
+projeção no fim dele. O que se dobra é a **figura**, e o **rótulo permanece** — um card que
+escondesse também as palavras teria encolhido por um motivo que o usuário não pode ver, e o
+que ficou dobrado deixaria de estar nomeado.
+
+Dobrar MUST NOT ser lido como omitir. A figura existe, foi reduzida pelo redutor e está a um
+toque; o que a dobra governa é o que a primeira tela gasta, nunca o que o card afirma. Ela
+não dispensa nem enfraquece a exigência de que uma metade sem movimento tenha **zero
+denominado** em vez da figura vazia.
+
+"Nada sob o rótulo" SHALL ser lido sobre **todos os termos das duas figuras**, e MUST NOT ser
+decidido por um termo só: o redutor responde um termo por moeda, e um mês pode ter
+`US$ 50,00` ao lado de um `R$ 0,00` que apenas diz que nada se moveu em reais. Uma
+verificação de um termo dobraria um mês com dinheiro dentro, e o usuário teria de adivinhar
+que o bloco escondia alguma coisa.
+
+A dobra é estado da **tela**: a partir do momento em que o usuário abre ou fecha um bloco, a
+escolha dele governa, e o estado inicial SHALL ser rederivado apenas quando aquele bloco
+cruzar entre ter e não ter movimento. Rederivá-lo a cada mudança dobraria de novo o bloco
+que o usuário acabou de abrir, no instante seguinte ao de mexer no seletor de mês.
+
+#### Scenario: O mês ainda não tem fato algum
+- **WHEN** nada foi lançado no mês selecionado e o mês ainda tem projeção
+- **THEN** o bloco lançado abre dobrado, com o seu rótulo visível, e o bloco da projeção abre aberto
+
+#### Scenario: Um zero ao lado de uma moeda que se moveu
+- **WHEN** a despesa lançada do mês é `R$ 0,00 + US$ 50,00`
+- **THEN** o bloco lançado abre aberto, porque um dos seus termos afirma movimento
+
+#### Scenario: A escolha do usuário sobrevive à troca de mês
+- **WHEN** o usuário abre um bloco que abrira dobrado e seleciona outro mês em que aquele bloco também não tem movimento
+- **THEN** o bloco continua aberto
+
 ### Requirement: A metade lançada é lida do razão, nunca do template
 
 As figuras do bloco lançado SHALL ser derivadas das **ocorrências confirmadas** do mês e do
@@ -181,13 +220,18 @@ Uma figura que o redutor não conseguiu reduzir a um único termo SHALL ser exib
 com a marca de aproximação que a consolidação define, e o card SHALL oferecer **uma** via para
 o arquivo de taxas que a explique — uma para o card inteiro, e não uma por figura.
 
+Um mês sem movimento SHALL produzir **zero denominado pelo redutor**, e MUST NOT produzir a
+figura vazia: zero é uma afirmação sobre o mês, e a ausência de figura é a recusa de afirmar.
+O que o bloco que a contém faz com ela — dobrá-la, inclusive — é decisão do bloco, e tem
+requisito próprio.
+
 #### Scenario: Figura multimoeda
 - **WHEN** as receitas fixas lançadas do mês somam R$ 5.865,00 e US$ 50,00 sem taxa cadastrada
 - **THEN** a figura é exibida em dois termos, marcada como aproximada, e o card oferece a via para o arquivo de taxas
 
 #### Scenario: Mês sem movimento
 - **WHEN** nada foi lançado no mês selecionado
-- **THEN** as duas figuras do bloco lançado exibem zero, denominado pelo redutor, e não desaparecem
+- **THEN** as duas figuras do bloco lançado são zero denominado pelo redutor, e não a figura vazia
 
 ### Requirement: O resumo permanece quando o recorte da lista está vazio
 

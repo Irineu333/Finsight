@@ -240,6 +240,30 @@ Aqui é o inverso deliberado: o chip governa só o card, o filtro governa só a 
 desambiguação é física — o filtro fica na `TopAppBar`, atrás da borda da barra; o card é o
 primeiro item da lista.
 
+### D15 — A altura do card se paga dobrando a metade vazia, não encolhendo o card
+
+A variante compacta (Open Question, decidida em 10.5 pela completa) atacava a altura tirando
+o rodapé — que é o único lugar do card onde um ciclo ignorado é representável. O que sobra
+para cortar é o que não está dizendo nada: um bloco cujas duas figuras são zero.
+
+Cada metade passa a ser dobrável, e a que **não tem movimento abre dobrada** — o fato no
+começo de um mês, a projeção no fim dele. O rótulo fica dos dois jeitos: o que se dobra é a
+figura, e um card que escondesse a palavra junto teria encolhido por um motivo invisível.
+
+O predicado é `ConsolidatedAmount.isZero`, e ele lê **todos os termos**, não o primeiro: o
+redutor devolve um termo por moeda, e `R$ 0,00 + US$ 50,00` é um mês com dinheiro dentro que
+uma verificação ingênua dobraria. Vive ao lado da figura porque uma segunda superfície já
+fazia a mesma pergunta à mão — a linha de fluxo de `BalanceOverviewFactory`, que some em vez
+de exibir zero —, e duas leituras de "isto não afirma movimento" é uma a mais.
+
+O estado inicial é derivado uma vez e **rederivado só quando aquele bloco cruza entre ter e
+não ter movimento** (`rememberSaveable(holdsNothing)`). Sem essa chave, o bloco que o usuário
+acabou de abrir se dobraria de novo assim que o seletor de mês se mexesse.
+
+Não conflita com a regra de que zero é afirmação e ausência não é: a figura continua sendo
+zero denominado pelo redutor, e continua a um toque. O que a dobra decide é o que a primeira
+tela gasta, não o que o card afirma.
+
 ## Risks / Trade-offs
 
 - **O card ocupa ~291dp e a primeira tela mostra ~4 linhas em vez de 8** → ele é item da

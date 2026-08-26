@@ -2,6 +2,9 @@
 
 package com.neoutils.finsight.ui.screen.recurring
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,10 +30,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
@@ -59,7 +65,9 @@ import com.neoutils.finsight.resources.recurring_screen_empty
 import com.neoutils.finsight.resources.recurring_screen_title
 import com.neoutils.finsight.resources.recurring_source_unusable
 import com.neoutils.finsight.resources.recurring_status_archived
+import com.neoutils.finsight.resources.recurring_summary_collapse
 import com.neoutils.finsight.resources.recurring_summary_counter
+import com.neoutils.finsight.resources.recurring_summary_expand
 import com.neoutils.finsight.resources.recurring_summary_fixed_expense
 import com.neoutils.finsight.resources.recurring_summary_fixed_income
 import com.neoutils.finsight.resources.recurring_summary_forecast
@@ -431,6 +439,7 @@ private fun RecurringMonthCard(
                 expense = summary.settledExpense,
                 income = summary.settledIncome,
                 amountStyle = SETTLED_AMOUNT_STYLE,
+                headerTestTag = "recurring_summary_settled_header",
                 expenseTestTag = "recurring_summary_settled_expense",
                 incomeTestTag = "recurring_summary_settled_income",
             )
@@ -440,6 +449,7 @@ private fun RecurringMonthCard(
                 expense = summary.forecastExpense,
                 income = summary.forecastIncome,
                 amountStyle = FORECAST_AMOUNT_STYLE,
+                headerTestTag = "recurring_summary_forecast_header",
                 expenseTestTag = "recurring_summary_forecast_expense",
                 incomeTestTag = "recurring_summary_forecast_income",
             )
@@ -490,39 +500,113 @@ private fun RecurringMonthCard(
     }
 }
 
+/**
+ * One half of the month, behind a header that folds it away.
+ *
+ * **A block with nothing in it opens folded.** Two lines of `R$ 0,00` are the card taking
+ * room to assert an absence, and the block that is empty is usually the one the user is
+ * not asking about — the fact half early in a month, the forecast half at the end of one.
+ * The label stays either way, so what is folded is still named: a card that hid the words
+ * as well would be a card that shrank for a reason the user cannot see.
+ *
+ * **The user's own toggle wins from then on**, and is re-seeded only when the block
+ * crosses between having movement and not. Re-deriving it on every change would fold away
+ * a block that had just been opened, the moment the month selector moved.
+ */
 @Composable
 private fun SummaryBlock(
     label: String,
     expense: ConsolidatedAmount,
     income: ConsolidatedAmount,
     amountStyle: TextStyle,
+    headerTestTag: String,
     expenseTestTag: String,
     incomeTestTag: String,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = label,
-            style = typography.labelLarge,
-            color = colorScheme.onSurfaceVariant,
-        )
+    val holdsNothing = holdsNothing(expense, income)
+    var expanded by rememberSaveable(holdsNothing) { mutableStateOf(!holdsNothing) }
+    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
 
-        SummaryFigure(
-            label = stringResource(Res.string.recurring_summary_fixed_expense),
-            amount = expense,
-            color = Expense,
-            style = amountStyle,
-            testTag = expenseTestTag,
-        )
+    Column {
+        Row(
+            modifier = Modifier
+                // Pulled left by exactly the inset the padding below puts back, so the
+                // target has room around the words while the label still starts on the
+                // card's own column — the figures under it are flush with that column,
+                // and a header indented by its own breathing room reads as a mistake.
+                .offset(x = -HEADER_HIT_INSET)
+                .clip(RoundedCornerShape(4.dp))
+                // The label and its arrow, and nothing past them: the two read as one
+                // control, and the empty width to their right belongs to the card. A
+                // target that ran the full width would put a ripple under the figures'
+                // column, where nothing is clickable.
+                .clickable { expanded = !expanded }
+                .padding(horizontal = HEADER_HIT_INSET)
+                .testTag(headerTestTag),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = typography.labelLarge,
+                color = colorScheme.onSurfaceVariant,
+            )
 
-        SummaryFigure(
-            label = stringResource(Res.string.recurring_summary_fixed_income),
-            amount = income,
-            color = Income,
-            style = amountStyle,
-            testTag = incomeTestTag,
-        )
+            // One glyph, turned — the same `KeyboardArrowDown` every other "there is more
+            // here" in the app draws. Which way it points is not the only thing that says
+            // the state: the description names the action in words.
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = stringResource(
+                    if (expanded) Res.string.recurring_summary_collapse
+                    else Res.string.recurring_summary_expand
+                ),
+                tint = colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer { rotationZ = arrowRotation },
+            )
+        }
+
+        AnimatedVisibility(visible = expanded) {
+            // The spacing lives in here rather than on the column above, so a folded
+            // block leaves no gap behind it.
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SummaryFigure(
+                    label = stringResource(Res.string.recurring_summary_fixed_expense),
+                    amount = expense,
+                    color = Expense,
+                    style = amountStyle,
+                    testTag = expenseTestTag,
+                )
+
+                SummaryFigure(
+                    label = stringResource(Res.string.recurring_summary_fixed_income),
+                    amount = income,
+                    color = Income,
+                    style = amountStyle,
+                    testTag = incomeTestTag,
+                )
+            }
+        }
     }
 }
+
+/**
+ * Whether a block of the summary has nothing under its label — which is what decides
+ * that it opens folded.
+ *
+ * It reads **every term of both figures**, and that is the whole rule: the reducer
+ * answers one term per currency, so a month may hold `US$ 50,00` beside a `R$ 0,00` that
+ * only means "there are reais accounts and nothing moved in them". A check that looked at
+ * one term would fold away a month with money in it, and the user would have to guess
+ * that the block was hiding something.
+ */
+internal fun holdsNothing(expense: ConsolidatedAmount, income: ConsolidatedAmount): Boolean =
+    expense.isZero && income.isZero
 
 @Composable
 private fun SummaryFigure(
@@ -835,6 +919,19 @@ private val ROW_LINE_GAP = 4.dp
 
 /** The chip's own vertical breathing room, as in `SummaryCard`. */
 private val CHIP_INSET = 6.dp
+
+/**
+ * The room the summary header's tap target takes around its own words — **sideways only**.
+ *
+ * Vertically it takes none: the header sits between two labelled blocks of a dense card,
+ * where every dp it claims is one the card grows by, and it is a fold rather than a
+ * primary action. So the target is exactly as tall as the line it wraps, and what keeps
+ * it from reading as a box drawn on the text is the small radius, not height.
+ *
+ * It is spent twice — as padding, and as the offset that cancels it — so the two cannot
+ * drift apart and leave the label indented out of the card's own column.
+ */
+private val HEADER_HIT_INSET = 4.dp
 
 private val SETTLED_AMOUNT_STYLE = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
 

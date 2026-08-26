@@ -3,6 +3,7 @@ package com.neoutils.finsight.extension
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -13,6 +14,32 @@ import kotlin.test.assertTrue
 class ConsolidatedAmountTest {
 
     private val formatter = currencyFormatterOf(TEST_SYMBOLS)
+
+/**
+     * **A figure says "no movement" only when every term of it does.**
+     *
+     * The reading a surface needs before deciding whether to draw a line at all — an
+     * absent flow row, a folded summary block. One term at zero beside another that is
+     * not is still a movement, and a surface that read only the first would fold away a
+     * month that had money in it.
+     */
+    @Test
+    fun aFigureIsZeroOnlyWhenEveryTermIs() {
+        fun figureOf(vararg values: Pair<Double, String>) = ConsolidatedAmount(
+            terms = values.map { (value, currency) ->
+                DisplayAmount.magnitude(value, currency, isApproximate = false)
+            },
+            isApproximate = false,
+        )
+
+        assertTrue(figureOf(0.0 to BRL).isZero)
+        assertTrue(figureOf(0.0 to BRL, 0.0 to USD).isZero)
+        assertFalse(figureOf(100.0 to BRL).isZero)
+        // The one a surface would get wrong by reading a single term.
+        assertFalse(figureOf(0.0 to BRL, 50.0 to USD).isZero)
+        // Nothing to say is not a movement either.
+        assertTrue(ConsolidatedAmount(terms = emptyList(), isApproximate = false).isZero)
+    }
 
     @Test
     fun oneTermIsTheCommonCaseAndIsNotSpecial() {

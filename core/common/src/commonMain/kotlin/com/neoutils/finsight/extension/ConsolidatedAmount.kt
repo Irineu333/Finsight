@@ -60,6 +60,20 @@ data class ConsolidatedAmount(
     /** The term in the base currency, when the figure has one. */
     val base: DisplayAmount? get() = baseIndex?.let(terms::getOrNull)
 
+    /**
+     * Whether the figure asserts **no movement at all**: every term of it is zero.
+     *
+     * A figure with one term at zero beside another that is not is still a movement, so
+     * this reads every term rather than the first — which is also why it is here and not
+     * at each surface that wants to know. Two of them do: a flow line that is absent
+     * rather than shown at zero, and a block of a summary that opens folded because there
+     * is nothing under it to read.
+     *
+     * A figure with no term at all is zero by the same reading: it says nothing, and
+     * saying nothing is not a movement.
+     */
+    val isZero: Boolean get() = terms.all { it.value == 0.0 }
+
     val isSingleTerm: Boolean get() = terms.size == 1
 }
 

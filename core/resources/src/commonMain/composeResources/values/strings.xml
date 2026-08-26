@@ -737,6 +737,8 @@
     <string name="recurring_summary_fixed_expense">Despesas fixas</string>
     <string name="recurring_summary_fixed_income">Receitas fixas</string>
     <string name="recurring_summary_counter">%1$d de %2$d tratadas</string>
+    <string name="recurring_summary_expand">Expandir</string>
+    <string name="recurring_summary_collapse">Recolher</string>
     <plurals name="recurring_summary_skipped">
         <item quantity="one">%1$d ignorada</item>
         <item quantity="other">%1$d ignoradas</item>

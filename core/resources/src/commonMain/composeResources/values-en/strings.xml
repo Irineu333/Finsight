@@ -736,6 +736,8 @@
     <string name="recurring_summary_fixed_expense">Fixed expenses</string>
     <string name="recurring_summary_fixed_income">Fixed income</string>
     <string name="recurring_summary_counter">%1$d of %2$d handled</string>
+    <string name="recurring_summary_expand">Expand</string>
+    <string name="recurring_summary_collapse">Collapse</string>
     <plurals name="recurring_summary_skipped">
         <item quantity="one">%1$d skipped</item>
         <item quantity="other">%1$d skipped</item>

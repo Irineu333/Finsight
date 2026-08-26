@@ -146,10 +146,12 @@
       (`recurring_source_unusable`), e não pela troca de `onSurfaceVariant` por `outline`
 - [x] 7.7 A legenda "Valor mensal" e o nome da categoria saíram da linha
 - [x] 7.8 Altura constante em toda variante, **por aritmética e não por medição**: a coluna
-      da direita governa (`titleMedium` 24dp + 2dp + `labelMedium` 16dp = 42dp, acima dos
-      40dp do chip) e os seus dois textos existem sempre — a figura vira `***` mas não
-      desaparece, e o dia é sempre uma linha. Rótulo e origem são `maxLines = 1` com
-      elipse, então nem o rótulo longo nem o nome de cartão longo mudam a altura
+      da direita governa (`titleMedium` 24dp + 4dp de vão + `labelMedium` 16dp = 44dp,
+      acima dos 40dp do chip) e os seus dois textos existem sempre — a figura vira `***`
+      mas não desaparece, e o dia é sempre uma linha. Rótulo e origem são `maxLines = 1`
+      com elipse, então nem o rótulo longo nem o nome de cartão longo mudam a altura. O
+      vão entre as duas linhas é o mesmo nos dois lados (`ROW_LINE_GAP`), para a linha ler
+      como uma grade e não como duas pilhas encostadas
 
 ## 8. O card de resumo (D11, D12, D14)
 

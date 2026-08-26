@@ -681,7 +681,7 @@ private fun RecurringCard(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(ROW_LINE_GAP),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -730,7 +730,7 @@ private fun RecurringCard(
 
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(ROW_LINE_GAP),
             ) {
                 // A magnitude, and no sign: this is an item surface, it shows one figure
                 // and takes part in no displayed sum. The summary above does not sum these
@@ -824,6 +824,14 @@ private val Recurring.directionIcon: ImageVector
  * it, so the list has one height and `animateItem()` reorders without a jump.
  */
 private val CHIP_SIZE = 40.dp
+
+/**
+ * Between the two lines of each column, and the same on both so the row reads as one
+ * grid rather than as two stacks that happen to sit side by side. Set together with
+ * [CHIP_SIZE]: it is what decides whether the chip or the text governs the height, and
+ * the height must stay the same in every variant either way.
+ */
+private val ROW_LINE_GAP = 4.dp
 
 /** The chip's own vertical breathing room, as in `SummaryCard`. */
 private val CHIP_INSET = 6.dp

@@ -852,6 +852,12 @@ private fun RecurringCard(
  *
  * The glyph and the tone are what say *unusable*; the words go on saying **which** source,
  * for as long as there is one to name (see [sourceName]).
+ *
+ * Which is why the glyph carries a description exactly when the sentence is not already
+ * it. A source that is merely archived spends the sentence on its name, leaving *unusable*
+ * to the glyph and the tone — and a tone is not read at all; a source that is gone has no
+ * name, so the sentence *is* the word, and describing the glyph with it too would have the
+ * row say it twice.
  */
 @Composable
 private fun SourceLine(recurring: Recurring) {
@@ -861,16 +867,23 @@ private fun SourceLine(recurring: Recurring) {
     val icon: ImageVector
     val text: String
     val color: Color
+    val iconDescription: String?
 
     if (!recurring.hasUsableSource) {
         icon = Icons.Outlined.LinkOff
         color = Warning
+        val unusable = stringResource(Res.string.recurring_source_unusable)
         // The sentence is the last resort, not the branch's answer: it speaks only for the
         // source that is gone, because a source that is merely archived still has a name
         // and the name is what tells two identical labels apart.
-        text = recurring.sourceName() ?: stringResource(Res.string.recurring_source_unusable)
+        val name = recurring.sourceName()
+        text = name ?: unusable
+        iconDescription = unusable.takeIf { name != null }
     } else {
         color = colorScheme.onSurfaceVariant
+        // A usable source is named by the words beside it, and the glyph only says which
+        // of the two kinds it is — which the account's own name already carries.
+        iconDescription = null
         if (creditCard != null) {
             icon = Icons.Default.CreditCard
             text = creditCard.name
@@ -886,7 +899,7 @@ private fun SourceLine(recurring: Recurring) {
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = iconDescription,
             tint = color,
             modifier = Modifier.size(14.dp),
         )

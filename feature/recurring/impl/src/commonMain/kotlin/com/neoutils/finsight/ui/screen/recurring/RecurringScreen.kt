@@ -939,17 +939,25 @@ private val Recurring.directionIcon: ImageVector
     }
 
 /**
- * What governs the height of every variant of the row — with a category and without,
- * archived and active, denominated and not. Two lines of text on either side stay under
- * it, so the list has one height and `animateItem()` reorders without a jump.
+ * The icon's container — the 40dp/radius-8 module of the analytic cards, not the
+ * 48dp/radius-12 one of the identity rows.
+ *
+ * It does **not** govern the row's height: the right-hand column measures 44dp
+ * (`titleMedium` 24 + [ROW_LINE_GAP] 4 + `labelMedium` 16) and clears it. What the chip
+ * does is stay under that, in every variant — with a category and without, archived and
+ * active, denominated and not — so the list has one height and `animateItem()` reorders
+ * without a jump.
  */
 private val CHIP_SIZE = 40.dp
 
 /**
  * Between the two lines of each column, and the same on both so the row reads as one
- * grid rather than as two stacks that happen to sit side by side. Set together with
- * [CHIP_SIZE]: it is what decides whether the chip or the text governs the height, and
- * the height must stay the same in every variant either way.
+ * grid rather than as two stacks that happen to sit side by side.
+ *
+ * It is the term that decides which side governs the height: at 4dp the right column
+ * comes to 44dp and clears [CHIP_SIZE]; shrink it to zero and the chip takes the height
+ * back. Either way the height must stay the same in every variant, which is what the two
+ * constants are set together for.
  */
 private val ROW_LINE_GAP = 4.dp
 

@@ -51,3 +51,33 @@ próxima pessoa vai ler.
 Corrigir as duas frases. A do estorno merece dizer o que de fato acontece, já que é a pergunta
 que ela mesma levanta: um estorno não é somado nem subtraído aqui, porque não tem ocorrência.
 Não vinculante.
+
+## Desfecho
+
+**Causa real** — a do relato, confirmada nos dois arquivos. As duas frases nasceram da mesma
+change e erram do mesmo jeito: descrevem o que o autor esperava do desenho, não o que o
+código ficou fazendo.
+
+**Mudança** — as duas frases foram reescritas.
+
+O KDoc de `RecurringSettledTotals` deixou de afirmar que um estorno reduz a despesa lançada e
+passou a dizer o que de fato acontece e por quê: um estorno é transação própria, com crédito
+na mesma dimensão, e nenhuma ocorrência aponta para ela — então ele nunca entra no `JOIN`. A
+diferença em relação aos demais fluxos mensais virou o assunto do parágrafo em vez de ser
+apagada por ele: eles varrem `entries` por período e pegam o estorno; este varre por
+ocorrência e responde por *o que os ciclos confirmados lançaram*, não pelo que o mês fez às
+dimensões em que eles caíram.
+
+O de `CHIP_SIZE` deixou de reivindicar o governo da altura. Ele agora nomeia o que a
+constante é — o módulo de 40dp/raio 8 dos cards analíticos — e diz que **não** governa: a
+coluna da direita mede 44dp (`titleMedium` 24 + `ROW_LINE_GAP` 4 + `labelMedium` 16) e passa
+por cima dela. O que o chip faz é ficar abaixo disso em toda variante, que é o que mantém a
+lista com uma altura só. O KDoc de `ROW_LINE_GAP` — que já dizia o certo — ganhou a
+aritmética explícita: é ele o termo que decide qual lado governa, e a 0dp o chip retomaria a
+altura.
+
+**Prova** — os `lineHeight` conferidos em `theme/Type.kt`: `titleMedium` 24sp, `labelMedium`
+16sp, `titleSmall` 20sp, `bodySmall` 16sp. Coluna direita 24+4+16 = 44dp; coluna esquerda
+20+4+16 = 40dp, empatada com o chip. A afirmação nova é a que a soma sustenta. Suíte
+`./gradlew jvmTest` verde. Nenhuma mudança de comportamento: os dois arquivos só mudaram
+comentário.

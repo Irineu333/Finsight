@@ -14,9 +14,14 @@ import kotlinx.datetime.YearMonth
  *
  * Both figures are **magnitudes**: an `EXPENSE` account is debit-natured and holds the
  * amount positive, an `INCOME` one is credit-natured and holds it negative, so the
- * income column negates and the two read the same way round. A refund posted against a
- * recurring expense is a negative `EXPENSE` leg and therefore lowers the expense
- * magnitude, which is the same arithmetic every other month flow of the app does.
+ * income column negates and the two read the same way round.
+ *
+ * **A refund is neither added nor subtracted here, and that follows from the perimeter.**
+ * A refund in this app is a transaction of its own — a credit on the same dimension — and
+ * no occurrence points at it, so it never enters this `JOIN`. The other month flows of the
+ * app sweep `entries` by period and do pick it up; this one sweeps by occurrence and
+ * answers a different question: what the month's confirmed **cycles** posted, not what the
+ * month did to the dimensions they landed on.
  *
  * One row per currency present, and **no row at all** when nothing matched: a grouped
  * aggregate has no empty row, and that is a different fact from a row of zeros.

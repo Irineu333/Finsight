@@ -266,7 +266,11 @@ class ConfirmRecurringModal(
                             modalManager.show(
                                 DatePickerModal(
                                     initialDate = uiState.confirmDate,
-                                    maxDate = currentDate,
+                                    // The month of the cycle, not merely "not the
+                                    // future": a date from another month files the
+                                    // confirmation where the pending list never looks.
+                                    minDate = uiState.confirmableDates.start,
+                                    maxDate = uiState.confirmableDates.endInclusive,
                                     onDateSelected = { date ->
                                         viewModel.onAction(ConfirmRecurringAction.DateChanged(date))
                                     }

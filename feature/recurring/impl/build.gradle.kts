@@ -21,6 +21,9 @@ kotlin {
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.budgets.api)
+            // The summary card draws consolidated figures, and every one of them owes a
+            // `ConsolidationBadge` with somewhere to lead: the rate archive lives here.
+            implementation(projects.feature.settings.api)
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)

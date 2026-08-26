@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetRecurringMonthOverviewUseCase
 import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
@@ -55,6 +56,12 @@ val recurringModule = module {
     factory { GetUnhandledRecurringUseCase() }
     factory { GetPendingRecurringUseCase(getUnhandledRecurring = get()) }
     factory {
+        GetRecurringMonthOverviewUseCase(
+            getUnhandledRecurring = get(),
+            occurrenceRepository = get(),
+        )
+    }
+    factory {
         ResolveRecurringRetirabilityUseCase(
             recurringRepository = get(),
             budgetRepository = get(),
@@ -90,6 +97,11 @@ val recurringModule = module {
         RecurringViewModel(
             recurringRepository = get(),
             accountRepository = get(),
+            occurrenceRepository = get(),
+            getRecurringMonthOverview = get(),
+            consolidateMoney = get(),
+            observeConsolidationChanges = get(),
+            clock = get(),
         )
     }
     viewModel {

@@ -1,12 +1,20 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 
 package com.neoutils.finsight.ui.screen.recurring
 
 import app.cash.turbine.test
 import com.neoutils.finsight.FakeAccountRepository
+import com.neoutils.finsight.FakeRecurringOccurrenceRepository
 import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.consolidationChanges
+import com.neoutils.finsight.consolidator
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
+import com.neoutils.finsight.domain.usecase.GetRecurringMonthOverviewUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.recurring
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,11 +22,18 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class RecurringViewModelTest {
 
@@ -30,11 +45,36 @@ class RecurringViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
+    private val today = LocalDate(2026, 8, 10)
+    private val thisMonth = YearMonth(2026, 8)
+    private val lastMonth = YearMonth(2026, 7)
+
     private val expense = recurring(id = 1L, createdAt = 1L)
     private val income = recurring(id = 2L, type = TransactionType.INCOME, createdAt = 2L)
     private val archived = recurring(id = 3L, createdAt = 3L, isArchived = true)
     private val archivedIncome =
         recurring(id = 4L, type = TransactionType.INCOME, createdAt = 4L, isArchived = true)
+
+    private class ClockOn(private val today: LocalDate) : Clock {
+        override fun now(): Instant = today.atStartOfDayIn(TimeZone.currentSystemDefault())
+    }
+
+    private fun viewModel(
+        repository: FakeRecurringRepository,
+        occurrences: FakeRecurringOccurrenceRepository = FakeRecurringOccurrenceRepository(),
+        accounts: FakeAccountRepository = FakeAccountRepository(),
+    ) = RecurringViewModel(
+        recurringRepository = repository,
+        accountRepository = accounts,
+        occurrenceRepository = occurrences,
+        getRecurringMonthOverview = GetRecurringMonthOverviewUseCase(
+            getUnhandledRecurring = GetUnhandledRecurringUseCase(),
+            occurrenceRepository = occurrences,
+        ),
+        consolidateMoney = consolidator(),
+        observeConsolidationChanges = consolidationChanges(),
+        clock = ClockOn(today),
+    )
 
     private suspend fun idsListedBy(
         filter: RecurringFilter,
@@ -42,7 +82,7 @@ class RecurringViewModelTest {
     ): List<Long> {
         val repository = FakeRecurringRepository()
         repository.all.value = recurrings
-        val vm = RecurringViewModel(repository, FakeAccountRepository())
+        val vm = viewModel(repository)
 
         var ids: List<Long> = emptyList()
         vm.uiState.test {
@@ -86,7 +126,7 @@ class RecurringViewModelTest {
     fun `empty means no recurring at all - not an empty filter`() = runTest(dispatcher) {
         val repository = FakeRecurringRepository()
         repository.all.value = listOf(archived)
-        val vm = RecurringViewModel(repository, FakeAccountRepository())
+        val vm = viewModel(repository)
 
         vm.uiState.test {
             assertIs<RecurringUiState.Loading>(awaitItem())
@@ -100,4 +140,98 @@ class RecurringViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    /**
+     * A database with no recurring at all has no month to summarise: the state that
+     * offers the creation of the first one carries no overview, and cannot.
+     */
+    @Test
+    fun `an empty database has no summary to offer`() = runTest(dispatcher) {
+        val repository = FakeRecurringRepository()
+        val vm = viewModel(repository)
+
+        vm.uiState.test {
+            assertIs<RecurringUiState.Loading>(awaitItem())
+            assertIs<RecurringUiState.Empty>(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    /** The filter governs the list and nothing else — the card has its own control. */
+    @Test
+    fun `changing the filter moves no figure and no count`() = runTest(dispatcher) {
+        val repository = FakeRecurringRepository()
+        repository.all.value = listOf(expense, income, archived)
+        val occurrences = FakeRecurringOccurrenceRepository(
+            settled = RecurringSettledMoney(
+                expense = MoneyByCurrency.of("BRL", 1_240.0),
+                income = MoneyByCurrency.of("BRL", 865.0),
+            ),
+        )
+        val vm = viewModel(repository, occurrences)
+
+        vm.uiState.test {
+            assertIs<RecurringUiState.Loading>(awaitItem())
+            val before = assertIs<RecurringUiState.Content>(awaitItem()).summary
+
+            vm.onAction(RecurringAction.SelectFilter(RecurringFilter.ARCHIVED))
+
+            var state = awaitItem()
+            while (state !is RecurringUiState.Content || state.filter != RecurringFilter.ARCHIVED) {
+                state = awaitItem()
+            }
+            assertEquals(listOf(archived.id), state.filteredRecurring.map { it.recurring.id })
+            assertEquals(before, state.summary)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    /** And the month governs the card and nothing else. */
+    @Test
+    fun `changing the month moves the summary and leaves the list alone`() = runTest(dispatcher) {
+        val repository = FakeRecurringRepository()
+        repository.all.value = listOf(expense, income)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        // Handled this month, and nothing last month: the same two templates, two
+        // different answers about the month.
+        occurrences.all.value = listOf(
+            occurrence(recurringId = expense.id, month = thisMonth),
+            occurrence(recurringId = income.id, month = thisMonth),
+        )
+        val vm = viewModel(repository, occurrences)
+
+        vm.uiState.test {
+            assertIs<RecurringUiState.Loading>(awaitItem())
+            val current = assertIs<RecurringUiState.Content>(awaitItem())
+            assertEquals(thisMonth, current.selectedYearMonth)
+            assertEquals(2, current.summary.handled)
+
+            vm.onAction(RecurringAction.SelectMonth(lastMonth))
+
+            var state = awaitItem()
+            while (state !is RecurringUiState.Content || state.selectedYearMonth != lastMonth) {
+                state = awaitItem()
+            }
+            assertEquals(0, state.summary.handled)
+            assertEquals(2, state.summary.total)
+            assertEquals(
+                current.filteredRecurring.map { it.recurring.id },
+                state.filteredRecurring.map { it.recurring.id },
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    private fun occurrence(
+        recurringId: Long,
+        month: YearMonth,
+        status: RecurringOccurrence.Status = RecurringOccurrence.Status.CONFIRMED,
+    ) = RecurringOccurrence(
+        recurringId = recurringId,
+        cycleNumber = 1,
+        yearMonth = month,
+        status = status,
+        effectiveDate = LocalDate(month.year, month.month, 5),
+        handledAt = 0L,
+    )
 }

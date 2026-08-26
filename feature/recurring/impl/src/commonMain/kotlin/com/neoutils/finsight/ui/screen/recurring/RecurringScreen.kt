@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.recurring
-import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,59 +13,79 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import com.neoutils.finsight.domain.analytics.Analytics
-import org.koin.compose.koinInject
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import com.neoutils.finsight.ui.util.exposeTestTags
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.extension.formatOrUnresolved
+import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.recurring_card_monthly_amount
 import com.neoutils.finsight.resources.recurring_empty_filter
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_filter_active
 import com.neoutils.finsight.resources.recurring_filter_archived
 import com.neoutils.finsight.resources.recurring_income
-import com.neoutils.finsight.resources.recurring_status_archived
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
 import com.neoutils.finsight.resources.recurring_screen_title
+import com.neoutils.finsight.resources.recurring_source_unusable
+import com.neoutils.finsight.resources.recurring_status_archived
+import com.neoutils.finsight.resources.recurring_summary_counter
+import com.neoutils.finsight.resources.recurring_summary_fixed_expense
+import com.neoutils.finsight.resources.recurring_summary_fixed_income
+import com.neoutils.finsight.resources.recurring_summary_forecast
+import com.neoutils.finsight.resources.recurring_summary_settled
+import com.neoutils.finsight.resources.recurring_summary_skipped
+import com.neoutils.finsight.resources.recurring_summary_undenominated
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.ConsolidationBadge
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.MoneyText
+import com.neoutils.finsight.ui.icons.VectorLazyIcon
+import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.ui.util.exposeTestTags
+import com.neoutils.finsight.ui.util.isWideWindow
+import com.neoutils.finsight.util.LocalDateFormats
+import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -78,6 +97,7 @@ fun RecurringScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
+    val navController = LocalNavController.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("recurring")
@@ -107,7 +127,8 @@ fun RecurringScreen(
                 },
                 actions = {
                     // One selector, in the top bar — same place and shape as the
-                    // categories screen.
+                    // categories screen. It governs the list and never the summary
+                    // card, and the bar's own edge is what separates the two.
                     if (uiState is RecurringUiState.Content) {
                         FilterSelector(
                             selected = uiState.filter,
@@ -144,17 +165,12 @@ fun RecurringScreen(
                 }
             }
 
+            // The only emptiness that still takes the whole screen: with no template at
+            // all there is no month to summarise, and the offer to create the first one
+            // is the screen.
             is RecurringUiState.Empty -> {
                 EmptyDatabaseState(
                     onCreateClick = { modalManager.show(RecurringFormModal()) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                )
-            }
-
-            is RecurringUiState.Content if uiState.filteredRecurring.isEmpty() -> {
-                EmptyFilterState(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
@@ -169,6 +185,36 @@ fun RecurringScreen(
                     contentPadding = PaddingValues(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    // An item of the list, not a header above it: it scrolls away and
+                    // does not come back, which is what makes it affordable to be tall.
+                    item(key = "recurring_month_summary") {
+                        RecurringMonthCard(
+                            summary = uiState.summary,
+                            selectedYearMonth = uiState.selectedYearMonth,
+                            onMonthSelected = {
+                                viewModel.onAction(RecurringAction.SelectMonth(it))
+                            },
+                            onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+
+                    // An empty cut is an item too, never a branch that replaces the
+                    // screen: it is precisely when the summary has the most to say, and
+                    // erasing it would leave the user with neither answer nor context.
+                    if (uiState.filteredRecurring.isEmpty()) {
+                        item(key = "recurring_empty_filter") {
+                            EmptyFilterState(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 32.dp)
+                                    .animateItem(),
+                            )
+                        }
+                    }
+
                     items(
                         items = uiState.filteredRecurring,
                         key = { "recurring_${it.recurring.id}" },
@@ -264,7 +310,7 @@ private fun EmptyFilterState(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 24.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -323,6 +369,266 @@ private fun EmptyDatabaseState(
     }
 }
 
+/**
+ * The month, split into what is **fact** and what is **forecast**.
+ *
+ * It inherits `SummaryCard`'s grammar — the chip inside the card, one badge for the whole
+ * card instead of a note per figure, each figure arriving with its sign policy already
+ * attached, and a conditional annotation being *absent* rather than zero — and inverts
+ * exactly one thing: there the chips govern the card and the list, here the chip governs
+ * only the card and the filter in the top bar only the list.
+ *
+ * The two blocks are not two halves of one class of thing. A posted figure is money in
+ * the ledger; a not-yet-posted one is a claim about a month that may end without it being
+ * written. So each block is named in words — position and weight alone would leave the
+ * difference to whoever reads typography — and the fact comes first.
+ */
+@Composable
+private fun RecurringMonthCard(
+    summary: RecurringMonthSummary,
+    selectedYearMonth: YearMonth,
+    onMonthSelected: (YearMonth) -> Unit,
+    onSeeRates: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+        ),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                // The chip carries its own inset, so a flat 20 all round would read as
+                // more room above than below: the top is discounted by that inset.
+                .padding(start = 20.dp, top = 20.dp - CHIP_INSET, end = 20.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PeriodChip(
+                    selectedYearMonth = selectedYearMonth,
+                    onMonthSelected = onMonthSelected,
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Four figures live in this card, so the mark is a prefix on each and the
+                // thing that explains it is one button for the whole card (design D21).
+                ConsolidationBadge(
+                    figures = summary.figures,
+                    onSeeRates = onSeeRates,
+                    modifier = Modifier.testTag("recurring_summary_badge"),
+                )
+            }
+
+            SummaryBlock(
+                label = stringResource(Res.string.recurring_summary_settled),
+                expense = summary.settledExpense,
+                income = summary.settledIncome,
+                amountStyle = SETTLED_AMOUNT_STYLE,
+                expenseTestTag = "recurring_summary_settled_expense",
+                incomeTestTag = "recurring_summary_settled_income",
+            )
+
+            SummaryBlock(
+                label = stringResource(Res.string.recurring_summary_forecast),
+                expense = summary.forecastExpense,
+                income = summary.forecastIncome,
+                amountStyle = FORECAST_AMOUNT_STYLE,
+                expenseTestTag = "recurring_summary_forecast_expense",
+                incomeTestTag = "recurring_summary_forecast_income",
+            )
+
+            HorizontalDivider()
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // The counter, and the only place a skipped cycle is representable at
+                // all: it is neither a posting nor something still owed, so it is absent
+                // from all four figures above — correctly, and that is exactly why the
+                // card would otherwise fail to account for a forecast that shrank while
+                // no fact grew. Not a filled proportion, because a proportion would have
+                // to decide visually what a skipped cycle fills.
+                Text(
+                    text = listOfNotNull(
+                        stringResource(
+                            Res.string.recurring_summary_counter,
+                            summary.handled,
+                            summary.total,
+                        ),
+                        summary.skipped.takeIf { it > 0 }?.let { skipped ->
+                            pluralStringResource(Res.plurals.recurring_summary_skipped, skipped, skipped)
+                        },
+                    ).joinToString(separator = " · "),
+                    style = typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("recurring_summary_counter"),
+                )
+
+                // Its own sentence, and never the badge's: the badge's copy is about a
+                // missing rate, and this is a template with no account. Two failures with
+                // two different ways out — pointing the template somewhere real, and
+                // registering a rate — and reusing that copy here would say the wrong one
+                // with authority.
+                if (summary.undenominated > 0) {
+                    Text(
+                        text = pluralStringResource(
+                            Res.plurals.recurring_summary_undenominated,
+                            summary.undenominated,
+                            summary.undenominated,
+                        ),
+                        style = typography.bodySmall,
+                        color = Warning,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryBlock(
+    label: String,
+    expense: ConsolidatedAmount,
+    income: ConsolidatedAmount,
+    amountStyle: TextStyle,
+    expenseTestTag: String,
+    incomeTestTag: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = label,
+            style = typography.labelLarge,
+            color = colorScheme.onSurfaceVariant,
+        )
+
+        SummaryFigure(
+            label = stringResource(Res.string.recurring_summary_fixed_expense),
+            amount = expense,
+            color = Expense,
+            style = amountStyle,
+            testTag = expenseTestTag,
+        )
+
+        SummaryFigure(
+            label = stringResource(Res.string.recurring_summary_fixed_income),
+            amount = income,
+            color = Income,
+            style = amountStyle,
+            testTag = incomeTestTag,
+        )
+    }
+}
+
+@Composable
+private fun SummaryFigure(
+    label: String,
+    amount: ConsolidatedAmount,
+    color: Color,
+    style: TextStyle,
+    testTag: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = typography.bodyMedium,
+            color = colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            // The label yields the room, never the figure.
+            modifier = Modifier.weight(weight = 1f, fill = false),
+        )
+
+        // The tag names the amount and not the row: a row holds a label too, and a tag on
+        // it would let an assertion pass by reading the word instead of the figure.
+        MoneyText(
+            figure = amount,
+            style = style.copy(color = color),
+            modifier = Modifier.testTag(testTag),
+        )
+    }
+}
+
+/**
+ * The month selector of the card — the same chip `SummaryCard` draws, over the same
+ * public `MonthPickerDropdownMenu`. Copied at ~25 lines rather than promoted: the wrapper
+ * is private to that file, and a third use is what earns a move to `:core:designsystem`.
+ */
+@Composable
+private fun PeriodChip(
+    selectedYearMonth: YearMonth,
+    onMonthSelected: (YearMonth) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Surface(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(8.dp),
+            color = colorScheme.surfaceContainerHighest,
+            contentColor = colorScheme.onSurface,
+            modifier = Modifier.testTag("recurring_summary_month"),
+        ) {
+            Row(
+                modifier = Modifier.padding(
+                    start = 12.dp,
+                    end = 8.dp,
+                    top = CHIP_INSET,
+                    bottom = CHIP_INSET,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = LocalDateFormats.current.yearMonth.format(selectedYearMonth),
+                    style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                )
+
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.padding(top = 1.dp),
+                )
+            }
+        }
+
+        MonthPickerDropdownMenu(
+            expanded = expanded,
+            selectedYearMonth = selectedYearMonth,
+            onDismissRequest = { expanded = false },
+            onMonthSelected = { selected ->
+                onMonthSelected(selected)
+                expanded = false
+            },
+        )
+    }
+}
+
+/**
+ * One rule the user keeps, in the four things that tell it from the next one: what it
+ * **is**, where it **posts**, **how much**, and **when**.
+ *
+ * A 2×2 grid rather than a line with a subtitle, because a card's name is long — "Nubank
+ * Ultravioleta" — and on one secondary line it would be truncated *after* the day. In
+ * columns the day is always whole, and the pair (figure, day) read together is the only
+ * thing on the screen that states the rule itself.
+ *
+ * It does **not** anticipate the detail sheet. Type, amount, day, status, account or card
+ * and category are all a tap away, labelled; a row that previewed all six paid height to
+ * add nothing. What is left is what discriminates.
+ *
+ * The chip is the 40dp/radius-8 module of the analytic cards, not the 48dp/radius-12 one
+ * of the identity rows. Not a saving of 8dp — a filiation: this is a list of rules the
+ * user maintains, and the dashboard's pending card answers a different question ("confirm
+ * this cycle?"), which is why it has neither day nor source.
+ */
 @Composable
 private fun RecurringCard(
     recurring: Recurring,
@@ -344,217 +650,189 @@ private fun RecurringCard(
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer,
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    val category = recurring.category
-                    if (category != null) {
-                        CategoryIconBox(
-                            category = category,
-                            contentPadding = PaddingValues(8.dp),
-                        )
-                    } else {
-                        Surface(
-                            color = typeColor.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Icon(
-                                imageVector = if (recurring.type.isIncome) {
-                                    Icons.AutoMirrored.Filled.TrendingUp
-                                } else {
-                                    Icons.AutoMirrored.Filled.TrendingDown
-                                },
-                                contentDescription = null,
-                                tint = typeColor,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .size(24.dp),
-                            )
-                        }
-                    }
-
-                    Column {
-                        Text(
-                            text = recurring.label,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        val categoryName = recurring.category
-                        if (!recurring.title.isNullOrBlank() && categoryName != null) {
-                            Text(
-                                text = categoryName.name,
-                                fontSize = 12.sp,
-                                color = colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // The colour alone cannot carry "archived" — it fails for anyone
-                    // who does not read colour. Icon + label states it in the clear,
-                    // as the category card already does.
-                    if (recurring.isArchived) {
-                        RecurringBadge(
-                            label = stringResource(Res.string.recurring_status_archived),
-                            color = Warning,
-                            icon = Icons.Default.Archive,
-                        )
-                    }
-
-                    RecurringBadge(label = typeLabel, color = typeColor)
-                }
+            val category = recurring.category
+            if (category != null) {
+                CategoryIconBox(
+                    category = category,
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.size(CHIP_SIZE),
+                )
+            } else {
+                // No category to read a colour and a glyph off: the row says what it can,
+                // which is which way the money goes.
+                CategoryIconBox(
+                    icon = VectorLazyIcon(recurring.directionIcon),
+                    tint = typeColor,
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.size(CHIP_SIZE),
+                )
             }
 
-            // No account left to denominate it: the figure is omitted rather than
-            // rendered in a currency nobody chose for it.
-            if (amount != null) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.recurring_card_monthly_amount),
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = formatter.format(amount),
-                        modifier = Modifier.testTag("recurring_card_amount"),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = typeColor,
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // Archived is a glyph with a description and no longer a badge with a
+                    // container. `account-lifecycle` never asked for the badge — it asks
+                    // that an archived recurring leave the active views and stay reachable
+                    // through the dedicated cut — and since the two never share a screen,
+                    // the badge was discriminating nothing.
+                    if (recurring.isArchived) {
+                        Icon(
+                            imageVector = Icons.Default.Archive,
+                            contentDescription = stringResource(Res.string.recurring_status_archived),
+                            tint = Warning,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+
+                    Text(
+                        text = recurring.label,
+                        style = typography.titleSmall,
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        // The identity yields the room, never the figure: a rule is
+                        // recognisable from its first words and from the chip beside it,
+                        // while an amount missing part of itself is a number that lies.
+                        modifier = Modifier.weight(weight = 1f, fill = false),
+                    )
+
+                    // The direction as a glyph, with the nature spelled in its content
+                    // description: colour alone carries no state, and `money-display`
+                    // forbids signing the figure of an item surface, so the badge could
+                    // not simply become a `-` on the amount.
                     Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
+                        imageVector = recurring.directionIcon,
+                        contentDescription = typeLabel,
+                        tint = typeColor,
                         modifier = Modifier.size(16.dp),
                     )
-                    Text(
-                        text = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
-                        fontSize = 14.sp,
-                        color = colorScheme.onSurfaceVariant,
-                    )
                 }
 
-                val creditCard = recurring.creditCard
-                val account = recurring.account
-                // An archived source keeps its name — that is the history — but reads
-                // muted, the same way an archived category does (see `displayColor`).
-                val sourceColor = if (recurring.hasUsableSource) {
-                    colorScheme.onSurfaceVariant
-                } else {
-                    colorScheme.outline
-                }
-                when {
-                    creditCard != null -> Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CreditCard,
-                            contentDescription = null,
-                            tint = sourceColor,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = creditCard.name,
-                            fontSize = 14.sp,
-                            color = sourceColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-
-                    account != null -> Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = null,
-                            tint = sourceColor,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = account.name,
-                            fontSize = 14.sp,
-                            color = sourceColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+                SourceLine(recurring = recurring)
             }
-        }
-    }
-}
 
-@Composable
-private fun RecurringBadge(
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.15f),
-            contentColor = color,
-        ),
-        shape = RoundedCornerShape(4.dp),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                // A magnitude, and no sign: this is an item surface, it shows one figure
+                // and takes part in no displayed sum. The summary above does not sum these
+                // rows, and no column of this screen closes on a total.
+                //
+                // When no account denominates the template the unresolved mark stands in
+                // its place, on the same node, so the row keeps its height and the absence
+                // is said out loud instead of being said by absence. The cause is on the
+                // line below.
+                Text(
+                    text = formatter.formatOrUnresolved(amount),
+                    modifier = Modifier.testTag("recurring_card_amount"),
+                    style = typography.titleMedium,
+                    color = typeColor,
+                    maxLines = 1,
+                )
+
+                Text(
+                    text = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
+                    style = typography.labelMedium,
+                    color = colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-            )
         }
     }
 }
+
+/**
+ * Where the money leaves from — or that it cannot.
+ *
+ * An unusable source is the gravest thing this row can state: the account or card was
+ * deleted or archived, and the template cannot post at all. It used to be a swap of
+ * `onSurfaceVariant` for `outline`, sixty lines under a comment saying colour alone does
+ * not carry state. It is now a glyph and a sentence.
+ */
+@Composable
+private fun SourceLine(recurring: Recurring) {
+    val creditCard = recurring.creditCard
+    val account = recurring.account
+
+    val icon: ImageVector
+    val text: String
+    val color: Color
+
+    if (!recurring.hasUsableSource) {
+        icon = Icons.Outlined.LinkOff
+        text = stringResource(Res.string.recurring_source_unusable)
+        color = Warning
+    } else {
+        color = colorScheme.onSurfaceVariant
+        if (creditCard != null) {
+            icon = Icons.Default.CreditCard
+            text = creditCard.name
+        } else {
+            icon = Icons.Default.AccountBalance
+            text = account?.name.orEmpty()
+        }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = text,
+            style = typography.bodySmall,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** The glyph of the nature, the one the transaction list already uses for it. */
+private val Recurring.directionIcon: ImageVector
+    get() = if (type.isIncome) {
+        Icons.AutoMirrored.Filled.TrendingUp
+    } else {
+        Icons.AutoMirrored.Filled.TrendingDown
+    }
+
+/**
+ * What governs the height of every variant of the row — with a category and without,
+ * archived and active, denominated and not. Two lines of text on either side stay under
+ * it, so the list has one height and `animateItem()` reorders without a jump.
+ */
+private val CHIP_SIZE = 40.dp
+
+/** The chip's own vertical breathing room, as in `SummaryCard`. */
+private val CHIP_INSET = 6.dp
+
+private val SETTLED_AMOUNT_STYLE = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+/**
+ * A step below the fact, and the same colour: what separates the two blocks is the
+ * label, the order and the weight — never the palette, which belongs to the nature of
+ * the money in all four figures.
+ */
+private val FORECAST_AMOUNT_STYLE = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold)

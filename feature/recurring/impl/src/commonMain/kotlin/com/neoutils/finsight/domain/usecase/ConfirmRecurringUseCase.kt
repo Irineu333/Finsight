@@ -24,13 +24,10 @@ import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.extension.contraLegFor
-import com.neoutils.finsight.extension.monthsUntil
-import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 /**
  * Confirms one cycle of a recurring, optionally redirecting it to another account or
@@ -72,12 +69,21 @@ class ConfirmRecurringUseCase(
         category: Category? = recurring.category,
     ): Either<Throwable, Transaction> {
         val yearMonth = date.yearMonth
-        val cycleNumber = Instant
-            .fromEpochMilliseconds(recurring.createdAt)
-            .toYearMonth()
-            .monthsUntil(yearMonth) + 1
 
         return catch {
+            // Which cycle this is, asked of the template rather than counted here. The
+            // answer is absent for a month before the series began, and that is a
+            // refusal and not a zero: an occurrence numbered 0 was persisted and read
+            // back onto the screen as "Aluguel • 0".
+            //
+            // First, so that nothing is written before it. The date picker of the
+            // confirmation is what makes this unreachable by the designed path; this is
+            // the net behind it, like the currency refusal below.
+            val cycleNumber = requireNotNull(recurring.cycleNumberIn(yearMonth)) {
+                "Recurring ${recurring.id} has no cycle in $yearMonth: " +
+                    "its series begins in ${recurring.originMonth}"
+            }
+
             // The template's own denomination, and the one the confirmation has to land
             // in. `null` means the template names no account any more — there is nothing
             // to disagree with, so the check has nothing to say.

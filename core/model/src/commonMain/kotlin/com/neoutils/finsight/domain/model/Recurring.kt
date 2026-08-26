@@ -3,6 +3,7 @@
 package com.neoutils.finsight.domain.model
 
 import com.neoutils.finsight.extension.displayTitleOrNull
+import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
@@ -62,6 +63,25 @@ data class Recurring(
      * seen once as money and once as a count.
      */
     fun generatesCycleIn(month: YearMonth): Boolean = !isArchived && originMonth <= month
+
+    /**
+     * Which cycle of the series [month] is — 1 for [originMonth], and `null` for a month
+     * before it, where the series has no cycle to number.
+     *
+     * The nullable answer is the whole point. The numbering used to be
+     * `origin.monthsUntil(month) + 1` written out at each site that needed it, and
+     * `monthsUntil` is a subtraction with no floor: a month before the origin produced
+     * cycle 0, then −1, then −2. Those were persisted — into `recurring_occurrences` and
+     * into the `recurringCycle` of the transaction — and read straight back onto the
+     * screen, where a detail line said "Aluguel • 0". An ordinal that can be zero is not
+     * an ordinal.
+     *
+     * Archiving is deliberately not part of it. A template that stopped generating cycles
+     * still *had* the ones it generated, and numbering one is a different question from
+     * offering it — which is what [generatesCycleIn] answers.
+     */
+    fun cycleNumberIn(month: YearMonth): Int? =
+        (originMonth.monthsUntil(month) + 1).takeIf { it >= 1 }
 
     /**
      * Whether the money still has somewhere to move through.

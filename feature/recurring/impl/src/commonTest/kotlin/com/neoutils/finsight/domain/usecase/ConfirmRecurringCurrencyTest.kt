@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -136,6 +137,10 @@ private class RecordingOccurrences : IRecurringOccurrenceRepository {
     override suspend fun getOccurrenceBy(recurringId: Long, yearMonth: YearMonth): RecurringOccurrence? = null
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? = null
     override suspend fun save(occurrence: RecurringOccurrence): Long = throw NotImplementedError()
+
+    /** Not exercised here: a fake that starts answering it says so instead of passing. */
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney =
+        throw NotImplementedError()
 }
 
 private class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {

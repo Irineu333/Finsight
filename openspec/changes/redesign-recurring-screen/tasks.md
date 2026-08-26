@@ -1,17 +1,25 @@
 ## 1. Dívidas que este trabalho encosta (D10)
 
-- [x] 1.1 `currencyOf(recurring)` passou a ter um dono só, como extensão pública sobre
+- [x] 1.1 `currencyOf(recurring)` passou a ter uma casa pública única, como extensão sobre
       `IAccountRepository`, com o KDoc de D17/D29 preservado — **em `feature/accounts/api`,
       não em `feature/recurring/api`**. A casa prevista pela proposta é inalcançável: a
       extensão tem `IAccountRepository` como receptor, ele mora em `feature/accounts/api`,
       e a regra 1 do `feature/README.md` (*api não depende de api*) proíbe a `api` de
       recorrentes de enxergá-lo. O módulo do receptor é a casa legal mais próxima, e é
-      vista pelos três `impl` que precisam da regra
-- [x] 1.2 `RecurringCurrency.kt` do `impl` foi apagado; no lugar dele nasceu
-      `CardCurrency.kt`, com **apenas** a sobrecarga de cartão que os modais de formulário
-      e de confirmação consomem. Ela não subiu junto: `feature/creditcards/impl` declara
-      um `currencyOf(CreditCard): String` **não-nulo** no mesmo pacote, e publicar a
-      versão nula ao lado de `IAccountRepository` tornaria as chamadas de lá ambíguas
+      vista pelos três `impl` que precisam da regra.
+      **A meta de D10 ficou pela metade, e o registro é este:** a versão publicada
+      **inlinou** a regra do cartão em vez de delegar, então "a moeda de um cartão"
+      continua com três implementações sob dois contratos. Está no backlog como
+      `a-derivable-rule-has-more-than-one-implementation`
+- [x] 1.2 `RecurringCurrency.kt` do `impl` foi apagado; no lugar dele nasceu a sobrecarga
+      de cartão que os modais de formulário e de confirmação consomem — hoje em
+      `RecurringCardCurrency.kt`, renomeada em `754232863` porque `CardCurrency.kt` colidia
+      no dex merge com a de `feature/creditcards/impl`. Ela não subiu junto por se julgar
+      que a versão nula ao lado de `IAccountRepository` tornaria ambíguas as chamadas
+      daquele módulo, que declara um `currencyOf(CreditCard): String` **não-nulo** no mesmo
+      pacote. **A justificativa é falsa e fica registrada como tal:** a declaração do
+      próprio módulo vence a resolução, e `:feature:creditcards:impl:compileKotlinJvm` passa
+      com as duas no classpath — é o mesmo bug do backlog citado em 1.1
 - [x] 1.3 A cópia inline de `currencyOf` em `DashboardComponentsBuilder` foi apagada e os
       seus dois chamadores passaram a consumir a da `api`; `List<Recurring>.moneyByCurrency()`
       dobra sobre a versão única, sem reimplementar a regra
@@ -106,7 +114,13 @@
       base, que também movem estas figuras e não escrevem entry alguma. É também o que
       `ConsolidatedFiguresReactTest` exige de todo view model que reduz uma figura
 - [x] 5.4 As moedas dos templates são resolvidas **uma vez por emissão**, num mapa
-      compartilhado entre a lista e o resumo, eliminando a chamada item a item
+      compartilhado entre a lista e o resumo. **Isso evitou dobrar a conta, não a
+      reduziu**, e o registro é este: `currenciesOf()` continua chamando
+      `accountRepository.currencyOf(item)` item a item, e o percurso passou do subconjunto
+      filtrado para a lista inteira — sob o filtro `ACTIVE`, que é o padrão, uma base com
+      arquivadas paga **mais** consultas por emissão do que pagava antes. Está no backlog
+      como `recurring-currencies-fan-out-into-one-query-per-template`, com a saída
+      apontada: um `getAllAccountsIncludingClosed()` por emissão
 - [x] 5.5 Teste de view model: trocar o filtro não altera nenhuma das quatro figuras nem o
       contador
 - [x] 5.6 Teste de view model: trocar o mês altera as figuras e o contador e não altera a
@@ -204,17 +218,47 @@
 
 ## 10. Verificação
 
-- [x] 10.1 `./gradlew jvmTest` verde, `EveryFigureCanExplainItselfTest` incluído
-      (`:app:shared:jvmTest --rerun-tasks`: 23 classes, nenhuma falha)
+- [x] 10.1 `./gradlew jvmTest --rerun-tasks` verde: 353 tasks executadas, **1488 testes em
+      249 classes, nenhuma falha**, `EveryFigureCanExplainItselfTest` incluído (23 classes em
+      `:app:shared`). Rerodado depois das correções de verificação (o `contentDescription` do
+      glifo de origem e os dois KDoc)
 - [x] 10.2 As cinco asserções de `recurring_card_amount` continuam válidas por leitura do
       código: a tag permanece num nó de `Text`, o texto continua sem sinal (política de
       magnitude) e as figuras do resumo têm ids próprios, de modo que o
       `assertNotVisible` por id **e** texto não pode casar com elas
-- [ ] 10.3 **Não executado:** `.maestro/flows/recurring/` exige o AVD do
-      `.maestro/README.md` §2 e `adb devices` não lista dispositivo algum nesta máquina.
-      Fica pendente, com o que asseverar já registrado em 10.2
-- [ ] 10.4 **Não executado:** conferir a tela no painel estreito de janela larga. É medição
-      na tela, e a coluna direita da grade 2×2 é a que mais sofre
+- [x] 10.3 Executado, **2/2 verdes** — `recurring_lifecycle` (2m44s) e
+      `recurring_from_transaction` (38s). Aparelho: AVD `finsight_e2e`, serial
+      `emulator-5556`, conferida linha a linha antes do run — API 36, `wm size`
+      1080x2400, `wm density` 420, `ro.product.locale` en-US, `am get-config` com
+      `-en-rUS-` e `-nokeys-`, IME `LatinIME`, `show_ime_with_hard_keyboard` 0 —, com o
+      alvo fixado por `ANDROID_SERIAL` **e** `--device` porque havia um segundo aparelho
+      ligado (§2.2.1), e o APK de debug reinstalado antes.
+      **Foi o recorte `--include-tags recurring`, não a suíte inteira**, por decisão
+      explícita de quem pediu o trabalho. Roda **pelo workspace**, então o `config.yaml`
+      vale e as animações continuam desligadas — é a forma que a §2.3 nomeia como a certa
+      para um subconjunto, e não o `.yaml` apontado direto, que perderia as duas coisas.
+      As áreas que esta change não toca ficam sem travessia neste run.
+      **Registrado junto:** matar um run pela metade deixa o driver do Maestro morto no
+      aparelho, e todo fluxo seguinte morre em `UNAVAILABLE` em ~70ms. `rm
+      ~/.maestro/sessions` (§2.4) não basta; o conserto é `adb uninstall dev.mobile.maestro`
+      e `dev.mobile.maestro.test`, que o Maestro reinstala sozinho no run seguinte
+- [x] 10.4 Medido, e a coluna direita **aguenta**. A janela foi posta em 2205x1080px a
+      420dpi = **840x411dp**, o breakpoint `LARGE` exato: é ali que o shell reserva o painel
+      de detalhe e a coluna da lista fica no mínimo que ela pode ter. Medido na captura,
+      o painel ocupa 402dp (confere com `DetailPaneWidth`) e a rail 96dp, deixando **342dp**
+      de coluna — mais estreita que os 411dp do aparelho de referência em retrato. O card
+      de resumo cabe inteiro (chip, os dois blocos rotulados, o contador), e a linha 2×2
+      mantém as duas colunas: o rótulo é quem cede (`weight(1f, fill = false)`), a figura e
+      o dia saem íntegros. Comparado com a mesma tela em retrato, nada foi espremido para
+      fora.
+      **O que a medição achou não foi a coluna, foi o FAB.** Numa janela de 411dp de altura
+      a lista enche a viewport, e o botão fica sobre a coluna direita da última linha, que
+      passa a ler `$` seguido do botão. Não há rolagem que o libere: o `contentPadding` do
+      `LazyColumn` reserva 16dp abaixo do último item contra os 56dp do FAB. **Não é desta
+      change** — o `contentPadding` é idêntico em `main`, e `TransactionsScreen` e
+      `CategoriesScreen` declaram o mesmo —, mas o redesenho mudou *o que* fica escondido:
+      a figura foi para a borda direita, exatamente sob o botão. Está no backlog como
+      `the-fab-covers-the-last-rows-figure-when-the-list-reaches-the-bottom`
 - [x] 10.5 **Open Question decidida pela variante completa.** A compacta trocaria o rodapé
       por uma linha ao lado do chip, e é ali que mora a única leitura do card em que um
       ciclo ignorado é representável — espremê-la ao lado do seletor de mês é o oposto do

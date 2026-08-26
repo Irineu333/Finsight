@@ -105,9 +105,12 @@ respondido por superfície alguma fora do dashboard, cujo componente é desligá
 
 - **`feature/recurring/api`** — nasce o use case dono da leitura do fato (as ocorrências
   confirmadas de um mês e o dinheiro que elas de fato lançaram, por moeda e por natureza),
-  ao lado de `GetUnhandledRecurringUseCase`; `IRecurringOccurrenceRepository` ganha o método
-  que ele consome; e `currencyOf(recurring)` muda de casa para cá, alcançável por quem
-  precisa.
+  ao lado de `GetUnhandledRecurringUseCase`; e `IRecurringOccurrenceRepository` ganha o
+  método que ele consome.
+- **`feature/accounts/api`** — a casa de `currencyOf(recurring)`, **e não
+  `feature/recurring/api`** como esta proposta previa: a extensão tem `IAccountRepository`
+  como receptor, e a regra 1 do `feature/README.md` (*api não depende de api*) torna a casa
+  prevista inalcançável do próprio módulo que copiara a regra (tarefa 1.1).
 - **`feature/recurring/impl`** — `RecurringScreen` reescreve a linha e ganha o card;
   `RecurringUiState`/`RecurringViewModel` ganham o mês selecionado, o resumo e a resolução de
   moedas por emissão; nasce um `RecurringSummaryFactory` nos moldes de
@@ -115,9 +118,10 @@ respondido por superfície alguma fora do dashboard, cujo componente é desligá
   implementa o método novo; `RecurringCurrency.kt` é aposentado em favor da versão na `api`.
 - **`feature/dashboard/impl`** — a cópia inline de `currencyOf` é apagada e passa a consumir a
   da `api`. Nenhuma mudança de comportamento.
-- **`core/database`** — `RecurringDao` ganha a consulta agregada que junta
-  `recurring_occurrences` a `transactions`, `entries` e `accounts`, agrupando por natureza e
-  moeda. Lê `transactions` pelo DAO da fachada, como as consultas de guarda já fazem, e
+- **`core/database`** — `RecurringOccurrenceDao` — dono da tabela de que a consulta parte,
+  **e não `RecurringDao`** como esta proposta previa (tarefa 2.3) — ganha a consulta agregada
+  que junta `recurring_occurrences` a `transactions`, `entries` e `accounts`, agrupando por
+  natureza e moeda. Lê `transactions` pelo DAO da fachada, como as consultas de guarda já fazem, e
   atravessa a foreign key real de `transactionId` — não a coluna de metadado de agrupamento
   que nenhuma leitura do razão pode consultar. **Sem migração de banco.**
 - **`core/resources`** — chaves novas dos dois blocos, dos rótulos das figuras, do contador,

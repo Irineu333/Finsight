@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -136,9 +137,7 @@ class WriteInvoicePaymentUseCase(
         date: LocalDate,
     ) {
         runCatching {
-            val cardCurrency = accountRepository
-                .getAccountById(invoice.creditCard.accountId)
-                ?.currency
+            val cardCurrency = accountRepository.currencyOf(invoice.creditCard)
 
             if (cardCurrency != null) {
                 harvestExchangeRate(

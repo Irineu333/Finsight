@@ -417,12 +417,11 @@ class DashboardComponentsBuilder(
         val creditCardsWithBills = input.creditCards
             .filter { it.id !in excludedIds }
             .mapNotNull { creditCard ->
-                // The limit is the card's money, so it reads in the card's currency (D17),
-                // and the LIABILITY account behind the card is the only place that states
-                // it. A card whose account does not resolve is an orphan row: it is left
-                // out of the pager rather than denominated by guess.
-                val currency = accountRepository.getAccountById(creditCard.accountId)
-                    ?.currency ?: return@mapNotNull null
+                // The limit is the card's money, so it reads in the card's currency
+                // (D17). A card whose account does not resolve is an orphan row: it is
+                // left out of the pager rather than denominated by guess.
+                val currency = accountRepository.currencyOf(creditCard)
+                    ?: return@mapNotNull null
 
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
                 val ui = CreditCardUi(

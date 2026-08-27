@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -72,7 +72,7 @@ class CreditCardFormViewModel(
     init {
         viewModelScope.launch {
             currency.value = creditCard
-                ?.let { accountRepository.currencyOf(it) }
+                ?.let { accountRepository.requireCurrencyOf(it) }
                 ?: creditCardRepository.currencyForNewCard()
         }
     }

@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -148,7 +148,7 @@ class CreditCardsViewModel(
         val cards = creditCards.map { creditCard ->
             val cardInvoices = invoices[creditCard.id].orEmpty()
             val invoice = cardInvoices.currentUnpaid()
-            val currency = accountRepository.currencyOf(creditCard)
+            val currency = accountRepository.requireCurrencyOf(creditCard)
             val ui = CreditCardUi(
                 cardId = creditCard.id,
                 iconKey = creditCard.iconKey,

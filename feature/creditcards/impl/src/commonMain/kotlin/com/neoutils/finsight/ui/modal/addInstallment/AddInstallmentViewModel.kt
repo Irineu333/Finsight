@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
@@ -120,7 +120,7 @@ class AddInstallmentViewModel(
             categories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
-            currency = selectedCard?.let { accountRepository.currencyOf(it) },
+            currency = selectedCard?.let { accountRepository.requireCurrencyOf(it) },
             invoiceSelection = invoiceSelection,
         )
     }.stateIn(

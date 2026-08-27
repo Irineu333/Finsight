@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -183,9 +184,9 @@ class InvoicePaymentViewModel(
             // would refuse the correction that raises it. On an invoice it never touched
             // there is nothing to leave out, so one formula covers both.
             amount = invoice?.let { calculateInvoiceUseCase(it, excluding = transaction?.id) } ?: 0.0,
-            currency = invoice?.let {
-                accountRepository.getAccountById(it.creditCard.accountId)?.currency
-            },
+            // The nullable reading, deliberately: with no invoice selected there is
+            // nothing to denominate, and the field is what says so.
+            currency = invoice?.let { accountRepository.currencyOf(it.creditCard) },
         )
     }.stateIn(
         scope = viewModelScope,

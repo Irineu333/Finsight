@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.UnarchiveCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -43,7 +43,7 @@ class ViewCreditCardViewModel(
     ) { creditCard, invoices ->
         creditCard ?: return@combine ViewCreditCardUiState.Error
         ViewCreditCardUiState.Content(
-            card = creditCard.toArchivedUi(accountRepository.currencyOf(creditCard)),
+            card = creditCard.toArchivedUi(accountRepository.requireCurrencyOf(creditCard)),
             isArchived = creditCard.isArchived,
             invoiceCount = invoices.size,
         )

@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.ui.mapper
 
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -32,7 +32,7 @@ class InvoiceUiMapperImpl(
         val outstandingDebt = calculateInvoiceUseCase(invoice).coerceAtLeast(0.0)
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
         // Mono-currency by construction, so exact: nothing was converted to get here.
-        val currency = accountRepository.currencyOf(invoice.creditCard)
+        val currency = accountRepository.requireCurrencyOf(invoice.creditCard)
         val hasProgress = outstandingDebt > 0 && limit.usage != 0.0
         val status = invoice.status
         val currentDate = clock.today()

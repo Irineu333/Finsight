@@ -5,9 +5,7 @@ import androidx.room.useWriterConnection
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
-import com.neoutils.finsight.database.dao.RecurringSettledTotals
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
-import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
@@ -92,8 +90,10 @@ class RecurringOccurrenceRepository(
     }
 
     /**
-     * One grouped query, in the same shape every other month flow of the app is read in:
-     * cents out of the ledger, divided into the major unit here, at the read boundary.
+     * One grouped query, lifted out of cents by the ledger's own `toMoney` — the single
+     * path [com.neoutils.finsight.database.dao.CurrencyScoped] exists for. Cents are the
+     * ledger's storage convention, and a facade that divided by a hundred itself would
+     * be keeping a copy of that convention with nothing to keep it in step.
      *
      * A month with no confirmed cycle returns no row, which is the honest answer — and
      * the empty figure it becomes is what lets the reducer decide, one layer up, what a
@@ -107,9 +107,3 @@ class RecurringOccurrenceRepository(
         )
     }
 }
-
-private const val CENTS_PER_UNIT = 100.0
-
-private inline fun List<RecurringSettledTotals>.toMoney(
-    value: (RecurringSettledTotals) -> Long,
-) = MoneyByCurrency.of(associate { it.currency to value(it) / CENTS_PER_UNIT })

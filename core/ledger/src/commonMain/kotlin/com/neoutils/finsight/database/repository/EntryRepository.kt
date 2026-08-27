@@ -220,18 +220,6 @@ class EntryRepository(
 }
 
 /**
- * One field of a grouped projection, lifted from cents to a figure per currency. The
- * row list carries several figures at once (income *and* expense *and* …), so each is
- * read out with its own selector rather than by mapping the list once.
- */
-private inline fun <T : CurrencyScoped> List<T>.toMoney(
-    negated: Boolean = false,
-    value: (T) -> Long,
-) = MoneyByCurrency.of(
-    associate { it.currency to (if (negated) -value(it) else value(it)) / CENTS_PER_UNIT },
-)
-
-/**
  * The total of each dimension, per currency. The `null` key is the unclassified
  * group, exactly as in the scalar read it replaces.
  */

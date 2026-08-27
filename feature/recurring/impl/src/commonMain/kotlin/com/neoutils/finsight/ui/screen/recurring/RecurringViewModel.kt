@@ -4,7 +4,7 @@ package com.neoutils.finsight.ui.screen.recurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.currencyBy
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -57,10 +57,8 @@ class RecurringViewModel(
         if (recurring.isEmpty()) {
             RecurringUiState.Empty(filter = filter)
         } else {
-            // Resolved **once per emission**, and shared by the list and the summary. It
-            // used to be asked item by item inside this block, which for a card template
-            // is a query each; summing the month over the same structure would have
-            // doubled it.
+            // One resolution per emission, shared by the list and the summary: two
+            // consumers of the same question, and neither pays for it twice.
             val currencies = currenciesOf(recurring)
 
             RecurringUiState.Content(
@@ -97,14 +95,29 @@ class RecurringViewModel(
     )
 
     /**
-     * What denominates each template, by id. A template with no resolvable source is
-     * absent from the map rather than mapped to `null`: absence is what both consumers
-     * already read as "there is no currency for this one".
+     * What denominates each template, by id — **one query for the whole list**.
+     *
+     * The chart of accounts is read once and a card's account becomes a lookup in it,
+     * instead of a query per template. Asked row by row, opening the screen cost one
+     * `getAccountById` for every card template, and paid it again on every ledger write,
+     * every filter change and every month change — the `combine` has five sources and
+     * any of them redoes this walk.
+     *
+     * The whole chart, not the account facade: the account a card projects onto is a
+     * `LIABILITY` row, and the facade lists `ASSET` only.
+     *
+     * A template with no resolvable source is absent from the map rather than mapped to
+     * `null`: absence is what both consumers already read as "there is no currency for
+     * this one".
      */
-    private suspend fun currenciesOf(recurring: List<Recurring>): Map<Long, String> =
-        recurring.mapNotNull { item ->
-            accountRepository.currencyOf(item)?.let { item.id to it }
+    private suspend fun currenciesOf(recurring: List<Recurring>): Map<Long, String> {
+        val currencyByAccountId = accountRepository.getAllLedgerAccounts()
+            .associate { it.id to it.currency }
+
+        return recurring.mapNotNull { item ->
+            item.currencyBy { currencyByAccountId[it.accountId] }?.let { item.id to it }
         }.toMap()
+    }
 
     private fun filteredFor(
         filter: RecurringFilter,

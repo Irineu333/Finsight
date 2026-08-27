@@ -104,18 +104,28 @@ class FakeBudgetRepository(
  * The chart of accounts, for the one question these screens ask of it: what currency a
  * card's account is in. Everything else throws, so a test that starts depending on more
  * says so instead of quietly passing.
+ *
+ * **The facade reads and the chart reads answer differently here, as they do in the
+ * DAO**: `accounts` is `ASSET` and `isArchived = 0`, the "including closed" pair drops
+ * only the second condition, and the ledger pair is the whole table. A fake that handed
+ * the same list to all three would let a caller read a card's `LIABILITY` account out of
+ * the accounts facade — which the real query never returns — and the test would go green
+ * on a screen that shows no currency at all.
  */
 class FakeAccountRepository(
     private val accounts: List<Account> = emptyList(),
 ) : IAccountRepository {
+    private val facade get() = accounts.filter { it.type == AccountType.ASSET }
+    private val openFacade get() = facade.filterNot { it.isArchived }
+
     override suspend fun hasYieldingAccount(): Boolean = false
     override suspend fun getAccountById(accountId: Long): Account? =
         accounts.firstOrNull { it.id == accountId }
 
-    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
-    override suspend fun getAllAccounts(): List<Account> = accounts
-    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
-    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts)
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(openFacade)
+    override suspend fun getAllAccounts(): List<Account> = openFacade
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = facade
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(facade)
     override suspend fun getAllLedgerAccounts(): List<Account> = accounts
     override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
     override fun observeAccountById(accountId: Long): Flow<Account?> =

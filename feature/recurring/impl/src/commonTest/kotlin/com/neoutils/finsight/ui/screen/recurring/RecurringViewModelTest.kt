@@ -8,6 +8,9 @@ import com.neoutils.finsight.FakeRecurringOccurrenceRepository
 import com.neoutils.finsight.FakeRecurringRepository
 import com.neoutils.finsight.consolidationChanges
 import com.neoutils.finsight.consolidator
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
@@ -153,6 +156,47 @@ class RecurringViewModelTest {
         vm.uiState.test {
             assertIs<RecurringUiState.Loading>(awaitItem())
             assertIs<RecurringUiState.Empty>(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    /**
+     * **A card template is denominated by the `LIABILITY` account the card projects
+     * onto**, and the list resolves the whole chart in one read to find it.
+     *
+     * The chart is what has to be read, not the account facade: that one is `ASSET`
+     * only, and a card's account is not in it. Resolved against the facade, every card
+     * template would silently lose its currency and its row would render the unresolved
+     * mark — a failure a single-account user would never see and no other test here
+     * would catch, because the rest of them use templates that name an account directly.
+     */
+    @Test
+    fun `a card template is denominated by the account behind the card`() = runTest(dispatcher) {
+        val cardAccount = Account(
+            id = 90L,
+            name = "Card",
+            type = AccountType.LIABILITY,
+            currency = "USD",
+        )
+        val repository = FakeRecurringRepository()
+        repository.all.value = listOf(
+            recurring(id = 1L, createdAt = 1L).copy(
+                creditCard = CreditCard(
+                    id = 7L,
+                    name = "Card",
+                    limit = 1_000.0,
+                    closingDay = 1,
+                    dueDay = 10,
+                    accountId = cardAccount.id,
+                ),
+            ),
+        )
+        val vm = viewModel(repository, accounts = FakeAccountRepository(listOf(cardAccount)))
+
+        vm.uiState.test {
+            assertIs<RecurringUiState.Loading>(awaitItem())
+            val row = assertIs<RecurringUiState.Content>(awaitItem()).filteredRecurring.single()
+            assertEquals("USD", row.amount?.currency)
             cancelAndIgnoreRemainingEvents()
         }
     }

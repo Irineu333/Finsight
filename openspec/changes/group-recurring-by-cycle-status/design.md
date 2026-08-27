@@ -318,8 +318,28 @@ Apagar a transação apaga a ocorrência, o ciclo volta a ser unhandled, e a lin
 
 - **A rota do arquivo entra pelo overflow da top bar, por um ícone próprio, ou pelo fim da
   lista?** Decidir com a top bar na mão — ela já carrega o seletor de natureza.
+
+  **Respondida: pelo overflow**, com o mesmo `MoreVert` que a tela de cartões usa para chegar
+  aos cartões arquivados. Um ícone próprio gastaria a segunda posição da top bar com o caminho
+  menos percorrido que sai dela, e o fim da lista põe a saída atrás de uma rolagem que cresce
+  com o mês. A opção é oferecida haja ou não algo arquivado: um controle que aparecesse e
+  sumisse com o conteúdo do destino a que leva seria uma top bar mudando de forma por um
+  motivo que o usuário não pode ver, e o destino afirma a própria vacuidade melhor do que um
+  botão ausente.
+
 - **A seção de lançados mostra a data real da transação ou o dia do ciclo?** `TransactionCard`
   mostra a data; as outras seções dizem "dia 12". Provavelmente a data, por coerência com D7,
   mas isso é escolha do componente e não foi verificada contra o layout.
+
+  **Respondida: a data da transação**, que é o que o componente exibe e o que D7 pede. A linha
+  inteira é o que o razão registrou, e o dia em que o dinheiro se moveu não é o dia em que ele
+  era devido — dizer o segundo numa seção chamada "lançado" seria a divergência que D7 existe
+  para eliminar, na única das cinco coisas da linha que ainda viria do template.
+
 - **Quantos dos cinco pontos Maestro que afirmam `recurring_card_amount` caem na seção de
   lançados?** Precisa ser levantado antes de escrever as tasks de fluxo, não depois.
+
+  **Respondida: um.** O de `recurring/from_transaction` — onde o template nasce com o ciclo do
+  mês já confirmado, então a linha dele está sob "lançado" desde a primeira emissão — passou a
+  ser afirmado em `transaction_card_amount`. Os outros quatro, todos em `recurring/lifecycle`,
+  caem em seções de template e mantiveram a tag.

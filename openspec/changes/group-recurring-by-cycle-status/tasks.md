@@ -47,17 +47,19 @@
 - [x] 4.1 Renderizar as seções na ordem pendente, a lançar, lançado, ignorado, com cabeçalho e
   contagem, sem `stickyHeader` (D4, D5)
 - [x] 4.2 Não renderizar seção sem itens — cabeçalho e contagem incluídos
-- [x] 4.3 Renderizar a linha dos ciclos lançados com `TransactionCard`, e conferir que a figura
+- [x] 4.3 Dar ao cabeçalho o controle que dobra o grupo, mantendo rótulo e contagem, com a
+  dobra chaveada pelo estado do ciclo e não pelo mês
+- [x] 4.4 Renderizar a linha dos ciclos lançados com `TransactionCard`, e conferir que a figura
   sai como magnitude para despesa e receita (D7)
-- [x] 4.4 Manter `RecurringCard` nas seções de template, com a marca de valor irresolvível
+- [x] 4.5 Manter `RecurringCard` nas seções de template, com a marca de valor irresolvível
   restrita a elas (D9)
-- [x] 4.5 Renderizar a linha do ciclo ignorado com o valor do template, sem tratamento visual
+- [x] 4.6 Renderizar a linha do ciclo ignorado com o valor do template, sem tratamento visual
   próprio (D10)
-- [x] 4.6 Exibir o vazio de mês como item abaixo do resumo, nunca como ramo que ocupa a tela
+- [x] 4.7 Exibir o vazio de mês como item abaixo do resumo, nunca como ramo que ocupa a tela
   (D14)
-- [x] 4.7 Remover o rodapé de contadores do `RecurringMonthCard` e o divisor acima dele,
+- [x] 4.8 Remover o rodapé de contadores do `RecurringMonthCard` e o divisor acima dele,
   mantendo a linha de templates sem conta (D13)
-- [x] 4.8 Publicar as `testTag` das seções e conferir onde `recurring_card_amount` continua
+- [x] 4.9 Publicar as `testTag` das seções e conferir onde `recurring_card_amount` continua
   válido depois da divisão em seções
 
 ## 5. O destino das arquivadas

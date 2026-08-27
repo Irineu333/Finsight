@@ -99,6 +99,39 @@ vazia é o resumo do mês afirmando de novo uma ausência que ele já afirma com
 - **WHEN** a seção "pendente" contém dois ciclos
 - **THEN** o cabeçalho da seção afirma que são dois
 
+### Requirement: Uma seção pode ser dobrada, e o cabeçalho permanece
+
+Cada seção SHALL poder ser **dobrada** pelo seu próprio cabeçalho. Dobrada, ela MUST NOT
+renderizar ciclo algum, e o cabeçalho e a **contagem** SHALL permanecer.
+
+Permanecer é o que torna a dobra útil: um grupo com que o usuário já terminou continua
+nomeado e continua contado, e para de gastar altura. Um cabeçalho que sobrevivesse sem a
+contagem ainda leria como dobra e teria perdido justamente a resposta — *quantos ainda
+faltam* é a pergunta que trouxe o usuário à tela.
+
+Toda seção SHALL abrir **aberta**. O bloco do resumo abre dobrado quando não tem nada sob o
+rótulo; aqui esse caso não existe, porque uma seção sem ciclo algum não é renderizada — não
+há seção vazia que a dobra pudesse poupar.
+
+A dobra é estado da **tela** e SHALL ser chaveada pelo **estado do ciclo**, nunca pelo mês:
+dobrar "lançado" é uma afirmação sobre como este usuário lê a tela, não sobre o mês que ele
+está lendo, e rederivá-la na troca de mês desfaria a escolha que ele acabou de fazer.
+
+O controle SHALL nomear a ação em palavras. A direção da seta é forma, e forma sozinha não
+carrega estado.
+
+#### Scenario: Uma seção dobrada mantém o cabeçalho e a contagem
+- **WHEN** o usuário dobra a seção "pendente", que contém dois ciclos
+- **THEN** nenhuma das duas linhas é exibida, e o cabeçalho continua afirmando que são dois
+
+#### Scenario: A dobra sobrevive à troca de mês
+- **WHEN** o usuário dobra a seção "lançado" e seleciona outro mês
+- **THEN** a seção "lançado" daquele mês também aparece dobrada
+
+#### Scenario: Uma seção nova abre aberta
+- **WHEN** uma seção é renderizada sem que o usuário a tenha dobrado
+- **THEN** os ciclos dela são exibidos
+
 ### Requirement: Dentro da seção, a ordem é a data do ciclo
 
 Dentro de cada seção, os ciclos SHALL ser ordenados pela **data efetiva do ciclo**, em ordem

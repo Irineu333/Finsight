@@ -180,19 +180,38 @@ O `combine` passa de 2 para 5 fontes, e `observeLedgerChanges()` é uma delas �
 leitura do fato é `suspend`, e sem esse gatilho as figuras congelariam enquanto o razão anda,
 que é exatamente o que o KDoc de `IEntryRepository.observeLedgerChanges` descreve.
 
-### D10 — `currencyOf` muda de casa, e a resolução vira um mapa por emissão
+### D10 — `currencyOf` muda de casa, e a resolução vira uma consulta por emissão
 
 Duas coisas ao mesmo tempo, porque são a mesma:
 
 A regra "a conta ou o cartão que a recorrência nomeia é o que denomina o valor dela" tem duas
 implementações idênticas hoje — uma `internal` em `feature/recurring/impl`, outra copiada
 inline em `feature/dashboard/impl` justamente porque a primeira não é alcançável. O resumo
-seria a terceira cópia. Sobe para `feature/recurring/api`, e a cópia do dashboard é apagada.
+seria a terceira cópia. Sobe, e a cópia do dashboard é apagada.
+
+**A casa é `feature/accounts/api`, não `feature/recurring/api` como esta decisão previa.** A
+extensão tem `IAccountRepository` como receptor, ele mora naquele módulo, e a regra 1 do
+`feature/README.md` (*api não depende de api*) tornaria a casa prevista inalcançável do
+próprio módulo que copiara a regra. É também o módulo que responde de fato à pergunta: a
+carta de contas é quem sabe, e a fachada é só o que se pergunta a respeito.
 
 E `RecurringViewModel` a chama **por item, dentro do `combine`** — para template de cartão
 isso é um `getAccountById`, logo N consultas por emissão. Somar o resumo sobre a mesma
 estrutura dobraria. As moedas passam a ser resolvidas uma vez por emissão, num
 `Map<Long, String>` que a lista e o resumo compartilham.
+
+**Um mapa por emissão não bastava, e o registro é este:** compartilhar a resolução evita
+dobrar a conta, não a reduz — e como o percurso passou do subconjunto filtrado para a lista
+inteira, sob o filtro `ACTIVE` uma base com arquivadas passaria a pagar *mais* consultas do
+que pagava antes. A resolução é, portanto, **uma consulta**: a carta de contas é lida uma vez
+por emissão e a conta de um cartão vira uma busca em memória. A carta inteira
+(`getAllLedgerAccounts`) e não a fachada de contas — esta é `ASSET` apenas, e a conta que um
+cartão projeta é `LIABILITY`, de modo que resolver contra a fachada tiraria a moeda de todo
+template de cartão sem que nada acusasse.
+
+O que sobrevive à mudança de casa é a regra, não o lugar de onde a conta é lida: ela recebe
+essa leitura como parâmetro (`Recurring.currencyBy`), o que é o que permite responder por uma
+lista sem uma segunda cópia dela.
 
 ### D11 — O card e o vazio de recorte são itens da mesma lista
 
@@ -281,8 +300,10 @@ tela gasta, não o que o card afirma.
   `onSeeRates` → a dependência de `feature:settings:api` entra junto, na mesma tarefa que
   desenha o card. Não é opcional nem posterior.
 - **O `combine` de 5 fontes reemite muito** → a leitura do fato é uma consulta agregada por
-  mês, e as moedas são resolvidas uma vez por emissão (D10). O custo por emissão cai em
-  relação ao de hoje mesmo com o resumo somado.
+  mês, e as moedas são **uma** consulta por emissão (D10), qualquer que seja o número de
+  templates de cartão. O custo por emissão cai em relação ao de hoje mesmo com o resumo
+  somado — e cai porque a resolução deixou de ser por item, não porque o mapa é
+  compartilhado, que sozinho só evitaria dobrá-la.
 - **As alturas em dp são aritmética, não medição** → as partes fixas (paddings, `spacedBy`,
   chips) são exatas; as de texto assumem `lineHeight` padrão do Compose com Roboto. Em iOS e
   Desktop variam alguns dp. Nada no desenho depende de um valor exato.

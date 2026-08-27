@@ -6,25 +6,35 @@
       extensão tem `IAccountRepository` como receptor, ele mora em `feature/accounts/api`,
       e a regra 1 do `feature/README.md` (*api não depende de api*) proíbe a `api` de
       recorrentes de enxergá-lo. O módulo do receptor é a casa legal mais próxima, e é
-      vista pelos três `impl` que precisam da regra.
-      **A meta de D10 ficou pela metade, e o registro é este:** a versão publicada
-      **inlinou** a regra do cartão em vez de delegar, então "a moeda de um cartão"
-      continua com três implementações sob dois contratos. Está no backlog como
-      `a-derivable-rule-has-more-than-one-implementation`
-- [x] 1.2 `RecurringCurrency.kt` do `impl` foi apagado; no lugar dele nasceu a sobrecarga
-      de cartão que os modais de formulário e de confirmação consomem — hoje em
-      `RecurringCardCurrency.kt`, renomeada em `754232863` porque `CardCurrency.kt` colidia
-      no dex merge com a de `feature/creditcards/impl`. Ela não subiu junto por se julgar
-      que a versão nula ao lado de `IAccountRepository` tornaria ambíguas as chamadas
-      daquele módulo, que declara um `currencyOf(CreditCard): String` **não-nulo** no mesmo
-      pacote. **A justificativa é falsa e fica registrada como tal:** a declaração do
-      próprio módulo vence a resolução, e `:feature:creditcards:impl:compileKotlinJvm` passa
-      com as duas no classpath — é o mesmo bug do backlog citado em 1.1
+      vista por todo `impl` que precisa da regra.
+      A versão publicada **delega** a regra do cartão em vez de inliná-la, de modo que
+      "a moeda de um cartão" tem um dono só (tarefa 1.5)
+- [x] 1.2 `RecurringCurrency.kt` do `impl` foi apagado, e a sobrecarga de cartão que o
+      substituíra (`RecurringCardCurrency.kt`) também: a versão nula subiu para
+      `feature/accounts/api` e os modais de formulário e de confirmação consomem aquela.
+      **A justificativa que a mantivera embaixo era falsa e fica registrada como tal:** ela
+      alegava que a versão nula ao lado de `IAccountRepository` tornaria ambíguas as
+      chamadas de `feature/creditcards/impl`, que declarava um `currencyOf(CreditCard)`
+      **não-nulo** no mesmo pacote — e a saída não foi conviver com a ambiguidade, foi
+      remover a colisão renomeando a não-nula pelo que ela acrescenta (tarefa 1.5)
 - [x] 1.3 A cópia inline de `currencyOf` em `DashboardComponentsBuilder` foi apagada e os
       seus dois chamadores passaram a consumir a da `api`; `List<Recurring>.moneyByCurrency()`
       dobra sobre a versão única, sem reimplementar a regra
 - [x] 1.4 Suíte do dashboard e de recorrentes verdes, sem mudança de expectativa em teste
       algum — a mudança de casa é comportamento idêntico
+- [x] 1.5 **"A moeda de um cartão" passou a ter um dono só.** `IAccountRepository.currencyOf(CreditCard)`
+      nasceu em `feature/accounts/api` como a única leitura de `getAccountById(accountId)?.currency`;
+      `currencyOf(Recurring)` delega a ela, a cópia de `feature/recurring/impl` foi apagada, e a
+      não-nula de `feature/creditcards/impl` virou `requireCurrencyOf` — um invólucro que já não
+      duplica a regra, só declara que ali a ausência é invariante quebrada e não figura a omitir
+      (9 pontos de chamada renomeados). Mais **cinco** leituras inline da mesma regra que a issue
+      não enumerava foram encontradas por grep e convertidas: `InvoicePaymentViewModel`,
+      `WriteInvoicePaymentUseCase`, `DashboardComponentsBuilder`, `AddTransactionViewModel` e
+      `EditTransactionViewModel`
+- [x] 1.6 **A elevação de centavos sobre `CurrencyScoped` também.** `toMoney` foi publicada em
+      `core/ledger` (`CurrencyScopedMoney.kt`), que é o "one path" que o KDoc da interface já
+      prometia; a `private` de `EntryRepository` e a cópia de `RecurringOccurrenceRepository` —
+      esta criada por esta change — foram apagadas, com o seu segundo `CENTS_PER_UNIT`
 
 ## 2. Razão — a leitura do que os ciclos confirmados lançaram (D6, D7)
 
@@ -113,20 +123,31 @@
       o qual as figuras congelariam enquanto o razão anda) e ainda carrega a taxa e a moeda
       base, que também movem estas figuras e não escrevem entry alguma. É também o que
       `ConsolidatedFiguresReactTest` exige de todo view model que reduz uma figura
-- [x] 5.4 As moedas dos templates são resolvidas **uma vez por emissão**, num mapa
-      compartilhado entre a lista e o resumo. **Isso evitou dobrar a conta, não a
-      reduziu**, e o registro é este: `currenciesOf()` continua chamando
-      `accountRepository.currencyOf(item)` item a item, e o percurso passou do subconjunto
-      filtrado para a lista inteira — sob o filtro `ACTIVE`, que é o padrão, uma base com
-      arquivadas paga **mais** consultas por emissão do que pagava antes. Está no backlog
-      como `recurring-currencies-fan-out-into-one-query-per-template`, com a saída
-      apontada: um `getAllAccountsIncludingClosed()` por emissão
+- [x] 5.4 As moedas dos templates são resolvidas em **uma consulta por emissão**, num mapa
+      compartilhado entre a lista e o resumo. O mapa sozinho evitaria dobrar a conta sem
+      reduzi-la — e como o percurso passou do subconjunto filtrado para a lista inteira,
+      sob o filtro `ACTIVE` uma base com arquivadas pagaria **mais** consultas do que
+      pagava antes. Então `currenciesOf()` lê a carta de contas uma vez e resolve contra
+      ela em memória, pela mesma regra (`Recurring.currencyBy`, que recebe a leitura da
+      conta como parâmetro em vez de crescer uma segunda cópia)
 - [x] 5.5 Teste de view model: trocar o filtro não altera nenhuma das quatro figuras nem o
       contador
 - [x] 5.6 Teste de view model: trocar o mês altera as figuras e o contador e não altera a
       lista
 - [x] 5.7 Teste de view model: base sem recorrência alguma continua emitindo o estado que
       oferece a criação da primeira, sem panorama
+- [x] 5.8 **A saída apontada pela issue estava errada e o registro é este:** ela indicava
+      `getAllAccountsIncludingClosed()`, que é `WHERE type = 'ASSET'` — a conta que um
+      cartão projeta é `LIABILITY`, então resolver contra a fachada tiraria a moeda de todo
+      template de cartão e a lista inteira leria `***`. A leitura certa é
+      `getAllLedgerAccounts()`, a carta inteira. `FakeAccountRepository` passou a distinguir
+      as três leituras como o DAO distingue — sem isso o fake devolvia a mesma lista às três
+      e nenhum teste podia pegar a troca
+- [x] 5.9 Teste de view model: um template de **cartão** é denominado pela conta
+      `LIABILITY` que o cartão projeta. Nenhum teste cobria isso — os demais usam templates
+      que nomeiam conta direto —, e é exatamente a regressão que a fachada teria causado em
+      silêncio; verificado que o teste falha quando o view model lê a fachada e passa quando
+      lê a carta
 
 ## 6. Strings (nos dois idiomas)
 
@@ -218,10 +239,11 @@
 
 ## 10. Verificação
 
-- [x] 10.1 `./gradlew jvmTest --rerun-tasks` verde: 353 tasks executadas, **1488 testes em
+- [x] 10.1 `./gradlew jvmTest --rerun-tasks` verde: 353 tasks executadas, **1489 testes em
       249 classes, nenhuma falha**, `EveryFigureCanExplainItselfTest` incluído (23 classes em
-      `:app:shared`). Rerodado depois das correções de verificação (o `contentDescription` do
-      glifo de origem e os dois KDoc)
+      `:app:shared`). Rerodado depois de cada correção de verificação — o
+      `contentDescription` do glifo de origem, os dois KDoc, e as dívidas das tarefas 1.5,
+      1.6 e 5.4. O teste a mais em relação à contagem anterior é o 5.9
 - [x] 10.2 As cinco asserções de `recurring_card_amount` continuam válidas por leitura do
       código: a tag permanece num nó de `Text`, o texto continua sem sinal (política de
       magnitude) e as figuras do resumo têm ids próprios, de modo que o
@@ -233,15 +255,29 @@
       `-en-rUS-` e `-nokeys-`, IME `LatinIME`, `show_ime_with_hard_keyboard` 0 —, com o
       alvo fixado por `ANDROID_SERIAL` **e** `--device` porque havia um segundo aparelho
       ligado (§2.2.1), e o APK de debug reinstalado antes.
-      **Foi o recorte `--include-tags recurring`, não a suíte inteira**, por decisão
-      explícita de quem pediu o trabalho. Roda **pelo workspace**, então o `config.yaml`
-      vale e as animações continuam desligadas — é a forma que a §2.3 nomeia como a certa
-      para um subconjunto, e não o `.yaml` apontado direto, que perderia as duas coisas.
-      As áreas que esta change não toca ficam sem travessia neste run.
+      Foi o recorte `--include-tags recurring`, rodado **pelo workspace** — o `config.yaml`
+      vale e as animações continuam desligadas, que é a forma que a §2.3 nomeia como a
+      certa para um subconjunto.
       **Registrado junto:** matar um run pela metade deixa o driver do Maestro morto no
       aparelho, e todo fluxo seguinte morre em `UNAVAILABLE` em ~70ms. `rm
       ~/.maestro/sessions` (§2.4) não basta; o conserto é `adb uninstall dev.mobile.maestro`
       e `dev.mobile.maestro.test`, que o Maestro reinstala sozinho no run seguinte
+- [x] 10.6 **A suíte inteira foi rodada depois**, no mesmo aparelho e com os sete checks
+      refeitos por serial, porque as dívidas pagas na verificação (tarefas 1.5, 1.6 e 5.4)
+      tocam cartões, transações, dashboard e o razão — áreas que o recorte `recurring` não
+      atravessa. Resultado: **14/15**. Os dois fluxos de recorrentes seguem verdes
+      (`recurring_lifecycle` 2m46s, `recurring_from_transaction` 41s), e o vermelho é
+      `creditcards_lifecycle`.
+      **Não é desta change, e a prova é um run e não um argumento:** com as mudanças
+      guardadas (`git stash`) e o APK reinstalado a partir do `HEAD`, o mesmo fluxo falha
+      no mesmo passo com o mesmo erro. Está no backlog como
+      `the-credit-card-flow-depends-on-where-its-forty-five-day-jump-lands` — o mesmo fluxo
+      passou no run de 24/08 (salto → 08/10) e falha no de hoje (salto → 10/10, o dia de
+      fechamento), e baixar `JUMP_DAYS` para 44 move a falha para outro passo.
+      Os dois fluxos de recorrentes foram rodados **uma última vez** depois da limpeza que
+      fez `currencyOf(Recurring)` delegar a `currencyOf(CreditCard)`, para que a travessia
+      responda pelo APK que está no branch e não por um anterior: **2/2 verdes**
+      (`recurring_lifecycle` 2m48s, `recurring_from_transaction` 41s)
 - [x] 10.4 Medido, e a coluna direita **aguenta**. A janela foi posta em 2205x1080px a
       420dpi = **840x411dp**, o breakpoint `LARGE` exato: é ali que o shell reserva o painel
       de detalhe e a coluna da lista fica no mínimo que ela pode ter. Medido na captura,

@@ -83,15 +83,15 @@
 ## 7. Verificação
 
 - [x] 7.1 Rodar `./gradlew jvmTest` e ler a saída
-- [ ] 7.2 Exercitar a tela no app: mês passado, mês corrente e mês futuro, conferindo quais
+- [x] 7.2 Exercitar a tela no app: mês passado, mês corrente e mês futuro, conferindo quais
   seções aparecem em cada um
-- [ ] 7.3 Conferir um ciclo confirmado com valor e título sobrescritos: a seção "lançado" precisa
+- [x] 7.3 Conferir um ciclo confirmado com valor e título sobrescritos: a seção "lançado" precisa
   exibir o que o razão registrou
-- [ ] 7.4 Conferir um ciclo lançado cujo template perdeu a conta: figura do razão, e não a marca
+- [x] 7.4 Conferir um ciclo lançado cujo template perdeu a conta: figura do razão, e não a marca
   de irresolvível
 - [x] 7.5 Conferir o card de pendências do dashboard depois da mudança do predicado, na virada
   do mês
 - [x] 7.6 Levantar quais dos cinco pontos Maestro que afirmam `recurring_card_amount` caem em
   qual seção, e atualizar os fluxos afetados
-- [ ] 7.7 Conferir a densidade da primeira tela e o painel estreito da janela larga, com as
+- [x] 7.7 Conferir a densidade da primeira tela e o painel estreito da janela larga, com as
   seções renderizadas

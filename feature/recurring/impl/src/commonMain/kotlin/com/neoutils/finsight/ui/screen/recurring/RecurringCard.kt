@@ -57,9 +57,9 @@ import org.jetbrains.compose.resources.stringResource
  * **It states no state of its own.** Which of the three a row is comes from the heading
  * of the section it sits under, said once for the whole group; a mark repeated on every
  * row of a group distinguishes no row from its neighbour, which is the test by which
- * this row decides what to assert. The same reasoning took the *archived* glyph away:
- * an archived template generates no cycle in any month, so it is not in this list, and
- * where it does live every row is archived.
+ * this row decides what to assert. *Archived* fails the same test for a second reason:
+ * an archived template generates no cycle in any month, so it is not in this list at all,
+ * and in the destination where it does live every row is archived.
  *
  * A 2×2 grid rather than a line with a subtitle, because a card's name is long — "Nubank
  * Ultravioleta" — and on one secondary line it would be truncated *after* the day. In
@@ -194,9 +194,8 @@ internal fun RecurringCard(
  * Where the money leaves from — or that it cannot.
  *
  * An unusable source is the gravest thing this row can state: the account or card was
- * deleted or archived, and the template cannot post at all. It used to be a swap of
- * `onSurfaceVariant` for `outline`, sixty lines under a comment saying colour alone does
- * not carry state. It is now a glyph and a sentence.
+ * deleted or archived, and the template cannot post at all. It is said by a glyph and a
+ * sentence, never by a tone alone: colour on its own carries no state.
  *
  * The glyph and the tone are what say *unusable*; the words go on saying **which** source,
  * for as long as there is one to name (see [sourceName]).
@@ -265,10 +264,11 @@ private fun SourceLine(recurring: Recurring) {
  * What the row calls the template's source — `null` only when there is nothing left to
  * call it.
  *
- * **Archived and removed are two absences, and the row used to read them as one.** Both
- * make `Recurring.hasUsableSource` false, and the unusable branch never reached a name, so
- * two "Aluguel" in two archived banks read identically — losing precisely the distinction
- * the row exists to make. A removed source is `null` on both sides (the foreign key is
+ * **Archived and removed are two absences, and the row keeps them apart.** Both make
+ * `Recurring.hasUsableSource` false, but reading them as one would leave the unusable
+ * branch without a name, and two "Aluguel" in two archived banks would read identically —
+ * losing precisely the distinction the row exists to make. A removed source is `null` on
+ * both sides (the foreign key is
  * `SET_NULL`) and genuinely has no name; an archived one exists, is named, and archiving is
  * offered to the user as reversible — it may take away the path to the account, never the
  * account's name.

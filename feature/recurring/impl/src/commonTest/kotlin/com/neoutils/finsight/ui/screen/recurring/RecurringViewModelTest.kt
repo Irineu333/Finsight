@@ -279,6 +279,33 @@ class RecurringViewModelTest {
         assertEquals(listOf(fifth.id, eighth.id), content.listedIds)
     }
 
+    /**
+     * **A skipped cycle has no fact and no promise, and still carries a number.** The
+     * month was answered and no money moved, so there is no transaction to read from; the
+     * template's figure is the only one that exists, and it is what answers *how much was
+     * not posted*.
+     *
+     * It is drawn by the same template row as pending and upcoming, with no mark of its
+     * own: the heading of the section is what says it was skipped, said once for the whole
+     * group.
+     */
+    @Test
+    fun `a skipped cycle shows the template's figure, on the same row as the others`() = runTest(dispatcher) {
+        val template = recurring(id = 1L, amount = 120.0, createdAt = 1L).copy(account = wallet)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        occurrences.all.value = listOf(
+            occurrence(template.id, status = RecurringOccurrence.Status.SKIPPED),
+        )
+
+        val content = contentOf(listOf(template), occurrences)
+        val section = content.sections.single()
+
+        assertEquals(RecurringCycleStatus.SKIPPED, section.status)
+        val row = assertIs<RecurringCycleUi.Template>(section.cycles.single())
+        assertEquals(120.0, row.amount?.value)
+        assertEquals("BRL", row.amount?.currency)
+    }
+
     // --- The posted section reads the ledger ------------------------------------------
 
     /**
@@ -380,8 +407,10 @@ class RecurringViewModelTest {
 
         contentOf(listOf(first, second), occurrences, transactions)
 
-        assertTrue(transactions.asked.isNotEmpty())
-        assertTrue(transactions.asked.all { it.toSet() == setOf(100L, 101L) })
+        // The whole section in one call, and one call only: a read per row would have
+        // asked for {100} and {101} separately, and the same read repeated would show up
+        // as a second entry here.
+        assertEquals(listOf(setOf(100L, 101L)), transactions.asked.map { it.toSet() })
     }
 
     // --- The two controls -------------------------------------------------------------

@@ -187,6 +187,9 @@ internal class LedgerTransactionRepository(
         ledger.write(id, date, legs)
     }
 
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        ids.mapNotNull { getTransactionById(it) }
+
     override suspend fun getTransactionById(id: Long): Transaction? =
         ledger.dateByTransaction[id]?.let { date ->
             Transaction(

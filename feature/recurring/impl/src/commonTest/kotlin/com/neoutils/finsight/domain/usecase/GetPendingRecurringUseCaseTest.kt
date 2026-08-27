@@ -12,7 +12,9 @@ import kotlin.test.assertEquals
  */
 class GetPendingRecurringUseCaseTest {
 
-    private val useCase = GetPendingRecurringUseCase(GetUnhandledRecurringUseCase())
+    private val useCase = GetPendingRecurringUseCase(
+        GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase()),
+    )
 
     // Both are due on day 5; today is the 20th, so both are past due.
     private val today = LocalDate(2026, 7, 20)

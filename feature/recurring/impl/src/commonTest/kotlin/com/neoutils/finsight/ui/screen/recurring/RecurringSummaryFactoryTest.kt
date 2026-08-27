@@ -32,9 +32,6 @@ class RecurringSummaryFactoryTest {
         settledIncome = settledIncome,
         forecastExpense = forecastExpense,
         forecastIncome = forecastIncome,
-        handled = 0,
-        total = 0,
-        skipped = 0,
         undenominated = 0,
     )
 

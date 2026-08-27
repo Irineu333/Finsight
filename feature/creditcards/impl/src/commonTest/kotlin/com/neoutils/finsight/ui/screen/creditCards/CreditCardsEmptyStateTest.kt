@@ -236,6 +236,9 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        transactions.filter { it.id in ids }
+
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()

@@ -46,9 +46,6 @@ internal suspend fun RecurringMonthOverview.toSummary(
         settledIncome = figure(settledIncome),
         forecastExpense = figure(forecastExpense),
         forecastIncome = figure(forecastIncome),
-        handled = handled,
-        total = total,
-        skipped = skipped,
         undenominated = undenominated,
     )
 }

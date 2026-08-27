@@ -218,6 +218,9 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        ids.mapNotNull { getTransactionById(it) }
+
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
 }
 

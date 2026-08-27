@@ -204,6 +204,13 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 
+    /**
+     * The legs of several transactions at once — the read that keeps a batch of
+     * transactions from costing one entry query per row.
+     */
+    @Query("SELECT * FROM entries WHERE transactionId IN (:transactionIds) ORDER BY id ASC")
+    suspend fun getByTransactionIds(transactionIds: Collection<Long>): List<EntryEntity>
+
     /** Entries of a transaction, each hydrated with its account — a complete leg. */
     @Transaction
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")

@@ -84,8 +84,11 @@ env:
       id: "screen_recurring"
     timeout: 15000
 - assertVisible: ${TITLE}
+# On the node of a *transaction*, not of a template: the template was born with this
+# month's cycle already confirmed, so the row sits under "Posted" and is drawn from the
+# ledger — the figure it shows is what was written, not what the template predicts.
 - assertVisible:
-    id: "recurring_card_amount"
+    id: "transaction_card_amount"
     text: "[$]39[.,]90"
 
 # --- And this month is settled, not owed ----------------------------------------------------------

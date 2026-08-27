@@ -3,20 +3,25 @@ package com.neoutils.finsight
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
+import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
@@ -255,3 +260,74 @@ fun consolidationChanges(
     baseCurrencyRepository = FakeBaseCurrency(baseCurrency),
     exchangeRateRepository = FakeExchangeRates(),
 )
+
+/**
+ * The ledger read the list of posted cycles makes, and only that one.
+ *
+ * It answers [getTransactionsByIds] out of what the test registered and throws on
+ * everything else: this screen asks the ledger for the transactions its occurrences point
+ * at and for nothing more, and a fake that started answering a second read would say so
+ * instead of quietly passing.
+ */
+class FakeTransactionsByIds(
+    private val transactions: List<Transaction> = emptyList(),
+) : ITransactionRepository {
+
+    /** Every set of ids this was asked for — where the "one query per emission" is read. */
+    val asked = mutableListOf<Collection<Long>>()
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> {
+        asked += ids
+        return transactions.filter { it.id in ids }
+    }
+
+    override fun observeAllTransactions() = throw NotImplementedError()
+    override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?) =
+        throw NotImplementedError()
+
+    override fun observeTransactionById(id: Long) = throw NotImplementedError()
+    override suspend fun getAllTransactions() = throw NotImplementedError()
+    override suspend fun getTransactionById(id: Long) = throw NotImplementedError()
+    override suspend fun createTransaction(intent: TransactionIntent) = throw NotImplementedError()
+    override suspend fun createTransactions(intents: List<TransactionIntent>) = throw NotImplementedError()
+    override suspend fun updateTransaction(
+        id: Long,
+        title: String?,
+        date: LocalDate,
+        legs: List<TransactionLeg>,
+        contra: ContraLeg?,
+    ) = throw NotImplementedError()
+
+    override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
+}
+
+/**
+ * The categories a posted row is classified by. Only the two reads that render history
+ * answer; the rest throw.
+ */
+class FakeCategoryRepository(
+    private val categories: List<Category> = emptyList(),
+) : ICategoryRepository {
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = categories
+    override suspend fun getAllCategories(): List<Category> = categories.filterNot { it.isArchived }
+
+    override fun observeAllCategories(): Flow<List<Category>> = flowOf(getAllCategoriesBlocking())
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(categories)
+    override fun observeCategoriesByType(type: Category.Type) = throw NotImplementedError()
+    override suspend fun getCategoryById(id: Long) = categories.firstOrNull { it.id == id }
+    override suspend fun getCategoryByDimensionId(dimensionId: Long) =
+        categories.firstOrNull { it.dimensionId == dimensionId }
+
+    override suspend fun getCategoryBySystemKey(systemKey: String) = throw NotImplementedError()
+    override fun observeCategoryById(id: Long) = throw NotImplementedError()
+    override suspend fun archive(id: Long) = throw NotImplementedError()
+    override suspend fun unarchive(id: Long) = throw NotImplementedError()
+    override suspend fun existsByName(name: String, ignoreId: Long) = throw NotImplementedError()
+    override suspend fun insert(category: Category) = throw NotImplementedError()
+    override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
+    override suspend fun update(category: Category) = throw NotImplementedError()
+    override suspend fun delete(category: Category) = throw NotImplementedError()
+
+    private fun getAllCategoriesBlocking() = categories.filterNot { it.isArchived }
+}

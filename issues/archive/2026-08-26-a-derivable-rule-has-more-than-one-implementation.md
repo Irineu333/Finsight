@@ -55,3 +55,31 @@ convenção do razão para dentro de um módulo de fachada, onde nada a mantém 
 Publicar uma implementação nula da moeda do cartão e transformar a não-nula num invólucro
 renomeado (`requireCurrencyOf`), que é rename mecânico nos pontos de chamada de um módulo só;
 e publicar o `toMoney` de `CurrencyScoped`, apagando a cópia. Não vinculante.
+
+## Desfecho
+
+**Causa real** — as duas do relato, confirmadas no código. E o levantamento estava
+**incompleto**: um grep por `getAccountById(…)?.currency`, em vez de pelo nome `currencyOf`,
+achou mais **cinco** leituras inline da moeda do cartão que a evidência não enumerava —
+`InvoicePaymentViewModel`, `WriteInvoicePaymentUseCase`, `DashboardComponentsBuilder`,
+`AddTransactionViewModel` e `EditTransactionViewModel`. Eram oito implementações, não três.
+
+**Mudança** — `IAccountRepository.currencyOf(CreditCard): String?` nasceu em
+`feature/accounts/api` como a única leitura da regra. `currencyOf(Recurring)` passou a delegar
+a ela em vez de inliná-la; a cópia de `feature/recurring/impl` foi apagada; a não-nula de
+`feature/creditcards/impl` virou `requireCurrencyOf`, um invólucro que já não duplica a regra
+e só declara que naquele módulo a ausência é invariante quebrada e não figura a omitir (nove
+pontos de chamada renomeados); e as cinco leituras inline passaram a consumir a mesma função.
+
+O `toMoney` de `CurrencyScoped` foi publicado em `core/ledger`
+(`database/repository/CurrencyScopedMoney.kt`) — que é o "one path" que o KDoc da interface já
+prometia —, e as duas cópias foram apagadas junto com o segundo `CENTS_PER_UNIT`.
+
+**Prova** — `./gradlew jvmTest --rerun-tasks` verde, 1489 testes em 249 classes, nenhuma
+falha, sem mudança de expectativa em teste algum: a unificação é comportamento idêntico em
+todos os pontos, exceto onde `requireCurrencyOf` preserva deliberadamente o `requireNotNull`
+que já existia.
+
+**O que continua fora** — `ConsolidateMoneyUseCase.CENTS_PER_UNIT`, `private` no companion e
+usado para converter, não para elevar um agregado do razão. É outra pergunta e não estava no
+escopo deste relato.

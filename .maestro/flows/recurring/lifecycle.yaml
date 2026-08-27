@@ -138,6 +138,33 @@ env:
     id: "recurring_card_amount"
     text: "[$]77[.,]00"
 
+# --- The group folds, and goes on saying how many it holds ---------------------------------------
+# Both are pending, so the two rows above are that one group. Folding it takes the rows away and
+# leaves the heading and its count — which is the only thing that makes folding one worth doing.
+# Asserted on the count's own node: a heading that survived while the count did not would still
+# read as a fold and would have lost the answer.
+- tapOn:
+    id: "recurring_section_pending"
+- assertVisible:
+    id: "recurring_section_pending_count"
+    text: "2"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+- tapOn:
+    id: "recurring_section_pending"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_card_amount"
+      text: "[$]940[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+
 # --- A recurring is not money --------------------------------------------------------------------
 # Two things are due and the balance is still zero: what the app knows it will ask for has not been
 # asked for yet. The settlement row appears to say exactly that — the day-zero story asserts its

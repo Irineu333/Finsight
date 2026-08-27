@@ -743,8 +743,8 @@
     <string name="recurring_summary_forecast">Not posted yet</string>
     <string name="recurring_summary_fixed_expense">Fixed expenses</string>
     <string name="recurring_summary_fixed_income">Fixed income</string>
-    <string name="recurring_summary_expand">Expand</string>
-    <string name="recurring_summary_collapse">Collapse</string>
+    <string name="recurring_expand">Expand</string>
+    <string name="recurring_collapse">Collapse</string>
     <plurals name="recurring_summary_undenominated">
         <item quantity="one">%1$d recurring left out of the total: no account denominates it.</item>
         <item quantity="other">%1$d recurring left out of the total: no account denominates them.</item>

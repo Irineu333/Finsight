@@ -744,8 +744,8 @@
     <string name="recurring_summary_forecast">Ainda não lançado</string>
     <string name="recurring_summary_fixed_expense">Despesas fixas</string>
     <string name="recurring_summary_fixed_income">Receitas fixas</string>
-    <string name="recurring_summary_expand">Expandir</string>
-    <string name="recurring_summary_collapse">Recolher</string>
+    <string name="recurring_expand">Expandir</string>
+    <string name="recurring_collapse">Recolher</string>
     <plurals name="recurring_summary_undenominated">
         <item quantity="one">%1$d recorrência ficou de fora da soma: nenhuma conta a denomina.</item>
         <item quantity="other">%1$d recorrências ficaram de fora da soma: nenhuma conta as denomina.</item>

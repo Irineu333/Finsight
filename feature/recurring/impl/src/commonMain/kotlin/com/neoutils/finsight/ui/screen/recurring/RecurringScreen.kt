@@ -23,10 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,8 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_empty_filter
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_filter_all
+import com.neoutils.finsight.resources.recurring_collapse
+import com.neoutils.finsight.resources.recurring_expand
 import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_empty
@@ -56,8 +61,6 @@ import com.neoutils.finsight.resources.recurring_section_pending
 import com.neoutils.finsight.resources.recurring_section_posted
 import com.neoutils.finsight.resources.recurring_section_skipped
 import com.neoutils.finsight.resources.recurring_section_upcoming
-import com.neoutils.finsight.resources.recurring_summary_collapse
-import com.neoutils.finsight.resources.recurring_summary_expand
 import com.neoutils.finsight.resources.recurring_summary_fixed_expense
 import com.neoutils.finsight.resources.recurring_summary_fixed_income
 import com.neoutils.finsight.resources.recurring_summary_forecast
@@ -96,6 +99,22 @@ fun RecurringScreen(
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
     val navController = LocalNavController.current
+
+    // Which groups the user folded away, by the name of the state that heads them.
+    //
+    // It lives here and not in the heading because it is the *list* that stops emitting
+    // the rows: a `LazyColumn` composes one item at a time, so a flag held inside a
+    // heading would be forgotten the moment that heading scrolled out of the viewport.
+    //
+    // Keyed by the state and not by the month, so folding "Posted" away survives moving
+    // to another month: it is a statement about how this user reads the screen, not
+    // about the month being read.
+    val collapsed = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() },
+        ),
+    ) { mutableStateListOf<String>() }
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("recurring")
@@ -230,10 +249,20 @@ fun RecurringScreen(
                     // is already an item that scrolls away, which is the grammar the
                     // headings follow.
                     uiState.sections.forEach { section ->
+                        val expanded = section.status.name !in collapsed
+
                         item(key = "recurring_section_${section.status.name}") {
                             SectionHeader(
                                 status = section.status,
                                 count = section.cycles.size,
+                                expanded = expanded,
+                                onToggle = {
+                                    if (expanded) {
+                                        collapsed += section.status.name
+                                    } else {
+                                        collapsed -= section.status.name
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -241,7 +270,10 @@ fun RecurringScreen(
                             )
                         }
 
-                        items(
+                        // A folded group emits no row at all — the heading and its count
+                        // stay, which is what makes folding one worth doing: the group
+                        // goes on being named and counted while it stops taking height.
+                        if (expanded) items(
                             items = section.cycles,
                             key = { "recurring_${it.recurring.id}" },
                         ) { cycle ->
@@ -329,44 +361,92 @@ private fun ArchiveOverflow(
 }
 
 /**
- * What names a group of cycles, and how many are in it.
+ * What names a group of cycles, how many are in it, and the control that folds it away.
  *
  * The heading is the legend for every row under it — it is what says *pending* or
  * *skipped*, once, so no row has to carry a mark of its own. The count comes with it
  * because the question the screen answers is not only *which* but *how many are left*,
  * and it is the figure the month summary stopped repeating when the sections took the
- * job over.
+ * job over. **Both stay while the group is folded**, which is the whole reason folding
+ * one is useful: a group the user has finished with keeps being named and counted, and
+ * stops spending height.
+ *
+ * The order is label, arrow, count: the arrow belongs to the word it turns under, and
+ * the count is what the fold leaves behind — so it sits outside the control rather than
+ * between it and its own affordance.
+ *
+ * The fold borrows `SummaryBlock`'s grammar wholesale — the same turned
+ * `KeyboardArrowDown`, the same target that wraps its own words rather than the row's
+ * full width, the same inset spent twice so the label still starts on the list's own
+ * column. Two folds on one screen that behaved differently would be two folds to learn.
  */
 @Composable
 private fun SectionHeader(
     status: RecurringCycleStatus,
     count: Int,
+    expanded: Boolean,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.testTag("recurring_section_${status.name.lowercase()}"),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(status.label),
-            style = typography.labelLarge,
-            color = colorScheme.onSurfaceVariant,
-        )
+    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
 
-        // A numeral needs no translation, and the word beside it is already translated.
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = colorScheme.surfaceContainerHighest,
-            contentColor = colorScheme.onSurfaceVariant,
+    Row(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                // Pulled left by exactly the inset the padding below puts back, so the
+                // target has room around the words while the label still starts on the
+                // column the cards below it are flush with.
+                .offset(x = -HEADER_HIT_INSET)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onToggle)
+                // The start inset is alignment and not breathing room — the offset above
+                // cancels it, so the label still starts on the column the cards are flush
+                // with. The other three sides are the target's own frame, and they are
+                // the same on all three.
+                .padding(
+                    start = HEADER_HIT_INSET,
+                    end = HEADER_FRAME,
+                    top = HEADER_FRAME,
+                    bottom = HEADER_FRAME,
+                )
+                .testTag("recurring_section_${status.name.lowercase()}"),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = count.toString(),
-                style = typography.labelMedium,
-                modifier = Modifier
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                    .testTag("recurring_section_${status.name.lowercase()}_count"),
+                text = stringResource(status.label),
+                style = typography.titleMedium,
+                color = colorScheme.onSurfaceVariant,
             )
+
+            // Which way it points is not the only thing that says the state: the
+            // description names the action in words.
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = stringResource(
+                    if (expanded) Res.string.recurring_collapse else Res.string.recurring_expand
+                ),
+                tint = colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer { rotationZ = arrowRotation },
+            )
+
+            // A numeral needs no translation, and the words beside it are already
+            // translated.
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = colorScheme.surfaceContainerHighest,
+                contentColor = colorScheme.onSurfaceVariant,
+            ) {
+                Text(
+                    text = count.toString(),
+                    style = typography.labelLarge,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .testTag("recurring_section_${status.name.lowercase()}_count"),
+                )
+            }
         }
     }
 }
@@ -674,8 +754,8 @@ private fun SummaryBlock(
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = stringResource(
-                    if (expanded) Res.string.recurring_summary_collapse
-                    else Res.string.recurring_summary_expand
+                    if (expanded) Res.string.recurring_collapse
+                    else Res.string.recurring_expand
                 ),
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -827,6 +907,16 @@ private val CHIP_INSET = 6.dp
  * drift apart and leave the label indented out of the card's own column.
  */
 private val HEADER_HIT_INSET = 4.dp
+
+/**
+ * The frame a section heading's tap target draws around its own contents, on the three
+ * sides that are not [HEADER_HIT_INSET]'s.
+ *
+ * Small, and the same on all three: what keeps the target from reading as a box drawn on
+ * the words is the radius, not the room — and a frame thicker on one side than the others
+ * reads as a mistake in a control whose whole shape is the ripple.
+ */
+private val HEADER_FRAME = 2.dp
 
 private val SETTLED_AMOUNT_STYLE = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
 

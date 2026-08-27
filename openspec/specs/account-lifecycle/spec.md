@@ -333,7 +333,7 @@ A inocuidade SHALL ser entendida como **nada desfazer**, não como repor o inter
 
 Uma vez desarquivada, a recorrência SHALL voltar a ser apresentada como pendente quando for o caso, a reaparecer nas listagens ativas, e a ser oferecida como receita base de orçamento.
 
-Uma recorrência arquivada SHALL permanecer **acessível** por uma listagem dedicada de arquivadas na sua própria tela — recorte de um seletor único, como em categoria —, de onde possa ser visualizada e desarquivada. Torná-la visível nessa listagem MUST NOT reintroduzi-la nas listagens ativas, nas pendências nem em seletor algum.
+Uma recorrência arquivada SHALL permanecer **acessível** por um destino próprio na feature, de onde possa ser visualizada e desarquivada. Não é um recorte da lista mensal: uma recorrência arquivada não gera ciclo em mês algum, logo não tem estado de ciclo e não cabe em seção alguma dela (`recurring-archive`). Torná-la visível ali MUST NOT reintroduzi-la nas listagens ativas, nas pendências nem em seletor algum.
 
 A oferta de desarquivar e a de retirar SHALL ser mutuamente exclusivas pelo estado de arquivamento, decisão de apresentação com o mesmo dono único.
 
@@ -358,6 +358,6 @@ A oferta de desarquivar e a de retirar SHALL ser mutuamente exclusivas pelo esta
 - **THEN** entre as ofertas de retirada a interface apresenta apenas desarquivar, e não oferece arquivar nem apagar
 
 #### Scenario: Arquivada é alcançável sem voltar às listagens ativas
-- **WHEN** o usuário seleciona o recorte de arquivadas na tela de recorrências
+- **WHEN** o usuário abre o destino de arquivadas a partir da tela de recorrências
 - **THEN** as recorrências arquivadas são listadas e podem ser abertas, sem que passem a aparecer nos recortes ativos nem nas pendências
 

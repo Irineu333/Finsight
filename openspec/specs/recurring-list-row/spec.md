@@ -33,12 +33,15 @@ A identidade SHALL ceder largura antes da figura quando o espaço não comportar
 Todo estado que a linha afirma SHALL ser legível sem depender da cor: um ícone, um texto, ou
 os dois.
 
-Isso vale, nomeadamente, para os dois estados que a linha carrega hoje:
+Isso vale, nomeadamente, para o estado que a linha carrega:
 
-- **arquivada** — quando o recorte exibe recorrências arquivadas;
 - **origem inutilizável** — quando a conta ou o cartão que a recorrência nomeia foi removido ou
-  arquivado, e portanto ela não consegue postar. É o estado mais grave que a linha pode
-  afirmar, e é o que hoje é dito apenas pela troca de um tom por outro.
+  arquivado, e portanto ela não consegue postar. É o estado mais grave que a linha pode afirmar.
+
+O estado **arquivada** deixa de ser afirmado por esta linha. Uma recorrência arquivada não gera
+ciclo em mês algum e não aparece na lista; no destino próprio em que ela permanece alcançável,
+todas estão arquivadas, e uma marca que toda linha carrega não distingue linha alguma da
+vizinha — que é o critério pelo qual a linha decide o que afirmar.
 
 A direção do lançamento — despesa ou receita — SHALL igualmente ser legível sem cor, e quando
 carregada por um ícone SHALL ter descrição de conteúdo que a nomeie.
@@ -61,6 +64,11 @@ não participa de soma alguma exibida. A presença de um resumo acima da lista M
 como autorização para assinar a figura da linha — as figuras do resumo não somam as linhas, e
 nenhuma coluna da tela fecha em total algum.
 
+Isso vale igualmente para a linha de um **ciclo lançado**, que é lida do razão e renderizada
+pelo componente de transação: a política de sinal desse componente já entrega magnitude para
+despesa e receita, e a organização da lista em seções MUST NOT ser lida como autorização para
+assinar figura alguma.
+
 #### Scenario: Linha de despesa
 - **WHEN** a linha exibe uma recorrência de despesa de R$ 39,90
 - **THEN** o valor é exibido sem sinal negativo
@@ -68,6 +76,10 @@ nenhuma coluna da tela fecha em total algum.
 #### Scenario: Resumo presente não muda a linha
 - **WHEN** o resumo do mês está visível acima da lista
 - **THEN** as figuras das linhas continuam sem sinal
+
+#### Scenario: Linha de ciclo lançado
+- **WHEN** a seção "lançado" exibe um ciclo de despesa de R$ 865
+- **THEN** o valor é exibido sem sinal negativo
 
 ### Requirement: Um template sem denominação exibe a marca de valor irresolvível
 
@@ -83,11 +95,21 @@ ausência apenas insinuava.
 A linha SHALL, junto, afirmar a **causa** — que a origem não é utilizável —, para que a marca
 não fique sem explicação.
 
+Este requisito vale para as linhas que leem o **template**: as dos ciclos pendentes, a lançar e
+ignorados, onde não há fato registrado e a denominação depende inteiramente da conta que o
+template nomeia. Ele MUST NOT ser aplicado à linha de um ciclo **lançado**: ali o dinheiro saiu,
+está registrado no razão com a moeda em que foi registrado, e não há denominação a resolver —
+exibir a marca afirmaria uma ausência que não existe.
+
 #### Scenario: Conta removida
-- **WHEN** a conta que denominava a recorrência foi removida
+- **WHEN** a conta que denominava a recorrência foi removida e o ciclo do mês não foi lançado
 - **THEN** a linha exibe a marca de valor irresolvível no lugar da figura, mantém a mesma altura das demais, e afirma que a origem não é utilizável
 
 #### Scenario: Altura constante
 - **WHEN** a lista mistura recorrências com e sem denominação
-- **THEN** todas as linhas têm a mesma altura
+- **THEN** todas as linhas de template têm a mesma altura
+
+#### Scenario: Conta removida depois do lançamento
+- **WHEN** a conta foi removida depois de o ciclo do mês ter sido confirmado
+- **THEN** a linha na seção "lançado" exibe a figura registrada no razão, e não a marca de valor irresolvível
 

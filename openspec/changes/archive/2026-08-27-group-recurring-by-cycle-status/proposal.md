@@ -53,10 +53,17 @@ ocorrências para alimentar o card.
 - `recurring-month-overview`: o requisito *"O seletor de mês governa o resumo e o filtro governa
   a lista"* é contradito na sua parte final — a lista passa a ser recortada por mês. E o
   requisito *"O contador é onde um ciclo ignorado é representável"* muda de dono: a
-  representabilidade passa para a seção, e o contador sai do card.
+  representabilidade passa para a seção, e o contador sai do card. Dois requisitos vizinhos são
+  arrastados por essas duas mudanças e vêm junto: *"A metade lançada é lida do razão"*, cujo
+  cenário de transação apagada afirmava o contador recuando, e *"O resumo permanece quando o
+  recorte da lista está vazio"*, cujo cenário esvaziava a lista pelo recorte de arquivadas.
 - `recurring-list-row`: a linha de um ciclo lançado passa a ser lida do ledger, o que restringe
   a marca de valor irresolvível às seções sem fato; e os cenários que falam do *recorte de
   arquivadas* deixam de ser sobre esta tela.
+- `account-lifecycle`: o requisito *"Recorrência arquivada pode ser desarquivada"* descreve o
+  acesso à arquivada como *"recorte de um seletor único, como em categoria"*. A exigência não
+  muda — arquivar continua reversível, e é ela que obriga o destino a existir —, mas a forma
+  do acesso passa a ser um destino próprio, porque o recorte que ele nomeia deixa de existir.
 
 ## Impact
 

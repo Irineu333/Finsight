@@ -89,7 +89,7 @@ lida do tipo declarado no template.
 
 #### Scenario: Transação de um ciclo é apagada
 - **WHEN** a transação gerada por um ciclo confirmado é removida
-- **THEN** o valor sai da figura lançada, o template volta a compor a figura não lançada, e o contador do mês recua um ciclo
+- **THEN** o valor sai da figura lançada, o template volta a compor a figura não lançada, e o ciclo volta a ser um dos que o mês ainda pode pedir
 
 ### Requirement: A metade não lançada é o mês inteiro, não apenas o vencido
 
@@ -111,58 +111,31 @@ MUST NOT ser reimplementada pela tela.
 - **WHEN** um template já tem ocorrência no mês, confirmada ou ignorada
 - **THEN** ele não compõe nenhuma das duas figuras não lançadas
 
-### Requirement: O contador é onde um ciclo ignorado é representável
-
-O resumo SHALL exibir um **contador de ciclos** do mês: quantos dos templates ativos já foram
-tratados, de quantos, e quantos o foram por **terem sido ignorados**.
-
-Um ciclo ignorado não é lançamento — não há entry — nem pendência — o domínio já o conta como
-tratado. Ele é, por construção, invisível nas quatro figuras, e essa aritmética está correta:
-contrabandeá-lo para qualquer uma delas afirmaria dinheiro que não existe ou um compromisso
-que não existe mais. O contador é o **único** lugar do resumo em que ele é representável, e
-sem ele o card não presta contas da diferença entre a projeção que encolheu e o fato que não
-cresceu.
-
-A menção aos ciclos ignorados SHALL ser exibida apenas quando houver algum no mês: uma
-anotação condicional é **ausente**, não zero.
-
-O contador MUST NOT ser expresso como proporção preenchida, porque uma proporção teria de
-decidir visualmente o que um ciclo ignorado preenche — que é precisamente a decisão que este
-requisito exige declarada em palavras.
-
-#### Scenario: Um ciclo é ignorado
-- **WHEN** o usuário ignora o ciclo do mês de um template de R$ 77,00
-- **THEN** a figura não lançada diminui em R$ 77,00, nenhuma figura lançada aumenta, e o contador registra o ciclo como tratado e como ignorado
-
-#### Scenario: Mês sem ciclos ignorados
-- **WHEN** nenhum ciclo do mês foi ignorado
-- **THEN** o contador não menciona ciclos ignorados
-
 ### Requirement: O seletor de mês governa o resumo e o filtro governa a lista
 
-O resumo SHALL carregar um **seletor de mês próprio**, e o mês selecionado SHALL governar as
-quatro figuras e o contador.
+O resumo SHALL carregar um **seletor de mês**, e o mês selecionado SHALL governar as quatro
+figuras.
 
-O resumo MUST NOT responder ao filtro da lista. Sob o recorte de arquivadas a metade não
-lançada é estruturalmente vazia, porque uma recorrência arquivada não gera pendência; e sob um
-recorte por natureza o resumo teria de suprimir uma das duas linhas de cada bloco — mudando de
-**forma** enquanto a lista muda de **conteúdo**, sem que o usuário possa saber qual das duas
-coisas o seletor fez.
+O mês SHALL governar **também a lista**. O que a lista exibe são os **ciclos** dos templates no
+mês selecionado, e um ciclo tem mês por definição — as duas metades da tela respondem pela mesma
+pergunta, sobre o mesmo mês, e um seletor que movesse só metade delas seria indistinguível de um
+defeito.
 
-O filtro da lista MUST NOT governar o resumo, e o seletor de mês MUST NOT governar a lista. Um
-resumo que não tem controle nenhum e ignora o único controle da tela é indistinguível de um
-defeito: é o seletor próprio que torna visível que o card tem governo próprio.
+A premissa que antes proibia isso permanece verdadeira e é o que a torna possível: um template
+não tem mês, apenas a ocorrência dele tem. O que mudou não foi a regra, foi o **objeto da
+lista**, que deixou de ser o template.
 
-A **lista** MUST NOT passar a ser recortada por mês. Um template não tem mês; apenas a
-ocorrência dele tem.
+O filtro da lista MUST NOT governar o resumo. Sob um recorte por natureza o resumo teria de
+suprimir uma das duas linhas de cada bloco — mudando de **forma** enquanto a lista muda de
+**conteúdo**, sem que o usuário possa saber qual das duas coisas o seletor fez.
 
 #### Scenario: O filtro muda a lista e não o resumo
-- **WHEN** o usuário troca o filtro da lista de ativas para arquivadas
-- **THEN** a lista passa a exibir as arquivadas e as quatro figuras e o contador permanecem inalterados
+- **WHEN** o usuário recorta a lista por despesas
+- **THEN** cada seção passa a exibir apenas ciclos de despesa e as quatro figuras permanecem inalteradas
 
-#### Scenario: O mês muda o resumo e não a lista
+#### Scenario: O mês muda o resumo e a lista
 - **WHEN** o usuário seleciona o mês anterior no seletor do resumo
-- **THEN** as quatro figuras e o contador passam a responder por aquele mês, e a lista continua exibindo os mesmos templates
+- **THEN** as quatro figuras passam a responder por aquele mês, e a lista passa a exibir os ciclos daquele mês
 
 ### Requirement: As figuras do resumo não exibem sinal
 
@@ -249,7 +222,7 @@ O resumo MUST NOT ser exibido quando não existe recorrência alguma cadastrada.
 resumir, e a tela SHALL manter a sua oferta de criar a primeira.
 
 #### Scenario: Recorte sem itens numa base povoada
-- **WHEN** o usuário seleciona o recorte de arquivadas numa base que tem recorrências, nenhuma delas arquivada
+- **WHEN** o usuário recorta a lista por receitas numa base que tem recorrências, nenhuma delas de receita
 - **THEN** o resumo continua exibido e a mensagem de recorte vazio aparece abaixo dele
 
 #### Scenario: Base sem nenhuma recorrência

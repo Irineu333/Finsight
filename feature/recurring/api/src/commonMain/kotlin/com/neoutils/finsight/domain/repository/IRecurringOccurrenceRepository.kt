@@ -1,10 +1,28 @@
 package com.neoutils.finsight.domain.repository
 
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.YearMonth
+
+/**
+ * What the confirmed cycles of a month **actually posted**, per currency and per nature.
+ *
+ * Two figures rather than one signed figure: the natures are two separate readings of
+ * the month and nothing above adds them, so there is no sum for a sign to be the effect
+ * on. Each is a magnitude.
+ */
+data class RecurringSettledMoney(
+    val expense: MoneyByCurrency,
+    val income: MoneyByCurrency,
+) {
+    companion object {
+        /** A month with no confirmed cycle at all. */
+        val none = RecurringSettledMoney(MoneyByCurrency.zero, MoneyByCurrency.zero)
+    }
+}
 
 interface IRecurringOccurrenceRepository {
     fun observeAllOccurrences(): Flow<List<RecurringOccurrence>>
@@ -35,4 +53,29 @@ interface IRecurringOccurrenceRepository {
         intent: TransactionIntent,
         occurrence: RecurringOccurrence,
     ): Transaction
+
+    /**
+     * The money the confirmed cycles of [month] wrote into the ledger, per currency.
+     *
+     * **Read from the ledger, never from the template.** Confirming a cycle lets the
+     * user override the amount, the account, the card, the title and the category of
+     * that cycle while the template stays as it was — so summing confirmed templates
+     * would produce a number that never existed. What is summed here is what the
+     * transactions the occurrences point at actually registered.
+     *
+     * **The month is the occurrence's, not the transaction's date** (design D7). The
+     * rule forbidding a recurring transaction to change month is declared and mapped to
+     * a string with nothing in the app producing it, so a confirmed transaction can
+     * still be edited into another month; cutting by the occurrence is what keeps the
+     * money summed and the cycles counted from disagreeing about which month a cycle
+     * belongs to.
+     *
+     * It does not consult `transactions.recurringId`. That column is grouping metadata,
+     * no ledger read looks at it, and the path from an occurrence to its transaction is
+     * a real foreign key.
+     *
+     * The nature of each figure is the ledger's — which nominal account the money landed
+     * on — and not the type declared on the template.
+     */
+    suspend fun settledIn(month: YearMonth): RecurringSettledMoney
 }

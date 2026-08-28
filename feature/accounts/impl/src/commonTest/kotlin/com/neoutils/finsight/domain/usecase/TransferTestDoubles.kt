@@ -67,6 +67,9 @@ internal class RewriteRecordingTransactions(
     val rewrites = mutableListOf<RecordedRewrite>()
     val created = mutableListOf<TransactionIntent>()
 
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        stored.filter { it.id in ids }
+
     override suspend fun getTransactionById(id: Long): Transaction? =
         stored.firstOrNull { it.id == id }
 

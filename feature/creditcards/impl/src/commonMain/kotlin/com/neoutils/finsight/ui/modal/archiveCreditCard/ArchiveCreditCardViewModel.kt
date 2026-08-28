@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ArchiveCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -50,7 +50,7 @@ class ArchiveCreditCardViewModel(
             hasBalance.value = balance != 0.0
             debt.value = DisplayAmount.owed(
                 value = balance,
-                currency = accountRepository.currencyOf(creditCard),
+                currency = accountRepository.requireCurrencyOf(creditCard),
                 isApproximate = false,
             )
         }

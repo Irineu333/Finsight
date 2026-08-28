@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
@@ -108,7 +109,7 @@ class DashboardComponentsBuilder(
      */
     private suspend fun List<Recurring>.moneyByCurrency(): MoneyByCurrency =
         fold(MoneyByCurrency.zero) { total, recurring ->
-            val currency = currencyOf(recurring) ?: return@fold total
+            val currency = accountRepository.currencyOf(recurring) ?: return@fold total
             total + MoneyByCurrency.of(currency, recurring.amount)
         }
 
@@ -132,11 +133,6 @@ class DashboardComponentsBuilder(
                 }
             }
     }
-
-    /** The account or card a template posts to is what denominates its amount (D17). */
-    private suspend fun currencyOf(recurring: Recurring): String? =
-        recurring.account?.currency
-            ?: recurring.creditCard?.let { accountRepository.getAccountById(it.accountId)?.currency }
 
     /**
      * Nothing worth a widget: no term of the figure is positive.
@@ -421,12 +417,11 @@ class DashboardComponentsBuilder(
         val creditCardsWithBills = input.creditCards
             .filter { it.id !in excludedIds }
             .mapNotNull { creditCard ->
-                // The limit is the card's money, so it reads in the card's currency (D17),
-                // and the LIABILITY account behind the card is the only place that states
-                // it. A card whose account does not resolve is an orphan row: it is left
-                // out of the pager rather than denominated by guess.
-                val currency = accountRepository.getAccountById(creditCard.accountId)
-                    ?.currency ?: return@mapNotNull null
+                // The limit is the card's money, so it reads in the card's currency
+                // (D17). A card whose account does not resolve is an orphan row: it is
+                // left out of the pager rather than denominated by guess.
+                val currency = accountRepository.currencyOf(creditCard)
+                    ?: return@mapNotNull null
 
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
                 val ui = CreditCardUi(
@@ -554,7 +549,7 @@ class DashboardComponentsBuilder(
         // deleted names no account, and a row no account denominates is left out rather
         // than shown in a guessed currency.
         val recurringUi = visibleRecurring.mapNotNull { recurring ->
-            val currency = currencyOf(recurring) ?: return@mapNotNull null
+            val currency = accountRepository.currencyOf(recurring) ?: return@mapNotNull null
 
             PendingRecurringUi(
                 recurring = recurring,

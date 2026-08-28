@@ -723,12 +723,32 @@
     <string name="recurring_screen_empty">No recurring transactions</string>
     <string name="recurring_screen_create">Create recurring</string>
     <string name="recurring_screen_day">Day %1$d</string>
-    <string name="recurring_filter_active">Active</string>
-    <string name="recurring_filter_archived">Archived</string>
+    <string name="recurring_filter_all">All</string>
     <string name="recurring_empty_filter">No recurring transactions here.</string>
+    <string name="recurring_view_archived">Archived</string>
+    <string name="recurring_archived_title">Archived recurring</string>
+    <string name="recurring_archived_empty">No archived recurring transactions</string>
+
+    <!-- Recurring Cycle Sections -->
+    <string name="recurring_section_pending">Pending</string>
+    <string name="recurring_section_upcoming">Upcoming</string>
+    <string name="recurring_section_posted">Posted</string>
+    <string name="recurring_section_skipped">Skipped</string>
     <string name="recurring_expense">Expense</string>
     <string name="recurring_income">Income</string>
-    <string name="recurring_card_monthly_amount">Monthly amount</string>
+    <string name="recurring_source_unusable">Source unavailable</string>
+
+    <!-- Recurring Month Summary -->
+    <string name="recurring_summary_settled">Posted this month</string>
+    <string name="recurring_summary_forecast">Not posted yet</string>
+    <string name="recurring_summary_fixed_expense">Fixed expenses</string>
+    <string name="recurring_summary_fixed_income">Fixed income</string>
+    <string name="recurring_expand">Expand</string>
+    <string name="recurring_collapse">Collapse</string>
+    <plurals name="recurring_summary_undenominated">
+        <item quantity="one">%1$d recurring left out of the total: no account denominates it.</item>
+        <item quantity="other">%1$d recurring left out of the total: no account denominates them.</item>
+    </plurals>
 
     <!-- Recurring Form Modal -->
     <string name="recurring_form_title_label">Title</string>

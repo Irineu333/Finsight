@@ -138,6 +138,33 @@ env:
     id: "recurring_card_amount"
     text: "[$]77[.,]00"
 
+# --- The group folds, and goes on saying how many it holds ---------------------------------------
+# Both are pending, so the two rows above are that one group. Folding it takes the rows away and
+# leaves the heading and its count — which is the only thing that makes folding one worth doing.
+# Asserted on the count's own node: a heading that survived while the count did not would still
+# read as a fold and would have lost the answer.
+- tapOn:
+    id: "recurring_section_pending"
+- assertVisible:
+    id: "recurring_section_pending_count"
+    text: "2"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+- tapOn:
+    id: "recurring_section_pending"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_card_amount"
+      text: "[$]940[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+
 # --- A recurring is not money --------------------------------------------------------------------
 # Two things are due and the balance is still zero: what the app knows it will ask for has not been
 # asked for yet. The settlement row appears to say exactly that — the day-zero story asserts its
@@ -406,17 +433,22 @@ env:
 - assertNotVisible:
     id: "recurring_card_amount"
     text: "[$]940[.,]00"
+# The archive is a destination of its own, reached from the overflow — not a cut of this
+# list. An archived recurring generates no cycle in any month, so it belongs to none of
+# the sections here.
 - tapOn:
-    id: "recurring_filter"
+    id: "recurring_more_options"
 - extendedWaitUntil:
     visible:
-      id: "recurring_filter_option_archived"
+      id: "recurring_view_archived"
     timeout: 15000
 - tapOn:
-    id: "recurring_filter_option_archived"
+    id: "recurring_view_archived"
 - extendedWaitUntil:
-    visible: ${INCOME_TITLE}
+    visible:
+      id: "screen_archived_recurring"
     timeout: 15000
+- assertVisible: ${INCOME_TITLE}
 
 # --- The month turns -----------------------------------------------------------------------------
 # The clock moves; the database does not. What was skipped is due again — a skip settles one cycle,
@@ -472,17 +504,22 @@ env:
     visible:
       id: "screen_recurring"
     timeout: 15000
+# The archive is a destination of its own, reached from the overflow — not a cut of this
+# list. An archived recurring generates no cycle in any month, so it belongs to none of
+# the sections here.
 - tapOn:
-    id: "recurring_filter"
+    id: "recurring_more_options"
 - extendedWaitUntil:
     visible:
-      id: "recurring_filter_option_archived"
+      id: "recurring_view_archived"
     timeout: 15000
 - tapOn:
-    id: "recurring_filter_option_archived"
+    id: "recurring_view_archived"
 - extendedWaitUntil:
-    visible: ${INCOME_TITLE}
+    visible:
+      id: "screen_archived_recurring"
     timeout: 15000
+- assertVisible: ${INCOME_TITLE}
 - tapOn: ${INCOME_TITLE}
 - extendedWaitUntil:
     visible:
@@ -507,6 +544,14 @@ env:
 
 # And it asks again — once, for this month. Reactivating puts a recurring back in circulation; it
 # does not bill for the months it spent archived.
+#
+# Two steps back, not one: the archive is its own destination now, so leaving it lands on the
+# recurring list and only the second back reaches the dashboard.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
 - back
 # Back to the top first: `open_section` left the dashboard scrolled down to the quick-action grid,
 # and the pending row sits above it — scrolling DOWN from there would never reach it.

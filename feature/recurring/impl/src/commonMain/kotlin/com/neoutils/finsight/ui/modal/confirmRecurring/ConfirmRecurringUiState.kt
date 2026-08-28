@@ -40,6 +40,12 @@ data class ConfirmRecurringUiState(
     val hiddenByCurrency: Boolean = false,
     /** What the recurring's amount is denominated in, when it names an account or card. */
     val recurringCurrency: String? = null,
+    /**
+     * The dates the picker may offer: the month of the cycle being confirmed, never past
+     * today — see `confirmableDates`. It is state and not a constant because the month is
+     * the caller's decision, carried in with the cycle.
+     */
+    val confirmableDates: ClosedRange<LocalDate> = confirmDate..confirmDate,
 ) {
     val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 

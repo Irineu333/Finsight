@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -126,6 +127,9 @@ class RecurringRepositoryTest {
         ): RecurringOccurrence? = throw NotImplementedError()
 
         override suspend fun save(occurrence: RecurringOccurrence): Long =
+            throw NotImplementedError()
+
+        override suspend fun settledIn(month: YearMonth): RecurringSettledMoney =
             throw NotImplementedError()
 
         override suspend fun confirmCycle(

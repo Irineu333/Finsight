@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
@@ -86,5 +87,23 @@ class RecurringOccurrenceRepository(
             save(occurrence.copy(transactionId = transaction.id))
             transaction
         }
+    }
+
+    /**
+     * One grouped query, lifted out of cents by the ledger's own `toMoney` — the single
+     * path [com.neoutils.finsight.database.dao.CurrencyScoped] exists for. Cents are the
+     * ledger's storage convention, and a facade that divided by a hundred itself would
+     * be keeping a copy of that convention with nothing to keep it in step.
+     *
+     * A month with no confirmed cycle returns no row, which is the honest answer — and
+     * the empty figure it becomes is what lets the reducer decide, one layer up, what a
+     * zero is denominated in.
+     */
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney {
+        val rows = dao.settledTotalsIn(month)
+        return RecurringSettledMoney(
+            expense = rows.toMoney { it.expense },
+            income = rows.toMoney { it.income },
+        )
     }
 }

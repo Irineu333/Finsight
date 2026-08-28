@@ -146,6 +146,26 @@ class TransactionRepository(
     }
 
     /**
+     * Three reads for the whole batch — the rows, their legs and the chart — instead of
+     * two per row. Hydrating each transaction through [toDomain] would have gone back to
+     * the entry table once per id, which is the cost this read exists to avoid.
+     */
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> {
+        if (ids.isEmpty()) return emptyList()
+
+        val accounts = ledgerAccounts()
+        val entriesByTransactionId = entryDao.getByTransactionIds(ids)
+            .groupBy { it.transactionId }
+
+        return transactionDao.getByIds(ids).mapNotNull { entity ->
+            transactionMapper.toDomain(
+                entity = entity,
+                entries = entriesByTransactionId[entity.id].orEmpty().toDomainEntries(accounts),
+            )
+        }
+    }
+
+    /**
      * The facade veto, asked at the single write boundary next to `Σ = 0` (design
      * D11/D23) so no screen or use case has to remember it. What the rule *is*
      * belongs to whoever owns the dimensions — this only guarantees there is one

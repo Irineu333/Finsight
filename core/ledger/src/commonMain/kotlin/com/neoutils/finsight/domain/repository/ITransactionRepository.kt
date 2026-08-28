@@ -21,6 +21,22 @@ interface ITransactionRepository {
     suspend fun getAllTransactions(): List<Transaction>
     suspend fun getTransactionById(id: Long): Transaction?
 
+    /**
+     * The transactions [ids] names, in one query.
+     *
+     * It exists because the two reads beside it are both wrong for a list that starts
+     * from a set of identities: [getTransactionById] per row is the N+1 a list pays on
+     * every emission, and [getAllTransactions] reads the whole ledger to keep a handful
+     * of rows. Whoever already holds the ids — a screen listing the transactions of
+     * confirmed cycles, of an installment, of anything the ledger hands identities for —
+     * asks for exactly those.
+     *
+     * An id with no row is an **absence, not an error**: the result holds the
+     * transactions that exist, in no guaranteed correspondence with [ids]. Order is the
+     * ledger's own — most recent first — and never the caller's.
+     */
+    suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction>
+
     /** Writes the user's [intent] as a balanced set of ledger entries. */
     suspend fun createTransaction(intent: TransactionIntent): Transaction
 

@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -142,7 +142,7 @@ class InvoiceTransactionsViewModel(
 
         // Every figure of this screen is the card's money, so all of them read in the
         // card's own currency (design D17) — asked once, not once per invoice.
-        val currency = accountRepository.currencyOf(creditCard)
+        val currency = accountRepository.requireCurrencyOf(creditCard)
 
         val invoice = invoices.getOrNull(index)
         // The rows render archived categories too, so the lookup keeps them — only the

@@ -9,6 +9,13 @@ termo. Cada decisão registra aqui o que foi trocado por quê, **e contra o que*
 recusadas estão nomeadas junto de cada uma, para que discordar de uma delas mais tarde não
 exija refazer a comparação do zero.
 
+A prancha está preservada em **`assets/layout-plate.html`**, abrível direto no navegador: o
+desenho final com uma linha para cada estado que o domínio produz, a anatomia das suas sete
+peças e o registro das nove decisões com o que foi descartado em cada uma. Ela é um **registro
+de decisão, e não uma especificação** — onde ela e a spec divergirem,
+`specs/budget-list-row/spec.md` é quem manda. As suas cores são lidas de `Color.kt` e
+`Theme.kt`, de modo que ela envelhece junto com o tema em vez de fingir permanência.
+
 ## Decisões
 
 ### D1 — O progresso é um anel em torno do ícone, e não uma barra

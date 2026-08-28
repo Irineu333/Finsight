@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Prancha de layout de redesign-budgets-screen.
+
+  Os mockups estao em escala real (1 dp = 1,25 px, viewport 360 dp), no tema escuro,
+  com as cores lidas de core/designsystem Color.kt e Theme.kt - inclusive os valores
+  exatos que budgetProgressColor(f) produz em cada fracao desenhada.
+
+  E um registro de decisao, nao uma especificacao: onde ele e a spec divergirem,
+  specs/budget-list-row/spec.md e quem manda.
+-->
+<style>h1,h2,h3,h4,p,ol,ul,figure{margin:0}</style>
+<title>Prancha de Orçamentos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap">
+
+<style>
+/* ─────────────────────────────────────────────────────────────
+   PRANCHA DE ORÇAMENTOS · rev. 4 — decidida
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --ground:      #E9EDF2;
+  --panel:       #FDFEFF;
+  --panel-sunk:  #DFE5EC;
+  --ink:         #10151F;
+  --ink-soft:    #57627A;
+  --ink-faint:   #8B95A8;
+  --rule:        #C7D0DC;
+  --rule-soft:   #D8DFE8;
+  --accent:      #0A7F76;
+  --accent-soft: #0A7F7614;
+  --con:         #C2410C;
+  --shadow:      0 1px 2px #10151f10, 0 12px 28px -12px #10151f28;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #06090E;
+    --panel:       #0E131B;
+    --panel-sunk:  #090D14;
+    --ink:         #E7ECF3;
+    --ink-soft:    #8E99AD;
+    --ink-faint:   #5C6679;
+    --rule:        #1E2733;
+    --rule-soft:   #161D27;
+    --accent:      #2BC4B4;
+    --accent-soft: #2BC4B41A;
+    --con:         #F4863F;
+    --shadow:      0 1px 2px #0006, 0 16px 34px -14px #000a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #06090E;
+  --panel:       #0E131B;
+  --panel-sunk:  #090D14;
+  --ink:         #E7ECF3;
+  --ink-soft:    #8E99AD;
+  --ink-faint:   #5C6679;
+  --rule:        #1E2733;
+  --rule-soft:   #161D27;
+  --accent:      #2BC4B4;
+  --accent-soft: #2BC4B41A;
+  --con:         #F4863F;
+  --shadow:      0 1px 2px #0006, 0 16px 34px -14px #000a;
+}
+
+/* Tokens do APP — lidos de Color.kt / Theme.kt */
+:root {
+  --app-bg:      #0F172A;
+  --app-surface: #1E293B;
+  --app-track:   #334155;
+  --app-on:      #FFFFFF;
+  --app-var:     #94A3B8;
+  --app-teal:    #0D9A8E;
+  --app-error:   #DC2626;
+  --app-warn:    #F59E0B;
+  --app-expense: #EF4444;
+
+  /* budgetProgressColor(f) — lerp Success→Warning→Error, calculado */
+  --p15:  #58B078;
+  --p35:  #B2A63A;
+  --p48:  #EC9F11;
+  --p62:  #EF8112;
+  --p80:  #E6561B;
+  --p100: #DC2626;
+
+  --dp: 1.25px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+
+.mono, code {
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+code { font-size: 0.88em; }
+
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+/* ── casca ─────────────────────────────────────────────────── */
+
+.page { max-width: 1180px; margin: 0 auto; padding: 0 28px 120px; }
+
+.masthead { padding: 72px 0 44px; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 22px; }
+
+.masthead h1 {
+  margin: 0; font-size: clamp(44px, 7.2vw, 82px); line-height: 0.95;
+  font-weight: 700; letter-spacing: -0.035em; text-wrap: balance;
+}
+
+.masthead h1 em { font-style: italic; color: var(--accent); }
+
+.lede { max-width: 64ch; font-size: 19px; color: var(--ink-soft); margin: 0; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+.specbar { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 8px; }
+
+.specbar div {
+  display: flex; gap: 8px; align-items: baseline;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11.5px; color: var(--ink-faint);
+}
+
+.specbar b { color: var(--ink-soft); font-weight: 500; }
+
+/* ── seções ────────────────────────────────────────────────── */
+
+.section { padding-top: 76px; }
+
+.section__head { display: flex; flex-direction: column; gap: 12px; padding-bottom: 30px; max-width: 68ch; }
+
+.section__head h2 {
+  margin: 0; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.06;
+  letter-spacing: -0.028em; font-weight: 700; text-wrap: balance;
+}
+
+.section__head p { margin: 0; color: var(--ink-soft); font-size: 17px; }
+.section__head p strong { color: var(--ink); font-weight: 600; }
+
+.axis-tag {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.axis-tag--open {
+  background: color-mix(in srgb, var(--con) 10%, transparent);
+  color: var(--con); border-color: color-mix(in srgb, var(--con) 30%, transparent);
+}
+
+/* ── palco / app ───────────────────────────────────────────── */
+
+.stage {
+  background: var(--panel-sunk); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 30px 22px; display: flex; justify-content: center;
+  min-width: 0; overflow-x: auto; box-shadow: var(--shadow);
+}
+
+.app {
+  width: calc(360 * var(--dp)); flex: none; background: var(--app-bg);
+  font-family: Roboto, ui-sans-serif, system-ui, sans-serif; color: var(--app-on);
+  padding: calc(16 * var(--dp)); display: flex; flex-direction: column;
+  gap: calc(8 * var(--dp)); border-radius: calc(6 * var(--dp)); line-height: 1.25;
+}
+
+.money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.unresolved { color: var(--app-var); letter-spacing: 0.06em; }
+
+.row {
+  background: var(--app-surface); border-radius: calc(12 * var(--dp));
+  padding: calc(8 * var(--dp)) calc(12 * var(--dp));
+  display: flex; align-items: center; gap: calc(12 * var(--dp));
+}
+
+.ring { width: calc(36 * var(--dp)); height: calc(36 * var(--dp)); flex: none; position: relative; display: grid; place-items: center; }
+.ring svg.track { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring svg.track circle { fill: none; stroke-width: 3; }
+.ring svg.track .t { stroke: var(--app-track); }
+.ring svg.track .v { stroke: currentColor; stroke-linecap: round; }
+
+.ring__glyph {
+  width: calc(17 * var(--dp)); height: calc(17 * var(--dp));
+  stroke: currentColor; fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.row__col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(2 * var(--dp)); }
+.row__line { display: flex; align-items: baseline; gap: calc(8 * var(--dp)); min-width: 0; }
+.row__line--mid { align-items: center; }
+
+.row__name {
+  font-size: calc(14 * var(--dp)); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+
+.row__limit {
+  margin-left: auto; flex: none; font-size: calc(15 * var(--dp)); font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  display: flex; align-items: center; gap: calc(5 * var(--dp));
+}
+
+.row__spent {
+  margin-left: auto; flex: none; font-size: calc(11 * var(--dp));
+  color: var(--app-var); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+.row__spent--over { color: var(--p100); font-weight: 500; }
+.row__spent b { font-weight: 500; color: inherit; }
+
+.warn-glyph { flex: none; color: var(--p100); font-size: calc(12 * var(--dp)); font-weight: 700; line-height: 1; }
+.row__period { font-size: calc(11 * var(--dp)); color: var(--app-var); flex: none; }
+
+.catstack { display: flex; align-items: center; flex: none; }
+
+.catstack i {
+  width: calc(18 * var(--dp)); height: calc(18 * var(--dp));
+  border-radius: calc(5 * var(--dp)); display: grid; place-items: center;
+  background: var(--app-track); box-shadow: 0 0 0 calc(1.5 * var(--dp)) var(--app-surface);
+  margin-left: calc(-5 * var(--dp)); color: var(--app-var);
+}
+
+.catstack i:first-child { margin-left: 0; }
+
+.catstack i svg {
+  width: calc(11 * var(--dp)); height: calc(11 * var(--dp));
+  stroke: currentColor; fill: none; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.catstack em { font-style: normal; font-size: calc(10 * var(--dp)); color: var(--app-var); margin-left: calc(5 * var(--dp)); font-variant-numeric: tabular-nums; }
+
+/* D1b — glifo + pílula */
+.d-pill {
+  flex: none; display: inline-flex; align-items: center; gap: calc(3 * var(--dp));
+  font-size: calc(10 * var(--dp)); font-weight: 600; color: var(--app-teal);
+  background: color-mix(in srgb, var(--app-teal) 16%, transparent);
+  border-radius: calc(4 * var(--dp)); padding: calc(2 * var(--dp)) calc(5 * var(--dp));
+  line-height: 1.3; font-variant-numeric: tabular-nums;
+}
+
+.d-pill svg {
+  width: calc(10 * var(--dp)); height: calc(10 * var(--dp));
+  stroke: var(--app-teal); fill: none; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.notice {
+  display: flex; align-items: center; gap: calc(8 * var(--dp));
+  padding: calc(8 * var(--dp)) calc(12 * var(--dp)); border-radius: calc(8 * var(--dp));
+  border: 1px solid color-mix(in srgb, var(--app-warn) 40%, transparent);
+  background: color-mix(in srgb, var(--app-warn) 10%, transparent);
+  font-size: calc(12 * var(--dp)); color: var(--app-var);
+}
+
+.notice b { color: var(--app-warn); font-weight: 500; }
+.notice u { margin-left: auto; color: var(--app-teal); text-decoration: none; font-weight: 500; flex: none; }
+
+/* ── anatomia ──────────────────────────────────────────────── */
+
+.anatomy { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 26px; align-items: start; }
+
+.anatomy__stage {
+  background: var(--panel-sunk); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 46px 26px; overflow-x: auto; box-shadow: var(--shadow);
+}
+
+.anatomy__inner { --dp: 2px; position: relative; width: calc(360 * var(--dp)); margin: 0 auto; }
+.anatomy__inner .app { padding: calc(10 * var(--dp)); gap: calc(10 * var(--dp)); }
+
+.pin {
+  position: absolute; width: 21px; height: 21px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 700; display: grid; place-items: center;
+  box-shadow: 0 0 0 3px var(--panel-sunk); z-index: 2;
+}
+
+.legend { display: flex; flex-direction: column; gap: 2px; }
+
+.legend__item {
+  display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 11px;
+  padding: 11px 0; border-bottom: 1px solid var(--rule-soft); align-items: start;
+}
+
+.legend__item:last-child { border-bottom: 0; }
+
+.legend__n {
+  width: 21px; height: 21px; border-radius: 50%; background: var(--accent); color: #fff;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 700;
+  display: grid; place-items: center; margin-top: 2px;
+}
+
+.legend__item b { display: block; font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+.legend__item span { display: block; font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; }
+
+/* ── densidade ─────────────────────────────────────────────── */
+
+.density { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; margin-top: 26px; }
+
+.dcol { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.dcol--win { border-color: var(--accent); }
+
+.dcol__head { display: flex; align-items: baseline; gap: 9px; }
+.dcol__head b { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; font-weight: 700; }
+.dcol__head span { font-size: 13px; color: var(--ink-soft); }
+
+.dstack {
+  --scale: 0.42px; height: calc(650 * var(--scale));
+  background: var(--panel-sunk); border: 1px solid var(--rule-soft); border-radius: 3px;
+  padding: calc(6 * var(--scale)); display: flex; flex-direction: column;
+  gap: calc(8 * var(--scale)); overflow: hidden;
+}
+
+.dstack i { display: block; flex: none; height: calc(var(--rh) * var(--scale)); border-radius: calc(6 * var(--scale)); background: color-mix(in srgb, var(--accent) 34%, var(--rule)); }
+.dcol--base .dstack i { background: color-mix(in srgb, var(--app-error) 34%, var(--rule)); }
+
+.dcol__count { display: flex; align-items: baseline; gap: 7px; }
+.dcol__count b { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: var(--accent); }
+.dcol--base .dcol__count b { color: var(--app-error); }
+.dcol__count span { font-size: 12.5px; color: var(--ink-faint); }
+
+/* ── registro de decisões ──────────────────────────────────── */
+
+.ledger { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; box-shadow: var(--shadow); overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 660px; }
+
+thead th {
+  text-align: left; padding: 15px 20px; border-bottom: 1px solid var(--rule);
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint);
+  font-weight: 500; white-space: nowrap;
+}
+
+tbody td { padding: 15px 20px; border-bottom: 1px solid var(--rule-soft); color: var(--ink-soft); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+.pick { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; font-weight: 700; color: var(--accent); }
+.drop { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: var(--ink-faint); text-decoration: line-through; }
+.tag-open { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 600; color: var(--con); }
+.tag-ok { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 600; color: var(--accent); }
+
+/* ── a change ──────────────────────────────────────────────── */
+
+.change { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+
+.cbox {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  box-shadow: var(--shadow); padding: 24px; display: flex; flex-direction: column; gap: 14px;
+}
+
+.cbox--flag { border-color: var(--con); }
+
+.cbox h4 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.012em; }
+.cbox p { margin: 0; font-size: 14.5px; color: var(--ink-soft); line-height: 1.5; }
+.cbox p b { color: var(--ink); font-weight: 600; }
+
+.filelist { display: flex; flex-direction: column; gap: 7px; }
+
+.filelist div {
+  display: flex; gap: 10px; align-items: baseline;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px;
+}
+
+.filelist span { color: var(--ink); }
+.filelist em { font-style: normal; color: var(--ink-faint); font-size: 11.5px; margin-left: auto; }
+
+.reqlist { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 0; list-style: none; counter-reset: r; }
+
+.reqlist li {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px;
+  font-size: 14px; color: var(--ink-soft); line-height: 1.45; counter-increment: r;
+}
+
+.reqlist li::before {
+  content: counter(r); font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 700; color: var(--accent); padding-top: 2px;
+}
+
+.commit {
+  margin-top: 30px; padding: 22px 26px; border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent); border-radius: 4px; background: var(--panel);
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.commit__sha {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px;
+  color: var(--ink-faint); display: flex; flex-wrap: wrap; gap: 6px 18px;
+}
+
+.commit__sha b { color: var(--accent); font-weight: 700; }
+.commit__msg { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; color: var(--ink); font-weight: 500; }
+
+footer {
+  margin-top: 70px; padding-top: 24px; border-top: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; gap: 8px 26px;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--ink-faint);
+}
+
+@media (max-width: 900px) {
+  .anatomy { grid-template-columns: minmax(0, 1fr); }
+  .anatomy__inner { --dp: 1.5px; }
+  .pin { display: none; }
+}
+
+@media (max-width: 560px) {
+  :root { --dp: 1px; }
+  .page { padding: 0 16px 80px; }
+  .anatomy__inner { --dp: 1.15px; }
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="ic-food" viewBox="0 0 24 24">
+    <path d="M6 3v6a2.5 2.5 0 0 0 5 0V3"/><path d="M8.5 11.5V21"/>
+    <path d="M17.5 3c-1.6 1.7-2.4 3.7-2.4 6 0 1.7 1 2.9 2.4 3.2V21"/>
+  </symbol>
+  <symbol id="ic-bag" viewBox="0 0 24 24">
+    <path d="M5.5 8h13l-1.1 12.2a1 1 0 0 1-1 .8H7.6a1 1 0 0 1-1-.8L5.5 8Z"/><path d="M9 8V6.2a3 3 0 0 1 6 0V8"/>
+  </symbol>
+  <symbol id="ic-car" viewBox="0 0 24 24">
+    <path d="M5.4 14.5 7 9.6A2 2 0 0 1 8.9 8.2h6.2A2 2 0 0 1 17 9.6l1.6 4.9"/>
+    <path d="M4.5 14.5h15v3.2h-15z"/><path d="M7.4 17.7v1.6M16.6 17.7v1.6"/>
+  </symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M10.3 8.6 16 12l-5.7 3.4V8.6Z"/></symbol>
+  <symbol id="ic-health" viewBox="0 0 24 24">
+    <path d="M4 12.5h4l1.6-3.6 2.9 7.2 1.8-3.6H20"/>
+    <path d="M4 12.5a5 5 0 0 1 8-5.4 5 5 0 0 1 8 5.4c0 3.6-5.3 7.4-8 9.2-2.7-1.8-8-5.6-8-9.2Z"/>
+  </symbol>
+  <symbol id="ic-cart" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.6l2.1-8H6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></symbol>
+  <symbol id="ic-cup" viewBox="0 0 24 24">
+    <path d="M5 8h11v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9.5h1.8a2.4 2.4 0 0 1 0 4.8H16"/><path d="M8 3v2.4M12 3v2.4"/>
+  </symbol>
+  <symbol id="ic-home" viewBox="0 0 24 24"><path d="M4 11.2 12 5l8 6.2V20a1 1 0 0 1-1 1h-4.2v-6H9.2v6H5a1 1 0 0 1-1-1v-8.8Z"/></symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13 3 5.5 13.4h5.3L10 21l7.6-10.4h-5.3L13 3Z"/></symbol>
+  <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M15.6 4.3a5 5 0 0 0-6.4 6.2L4 15.7 8.3 20l5.2-5.2a5 5 0 0 0 6.2-6.4l-2.9 2.9-2.6-.7-.7-2.6 3.1-3.7Z"/></symbol>
+  <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M4 8.5A2 2 0 0 1 6 6.5h12a2 2 0 0 1 2 2v1.8a2 2 0 0 0 0 3.4v1.8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.8a2 2 0 0 0 0-3.4V8.5Z"/></symbol>
+  <symbol id="ic-autorenew" viewBox="0 0 24 24">
+    <path d="M5.2 12a6.8 6.8 0 0 1 10.9-5.4"/><path d="M13.6 6.1h3v-3"/>
+    <path d="M18.8 12a6.8 6.8 0 0 1-10.9 5.4"/><path d="M10.4 17.9h-3v3"/>
+  </symbol>
+</svg>
+
+<div class="page">
+
+  <!-- ══ MASTHEAD ═══════════════════════════════════════════ -->
+  <header class="masthead">
+    <span class="eyebrow">Finsight · feature/budgets · rev. 4 · decidida e proposta</span>
+    <h1>A linha,<br><em>fechada</em></h1>
+    <p class="lede">
+      Todas as decisões tomadas. A lista abaixo é o desenho final, com <strong>uma linha para
+      cada estado que o domínio produz</strong> — estourado, derivado, irresolvível — na ordem
+      em que a tela vai apresentá-las. Ela virou a change
+      <code>redesign-budgets-screen</code>: proposta, design, 8 requisitos e 25 tarefas,
+      commitados em <code>chore/redesign-budgets-screen</code>.
+    </p>
+    <div class="specbar">
+      <div><b>altura</b> 232 → 52&#8239;dp</div>
+      <div><b>por tela</b> 2,7 → 10,8</div>
+      <div><b>escala</b> 1&#8239;dp = 1,25&#8239;px</div>
+      <div><b>domínio</b> sem mudança</div>
+      <div><b>banco</b> sem migração</div>
+    </div>
+  </header>
+
+  <!-- ══ A LISTA FINAL ══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section__head">
+      <span class="axis-tag">O desenho final</span>
+      <h2>A tela, do estourado ao desconhecido</h2>
+      <p>
+        Sete orçamentos, ordenados por <strong>progresso decrescente</strong> — a decisão que
+        compensa o custo do anel: arco não se compara bem entre linhas, então a lista chega
+        <strong>pré-comparada</strong>, e o gradiente vira uma escala contínua de cima para
+        baixo. O gasto irresolvível fica no fim, e não entre os tranquilos: sem fração ele não
+        tem posição na escala.
+      </p>
+    </div>
+
+    <div class="stage">
+      <div class="app">
+
+        <div class="notice"><b>&#9888;</b> Uma moeda sem taxa neste mês <u>Ver taxas</u></div>
+
+        <div class="row" style="color:var(--p100)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg>
+            <svg class="ring__glyph"><use href="#ic-bag"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Delivery</span><span class="warn-glyph">&#9650;</span>
+              <span class="row__limit money">R$&#8239;300,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-bag"/></svg></i><i><svg><use href="#ic-cup"/></svg></i></span>
+              <span class="row__spent row__spent--over money">R$&#8239;380 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--p80)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="20.1"/></svg>
+            <svg class="ring__glyph"><use href="#ic-food"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Alimentação</span>
+              <span class="row__limit money">R$&#8239;1.200,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-cart"/></svg></i><i><svg><use href="#ic-food"/></svg></i><i><svg><use href="#ic-cup"/></svg></i></span>
+              <span class="row__spent money">R$&#8239;960 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--p62)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="38.2"/></svg>
+            <svg class="ring__glyph"><use href="#ic-home"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Casa</span>
+              <span class="row__limit money">R$&#8239;2.500,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack">
+                <i><svg><use href="#ic-home"/></svg></i><i><svg><use href="#ic-bolt"/></svg></i><i><svg><use href="#ic-wrench"/></svg></i><em>+1</em>
+              </span>
+              <span class="row__spent money">R$&#8239;1.550 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--p48)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="52.3"/></svg>
+            <svg class="ring__glyph"><use href="#ic-ticket"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Lazer</span>
+              <span class="row__limit">
+                <span class="d-pill"><svg><use href="#ic-autorenew"/></svg>30%</span>
+                <span class="money">R$&#8239;1.500,00</span>
+              </span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-ticket"/></svg></i><i><svg><use href="#ic-play"/></svg></i></span>
+              <span class="row__spent money">R$&#8239;720 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--p35)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="65.3"/></svg>
+            <svg class="ring__glyph"><use href="#ic-car"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Transporte</span>
+              <span class="row__limit money">R$&#8239;300,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-car"/></svg></i><i><svg><use href="#ic-bolt"/></svg></i></span>
+              <span class="row__spent money">R$&#8239;105 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--p15)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="85.4"/></svg>
+            <svg class="ring__glyph"><use href="#ic-play"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Assinaturas</span>
+              <span class="row__limit money">R$&#8239;300,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-play"/></svg></i></span>
+              <span class="row__spent money">R$&#8239;45 <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="color:var(--app-var)">
+          <span class="ring">
+            <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/></svg>
+            <svg class="ring__glyph"><use href="#ic-health"/></svg>
+          </span>
+          <div class="row__col">
+            <div class="row__line">
+              <span class="row__name">Saúde</span>
+              <span class="row__limit money" style="color:var(--app-on)">R$&#8239;400,00</span>
+            </div>
+            <div class="row__line row__line--mid">
+              <span class="catstack"><i><svg><use href="#ic-health"/></svg></i><i><svg><use href="#ic-cup"/></svg></i></span>
+              <span class="row__spent unresolved">&#42;&#42;&#42; <b>gastos</b></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="density">
+      <div class="dcol dcol--base">
+        <div class="dcol__head"><b>ANTES</b><span>232 dp</span></div>
+        <div class="dstack"><i style="--rh:232"></i><i style="--rh:232"></i><i style="--rh:232"></i></div>
+        <div class="dcol__count"><b>2,7</b><span>por tela</span></div>
+      </div>
+      <div class="dcol dcol--win">
+        <div class="dcol__head"><b>DEPOIS</b><span>52 dp</span></div>
+        <div class="dstack">
+          <i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i>
+          <i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i><i style="--rh:52"></i>
+        </div>
+        <div class="dcol__count"><b>10,8</b><span>por tela</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ANATOMIA ═══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section__head">
+      <span class="axis-tag">Anatomia</span>
+      <h2>Sete peças em 52&#8239;dp</h2>
+      <p>
+        A linha em escala dobrada. Cada peça abaixo corresponde a um requisito da spec — nada
+        aqui é decoração, e nenhum estado depende só de cor.
+      </p>
+    </div>
+
+    <div class="anatomy">
+      <div class="anatomy__stage">
+        <div class="anatomy__inner">
+          <span class="pin" style="left:-9px; top:34px">1</span>
+          <span class="pin" style="left:82px; top:2px">2</span>
+          <span class="pin" style="left:170px; top:2px">3</span>
+          <span class="pin" style="right:172px; top:2px">4</span>
+          <span class="pin" style="right:-9px; top:14px">5</span>
+          <span class="pin" style="left:82px; bottom:2px">6</span>
+          <span class="pin" style="right:-9px; bottom:14px">7</span>
+
+          <div class="app">
+            <div class="row" style="color:var(--p100)">
+              <span class="ring">
+                <svg class="track" viewBox="0 0 36 36"><circle class="t" cx="18" cy="18" r="16"/><circle class="v" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg>
+                <svg class="ring__glyph"><use href="#ic-bag"/></svg>
+              </span>
+              <div class="row__col">
+                <div class="row__line">
+                  <span class="row__name">Delivery</span>
+                  <span class="warn-glyph">&#9650;</span>
+                  <span class="row__limit">
+                    <span class="d-pill"><svg><use href="#ic-autorenew"/></svg>30%</span>
+                    <span class="money">R$&#8239;300,00</span>
+                  </span>
+                </div>
+                <div class="row__line row__line--mid">
+                  <span class="catstack"><i><svg><use href="#ic-bag"/></svg></i><i><svg><use href="#ic-cup"/></svg></i><i><svg><use href="#ic-cart"/></svg></i></span>
+                  <span class="row__spent row__spent--over money">R$&#8239;380 <b>gastos</b></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend__item">
+          <span class="legend__n">1</span>
+          <div>
+            <b>Anel + ícone</b>
+            <span>O progresso ocupa a altura do chip que já existia. Custa <strong>zero dp</strong> — é o que libera os dois slots de texto.</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">2</span>
+          <div>
+            <b>Identidade</b>
+            <span>Cede largura antes das figuras. Trunca com reticências; o teto nunca.</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">3</span>
+          <div>
+            <b>Glifo de estouro</b>
+            <span>Com <code>contentDescription</code>. Necessário porque o anel satura: cheio, não distingue 100% de 300%.</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">4</span>
+          <div>
+            <b>Marca de teto derivado</b>
+            <span>Só em <code>PERCENTAGE</code>. <code>Autorenew</code> — o glifo que o app já usa para recorrência — mais o percentual, em <code>Primary1</code>. Não âmbar (não é aviso), não <code>Info</code> (já significa <em>editar</em>).</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">5</span>
+          <div>
+            <b>O teto</b>
+            <span>A figura principal. Digitado, na moeda da criação — a única da linha imune a câmbio.</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">6</span>
+          <div>
+            <b>Pilha de categorias</b>
+            <span>Largura constante, excedente contado, <strong>sem tint</strong>: a cor de categoria responde por tipo, e sairia toda vermelha.</span>
+          </div>
+        </div>
+        <div class="legend__item">
+          <span class="legend__n">7</span>
+          <div>
+            <b>O gasto</b>
+            <span>Sob o teto, o estouro fica legível <strong>por aritmética</strong>. Vira <code>***</code> quando não se reduz à moeda do limite.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ REGISTRO ═══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section__head">
+      <span class="axis-tag">Registro</span>
+      <h2>O que foi escolhido, e contra o quê</h2>
+    </div>
+
+    <div class="ledger">
+      <table>
+        <thead><tr><th>Decisão</th><th>Escolhido</th><th>Descartado</th><th>O que decidiu</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Forma do progresso</td>
+            <td><span class="pick">V2</span> anel no ícone</td>
+            <td><span class="drop">V1 barra</span> <span class="drop">V3 linha-barra</span></td>
+            <td>ocupa a altura do chip que já existia; o progresso deixa de custar altura</td>
+          </tr>
+          <tr>
+            <td>Número principal</td>
+            <td><span class="pick">teto</span> cadastrado</td>
+            <td><span class="drop">par</span> <span class="drop">restante</span> <span class="drop">percentual</span></td>
+            <td>a tela é de gestão, não de acompanhamento — e o teto é imune a câmbio</td>
+          </tr>
+          <tr>
+            <td>Categorias</td>
+            <td><span class="pick">CAT-2</span> ícones, sem tint</td>
+            <td><span class="drop">CAT-1 nomes</span> <span class="drop">CAT-3 contagem</span></td>
+            <td>largura constante; e a cor por tipo sairia toda vermelha</td>
+          </tr>
+          <tr>
+            <td>Quarto quadrante</td>
+            <td><span class="pick">Q2</span> o gasto</td>
+            <td><span class="drop">Q1 percentual</span> <span class="drop">Q3 vazio</span></td>
+            <td>torna o estouro legível por aritmética, sem depender do indicador</td>
+          </tr>
+          <tr>
+            <td>Teto derivado</td>
+            <td><span class="pick">D1b</span> glifo + pílula</td>
+            <td><span class="drop">D1a só glifo</span> <span class="drop">D1c pontilhado</span> <span class="drop">D1d prefixo</span></td>
+            <td>diz <em>que</em> se renova e <em>de quanto</em>, sem virar frase</td>
+          </tr>
+          <tr>
+            <td>Ordenação</td>
+            <td><span class="pick">progresso &darr;</span></td>
+            <td><span class="drop">createdAt ASC</span> <span class="drop">seções por estado</span></td>
+            <td>compensa o custo do anel; cabeçalhos custam mais do que organizam</td>
+          </tr>
+          <tr>
+            <td>Badge de câmbio</td>
+            <td><span class="pick">aviso único</span> no topo</td>
+            <td><span class="drop">badge por linha</span></td>
+            <td>a causa é global — falta taxa —, não propriedade de um orçamento</td>
+          </tr>
+          <tr>
+            <td>Período</td>
+            <td><span class="pick">slot reservado</span>, vazio</td>
+            <td><span class="drop">sem lugar</span></td>
+            <td>o mesmo teto significa coisas opostas por mês e por semana</td>
+          </tr>
+          <tr>
+            <td>Modal de detalhe</td>
+            <td><span class="pick">não muda</span></td>
+            <td><span class="drop">encolher</span> <span class="drop">breakdown</span></td>
+            <td>a redundância morreu por subtração do lado certo</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ A CHANGE ═══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section__head">
+      <span class="axis-tag">Entregue</span>
+      <h2>O que virou change</h2>
+      <p>
+        <code>openspec/changes/redesign-budgets-screen/</code> — validada, 25 tarefas.
+        Nenhuma capacidade existente foi modificada.
+      </p>
+    </div>
+
+    <div class="change">
+
+      <div class="cbox">
+        <h4>Os arquivos</h4>
+        <div class="filelist">
+          <div><span>proposal.md</span><em>por que, o que muda, impacto</em></div>
+          <div><span>design.md</span><em>7 decisões + riscos</em></div>
+          <div><span>tasks.md</span><em>7 blocos, 25 tarefas</em></div>
+          <div><span>specs/budget-list-row/</span><em>8 requisitos, 21 cenários</em></div>
+        </div>
+        <p>
+          <b>Sem mudança de domínio, razão ou banco.</b> <code>BudgetProgress</code> já expõe
+          tudo o que a linha lê — é UI e ordenação.
+        </p>
+      </div>
+
+      <div class="cbox">
+        <h4>A capacidade nova</h4>
+        <ol class="reqlist">
+          <li>A linha discrimina, e não antecipa a ficha</li>
+          <li>O número principal é o teto cadastrado</li>
+          <li>As categorias são o segundo dado, e os ícones não são tintados</li>
+          <li>Nenhum estado é carregado apenas por cor</li>
+          <li>Um teto derivado se declara como derivado</li>
+          <li>A linha é superfície de gramática própria; o aviso é da lista</li>
+          <li>A lista é ordenada por progresso</li>
+          <li>A linha comporta o período do orçamento</li>
+        </ol>
+      </div>
+
+      <div class="cbox">
+        <h4>Nada foi modificado</h4>
+        <p>
+          <b>budget-composition</b> é premissa, não objeto: a proibição de somar orçamentos é o
+          que impede esta tela de ganhar o card de resumo que Recorrentes ganhou.
+        </p>
+        <p>
+          <b>money-display</b> já prevê as duas superfícies — a que mostra as parcelas e a de
+          gramática própria que mostra <code>***</code> — e exige que cada uma <em>declare</em>
+          qual é, “não deixando a decisão ao layout”. A linha muda de classe; a declaração mora
+          na capacidade nova.
+        </p>
+      </div>
+
+      <div class="cbox cbox--flag">
+        <h4>Duas coisas a confirmar</h4>
+        <p>
+          Decididas por argumento, não por escolha explícita. Estão marcadas em
+          <code>design.md</code> e são reversíveis sem tocar no resto.
+        </p>
+        <p>
+          <b>1. Ordenação por progresso.</b> A alternativa é manter a ordem de criação, que não
+          responde pergunta alguma da tela.
+        </p>
+        <p>
+          <b>2. O rótulo “gastos”.</b> <code>recurring-list-row</code> desaconselha legenda
+          constante — mas aquela linha exibe <em>uma</em> figura e esta exibe <em>duas</em>. A
+          spec registra a distinção como exceção, em vez de fingir que não existe.
+        </p>
+      </div>
+
+      <div class="cbox cbox--flag">
+        <h4>Perda de cobertura declarada</h4>
+        <p>
+          <code>budgets/lifecycle.yaml</code> usa <code>budget_remaining_label</code> e
+          <code>budget_remaining_amount</code> em <b>três blocos</b>, e as duas tags somem.
+        </p>
+        <p>
+          O fluxo prova hoje que lista e ficha implementam o estouro por caminhos
+          independentes — o próprio comentário diz “cada um capaz de quebrar sem o outro”.
+          <b>Na lista sobra um.</b> As asserções passam para o glifo e para a relação entre
+          <code>budget_limit_amount</code> e <code>budget_spent_amount</code>.
+        </p>
+      </div>
+
+      <div class="cbox">
+        <h4>Fora de escopo, registrado</h4>
+        <p>
+          <b>Cor por categoria</b> — exigiria <code>Category</code> ganhar cor como estado
+          primário, com migração e formulário, atravessando toda tela que renderiza categoria.
+        </p>
+        <p>
+          <b>Breakdown por categoria</b> no detalhe — segue sendo a única coisa que esta linha
+          jamais poderá mostrar, e por isso o melhor candidato a próxima change.
+        </p>
+        <p>
+          <b>Orçamentos semanais</b> — e a questão maior que eles abrem: o seletor de mês vive
+          na <code>TopAppBar</code> e governa a tela inteira.
+        </p>
+      </div>
+    </div>
+
+    <div class="commit">
+      <div class="commit__sha">
+        <span><b>9b7016a9e</b></span>
+        <span>chore/redesign-budgets-screen</span>
+        <span>5 arquivos</span>
+        <span>não enviado</span>
+      </div>
+      <div class="commit__msg">Chore(OpenSpec): propose a budgets list that leads with the ceiling, not the spend</div>
+    </div>
+  </section>
+
+  <footer>
+    <span>BudgetsScreen.kt:226</span>
+    <span>CalculateBudgetProgressUseCase.kt:103</span>
+    <span>CategoryColor.kt:39</span>
+    <span>BudgetDao.kt:14</span>
+    <span>budget-composition/spec.md</span>
+    <span>money-display/spec.md</span>
+    <span>recurring-list-row/spec.md</span>
+  </footer>
+</div>
+</body>
+</html>

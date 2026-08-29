@@ -109,7 +109,7 @@
 * { box-sizing: border-box; }
 
 /* Class-level `display` beats the UA sheet's [hidden] rule, and this page hides
-   flex containers (the rail, the chevron). Without this they stay laid out. */
+   flex containers (the rail, the menu). Without this they stay laid out. */
 [hidden] { display: none !important; }
 
 body {
@@ -243,14 +243,10 @@ section { padding-top: clamp(56px, 8vw, 88px); }
 .fab button:hover { background: rgba(255,255,255,.14); }
 .fab button:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 .fab-main { width: 56px; height: 56px; }
-.fab-main svg { width: 24px; height: 24px; }
-.fab-toggle {
-  width: 34px; height: 56px;
-  border-left: 1px solid rgba(255,255,255,.28) !important;
-}
-.fab-toggle svg { width: 18px; height: 18px; transition: transform .22s ease; }
-.fab-unit[data-open="true"] .fab-toggle svg { transform: rotate(180deg); }
-.fab.is-solo { border-radius: 18px; }
+.fab-main svg { width: 24px; height: 24px; transition: transform .22s ease; }
+/* One size on every screen: the plus turns into a cross while the menu is open, and that is the
+   whole of the difference between a button that acts and a button that opens. */
+.fab-unit[data-open="true"] .fab-main svg { transform: rotate(45deg); }
 
 .fab-menu {
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
@@ -533,7 +529,6 @@ footer {
 
 <svg style="display:none" aria-hidden="true">
   <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></symbol>
   <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h14l-3-3M21 16H7l3 3"/></symbol>
   <symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4V3z"/><path d="M9.5 8h5M9.5 12h5"/></symbol>
   <symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h12v4"/><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor" stroke="none"/></symbol>
@@ -556,8 +551,9 @@ footer {
     <p class="lede">
       O app tem <strong>dez botões de ação flutuantes</strong>: um no shell, que adiciona transação,
       e nove dentro das telas, um por feature. Eles nunca se conversam — e na janela larga aparecem
-      dois ao mesmo tempo. A proposta é um FAB só, dono da posição e do componente, que mantém a ação
-      de cada tela a <strong>um toque</strong> e guarda as demais atrás de um chevron.
+      dois ao mesmo tempo. A proposta é um FAB só, dono da posição e do componente, com
+      <strong>um tamanho só</strong> em toda tela: onde a tela oferece uma ação ele é a ação, e onde
+      oferece mais ele abre um menu com todas elas.
     </p>
     <dl class="facts">
       <div class="fact"><dt>FABs hoje</dt><dd>10</dd></div>
@@ -570,22 +566,22 @@ footer {
   <section id="anatomia">
     <div class="sec-head"><span class="num">01</span><h2>Anatomia</h2></div>
     <p class="sec-sub">
-      Um componente, três formas — e a forma é decidida pela quantidade de ações que a tela publica,
-      nunca declarada por ela.
+      Um componente, um tamanho. O que muda com a quantidade de ações que a tela publica é o que
+      pressioná-lo faz — e isso a tela também não declara.
     </p>
 
     <div class="anatomy">
       <article class="spec">
         <div class="spec-stage">
           <div class="fab-unit">
-            <div class="fab is-solo">
+            <div class="fab">
               <button class="fab-main" type="button" aria-label="Nova conta" tabindex="-1"><svg><use href="#i-plus"/></svg></button>
             </div>
           </div>
         </div>
         <div>
           <h3>Uma ação</h3>
-          <p>Sem chevron, sem menu. Idêntico ao FAB que a tela já tem hoje.</p>
+          <p>Pressionar executa a ação, e o botão responde pelo id dela. Idêntico ao FAB que a tela já tem hoje.</p>
           <span class="mono">actions.size == 1</span>
         </div>
       </article>
@@ -594,14 +590,13 @@ footer {
         <div class="spec-stage">
           <div class="fab-unit">
             <div class="fab">
-              <button class="fab-main" type="button" aria-label="Nova conta" tabindex="-1"><svg><use href="#i-plus"/></svg></button>
-              <button class="fab-toggle" type="button" aria-label="Mais ações" tabindex="-1"><svg><use href="#i-chev"/></svg></button>
+              <button class="fab-main" type="button" aria-label="Mais ações" tabindex="-1"><svg><use href="#i-plus"/></svg></button>
             </div>
           </div>
         </div>
         <div>
           <h3>Duas ou mais, fechado</h3>
-          <p>O corpo executa a primária num toque. O chevron é a única parte que abre o menu.</p>
+          <p>Mesmo tamanho, mesmo desenho. Pressionar abre o menu, e o botão passa a ter um id próprio.</p>
           <span class="mono">actions.size &gt; 1</span>
         </div>
       </article>
@@ -610,19 +605,19 @@ footer {
         <div class="spec-stage">
           <div class="fab-unit" data-open="true">
             <div class="fab-menu">
+              <button class="fab-item" type="button" tabindex="-1"><svg><use href="#i-plus"/></svg>Nova conta</button>
               <button class="fab-item" type="button" tabindex="-1"><svg class="tint-transfer"><use href="#i-swap"/></svg>Nova transferência</button>
               <button class="fab-item" type="button" tabindex="-1"><svg class="tint-expense"><use href="#i-receipt"/></svg>Nova transação</button>
             </div>
             <div class="fab">
-              <button class="fab-main" type="button" aria-label="Nova conta" tabindex="-1"><svg><use href="#i-plus"/></svg></button>
-              <button class="fab-toggle" type="button" aria-label="Fechar" tabindex="-1"><svg><use href="#i-chev"/></svg></button>
+              <button class="fab-main" type="button" aria-label="Fechar ações" tabindex="-1"><svg><use href="#i-plus"/></svg></button>
             </div>
           </div>
         </div>
         <div>
           <h3>Aberto</h3>
-          <p>As secundárias sobem rotuladas — sem ícone mudo. O chevron gira; o corpo continua fazendo a primária.</p>
-          <span class="mono">chevron → aria-expanded="true"</span>
+          <p>Todas sobem rotuladas — a primeira inclusive, porque o botão deixou de executá-la. O <span class="mono">+</span> gira 45°.</p>
+          <span class="mono">aria-expanded="true"</span>
         </div>
       </article>
     </div>
@@ -631,8 +626,8 @@ footer {
   <section id="simulador">
     <div class="sec-head"><span class="num">02</span><h2>Simulador</h2></div>
     <p class="sec-sub">
-      Escolha a tela, a janela e onde o botão fica. Ele funciona: o corpo dispara a ação primária, o
-      chevron abre o resto. O número no chip é quantas ações aquela tela publica.
+      Escolha a tela, a janela e onde o botão fica. Ele funciona: com uma ação o botão a dispara, com
+      mais de uma ele abre o menu. O número no chip é quantas ações aquela tela publica.
     </p>
 
     <div class="sim">
@@ -667,8 +662,7 @@ footer {
               <div class="fab-unit" id="unit" data-open="false">
                 <div class="fab-menu" id="menu" hidden></div>
                 <div class="fab" id="fab">
-                  <button class="fab-main" id="fab-main" type="button"><svg><use href="#i-plus"/></svg></button>
-                  <button class="fab-toggle" id="fab-toggle" type="button" aria-expanded="false" aria-label="Mais ações"><svg><use href="#i-chev"/></svg></button>
+                  <button class="fab-main" id="fab-main" type="button" aria-expanded="false"><svg><use href="#i-plus"/></svg></button>
                 </div>
               </div>
             </div>
@@ -698,10 +692,11 @@ footer {
   <section id="matriz">
     <div class="sec-head"><span class="num">03</span><h2>As onze telas</h2></div>
     <p class="sec-sub">
-      A prova de que nada regride: a primária de cada tela é a ação que o FAB local dela já executa
-      hoje. O toque único continua valendo em todas — o menu só acrescenta. Em compensação, o chevron
-      existe em três telas apenas, e em nenhuma das duas tabs principais: quem só usa Dashboard e
-      Transações nunca descobre que o botão tem um menu.
+      A prova de que nada regride em repertório: a primeira ação de cada tela é a que o FAB local dela
+      já executa hoje, e o menu só acrescenta. Nas oito telas de ação única o toque continua sendo um;
+      nas três com menu ele passa a ser dois, que é o preço do botão de tamanho único. E o menu existe
+      em três telas apenas, em nenhuma das duas tabs principais: quem só usa Dashboard e Transações
+      nunca descobre que o botão tem um.
     </p>
 
     <div class="tablewrap">
@@ -803,7 +798,7 @@ const SCREENS = [
     id: 'dashboard', name: 'Dashboard', tab: true, sub: 'agosto de 2026',
     today: 'shell · Adicionar transação', tag: 'add_transaction_fab',
     primary: A.tx, menu: [],
-    desc: 'Uma ação só, exatamente como hoje: sem chevron e sem menu. Aqui a consolidação é de componente e de posição, não de repertório.',
+    desc: 'Uma ação só, exatamente como hoje: pressionar o botão a executa. Aqui a consolidação é de componente e de posição, não de repertório.',
     body: [
       { hero: true, lbl: 'Saldo consolidado', big: 'R$ 12.480,35',
         split: [['Contas', 'R$ 8.230,15', 'tint-income'], ['Cartões', '−R$ 1.842,70', 'tint-expense'], ['Mês', '+R$ 640,20', 'tint-income']] },
@@ -865,7 +860,7 @@ const SCREENS = [
     id: 'budgets', name: 'Orçamentos', tab: false, sub: 'agosto de 2026',
     today: 'tela · Novo orçamento', tag: 'budgets_add',
     primary: A.budget, menu: [],
-    desc: 'Uma ação só. O FAB fica sem chevron e é indistinguível do que existe hoje — o ganho aqui é o componente e a posição únicos.',
+    desc: 'Uma ação só. Pressionar o botão a executa, e ele é indistinguível do que existe hoje — o ganho aqui é o componente e a posição únicos.',
     body: [
       { icon: 'i-savings', tint: 'tint-amber',   t1: 'Alimentação', t2: 'R$ 1.240 de R$ 1.600', val: '78%', bar: 78, barColor: 'var(--amber)' },
       { icon: 'i-savings', tint: 'tint-income',  t1: 'Transporte',  t2: 'R$ 612 de R$ 1.000',   val: '61%', bar: 61, barColor: 'var(--income)' },
@@ -985,8 +980,10 @@ document.querySelectorAll('.seg button[data-p]').forEach((b) => {
   });
 });
 
-$('fab-main').addEventListener('click', () => fire(current.primary));
-$('fab-toggle').addEventListener('click', () => { open = !open; render(); });
+$('fab-main').addEventListener('click', () => {
+  /* One action and the button is that action; more than one and it is the menu's opener. */
+  if (current.menu.length) { open = !open; render(); } else { fire(current.primary); }
+});
 $('scrim').addEventListener('click', () => { open = false; render(); });
 
 function fire(action) {
@@ -1069,27 +1066,33 @@ function render() {
 
   /* the fab */
   const hasMenu = current.menu.length > 0;
-  $('fab').classList.toggle('is-solo', !hasMenu);
-  $('fab-toggle').hidden = !hasMenu;
-  $('fab-main').setAttribute('aria-label', current.primary.label);
-  $('fab-toggle').setAttribute('aria-expanded', String(open));
+  /* The menu lists every action, the first one included: the button stopped running it. */
+  const listed = hasMenu ? [current.primary, ...current.menu] : [];
+
+  $('fab-main').setAttribute(
+    'aria-label',
+    hasMenu ? (open ? 'Fechar ações' : 'Mais ações') : current.primary.label,
+  );
+  $('fab-main').setAttribute('aria-expanded', String(open && hasMenu));
 
   $('unit').dataset.open = String(open && hasMenu);
   $('menu').hidden = !(open && hasMenu);
-  $('menu').innerHTML = current.menu.map((a, i) => `
+  $('menu').innerHTML = listed.map((a, i) => `
     <button class="fab-item" type="button" data-a="${i}">${ico(a.icon, a.tint)}${a.label}</button>`).join('');
   $('menu').querySelectorAll('.fab-item').forEach((b) => {
-    b.addEventListener('click', () => fire(current.menu[+b.dataset.a]));
+    b.addEventListener('click', () => fire(listed[+b.dataset.a]));
   });
   $('scrim').dataset.on = String(open && hasMenu);
 
   /* notes */
   $('note-title').textContent = current.name;
   $('note-desc').textContent = current.desc;
-  $('note-rows').innerHTML = [
-    `<div class="r">${ico(current.primary.icon, current.primary.tint)}<span>${current.primary.label}</span><span class="k">1 toque</span></div>`,
-    ...current.menu.map((a) => `<div class="r">${ico(a.icon, a.tint)}<span>${a.label}</span><span class="k">2 toques</span></div>`),
-  ].join('');
+  /* Every action costs the same on a given screen: one tap where the button *is* the action, two
+     wherever it opens the menu — the first action included. */
+  const cost = hasMenu ? '2 toques' : '1 toque';
+  $('note-rows').innerHTML = [current.primary, ...current.menu]
+    .map((a) => `<div class="r">${ico(a.icon, a.tint)}<span>${a.label}</span><span class="k">${cost}</span></div>`)
+    .join('');
 
   $('note-bar').innerHTML = showBar
     ? '<span class="badge">bottom bar visível</span>'

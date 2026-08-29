@@ -18,20 +18,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -75,23 +71,22 @@ enum class FloatingActionMenuDirection {
     Beside,
 }
 
-/** The expand control of a button that offers more than one action. */
+/** The button, while it is the thing that opens the menu rather than an action of its own. */
 const val FLOATING_ACTION_EXPAND_TEST_TAG = "floating_action_expand"
 
 /** The area an open menu is dismissed on (see [FloatingActionMenuScrim]). */
 const val FLOATING_ACTION_SCRIM_TEST_TAG = "floating_action_scrim"
 
-private val ButtonHeight = 56.dp
-private val BodyWidth = 56.dp
-private val ExpandWidth = 48.dp
-
 /**
- * The action button, in the three forms its list of actions decides.
+ * The app's action button: one plus sign, one size, on every screen.
  *
- * The form is derived, never declared: no action draws nothing, one action draws a plain button
- * that runs it, and two or more draw a body — which runs the **first** action, the primary one —
- * beside an expand control that reveals the rest. The body never opens the menu, so the primary
- * action costs a single tap on every screen.
+ * What it *does* is what changes with the list, and nothing about its shape says so. No action
+ * draws nothing at all. A single action is the button — pressing it runs that action, and the
+ * button carries that action's identity. Two or more turn it into the opener of
+ * [FloatingActionMenuList], which lists them all: the button is then no action in particular, so it
+ * wears the app's own add mark instead of borrowing one action's icon, and it answers to
+ * [FLOATING_ACTION_EXPAND_TEST_TAG]. The plus turns into a cross while the menu is open, which is
+ * the same gesture read backwards.
  *
  * The menu is [FloatingActionMenuList] and the scrim is [FloatingActionMenuScrim]: three
  * composables rather than one because the caller places them at three different points. In a wide
@@ -106,94 +101,41 @@ fun FloatingActionMenuButton(
     modifier: Modifier = Modifier,
 ) {
     val primary = actions.firstOrNull() ?: return
-    val primaryLabel = stringResource(primary.labelRes)
-
-    if (actions.size == 1) {
-        FloatingActionButton(
-            onClick = primary.onClick,
-            modifier = modifier.testTag(primary.testTag),
-        ) {
-            Icon(
-                imageVector = primary.icon,
-                contentDescription = primaryLabel,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-
-        return
-    }
-
-    val containerColor = FloatingActionButtonDefaults.containerColor
-    val contentColor = contentColorFor(containerColor)
+    val opensMenu = actions.size > 1
 
     val rotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        label = "FloatingActionExpandRotation",
+        targetValue = if (opensMenu && expanded) 45f else 0f,
+        label = "FloatingActionRotation",
     )
 
-    Surface(
-        shape = FloatingActionButtonDefaults.shape,
-        color = containerColor,
-        contentColor = contentColor,
-        shadowElevation = 6.dp,
-        modifier = modifier.height(ButtonHeight),
+    FloatingActionButton(
+        onClick = {
+            if (opensMenu) onExpandedChange(!expanded) else primary.onClick()
+        },
+        modifier = modifier.testTag(
+            if (opensMenu) FLOATING_ACTION_EXPAND_TEST_TAG else primary.testTag
+        ),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(width = BodyWidth, height = ButtonHeight)
-                    .clickable(
-                        role = Role.Button,
-                        onClick = primary.onClick,
-                    )
-                    .testTag(primary.testTag),
-            ) {
-                Icon(
-                    imageVector = primary.icon,
-                    contentDescription = primaryLabel,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-
-            VerticalDivider(
-                color = contentColor.copy(alpha = 0.24f),
-                modifier = Modifier.height(32.dp),
-            )
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(width = ExpandWidth, height = ButtonHeight)
-                    .clickable(
-                        role = Role.Button,
-                        onClick = { onExpandedChange(!expanded) },
-                    )
-                    .testTag(FLOATING_ACTION_EXPAND_TEST_TAG),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ExpandLess,
-                    contentDescription = stringResource(
-                        if (expanded) {
-                            Res.string.floating_action_collapse
-                        } else {
-                            Res.string.floating_action_expand
-                        }
-                    ),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(rotation),
-                )
-            }
-        }
+        Icon(
+            imageVector = if (opensMenu) Icons.Default.Add else primary.icon,
+            contentDescription = when {
+                !opensMenu -> stringResource(primary.labelRes)
+                expanded -> stringResource(Res.string.floating_action_collapse)
+                else -> stringResource(Res.string.floating_action_expand)
+            },
+            modifier = Modifier
+                .size(24.dp)
+                .rotate(rotation),
+        )
     }
 }
 
 /**
- * The actions the expand control reveals — everything after the primary one.
+ * The actions the button reveals, whenever there is more than one of them.
  *
- * It takes the same list the button does and drops the primary itself, so the two cannot disagree
- * about which action that is. Every item is labelled: an icon alone would name nothing.
+ * It takes the same list the button does and lists it whole — the first action included. The button
+ * no longer runs it, so leaving it out would put it out of reach entirely. Every item is labelled:
+ * an icon alone would name nothing.
  */
 @Composable
 fun FloatingActionMenuList(
@@ -204,9 +146,7 @@ fun FloatingActionMenuList(
     modifier: Modifier = Modifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.End,
 ) {
-    val secondary = actions.drop(1)
-
-    if (secondary.isEmpty()) return
+    if (actions.size < 2) return
 
     AnimatedVisibility(
         visible = expanded,
@@ -224,10 +164,10 @@ fun FloatingActionMenuList(
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Nearest the button first: opening upwards, that is the last row drawn.
+            // The first action nearest the button: opening upwards, that is the last row drawn.
             val ordered = when (direction) {
-                FloatingActionMenuDirection.Above -> secondary.asReversed()
-                FloatingActionMenuDirection.Beside -> secondary
+                FloatingActionMenuDirection.Above -> actions.asReversed()
+                FloatingActionMenuDirection.Beside -> actions
             }
 
             ordered.forEach { action ->

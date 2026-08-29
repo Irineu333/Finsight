@@ -1,0 +1,28 @@
+appId: com.neoutils.finsight
+name: tap_action
+---
+# Reaches one action of the app's action button by its id, whichever form the button has. Callers
+# pass ACTION, the id the screen declared for that action.
+#
+# The button is a single `+` on every screen, and what pressing it does depends on how many actions
+# the screen published: one, and the button *is* that action and answers to its id; more than one,
+# and it opens a menu where each action answers to its own. Which of the two it is depends on the
+# screen's **state**, not only on the screen — the accounts screen offers one action with no account
+# in view and three with one — so a flow cannot decide it once and for all.
+#
+# Hence the condition: open the menu only when the action is not already on screen. That also covers
+# the empty-state buttons that deliberately carry the same id as the action they duplicate.
+- runFlow:
+    when:
+      notVisible:
+        id: ${ACTION}
+    commands:
+      - tapOn:
+          id: "floating_action_expand"
+      - extendedWaitUntil:
+          visible:
+            id: ${ACTION}
+          timeout: 5000
+
+- tapOn:
+    id: ${ACTION}

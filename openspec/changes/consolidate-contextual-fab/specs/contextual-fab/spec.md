@@ -24,9 +24,10 @@ Cada tela SHALL declarar as ações que o botão oferece **enquanto ela está em
 pelo canal de chrome (`ChromeEffect`). A casca SHALL renderizá-las sem conhecer a feature que as
 originou: ela decide *como* elas aparecem, e nunca *quais* são.
 
-A lista SHALL ser **ordenada**, e a primeira posição SHALL ser a ação primária. Uma ação SHALL
-declarar o rótulo que a nomeia, o ícone que a acompanha, a identidade que a torna alcançável em
-teste e o que ela executa.
+A lista SHALL ser **ordenada**, e a ordem SHALL ser a que a tela declarou — é ela que decide o que
+o usuário lê primeiro, e o que o botão executa quando há uma ação só. Uma ação SHALL declarar o
+rótulo que a nomeia, o ícone que a acompanha, a identidade que a torna alcançável em teste e o que
+ela executa.
 
 A casca MUST NOT manter um mapa de rota para ações. Uma ação pode depender do estado corrente da
 tela — o tipo que o formulário de categoria abre pré-selecionado depende do filtro em vigor —, e
@@ -48,9 +49,9 @@ o registro da sua identidade, e MUST NOT apagar o de outra — a tela que sai se
 tela que entra já ter publicado.
 
 #### Scenario: Ação que depende do estado da tela
-- **WHEN** o filtro da tela de categorias está em despesas e o usuário aciona a ação primária
+- **WHEN** o filtro da tela de categorias está em despesas e o usuário aciona a primeira ação
 - **THEN** o formulário abre com o tipo despesa pré-selecionado; trocado o filtro para receitas, a
-  mesma ação primária passa a abrir com receita, sem que a casca tenha sido alterada
+  mesma ação passa a abrir com receita, sem que a casca tenha sido alterada
 
 #### Scenario: Navegação entre telas com ações diferentes
 - **WHEN** o usuário navega de uma tela para outra que oferece ações distintas
@@ -65,30 +66,39 @@ tela que entra já ter publicado.
 - **WHEN** a casca é inspecionada
 - **THEN** ela não nomeia nenhuma feature nem obtém entry point algum para montar as ações do botão
 
-### Requirement: A ação primária custa um toque, e a forma do botão diz quantas há
+### Requirement: O botão tem uma forma só, e a lista decide o que acioná-lo faz
 
-A forma do botão SHALL ser **derivada** da quantidade de ações publicadas, e MUST NOT ser
-declarada pela tela:
+O botão SHALL ter **a mesma forma e o mesmo tamanho em toda tela**, qualquer que seja o número de
+ações publicadas. A quantidade de ações MUST NOT alterar a sua silhueta: um botão que cresce ao
+ganhar uma segunda ação anuncia, no espaço que ocupa, algo que o usuário não pediu para saber.
+
+O que **acioná-lo faz** SHALL ser derivado da quantidade de ações publicadas, e MUST NOT ser
+declarado pela tela:
 
 - **Nenhuma ação** — o botão não é exibido.
-- **Uma ação** — botão simples. Acioná-lo executa a ação.
-- **Duas ou mais** — botão com duas áreas: o corpo, que executa a ação primária, e um controle de
-  expansão, que revela as demais. O corpo MUST NOT abrir o menu.
+- **Uma ação** — acioná-lo executa a ação, e o botão carrega a identidade dela.
+- **Duas ou mais** — acioná-lo abre o menu. O botão não é então nenhuma ação em particular: ele
+  MUST NOT carregar a identidade de nenhuma delas, e SHALL ter uma identidade própria.
 
-Acionar a ação primária SHALL custar **um toque** em toda tela, qualquer que seja o número de
-ações publicadas. As ações secundárias SHALL ser exibidas com rótulo visível, e MUST NOT ser
-oferecidas apenas por ícone.
+Com duas ou mais ações, o menu SHALL listar **todas** as ações publicadas, a primeira inclusive:
+o botão deixou de executá-la, e uma ação fora do menu não teria como ser alcançada. As ações
+SHALL ser exibidas com rótulo visível, e MUST NOT ser oferecidas apenas por ícone.
 
 Enquanto o menu está aberto, o conteúdo atrás dele SHALL ser obscurecido, e acionar a área
 obscurecida SHALL fechá-lo sem executar ação alguma.
 
 #### Scenario: Tela que publica uma ação
 - **WHEN** a tela em foco publica uma única ação
-- **THEN** o botão não exibe controle de expansão, e um toque executa a ação
+- **THEN** um toque executa a ação, e o botão responde pela identidade que a tela declarou para ela
 
 #### Scenario: Tela que publica três ações
-- **WHEN** a tela em foco publica três ações e o usuário toca o corpo do botão
-- **THEN** a ação primária é executada e o menu não é aberto
+- **WHEN** a tela em foco publica três ações e o usuário aciona o botão
+- **THEN** o menu abre com as três, nenhuma delas executada, e o botão tem o mesmo tamanho que tem
+  numa tela de ação única
+
+#### Scenario: A primeira ação numa tela com menu
+- **WHEN** a tela publica mais de uma ação e o usuário quer a primeira delas
+- **THEN** ela está no menu, como as demais, e é alcançada abrindo-o
 
 #### Scenario: Menu aberto e dispensado
 - **WHEN** o menu está aberto e o usuário toca fora dele
@@ -154,15 +164,22 @@ nem deixar de publicar as suas identidades de teste na raiz de composição da j
 ### Requirement: Toda ação é nomeada e alcançável
 
 Toda ação SHALL declarar um rótulo internacionalizado, presente nos dois idiomas que o app publica.
-O botão SHALL expor uma descrição acessível correspondente à sua ação primária, e cada ação do menu
-SHALL ser alcançável por uma identidade estável de teste declarada junto com a ação.
+O botão SHALL expor uma descrição acessível do que acioná-lo faz — a ação, quando ele executa uma;
+o menu, quando ele o abre — e cada ação SHALL ser alcançável por uma identidade estável de teste
+declarada junto com ela.
 
-A identidade de teste da ação primária de uma tela SHALL ser a que a própria tela declara, de modo
-que a superfície de automação não dependa de qual componente a desenha.
+A identidade de teste de uma ação SHALL ser a que a própria tela declara, de modo que a superfície
+de automação não dependa de qual componente a desenha. Onde a tela publica mais de uma ação, essa
+identidade vive no item do menu, e alcançá-la passa por abrir o menu.
 
-#### Scenario: Ação primária dirigida em teste
-- **WHEN** um fluxo E2E aciona a ação de criar conta pela identidade que a tela de contas declara
-- **THEN** o formulário de conta é aberto, independentemente de o botão ser desenhado pela casca
+#### Scenario: Ação dirigida em teste numa tela de ação única
+- **WHEN** um fluxo E2E aciona a criação de taxa pela identidade que a tela de taxas declara
+- **THEN** o formulário é aberto, independentemente de o botão ser desenhado pela casca
+
+#### Scenario: Ação dirigida em teste numa tela com menu
+- **WHEN** um fluxo E2E quer a criação de conta, e a tela de contas publica mais de uma ação
+- **THEN** ele aciona o botão pela identidade própria dele, e então a ação pela identidade que a
+  tela declarou — o id da ação não muda por ela estar no menu
 
 #### Scenario: Rótulo ausente num idioma
 - **WHEN** a chave de rótulo de uma ação existe em apenas um dos arquivos de string

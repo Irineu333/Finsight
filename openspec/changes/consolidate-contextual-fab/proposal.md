@@ -28,11 +28,13 @@ desenhou, nove vezes porque a tela a desenhou.
   o que a casca decide é *como* elas aparecem. Um catálogo estático na casca não serviria: a ação
   de categorias depende do filtro corrente (`CategoriesScreen.kt:138` —
   `CategoryFormModal(initialType = uiState.filter.fabInitialType)`).
-- A **ação primária** de cada tela é a que o FAB local dela já executa hoje, a um toque. As
-  demais ficam atrás de um chevron. Nenhuma tela perde o que tinha.
+- A **primeira ação** de cada tela é a que o FAB local dela já executa hoje. Nenhuma tela perde o
+  que tinha. O botão tem um tamanho só em toda tela: com uma ação ele *é* a ação, com mais de uma
+  ele abre um menu que as lista todas.
 - O menu existe em **três** das onze telas: contas (transferência, transação na conta), cartões
-  (transação no cartão) e categorias (o outro tipo). As outras oito publicam uma ação só e o FAB
-  não tem chevron — indistinguível do que existe hoje.
+  (transação no cartão) e categorias (o outro tipo). As outras oito publicam uma ação só, e ali o
+  botão é indistinguível do que existe hoje. Nas três com menu a primeira ação passa a custar dois
+  toques — é o preço do botão de tamanho único, e está registrado em D12.
 - O botão **não desaparece numa tela sem ação própria**: ela recebe a **ação universal** —
   registrar uma transação —, que é o que o FAB da casca já faz hoje. Isso preserva o alcance
   existente no desktop, onde o botão aparece no `header` da rail em toda tela (relatórios,
@@ -96,7 +98,7 @@ apontando para a conta de onde o dinheiro sai — que é o que o requisito já d
   para o teste do componente — hoje só `core/ui` os tem.
 
 **Código**
-- `core/designsystem` — novo componente de FAB com ação primária e menu. O
+- `core/designsystem` — novo componente de FAB com menu. O
   `FloatingActionButtonMenu`/`ToggleFloatingActionButton` do M3 Expressive **não existe** no
   `org.jetbrains.compose.material3:material3:1.9.0` que o Compose Multiplatform 1.10.1 resolve
   (verificado no jar: só `FloatingActionButton` e `ExtendedFloatingActionButton`), então o
@@ -124,11 +126,12 @@ apontando para a conta de onde o dinheiro sai — que é o que o requisito já d
 - `AppNavCatalogTest` não cobre o FAB; a cobertura nova é de ViewModel e de composição — quais
   ações cada tela publica, e a forma do botão para zero, uma e várias ações.
 - Maestro: dezesseis arquivos tocam os ids dos botões, seis em `subflows/` e o restante em
-  `flows/`. Como a primária de cada tela é a de hoje, esses ids são reemitidos pelo botão da casca
-  e **nenhum flow precisa de um toque a mais** — só os que forem exercitar as ações novas. Duas
-  ressalvas: `CurrenciesScreen` não tem `testTag` hoje, então ou se introduz um id novo ou ela
-  publica sem; e as ações do menu só alcançam o Maestro se a raiz que as compõe publicar os test
-  tags.
+  `flows/`. Os ids continuam existindo — as telas os declaram —, mas **os flows das três telas com
+  menu ganham um toque**: `accounts_add`, `credit_cards_add` e `categories_add` passam a viver
+  dentro do menu, e alcançá-los passa por abri-lo. O toque a mais fica num subflow que o dá só
+  quando há menu, porque a mesma tela publica uma ação num estado e três noutro. Duas ressalvas:
+  `CurrenciesScreen` não tem `testTag` hoje, então ou se introduz um id novo ou ela publica sem; e
+  as ações do menu só alcançam o Maestro se a raiz que as compõe publicar os test tags.
 
 **Strings**
 - Cada ação do menu precisa de rótulo visível, e cada FAB de `contentDescription`. As chaves

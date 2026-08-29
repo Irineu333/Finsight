@@ -38,7 +38,7 @@ porque as duas posições coexistem hoje em botões diferentes.
 
 **Goals:**
 - Um componente de botão de ação, um dono da posição, uma regra de visibilidade.
-- A ação primária de cada tela permanece a um toque, e é a mesma de hoje.
+- O botão tem um tamanho só, em toda tela. O que cada tela oferece é o que ela já oferece.
 - A decisão sobre quais ações existem permanece na feature dona.
 - O botão nunca exibe as ações de outro destino, e nunca fica vazio por um frame durante a
   transição.
@@ -186,9 +186,16 @@ com o filtro velho.
 
 ### D8 — O botão emite a identidade de teste que a tela declarou
 
-Cada ação carrega o seu `testTag`; o botão emite o da primária da tela em foco, e cada item do menu
-o seu. Os ids que o Maestro dirige hoje continuam existindo, agora declarados pela tela, e nenhum
-subflow ganha um toque a mais.
+Cada ação carrega o seu `testTag`. Onde a tela publica uma ação só, o botão *é* aquela ação e emite
+o id dela; onde publica mais de uma, o botão é o que abre o menu, tem um id próprio
+(`floating_action_expand`) e cada item do menu emite o seu. Os ids que o Maestro dirige hoje
+continuam existindo, agora declarados pela tela.
+
+**Os flows das três telas com menu ganham um toque** — o que abre o menu. A primeira versão desta
+proposta prometia que nenhum ganharia, e a promessa dependia de o corpo do botão executar a ação
+primária, o que D12 desfez. O toque a mais é encapsulado num subflow que abre o menu apenas quando
+ele existe (`subflows/tap_action.yaml`), de modo que um mesmo chamador serve a tela em qualquer dos
+seus estados — o botão de contas tem uma ação com a lista vazia e três com uma conta em foco.
 
 Duas ressalvas verificadas: `CurrenciesScreen.kt:102-108` **não tem** `testTag` hoje (só
 `contentDescription`), então ali ou se introduz um id novo ou se publica sem; e o
@@ -230,18 +237,41 @@ A ação só é publicada quando há mais de uma conta, como `AccountsScreen.kt:
 (`canTransfer = uiState.accounts.size > 1`) já exige; do contrário ofereceria uma operação
 impossível.
 
-### D11 — Categorias mantém a primária dependente do filtro
+### D11 — Categorias mantém a primeira ação dependente do filtro
 
-A primária continua abrindo o formulário com o tipo que o filtro corrente indica, como
-`CategoriesScreen.kt:138` já faz, e o menu oferece o outro. É o caso que prova por que as ações são
-publicadas pela tela.
+A primeira ação continua abrindo o formulário com o tipo que o filtro corrente indica, como
+`CategoriesScreen.kt:138` já faz, e a segunda oferece o outro. É o caso que prova por que as ações
+são publicadas pela tela.
+
+### D12 — O botão é sempre o mesmo `+`, e com duas ou mais ações ele abre o menu
+
+O botão dividido — corpo de 56dp mais controle de expansão de 48dp — ficou grande demais. Ele tinha
+uma silhueta por contagem de ações, o que anuncia no espaço ocupado uma informação que ninguém
+pediu, e o pior é que a silhueta grande aparecia justamente nas duas telas mais usadas depois das
+abas.
+
+O botão volta a ser o `FloatingActionButton` de 56dp com o `+`, em toda tela. Com uma ação, ele *é*
+a ação. Com duas ou mais, acioná-lo abre o menu, e o `+` gira 45° enquanto ele está aberto — o
+mesmo gesto lido de trás para frente. Como o botão deixa de executar a primeira ação, **o menu
+passa a listar todas**, ela inclusive: deixá-la de fora a poria fora de alcance.
+
+O custo é conhecido e aceito: nas três telas com menu a primeira ação passa a custar dois toques.
+O requisito de um toque saiu do spec por isso, e não por descuido — ele existia para justificar o
+corpo executável, que é exatamente o que se está removendo. Em oito das onze telas nada muda: uma
+ação só, um toque.
+
+*Alternativa descartada:* um mini-botão de 40dp com o chevron acima do `+`, que teria mantido o
+toque único. Duas superfícies flutuantes empilhadas por causa de duas entradas de menu é mais
+aparato do que o problema pede, e a segunda superfície precisaria da sua própria regra de posição
+em cada uma das três larguras.
 
 ## Risks / Trade-offs
 
 - **O menu na rail cobre o topo do conteúdo** → Aberto, ele cai sobre o título da tela e a primeira
   linha da lista. É transitório e dispensável com um toque fora. Não resolvido aqui.
-- **O padrão fica pouco descoberto** → O controle de expansão existe em três das onze telas, e em
-  nenhuma das duas abas principais. É consequência aceita: o valor é a consolidação.
+- **O padrão fica pouco descoberto** → O menu existe em três das onze telas, e em nenhuma das duas
+  abas principais. Nada na aparência do botão diz qual das duas coisas ele fará, que é o preço de
+  ele ter um tamanho só (D12). É consequência aceita: o valor é a consolidação.
 - **Seis telas condicionam o botão ao estado** → `is Content` em cinco delas e `!is Loading` em
   recorrentes. "Publicar a mesma ação" tem de significar "publicar nenhuma ação nos mesmos estados",
   ou o botão passa a aparecer durante o carregamento.

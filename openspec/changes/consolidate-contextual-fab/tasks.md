@@ -15,16 +15,17 @@
 - [x] 1.1 Declarar em `:core:designsystem` a interface de uma ação — `icon`, `labelRes:
       StringResource`, `testTag`, `onClick` — no molde de `BottomNavigationItem`, sem nomear
       feature alguma e sem expor `UiText`
-- [x] 1.2 Implementar o componente genérico sobre essa interface, com as três formas derivadas do
-      tamanho da lista: nenhuma ação não desenha, uma desenha o botão simples sem controle de
-      expansão, duas ou mais desenham corpo e controle de expansão
-- [x] 1.3 Implementar o menu: itens rotulados (nunca só ícone), fechamento ao tocar fora, giro do
-      controle de expansão, e direção de abertura (acima ou ao lado) como parâmetro — quem decide
-      é a casca
-- [x] 1.4 Derivar o `contentDescription` do botão do rótulo da sua ação primária, em vez de
-      recebê-lo ou deixá-lo nulo
-- [x] 1.5 Teste de composição do componente: as três formas, o corpo que executa a primária sem
-      abrir o menu, e o toque fora que fecha sem executar
+- [x] 1.2 Implementar o componente genérico sobre essa interface. **Revisto por D12:** o botão tem
+      um tamanho só — o `+` de 56dp em toda tela —, e o que é derivado do tamanho da lista é o que
+      pressioná-lo faz: nenhuma ação não desenha, uma executa a ação, duas ou mais abrem o menu
+- [x] 1.3 Implementar o menu: itens rotulados (nunca só ícone), fechamento ao tocar fora, e direção
+      de abertura (acima ou ao lado) como parâmetro — quem decide é a casca. **Revisto por D12:** o
+      menu lista **todas** as ações, a primeira inclusive, e o giro é do `+` do próprio botão (45°),
+      já que não há mais controle de expansão separado
+- [x] 1.4 Derivar o `contentDescription` do botão do que pressioná-lo faz: o rótulo da ação onde há
+      uma só, o do menu onde ele o abre — em vez de recebê-lo ou deixá-lo nulo
+- [x] 1.5 Teste de composição do componente: as três situações, o botão que abre o menu sem executar
+      nada, e o toque fora que fecha sem executar
 
 ## 2. O canal na casca
 
@@ -122,6 +123,10 @@
       continuam existindo, agora declarados pelas telas, e os seis `add_transaction_fab` são
       todos tocados a partir da dashboard, onde a ação universal os reemite. Nenhuma suíte foi
       executada
+- [x] 7.4b Ajustar os flows Maestro ao botão de D12: `subflows/tap_action.yaml` abre o menu apenas
+      quando a ação pedida ainda não está na tela, e os quatro sítios que tocam `accounts_add`,
+      `credit_cards_add` e `categories_add` passam por ele. Os três `assertVisible` restantes ficam
+      como estão — são estados vazios, onde o id pertence ao botão do próprio estado vazio
 - [x] 7.5 As ações do menu são compostas na raiz da janela — a casca as desenha dentro do próprio
       `Box` do `ChromeHost`, e não num `Popup`, justamente para que o `Modifier.exposeTestTags()`
       do `App` as alcance sem uma chamada nova. Verificado na fonte, não em execução

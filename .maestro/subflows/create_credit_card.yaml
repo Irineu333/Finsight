@@ -5,8 +5,10 @@ name: create_credit_card
 # Callers pass NAME, LIMIT (bare digits), CLOSING_DAY and DUE_DAY. The caller is responsible for
 # being on the credit cards screen already, and for asserting whatever the new card should show —
 # a subflow carries the arrangement, never the claim.
-- tapOn:
-    id: "credit_cards_add"
+- runFlow:
+    file: tap_action.yaml
+    env:
+      ACTION: "credit_cards_add"
 - extendedWaitUntil:
     visible:
       id: "credit_card_form_name"

@@ -25,12 +25,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * **The form of the button is derived from the list, and the body is not the menu.**
+ * **One button, one size, and what it does comes from the list.**
  *
- * Three facts nothing else can hold up. The count decides the shape, so a screen never has a say
- * in it; the body runs the primary action rather than opening the menu, which is what keeps that
- * action at one tap on every screen; and the scrim dismisses without running anything, so a tap
- * meant to close the menu never spends money.
+ * Three facts nothing else can hold up. The button looks the same on every screen — the count
+ * decides what pressing it means, never how large it is. With more than one action it opens the
+ * menu, and the menu lists them **all**: the button stops running the first one, so an action left
+ * out of the menu would be out of reach entirely. And the scrim dismisses without running anything,
+ * so a tap meant to close the menu never spends money.
  */
 class FloatingActionMenuTest {
 
@@ -93,15 +94,15 @@ class FloatingActionMenuTest {
     }
 
     @Test
-    fun `three actions draw an expand control, and the body runs the primary without opening`() =
+    fun `three actions turn the button into the opener, and the menu lists all three`() =
         runComposeUiTest {
-            var primary = 0
+            var first = 0
             var expanded by mutableStateOf(false)
 
             setContent {
                 Host(
                     actions = listOf(
-                        Action(Res.string.accounts_add, "accounts_add") { primary++ },
+                        Action(Res.string.accounts_add, "accounts_add") { first++ },
                         Action(Res.string.accounts_transfer, "accounts_add_transfer", Icons.Default.SwapHoriz) {},
                         Action(Res.string.accounts_add_transaction, "accounts_add_transaction") {},
                     ),
@@ -111,21 +112,26 @@ class FloatingActionMenuTest {
             }
             waitForIdle()
 
+            // The button is no action in particular now, so it does not answer to one's id.
             onNodeWithTag(FLOATING_ACTION_EXPAND_TEST_TAG).assertIsDisplayed()
-
-            onNodeWithTag("accounts_add").performClick()
-            waitForIdle()
-
-            assertEquals(1, primary)
-            assertEquals(false, expanded)
-            onNodeWithTag("accounts_add_transfer").assertDoesNotExist()
+            onNodeWithTag("accounts_add").assertDoesNotExist()
 
             onNodeWithTag(FLOATING_ACTION_EXPAND_TEST_TAG).performClick()
             waitForIdle()
 
             assertEquals(true, expanded)
+            assertEquals(0, first)
+
+            // The first action included: nothing else would reach it.
+            onNodeWithTag("accounts_add").assertIsDisplayed()
             onNodeWithTag("accounts_add_transfer").assertIsDisplayed()
             onNodeWithTag("accounts_add_transaction").assertIsDisplayed()
+
+            onNodeWithTag("accounts_add").performClick()
+            waitForIdle()
+
+            assertEquals(1, first)
+            assertEquals(false, expanded)
         }
 
     @Test

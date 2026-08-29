@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -412,7 +411,10 @@ private fun CategoryStack(categories: List<Category>) {
 
     val shape = RoundedCornerShape(5.dp)
 
-    Row(horizontalArrangement = Arrangement.spacedBy(CATEGORY_CHIP_OVERLAP)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(CATEGORY_CHIP_OVERLAP),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         categories.take(MAX_CATEGORY_CHIPS).forEach { category ->
             Box(
                 modifier = Modifier

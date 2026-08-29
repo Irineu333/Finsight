@@ -153,12 +153,10 @@ env:
 - assertVisible:
     id: "budget_spent_amount"
     text: "[$]0[.,]00"
-- assertVisible:
-    id: "budget_remaining_label"
-    text: "Remaining"
-- assertVisible:
-    id: "budget_remaining_amount"
-    text: "[$]240[.,]00"
+# The row states going over by a glyph, and by the arithmetic between the two figures it
+# already prints. Nothing has been spent, so neither says it.
+- assertNotVisible:
+    id: "budget_exceeded_mark"
 
 # ...and the dashboard has a budget to show, where day zero had none.
 - back
@@ -211,7 +209,7 @@ env:
     id: "dashboard_budget_amount"
     text: "[$]87[.,]30 / [$]240[.,]00"
 
-# The budgets screen recomputes the same figures by its own path, and says what is left.
+# The budgets screen recomputes the same figures by its own path, against the ceiling it prints.
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -226,15 +224,12 @@ env:
 - assertVisible:
     id: "budget_spent_amount"
     text: "[$]87[.,]30"
-- assertVisible:
-    id: "budget_remaining_label"
-    text: "Remaining"
-- assertVisible:
-    id: "budget_remaining_amount"
-    text: "[$]152[.,]70"
+- assertNotVisible:
+    id: "budget_exceeded_mark"
 
-# The detail sheet is a third path to the same three numbers, and it is the one that has to agree
-# with the card it was opened from.
+# The detail sheet is a third path to the same figures, and it is the one that has to agree with the
+# row it was opened from. It is also the only surface that still states what is left: the row prints
+# the ceiling and the spending, from which the remainder is arithmetic.
 - tapOn:
     id: "budget_card"
 - extendedWaitUntil:
@@ -263,10 +258,10 @@ env:
       AMOUNT: ${SPEND2_DIGITS}
       CATEGORY: ${CATEGORY}
 
-# $87.30 + $176.45 = $263.75, past a limit of $240.00. The card does not merely render a bigger
-# number: the line that read "Remaining" now reads "Exceeded by", and the figure beside it changes
-# formula with it. That substitution is the rule, and asserting both sides of it is why this flow
-# spends a second expense.
+# $87.30 + $176.45 = $263.75, past a limit of $240.00. The row does not merely render a bigger
+# number: the glyph that marks going over appears, and the spending it prints is now larger than the
+# ceiling printed above it. Those are the two independent ways the row says it — neither of them
+# colour — and asserting both is why this flow spends a second expense.
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -282,19 +277,15 @@ env:
     id: "budget_spent_amount"
     text: "[$]263[.,]75"
 - assertVisible:
-    id: "budget_remaining_label"
-    text: "Exceeded by"
-- assertNotVisible:
-    id: "budget_remaining_label"
-    text: "Remaining"
-- assertVisible:
-    id: "budget_remaining_amount"
-    text: "[$]23[.,]75"
+    id: "budget_exceeded_mark"
 
-# The detail sheet takes the same branch by its own path, and states it differently: the card swaps
-# the text on one tag, the sheet swaps the tag itself. Two implementations of one rule, each able to
-# break without the other. What is not restated here is $263.75 — the card printed it twelve steps
-# ago, and the wait above already proves the sheet composed.
+# The detail sheet takes the same branch by its own path, and states it differently: the row raises a
+# glyph, the sheet swaps the tag its figure sits on. **The cover here is thinner than it was**, and
+# deliberately so: the row used to swap the text of `budget_remaining_label` between "Remaining" and
+# "Exceeded by", which was a second implementation of the rule able to break on its own. With the
+# ceiling as the row's hero figure that label is gone, and on the list one implementation is left.
+# What is not restated here is $263.75 — the row printed it twelve steps ago, and the wait above
+# already proves the sheet composed.
 - tapOn:
     id: "budget_card"
 - extendedWaitUntil:

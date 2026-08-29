@@ -284,14 +284,14 @@
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Orçamentos</string>
-    <string name="budgets_limit">Limite</string>
-    <string name="budgets_spent">Gasto</string>
-    <string name="budgets_remaining">Restante</string>
-    <string name="budgets_exceeded_by">Excedido em</string>
-    <string name="budgets_category_singular">1 categoria</string>
-    <string name="budgets_category_plural">%1$d categorias</string>
     <string name="budgets_empty">Sem orçamentos</string>
     <string name="budgets_create">Criar orçamento</string>
+    <string name="budgets_row_spent">gastos</string>
+    <string name="budgets_row_categories_more">+%1$d</string>
+    <string name="budgets_row_exceeded">Acima do teto</string>
+    <string name="budgets_row_derived_limit">Teto derivado de uma receita recorrente</string>
+    <string name="budgets_period_monthly">Mensal</string>
+    <string name="budgets_period_weekly">Semanal</string>
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
@@ -905,6 +905,7 @@
     <string name="money_unresolved_badge">Por que falta informação aqui</string>
     <string name="money_unresolved_title">Sem um valor único para comparar</string>
     <string name="money_unresolved_body">Alguma parte deste período está em uma moeda sem taxa cadastrada, então não existe um valor único para comparar — e é por isso que a barra e a proporção não aparecem. Os valores continuam exatos, cada um na sua moeda; o que falta é a medida comum entre eles. Cadastre a taxa e isto volta a funcionar.</string>
+    <string name="money_unresolved_list_notice">Uma moeda sem taxa neste mês</string>
     <string name="report_export_footnote">≈ marca um valor que passou por uma taxa de câmbio. Quando não havia taxa, a parcela daquela moeda aparece por si, sem conversão.</string>
     <string name="money_approximate_see_rates">Ver taxas</string>
 

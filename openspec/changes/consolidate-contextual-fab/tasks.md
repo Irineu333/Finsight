@@ -108,11 +108,10 @@
 ## 7. Verificação
 
 - [x] 7.1 `./gradlew jvmTest` verde, com a saída lida
-- [ ] 7.2 Rodar o app no desktop e confirmar: um único botão por janela em todas as seções, e o
-      botão presente também nas telas sem ação própria (relatórios, configurações, faturas)
-      — **NÃO FEITO.** O app sobe e permanece de pé (`:app:desktop:run`, processo vivo por >45s,
-      sem exceção no log), mas esta máquina não concede a permissão de gravação de tela ao
-      `screencapture`, que devolve só o papel de parede. A confirmação visual não foi feita
+- [x] 7.2 Rodado no desktop **pelo autor**, e não por esta sessão, que não consegue ver a janela:
+      esta máquina não concede a permissão de gravação de tela ao `screencapture`, que devolve só o
+      papel de parede. A evidência é o relato de quem rodou — a janela larga funciona —, e é uma
+      confirmação de conjunto, não uma medição item a item como a do aparelho em 7.3
 - [x] 7.3 Rodado no emulador `sdk_gphone16k_arm64` (1080×2340, 480dpi, 360×780dp), com as três
       posições medidas em pixels sobre a captura, não estimadas:
       - aba primária: botão de 56dp, centrado, **afundado 23,7dp na barra** de 104dp — a mesma
@@ -178,3 +177,4 @@
       botão isolado por componente conexo. Ida (180,80) → (206,72) → (247,60,0) → (278,51) →
       (316,40); volta (316,40) → (289,48) → (247,**60,3**) → (218,69) → (180,80) — mesmos pontos,
       sentido inverso
+

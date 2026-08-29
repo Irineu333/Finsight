@@ -140,6 +140,12 @@ navegável; a linha só diz qual é.
 O custo é largura, e ele está contido por prioridade declarada: o percentual não trunca, o
 nome trunca, e a marca inteira tem teto de largura para não empurrar a identidade para fora.
 
+**A posição é regra, e não arranjo.** A marca fica encostada no valor, com a folga da linha
+entre ela e a identidade. Ceder largura e ficar no lugar certo são dois requisitos, e a
+primeira implementação atendeu ao primeiro quebrando o segundo: a marca passou a flutuar até
+o título, e ali ela afirma que *o nome* se re-deriva. É o tipo de erro que só aparece com o
+desenho em mãos, e é por isso que a regra está escrita.
+
 ## Decisões tomadas por recomendação, a confirmar
 
 Estas duas foram decididas pelo argumento e não por escolha explícita. São reversíveis sem

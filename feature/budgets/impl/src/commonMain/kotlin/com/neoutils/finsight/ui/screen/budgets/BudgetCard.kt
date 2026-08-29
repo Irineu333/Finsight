@@ -128,11 +128,20 @@ internal fun BudgetCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(ROW_LINE_GAP),
             ) {
+                // Three things share this line, and each has a different claim on it.
+                //
                 // The ceiling is the only unweighted child, so it is measured first and
-                // never gives way. What is left of the line is split between the identity
-                // and the derived mark, each taking only what it needs — which is what
-                // keeps a long recurring name from crushing the title at a large font
-                // scale, and the title from pushing the mark off the line.
+                // never gives way. The identity and the derived mark divide what is left,
+                // each taking only what it needs: that is what keeps a long recurring name
+                // from crushing the title at a large font scale, and the title from
+                // pushing the mark off the line.
+                //
+                // `SpaceBetween` is what decides **where the slack falls**, and it is not
+                // cosmetic: the mark qualifies the ceiling — it says the number beside it
+                // is a share and re-derives every month — so it has to sit against the
+                // ceiling. Left at the start, the slack would land after the mark and
+                // float it back towards the title, where it would read as qualifying the
+                // budget's name instead.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -140,7 +149,7 @@ internal fun BudgetCard(
                 ) {
                     Row(
                         modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
@@ -185,7 +194,13 @@ internal fun BudgetCard(
                             DerivedLimitMark(
                                 percentage = percentage,
                                 source = progress.recurringLabel,
-                                modifier = Modifier.weight(weight = 1f, fill = false),
+                                // The gap is the mark's own, not the arrangement's:
+                                // `SpaceBetween` leaves none once the line is tight, and
+                                // the mark touching the title is the one thing it must
+                                // never do.
+                                modifier = Modifier
+                                    .weight(weight = 1f, fill = false)
+                                    .padding(start = 5.dp),
                             )
                         }
                     }

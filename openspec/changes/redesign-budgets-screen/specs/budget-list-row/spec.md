@@ -124,6 +124,12 @@ nome diz *qual* derivação e SHALL ceder primeiro, em **uma linha só**, trunca
 couber. A declaração inteira SHALL ter largura limitada, de modo que um nome longo não empurre
 a identidade do orçamento para fora da linha.
 
+A declaração SHALL ser exibida **junto ao valor que ela qualifica**, e a folga da linha
+MUST NOT ser posta entre as duas. O que ela afirma é que **aquele número** é uma fração que se
+re-deriva a cada mês; encostada na identidade ela afirmaria isso sobre o nome do orçamento, que
+é a única coisa da linha que o usuário digitou por inteiro. Onde a linha sobra espaço, ele fica
+entre a identidade e a declaração.
+
 Onde a receita base não existe mais, a declaração SHALL exibir apenas o percentual, e MUST NOT
 deixar o separador pendurado.
 
@@ -134,6 +140,10 @@ deixar o separador pendurado.
 #### Scenario: Dois tetos derivados de receitas diferentes
 - **WHEN** dois orçamentos tomam 30% de receitas base distintas
 - **THEN** as duas declarações são distinguíveis sem abrir o detalhe
+
+#### Scenario: Linha com espaço de sobra
+- **WHEN** a identidade do orçamento é curta e a linha sobra espaço
+- **THEN** a declaração permanece encostada no valor, e o espaço que sobra fica entre ela e a identidade
 
 #### Scenario: Nome de receita longo
 - **WHEN** o nome da receita base não cabe na largura reservada à declaração

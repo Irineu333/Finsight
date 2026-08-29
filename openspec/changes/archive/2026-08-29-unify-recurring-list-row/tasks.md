@@ -25,4 +25,30 @@
 - [x] 4.2 Rodar `./gradlew :feature:recurring:impl:jvmTest` e ler a saída; corrigir o que quebrar.
 - [x] 4.3 Rodar `./gradlew jvmTest` para confirmar que nenhuma outra feature dependia do que mudou.
 - [x] 4.4 Acrescentar a `.maestro/flows/recurring/lifecycle.yaml` a asserção da seção lançada pelos ids da linha de recorrência, que hoje não existe.
-- [ ] 4.5 Conferir na AVD `pixel_6` API 36 (as sete verificações de `.maestro/README.md` §2, após `./gradlew :app:android:installDebug`) que as quatro seções desenham linhas de mesma altura, e relatar em qual device a execução aconteceu.
+- [x] 4.5 Conferir na AVD `pixel_6` API 36 (as sete verificações de `.maestro/README.md` §2, após `./gradlew :app:android:installDebug`) que as quatro seções desenham linhas de mesma altura, e relatar em qual device a execução aconteceu.
+
+## Resultado da verificação em aparelho
+
+**Aparelho:** AVD `finsight_e2e` (`emulator-5554`) — API 36, 1080x2400, densidade 420,
+`-en-rUS-` e `-nokeys-`, IME Gboard presente, `show_ime_with_hard_keyboard=0`. As sete
+linhas da §2.2 conferidas à mão antes do run; um segundo emulador ligado (`Galaxy_A54`,
+API 37, `qwerty`) foi descartado e o alvo fixado por serial em `adb` e em `maestro`.
+
+**Altura das quatro seções**, medida na hierarquia de acessibilidade com as quatro no ar
+(pendente, a lançar, lançada, ignorada, uma linha cada): **169px em todas**, com passo de
+296px entre seções. A linha lançada afirma `01/08` no slot em que as de template afirmam
+`Day 1`/`Day 30`, e nomeia `Wallet` na mesma posição.
+
+**Suíte Maestro** (`maestro test --device emulator-5554 .maestro`, pelo workspace):
+15 fluxos, **14 verdes**. `recurring_lifecycle` e `recurring_from_transaction` verdes,
+este último após a correção do commit `e4c002c62` — ele lia a figura do ciclo lançado em
+`transaction_card_amount` estando na tela de recorrências, nó que aquela seção deixou de
+publicar. `creditcards_lifecycle` vermelho e **anterior a esta mudança**: reproduz no APK
+do commit pai (`a0af083b1`), e a causa é o calendário — fechamento no dia 10 com salto de
+45 dias, que rodando em 29/08 cai em 13/10 e manda a despesa para a fatura seguinte.
+
+**Divergência encontrada e corrigida:** o KDoc de `CHIP_SIZE` afirmava que a coluna
+direita governa a altura (44dp) e que o chip fica sob ela. O aparelho diz o contrário —
+chip 40,0dp, coluna direita 37dp, identidade 35dp, linha 64dp — porque uma linha de
+`Text` mede pelas métricas da fonte e não pelo `lineHeight` do estilo. O comentário era
+anterior a esta mudança e foi corrigido junto.

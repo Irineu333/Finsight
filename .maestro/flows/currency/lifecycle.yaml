@@ -81,8 +81,10 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
-- tapOn:
-    id: "accounts_add"
+- runFlow:
+    file: ../../subflows/tap_action.yaml
+    env:
+      ACTION: "accounts_add"
 - extendedWaitUntil:
     visible:
       id: "account_form_name"

@@ -43,14 +43,19 @@ reserva menos do que o botão ocupa.
 ## Evidência
 
 - `feature/recurring/impl/.../screen/recurring/RecurringScreen.kt` — `contentPadding` do
-  `LazyColumn`, e o `floatingActionButton` do `Scaffold` acima dele
+  `LazyColumn`
 - `feature/transactions/impl/.../screen/transactions/TransactionsScreen.kt` — mesmo
-  `contentPadding`, mesmo FAB
+  `contentPadding`
 - `feature/categories/impl/.../screen/categories/CategoriesScreen.kt` — idem
 - `feature/settings/impl/.../screen/exchangeRateHistory/ExchangeRateHistoryScreen.kt` — a
   exceção, com `bottom = 24.dp`
-- `feature/shell/impl/.../screen/home/ChromeHost.kt` — em `LARGE` a rail já carrega o seu
-  próprio FAB, de modo que o da tela é o **segundo** botão idêntico na mesma janela
+- `feature/shell/impl/.../screen/home/ChromeHost.kt` — o botão, agora o único do app, é desenhado
+  aqui e sobre a área de conteúdo
+
+O **FAB duplo em `LARGE` deixou de existir**: `consolidate-contextual-fab` tirou o botão do
+`Scaffold` das nove telas que o declaravam, e a casca passou a desenhar um só. O defeito desta
+issue não é esse — ele é a ausência de folga inferior nas listas, e continua inteiro: o botão
+único segue sobre a última linha, e nenhuma tela reserva o espaço que ele ocupa.
 
 ## Consequência
 

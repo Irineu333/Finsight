@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
@@ -94,6 +96,11 @@ private fun ReportConfigContent(
         inactiveContentColor = colorScheme.onSurfaceVariant,
         inactiveBorderColor = colorScheme.outline,
     )
+
+    // The generate button spans the bottom bar of this screen, and on a stacked screen the shell
+    // puts the action button over its right-hand end. This screen has a primary action of its own
+    // and needs no second one floating on top of it.
+    ChromeEffect(config = ChromeConfig(isFloatingActionButtonVisible = false))
 
     Scaffold(
         topBar = {

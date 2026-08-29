@@ -28,6 +28,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
@@ -45,6 +46,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class AddTransactionViewModel(
+    private val origin: TransactionOrigin?,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -113,6 +115,31 @@ class AddTransactionViewModel(
     private val accounts = accountRepository.observeAllAccounts()
 
     init {
+        // What the screen that opened the form was looking at, resolved from its id.
+        //
+        // It cannot be an initial value: the ViewModel holds an `Account`/`CreditCard`, not an id,
+        // and reading one costs a suspension. What it must not do is race the defaults — so the
+        // card is selected *before* the target is aimed at it, or the collector below would see a
+        // card target with nothing selected and choose one of its own.
+        origin?.let { origin ->
+            viewModelScope.launch {
+                when (origin) {
+                    is TransactionOrigin.Account -> {
+                        selectedAccount.value = accountRepository.getAccountById(origin.accountId)
+                    }
+
+                    is TransactionOrigin.CreditCard -> {
+                        val creditCard = creditCardRepository
+                            .getCreditCardById(origin.creditCardId)
+                            ?: return@launch
+
+                        applyCreditCardSelection(creditCard)
+                        input.update { it.copy(target = TransactionTarget.CREDIT_CARD) }
+                    }
+                }
+            }
+        }
+
         // With a single card there is nothing to choose, so aiming at the card target
         // chooses it. It belongs here and not in the sheet: it is a decision about state,
         // and it also settles which invoice the expense lands on.
@@ -267,6 +294,10 @@ class AddTransactionViewModel(
     }
 
     private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+        applyCreditCardSelection(creditCard)
+    }
+
+    private suspend fun applyCreditCardSelection(creditCard: CreditCard?) {
         // Cleared first so that no pair of the new card with the old card's invoice is ever
         // observed: that pair names a window neither selection stands for, and the date
         // would be placed in it before being placed again in the right one.

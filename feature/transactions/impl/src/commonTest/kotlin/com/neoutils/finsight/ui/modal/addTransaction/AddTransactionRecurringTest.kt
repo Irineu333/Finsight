@@ -218,6 +218,8 @@ class AddTransactionRecurringTest {
         modalManager: ModalManager = ModalManager(),
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = AddTransactionViewModel(
+        // Opened from nowhere in particular: nothing is preselected.
+        origin = null,
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards,
         invoiceRepository = FakeInvoices,

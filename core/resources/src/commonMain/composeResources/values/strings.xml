@@ -1006,4 +1006,14 @@
     <string name="build_transaction_error_account_required">Selecione a conta.</string>
     <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
+
+    <!-- Action button: the app's single floating action button and the actions screens publish to it -->
+    <string name="floating_action_expand">Mais ações</string>
+    <string name="floating_action_collapse">Fechar ações</string>
+    <string name="accounts_add">Adicionar conta</string>
+    <string name="accounts_add_transaction">Nova transação nesta conta</string>
+    <string name="credit_cards_add_transaction">Nova transação neste cartão</string>
+    <string name="categories_add_expense">Adicionar categoria de despesa</string>
+    <string name="categories_add_income">Adicionar categoria de receita</string>
+    <string name="support_create_issue">Abrir issue</string>
 </resources>

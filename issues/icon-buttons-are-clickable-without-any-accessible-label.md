@@ -53,8 +53,11 @@ Os demais são botões de calendário e de fechar dentro de folhas
 
 O contraexemplo, único no app:
 
-- `feature/shell/impl/.../home/ChromeHost.kt` — `AddTransactionFab()` com
-  `contentDescription = stringResource(Res.string.add_transaction_fab_description)`
+- `core/designsystem/.../component/FloatingActionMenu.kt` — o botão de ação deriva o seu
+  `contentDescription` do rótulo da ação que executa, e cada item do menu é rotulado com
+  texto visível. Desde `consolidate-contextual-fab` isso vale para o botão de **toda** tela,
+  e não só para o de transação: os nove FABs que passavam `contentDescription = null`
+  deixaram de existir
 - `core/designsystem/.../component/MoneyText.kt` — `asOneFigure()`, a única `semantics`
   do projeto, e ela não rotula
 

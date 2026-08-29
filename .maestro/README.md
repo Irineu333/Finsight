@@ -222,10 +222,17 @@ veredito, rode pelo workspace.
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são oito: `launch_fresh` (estado inicial), `open_section`
+ser executado como teste próprio. Hoje são nove: `launch_fresh` (estado inicial), `open_section`
 (chegar a uma seção pela grade de ações rápidas), `record_transaction`, `record_categorized_expense`
 e `record_card_expense` (lançar), `create_account`, `create_credit_card` e `create_category` (abrir
-uma conta, abrir um cartão, criar uma categoria).
+uma conta, abrir um cartão, criar uma categoria), e `tap_action` (alcançar uma ação do botão de
+ação, esteja ela no botão ou dentro do menu que ele abre).
+
+`tap_action` é o único que existe por causa da forma de um componente, e não de uma jornada. O app
+tem **um** botão de ação, desenhado pela casca, e o que pressioná-lo faz depende de quantas ações a
+tela publicou: uma, e o botão é a ação; mais de uma, e ele abre um menu onde cada ação responde pelo
+seu id. Como isso varia com o *estado* da tela e não só com a tela, quem quer uma ação pergunta por
+ela — o subflow abre o menu apenas quando ela ainda não está na tela.
 
 Um subflow carrega o **arranjo**, nunca a afirmação: quem chama é que diz o que o estado criado
 deve mostrar. É por isso que `create_credit_card` não assere o limite disponível do cartão que

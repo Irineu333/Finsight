@@ -12,6 +12,7 @@ kotlin {
             implementation(projects.core.crashlytics)
             implementation(projects.core.designsystem)
             implementation(projects.core.resources)
+            implementation(projects.feature.shell.api)
             implementation(projects.feature.support.api)
 
             implementation(libs.gitlive.firebase.firestore)

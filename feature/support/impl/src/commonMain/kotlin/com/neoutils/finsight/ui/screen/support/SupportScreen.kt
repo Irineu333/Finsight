@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +63,31 @@ fun SupportScreen(
         }
     }
 
+    // Nothing to create against while the list is still being read — the same states the button
+    // used to be drawn in, now the states it is published in.
+    ChromeEffect(
+        actions = if (uiState is SupportUiState.Content) {
+            remember(modalManager, viewModel) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.support_create_issue,
+                        testTag = "support_add",
+                        onClick = {
+                            modalManager.show(
+                                CreateSupportIssueModal(
+                                    onSubmit = { draft -> viewModel.createIssue(draft = draft) },
+                                )
+                            )
+                        },
+                    )
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_support"),
         topBar = {
@@ -88,29 +115,6 @@ fun SupportScreen(
                     )
                 },
             )
-        },
-        floatingActionButton = {
-            if (uiState is SupportUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(
-                            CreateSupportIssueModal(
-                                onSubmit = { draft ->
-                                    viewModel.createIssue(
-                                        draft = draft,
-                                    )
-                                },
-                            )
-                        )
-                    },
-                    modifier = Modifier.testTag("support_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                    )
-                }
-            }
         },
     ) { paddingValues ->
         when (uiState) {

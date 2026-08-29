@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
@@ -59,6 +61,13 @@ fun SupportIssueScreen(
             }
         }
     }
+
+    // This screen suppresses the action button, and it is the one kind of screen that has to. The
+    // reply field ends in a send button, in the bottom-right corner — which is where the shell puts
+    // the button on a stacked screen. A screen that offers no action of its own is served the
+    // universal one, so without this the two land on top of each other and the press meant for
+    // send opens a transaction form instead.
+    ChromeEffect(config = ChromeConfig(isFloatingActionButtonVisible = false))
 
     Scaffold(
         modifier = Modifier.testTag("screen_support_issue"),

@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.ConsolidationListNotice
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -65,6 +67,28 @@ fun BudgetsScreen(
         analytics.logScreenView("budgets")
     }
 
+    // Only in `Content`, as the button used to be: publishing unconditionally would put it on
+    // screen while the month is still being read.
+    ChromeEffect(
+        actions = if (uiState is BudgetsUiState.Content) {
+            remember(modalManager) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.budgets_create,
+                        // The same command as the empty state's button, so it carries the same
+                        // id: a flow asks for "create a budget", not for whichever affordance
+                        // the current state happens to render it as.
+                        testTag = "budgets_add",
+                        onClick = { modalManager.show(BudgetFormModal()) },
+                    )
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_budgets"),
         topBar = {
@@ -94,19 +118,6 @@ fun BudgetsScreen(
                 },
             )
         },
-        floatingActionButton = {
-            if (uiState is BudgetsUiState.Content) {
-                FloatingActionButton(
-                    onClick = { modalManager.show(BudgetFormModal()) },
-                    // The same command as the empty state's button, so it carries the
-                    // same id: a flow asks for "create a budget", not for whichever
-                    // affordance the current state happens to render it as.
-                    modifier = Modifier.testTag("budgets_add"),
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                }
-            }
-        }
     ) { paddingValues ->
         when (val uiState = uiState) {
             is BudgetsUiState.Loading -> {

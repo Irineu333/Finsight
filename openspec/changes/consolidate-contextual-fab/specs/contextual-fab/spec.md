@@ -151,6 +151,11 @@ Sem a bottom bar, o botão SHALL respeitar os insets da janela. A casca desenha 
 insets zerados e cada tela os reintroduz; um botão que herdasse os insets da casca seria desenhado
 sob a barra de navegação do sistema.
 
+O movimento entre as duas posições SHALL ser **reversível**: voltar refaz o caminho da ida. A
+posição ancorada é uma figura da barra **parada** — a barra anima a própria altura ao entrar e ao
+sair, e um botão que acompanhasse esses valores intermediários desceria até a borda da janela antes
+de subir, o que não é o caminho de volta e sim outro caminho.
+
 Em janela larga o menu SHALL abrir ao lado do botão, e nenhuma das suas ações SHALL ser recortada
 pelos limites da rail. O menu MUST NOT deixar de participar do overlay de transição por causa disso,
 nem deixar de publicar as suas identidades de teste na raiz de composição da janela.
@@ -163,6 +168,11 @@ nem deixar de publicar as suas identidades de teste na raiz de composição da j
 #### Scenario: Aba primária no celular
 - **WHEN** a janela é estreita e o destino é uma aba primária
 - **THEN** a bottom bar é exibida e o botão é central, ancorado a ela
+
+#### Scenario: Ida e volta entre uma aba e uma tela empilhada
+- **WHEN** o usuário sai de uma aba primária para uma tela empilhada e volta
+- **THEN** o botão percorre na volta o mesmo caminho da ida, em sentido inverso, sem passar por
+  nenhuma posição que a ida não tenha ocupado
 
 #### Scenario: Menu aberto em janela larga
 - **WHEN** o botão é o `header` da rail e o usuário abre o menu

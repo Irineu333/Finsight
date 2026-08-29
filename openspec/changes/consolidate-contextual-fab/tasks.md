@@ -169,4 +169,12 @@
       do slot. Ele é dito diretamente agora (`alturaDaBarra - 24dp`, e `safeDrawing.bottom + 16dp`
       sem barra), com piso em zero no alvo e no uso — a âncora é uma mola, e mola que cai a zero
       passa por baixo
-- [x] 8.7 Conferir no aparelho, medindo sobre os pixels da captura em vez de estimar: ver 7.3
+- [x] 8.7 **A volta não refazia o caminho da ida.** A ida ficou perfeita e a volta descia até a
+      borda antes de subir, porque a altura da barra era lida enquanto ela animava: a entrada
+      relata a subida inteira (1dp, 5dp, 36dp…) e a saída relata um zero final já com a transição
+      assentada. Passa a ser lida só com a chrome parada e com altura não nula
+- [x] 8.8 Conferir no aparelho, medindo sobre os pixels da captura em vez de estimar: ver 7.3, mais
+      a trajetória do botão nas duas transições, amostrada com `animator_duration_scale` em 10× e o
+      botão isolado por componente conexo. Ida (180,80) → (206,72) → (247,60,0) → (278,51) →
+      (316,40); volta (316,40) → (289,48) → (247,**60,3**) → (218,69) → (180,80) — mesmos pontos,
+      sentido inverso

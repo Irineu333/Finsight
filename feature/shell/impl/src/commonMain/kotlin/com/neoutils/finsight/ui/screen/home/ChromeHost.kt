@@ -45,6 +45,7 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -182,18 +183,20 @@ fun ChromeHost(
     // Where the button sits, measured rather than guessed: docked into the bar when there is one,
     // and above the system's own bar when there is not — the shell zeroes the content insets, so a
     // button that inherited them would be drawn underneath that one.
+    //
+    // `null` until a bar has been measured at rest, which is not the same as "no bar": with no
+    // figure to dock to, the button stands where it stands without one.
     val density = LocalDensity.current
-    var bottomBarHeight by remember { mutableStateOf(0.dp) }
+    var bottomBarHeight by remember { mutableStateOf<Dp?>(null) }
 
     val isBottomBarPresent = !isWideWindow && effectiveConfig.isBottomBarVisible
     val safeBottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
 
+    val cornerAnchor = safeBottom + FabMargin
+    val dockedAnchor = bottomBarHeight?.let { (it - FabDockedIntoBar).coerceAtLeast(0.dp) }
+
     val bottomAnchor by animateDpAsState(
-        targetValue = if (isBottomBarPresent) {
-            (bottomBarHeight - FabDockedIntoBar).coerceAtLeast(0.dp)
-        } else {
-            safeBottom + FabMargin
-        },
+        targetValue = if (isBottomBarPresent) dockedAnchor ?: cornerAnchor else cornerAnchor,
         label = "FloatingActionBottomAnchor",
     )
 
@@ -218,8 +221,19 @@ fun ChromeHost(
                             exit = shrinkVertically() + slideOutVertically { it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onSizeChanged {
-                                    bottomBarHeight = with(density) { it.height.toDp() }
+                                .onSizeChanged { size ->
+                                    // Only while the chrome is settled. The bar's height is a
+                                    // figure of the bar at rest; its entrance animates that figure
+                                    // up from nothing and its exit animates it back down, and an
+                                    // anchor that believed those intermediate values would dive to
+                                    // the window's edge on the way back and climb out again —
+                                    // which is the return trip failing to mirror the outbound one.
+                                    // The height of nothing is not a height either: the exit ends
+                                    // by reporting zero, and it reports it once the transition has
+                                    // already settled.
+                                    if (!chromeTransition.isRunning && size.height > 0) {
+                                        bottomBarHeight = with(density) { size.height.toDp() }
+                                    }
                                 }
                                 .aboveSharedElements(OverlayPriority.NavigationChrome),
                         ) {

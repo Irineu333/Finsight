@@ -144,6 +144,14 @@ lido no bloco de medição (`Scaffold.kt:199-215`) e o offset resultante é colo
 (`Scaffold.kt:291-293`) — o botão teleportaria. No overlay próprio, a posição é um `Alignment`
 animado.
 
+A altura da barra é lida **só com a chrome parada**, e é a única sutileza da posição. A barra anima
+a própria altura nas duas pontas — `expandVertically` ao entrar, `shrinkVertically` ao sair —, então
+`onSizeChanged` relata a subida inteira, e a saída ainda relata um zero final *depois* de a
+transição ter assentado. Um ancoramento que acreditasse nesses valores desceria até a borda da
+janela e subiria de novo perseguindo a barra: a ida ficaria perfeita e a volta seria outro caminho,
+não o inverso dela. Os dois guardas — transição parada e altura não nula — são o que torna o
+movimento reversível.
+
 *Alternativas descartadas:* posição fixa ao centro — o botão central é convenção de FAB ancorado a
 uma barra, e nas nove telas sem barra ficaria solto. Posição fixa no canto — mudaria de lugar nas
 duas abas mais usadas.

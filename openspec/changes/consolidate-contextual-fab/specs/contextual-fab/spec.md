@@ -37,8 +37,15 @@ a chrome, e uma lista de funções nunca é igual a si mesma entre recomposiçõ
 reiniciaria a transição indefinidamente. O canal das ações SHALL ser distinto do canal da
 configuração, ainda que ambos partam da mesma tela.
 
-Publicar as ações SHALL acontecer **durante** a composição da tela, e não depois dela. Uma
-publicação diferida exibe, no primeiro frame após navegar, as ações da tela anterior.
+A casca MUST NOT desenhar ações que não sejam do destino em foco. Durante uma transição de
+navegação duas telas estão compostas ao mesmo tempo, e ambas publicam; a publicação SHALL portanto
+carregar a identidade do destino que a originou, e a casca SHALL desenhar apenas a que corresponde
+ao destino corrente. Ordem de composição MUST NOT ser usada como garantia: ela não é contratual
+entre telas irmãs, e o requisito é sobre o que se desenha, não sobre quem escreve primeiro.
+
+Cada destino SHALL ter o seu próprio registro de ações. Uma tela que se dispõe SHALL limpar apenas
+o registro da sua identidade, e MUST NOT apagar o de outra — a tela que sai se dispõe depois de a
+tela que entra já ter publicado.
 
 #### Scenario: Ação que depende do estado da tela
 - **WHEN** o filtro da tela de categorias está em despesas e o usuário aciona a ação primária
@@ -47,7 +54,12 @@ publicação diferida exibe, no primeiro frame após navegar, as ações da tela
 
 #### Scenario: Navegação entre telas com ações diferentes
 - **WHEN** o usuário navega de uma tela para outra que oferece ações distintas
-- **THEN** em nenhum frame o botão exibe as ações da tela anterior
+- **THEN** em nenhum frame o botão exibe as ações da tela anterior, e em nenhum frame da transição
+  ele fica sem as ações do destino que entra
+
+#### Scenario: Tela que sai se dispõe depois da que entra
+- **WHEN** a animação de saída termina e a tela anterior se dispõe
+- **THEN** as ações do destino corrente permanecem publicadas
 
 #### Scenario: Casca inspecionada
 - **WHEN** a casca é inspecionada
@@ -82,34 +94,62 @@ obscurecida SHALL fechá-lo sem executar ação alguma.
 - **WHEN** o menu está aberto e o usuário toca fora dele
 - **THEN** o menu fecha e nenhuma ação é executada
 
-### Requirement: O botão aparece porque a tela tem ação, e não porque o seletor apareceu
+### Requirement: O botão existe em toda tela, e a ausência de ação própria não o apaga
 
-A visibilidade do botão SHALL ser derivada exclusivamente de haver ação publicada pela tela em
-foco. Ela MUST NOT depender de o destino ser uma aba primária, nem de o seletor estar visível.
+O app SHALL ter uma **ação universal** — registrar uma transação —, que não pertence a tela alguma
+e é a razão de o app existir. Uma tela que não publica ação nenhuma SHALL ter o botão com a ação
+universal, e MUST NOT ficar sem botão por não ter ação própria. Uma tela que publica ações SHALL ter
+o botão com as suas.
 
-O `ChromeConfig` MUST NOT declarar a visibilidade do botão. Uma tela que não quer o botão publica
-zero ações; uma que o quer publica as suas. A configuração de chrome rege o seletor, e nada mais.
+A visibilidade do botão MUST NOT depender de o destino ser uma aba primária, nem de o seletor estar
+visível. As duas regras são independentes: a bottom bar continua restrita às abas primárias, e o
+botão não.
 
-A **posição** do botão SHALL acompanhar o seletor: com a bottom bar visível, o botão é central e
-ancorado a ela; sem a bottom bar, o botão fica no canto da área de conteúdo; em janela larga, o
-botão é o `header` da rail. Em janela larga o menu SHALL abrir ao lado do botão, e não acima dele.
+Uma tela SHALL poder **suprimir** o botão declarando-o na configuração de chrome. Suprimir é um ato
+explícito, e MUST NOT ser confundido com não ter ação própria — a tela que nada declara recebe a
+ação universal, e só a que pede para não ter botão fica sem ele.
 
-#### Scenario: Tela empilhada no celular
-- **WHEN** a janela é estreita, o destino não é uma aba primária e a tela publica ações
-- **THEN** a bottom bar é ocultada e o botão permanece visível, no canto da área de conteúdo
+#### Scenario: Tela sem ação própria em janela larga
+- **WHEN** o usuário está numa tela que não publica ação alguma (relatórios, configurações, a fatura
+  de um cartão) em janela larga
+- **THEN** o botão é exibido com a ação universal, como já era antes desta capability existir
 
-#### Scenario: Aba primária no celular
-- **WHEN** a janela é estreita, o destino é uma aba primária e a tela publica ações
-- **THEN** a bottom bar é exibida e o botão é central, ancorado a ela
+#### Scenario: Tela sem ação própria no celular
+- **WHEN** o usuário está numa tela que não publica ação alguma e o destino não é uma aba primária
+- **THEN** a bottom bar é ocultada e o botão permanece, com a ação universal
 
 #### Scenario: Tela em modo de edição
-- **WHEN** o painel entra em modo de edição e publica zero ações
-- **THEN** o botão é ocultado, sem que nenhuma configuração de visibilidade tenha sido declarada
+- **WHEN** o painel entra em modo de edição e suprime o botão na configuração de chrome
+- **THEN** o botão é ocultado, e a ação universal não o substitui
+
+### Requirement: A posição do botão acompanha o seletor
+
+A posição do botão SHALL acompanhar o seletor: com a bottom bar visível, o botão é central e
+ancorado a ela; sem a bottom bar, o botão fica no canto da área de conteúdo; em janela larga, o
+botão é o `header` da rail. É onde cada botão de ação do app já se encontra, e a consolidação
+MUST NOT mover nenhum deles.
+
+Sem a bottom bar, o botão SHALL respeitar os insets da janela. A casca desenha o conteúdo com os
+insets zerados e cada tela os reintroduz; um botão que herdasse os insets da casca seria desenhado
+sob a barra de navegação do sistema.
+
+Em janela larga o menu SHALL abrir ao lado do botão, e nenhuma das suas ações SHALL ser recortada
+pelos limites da rail. O menu MUST NOT deixar de participar do overlay de transição por causa disso,
+nem deixar de publicar as suas identidades de teste na raiz de composição da janela.
+
+#### Scenario: Tela empilhada no celular
+- **WHEN** a janela é estreita e o destino não é uma aba primária
+- **THEN** a bottom bar é ocultada e o botão fica no canto da área de conteúdo, acima da barra de
+  navegação do sistema
+
+#### Scenario: Aba primária no celular
+- **WHEN** a janela é estreita e o destino é uma aba primária
+- **THEN** a bottom bar é exibida e o botão é central, ancorado a ela
 
 #### Scenario: Menu aberto em janela larga
 - **WHEN** o botão é o `header` da rail e o usuário abre o menu
-- **THEN** as ações são exibidas ao lado do botão, sobre o conteúdo, e nenhuma delas é recortada
-  pelos limites da rail
+- **THEN** as ações são exibidas ao lado do botão, sobre o conteúdo, nenhuma delas recortada pela
+  rail, e todas alcançáveis pela automação de teste
 
 ### Requirement: Toda ação é nomeada e alcançável
 

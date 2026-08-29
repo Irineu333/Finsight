@@ -3,9 +3,11 @@
 ### Requirement: Tipos de acesso cross-feature à UI
 O acesso a recursos de UI de outra feature SHALL ocorrer exclusivamente por: (1) navegação por rota declarada na `api` de destino; (2) modal obtido via entry point, exibido via `ModalManager` (modais transitórios: formulários e confirmações) ou via `DetailPaneController` (modais de **detalhe** adaptativos, `view*`), sendo a superfície painel-vs-sheet resolvida pela largura da janela na casca; (3) conteúdo `@Composable` retornado por entry point (caso excepcional, apenas mediante necessidade real); (4) registro do subgrafo de navegação da feature de destino via um `register()` no seu entry point que receba o `NavGraphBuilder` como context parameter, quando uma feature hospeda os destinos de outra. Import direto de composable, modal, ViewModel ou função de grafo (`NavGraphBuilder.<nome>Graph()`) de outro `impl` MUST NOT ocorrer. O mecanismo (4) permanece disponível, porém Dashboard e Transactions deixam de ser hospedados: seus `dashboardGraph()`/`transactionsGraph()` são grafos de primeiro nível invocados diretamente pelo `AppNavHost`, como as demais features.
 
-Uma ação publicada no botão de ação da casca SHALL seguir as mesmas regras: quem publica é a **tela em foco**, e o modal que a ação abre é obtido pelo entry point da feature dona quando ele não pertence ao `impl` da tela. A casca MUST NOT obter entry point algum para montar o botão — ela desenha o que a tela publicou, e não conhece a feature que originou a ação.
+Uma ação publicada no botão de ação SHALL seguir as mesmas regras: quem publica é a **tela em foco**, e o modal que a ação abre é obtido pelo entry point da feature dona quando ele não pertence ao `impl` da tela. A casca continua obtendo por entry point a **ação universal** que serve as telas sem ação própria, e MUST NOT conhecer as ações que as telas publicam.
 
 Um entry point SHALL poder receber, como parâmetro, o contexto que a tela chamadora já tem à mão — a conta ou o cartão em foco, identificados pelo seu id —, de modo que o formulário nasça preenchido com o que o usuário está olhando. Esse parâmetro MUST NOT introduzir tipo declarado em `impl`, e MUST NOT tornar obrigatório um contexto que nem todo chamador possui: um chamador sem contexto SHALL poder abrir o mesmo formulário sem ele.
+
+O contexto passado SHALL ser o que a tela tem **em foco agora**, e MUST NOT ser lido do argumento de rota que a abriu. A rota carrega a seleção inicial; o foco corrente muda enquanto a tela vive, e um formulário preenchido a partir da rota afirmaria o item que o usuário abriu, e não o que ele está olhando.
 
 #### Scenario: Abertura de tela de outra feature
 - **WHEN** uma feature precisa levar o usuário a uma tela de outra feature
@@ -21,11 +23,15 @@ Um entry point SHALL poder receber, como parâmetro, o contexto que a tela chama
 
 #### Scenario: Ação de botão servida por outra feature
 - **WHEN** a tela de contas publica no botão de ação a criação de uma transação, cujo modal pertence a transactions
-- **THEN** `accounts:impl` obtém o `Modal` por `TransactionsEntry.addTransactionModal(...)` e o publica como ação, sem instanciar `AddTransactionModal` de `transactions:impl` e sem que a casca conheça `TransactionsEntry`
+- **THEN** `accounts:impl` obtém o `Modal` por `TransactionsEntry.addTransactionModal(...)` e o publica como ação, sem instanciar `AddTransactionModal` de `transactions:impl`; que a casca também obtenha esse entry point para a ação universal é irrelevante para a tela, que não passa por ela
 
 #### Scenario: Formulário aberto com o contexto em foco
 - **WHEN** a tela de cartões publica a criação de transação enquanto um cartão está em foco
 - **THEN** o entry point recebe o id desse cartão e o formulário abre com ele pré-selecionado; aberto de onde não há cartão em foco, o mesmo entry point é chamado sem o parâmetro e o formulário abre sem pré-seleção
+
+#### Scenario: O foco mudou depois da navegação
+- **WHEN** a tela foi aberta por uma rota que nomeia um cartão e o usuário desliza até outro antes de acionar a ação
+- **THEN** o formulário abre com o cartão que está em foco, e não com o que a rota nomeia
 
 #### Scenario: Detalhe adaptativo obtido via entry point
 - **WHEN** uma feature precisa exibir o detalhe `view*` de outra feature (ex.: o dashboard exibindo o detalhe de uma categoria)

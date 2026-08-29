@@ -70,6 +70,7 @@ val transactionsModule = module {
     }
     viewModel {
         AddTransactionViewModel(
+            origin = it.getOrNull(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),

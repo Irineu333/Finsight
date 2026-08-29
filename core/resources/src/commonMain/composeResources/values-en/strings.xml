@@ -1005,4 +1005,14 @@
     <string name="build_transaction_error_account_required">Pick the account.</string>
     <string name="build_transaction_error_closed_invoice">A closed invoice takes no new spending.</string>
     <string name="build_transaction_error_closed_selection">An archived account or card takes no new transactions.</string>
+
+    <!-- Action button: the app's single floating action button and the actions screens publish to it -->
+    <string name="floating_action_expand">More actions</string>
+    <string name="floating_action_collapse">Close actions</string>
+    <string name="accounts_add">Add account</string>
+    <string name="accounts_add_transaction">New transaction in this account</string>
+    <string name="credit_cards_add_transaction">New transaction on this card</string>
+    <string name="categories_add_expense">Add expense category</string>
+    <string name="categories_add_income">Add income category</string>
+    <string name="support_create_issue">Open issue</string>
 </resources>

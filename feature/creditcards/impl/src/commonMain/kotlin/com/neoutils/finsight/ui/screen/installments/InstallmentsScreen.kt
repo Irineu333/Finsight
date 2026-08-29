@@ -81,6 +81,8 @@ import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.categoryDisplayColor
@@ -146,6 +148,25 @@ private fun InstallmentsContent(
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
+
+    ChromeEffect(
+        actions = if (uiState is InstallmentsUiState.Content) {
+            remember(modalManager) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.installments_create,
+                        // Same id as the empty state's button below: the flow asks to create an
+                        // installment, not for the affordance the current state renders.
+                        testTag = "installments_add",
+                        onClick = { modalManager.show(AddInstallmentModal()) },
+                    )
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
 
     Scaffold(
         modifier = Modifier.testTag("screen_installments"),
@@ -230,23 +251,6 @@ private fun InstallmentsContent(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            if (uiState is InstallmentsUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(AddInstallmentModal())
-                    },
-                    // Same id as the empty state's button below: the flow asks to create
-                    // an installment, not for the affordance the current state renders.
-                    modifier = Modifier.testTag("installments_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                    )
-                }
-            }
         },
     ) { paddingValues ->
         when (uiState) {

@@ -155,6 +155,8 @@ class AddTransactionSubmitTest {
     }
 
     private fun viewModel(today: LocalDate) = AddTransactionViewModel(
+        // Opened from nowhere in particular: nothing is preselected.
+        origin = null,
         categoryRepository = FakeCategoryRepository,
         creditCardRepository = FakeCreditCardRepository,
         invoiceRepository = FakeInvoiceRepository,

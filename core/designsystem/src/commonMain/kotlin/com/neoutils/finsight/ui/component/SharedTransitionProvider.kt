@@ -34,8 +34,14 @@ object OverlayPriority {
     /** The bottom navigation bar and the navigation rail: the same thing at different widths. */
     const val NavigationChrome = 1f
 
+    /**
+     * The scrim of the action button's open menu. Above the navigation chrome on purpose: the
+     * menu dismisses what is behind it, and a bar left uncovered would go on taking taps.
+     */
+    const val ActionScrim = 2f
+
     /** The FAB, docked over the bottom bar — mirrors the `Scaffold` placement order. */
-    const val FloatingActionButton = 2f
+    const val FloatingActionButton = 3f
 }
 
 @Composable

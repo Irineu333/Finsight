@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.modal.addTransaction
 
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import org.koin.compose.koinInject
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -49,9 +50,16 @@ import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
 
-class AddTransactionModal : ModalBottomSheet() {
+/**
+ * @param origin what the screen that opened this form had in focus, when it had anything. It is a
+ * preselection and not a lock: every selector below stays free.
+ */
+class AddTransactionModal(
+    private val origin: TransactionOrigin? = null,
+) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -60,7 +68,7 @@ class AddTransactionModal : ModalBottomSheet() {
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
-        val viewModel = koinViewModel<AddTransactionViewModel>()
+        val viewModel = koinViewModel<AddTransactionViewModel> { parametersOf(origin) }
 
         val uiState by viewModel.uiState.collectAsState()
 

@@ -46,6 +46,8 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.RecurringCycleStatus
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_empty_filter
@@ -119,6 +121,26 @@ fun RecurringScreen(
         analytics.logScreenView("recurring")
     }
 
+    // Not tied to Content: a month with no cycle at all must still offer the create button.
+    ChromeEffect(
+        actions = if (uiState !is RecurringUiState.Loading) {
+            remember(modalManager) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.recurring_screen_create,
+                        // The empty state's button carries the same id: a flow asks to create a
+                        // recurring, not for whichever affordance renders that offer.
+                        testTag = "recurring_add",
+                        onClick = { modalManager.show(RecurringFormModal()) },
+                    )
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_recurring"),
         topBar = {
@@ -162,20 +184,6 @@ fun RecurringScreen(
                     )
                 }
             )
-        },
-        floatingActionButton = {
-            // Not tied to Content: a month with no cycle at all must still offer the
-            // create button.
-            if (uiState !is RecurringUiState.Loading) {
-                FloatingActionButton(
-                    onClick = { modalManager.show(RecurringFormModal()) },
-                    // The empty state's button carries the same id: a flow asks to create
-                    // a recurring, not for whichever affordance renders that offer.
-                    modifier = Modifier.testTag("recurring_add"),
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                }
-            }
         },
     ) { paddingValues ->
         when (val uiState = uiState) {

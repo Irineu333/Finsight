@@ -275,6 +275,8 @@ class AddTransactionInvoiceDateTest {
     }
 
     private fun viewModel(cards: List<CreditCard> = listOf(card)) = AddTransactionViewModel(
+        // Opened from nowhere in particular: nothing is preselected.
+        origin = null,
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards(cards),
         invoiceRepository = FakeInvoices(cards.map(::openInvoiceOf)),

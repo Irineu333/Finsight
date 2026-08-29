@@ -1,6 +1,10 @@
 package com.neoutils.finsight.ui.screen.categories
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.categories_add_expense
+import com.neoutils.finsight.resources.categories_add_income
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * The one selector on the categories screen, mixing two axes on purpose: status
@@ -22,4 +26,21 @@ val CategoryFilter.fabInitialType: Category.Type
     get() = when (this) {
         CategoryFilter.INCOME -> Category.Type.INCOME
         else -> Category.Type.EXPENSE
+    }
+
+/**
+ * The type the action button does *not* open on — what the menu offers beside the primary. There
+ * are two types and no third, so "the other one" is total.
+ */
+val Category.Type.other: Category.Type
+    get() = when (this) {
+        Category.Type.INCOME -> Category.Type.EXPENSE
+        Category.Type.EXPENSE -> Category.Type.INCOME
+    }
+
+/** How an action that creates a category of this type names itself. */
+val Category.Type.addLabel: StringResource
+    get() = when (this) {
+        Category.Type.INCOME -> Res.string.categories_add_income
+        Category.Type.EXPENSE -> Res.string.categories_add_expense
     }

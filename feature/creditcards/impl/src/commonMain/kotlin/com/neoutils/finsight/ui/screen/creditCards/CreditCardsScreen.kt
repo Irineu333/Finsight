@@ -7,6 +7,9 @@ package com.neoutils.finsight.ui.screen.creditCards
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.navigation.ArchivedCreditCardsRoute
@@ -22,6 +25,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.FilterAltOff
@@ -101,6 +105,42 @@ private fun CreditCardsContent(
     val transactionsEntry = koinInject<TransactionsEntry>()
     val navController = LocalNavController.current
 
+    // The card in focus is the pager's, never the route's: the route names the card the screen was
+    // opened on, and the user swipes past it.
+    val focusedCardId = (uiState as? CreditCardsUiState.Content)
+        ?.let { it.domainCards.getOrNull(it.selectedCardIndex)?.id }
+
+    ChromeEffect(
+        actions = if (uiState is CreditCardsUiState.Content) {
+            remember(modalManager, transactionsEntry, focusedCardId) {
+                listOfNotNull(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.credit_cards_create,
+                        testTag = "credit_cards_add",
+                        onClick = { modalManager.show(CreditCardFormModal()) },
+                    ),
+                    focusedCardId?.let { creditCardId ->
+                        ChromeAction(
+                            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                            labelRes = Res.string.credit_cards_add_transaction,
+                            testTag = "credit_cards_add_transaction",
+                            onClick = {
+                                modalManager.show(
+                                    transactionsEntry.addTransactionModal(
+                                        TransactionOrigin.CreditCard(creditCardId)
+                                    )
+                                )
+                            },
+                        )
+                    },
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -155,21 +195,6 @@ private fun CreditCardsContent(
             )
         },
         modifier = Modifier.testTag("screen_credit_cards"),
-        floatingActionButton = {
-            if (uiState is CreditCardsUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(CreditCardFormModal())
-                    },
-                    modifier = Modifier.testTag("credit_cards_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-                }
-            }
-        },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         when (uiState) {

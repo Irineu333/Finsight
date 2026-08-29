@@ -110,15 +110,38 @@ A linha SHALL declarar um limite que é **percentual de uma receita base**, e n�
 O valor chega à superfície já calculado, e sem essa declaração é indistinguível de um teto
 fixo — o que faria a linha afirmar permanência sobre um número que se re-deriva a cada mês.
 A declaração SHALL usar o mesmo glifo com que o sistema já significa *recorrência* nas demais
-telas, SHALL exibir o percentual, e MUST NOT usar cor que o sistema já reservou para outro
-significado.
+telas, SHALL exibir o percentual **e a receita base de que ele é fração**, e MUST NOT usar cor
+que o sistema já reservou para outro significado.
 
-A declaração MUST NOT nomear **qual** é a receita base: isso é da ficha de detalhe, que já a
-enuncia e navega até ela.
+**O percentual sozinho não discrimina**, que é o critério pelo qual esta linha decide o que
+afirmar: "30%" é a mesma marca num orçamento que toma uma fração do salário e noutro que a
+toma do aluguel, e quem mantém os dois leria a mesma declaração duas vezes. A ficha de detalhe
+continua enunciando a receita base por extenso e navegando até ela; o que a linha acrescenta é
+**qual** delas.
+
+As duas partes cedem largura em ordem: o percentual é a derivação e MUST NOT ser truncado; o
+nome diz *qual* derivação e SHALL ceder primeiro, em **uma linha só**, truncado quando não
+couber. A declaração inteira SHALL ter largura limitada, de modo que um nome longo não empurre
+a identidade do orçamento para fora da linha.
+
+Onde a receita base não existe mais, a declaração SHALL exibir apenas o percentual, e MUST NOT
+deixar o separador pendurado.
 
 #### Scenario: Teto percentual
-- **WHEN** um orçamento tem limite de 30% de uma receita base
-- **THEN** a linha exibe o valor derivado do mês, acompanhado do glifo de recorrência e do percentual
+- **WHEN** um orçamento tem limite de 30% de uma receita base chamada "Salário"
+- **THEN** a linha exibe o valor derivado do mês, acompanhado do glifo de recorrência, do percentual e do nome da receita
+
+#### Scenario: Dois tetos derivados de receitas diferentes
+- **WHEN** dois orçamentos tomam 30% de receitas base distintas
+- **THEN** as duas declarações são distinguíveis sem abrir o detalhe
+
+#### Scenario: Nome de receita longo
+- **WHEN** o nome da receita base não cabe na largura reservada à declaração
+- **THEN** o nome é truncado, o percentual permanece inteiro, e a identidade do orçamento conserva o seu lugar na linha
+
+#### Scenario: Receita base removida
+- **WHEN** a recorrência de que o teto deriva não existe mais
+- **THEN** a declaração exibe apenas o percentual
 
 #### Scenario: Teto fixo não recebe declaração
 - **WHEN** um orçamento tem limite digitado

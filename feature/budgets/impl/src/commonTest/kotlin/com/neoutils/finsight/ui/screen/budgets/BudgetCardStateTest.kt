@@ -65,6 +65,38 @@ class BudgetCardStateTest {
     }
 
     /**
+     * The share alone is the same mark on two budgets that take a share of different
+     * incomes, which is exactly what this row exists not to do. The name travels with the
+     * budget's progress, and the mark reads it from there.
+     */
+    @Test
+    fun `the derived mark names the income the share is taken of`() {
+        val progress = BudgetProgress(
+            budget = budget(limitType = LimitType.PERCENTAGE, percentage = 30.0),
+            spent = 0.0,
+            recurringLabel = "Salário",
+        )
+
+        assertEquals(30, progress.budget.derivedLimitPercentage)
+        assertEquals("Salário", progress.recurringLabel)
+    }
+
+    /**
+     * A recurring that no longer exists leaves the share without a name, and the mark shows
+     * the share by itself rather than a separator with nothing after it.
+     */
+    @Test
+    fun `a derived ceiling whose recurring is gone has no name to show`() {
+        val progress = BudgetProgress(
+            budget = budget(limitType = LimitType.PERCENTAGE, percentage = 30.0),
+            spent = 0.0,
+        )
+
+        assertEquals(30, progress.budget.derivedLimitPercentage)
+        assertNull(progress.recurringLabel)
+    }
+
+    /**
      * **The row is a surface of its own grammar**, in the sense of `money-display`: it has
      * the width of one amount and no more, so it shows the absence rather than the parts —
      * which is exactly the declaration that capability requires of each surface, and the

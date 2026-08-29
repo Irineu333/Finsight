@@ -75,7 +75,8 @@ Toda a densidade precisa, portanto, sair da própria linha.
   receita base deste mês*, e chega à UI **indistinguível de um valor digitado**. Enquanto o
   limite era o terceiro dado da tela isso passava; como dado principal, a linha passaria a
   afirmar teto fixo onde não há. Ele ganha o glifo de recorrência que o app já usa
-  (`Icons.Outlined.Autorenew`) mais o percentual, num marcador contido.
+  (`Icons.Outlined.Autorenew`), o percentual e o nome da receita base, num marcador contido —
+  o percentual sozinho não distingue 30% do salário de 30% do aluguel.
 
 - **O badge de consolidação sai da linha e a explicação vira um aviso único no topo da lista.**
   A causa é **global** — falta taxa para uma moeda —, não propriedade de um orçamento, e a

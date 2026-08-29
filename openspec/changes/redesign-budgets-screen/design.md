@@ -131,8 +131,14 @@ formulário de transação. Reusá-lo custa nada e não ensina um símbolo novo.
 Cor: `Primary1`. **Não** âmbar — um teto derivado é normal, não um aviso; e **não** `Info`,
 que no app significa *editar* (o botão do próprio detalhe de orçamento).
 
-A declaração diz *que* se renova e *de quanto*, e **não** *de quê*: a receita base já está no
-detalhe, com link para a recorrência.
+A declaração diz *que* se renova, *de quanto* e **de quê**. O terceiro termo entrou depois de
+ver a marca desenhada em escala real: "30%" sozinho não distingue 30% do salário de 30% do
+aluguel, e uma linha cujo trabalho é discriminar não pode exibir a mesma marca em dois
+orçamentos diferentes. O detalhe continua sendo onde a receita base é enunciada por extenso e
+navegável; a linha só diz qual é.
+
+O custo é largura, e ele está contido por prioridade declarada: o percentual não trunca, o
+nome trunca, e a marca inteira tem teto de largura para não empurrar a identidade para fora.
 
 ## Decisões tomadas por recomendação, a confirmar
 

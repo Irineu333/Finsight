@@ -283,14 +283,14 @@
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Budgets</string>
-    <string name="budgets_limit">Limit</string>
-    <string name="budgets_spent">Spent</string>
-    <string name="budgets_remaining">Remaining</string>
-    <string name="budgets_exceeded_by">Exceeded by</string>
-    <string name="budgets_category_singular">1 category</string>
-    <string name="budgets_category_plural">%1$d categories</string>
     <string name="budgets_empty">No budgets</string>
     <string name="budgets_create">Create budget</string>
+    <string name="budgets_row_spent">spent</string>
+    <string name="budgets_row_categories_more">+%1$d</string>
+    <string name="budgets_row_exceeded">Over budget</string>
+    <string name="budgets_row_derived_limit">Ceiling derived from a recurring income</string>
+    <string name="budgets_period_monthly">Monthly</string>
+    <string name="budgets_period_weekly">Weekly</string>
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Edit Card</string>
@@ -904,6 +904,7 @@
     <string name="money_unresolved_badge">Why something is missing here</string>
     <string name="money_unresolved_title">No single amount to compare against</string>
     <string name="money_unresolved_body">Some part of this period is in a currency with no rate on file, so there is no single amount to compare against — which is why the bar and the proportion are not there. The amounts are still exact, each in its own currency; what is missing is the common measure between them. Add the rate and this works again.</string>
+    <string name="money_unresolved_list_notice">A currency with no rate this month</string>
     <string name="report_export_footnote">≈ marks an amount that passed through an exchange rate. Where no rate was on file, that currency's share stands on its own, unconverted.</string>
     <string name="money_approximate_see_rates">See rates</string>
 

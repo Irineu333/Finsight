@@ -471,18 +471,27 @@ footer {
 
   <!-- ══ MASTHEAD ═══════════════════════════════════════════ -->
   <header class="masthead">
-    <span class="eyebrow">Finsight · feature/budgets · rev. 4 · decidida e proposta</span>
-    <h1>A linha,<br><em>fechada</em></h1>
+    <span class="eyebrow">Finsight · feature/budgets · rev. 4 · registro de decisão, anterior a D7</span>
+    <h1>A linha,<br><em>decidida</em></h1>
     <p class="lede">
-      Todas as decisões tomadas. A lista abaixo é o desenho final, com <strong>uma linha para
-      cada estado que o domínio produz</strong> — estourado, derivado, irresolvível — na ordem
-      em que a tela vai apresentá-las. Ela virou a change
-      <code>redesign-budgets-screen</code>: proposta, design, 8 requisitos e 25 tarefas,
-      commitados em <code>chore/redesign-budgets-screen</code>.
+      A rodada de comparação de que saíram <strong>D1–D6</strong>: uma linha para cada estado
+      que o domínio produz — estourado, derivado, irresolvível — desenhada em escala real, com
+      cada decisão ao lado do que foi recusado para chegar nela. Ela virou a change
+      <code>redesign-budgets-screen</code>, em <code>chore/redesign-budgets-screen</code>.
+    </p>
+    <p class="lede" style="margin-top:14px;border-left:3px solid var(--con);padding-left:14px;color:var(--ink-soft);font-size:16px;">
+      <strong style="color:var(--con);">Isto não é a linha entregue.</strong> O que está
+      desenhado aqui é a grade 2×2 de ~52&#8239;dp, com o marcador de teto derivado reduzido a
+      <code>30%</code> e colado ao título. <strong>D7</strong> veio depois: o marcador passou a
+      nomear a receita base e ganhou linha própria sobre o teto, identidade e figuras viraram
+      dois blocos, e a linha foi para ~62&#8239;dp — ~80&#8239;dp quando o teto deriva. O que
+      esta prancha continua respondendo é <em>contra o que</em> cada decisão foi tomada, e as
+      alternativas recusadas não mudaram. Para o que a linha é hoje, valem
+      <code>specs/budget-list-row/spec.md</code> e <code>BudgetCard.kt</code>.
     </p>
     <div class="specbar">
-      <div><b>altura</b> 232 → 52&#8239;dp</div>
-      <div><b>por tela</b> 2,7 → 10,8</div>
+      <div><b>altura, aqui</b> 232 → 52&#8239;dp</div>
+      <div><b>altura, entregue</b> 62–80&#8239;dp</div>
       <div><b>escala</b> 1&#8239;dp = 1,25&#8239;px</div>
       <div><b>domínio</b> sem mudança</div>
       <div><b>banco</b> sem migração</div>
@@ -492,7 +501,7 @@ footer {
   <!-- ══ A LISTA FINAL ══════════════════════════════════════ -->
   <section class="section">
     <div class="section__head">
-      <span class="axis-tag">O desenho final</span>
+      <span class="axis-tag">O desenho desta rodada</span>
       <h2>A tela, do estourado ao desconhecido</h2>
       <p>
         Sete orçamentos, ordenados por <strong>progresso decrescente</strong> — a decisão que

@@ -9,12 +9,20 @@ termo. Cada decisão registra aqui o que foi trocado por quê, **e contra o que*
 recusadas estão nomeadas junto de cada uma, para que discordar de uma delas mais tarde não
 exija refazer a comparação do zero.
 
-A prancha está preservada em **`assets/layout-plate.html`**, abrível direto no navegador: o
-desenho final com uma linha para cada estado que o domínio produz, a anatomia das suas sete
-peças e o registro das nove decisões com o que foi descartado em cada uma. Ela é um **registro
-de decisão, e não uma especificação** — onde ela e a spec divergirem,
-`specs/budget-list-row/spec.md` é quem manda. As suas cores são lidas de `Color.kt` e
-`Theme.kt`, de modo que ela envelhece junto com o tema em vez de fingir permanência.
+A prancha está preservada em **`assets/layout-plate.html`**, abrível direto no navegador: uma
+linha para cada estado que o domínio produz, a anatomia das suas peças e o registro das nove
+decisões com o que foi descartado em cada uma. Ela é um **registro de decisão, e não uma
+especificação** — onde ela e a spec divergirem, `specs/budget-list-row/spec.md` é quem manda.
+As suas cores são lidas de `Color.kt` e `Theme.kt`, de modo que ela envelhece junto com o tema
+em vez de fingir permanência.
+
+**Ela desenha a linha em que D1–D6 foram decididas, e não a que foi entregue.** Aquela era uma
+grade 2×2 de ~52 dp, com o marcador de teto derivado reduzido a `30%` e colado ao título. D7 —
+que veio depois, do desenho em escala real e não da prancha — nomeou a receita base e separou
+identidade e figuras em dois blocos, e com isso a linha passou a ~62 dp, ~80 dp quando o teto
+deriva. Regenerar a prancha custaria mais do que vale: o que ela documenta é **contra o que**
+cada decisão foi tomada, e as alternativas recusadas não mudaram. Para o que a linha é hoje,
+a spec e `BudgetCard.kt` são as fontes.
 
 ## Decisões
 
@@ -23,9 +31,10 @@ de decisão, e não uma especificação** — onde ela e a spec divergirem,
 **Escolhido:** anel de ~36 dp com traço de ~3 dp, envolvendo o chip da categoria.
 
 O anel ocupa a altura do chip que a linha já teria de ter. É essa propriedade — e não a
-estética — que torna o resto possível: com o progresso custando **zero altura adicional**, os
-dois slots de texto da grade 2×2 ficaram livres para o teto e as categorias. Uma barra abaixo
-do nome consumiria um deles e a linha subiria para ~64 dp.
+estética — que torna o resto possível: com o progresso custando **zero altura adicional**, as
+duas linhas de texto de cada bloco ficaram livres para o teto, o gasto, o título e as
+categorias. Uma barra abaixo do nome consumiria uma delas, e a consumiria em *toda* linha —
+inclusive nas que nada têm a dizer além do teto.
 
 **O que se perde, declaradamente.** Arco é uma codificação visual pior que comprimento: barras
 alinhadas no mesmo eixo se comparam de relance, anéis não. Numa lista longa, comparar
@@ -59,8 +68,16 @@ e, não sendo dinheiro, faria a linha deixar de falar de dinheiro.
 ### D3 — Categorias como ícones empilhados, sem tint
 
 Ícones foram escolhidos sobre nomes por uma razão de layout que só apareceu ao desenhar:
-a pilha tem **largura constante**, então o lado esquerdo da linha não disputa espaço com o
-lado direito. Com nomes, título e categorias truncariam em linhas diferentes ao mesmo tempo.
+a pilha tem **largura limitada** — três chips e um excedente contado —, então o número de
+categorias de um orçamento não decide a largura de nada. Com nomes, título e categorias
+truncariam em linhas diferentes ao mesmo tempo.
+
+**Limitada, e não fixa**, e a distinção passou a importar com D7. Reservar a largura dos três
+chips em toda linha faria todo orçamento pagar pelo maior deles; o que precisa ser excluído é
+só o caso inverso, o de muitas categorias apertando a linha. Na linha entregue nem isso chega
+a ser disputa: a pilha tem uma linha própria sob o título, e a coluna das figuras é medida
+antes da identidade — de modo que a razão da regra é cumprida duas vezes, e por vias
+independentes.
 
 **A ausência de tint não é escolha estética, é correção.** `categoryDisplayColor`
 (`core/ui/.../CategoryColor.kt:39`) responde por `Category.Type`, não por categoria:
@@ -159,10 +176,11 @@ legível.
 O título passou a ler no tamanho do teto, separado dele só pelo peso: em corpo menor ele lia
 como legenda do próprio orçamento.
 
-## Decisões tomadas por recomendação, a confirmar
+## Decisões tomadas por recomendação
 
-Estas duas foram decididas pelo argumento e não por escolha explícita. São reversíveis sem
-tocar no resto do desenho.
+Estas duas foram decididas pelo argumento e não por escolha explícita, e ambas estão
+implementadas. Ficam registradas à parte porque continuam **reversíveis sem tocar no resto do
+desenho** — cada uma tem a sua alternativa nomeada, e nenhuma delas exige refazer nada.
 
 1. **Ordenação por progresso decrescente** (D6). A alternativa é manter a ordem de criação, que
    não responde pergunta alguma da tela.
@@ -174,16 +192,26 @@ tocar no resto do desenho.
 
 ## Riscos
 
-- **Sopa de ícones.** Chip do orçamento com anel + até três chips de categoria na mesma linha
-  de 52 dp. Os mockups sustentam, mas o teste é em aparelho, com ícones reais e nomes reais.
-- **Perda de cobertura E2E declarada.** `budgets/lifecycle.yaml` prova hoje que a lista troca
-  o texto de `budget_remaining_label` entre "Remaining" e "Exceeded by", *e* que a ficha troca
-  a própria tag — duas implementações de uma regra, cada uma capaz de quebrar sem a outra
-  (o comentário do fluxo diz isso). Na lista sobra uma. O fluxo passa a asserir o glifo de
-  estouro e a relação entre `budget_limit_amount` e `budget_spent_amount`.
-- **52 dp com fontes grandes.** A grade 2×2 tem duas linhas de texto à esquerda dentro da
-  altura do chip. Com escala de fonte do sistema aumentada, a linha cresce — aceitável, desde
-  que cresça igual em toda variante.
+Os dois primeiros eram riscos de desenho e foram fechados em aparelho; o registro está no
+corpo dos commits `649bfc5bd`, `287ff5018`, `6812a1c02` e `e050894f4` — AVD `finsight_e2e`
+(API 36, 1080×2400 @420, en-US, `nokeys`), nos dois temas e em escala de fonte 1,0 e 1,3.
+O terceiro é o que a change aceita pagar e não fecha.
+
+- **Sopa de ícones** — *fechado*. Chip do orçamento com anel + até três chips de categoria na
+  mesma linha. Sustentou com ícones e nomes reais; o que a verificação mudou foi outra coisa —
+  o título passou a ler no tamanho do teto, porque em corpo menor lia como legenda do próprio
+  orçamento.
+- **Altura com fontes grandes** — *fechado*. A identidade tem duas linhas de texto dentro da
+  altura do chip, e as figuras têm duas ou três. Em escala 1,3 a linha cresce, e cresce igual
+  em toda variante: quem governa a altura é a pilha das figuras, cujo número de linhas depende
+  só do tipo do teto. O nome da receita base é o que trunca primeiro, sob o seu cap de largura,
+  e o título segue inteiro.
+- **Perda de cobertura E2E declarada** — *aceita*. `budgets/lifecycle.yaml` provava que a
+  lista trocava o texto de `budget_remaining_label` entre "Remaining" e "Exceeded by", *e* que
+  a ficha trocava a própria tag — duas implementações de uma regra, cada uma capaz de quebrar
+  sem a outra (o comentário do fluxo dizia isso). Na lista sobra uma. O fluxo passou a asserir
+  o glifo de estouro e a relação entre `budget_limit_amount` e `budget_spent_amount`, e o
+  comentário foi reescrito para declarar a cobertura que ficou.
 
 ## Não-objetivos
 

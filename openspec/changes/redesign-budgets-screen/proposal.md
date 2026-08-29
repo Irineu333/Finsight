@@ -32,12 +32,16 @@ Toda a densidade precisa, portanto, sair da própria linha.
 
 ## What Changes
 
-- **A linha passa de ~232 dp para ~52 dp**, em grade 2×2 — o mesmo arranjo de `RecurringCard`,
-  e pela mesma razão: com um subtítulo em linha única, a identidade truncaria antes da figura.
-  **2,7 itens por tela passam a ~10,8.**
+- **A linha passa de ~232 dp para ~62 dp**, em **dois blocos** — identidade de um lado,
+  figuras do outro —, e não numa grade pareada: nada de um lado corresponde a nada em
+  particular do outro, e alinhá-los linha a linha foi justamente o que fez as três primeiras
+  tentativas de acomodar o marcador de teto derivado falharem (design D7). **2,7 itens por
+  tela passam a ~10**, na mesma janela com que a primeira conta foi feita. Um teto derivado
+  paga uma linha a mais — ~80 dp —, e é a única variação de altura da lista.
 
 - **O progresso passa a ser um anel em torno do ícone**, ocupando a altura do chip que já
-  existia. É isso que libera os dois slots de texto: o progresso deixa de custar altura.
+  existia. É isso que libera as duas linhas de texto de cada bloco: o progresso deixa de
+  custar altura.
 
 - **O número principal da linha passa a ser o limite cadastrado**, e não o gasto. Esta é uma
   tela de **gestão** — cria, edita e apaga orçamento —, e não de acompanhamento; o teto é a
@@ -46,8 +50,9 @@ Toda a densidade precisa, portanto, sair da própria linha.
 
 - **As categorias sobem para a linha, como ícones empilhados**, no lugar da contagem muda
   "3 categorias". Elas são a segunda coisa que discrimina uma linha da vizinha: dois
-  orçamentos de mesmo nome só se distinguem pelo que medem. A pilha tem **largura constante**
-  e por isso não disputa espaço com a figura, e excedentes viram `+N`.
+  orçamentos de mesmo nome só se distinguem pelo que medem. A pilha tem **largura limitada**
+  — três chips e um excedente contado, `+N` — e por isso um número variável de categorias
+  não decide a largura de nada.
 
 - **Os ícones de categoria são exibidos sem tint.** `categoryDisplayColor`
   (`CategoryColor.kt:39`) responde por **tipo**, não por categoria — `EXPENSE` é vermelho —, e
@@ -56,7 +61,7 @@ Toda a densidade precisa, portanto, sair da própria linha.
   dois vermelhos com significados opostos na mesma linha. Cor por categoria não existe no
   domínio, e criá-la é change própria.
 
-- **O quadrante inferior direito exibe o gasto.** Com o gasto sob o teto, **o estouro fica
+- **O gasto vem logo abaixo do teto, no bloco das figuras.** Com o gasto sob o teto, **o estouro fica
   legível por aritmética** — R$ 380 abaixo de R$ 300 é o estouro —, e o glifo e a cor passam
   a confirmar em vez de carregar o estado sozinhos.
 
@@ -76,7 +81,10 @@ Toda a densidade precisa, portanto, sair da própria linha.
   limite era o terceiro dado da tela isso passava; como dado principal, a linha passaria a
   afirmar teto fixo onde não há. Ele ganha o glifo de recorrência que o app já usa
   (`Icons.Outlined.Autorenew`), o percentual e o nome da receita base, num marcador contido —
-  o percentual sozinho não distingue 30% do salário de 30% do aluguel.
+  o percentual sozinho não distingue 30% do salário de 30% do aluguel. **O marcador tem linha
+  própria, imediatamente acima do teto que ele qualifica**, e não ao lado do título: dividindo
+  uma linha com a identidade ele acaba lido como se o *nome* é que se re-derivasse a cada mês
+  (design D7).
 
 - **O badge de consolidação sai da linha e a explicação vira um aviso único no topo da lista.**
   A causa é **global** — falta taxa para uma moeda —, não propriedade de um orçamento, e a
@@ -85,7 +93,7 @@ Toda a densidade precisa, portanto, sair da própria linha.
 
 - **A linha declara-se superfície de gramática própria** no sentido de `money-display`: com
   parcela não precificada ela exibe a marca de ausência, e **não** as partes. Hoje o card tem
-  espaço e exibe as partes (invariante 2); a linha de 52 dp não tem, e cai na invariante 3.
+  espaço e exibe as partes (invariante 2); a linha densa não tem, e cai na invariante 3.
   A spec exige que cada superfície **declare** essa limitação e que ela *"MUST NOT ser deixada
   ao layout"* — é o que esta change faz, e é a razão de a declaração morar aqui.
 
@@ -136,8 +144,8 @@ categoria no detalhe; orçamentos semanais e o que eles fazem com o seletor de m
 
 ## Impact
 
-- **`feature/budgets/impl`** — nasce `BudgetCard.kt` (a linha, nos moldes de
-  `RecurringCard.kt`), com o anel, a pilha de ícones, o glifo de estouro e o marcador de
+- **`feature/budgets/impl`** — nasce `BudgetCard.kt` (a linha, em dois blocos), com o anel,
+  a pilha de ícones, o glifo de estouro e o marcador de
   limite derivado; `BudgetsScreen` perde `BudgetProgressItem` e ganha o aviso de câmbio como
   primeiro item da lista; `BudgetsViewModel` passa a ordenar por progresso **depois** de
   `CalculateBudgetProgressUseCase` — a ordem não pode sair do DAO, que não conhece o

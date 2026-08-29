@@ -64,9 +64,15 @@ A linha SHALL exibir **as categorias que o orçamento mede**, e MUST NOT substit
 contagem: "3 categorias" é verdade sobre quase todo orçamento e não distingue linha alguma da
 vizinha, que é o critério pelo qual esta linha decide o que afirmar.
 
-A representação SHALL ter **largura constante**, de modo que a identidade e a figura não
-disputem espaço com um número variável de categorias; categorias além do que a largura
-comporta SHALL ser declaradas por um excedente contado.
+A representação SHALL ter **largura limitada**, de modo que um número variável de categorias
+não decida a largura de nada: nem a da identidade, nem a das figuras. Categorias além do que
+essa largura comporta SHALL ser declaradas por um excedente contado, e MUST NOT ser
+silenciosamente descartadas.
+
+O que se exige é o **teto**, e não uma largura fixa: reservar largura para categorias que um
+orçamento não tem seria pagar em todo orçamento pelo maior deles. O que a largura limitada
+impede é o caso oposto — um orçamento de muitas categorias apertando a linha inteira —, e é
+esse o caso que a regra existe para excluir.
 
 Os ícones de categoria exibidos na linha MUST NOT receber a cor de categoria do sistema. Essa
 cor responde por **tipo**, e um orçamento contém apenas categorias de despesa — de modo que
@@ -78,6 +84,10 @@ distintos. Na linha, **a cor tem um dono único: o progresso.**
 #### Scenario: Categorias além da largura
 - **WHEN** um orçamento contém mais categorias do que a pilha comporta
 - **THEN** as que cabem são exibidas e as demais são declaradas por um excedente contado, sem que a linha mude de largura
+
+#### Scenario: Muitas categorias não encolhem o resto da linha
+- **WHEN** um orçamento de sete categorias é exibido ao lado de um de uma só
+- **THEN** os dois títulos dispõem da mesma largura, e os dois tetos são exibidos por inteiro
 
 #### Scenario: Ícones sem cor de categoria
 - **WHEN** a linha de um orçamento tranquilo exibe as suas categorias

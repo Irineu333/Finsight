@@ -52,13 +52,24 @@ regressão de quem estiver mexendo no app naquele dia. Foi o que aconteceu: o ve
 encontrado durante a verificação de uma change que não toca cartões, e só um run do `HEAD`
 com as mudanças guardadas separou uma coisa da outra.
 
-## Não confirmado
+## A pergunta seguinte, respondida
 
-**Se há defeito de app por trás, isto não determinou.** O que está provado é a dependência
-de calendário do fluxo. Se o app deveria ou não exibir a despesa de $33,00 no mês em que o
-salto aterrissa quando esse dia é o de fechamento é a pergunta seguinte, e ela precisa ser
-respondida antes de escolher a saída — mudar o fluxo para não depender do calendário pode
-estar escondendo a resposta em vez de corrigi-la.
+**Há defeito de app por trás, e ele está registrado em
+`an-absent-injected-parameter-falls-back-to-the-previous-one-of-its-type`.** Num run de
+29/08/2026 (salto → 13/10) o fluxo falhou em `invoice_expenses_amount` esperando `[-][$]33[.,]00`;
+a captura mostra o extrato aberto na fatura **paga** de setembro (−$120,00 / +$120,00 / $0,00), e
+o banco extraído do aparelho tem só duas faturas do cartão `id = 1`: `id 1 | 2026-08 | PAID` e
+`id 2 | 2026-09 | OPEN`. A tela abriu na `id 1` porque `initialInvoiceId` recebeu o id do
+*cartão*.
+
+Isso **não** dissolve este arquivo: continuam sendo dois defeitos distintos. O de injeção decide
+*qual fatura* o extrato abre; a constante `JUMP_DAYS` continua decidindo *quantas faturas
+existem* e qual está aberta depois do salto, e foi ela que produziu a falha de 26/08 num passo
+completamente diferente (`dashboard_component_balance_stats_credit_card`). Corrigir a injeção
+deixa este fluxo verde na maioria dos dias sem tornar a data de execução uma entrada declarada.
+
+*Segue não determinado: se o app deveria ou não exibir a despesa de $33,00 no mês em que o salto
+aterrissa quando esse dia é o de fechamento.*
 
 ## Sugestão
 

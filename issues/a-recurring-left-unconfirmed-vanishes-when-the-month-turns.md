@@ -1,6 +1,6 @@
 ---
 area: recurring
-severity: medium
+severity: high
 type: data
 ---
 
@@ -25,9 +25,17 @@ meses anteriores em lugar nenhum do caminho.
 Não há outra porta: o único consumidor é o dashboard, e a única entrada para a confirmação é
 o cartão de pendência — `RecurringScreen` lista *recorrências*, não ocorrências.
 
-O contorno existe e é indireto: o seletor de data da confirmação não tem `minDate`, então dá
-para retroagir a data até junho. O preço é que julho fica pendente no lugar — é o cenário de
-`confirming-a-recurring-in-another-month-leaves-the-current-one-pending`.
+O contorno que existia foi fechado. `confirmableDates(cycleMonth, today)` limita a confirmação
+ao mês do ciclo que a abriu — `first..maxOf(first, minOf(today, cycleMonth.lastDay))` — e a
+janela é aplicada nos cinco pontos do view model, com o campo de data `readOnly` e o
+`DatePickerModal` recebendo `minDate`/`maxDate` dela. Retroagir a data para o mês perdido deixou
+de ser possível.
+
+O redesenho da tela tornou a perda **visível sem torná-la resolvível**: com o seletor de mês, um
+mês passado exibe a seção "Pendente" com a sua contagem — todo ciclo sem ocorrência de um mês
+encerrado é `PENDING`, porque `date <= today` —, e a linha leva a `ViewRecurringModal`, que não
+oferece confirmar nem pular. A tela afirma uma obrigação em aberto e nenhuma ação do app a
+responde.
 
 ## Evidência
 
@@ -37,8 +45,18 @@ para retroagir a data até junho. O preço é que julho fica pendente no lugar �
   consumidor; `handledRecurringIds` filtra por `currentYearMonth` de novo
 - `feature/recurring/impl/.../usecase/ConfirmRecurringUseCase.kt` — a ocorrência é gravada em
   `date.yearMonth`, o que torna junho alcançável apenas retroagindo a data
-- `feature/recurring/impl/.../recurring/RecurringScreen.kt` — lista recorrências; não há tela
-  de ocorrências pendentes
+- `feature/recurring/impl/.../modal/confirmRecurring/ConfirmRecurringViewModel.kt` —
+  `confirmableDates()`, e os cinco `coerceIn(confirmableDates)`
+- `feature/recurring/impl/.../modal/confirmRecurring/ConfirmRecurringModal.kt` — campo de data
+  `readOnly = true`; `DatePickerModal(minDate = uiState.confirmableDates.start, maxDate = …endInclusive)`
+- `feature/recurring/api/.../usecase/GetRecurringCyclesUseCase.kt` — `invoke()`:
+  `if (date <= today) PENDING else UPCOMING`
+- `feature/recurring/impl/.../recurring/RecurringScreen.kt` — o `onClick` da linha mostra
+  `ViewRecurringModal`; `SectionHeader` publica `recurring_section_pending_count`
+- `feature/recurring/impl/.../recurring/RecurringAction.kt` — só `SelectFilter` e `SelectMonth`:
+  nenhuma ação de confirmar ou pular
+- `feature/dashboard/impl/.../dashboard/DashboardComponentContent.kt` — `confirmRecurringModal`
+  tem um único chamador no app inteiro, e ele calcula `targetDate` sobre `currentDate.yearMonth`
 
 ## Consequência
 

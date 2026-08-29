@@ -28,43 +28,43 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.formatOrUnresolved
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_income
-import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_source_unusable
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.icons.VectorLazyIcon
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * One rule the user keeps, in the four things that tell it from the next one: what it
- * **is**, where it **posts**, **how much**, and **when**.
+ * One cycle of one rule the user keeps, in the four things that tell it from the next
+ * one: what it **is**, where it **posts**, **how much**, and **when**.
  *
- * **It draws a cycle that has no fact behind it** — pending, upcoming or skipped — and
- * the figure it shows is the template's, because that is the only number those three
- * have. A cycle that was posted is drawn from the ledger by `TransactionCard` instead:
- * once the money moved, the transaction is the fact and the template is only what
- * predicted it.
+ * **It is the only row of this list.** What fills it may have been read from the template
+ * that projects the cycle or from the ledger that recorded it, and it is not this
+ * component's business which: the choice belongs to the view model, and what arrives here
+ * is [RecurringRowUi] — what the row asserts, with the source already resolved away. Two
+ * components for four sections put the same facts in different columns and left the
+ * height of the list without an owner.
  *
- * **It states no state of its own.** Which of the three a row is comes from the heading
- * of the section it sits under, said once for the whole group; a mark repeated on every
- * row of a group distinguishes no row from its neighbour, which is the test by which
- * this row decides what to assert. *Archived* fails the same test for a second reason:
- * an archived template generates no cycle in any month, so it is not in this list at all,
- * and in the destination where it does live every row is archived.
+ * **It states no state of its own.** Which section a row is in comes from the heading
+ * above it, said once for the whole group; a mark repeated on every row of a group
+ * distinguishes no row from its neighbour, which is the test by which this row decides
+ * what to assert. *Archived* fails the same test for a second reason: an archived template
+ * generates no cycle in any month, so it is not in this list at all, and in the
+ * destination where it does live every row is archived.
  *
  * A 2×2 grid rather than a line with a subtitle, because a card's name is long — "Nubank
  * Ultravioleta" — and on one secondary line it would be truncated *after* the day. In
- * columns the day is always whole, and the pair (figure, day) read together is the only
- * thing on the screen that states the rule itself.
+ * columns the moment is always whole, and the pair (figure, moment) read together is the
+ * only thing on the screen that states the cycle itself.
  *
  * It does **not** anticipate the detail sheet. Type, amount, day, status, account or card
  * and category are all a tap away, labelled; a row that previewed all six paid height to
@@ -77,14 +77,13 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun RecurringCard(
-    recurring: Recurring,
-    amount: DisplayAmount?,
+    row: RecurringRowUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val typeColor = if (recurring.type.isIncome) Income else Expense
-    val typeLabel = if (recurring.type.isIncome) {
+    val typeColor = if (row.direction.isIncome) Income else Expense
+    val typeLabel = if (row.direction.isIncome) {
         stringResource(Res.string.recurring_income)
     } else {
         stringResource(Res.string.recurring_expense)
@@ -105,7 +104,7 @@ internal fun RecurringCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val category = recurring.category
+            val category = row.category
             if (category != null) {
                 CategoryIconBox(
                     category = category,
@@ -117,7 +116,7 @@ internal fun RecurringCard(
                 // No category to read a colour and a glyph off: the row says what it can,
                 // which is which way the money goes.
                 CategoryIconBox(
-                    icon = VectorLazyIcon(recurring.directionIcon),
+                    icon = VectorLazyIcon(row.direction.directionIcon),
                     tint = typeColor,
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(8.dp),
@@ -134,7 +133,7 @@ internal fun RecurringCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = recurring.label,
+                        text = stringUiText(row.identity),
                         style = typography.titleSmall,
                         color = colorScheme.onSurface,
                         maxLines = 1,
@@ -150,14 +149,14 @@ internal fun RecurringCard(
                     // forbids signing the figure of an item surface, so the badge could
                     // not simply become a `-` on the amount.
                     Icon(
-                        imageVector = recurring.directionIcon,
+                        imageVector = row.direction.directionIcon,
                         contentDescription = typeLabel,
                         tint = typeColor,
                         modifier = Modifier.size(16.dp),
                     )
                 }
 
-                SourceLine(recurring = recurring)
+                SourceLine(source = row.source)
             }
 
             Column(
@@ -166,22 +165,27 @@ internal fun RecurringCard(
             ) {
                 // A magnitude, and no sign: this is an item surface, it shows one figure
                 // and takes part in no displayed sum. The summary above does not sum these
-                // rows, and no column of this screen closes on a total.
+                // rows, and no column of this screen closes on a total. The organisation
+                // into sections is no authorisation to sign one either, whichever source
+                // the row was read from.
                 //
                 // When no account denominates the template the unresolved mark stands in
                 // its place, on the same node, so the row keeps its height and the absence
                 // is said out loud instead of being said by absence. The cause is on the
-                // line below.
+                // line below. A row read from the ledger never reaches it: the money moved,
+                // and it was recorded in the currency it moved in.
                 Text(
-                    text = formatter.formatOrUnresolved(amount),
+                    text = formatter.formatOrUnresolved(row.amount),
                     modifier = Modifier.testTag("recurring_card_amount"),
                     style = typography.titleMedium,
                     color = typeColor,
                     maxLines = 1,
                 )
 
+                // The day the template projects, or the date the fact was registered on —
+                // one slot, because the two answer the same question about the cycle.
                 Text(
-                    text = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
+                    text = stringUiText(row.moment),
                     style = typography.labelMedium,
                     color = colorScheme.onSurfaceVariant,
                 )
@@ -207,37 +211,28 @@ internal fun RecurringCard(
  * row say it twice.
  */
 @Composable
-private fun SourceLine(recurring: Recurring) {
-    val creditCard = recurring.creditCard
-    val account = recurring.account
-
+private fun SourceLine(source: RecurringRowSource) {
     val icon: ImageVector
     val text: String
     val color: Color
     val iconDescription: String?
 
-    if (!recurring.hasUsableSource) {
+    if (!source.isUsable) {
         icon = Icons.Outlined.LinkOff
         color = Warning
         val unusable = stringResource(Res.string.recurring_source_unusable)
         // The sentence is the last resort, not the branch's answer: it speaks only for the
         // source that is gone, because a source that is merely archived still has a name
         // and the name is what tells two identical labels apart.
-        val name = recurring.sourceName()
-        text = name ?: unusable
-        iconDescription = unusable.takeIf { name != null }
+        text = source.name ?: unusable
+        iconDescription = unusable.takeIf { source.name != null }
     } else {
         color = colorScheme.onSurfaceVariant
         // A usable source is named by the words beside it, and the glyph only says which
         // of the two kinds it is — which the account's own name already carries.
         iconDescription = null
-        if (creditCard != null) {
-            icon = Icons.Default.CreditCard
-            text = creditCard.name
-        } else {
-            icon = Icons.Default.AccountBalance
-            text = account?.name.orEmpty()
-        }
+        icon = if (source.isCard) Icons.Default.CreditCard else Icons.Default.AccountBalance
+        text = source.name.orEmpty()
     }
 
     Row(
@@ -260,27 +255,9 @@ private fun SourceLine(recurring: Recurring) {
     }
 }
 
-/**
- * What the row calls the template's source — `null` only when there is nothing left to
- * call it.
- *
- * **Archived and removed are two absences, and the row keeps them apart.** Both make
- * `Recurring.hasUsableSource` false, but reading them as one would leave the unusable
- * branch without a name, and two "Aluguel" in two archived banks would read identically —
- * losing precisely the distinction the row exists to make. A removed source is `null` on
- * both sides (the foreign key is
- * `SET_NULL`) and genuinely has no name; an archived one exists, is named, and archiving is
- * offered to the user as reversible — it may take away the path to the account, never the
- * account's name.
- *
- * The card comes first, as everywhere else that resolves a template's source: it is the
- * more specific of the two, and a template that names one is denominated by it.
- */
-internal fun Recurring.sourceName(): String? = creditCard?.name ?: account?.name
-
 /** The glyph of the nature, the one the transaction list already uses for it. */
-private val Recurring.directionIcon: ImageVector
-    get() = if (type.isIncome) {
+private val TransactionType.directionIcon: ImageVector
+    get() = if (isIncome) {
         Icons.AutoMirrored.Filled.TrendingUp
     } else {
         Icons.AutoMirrored.Filled.TrendingDown
@@ -293,8 +270,8 @@ private val Recurring.directionIcon: ImageVector
  * It does **not** govern the row's height: the right-hand column measures 44dp
  * (`titleMedium` 24 + [ROW_LINE_GAP] 4 + `labelMedium` 16) and clears it. What the chip
  * does is stay under that, in every variant — with a category and without, archived and
- * active, denominated and not — so the list has one height and `animateItem()` reorders
- * without a jump.
+ * active, denominated and not, read from the template and read from the ledger — so the
+ * whole list has one height and `animateItem()` reorders without a jump.
  */
 private val CHIP_SIZE = 40.dp
 

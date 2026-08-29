@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.recurring
 import app.cash.turbine.test
 import com.neoutils.finsight.FakeAccountRepository
 import com.neoutils.finsight.FakeCategoryRepository
+import com.neoutils.finsight.FakeCreditCardRepository
 import com.neoutils.finsight.FakeRecurringOccurrenceRepository
 import com.neoutils.finsight.FakeRecurringRepository
 import com.neoutils.finsight.FakeTransactionsByIds
@@ -27,6 +28,7 @@ import com.neoutils.finsight.domain.usecase.GetRecurringMonthOverviewUseCase
 import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.recurring
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
+import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -70,8 +72,23 @@ class RecurringViewModelTest {
     private val lastMonth = YearMonth(2026, 7)
 
     private val wallet = Account(id = 1L, name = "Wallet", type = AccountType.ASSET, currency = "BRL")
+    private val savings = Account(id = 2L, name = "Poupança", type = AccountType.ASSET, currency = "BRL")
     private val expenseAccount =
         Account(id = 4L, name = "expense", type = AccountType.EXPENSE, currency = "BRL")
+
+    // A card is a facade over a `LIABILITY` row of the chart, and the two are named apart
+    // on purpose: the row's name is the ledger's, and a row that showed it would be showing
+    // the user a name they never gave anything.
+    private val cardAccount =
+        Account(id = 90L, name = "liability:nubank", type = AccountType.LIABILITY, currency = "BRL")
+    private val nubank = CreditCard(
+        id = 7L,
+        name = "Nubank",
+        limit = 1_000.0,
+        closingDay = 1,
+        dueDay = 10,
+        accountId = cardAccount.id,
+    )
 
     private val groceries = Category(
         id = 7L,
@@ -98,10 +115,12 @@ class RecurringViewModelTest {
         accounts: FakeAccountRepository = FakeAccountRepository(listOf(wallet, expenseAccount)),
         transactions: FakeTransactionsByIds = FakeTransactionsByIds(),
         categories: FakeCategoryRepository = FakeCategoryRepository(listOf(groceries)),
+        cards: FakeCreditCardRepository = FakeCreditCardRepository(listOf(nubank)),
     ) = RecurringViewModel(
         recurringRepository = repository,
         accountRepository = accounts,
         categoryRepository = categories,
+        creditCardRepository = cards,
         transactionRepository = transactions,
         occurrenceRepository = occurrences,
         getRecurringCycles = GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase()),
@@ -127,18 +146,23 @@ class RecurringViewModelTest {
         handledAt = 0L,
     )
 
+    /**
+     * An expense posted to [account] — one monetary leg and its nominal counterpart, which
+     * is the shape `ConfirmRecurringUseCase` writes.
+     */
     private fun transaction(
         id: Long,
         title: String?,
         cents: Long,
         date: LocalDate = LocalDate(2026, 8, 5),
+        account: Account = wallet,
     ) = Transaction(
         id = id,
         title = title,
         date = date,
         recurringId = null,
         entries = listOf(
-            Entry(account = wallet, amount = -cents),
+            Entry(account = account, amount = -cents),
             Entry(account = expenseAccount, amount = cents, dimensionId = groceries.dimensionId),
         ),
     )
@@ -151,12 +175,13 @@ class RecurringViewModelTest {
         recurrings: List<Recurring>,
         occurrences: FakeRecurringOccurrenceRepository = FakeRecurringOccurrenceRepository(),
         transactions: FakeTransactionsByIds = FakeTransactionsByIds(),
+        accounts: FakeAccountRepository = FakeAccountRepository(listOf(wallet, expenseAccount)),
         filter: RecurringFilter? = null,
         month: YearMonth? = null,
     ): RecurringUiState.Content {
         val repository = FakeRecurringRepository()
         repository.all.value = recurrings
-        val vm = viewModel(repository, occurrences, transactions = transactions)
+        val vm = viewModel(repository, occurrences, accounts, transactions = transactions)
 
         var content: RecurringUiState.Content? = null
         vm.uiState.test {
@@ -386,6 +411,113 @@ class RecurringViewModelTest {
 
         val row = assertIs<RecurringCycleUi.Template>(content.sections.single().cycles.single())
         assertNull(row.amount)
+    }
+
+    // --- ...and the source it posted to is the ledger's too ---------------------------
+
+    /**
+     * **Confirming a cycle may send it somewhere else for that month alone.** The template
+     * names the wallet; this month's rent left the savings account, and the occurrence
+     * keeps no record of that — only the `transactionId`. The row that named the template's
+     * account would be asserting the rule where the user reads the fact, and would be wrong
+     * in the one month the two disagree, which is the only month naming it distinguishes
+     * anything.
+     */
+    @Test
+    fun `a posted cycle names the account the transaction posted to`() = runTest(dispatcher) {
+        val template = recurring(id = 1L, createdAt = 1L).copy(account = wallet)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        occurrences.all.value = listOf(occurrence(template.id, transactionId = 100L))
+
+        val content = contentOf(
+            recurrings = listOf(template),
+            occurrences = occurrences,
+            transactions = FakeTransactionsByIds(
+                listOf(transaction(id = 100L, title = "Aluguel", cents = 86_500, account = savings)),
+            ),
+            accounts = FakeAccountRepository(listOf(wallet, savings, expenseAccount)),
+        )
+
+        val row = assertIs<RecurringCycleUi.Posted>(content.sections.single().cycles.single())
+        assertEquals(RecurringRowSource(name = savings.name, isCard = false), row.row.source)
+    }
+
+    /**
+     * A leg on a `LIABILITY` account is a card, and the row names the **card** — the chart
+     * row it posts to is named for the ledger, and showing that name would show the user a
+     * name they never gave anything.
+     */
+    @Test
+    fun `a cycle posted on a card names the card, not its chart account`() = runTest(dispatcher) {
+        val template = recurring(id = 1L, createdAt = 1L).copy(creditCard = nubank)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        occurrences.all.value = listOf(occurrence(template.id, transactionId = 100L))
+
+        val content = contentOf(
+            recurrings = listOf(template),
+            occurrences = occurrences,
+            transactions = FakeTransactionsByIds(
+                listOf(transaction(id = 100L, title = "Netflix", cents = 3_990, account = cardAccount)),
+            ),
+            accounts = FakeAccountRepository(listOf(wallet, cardAccount, expenseAccount)),
+        )
+
+        val row = assertIs<RecurringCycleUi.Posted>(content.sections.single().cycles.single())
+        assertEquals(RecurringRowSource(name = nubank.name, isCard = true), row.row.source)
+    }
+
+    /**
+     * **The posted row asserts the date of the fact where a template row asserts the day it
+     * projects** — one slot, and a cycle confirmed off its day says so on its own row.
+     */
+    @Test
+    fun `a posted cycle states the date it was registered on`() = runTest(dispatcher) {
+        val template = recurring(id = 1L, createdAt = 1L).copy(account = wallet)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        // Projected for the 5th, confirmed on the 8th.
+        occurrences.all.value = listOf(occurrence(template.id, transactionId = 100L, day = 8))
+
+        val content = contentOf(
+            recurrings = listOf(template),
+            occurrences = occurrences,
+            transactions = FakeTransactionsByIds(
+                listOf(
+                    transaction(
+                        id = 100L,
+                        title = "Aluguel",
+                        cents = 86_500,
+                        date = LocalDate(2026, 8, 8),
+                    ),
+                ),
+            ),
+        )
+
+        val row = assertIs<RecurringCycleUi.Posted>(content.sections.single().cycles.single())
+        assertEquals(UiText.Raw("08/08"), row.row.moment)
+    }
+
+    /**
+     * The net under the ledger read: a cycle the occurrence says was confirmed but whose
+     * transaction cannot be read keeps its place in the posted section, drawn from the
+     * template — the section loses a reading, never a row.
+     */
+    @Test
+    fun `a posted cycle whose transaction cannot be read falls back to the template`() = runTest(dispatcher) {
+        val template = recurring(id = 1L, amount = 940.0, createdAt = 1L).copy(account = wallet)
+        val occurrences = FakeRecurringOccurrenceRepository()
+        occurrences.all.value = listOf(occurrence(template.id, transactionId = 100L))
+
+        val content = contentOf(
+            recurrings = listOf(template),
+            occurrences = occurrences,
+            transactions = FakeTransactionsByIds(),
+        )
+
+        val section = content.sections.single()
+        assertEquals(RecurringCycleStatus.POSTED, section.status)
+        val row = assertIs<RecurringCycleUi.Template>(section.cycles.single())
+        assertEquals(940.0, row.amount?.value)
+        assertEquals(RecurringRowSource(name = wallet.name, isCard = false), row.row.source)
     }
 
     /** One read for the whole section, never one per row. */

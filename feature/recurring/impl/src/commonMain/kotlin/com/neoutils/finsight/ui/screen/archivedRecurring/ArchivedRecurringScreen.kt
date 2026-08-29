@@ -129,8 +129,7 @@ fun ArchivedRecurringScreen(
                     // thing, seen where it went, and a second component for it would be
                     // a second vocabulary for one object.
                     RecurringCard(
-                        recurring = item.recurring,
-                        amount = item.amount,
+                        row = item.row,
                         onClick = {
                             detailController.show(ViewRecurringModal(item.recurring.id))
                         },

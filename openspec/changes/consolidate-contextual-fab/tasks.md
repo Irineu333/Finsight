@@ -123,13 +123,20 @@
         scrim escurece o conteúdo para 0,68× do valor original em cada canal
       Não percorridas as onze: três telas cobrem as três posições, e as outras oito repetem a de
       tela empilhada
-- [ ] 7.4 Rodar a suíte Maestro conforme `.maestro/README.md` §2, no dispositivo conforme.
-      Dezesseis arquivos tocam os ids dos botões (seis em `subflows/`, o restante em `flows/`) e
-      todos devem passar **sem edição**; reportar em qual dispositivo a execução aconteceu
-      — **NÃO FEITO.** A conferência estática está feita: os nove ids que os flows dirigem
-      continuam existindo, agora declarados pelas telas, e os seis `add_transaction_fab` são
-      todos tocados a partir da dashboard, onde a ação universal os reemite. Nenhuma suíte foi
-      executada
+- [x] 7.4 Rodada na AVD `finsight_e2e`, criada para isto conforme `.maestro/README.md` §2.2 —
+      `pixel_6`, API 36, arm64, 1080×2400 a 420dpi, `en-US`, `nokeys`, IME presente,
+      `show_ime_with_hard_keyboard` 0 —, com as sete conferências feitas antes de cada run e o
+      alvo fixado por serial (`emulator-5554`), APK de debug reinstalado, e o run pelo workspace.
+      **14/15 no aparelho recém-iniciado**, e os flows passaram sem edição: os nove ids que eles
+      dirigem continuam existindo, agora declarados pelas telas, e `subflows/tap_action.yaml`
+      abre o menu só onde ele existe — visto no relatório como um `runFlow` `SKIPPED` quando a
+      ação já está na tela.
+      O vermelho é `creditcards/lifecycle`, e o grupo 10 diz por que ele não é desta change.
+      Duas ressalvas de método, ambas encontradas rodando a suíte cinco vezes: um aparelho com
+      duas horas de uso reprova o que aprova quando limpo — `creditcards/retroactive_payment` e
+      `currency/lifecycle` caíram só ali, com `recurring/lifecycle` 72% mais lento (5m01 contra
+      2m54) e swap em uso —, e as sete linhas da §2.2 são todas estruturais: nenhuma delas
+      enxerga isso
 - [x] 7.5 As ações do menu são compostas na raiz da janela — a casca as desenha dentro do próprio
       `Box` do `ChromeHost`, e não num `Popup`, justamente para que o `Modifier.exposeTestTags()`
       do `App` as alcance sem uma chamada nova. Verificado na fonte, não em execução

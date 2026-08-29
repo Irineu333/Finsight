@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -70,12 +71,14 @@ import org.jetbrains.compose.resources.stringResource
  *
  * **The progress is a ring around the chip, and that is what buys the density.** Wrapping
  * the icon the row would have drawn anyway, it costs *zero* additional height — which is
- * what leaves both text slots of the 2×2 grid free for the ceiling and the categories. A
- * bar under the name would have taken one of them and pushed the row half as tall again.
+ * what leaves both text slots free for the ceiling and the categories. A bar under the name
+ * would have taken one of them and pushed the row half as tall again.
  *
- * The grid grows to a third line for exactly one thing: the declaration of a **derived**
- * ceiling, which is the only thing the row has to say that does not fit the other two lines
- * without shortening what it says.
+ * **It is two stacks, not a paired grid.** The identity — chip, title, categories — says
+ * which budget this is; the figures — the derived ceiling's declaration, the ceiling, the
+ * spending — say what it is worth. Nothing on one side belongs beside anything in
+ * particular on the other, so nothing is aligned to it, and the figures growing a line for
+ * a derived ceiling rearranges nothing on the identity's side.
  *
  * The ring's cost is paid elsewhere, deliberately: an arc compares worse between rows than
  * a bar does, and the list answers that by arriving **pre-compared** (see
@@ -87,7 +90,7 @@ import org.jetbrains.compose.resources.stringResource
  * the full list of category names and the base income are all a tap away, labelled; a row
  * that previewed them paid height to add nothing.
  *
- * **The period slot.** The ceiling's period belongs beside the identity, because the same
+ * **The period slot.** The ceiling's period belongs under the identity, because the same
  * figure means opposite things by week and by month — but every budget is monthly today,
  * and a period every row carries distinguishes no row from its neighbour. So the place is
  * kept (`budgets_period_monthly` / `budgets_period_weekly` exist for it) and nothing is
@@ -99,11 +102,6 @@ internal fun BudgetCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalCurrencyFormatter.current
-    // Both figures are denominated by the limit, never by the base: a budget declares its
-    // currency once, at creation, and what is shown under the ceiling is the spending
-    // reduced *to it* (design D13). `BudgetProgress` carries them already denominated.
-    //
     // No fraction means no "how full" to colour by, so the accent falls back to the
     // neutral one rather than to the colour an empty ring would wear.
     val accent = progress.progress?.let { budgetProgressColor(it) } ?: colorScheme.onSurfaceVariant
@@ -114,6 +112,16 @@ internal fun BudgetCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         shape = RoundedCornerShape(12.dp),
     ) {
+        // Two stacks side by side, and stacks rather than a paired grid because the two
+        // sides answer different questions: the left says **which budget this is**, the
+        // right **what it is worth**. Nothing on the left belongs beside anything in
+        // particular on the right, so nothing is aligned to it.
+        //
+        // The figures are the taller stack — three lines where the ceiling is derived, two
+        // otherwise — so they set the row's height, and the chip and the identity centre
+        // against them as one block. Centred and not hung from the top because the two are
+        // read together: the chip is the identity's, and a name pinned to the first line
+        // would drift away from the ring beside it on the rows that grow.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,121 +139,113 @@ internal fun BudgetCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(ROW_LINE_GAP),
             ) {
-                // The declaration of a derived ceiling, on a line of its own, directly
-                // over the figure it qualifies and aligned to it.
-                //
-                // **Above the ceiling and never beside the title**, because what it says
-                // is that *that number* is a share and re-derives every month; on the
-                // title's line it would say it about the budget's name, which is the one
-                // thing on the row the user typed whole. A line of its own is also what
-                // frees it from competing for width: the income's name fits entire in the
-                // common case, and the identity gives up nothing for it.
-                //
-                // The row that carries it is taller than one that does not, and that is
-                // the trade taken: a derived ceiling has more to say than a typed one, and
-                // saying it by ellipsis would half-say the only thing that tells two
-                // identical declarations apart.
-                progress.budget.derivedLimitPercentage?.let { percentage ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        DerivedLimitMark(
-                            percentage = percentage,
-                            source = progress.recurringLabel,
-                            // Bounded by the line it sits on, so a name longer than the
-                            // row is wide ellipsises instead of overflowing.
-                            modifier = Modifier.weight(weight = 1f, fill = false),
-                        )
-                    }
-                }
-
-                // The ceiling is unweighted and so is measured first: the identity yields
-                // the room, never the figure.
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = progress.budget.title,
-                            style = typography.titleMedium,
-                            color = colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            // Truncates before it pushes the glyph off the line: a budget
-                            // is recognisable from its first words and from the chip
-                            // beside it, while the mark of going over is the whole state.
-                            modifier = Modifier.weight(weight = 1f, fill = false),
-                        )
-
-                        // Going over, as a glyph with the state spelled in its content
-                        // description. It is not optional decoration: the ring saturates,
-                        // and with the ceiling as the hero figure there is no label left
-                        // to swap from "remaining" to "exceeded by".
-                        if (progress.isExceeded) {
-                            Icon(
-                                imageVector = Icons.Filled.ArrowDropUp,
-                                contentDescription = stringResource(Res.string.budgets_row_exceeded),
-                                tint = budgetProgressColor(progress = 1f),
-                                modifier = Modifier
-                                    .testTag("budget_exceeded_mark")
-                                    .size(18.dp),
-                            )
-                        }
-                    }
-
                     Text(
-                        text = formatter.format(progress.limitAmount),
-                        modifier = Modifier.testTag("budget_limit_amount"),
-                        style = LIMIT_STYLE,
+                        text = progress.budget.title,
+                        style = TITLE_STYLE,
                         color = colorScheme.onSurface,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        // Truncates before it pushes the glyph off the line: a budget is
+                        // recognisable from its first words and from the chip beside it,
+                        // while the mark of going over is the whole state.
+                        modifier = Modifier.weight(weight = 1f, fill = false),
+                    )
+
+                    // Going over, as a glyph with the state spelled in its content
+                    // description. It is not optional decoration: the ring saturates, and
+                    // with the ceiling as the hero figure there is no label left to swap
+                    // from "remaining" to "exceeded by".
+                    if (progress.isExceeded) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropUp,
+                            contentDescription = stringResource(Res.string.budgets_row_exceeded),
+                            tint = budgetProgressColor(progress = 1f),
+                            modifier = Modifier
+                                .testTag("budget_exceeded_mark")
+                                .size(18.dp),
+                        )
+                    }
+                }
+
+                CategoryStack(categories = progress.budget.categories)
+
+                // The period the ceiling refers to belongs here, under the identity. Every
+                // budget is monthly today, and a period every row carries distinguishes no
+                // row from its neighbour, so the place is kept and nothing is drawn.
+            }
+
+            // The figures, right-aligned and unweighted: they are measured before the
+            // identity, which is what makes the identity the side that yields.
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(ROW_LINE_GAP),
+            ) {
+                progress.budget.derivedLimitPercentage?.let { percentage ->
+                    DerivedLimitMark(
+                        percentage = percentage,
+                        source = progress.recurringLabel,
                     )
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CategoryStack(categories = progress.budget.categories)
+                Ceiling(progress = progress)
 
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // This row is a surface of its own grammar in the sense of
-                    // `money-display`: it has the width of one amount and no more, so
-                    // where the spending gathers a part no rate reaches it shows the
-                    // absence mark rather than the parts. The detail sheet is the surface
-                    // with the room, and it still shows them.
-                    Text(
-                        text = formatter.formatOrUnresolved(progress.spentAmount),
-                        modifier = Modifier.testTag("budget_spent_amount"),
-                        style = typography.labelLarge,
-                        color = if (progress.isExceeded) {
-                            budgetProgressColor(progress = 1f)
-                        } else {
-                            colorScheme.onSurfaceVariant
-                        },
-                        maxLines = 1,
-                    )
-                    // The one label the row carries, and it is allowed precisely because
-                    // there are *two* money figures stacked here: it says which of the two
-                    // this is, rather than naming the nature of a figure that stands alone.
-                    Text(
-                        text = stringResource(Res.string.budgets_row_spent),
-                        style = typography.labelLarge,
-                        color = colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
+                SpentFigure(progress = progress)
             }
         }
+    }
+}
+
+/** The ceiling — the row's hero figure, and the one no rate can take away. */
+@Composable
+private fun Ceiling(progress: BudgetProgress) {
+    Text(
+        text = LocalCurrencyFormatter.current.format(progress.limitAmount),
+        modifier = Modifier.testTag("budget_limit_amount"),
+        style = LIMIT_STYLE,
+        color = colorScheme.onSurface,
+        maxLines = 1,
+    )
+}
+
+/**
+ * How much of the ceiling is gone, printed under the ceiling itself so that going over is
+ * legible **by arithmetic** before any glyph or colour says it.
+ *
+ * **The row is a surface of its own grammar** in the sense of `money-display`: it has the
+ * width of one amount and no more, so where the spending gathers a part no rate reaches it
+ * shows the absence mark rather than the parts. The detail sheet is the surface with the
+ * room, and it still shows them.
+ */
+@Composable
+private fun SpentFigure(progress: BudgetProgress) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = LocalCurrencyFormatter.current.formatOrUnresolved(progress.spentAmount),
+            modifier = Modifier.testTag("budget_spent_amount"),
+            style = typography.labelLarge,
+            color = if (progress.isExceeded) {
+                budgetProgressColor(progress = 1f)
+            } else {
+                colorScheme.onSurfaceVariant
+            },
+            maxLines = 1,
+        )
+        // The one label the row carries, and it is allowed precisely because there are
+        // *two* money figures stacked here: it says which of the two this is, rather than
+        // naming the nature of a figure that stands alone.
+        Text(
+            text = stringResource(Res.string.budgets_row_spent),
+            style = typography.labelLarge,
+            color = colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
     }
 }
 
@@ -322,9 +322,9 @@ private fun DerivedLimitMark(percentage: Int, source: String?, modifier: Modifie
                 color = Primary1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                // Yields before the percentage, which is unweighted: what is left of
-                // the line after the glyph and the share belongs to the name.
-                modifier = Modifier.weight(weight = 1f, fill = false),
+                // Yields before the percentage, which is unweighted, and is capped so
+                // that the figures column cannot widen past what the identity needs.
+                modifier = Modifier.widthIn(max = DERIVED_SOURCE_MAX_WIDTH),
             )
         }
     }
@@ -344,11 +344,12 @@ private fun ProgressRing(
     budget: Budget,
     fraction: Float?,
     accent: Color,
+    modifier: Modifier = Modifier,
 ) {
     val trackColor = colorScheme.surfaceContainerHighest
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(RING_SIZE)
             .drawBehind {
                 val stroke = RING_STROKE.toPx()
@@ -445,25 +446,32 @@ private fun CategoryStack(categories: List<Category>) {
 }
 
 /**
- * The ceiling's own style — a step above the identity in size and in weight, because it is
- * the figure the row exists to state.
+ * **The two things the row leads with read at the same size**, and are told apart by weight
+ * alone: the ceiling carries the extra weight because it is the figure the row exists to
+ * state, and the identity carries none because it is a name and not a number. Sized apart
+ * as well, the title read as a caption over its own budget.
  *
- * Its line height is [androidx.compose.material3.Typography.titleMedium]'s, which is what
- * sets the row's height: the two text lines together (24 + [ROW_LINE_GAP] + 20) come to
- * 46dp, and every variant of the row measures that same 46dp — exceeded and not, resolved
- * and not. A **derived** ceiling is the one exception, and a declared one: its declaration
- * takes a third line, and the row grows by it rather than half-saying it.
+ * Their line height is [androidx.compose.material3.Typography.titleMedium]'s, which is what
+ * sets the row's height: the figures' two lines (24 + [ROW_LINE_GAP] + 20) come to 46dp, and
+ * every variant of the row measures that same 46dp — exceeded and not, resolved and not. A
+ * **derived** ceiling is the one exception, and a declared one: its declaration takes a
+ * third line in the figures' stack, and the row grows by it rather than half-saying it.
  */
+private val HEADLINE_SIZE = 17.sp
+
+private val TITLE_STYLE
+    @Composable get() = typography.titleMedium.copy(fontSize = HEADLINE_SIZE)
+
 private val LIMIT_STYLE
     @Composable get() = typography.titleMedium.copy(
-        fontSize = 17.sp,
+        fontSize = HEADLINE_SIZE,
         fontWeight = FontWeight.SemiBold,
     )
 
 /**
  * The ring, and the chip inside it.
  *
- * The ring does **not** govern the row's height: the text column measures 46dp and clears
+ * The ring does **not** govern the row's height: the figures' stack measures 46dp and clears
  * it. What the ring does is stay under that in every variant, so a row's height is decided
  * by what it has to say and never by the chip — which matters more here than elsewhere,
  * because this list reorders itself as the month goes on and `animateItem()` should have
@@ -490,4 +498,18 @@ private val ROW_LINE_GAP = 2.dp
 private const val MAX_CATEGORY_CHIPS = 3
 private val CATEGORY_CHIP_SIZE = 19.dp
 private val CATEGORY_CHIP_OVERLAP = (-5).dp
+
+/**
+ * How wide the name of the base income may grow.
+ *
+ * The figures column is unweighted — measured before the identity, so that the identity is
+ * the side that yields — and the declaration is the only thing in it whose width the app
+ * does not control. Left uncapped, one long recurring name would set the width of the whole
+ * column and take the title's room with it.
+ *
+ * It is a **layout budget and not a type budget**, which is why it is in dp: what it
+ * protects is the share of the row left to the identity, and a larger font scale should
+ * shorten the name rather than the title.
+ */
+private val DERIVED_SOURCE_MAX_WIDTH = 104.dp
 

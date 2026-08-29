@@ -137,19 +137,27 @@ aluguel, e uma linha cujo trabalho é discriminar não pode exibir a mesma marca
 orçamentos diferentes. O detalhe continua sendo onde a receita base é enunciada por extenso e
 navegável; a linha só diz qual é.
 
-**A marca tem linha própria, acima do teto** — e isso saiu de duas tentativas erradas na mesma
-linha do teto. Dividindo a linha com a identidade, ou ela esmagava o título (largura fixa) ou
-flutuava até ele ao sobrar espaço, e ali afirma que *o nome* se re-deriva. As duas falhas têm
-a mesma raiz: três coisas com direitos diferentes disputando uma linha só.
+**A marca é a primeira das figuras, acima do teto** — e a linha deixou de ser uma grade pareada
+para virar **dois blocos**: identidade (chip, título, categorias) de um lado, figuras (marca,
+teto, gasto) do outro. Nada de um lado corresponde a nada em particular do outro, então nada é
+alinhado linha a linha; o bloco das figuras cresce uma linha quando o teto é derivado e a
+identidade não é rearranjada por isso.
 
-Com linha própria não há disputa. O nome da receita cabe inteiro no caso comum — o que importa,
-porque ele é a metade que discrimina —, a identidade não cede nada, e a marca fica logo acima
-do número que qualifica.
+Esse desenho saiu de três tentativas erradas, todas de pôr a marca na linha do teto. Dividindo
+uma linha com identidade **e** teto, ela ou esmagava o título (largura fixa), ou flutuava até
+o título ao sobrar espaço — e ali afirma que *o nome* se re-deriva. Em linha cheia própria,
+empurrava título e categorias para baixo. A raiz é sempre a mesma: coisas com direitos
+diferentes disputando uma linha só.
+
+Os dois blocos se centram verticalmente um contra o outro, e o chip acompanha a identidade: o
+chip é da identidade, e os dois são lidos juntos.
 
 **O preço é altura, e só para quem deriva:** ~62 dp com teto digitado, ~80 dp com teto derivado.
 Duas alturas na lista, decididas pelo tipo do teto e não pelo conteúdo, o que mantém a regra
-legível. A alternativa — truncar — dizia pela metade a única coisa que separa "30% do salário"
-de "30% do aluguel", que é exatamente o que a marca existe para dizer.
+legível.
+
+O título passou a ler no tamanho do teto, separado dele só pelo peso: em corpo menor ele lia
+como legenda do próprio orçamento.
 
 ## Decisões tomadas por recomendação, a confirmar
 

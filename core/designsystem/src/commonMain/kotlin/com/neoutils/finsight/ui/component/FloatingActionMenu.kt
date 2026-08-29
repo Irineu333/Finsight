@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.floating_action_collapse
@@ -180,24 +182,32 @@ fun FloatingActionMenuList(
     }
 }
 
+/**
+ * The press is [Surface]'s own, and not a `clickable` wrapped around it.
+ *
+ * Order is the whole of it: the clickable `Surface` puts the background and the clip *before* the
+ * indication, so the ripple lands on top of the fill and inside the rounded corners. A `clickable`
+ * modifier handed to a `Surface` from outside sits earlier in the same chain — its ripple is
+ * painted under an opaque background, and the item answers a tap with nothing at all.
+ */
 @Composable
 private fun MenuItem(
     action: FloatingActionItem,
     onDismissRequest: () -> Unit,
 ) {
     Surface(
+        onClick = {
+            onDismissRequest()
+            action.onClick()
+        },
         shape = MaterialTheme.shapes.large,
         color = colorScheme.surface,
         contentColor = colorScheme.onSurface,
         shadowElevation = 3.dp,
+        // The clickable `Surface` sets no role of its own, and says so: this is the way it asks for
+        // one.
         modifier = Modifier
-            .clickable(
-                role = Role.Button,
-                onClick = {
-                    onDismissRequest()
-                    action.onClick()
-                },
-            )
+            .semantics { role = Role.Button }
             .testTag(action.testTag),
     ) {
         Row(

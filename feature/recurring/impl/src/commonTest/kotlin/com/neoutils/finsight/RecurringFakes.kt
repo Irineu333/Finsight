@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.ContraLeg
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
@@ -17,6 +18,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
@@ -300,6 +302,31 @@ class FakeTransactionsByIds(
 
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
+}
+
+/**
+ * The cards a posted row may have been charged to. Only the read that renders history
+ * answers; the rest throw.
+ *
+ * Closed ones included, and the distinction matters here: an archived card still names
+ * where the money went, and a fake that hid it would let the posted row lose its source
+ * exactly where the real read keeps it.
+ */
+class FakeCreditCardRepository(
+    private val creditCards: List<CreditCard> = emptyList(),
+) : ICreditCardRepository {
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = creditCards
+    override suspend fun getAllCreditCards(): List<CreditCard> = creditCards.filterNot { it.isArchived }
+
+    override fun observeAllCreditCards() = throw NotImplementedError()
+    override fun observeAllCreditCardsIncludingClosed() = throw NotImplementedError()
+    override suspend fun getCreditCardById(creditCardId: Long) = throw NotImplementedError()
+    override fun observeCreditCardById(creditCardId: Long) = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard, currency: String) = throw NotImplementedError()
+    override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun currencyForNewCard() = throw NotImplementedError()
 }
 
 /**

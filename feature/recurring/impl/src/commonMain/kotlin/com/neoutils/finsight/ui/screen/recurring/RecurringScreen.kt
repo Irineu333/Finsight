@@ -72,7 +72,6 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MoneyText
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
-import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.navigation.ArchivedRecurringRoute
@@ -277,36 +276,22 @@ fun RecurringScreen(
                             items = section.cycles,
                             key = { "recurring_${it.recurring.id}" },
                         ) { cycle ->
-                            // Every row leads to the same place, whichever of the two it
-                            // is drawn as: this is the screen of the rules the user
+                            // One row for the whole list, and it leads to the same place
+                            // from every section: this is the screen of the rules the user
                             // keeps, and the row that shows what one of them posted is
-                            // still that rule's row.
-                            val onClick = {
-                                detailController.show(ViewRecurringModal(cycle.recurring.id))
-                            }
-                            val rowModifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .animateItem()
-
-                            when (cycle) {
-                                is RecurringCycleUi.Template -> RecurringCard(
-                                    recurring = cycle.recurring,
-                                    amount = cycle.amount,
-                                    onClick = onClick,
-                                    modifier = rowModifier,
-                                )
-
-                                // The ledger's own row, and its own sign policy: a
-                                // magnitude for expense and for income alike, which the
-                                // organisation into sections is no authorisation to
-                                // change.
-                                is RecurringCycleUi.Posted -> TransactionCard(
-                                    transaction = cycle.transaction,
-                                    onClick = onClick,
-                                    modifier = rowModifier,
-                                )
-                            }
+                            // still that rule's row. Which of the two sources filled it is
+                            // settled in the view model — the row arrives with the answer,
+                            // and the section heading is what names it.
+                            RecurringCard(
+                                row = cycle.row,
+                                onClick = {
+                                    detailController.show(ViewRecurringModal(cycle.recurring.id))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem(),
+                            )
                         }
                     }
                 }

@@ -361,6 +361,21 @@ env:
     visible:
       id: "screen_recurring"
     timeout: 15000
+# The posted section draws the list's one row, and publishes the same ids as the other three: the
+# figure is read on `recurring_card_amount`, exactly as it is for the pending rows above. What it
+# says is the ledger's $865.00 — what this cycle was confirmed for — and never the $940.00 the model
+# goes on asking for, which no row of this screen shows once the cycle has posted.
+- scrollUntilVisible:
+    element:
+      id: "recurring_section_posted"
+    direction: DOWN
+    timeout: 15000
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]865[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
 - tapOn: ${INCOME_TITLE}
 - extendedWaitUntil:
     visible:

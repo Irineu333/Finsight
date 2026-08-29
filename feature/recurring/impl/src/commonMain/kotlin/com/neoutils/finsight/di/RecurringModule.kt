@@ -96,6 +96,7 @@ val recurringModule = module {
             recurringRepository = get(),
             accountRepository = get(),
             categoryRepository = get(),
+            creditCardRepository = get(),
             transactionRepository = get(),
             occurrenceRepository = get(),
             getRecurringCycles = get(),

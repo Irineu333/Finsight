@@ -84,11 +84,17 @@ env:
       id: "screen_recurring"
     timeout: 15000
 - assertVisible: ${TITLE}
-# On the node of a *transaction*, not of a template: the template was born with this
-# month's cycle already confirmed, so the row sits under "Posted" and is drawn from the
-# ledger — the figure it shows is what was written, not what the template predicts.
+# Under "Posted", and on the list's one row — the same node every other section publishes.
+# The section is what says where the figure came from: the template was born with this
+# month's cycle already confirmed, so there is a fact to read, and what the row shows is
+# what was written rather than what the template predicts.
+- scrollUntilVisible:
+    element:
+      id: "recurring_section_posted"
+    direction: DOWN
+    timeout: 15000
 - assertVisible:
-    id: "transaction_card_amount"
+    id: "recurring_card_amount"
     text: "[$]39[.,]90"
 
 # --- And this month is settled, not owed ----------------------------------------------------------

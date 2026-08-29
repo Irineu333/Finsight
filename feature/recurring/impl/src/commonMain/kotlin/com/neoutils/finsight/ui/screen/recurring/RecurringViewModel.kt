@@ -5,13 +5,16 @@ package com.neoutils.finsight.ui.screen.recurring
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.extension.currencyBy
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringCycle
 import com.neoutils.finsight.domain.model.RecurringCycleStatus
 import com.neoutils.finsight.domain.model.RecurringCycles
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
@@ -35,6 +38,7 @@ class RecurringViewModel(
     private val recurringRepository: IRecurringRepository,
     private val accountRepository: IAccountRepository,
     private val categoryRepository: ICategoryRepository,
+    private val creditCardRepository: ICreditCardRepository,
     private val transactionRepository: ITransactionRepository,
     private val occurrenceRepository: IRecurringOccurrenceRepository,
     private val getRecurringCycles: GetRecurringCyclesUseCase,
@@ -151,7 +155,9 @@ class RecurringViewModel(
      *
      * The ledger is asked for the transactions the occurrences point at, all of them at
      * once: asked row by row this would be one read per posted cycle, on every emission
-     * of a `combine` with five sources.
+     * of a `combine` with five sources. The categories that classify them and the cards
+     * that could have received them are read on the same terms — once each, and turned
+     * into a lookup — so no row costs a query of its own.
      *
      * The path is the occurrence's foreign key, never `transactions.recurringId`: that
      * column is grouping metadata and no read of the ledger consults it.
@@ -174,11 +180,15 @@ class RecurringViewModel(
             .getTransactionsByIds(transactionIdByRecurring.values.toSet())
             .associateBy { it.id }
 
-        // Closed ones included: a category taken out of circulation still labels the
-        // history it classified, and this section is history.
+        // Closed ones included, on both: a category taken out of circulation still labels
+        // the history it classified and an archived card still names where the money went,
+        // and this section is history.
         val lookup = TransactionFacadeLookup.of(
             categories = categoryRepository.getAllCategoriesIncludingClosed(),
         )
+        val cardsByAccountId = creditCardRepository
+            .getAllCreditCardsIncludingClosed()
+            .associateBy { it.accountId }
 
         return posted.mapNotNull { cycle ->
             val transaction = transactionIdByRecurring[cycle.recurring.id]
@@ -189,6 +199,8 @@ class RecurringViewModel(
             cycle.recurring.id to RecurringCycleUi.Posted(
                 recurring = cycle.recurring,
                 transaction = ui,
+                category = lookup.categoryOf(transaction),
+                source = transaction.sourceOf(cardsByAccountId),
             )
         }.toMap()
     }
@@ -225,6 +237,26 @@ class RecurringViewModel(
         }
     }
 }
+
+/**
+ * Where a posted cycle's money actually moved — read off the legs, never off the template.
+ *
+ * Confirming a cycle may redirect it to another account or card for that month alone
+ * (`ConfirmRecurringUseCase`), and the occurrence records only the `transactionId`: the
+ * transaction is the sole place the answer survives. A row that named the template's
+ * source would assert the rule where the user reads the fact, and would be wrong in
+ * exactly the month the two diverge — the only month in which naming it distinguishes
+ * anything.
+ *
+ * A `LIABILITY` leg is a card, and it is resolved to the **facade** that projects onto it:
+ * the chart row is named for the ledger, and its name is not the one the user gave the
+ * card. Everything else moved through an account, which the leg carries hydrated, so it
+ * needs no lookup at all.
+ */
+private fun Transaction.sourceOf(cardsByAccountId: Map<Long, CreditCard>) =
+    liabilityAccountId?.let { accountId ->
+        RecurringRowSource(name = cardsByAccountId[accountId]?.name, isCard = true)
+    } ?: RecurringRowSource(name = sourceAccount?.name, isCard = false)
 
 /** The cut by nature, transversal to the sections: it narrows each, and reorders none. */
 private fun RecurringFilter.accepts(recurring: Recurring): Boolean = when (this) {

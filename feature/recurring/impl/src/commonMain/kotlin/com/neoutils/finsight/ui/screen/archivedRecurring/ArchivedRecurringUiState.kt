@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.screen.archivedRecurring
 
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.DisplayAmount
+import com.neoutils.finsight.ui.screen.recurring.RecurringRowUi
+import com.neoutils.finsight.ui.screen.recurring.templateRowOf
 
 /**
  * An archived recurring together with the figure it reads as, denominated by the account
@@ -14,7 +16,13 @@ import com.neoutils.finsight.extension.DisplayAmount
 data class ArchivedRecurringUi(
     val recurring: Recurring,
     val amount: DisplayAmount?,
-)
+) {
+    /**
+     * What the row draws — the template reading, which is the only one an archived rule
+     * has: it generates no cycle in any month, so there is never a fact to read instead.
+     */
+    val row: RecurringRowUi = templateRowOf(recurring, amount)
+}
 
 sealed interface ArchivedRecurringUiState {
 

@@ -178,3 +178,15 @@
       (316,40); volta (316,40) → (289,48) → (247,**60,3**) → (218,69) → (180,80) — mesmos pontos,
       sentido inverso
 
+## 9. O que a verificação pegou
+
+> Um ajuste, e o inverso do que o grupo 8 registra: ali estão as coisas que só apareceram com o app
+> na mão; aqui, a que ver o app rodando não apontou. O menu da rail abria no lugar certo — ele só
+> não abria pelo motivo que 3.5 declara.
+
+- [x] 9.1 **O menu da rail passa a ser ancorado no botão**, e não numa constante. Ele abria alinhado
+      ao topo da área de conteúdo com 12dp de padding, o que dá na altura do botão enquanto a rail
+      tiver o padding que tem hoje e a janela os insets que tem hoje — uma coincidência, e não um
+      ancoramento. As duas posições passam a ser lidas em espaço de janela e subtraídas na fase de
+      layout, e a diferença é o deslocamento vertical do menu. Sem medida ainda, as duas valem zero,
+      que é precisamente onde o menu estava antes

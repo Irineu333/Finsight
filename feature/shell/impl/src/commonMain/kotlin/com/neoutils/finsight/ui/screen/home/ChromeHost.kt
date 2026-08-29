@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -37,15 +38,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -75,6 +80,7 @@ import com.neoutils.finsight.ui.component.OverlayPriority
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import com.neoutils.finsight.ui.util.isWideWindow
 import org.koin.compose.koinInject
+import kotlin.math.roundToInt
 
 /** The button's clearance from the edges it is not docked to. */
 private val FabMargin = 16.dp
@@ -180,6 +186,13 @@ fun ChromeHost(
         isMenuExpanded = false
     }
 
+    // Where the rail's header actually put the button, so that the menu opening outside the rail
+    // opens level with it. Two figures read in window space and subtracted, because the menu is a
+    // child of the content area and the button is not: what separates them is the rail's own
+    // padding and the insets above it, which is exactly what a constant would have to guess.
+    var railButtonWindowY by remember { mutableFloatStateOf(0f) }
+    var contentWindowY by remember { mutableFloatStateOf(0f) }
+
     // Where the button sits, measured rather than guessed: docked into the bar when there is one,
     // and above the system's own bar when there is not — the shell zeroes the content insets, so a
     // button that inherited them would be drawn underneath that one.
@@ -268,6 +281,9 @@ fun ChromeHost(
                                             actions = actions,
                                             expanded = isMenuExpanded,
                                             onExpandedChange = { isMenuExpanded = it },
+                                            modifier = Modifier.onGloballyPositioned {
+                                                railButtonWindowY = it.positionInWindow().y
+                                            },
                                         )
                                     }
                                 },
@@ -275,7 +291,11 @@ fun ChromeHost(
                         }
                     }
 
-                    Box(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .onGloballyPositioned { contentWindowY = it.positionInWindow().y },
+                    ) {
                         content(padding)
 
                         // The rail is a `Surface`, and a `Surface` clips: a menu opening inside it
@@ -299,7 +319,19 @@ fun ChromeHost(
                                 horizontalAlignment = Alignment.Start,
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(12.dp)
+                                    // Level with the button, in the layout phase: the two figures
+                                    // are read where they cost no recomposition, and both start at
+                                    // zero — the top of the content area, which is where the menu
+                                    // stood back when it was anchored to nothing.
+                                    .offset {
+                                        IntOffset(
+                                            x = 0,
+                                            y = (railButtonWindowY - contentWindowY)
+                                                .roundToInt()
+                                                .coerceAtLeast(0),
+                                        )
+                                    }
+                                    .padding(start = 12.dp)
                                     .aboveSharedElements(OverlayPriority.FloatingActionButton),
                             )
                         }

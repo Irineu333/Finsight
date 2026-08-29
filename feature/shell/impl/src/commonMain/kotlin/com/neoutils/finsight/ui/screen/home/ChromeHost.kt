@@ -4,8 +4,7 @@ package com.neoutils.finsight.ui.screen.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -38,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +51,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -124,6 +125,12 @@ fun ChromeHost(
         ?.findStartDestination()
         ?.let { sectionStart -> destinations.firstOrNull { sectionStart.hasRoute(it.route::class) } }
 
+    // `currentBackStackEntryAsState()` seeds itself with null — it is `currentBackStackEntryFlow`
+    // collected with a null seed — and the `NavHost` that will fill it is composed inside this
+    // shell's own content. On the first frame the shell genuinely does not know where it is, and
+    // "I don't know yet" is not "this is not a primary tab". Every chrome decision below descends
+    // from that difference.
+    val isDestinationResolved = destination != null
     val isOnPrimaryTab = selectedItem?.primaryTab == true
 
     LaunchedEffect(selectedItem) {
@@ -157,10 +164,21 @@ fun ChromeHost(
         else -> publishedConfig.copy(isBottomBarVisible = false)
     }
 
-    val chromeTransition = updateTransition(
-        targetState = effectiveConfig,
-        label = "ChromeTransition",
-    )
+    // Created the moment the shell first knows where it stands. A transition created *in* a state
+    // does not animate towards it — `updateTransition` keeps `remember { Transition(targetState) }`,
+    // so `currentState == targetState` and nothing runs. A cold start is a first painting and not a
+    // change: the bar is simply there in the frame it is drawn in, and the button with it.
+    //
+    // Holding the bar back until the destination resolves would not be enough. A child
+    // `AnimatedVisibility` takes its initial state from the parent's `currentState` at the moment it
+    // is first composed, and a parent seeded on the indeterminate frame still carries "no bar"
+    // there. It is the parent that has to start over.
+    //
+    // The key flips exactly once: the flow never emits null, and a resolved destination never
+    // becomes indeterminate again.
+    val chromeTransition = key(isDestinationResolved) {
+        updateTransition(targetState = effectiveConfig, label = "ChromeTransition")
+    }
 
     // Registering a transaction belongs to no screen — it is why the app exists — so a screen with
     // nothing of its own to offer gets it rather than losing the button. This is the one action the
@@ -193,12 +211,17 @@ fun ChromeHost(
     var railButtonWindowY by remember { mutableFloatStateOf(0f) }
     var contentWindowY by remember { mutableFloatStateOf(0f) }
 
-    // Where the button sits, measured rather than guessed: docked into the bar when there is one,
-    // and above the system's own bar when there is not — the shell zeroes the content insets, so a
-    // button that inherited them would be drawn underneath that one.
+    // The bar's height at rest. Measured on the bar itself, inside the visibility animation rather
+    // than on the container the animation resizes: `expandVertically`/`shrinkVertically` measure
+    // their child at full size on every frame and animate only the size they *report* upwards. Read
+    // from within, the figure is therefore the resting one from the first measurement — during the
+    // entrance, during the exit, and never a zero.
     //
-    // `null` until a bar has been measured at rest, which is not the same as "no bar": with no
-    // figure to dock to, the button stands where it stands without one.
+    // That is what the docked position has to be made of. A button following the size the container
+    // reports would dive to the window's edge on the way out and climb back, which is not the
+    // outbound path reversed but a different path.
+    //
+    // `null` until a bar has been measured, which is not the same as "there is no bar".
     val density = LocalDensity.current
     var bottomBarHeight by remember { mutableStateOf<Dp?>(null) }
 
@@ -208,17 +231,36 @@ fun ChromeHost(
     val cornerAnchor = safeBottom + FabMargin
     val dockedAnchor = bottomBarHeight?.let { (it - FabDockedIntoBar).coerceAtLeast(0.dp) }
 
-    val bottomAnchor by animateDpAsState(
-        targetValue = if (isBottomBarPresent) dockedAnchor ?: cornerAnchor else cornerAnchor,
-        label = "FloatingActionBottomAnchor",
-    )
+    // Where the button is, as a single figure: 0f docked into the bar, 1f in the corner, and every
+    // value between them a point on the one line joining the two. The horizontal bias and the
+    // bottom anchor cannot arrive separately because there is only one of them — which is what
+    // makes the return trip the outbound one reversed. Two independent springs would be two
+    // journeys that merely start and end together.
+    //
+    // `null` while the shell can name no position at all: no destination resolved, or a bar the
+    // button belongs to that has not been measured. Neither of those is "the corner".
+    val fabTarget: Float? = when {
+        !isDestinationResolved -> null
+        !isBottomBarPresent -> 1f
+        else -> dockedAnchor?.let { 0f }
+    }
 
-    // Centred over the bar, in the corner without it — the two places every action button of this
-    // app already stood, now said once. Animated, because the bar comes and goes under it.
-    val horizontalBias by animateFloatAsState(
-        targetValue = if (isBottomBarPresent) 0f else 1f,
-        label = "FloatingActionHorizontalBias",
-    )
+    // Seeded at the first position the shell can name, so that the button's first frame *is* that
+    // position: it is placed there, not sent there. A spring seeded at a default the button never
+    // occupied is precisely the two-step entrance being removed here.
+    val fabPlacement = remember(fabTarget != null) { Animatable(fabTarget ?: 0f) }
+
+    LaunchedEffect(fabPlacement, fabTarget) {
+        fabTarget?.let { fabPlacement.animateTo(it) }
+    }
+
+    // Clamped: a spring is not contractually confined to [0, 1], and `lerp` extrapolates.
+    val fabProgress = fabPlacement.value.coerceIn(0f, 1f)
+
+    // The endpoints are read directly and only the progress animates: a bar of a new height, or
+    // insets arriving late, change where the button rests — they are not a journey it made.
+    val bottomAnchor = lerp(dockedAnchor ?: cornerAnchor, cornerAnchor, fabProgress)
+    val horizontalBias = fabProgress
 
     val menuAlignment = if (horizontalBias > 0.5f) Alignment.End else Alignment.CenterHorizontally
 
@@ -234,26 +276,21 @@ fun ChromeHost(
                             exit = shrinkVertically() + slideOutVertically { it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onSizeChanged { size ->
-                                    // Only while the chrome is settled. The bar's height is a
-                                    // figure of the bar at rest; its entrance animates that figure
-                                    // up from nothing and its exit animates it back down, and an
-                                    // anchor that believed those intermediate values would dive to
-                                    // the window's edge on the way back and climb out again —
-                                    // which is the return trip failing to mirror the outbound one.
-                                    // The height of nothing is not a height either: the exit ends
-                                    // by reporting zero, and it reports it once the transition has
-                                    // already settled.
-                                    if (!chromeTransition.isRunning && size.height > 0) {
-                                        bottomBarHeight = with(density) { size.height.toDp() }
-                                    }
-                                }
                                 .aboveSharedElements(OverlayPriority.NavigationChrome),
                         ) {
                             BottomNavigationBar(
                                 items = bottomItems,
                                 selectedItem = selectedItem ?: bottomItems.first(),
                                 onItemSelected = onItemSelected,
+                                // Measured here, on the bar, and not on the modifier handed to the
+                                // `AnimatedVisibility` above it: that one sits outside the
+                                // enter/exit modifier and therefore sees the size the animation
+                                // reports, which climbs from nothing and ends at a zero. The child
+                                // is measured at full size on every frame, so this is the figure of
+                                // the bar standing still, whatever the animation is doing.
+                                modifier = Modifier.onSizeChanged { size ->
+                                    bottomBarHeight = with(density) { size.height.toDp() }
+                                },
                             )
                         }
                     }
@@ -357,31 +394,37 @@ fun ChromeHost(
                     modifier = Modifier.aboveSharedElements(OverlayPriority.ActionScrim),
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                        )
-                        .padding(horizontal = FabMargin)
-                        // Clamped at the use site as well: the anchor is a spring, and a spring
-                        // asked to fall to zero passes through negative on the way.
-                        .padding(bottom = bottomAnchor.coerceAtLeast(0.dp)),
-                ) {
-                    chromeTransition.AnimatedVisibility(
-                        visible = { it.isFloatingActionButtonVisible },
-                        enter = fadeIn(),
-                        exit = fadeOut(),
+                // No button until there is a position to put it in. That is one or two frames of a
+                // cold start, while the window itself is still arriving, and nobody sees a button
+                // that is missing for two frames — whereas a button drawn in the corner and then
+                // travelling to the bar is exactly the movement being removed. Any provisional
+                // position is one the button must leave the moment the shell knows better, and that
+                // leaving is the unasked-for animation.
+                if (fabTarget != null) {
+                    Box(
                         modifier = Modifier
-                            .align(BiasAlignment(horizontalBias, verticalBias = 1f))
-                            .aboveSharedElements(OverlayPriority.FloatingActionButton),
+                            .fillMaxSize()
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                            )
+                            .padding(horizontal = FabMargin)
+                            .padding(bottom = bottomAnchor),
                     ) {
-                        FloatingActionMenu(
-                            actions = actions,
-                            expanded = isMenuExpanded,
-                            onExpandedChange = { isMenuExpanded = it },
-                            horizontalAlignment = menuAlignment,
-                        )
+                        chromeTransition.AnimatedVisibility(
+                            visible = { it.isFloatingActionButtonVisible },
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier
+                                .align(BiasAlignment(horizontalBias, verticalBias = 1f))
+                                .aboveSharedElements(OverlayPriority.FloatingActionButton),
+                        ) {
+                            FloatingActionMenu(
+                                actions = actions,
+                                expanded = isMenuExpanded,
+                                onExpandedChange = { isMenuExpanded = it },
+                                horizontalAlignment = menuAlignment,
+                            )
+                        }
                     }
                 }
             }

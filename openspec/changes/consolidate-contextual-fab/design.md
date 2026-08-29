@@ -22,6 +22,11 @@ Três restrições valem para tudo o que segue, e todas foram verificadas:
    um catálogo de *ações* ali reintroduziria na casca a decisão que pertence à feature — e não
    funcionaria para a ação de categorias, que depende do filtro em vigor.
 
+`assets/interaction-plate.html` acompanha este documento: o botão nas suas três formas, as onze
+telas com a ação que cada uma publica, e as duas larguras de janela com as duas posições, todas
+acionáveis. Foi nela que a questão da posição (D3) apareceu — ela não se enxerga lendo o código,
+porque as duas posições coexistem hoje em botões diferentes.
+
 ## Goals / Non-Goals
 
 **Goals:**

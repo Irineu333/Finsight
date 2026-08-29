@@ -100,10 +100,14 @@ junto da marca. Lá a causa é *conta removida* — um estado daquele template, 
 acionável naquela linha. Aqui é *falta taxa*, um estado do acervo, comum a todas. A divergência
 é de natureza da causa, não de rigor.
 
-**Em aberto (implementação):** `ConsolidationBadge` é hoje um `IconButton` por figura em
-`core/designsystem`. O aviso é uma faixa para um conjunto. Decidir se nasce um componente
-irmão ou se o existente ganha uma segunda forma — a segunda opção só se o `ConsolidationNotice`
-que ele já deriva servir a um conjunto sem reescrita.
+**Decidido: nasce um componente irmão** — `ConsolidationListNotice`, ao lado de
+`ConsolidationBadge` em `core/designsystem`. A segunda opção estava condicionada a o
+`ConsolidationNotice` que o badge deriva servir a um conjunto sem reescrita, e ele não serve:
+o badge decide *sozinho* se aparece e em qual dos três níveis, e a faixa quer exatamente um
+deles. Uma figura convertida continua sendo um número só, e uma lista não deve uma faixa
+permanente a ela — o que ganha uma linha inteira no topo é o único nível em que a superfície
+deixou de fazer parte do seu trabalho. Então quem chama declara a condição e o componente a
+enuncia, enquanto o badge segue graduando os três níveis onde uma figura sozinha os carrega.
 
 ### D6 — A ordenação acontece no ViewModel, não no DAO
 

@@ -75,6 +75,17 @@ import com.neoutils.finsight.ui.util.isExtraWideWindow
 import com.neoutils.finsight.ui.util.isWideWindow
 import org.koin.compose.koinInject
 
+/** The button's clearance from the edges it is not docked to. */
+private val FabMargin = 16.dp
+
+/**
+ * How far the button sinks into the bottom bar. At 56dp tall it leaves 32dp of itself above the
+ * bar's edge, which is the docked button this app has always drawn — the shell used to reach it by
+ * offsetting the `Scaffold`'s FAB slot 40dp downwards, and this is the same figure said as what it
+ * is instead of as a correction to somebody else's arithmetic.
+ */
+private val FabDockedIntoBar = 24.dp
+
 @Composable
 fun ChromeHost(
     content: @Composable (PaddingValues) -> Unit,
@@ -168,9 +179,9 @@ fun ChromeHost(
         isMenuExpanded = false
     }
 
-    // Where the button sits, measured rather than guessed: with the bar up it rides above it, and
-    // without it above the system's own bar — the shell zeroes the content insets, so a button that
-    // inherited them would be drawn underneath that one.
+    // Where the button sits, measured rather than guessed: docked into the bar when there is one,
+    // and above the system's own bar when there is not — the shell zeroes the content insets, so a
+    // button that inherited them would be drawn underneath that one.
     val density = LocalDensity.current
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
@@ -178,7 +189,11 @@ fun ChromeHost(
     val safeBottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
 
     val bottomAnchor by animateDpAsState(
-        targetValue = if (isBottomBarPresent) bottomBarHeight else safeBottom,
+        targetValue = if (isBottomBarPresent) {
+            (bottomBarHeight - FabDockedIntoBar).coerceAtLeast(0.dp)
+        } else {
+            safeBottom + FabMargin
+        },
         label = "FloatingActionBottomAnchor",
     )
 
@@ -302,8 +317,10 @@ fun ChromeHost(
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                         )
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = bottomAnchor + 16.dp),
+                        .padding(horizontal = FabMargin)
+                        // Clamped at the use site as well: the anchor is a spring, and a spring
+                        // asked to fall to zero passes through negative on the way.
+                        .padding(bottom = bottomAnchor.coerceAtLeast(0.dp)),
                 ) {
                     chromeTransition.AnimatedVisibility(
                         visible = { it.isFloatingActionButtonVisible },

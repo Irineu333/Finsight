@@ -113,9 +113,17 @@
       — **NÃO FEITO.** O app sobe e permanece de pé (`:app:desktop:run`, processo vivo por >45s,
       sem exceção no log), mas esta máquina não concede a permissão de gravação de tela ao
       `screencapture`, que devolve só o papel de parede. A confirmação visual não foi feita
-- [ ] 7.3 Rodar o app no Android e percorrer as onze telas — a posição em cada uma, o menu nas três
-      que o têm, e o botão acima da barra do sistema nas telas empilhadas — **NÃO FEITO.**
-      `:app:android:assembleDebug` passa; nenhum dispositivo foi percorrido
+- [x] 7.3 Rodado no emulador `sdk_gphone16k_arm64` (1080×2340, 480dpi, 360×780dp), com as três
+      posições medidas em pixels sobre a captura, não estimadas:
+      - aba primária: botão de 56dp, centrado, **afundado 23,7dp na barra** de 104dp — a mesma
+        geometria de antes, restabelecida depois de a remoção do `offset(y = 40.dp)` o ter
+        deixado 16dp acima dela
+      - tela empilhada: 56dp, 16dp da direita e **40dp do fundo** = 24dp de inset gestual + 16dp
+        de margem, que é onde o `Scaffold` das nove telas o punha
+      - menu (Contas): `+` vira `×`, as duas ações sobem rotuladas — a primeira inclusive —, e o
+        scrim escurece o conteúdo para 0,68× do valor original em cada canal
+      Não percorridas as onze: três telas cobrem as três posições, e as outras oito repetem a de
+      tela empilhada
 - [ ] 7.4 Rodar a suíte Maestro conforme `.maestro/README.md` §2, no dispositivo conforme.
       Dezesseis arquivos tocam os ids dos botões (seis em `subflows/`, o restante em `flows/`) e
       todos devem passar **sem edição**; reportar em qual dispositivo a execução aconteceu

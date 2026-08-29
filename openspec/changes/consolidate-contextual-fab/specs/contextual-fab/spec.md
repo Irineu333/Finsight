@@ -84,6 +84,10 @@ Com duas ou mais ações, o menu SHALL listar **todas** as ações publicadas, a
 o botão deixou de executá-la, e uma ação fora do menu não teria como ser alcançada. As ações
 SHALL ser exibidas com rótulo visível, e MUST NOT ser oferecidas apenas por ícone.
 
+Toda superfície que aceita um toque — o botão e cada ação do menu — SHALL responder visivelmente
+ao toque que recebe, dentro dos seus próprios limites. Uma superfície que executa a ação sem
+acusar o toque é indistinguível de uma que o ignorou.
+
 Enquanto o menu está aberto, o conteúdo atrás dele SHALL ser obscurecido, e acionar a área
 obscurecida SHALL fechá-lo sem executar ação alguma.
 
@@ -99,6 +103,10 @@ obscurecida SHALL fechá-lo sem executar ação alguma.
 #### Scenario: A primeira ação numa tela com menu
 - **WHEN** a tela publica mais de uma ação e o usuário quer a primeira delas
 - **THEN** ela está no menu, como as demais, e é alcançada abrindo-o
+
+#### Scenario: Ação do menu pressionada
+- **WHEN** o usuário pressiona uma ação do menu
+- **THEN** ela acusa o toque no seu próprio desenho, e não por baixo dele nem para fora dele
 
 #### Scenario: Menu aberto e dispensado
 - **WHEN** o menu está aberto e o usuário toca fora dele

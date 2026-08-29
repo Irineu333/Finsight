@@ -131,12 +131,42 @@
       continuam existindo, agora declarados pelas telas, e os seis `add_transaction_fab` são
       todos tocados a partir da dashboard, onde a ação universal os reemite. Nenhuma suíte foi
       executada
-- [x] 7.4b Ajustar os flows Maestro ao botão de D12: `subflows/tap_action.yaml` abre o menu apenas
-      quando a ação pedida ainda não está na tela, e os quatro sítios que tocam `accounts_add`,
-      `credit_cards_add` e `categories_add` passam por ele. Os três `assertVisible` restantes ficam
-      como estão — são estados vazios, onde o id pertence ao botão do próprio estado vazio
 - [x] 7.5 As ações do menu são compostas na raiz da janela — a casca as desenha dentro do próprio
       `Box` do `ChromeHost`, e não num `Popup`, justamente para que o `Modifier.exposeTestTags()`
       do `App` as alcance sem uma chamada nova. Verificado na fonte, não em execução
 - [x] 7.6 Atualizar em `issues/the-fab-covers-the-last-rows-figure-when-the-list-reaches-the-bottom.md`
       a evidência que cita o FAB duplo da rail, que deixa de existir; o defeito em si continua aberto
+
+## 8. Ajustes depois de ver o app rodando
+
+> Três correções que só apareceram com o app na mão, e que a verificação do grupo 7 não teria
+> pego: duas são de forma — nada quebra, nada falha, o resultado é só pior — e a terceira é um
+> componente que aceitava o toque sem dizer nada. Estão aqui, e não emendadas no grupo em que
+> caberiam, porque a ordem em que se descobre uma coisa é informação.
+
+- [x] 8.1 **O botão tem um tamanho só** (D12). O botão dividido — corpo de 56dp mais controle de
+      expansão de 48dp, 104dp ao todo — ficou grande demais, e fazia a silhueta variar com a
+      contagem de ações. Ele volta a ser o `+` de 56dp em toda tela; com duas ou mais ações,
+      pressioná-lo abre o menu, e o `+` gira 45° enquanto ele está aberto
+- [x] 8.2 **O menu passa a listar todas as ações**, a primeira inclusive — o botão deixou de
+      executá-la, e uma ação fora do menu não teria como ser alcançada. O botão ganha identidade
+      própria (`floating_action_expand`) onde abre o menu, e mantém a da ação onde há uma só
+- [x] 8.3 Reescrever no spec o requisito da forma do botão, que exigia a ação primária a um toque:
+      ele existia para justificar o corpo executável, que é o que 8.1 remove. O requisito que
+      entra no lugar é o que estava sendo pedido — mesmo tamanho em toda tela —, e o custo
+      (dois toques nas três telas com menu) fica dito no proposal e em D12
+- [x] 8.4 `subflows/tap_action.yaml`: os ids das três telas com menu passaram a viver dentro dele,
+      então os flows ganham o toque que o abre. O subflow o dá **apenas quando a ação ainda não
+      está na tela** — a mesma tela publica uma ação num estado e três noutro, e os botões de
+      estado vazio carregam esses mesmos ids de propósito
+- [x] 8.5 **O ripple das ações do menu.** `Modifier.clickable` entregue ao `Surface` de fora fica
+      antes do `.surface(...)` na mesma cadeia, então o ripple era pintado sob um fundo opaco e
+      fora do recorte: o item aceitava o toque sem responder nada. Passou a usar a sobrecarga
+      clicável do próprio `Surface`, que tem a ordem inversa — e que traz
+      `minimumInteractiveComponentSize()` junto
+- [x] 8.6 **O ancoramento na bottom bar.** Tirar o botão do slot do `Scaffold` levou junto o
+      afundamento de 24dp na barra, que o `offset(y = 40.dp)` produzia por correção da aritmética
+      do slot. Ele é dito diretamente agora (`alturaDaBarra - 24dp`, e `safeDrawing.bottom + 16dp`
+      sem barra), com piso em zero no alvo e no uso — a âncora é uma mola, e mola que cai a zero
+      passa por baixo
+- [x] 8.7 Conferir no aparelho, medindo sobre os pixels da captura em vez de estimar: ver 7.3

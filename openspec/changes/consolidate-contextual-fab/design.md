@@ -98,8 +98,7 @@ restrição 5. O requisito foi escrito assim.
 
 ### D3 — O botão sai do slot `floatingActionButton` do `Scaffold`
 
-Ele passa a ser desenhado num overlay próprio, dentro do `Box(Modifier.weight(1f))` de
-`ChromeHost.kt:202-204`, ao lado de `content(padding)`. Quatro razões, todas verificadas:
+Ele passa a ser desenhado num overlay próprio da casca. Quatro razões, todas verificadas:
 
 - O `fabPlaceable` é medido e posicionado pelo `Scaffold` (`Scaffold.kt:187` e `291-293`), então um
   scrim de janela inteira dentro do slot seria posicionado junto com o botão — e o menu, ao crescer,
@@ -110,13 +109,26 @@ Ele passa a ser desenhado num overlay próprio, dentro do `Box(Modifier.weight(1
 - `fabOffsetFromBottom` lê `contentWindowInsets` (restrição 7), que a casca zera — o botão no canto
   de uma tela empilhada cairia sob a barra do sistema.
 
-O `Box` de conteúdo dá os limites certos de graça: não invade a rail nem o `DetailPane`
-(`ChromeHost.kt:206-212`), e expõe o `padding`, cujo `calculateBottomPadding()` é a altura da bottom
-bar — o ancoramento sai daí, sem o `offset` mágico. `aboveSharedElements(OverlayPriority.FloatingActionButton)`
-continua aplicável tal como está.
+O ancoramento sai da altura da barra, e não de um `offset`. O que o `offset(y = 40.dp)` produzia era
+um afundamento de 24dp na barra, escrito como correção da aritmética do slot (`bottomBarHeight + 16`
+menos 40); ele passa a ser dito como o que é — `alturaDaBarra - 24dp` com barra,
+`safeDrawing.bottom + 16dp` sem. As duas figuras têm piso em zero, no alvo e no uso, porque a âncora
+é uma mola e uma mola que cai a zero passa por baixo, e `Modifier.padding` recusa negativo.
+`aboveSharedElements(OverlayPriority.FloatingActionButton)` continua aplicável tal como está.
 
-O scrim é a exceção: ele cobre a janela inteira, e portanto é irmão do `Scaffold`, não filho do
-`Box`. Do contrário a bottom bar continuaria clicável com o menu aberto.
+**Onde exatamente o overlay fica é decidido pelo scrim, e não pelo botão.** O scrim tem de cobrir a
+bottom bar — do contrário ela continua clicável com o menu aberto —, logo é irmão do `Scaffold`. E
+como a ordem de teste de toque dentro de um `Box` é a de declaração, o que precisa continuar
+clicável tem de vir **depois** dele: o botão e o menu são irmãos do `Scaffold` também, desenhados na
+sequência scrim → menu → botão. Um botão dentro do `Box` de conteúdo, que é o lugar natural para
+ele, ficaria atrás do scrim e deixaria de responder justamente enquanto o seu próprio menu estivesse
+aberto.
+
+Em janela larga a conta se inverte, e o overlay cai no `Box` de conteúdo. Não há bottom bar a
+neutralizar ali; o que existe é a rail, e escurecê-la levaria junto o botão, que é o seu `header`.
+O scrim então para na área de conteúdo, a rail segue viva, e o menu é desenhado ao lado do botão —
+fora da rail, que recorta (restrição 6). Isso responde a pergunta que ficou aberta neste documento
+sobre o scrim escurecer a rail: ele não escurece.
 
 ### D4 — A posição acompanha o seletor
 
@@ -302,8 +314,9 @@ cada tela — mecânico, mas por tela.
 
 ## Open Questions
 
-- **O scrim escurece a rail também?** D3 o põe cobrindo a janela para que a bottom bar não fique
-  clicável; em janela larga isso escurece a rail inteira, o que pode ser demais para um menu de duas
-  entradas.
-- **O menu fecha ao navegar?** Nenhuma ação prevista navega, mas a regra deve existir antes que a
-  primeira apareça. Com o estado do menu vivendo na casca chaveado pelo destino, isso cai de graça.
+- ~~**O scrim escurece a rail também?**~~ Respondida em D3: não. Em janela estreita ele cobre a
+  janela, para neutralizar a bottom bar; em janela larga para na área de conteúdo, porque a rail
+  carrega o botão e escurecê-la o tiraria de alcance com o menu aberto.
+- ~~**O menu fecha ao navegar?**~~ Fecha. O estado do menu vive na casca, e um `LaunchedEffect`
+  chaveado pelo destino — e pela contagem de ações — o recolhe: navegar fecha, e uma tela que
+  retira as ações que estavam sendo exibidas também.

@@ -137,14 +137,19 @@ aluguel, e uma linha cujo trabalho é discriminar não pode exibir a mesma marca
 orçamentos diferentes. O detalhe continua sendo onde a receita base é enunciada por extenso e
 navegável; a linha só diz qual é.
 
-O custo é largura, e ele está contido por prioridade declarada: o percentual não trunca, o
-nome trunca, e a marca inteira tem teto de largura para não empurrar a identidade para fora.
+**A marca tem linha própria, acima do teto** — e isso saiu de duas tentativas erradas na mesma
+linha do teto. Dividindo a linha com a identidade, ou ela esmagava o título (largura fixa) ou
+flutuava até ele ao sobrar espaço, e ali afirma que *o nome* se re-deriva. As duas falhas têm
+a mesma raiz: três coisas com direitos diferentes disputando uma linha só.
 
-**A posição é regra, e não arranjo.** A marca fica encostada no valor, com a folga da linha
-entre ela e a identidade. Ceder largura e ficar no lugar certo são dois requisitos, e a
-primeira implementação atendeu ao primeiro quebrando o segundo: a marca passou a flutuar até
-o título, e ali ela afirma que *o nome* se re-deriva. É o tipo de erro que só aparece com o
-desenho em mãos, e é por isso que a regra está escrita.
+Com linha própria não há disputa. O nome da receita cabe inteiro no caso comum — o que importa,
+porque ele é a metade que discrimina —, a identidade não cede nada, e a marca fica logo acima
+do número que qualifica.
+
+**O preço é altura, e só para quem deriva:** ~62 dp com teto digitado, ~80 dp com teto derivado.
+Duas alturas na lista, decididas pelo tipo do teto e não pelo conteúdo, o que mantém a regra
+legível. A alternativa — truncar — dizia pela metade a única coisa que separa "30% do salário"
+de "30% do aluguel", que é exatamente o que a marca existe para dizer.
 
 ## Decisões tomadas por recomendação, a confirmar
 

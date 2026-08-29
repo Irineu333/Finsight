@@ -119,16 +119,19 @@ toma do aluguel, e quem mantém os dois leria a mesma declaração duas vezes. A
 continua enunciando a receita base por extenso e navegando até ela; o que a linha acrescenta é
 **qual** delas.
 
-As duas partes cedem largura em ordem: o percentual é a derivação e MUST NOT ser truncado; o
-nome diz *qual* derivação e SHALL ceder primeiro, em **uma linha só**, truncado quando não
-couber. A declaração inteira SHALL ter largura limitada, de modo que um nome longo não empurre
-a identidade do orçamento para fora da linha.
+A declaração SHALL ocupar **linha própria**, imediatamente acima do valor que ela qualifica e
+alinhada a ele, e MUST NOT dividir a linha com a identidade do orçamento. O que ela afirma é
+que **aquele número** é uma fração que se re-deriva a cada mês; ao lado do título ela afirmaria
+isso sobre o nome do orçamento, que é a única coisa da linha que o usuário digitou por inteiro.
 
-A declaração SHALL ser exibida **junto ao valor que ela qualifica**, e a folga da linha
-MUST NOT ser posta entre as duas. O que ela afirma é que **aquele número** é uma fração que se
-re-deriva a cada mês; encostada na identidade ela afirmaria isso sobre o nome do orçamento, que
-é a única coisa da linha que o usuário digitou por inteiro. Onde a linha sobra espaço, ele fica
-entre a identidade e a declaração.
+A linha própria é também o que dispensa a declaração de disputar largura: o nome da receita
+cabe inteiro no caso comum, e a identidade não cede nada por causa dela. Onde ainda assim não
+couber, o percentual é a derivação e MUST NOT ser truncado, e o nome — que diz *qual* derivação
+— SHALL ceder primeiro, em uma linha só.
+
+Uma linha que carrega a declaração SHALL ser mais alta que uma que não a carrega, e a troca é
+aceita deliberadamente: um teto derivado tem mais a dizer que um digitado, e dizê-lo por
+truncagem seria dizer pela metade justamente o que separa duas declarações iguais.
 
 Onde a receita base não existe mais, a declaração SHALL exibir apenas o percentual, e MUST NOT
 deixar o separador pendurado.
@@ -141,13 +144,13 @@ deixar o separador pendurado.
 - **WHEN** dois orçamentos tomam 30% de receitas base distintas
 - **THEN** as duas declarações são distinguíveis sem abrir o detalhe
 
-#### Scenario: Linha com espaço de sobra
-- **WHEN** a identidade do orçamento é curta e a linha sobra espaço
-- **THEN** a declaração permanece encostada no valor, e o espaço que sobra fica entre ela e a identidade
+#### Scenario: A declaração não divide a linha com a identidade
+- **WHEN** um orçamento de teto derivado é exibido ao lado de outros de teto digitado
+- **THEN** a sua declaração ocupa linha própria acima do valor, a sua linha é mais alta que as demais, e nenhuma identidade cede largura por causa dela
 
 #### Scenario: Nome de receita longo
-- **WHEN** o nome da receita base não cabe na largura reservada à declaração
-- **THEN** o nome é truncado, o percentual permanece inteiro, e a identidade do orçamento conserva o seu lugar na linha
+- **WHEN** o nome da receita base não cabe na largura da linha da declaração
+- **THEN** o nome é truncado e o percentual permanece inteiro
 
 #### Scenario: Receita base removida
 - **WHEN** a recorrência de que o teto deriva não existe mais

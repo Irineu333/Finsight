@@ -190,3 +190,28 @@
       ancoramento. As duas posições passam a ser lidas em espaço de janela e subtraídas na fase de
       layout, e a diferença é o deslocamento vertical do menu. Sem medida ainda, as duas valem zero,
       que é precisamente onde o menu estava antes
+
+## 10. O que a suíte E2E pegou
+
+> A suíte rodou pela primeira vez aqui — 7.4 estava aberta — e encontrou o que nenhuma das
+> verificações anteriores encontraria: a ação universal (D5) põe um botão em telas que nunca
+> tiveram um, e onde a tela já usa aquele canto os dois se sobrepõem. O toque vai para o botão
+> desenhado por último, que é o da casca.
+
+- [x] 10.1 **A conversa do suporte perdia o toque de enviar.** `support_reply_send` é o ícone final
+      do campo de resposta, no rodapé; o botão da casca fica a 16dp da direita e 16dp acima da
+      barra do sistema. `support/lifecycle` reprovou lendo a mensagem de volta, e a captura mostrou
+      a folha de transação aberta sobre a conversa. A tela passa a suprimir o botão — que é o que
+      `isFloatingActionButtonVisible` existe para dizer, e por que a flag sobreviveu à consolidação
+- [x] 10.2 **A configuração de relatório tinha o mesmo defeito, sem flow que o pegasse.** O botão
+      "gerar" ocupa uma `bottomBar` de largura cheia: a sobreposição é total na vertical e vale os
+      56dp da direita. O flow passa porque o Maestro toca no centro de um botão largo; um dedo na
+      borda direita abriria o formulário de transação. Mesma supressão
+- [x] 10.3 `creditcards/lifecycle` está vermelho, e **não é desta change**: falhou às 01:42 com a
+      mesma mensagem, 4h30 antes do primeiro commit de código (06:13), e alterna entre dois modos
+      de falha — `dashboard_component_balance_stats_credit_card` e `invoice_expenses_amount` — que
+      já apareciam antes. Fica para uma change própria
+- [x] 10.4 `dashboard/customization` falhou uma vez e passou três (duas isoladas, uma na suíte),
+      sempre com o app indo parar na tela inicial durante um `scrollUntilVisible` de 25s. Não é
+      reprodutível, e não há evidência de que seja desta change — fica registrado como visto, não
+      como resolvido

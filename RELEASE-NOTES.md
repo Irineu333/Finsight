@@ -8,7 +8,8 @@ O projeto **não usa tags git**: a versão é declarada em `app/android/build.gr
 `app/desktop/build.gradle.kts` (`packageVersion`). Cada seção abaixo cobre os commits
 alcançáveis a partir do commit que subiu a versão e não alcançáveis a partir do anterior —
 é isso que decide em qual release uma mudança saiu, e não a data em que ela foi escrita.
-Os release candidates aparecem quando a mudança entrou por um deles.
+Uma versão ainda em preparação separa o que entrou por cada release candidate; quando
+ela sai, as seções se consolidam.
 
 Estado atual: **1.10.0** em produção. Nenhum ciclo aberto depois dela.
 
@@ -16,13 +17,13 @@ Estado atual: **1.10.0** em produção. Nenhum ciclo aberto depois dela.
 
 ## 1.10.0 — 29/08/2026
 
-`versionCode` 34. Ciclo aberto em 08/08/2026 e fechado em 29/08/2026, por três release
-candidates antes do final — `versionCode` 31 (rc01), 32 (rc02) e 33 (rc03). Esquema do
-banco: **10 → 14**. 415 commits — a maior versão do projeto.
+`versionCode` 34, depois de 31, 32 e 33 nos três release candidates do ciclo. Aberto em
+08/08/2026 e fechado em 29/08/2026. Esquema do banco: **10 → 14**. 415 commits — a maior
+versão do projeto.
 
 A versão em que o app deixou de ser mono-moeda.
 
-### Multimoeda e consolidação (rc01)
+### Multimoeda e consolidação
 
 - **Moeda por conta e por cartão.** Toda conta do plano de contas declara uma moeda, sem
   valor padrão e imutável. Uma conta sem moeda deixou de ser representável.
@@ -56,73 +57,11 @@ A versão em que o app deixou de ser mono-moeda.
   contas em BRL. É redenominação, não conversão: contas, lançamentos e orçamentos mudam de
   moeda na mesma transação, e `Σ = 0` por moeda continua valendo.
 
-### Correções e ajustes (rc01)
-
-- A marca de milhar deixou de ser lida como separador decimal no campo de taxa.
-- O botão de salvar do formulário de taxa deixou de cancelar o próprio salvamento.
-- Um valor sugerido parou de sobreviver à troca de moeda.
-- Um zero parou de guardar a moeda em que por acaso chegou.
-- A confirmação de recorrente passou a oferecer cartões também por moeda.
-- O `setter` da moeda base foi removido: escrevê-la sozinha era a corrupção.
-- A exclusão de uma moeda e o seu arquivo de taxas viraram uma escrita só.
-- Migrações reorganizadas: um arquivo por migração, cada uma documentando o que faz e em
-  que versão saiu.
-- Suíte E2E: décimo terceiro fluxo, cruzando a linha da moeda — algo que nenhuma camada
-  abaixo consegue montar.
-
-### Novidades (rc02)
+### Novidades
 
 - **Faturas retroativas**: a fatura de qualquer mês pode ser criada na tela de faturas, e a
   fatura escolhida é quem posiciona a data — nunca o contrário. A tela avisa quando a data
   cai fora do período da fatura.
-- **Ajuste de saldo datado**: um único ajuste, com alvo numa data, no lugar dos três modos
-  anteriores (saldo atual / final / inicial).
-- **Detalhe da transação por pernas**: a operação é composta de um card por perna
-  monetária, tingido pela direção da perna, com a seta entre os cards, a categoria como
-  linha de contexto e o ícone da fachada à frente do nome de cada perna. Não há mais escolha
-  de uma ponta.
-- **Orçamentos sobrepostos**: uma categoria pode ser medida por quantos orçamentos o
-  usuário quiser.
-- **Recorrente sem redigitar**: uma transação pode nascer recorrente no próprio lançamento,
-  e a confirmação do ciclo passou a editar título e categoria. Pular um ciclo agora pergunta
-  antes.
-- **Ícone sugerido**: uma conta nova abre com o primeiro ícone do catálogo que nenhuma conta
-  aberta esteja usando.
-- **Contas fora do total**: desmarcar uma conta no widget de saldo a retira da soma, sem
-  alterar a conta.
-- Widgets do dashboard passaram a declarar em quais modos de janela aparecem.
-- Suíte E2E: décimo quarto fluxo, o da recorrente nascida no próprio lançamento.
-
-### Correções (rc02)
-
-- Criação de cartão falha quando a primeira fatura não abre, em vez de deixar o cartão sem
-  fatura.
-- A fatura aberta a partir do detalhe é a que o chamador nomeou.
-- A perna do cartão leva à fatura, não ao registro do cartão.
-- O formulário rola em vez de ser espremido pelo teclado.
-- O card de saldo mantém a mesma altura com e sem a marca de aproximação.
-- A área de toque de uma categoria ficou contida na linha que a mostra.
-- O id do usuário pode não resolver sem abortar o app.
-
-### Novidades (rc03)
-
-- **Gasto sem categoria**: o não classificado ganhou linha e fatia próprias na quebra por
-  categoria, no dashboard e no relatório, lendo a própria natureza.
-- **Filtro sem categoria**: as cinco listas que filtram por categoria passaram a recortar
-  também o que não tem nenhuma, e a oferecer a opção só quando ela encontra algo.
-- **A liquidar este mês**: novo widget somando recorrentes do mês e faturas por pagar em
-  "A entrar" e "A sair", com cabeçalho opcional.
-- **Transferência corrigível**: uma transferência passou a ser corrigida no lugar, pelo
-  mesmo formulário que a registrou, em vez de apagada e refeita. As duas pontas, o valor,
-  o valor de destino e a data são corrigíveis, e a transferência entre moedas entra pela
-  mesma porta. O portão de edição parou de contar pernas monetárias e passou a nomear
-  rótulos — o pagamento de fatura, que ficava de fora pela contagem, passou a ficar por
-  declaração própria. No razão, a reescrita de uma transação passou a aceitar a mesma
-  lista de pernas que a criação sempre aceitou.
-- **Título na transferência**: a transferência passou a dizer por que o dinheiro se moveu.
-  Com o campo veio a cadeia de nomeação — título, depois categoria, depois forma — valendo
-  em toda superfície que nomeia uma operação, o card da lista e o documento exportado
-  incluídos. O literal de reserva `"Untitled"`, inglês num app pt/en, foi removido.
 - **Pagamento de fatura unificado**: um único formulário que nomeia a fatura que paga —
   seletor de cartão, de fatura e de conta pagadora —, com o estado da fatura decidindo o
   modo: aberta ou retroativa aceita pagamento parcial; fechada aceita apenas a quitação
@@ -137,25 +76,66 @@ A versão em que o app deixou de ser mono-moeda.
   operação: um parcial de R$ 300 numa fatura de R$ 800 pode ser corrigido para R$ 700, o
   que o devido corrente recusava. A quitação total continua história liquidada, sem
   correção e sem remoção.
-- **Backlog de bugs** em `issues/`, com regra de entrada, correção e arquivamento, e uma
-  skill que o conduz. A auditoria de tratamento de erro migrou para ele, e os bugs que o
-  próprio ciclo introduziu passaram a dizer em que versão nasceram.
-- **Notas de versão e roadmap** reconstruídos a partir dos commits que os sustentam, com o
-  que foi entregue separado do que é apenas desejado.
-- Suíte E2E: décimo quinto fluxo, o do pagamento de uma fatura retroativa.
-
-### Correções (rc03)
-
-- O seletor de mês só marca o mês quando o ano também bate.
-- A hidratação de uma perna usa o mapper dono da conta.
-- A recusa da conta padrão fala na língua do usuário.
-- O Suporte decide o vazio pelo escopo que está na tela.
-- O documento exportado do relatório diz em que língua foi escrito.
-- O formulário de ajuste de saldo fica na tela enquanto a data é digitada, em vez de dar
-  lugar a um spinner a cada tecla.
-
-### Novidades (final)
-
+- **Ajuste de saldo datado**: um único ajuste, com alvo numa data, no lugar dos três modos
+  anteriores (saldo atual / final / inicial).
+- **Detalhe da transação por pernas**: a operação é composta de um card por perna
+  monetária, tingido pela direção da perna, com a seta entre os cards, a categoria como
+  linha de contexto e o ícone da fachada à frente do nome de cada perna. Não há mais escolha
+  de uma ponta — e o ajuste, que tinha um segundo detalhe só seu (`ViewAdjustmentModal`,
+  com ViewModel, estado e testes próprios), passou a abrir este, nomeado pelo alvo que
+  corrige.
+- **Transferência corrigível**: uma transferência passou a ser corrigida no lugar, pelo
+  mesmo formulário que a registrou, em vez de apagada e refeita. As duas pontas, o valor,
+  o valor de destino e a data são corrigíveis, e a transferência entre moedas entra pela
+  mesma porta. O portão de edição parou de contar pernas monetárias e passou a nomear
+  rótulos — o pagamento de fatura, que ficava de fora pela contagem, passou a ficar por
+  declaração própria. No razão, a reescrita de uma transação passou a aceitar a mesma
+  lista de pernas que a criação sempre aceitou.
+- **Título na transferência**: a transferência passou a dizer por que o dinheiro se moveu.
+  Com o campo veio a cadeia de nomeação — título, depois categoria, depois forma — valendo
+  em toda superfície que nomeia uma operação, e com dono único: o card da lista, o
+  documento exportado e o modal deixaram de derivá-la cada um por sua conta. O literal de
+  reserva `"Untitled"`, inglês num app pt/en, foi removido.
+- **Recorrente sem redigitar**: uma transação pode nascer recorrente no próprio lançamento,
+  e a confirmação do ciclo passou a editar título e categoria. Pular um ciclo agora pergunta
+  antes.
+- **Recorrentes lista ciclos, não modelos.** A tela passou a listar os ciclos do mês
+  selecionado, em quatro seções com contagem própria — pendente, a lançar, lançado e ignorado
+  —, e a partição ganhou dono único no domínio (`RecurringCycles`), consumido tanto por quem
+  lista quanto por quem projeta. O corte entre *pendente* e *a lançar* passou a comparar
+  datas, e não dias do mês: a comparação anterior só era correta enquanto o mês fosse o
+  corrente, e o mês virou selecionável. A linha de um ciclo lançado é lida inteira do razão —
+  figura, título, categoria e origem da transação —, nunca do modelo, porque confirmar um
+  ciclo permite sobrescrever os cinco. As arquivadas saíram da lista, onde não há seção em que
+  caibam, e ganharam tela própria; o recorte perdeu `ARCHIVED` e ficou só com o eixo de
+  natureza.
+- **Resumo do mês em Recorrentes.** Um card no topo separa fato de projeção: *lançado neste
+  mês*, lido das ocorrências confirmadas pelas transações que elas apontam, e *ainda não
+  lançado*, dos modelos sem ocorrência no mês. Cada metade se dobra, e a que não tem movimento
+  abre dobrada — o rótulo permanece dos dois jeitos, porque o que se dobra é a figura, nunca o
+  nome do que ela mede. O seletor de mês nasceu no card e passou a governar a tela inteira.
+- **A linha de Recorrentes de ~180dp para 64dp.** A ficha de três blocos empilhados virou uma
+  linha: à esquerda o que a recorrência é e de onde sai, à direita quanto e quando. Saíram a
+  legenda "Valor mensal" e os dois badges; a direção do lançamento virou glifo com
+  `contentDescription`. A altura medida no aparelho é de 64dp, contra os ~180dp da ficha
+  anterior — cabe quase o triplo de linhas na mesma tela. Um modelo sem denominação passou a
+  exibir `***` em vez de omitir a figura, e a altura da linha ficou constante em toda variante
+  — a ausência do número passou a ser dita em voz alta, e não por ausência. A lista inteira,
+  inclusive a seção de lançados, é desenhada por um componente só: antes eram dois, de alturas
+  e colunas diferentes lado a lado. A linha lançada não trocou de fonte com isso — segue lendo
+  do razão, e mostra a origem que a **transação** registrou, não a que o modelo nomeia.
+- **Orçamentos sobrepostos**: uma categoria pode ser medida por quantos orçamentos o
+  usuário quiser.
+- **A linha de Orçamentos de ~232dp para ~62dp.** O progresso virou um anel em torno do ícone,
+  e é isso que compra a densidade: ele deixou de custar altura. O número principal da linha
+  passou a ser o limite cadastrado, e não o gasto — esta é a tela que cria, edita e apaga
+  orçamento, e o teto é o que distingue "Transporte de R$ 300" de "Casa de R$ 2.500"; o
+  acompanhamento continua sendo pergunta do dashboard. As categorias subiram para a linha como
+  ícones empilhados, de largura limitada e excedente contado (`+N`), no lugar da contagem muda
+  "3 categorias". Um teto derivado de uma receita recorrente nomeia a origem numa linha
+  própria, sobre o teto que ela qualifica, e é a única variação de altura da lista (~80dp). A
+  lista deixou de sair na ordem de criação e passou a sair por consumo: o que precisa de ação
+  sobe sozinho.
 - **Categoria lida contra a própria média.** O detalhe de uma categoria perdeu o seletor de
   mês e passou a dizer três figuras sobre uma janela declarada: o gasto do mês corrente,
   anunciado como parcial no próprio rótulo ("dia 24 de 31"); a média dos últimos 12 meses
@@ -167,61 +147,20 @@ A versão em que o app deixou de ser mono-moeda.
   fato cobre, e uma sem movimento não mostra zero algum. Nenhuma figura inclui lançamento com
   data futura. No lugar da navegação temporal removida, um atalho abre a lista de transações
   já recortada por aquela categoria.
-
 - **Série mensal por dimensão no razão.** Um total por (mês, moeda) numa consulta só, com
   corte superior escolhido por quem chama. É ela que sustenta as três figuras da categoria:
   uma janela de doze meses passou a custar uma leitura, e não doze.
-
-- **Recorrentes lista ciclos, não modelos.** A tela passou a listar os ciclos do mês
-  selecionado, em quatro seções com contagem própria — pendente, a lançar, lançado e ignorado
-  —, e a partição ganhou dono único no domínio (`RecurringCycles`), consumido tanto por quem
-  lista quanto por quem projeta. O corte entre *pendente* e *a lançar* passou a comparar
-  datas, e não dias do mês: a comparação anterior só era correta enquanto o mês fosse o
-  corrente, e o mês virou selecionável. A linha de um ciclo lançado é lida inteira do razão —
-  figura, título, categoria e origem da transação —, nunca do modelo, porque confirmar um
-  ciclo permite sobrescrever os cinco. As arquivadas saíram da lista, onde não há seção em que
-  caibam, e ganharam tela própria; o recorte perdeu `ARCHIVED` e ficou só com o eixo de
-  natureza.
-
-- **A linha de Recorrentes de ~180dp para 64dp.** A ficha de três blocos empilhados virou uma
-  linha: à esquerda o que a recorrência é e de onde sai, à direita quanto e quando. Saíram a
-  legenda "Valor mensal" e os dois badges; a direção do lançamento virou glifo com
-  `contentDescription`. A altura medida no aparelho é de 64dp, contra os ~180dp da ficha
-  anterior — cabe quase o triplo de linhas na mesma tela. Um modelo sem denominação passou a
-  exibir `***` em vez de omitir a figura, e a altura da linha ficou constante em toda variante
-  — a ausência do número passou a ser dita em voz alta, e não por ausência.
-
-- **Resumo do mês em Recorrentes.** Um card no topo separa fato de projeção: *lançado neste
-  mês*, lido das ocorrências confirmadas pelas transações que elas apontam, e *ainda não
-  lançado*, dos modelos sem ocorrência no mês. Cada metade se dobra, e a que não tem movimento
-  abre dobrada — o rótulo permanece dos dois jeitos, porque o que se dobra é a figura, nunca o
-  nome do que ela mede. O seletor de mês nasceu no card e passou a governar a tela inteira.
-
-- **Uma linha só para a lista de Recorrentes.** A seção *lançadas* era desenhada pelo card de
-  transação (72dp, chip de 48dp) ao lado do card de recorrente (68dp, chip de 40dp), com a
-  origem e a data em colunas trocadas entre as duas. Agora um componente só desenha a lista
-  inteira, com a mesma altura e a mesma geometria de colunas em toda variante — sem trocar de
-  fonte: a linha lançada continua lendo do razão, e mostra a origem que a **transação**
-  registrou, não a que o modelo nomeia, porque confirmar um ciclo pode sobrescrevê-la.
-
-- **A linha de Orçamentos de ~232dp para ~62dp.** O progresso virou um anel em torno do ícone,
-  e é isso que compra a densidade: ele deixou de custar altura. O número principal da linha
-  passou a ser o limite cadastrado, e não o gasto — esta é a tela que cria, edita e apaga
-  orçamento, e o teto é o que distingue "Transporte de R$ 300" de "Casa de R$ 2.500"; o
-  acompanhamento continua sendo pergunta do dashboard. As categorias subiram para a linha como
-  ícones empilhados, de largura limitada e excedente contado (`+N`), no lugar da contagem muda
-  "3 categorias". Um teto derivado de uma receita recorrente nomeia a origem numa linha
-  própria, sobre o teto que ela qualifica, e é a única variação de altura da lista (~80dp). A
-  lista deixou de sair na ordem de criação e passou a sair por consumo: o que precisa de ação
-  sobe sozinho.
-
-- **Ajuste corrigido pelo detalhe de sempre.** O `ViewAdjustmentModal` — um segundo detalhe de
-  transação, com ViewModel, estado e testes próprios — foi removido: um ajuste abre o mesmo
-  detalhe de qualquer outra operação, nomeado pelo alvo que corrige. Com ele saiu a
-  duplicação: o nome de uma operação ganhou dono único, e a cadeia título > categoria > forma
-  deixou de ser derivada por conta própria no card da lista, no documento exportado e no
-  modal.
-
+- **Gasto sem categoria**: o não classificado ganhou linha e fatia próprias na quebra por
+  categoria, no dashboard e no relatório, lendo a própria natureza.
+- **Filtro sem categoria**: as cinco listas que filtram por categoria passaram a recortar
+  também o que não tem nenhuma, e a oferecer a opção só quando ela encontra algo.
+- **A liquidar este mês**: novo widget somando recorrentes do mês e faturas por pagar em
+  "A entrar" e "A sair", com cabeçalho opcional.
+- **Contas fora do total**: desmarcar uma conta no widget de saldo a retira da soma, sem
+  alterar a conta.
+- **Ícone sugerido**: uma conta nova abre com o primeiro ícone do catálogo que nenhuma conta
+  aberta esteja usando.
+- Widgets do dashboard passaram a declarar em quais modos de janela aparecem.
 - **Telemetria que separa arquivar de apagar.** Arquivar conta, categoria ou cartão registrava
   `delete_*` — o mesmo evento das modais de exclusão —, e reabrir não registrava nada, o que
   fazia as "exclusões" parecerem se desfazer sozinhas. Cada um ganhou o seu `archive_*` e o
@@ -229,20 +168,34 @@ A versão em que o app deixou de ser mono-moeda.
   arquivados passaram a se anunciar como telas, e um valor de parâmetro que o Firebase corta
   em 100 caracteres — em silêncio, no meio de uma chave — passou a ser cortado onde o app sabe
   declará-lo, com um `<chave>_count` que sobrevive ao corte.
+- **Backlog de bugs** em `issues/`, com regra de entrada, correção e arquivamento, e uma
+  skill que o conduz. A auditoria de tratamento de erro migrou para ele, e os bugs que o
+  próprio ciclo introduziu passaram a dizer em que versão nasceram. A varredura que fechou o
+  ciclo registrou 15 defeitos novos; são 66 abertos e 9 arquivados.
+- **Notas de versão e roadmap** reconstruídos a partir dos commits que os sustentam, com o
+  que foi entregue separado do que é apenas desejado.
+- Suíte E2E: três fluxos novos no ciclo — a travessia da linha da moeda, a recorrente nascida
+  no próprio lançamento e o pagamento de uma fatura retroativa —, e dois ramos que fluxos
+  existentes só anunciavam passaram a ser percorridos: apagar uma conta, e recortar a lista de
+  transações por uma categoria arquivada. São 15 fluxos, rodados no aparelho no fim do ciclo:
+  **14 verdes**, e o vermelho é `creditcards_lifecycle`, que falha conforme o dia do mês em
+  que a suíte roda — defeito do fluxo, anterior à mudança que o encontrou, e já registrado em
+  `issues/`.
 
-- **Backlog de bugs.** A varredura que fechou o ciclo registrou 15 defeitos novos em
-  `issues/`, e os que nasceram dentro do próprio ciclo dizem em que versão nasceram. São 66
-  abertos e 9 arquivados.
+### Correções
 
-- Suíte E2E: nenhum fluxo novo — seguem 15 —, e dois ramos que os fluxos existentes só
-  anunciavam passaram a ser percorridos: apagar uma conta, e recortar a lista de transações
-  por uma categoria arquivada. Os números do README foram corrigidos para os da suíte que
-  existe. A suíte foi rodada no aparelho no fim do ciclo: **14 verdes de 15**, e o vermelho
-  é `creditcards_lifecycle`, que falha conforme o dia do mês em que a suíte roda — defeito do
-  fluxo, anterior à mudança que o encontrou, e já registrado em `issues/`.
-
-### Correções (final)
-
+- A marca de milhar deixou de ser lida como separador decimal no campo de taxa.
+- O botão de salvar do formulário de taxa deixou de cancelar o próprio salvamento.
+- Um valor sugerido parou de sobreviver à troca de moeda.
+- Um zero parou de guardar a moeda em que por acaso chegou.
+- O `setter` da moeda base foi removido: escrevê-la sozinha era a corrupção.
+- A exclusão de uma moeda e o seu arquivo de taxas viraram uma escrita só.
+- A confirmação de recorrente passou a oferecer cartões também por moeda.
+- A moeda de um cartão passou a ter um dono só: eram oito implementações.
+- Criação de cartão falha quando a primeira fatura não abre, em vez de deixar o cartão sem
+  fatura.
+- A fatura aberta a partir do detalhe é a que o chamador nomeou.
+- A perna do cartão leva à fatura, não ao registro do cartão.
 - Uma confirmação de recorrente podia cair fora do mês do ciclo que confirma: qualquer data
   passada era escolhível, a ocorrência era registrada sob o mês da data, a pendência
   permanecia no dashboard e a mesma despesa mensal entrava duas vezes no razão.
@@ -251,13 +204,25 @@ A versão em que o app deixou de ser mono-moeda.
 - Um modelo deixou de ser projetado nos meses em que a série dele ainda não tinha começado.
 - Uma origem arquivada mantém o nome na lista, em vez de virar "Origem indisponível" e tornar
   duas recorrentes de mesmo rótulo indistinguíveis.
-- A moeda de um cartão passou a ter um dono só: eram oito implementações.
 - As moedas da lista de recorrentes são resolvidas numa consulta, e não numa por linha.
+- A altura da linha de recorrente passou a ser dita por quem a mede, e não por uma aritmética
+  que a antecedia.
 - A marca de teto derivado ficou ancorada ao teto que qualifica, e o excedente contado ficou
   centrado nos chips que conta.
 - O detalhe de uma categoria parou de afirmar uma direção que não está lá.
-- A altura da linha de recorrente passou a ser dita por quem a mede, e não por uma aritmética
-  que a antecedia.
+- O formulário rola em vez de ser espremido pelo teclado.
+- O formulário de ajuste de saldo fica na tela enquanto a data é digitada, em vez de dar
+  lugar a um spinner a cada tecla.
+- O card de saldo mantém a mesma altura com e sem a marca de aproximação.
+- A área de toque de uma categoria ficou contida na linha que a mostra.
+- O seletor de mês só marca o mês quando o ano também bate.
+- A hidratação de uma perna usa o mapper dono da conta.
+- A recusa da conta padrão fala na língua do usuário.
+- O Suporte decide o vazio pelo escopo que está na tela.
+- O documento exportado do relatório diz em que língua foi escrito.
+- O id do usuário pode não resolver sem abortar o app.
+- Migrações reorganizadas: um arquivo por migração, cada uma documentando o que faz e em
+  que versão saiu.
 
 ---
 

@@ -1,4 +1,13 @@
-## ADDED Requirements
+# contextual-fab Specification
+
+## Purpose
+
+O botão de ação flutuante do app: quem declara as ações que ele oferece, o que a forma do botão
+deriva da lista, quando ele aparece e onde fica em cada largura de janela. O assunto esteve
+disperso entre um trecho de `navigation` e os `Scaffold` de nove telas, cada uma com o seu botão;
+ele tem um dono.
+
+## Requirements
 
 ### Requirement: O app tem um único botão de ação flutuante
 

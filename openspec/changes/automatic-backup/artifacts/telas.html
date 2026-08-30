@@ -404,8 +404,10 @@
   <div class="sh"><span class="n">01</span><h2>A tela de backup, antes e depois</h2></div>
   <p class="intro">
     A tela passa a ter <strong>dois grupos, não quatro</strong>: o que o app faz sozinho, e o que sai
-    e entra pela mão do usuário. E a primeira frase muda — hoje ela promete que o app não guarda
-    cópias, e essa promessa passa a valer só enquanto o cofre está desligado.
+    e entra pela mão do usuário. <strong>E o card explicativo do topo sai de vez</strong> — as três
+    frases que ele carregava se separam: o alcance do arquivo vai para a confirmação de restaurar,
+    "sem cofre não há cópias" vira o subtítulo do próprio interruptor, e o que cada destino não
+    cobre entra no card do último backup.
   </p>
 
   <div class="stage">
@@ -419,21 +421,13 @@
           <span class="ttl">Backup</span>
         </div>
         <div class="body-pad">
-          <div class="infocard">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg>
-            <div class="txt">
-              <span>O arquivo contém todos os seus dados: contas, cartões, lançamentos, categorias, orçamentos e moedas. Preferências de exibição ficam de fora.</span>
-              <span>O app não guarda cópias por conta própria. Recuperar seus dados em outro aparelho depende do arquivo que você exportar.</span>
-            </div>
-          </div>
-
           <div class="grp">
             <span class="lbl">Backup automático</span>
             <div class="tile">
               <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01" stroke-linecap="round"/></svg>
               <div class="mid">
                 <div class="t">Guardar cópias automaticamente</div>
-                <div class="s">Desligado. O app não está guardando nada.</div>
+                <div class="s">Com o cofre desligado, o app não guarda cópias. Recuperar seus dados depende do arquivo que você exportar.</div>
               </div>
               <div class="end"><span class="sw off"><i></i></span></div>
             </div>
@@ -478,6 +472,7 @@
               <div class="k">Último backup</div>
               <div class="v">Hoje, 14:32</div>
               <div class="w">Dentro do app · 3 cópias guardadas</div>
+              <div class="w">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</div>
             </div>
           </div>
 
@@ -543,7 +538,7 @@
   </div>
 
   <div class="notes">
-    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O card de escopo perde uma frase e ganha outra.</b> Com o cofre ligado, "o app não guarda cópias por conta própria" deixaria de ser verdade — o card some, e a linha de status assume o lugar dele no topo.</div></div>
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O card de escopo não muda: ele desaparece.</b> Suas três frases se mudam para onde cada uma faz mais sentido — o alcance do arquivo para a confirmação de restaurar, "sem cofre não há cópias" para o subtítulo do interruptor, e o que o destino não cobre para o card do último backup.</div></div>
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>"Onde guardar" diz a consequência, não o caminho.</b> "Dentro do app — some se você desinstalar" é a informação que o usuário precisa para decidir; o caminho técnico não é.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>O histórico é um destino, não uma seção.</b> A tela de backup é de configuração; uma lista de cópias é conteúdo, com padrão próprio no app e com ações por item. O tile leva para ela e adianta o que ela contém — quantas, e a mais recente.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Dois grupos, não quatro.</b> Hoje a tela tem um cabeçalho <code>Exportar</code> sobre um tile "Exportar backup" e um <code>Restaurar</code> sobre "Restaurar de um arquivo" — cabeçalhos que não agrupam nada e repetem o próprio item. Juntos, eles formam o par certo: <b>o que o app faz sozinho</b> e <b>o que sai e entra pela sua mão</b>.</div></div>
@@ -642,6 +637,7 @@
               <div class="k">Último backup</div>
               <div class="v">Hoje, 14:32</div>
               <div class="w">Documentos/Finsight · 10 cópias guardadas</div>
+              <div class="w">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</div>
             </div>
           </div>
         </div>
@@ -657,7 +653,8 @@
             <div>
               <div class="k">Último backup</div>
               <div class="v">Há 12 dias</div>
-              <div class="w"><b>Mais antigo que o intervalo de 3 dias.</b> Abra o app com mais frequência, ou verifique se a pasta continua acessível.</div>
+              <div class="w"><b>Mais antigo que o intervalo de 3 dias.</b> Abra o app com mais frequência para que uma cópia nova seja feita.</div>
+              <div class="w">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</div>
             </div>
           </div>
         </div>
@@ -674,6 +671,7 @@
               <div class="k">Último backup</div>
               <div class="v">Ainda nenhum</div>
               <div class="w">A primeira cópia acontece quando você lançar algo ou na próxima vez que abrir o app.</div>
+              <div class="w">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</div>
             </div>
           </div>
         </div>
@@ -1016,6 +1014,7 @@
             <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
             <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
           </div>
+          <p>O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</p>
           <p>Todos os seus dados atuais serão substituídos pelos deste arquivo. <b>Esta ação não pode ser desfeita.</b></p>
           <div class="btns">
             <span class="btn text">Cancelar</span>
@@ -1037,6 +1036,7 @@
             <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
             <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
           </div>
+          <p>O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</p>
           <p>Todos os seus dados atuais serão substituídos pelos deste arquivo.</p>
           <p><b>Uma cópia de como está agora é guardada antes</b>, e você pode voltar a ela por esta mesma tela.</p>
           <div class="btns">
@@ -1089,7 +1089,7 @@
     <div class="note"><span class="mk pg">+</span><div class="nt"><b>Uma linha de status</b> — quatro estados (em dia, atrasado, provisório, ainda nenhum). Barra de 3 dp à esquerda no token do estado, sobre <code>surfaceContainer</code>, no formato do card de escopo que já existe.</div></div>
     <div class="note"><span class="mk pg">+</span><div class="nt"><b>Uma linha de cópia</b> — o mesmo esqueleto do <code>TransactionCard</code> (ícone, título, subtítulo, marcador à direita), com o chip de rótulo no formato que o <code>CreditCardCard</code> já usa: cor a 15% no fundo, cor cheia no texto, cantos de 4 dp.</div></div>
     <div class="note"><span class="mk pg">=</span><div class="nt"><b>Todo o resto é reuso:</b> <code>SettingsMenuLink</code> com <code>Switch</code> no slot de ação, sheets com listas de rádio pelo <code>ModalManager</code>, o fluxo de exportação para "salvar fora do app", e os botões que os modais de exclusão já usam.</div></div>
-    <div class="note"><span class="mk pg">~</span><div class="nt"><b>Duas telas mudam de texto sem mudar de forma:</b> o card de escopo da tela de backup e a confirmação de restauração — as duas frases de <code>local-backup</code> que deixaram de ser verdade.</div></div>
+    <div class="note"><span class="mk pg">~</span><div class="nt"><b>A tela de backup perde um card; a confirmação de restauração só troca de frase.</b> Na primeira, o card explicativo saiu de vez e suas três frases foram para o interruptor, para o card do último backup e para a própria confirmação de restaurar. Na segunda, a frase de irreversibilidade cede lugar à de que existe uma cópia — a outra frase de <code>local-backup</code> que deixou de ser verdade.</div></div>
   </div>
 </section>
 

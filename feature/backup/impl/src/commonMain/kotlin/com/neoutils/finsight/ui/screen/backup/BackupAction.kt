@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.screen.backup
 
+import com.neoutils.finsight.domain.vault.BackupRetention
+import com.neoutils.finsight.domain.vault.VaultInterval
 import com.neoutils.finsight.extension.PlatformContext
 
 /**
@@ -23,4 +25,29 @@ sealed interface BackupAction {
 
     /** The confirmation was dismissed without an answer. */
     data object DiscardCandidate : BackupAction
+
+    /**
+     * The user was told the copy owed before the restore could not be taken, and said to
+     * restore anyway.
+     */
+    data object RestoreWithoutCopy : BackupAction
+
+    /** The same question, answered by leaving the archive alone. */
+    data object AbandonRestore : BackupAction
+
+    /**
+     * The one switch. It governs every trigger the vault has, so there is nothing else to
+     * turn on beside it (design D1).
+     */
+    data class SetVaultOn(val isOn: Boolean) : BackupAction
+
+    /** The trigger that fires when the app is opened, on its own. */
+    data class SetPeriodicOn(val isOn: Boolean) : BackupAction
+
+    /** The trigger that fires before something is destroyed, on its own. */
+    data class SetPreventiveOn(val isOn: Boolean) : BackupAction
+
+    data class SetInterval(val interval: VaultInterval) : BackupAction
+
+    data class SetRetention(val retention: BackupRetention) : BackupAction
 }

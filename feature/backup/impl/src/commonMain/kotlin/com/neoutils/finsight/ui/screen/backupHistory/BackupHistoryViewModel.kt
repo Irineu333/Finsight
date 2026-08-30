@@ -1,0 +1,331 @@
+package com.neoutils.finsight.ui.screen.backupHistory
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+import com.neoutils.finsight.database.repository.BackupVaultRepository
+import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.restore.ArchiveRestore
+import com.neoutils.finsight.domain.restore.RestoreConfirmation
+import com.neoutils.finsight.domain.restore.RestoreOutcome
+import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_export_success
+import com.neoutils.finsight.resources.backup_history_gone
+import com.neoutils.finsight.resources.backup_history_remove_refused
+import com.neoutils.finsight.resources.backup_history_removed
+import com.neoutils.finsight.resources.backup_restore_success
+import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
+import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.StringResource
+import kotlin.coroutines.cancellation.CancellationException
+
+/**
+ * The copies the vault keeps, and the three things a person does with one of them.
+ *
+ * **The listing is a reading of the destination, never a record.** It is taken when the
+ * screen opens and again after anything that could have changed it, so a copy removed with
+ * a file manager stops being listed without an error being made of it (design D9). Nothing
+ * about a copy is kept anywhere: what a file *is* gets decided by reading the file, which
+ * is what the restore and the removal both do.
+ *
+ * **Restoring is not implemented here.** It is [ArchiveRestore]'s, exactly as it is for the
+ * backup screen: the two differ only in how the candidate arrives — one from a picker, one
+ * out of the destination — and two screens offering a restore must not be two decisions
+ * about when the person is asked or whether a copy that could not be taken may be walked
+ * past. What is here is the asking, because the sheets are this screen's.
+ *
+ * **Nothing leaves the destination by path.** A copy is written into a temporary file of
+ * this app's own and that file is what is restored from or handed to a picker — the
+ * destination never answers with a path, because on iOS a folder's permission dies on the
+ * way through a string (design D2). The temporary is removed on every way out, under
+ * [NonCancellable], because a suspending call in a `finally` does not run once its
+ * coroutine is cancelled.
+ *
+ * **Handing a copy out captures nothing.** It is the same picker the manual export uses,
+ * over the file that already exists — which is the way off the device on a platform where
+ * the vault is local and no cloud provider appears in a folder picker.
+ */
+class BackupHistoryViewModel(
+    private val destination: BackupDestination,
+    private val files: BackupFileService,
+    private val archiveRestore: ArchiveRestore,
+    private val vault: BackupVaultRepository,
+    private val modalManager: ModalManager,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(
+        BackupHistoryUiState(
+            destination = vault.observe().value.destination,
+            isVaultOn = vault.observe().value.isOn,
+        )
+    )
+    val uiState = _uiState.asStateFlow()
+
+    /**
+     * The answer a sheet sends back, while it is being asked for. The file it is about is a
+     * local of the flow that made it, which is still running and is what removes it.
+     */
+    private var answer: CompletableDeferred<Boolean>? = null
+
+    /**
+     * The one part of the state the confirmation sheet reads. A modal is rendered outside
+     * the screen's tree, by the manager that holds it, so it is handed the flow rather than
+     * a value that was true when it was built.
+     */
+    val isRestoring: StateFlow<Boolean> = uiState
+        .map { it.isRestoring }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * Whether a copy of the current archive is genuinely taken before it is replaced.
+     *
+     * It is read from the vault rather than assumed from the screen being reachable: a
+     * person can be looking at kept copies with the preventive trigger switched off, and
+     * the confirmation is not allowed to promise a way back that nothing will write
+     * (`local-backup` spec).
+     */
+    val keepsCopy: StateFlow<Boolean> = vault.observe()
+        .map { it.keepsCopy }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value.keepsCopy)
+
+    init {
+        refresh()
+    }
+
+    fun onAction(action: BackupHistoryAction) {
+        when (action) {
+            BackupHistoryAction.Refresh -> refresh()
+            is BackupHistoryAction.Restore -> restore(action.backup)
+            is BackupHistoryAction.Share -> share(action.backup, action.context)
+            is BackupHistoryAction.Remove -> remove(action.backup)
+            BackupHistoryAction.ConfirmRestore -> confirmRestore()
+            BackupHistoryAction.DiscardCandidate -> answerConfirmation(proceed = false)
+            BackupHistoryAction.RestoreWithoutCopy -> answerRefusal(proceed = true)
+            BackupHistoryAction.AbandonRestore -> answerRefusal(proceed = false)
+        }
+    }
+
+    /**
+     * Reads the destination, off the main thread: listing a folder is disk work, and the
+     * composition that opened this screen has nothing to wait for.
+     */
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val state = vault.observe().value
+            destination.list().fold(
+                ifLeft = {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isUnreadable = true,
+                            destination = state.destination,
+                            isVaultOn = state.isOn,
+                        )
+                    }
+                },
+                ifRight = { copies ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isUnreadable = false,
+                            destination = state.destination,
+                            isVaultOn = state.isOn,
+                            copies = copies,
+                            totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    /**
+     * Replaces the archive with [backup]'s content, having copied it out of the destination
+     * first.
+     *
+     * The copy taken out is this flow's for the whole of its life and the restore removes
+     * it; the file in the destination is read and left exactly as it was, so a restore
+     * that goes wrong costs nothing that was being kept.
+     */
+    private fun restore(backup: StoredBackup) {
+        if (_uiState.value.isBusy || answer != null) return
+        _uiState.update { it.copy(working = backup) }
+
+        viewModelScope.launch {
+            try {
+                when (val outcome = archiveRestore.restoreFrom({ copyOut(backup) }, questions)) {
+                    RestoreOutcome.Restored -> succeed(Res.string.backup_restore_success)
+                    RestoreOutcome.Abandoned -> Unit
+                    is RestoreOutcome.Failed -> fail(outcome.error)
+                }
+            } finally {
+                _uiState.update {
+                    it.copy(
+                        working = null,
+                        isRestoring = false,
+                        confirmation = null,
+                        captureRefusal = null,
+                    )
+                }
+                refresh()
+            }
+        }
+    }
+
+    /**
+     * Hands [backup] to wherever the user chooses, as it is.
+     *
+     * No capture happens: the file being offered is the one the vault already wrote, which
+     * is the whole point — it is how a copy gets off a device where the vault is local.
+     */
+    private fun share(backup: StoredBackup, context: PlatformContext) {
+        if (_uiState.value.isBusy) return
+        _uiState.update { it.copy(working = backup) }
+
+        viewModelScope.launch {
+            var taken: String? = null
+            try {
+                val path = copyOut(backup).fold(
+                    ifLeft = { error -> fail(error); null },
+                    ifRight = { it },
+                ) ?: return@launch
+
+                taken = path
+
+                files.copyOutCapturedFile(
+                    sourcePath = path,
+                    suggestedName = backup.name,
+                    context = context,
+                ).fold(
+                    ifLeft = ::fail,
+                    ifRight = { saved -> if (saved) succeed(Res.string.backup_export_success) },
+                )
+            } catch (cause: CancellationException) {
+                throw cause
+            } catch (cause: Exception) {
+                fail(BackupError.EXPORT_FAILED)
+            } finally {
+                taken?.let { withContext(NonCancellable) { files.discard(it) } }
+                _uiState.update { it.copy(working = null) }
+            }
+        }
+    }
+
+    /**
+     * Removes [backup], if the destination confirms by reading it that this app wrote it.
+     *
+     * A refusal is said out loud rather than swallowed: the folder may be the user's own,
+     * the app removes only its own files there, and somebody who asked for a removal that
+     * did not happen is owed the reason.
+     */
+    private fun remove(backup: StoredBackup) {
+        if (_uiState.value.isBusy) return
+        _uiState.update { it.copy(working = backup) }
+
+        viewModelScope.launch {
+            try {
+                destination.remove(backup).fold(
+                    ifLeft = ::fail,
+                    ifRight = { removed ->
+                        succeed(
+                            if (removed) {
+                                Res.string.backup_history_removed
+                            } else {
+                                Res.string.backup_history_remove_refused
+                            }
+                        )
+                    },
+                )
+            } finally {
+                _uiState.update { it.copy(working = null) }
+                refresh()
+            }
+        }
+    }
+
+    /**
+     * A private copy of [backup], at a path this app owns and throws away.
+     *
+     * Null where the copy is no longer in the destination — somebody removed it between the
+     * listing and the tap — and the person is told, because they asked for something about
+     * a file that is not there any more.
+     */
+    private suspend fun copyOut(backup: StoredBackup): Either<BackupError, String?> =
+        files.newCapturePath().flatMap { path ->
+            destination.copyOut(backup, path).flatMap { copied ->
+                if (copied) {
+                    path.right()
+                } else {
+                    withContext(NonCancellable) { files.discard(path) }
+                    modalManager.showError(UiText.Res(Res.string.backup_history_gone))
+                    null.right()
+                }
+            }
+        }
+
+    /** The two questions this screen puts up, and where the answers come back from. */
+    private val questions = object : RestoreQuestions {
+
+        override suspend fun confirm(confirmation: RestoreConfirmation): Boolean =
+            await { it.copy(confirmation = confirmation) }
+
+        override suspend fun permitWithoutCopy(reason: UiText): Boolean =
+            await { it.copy(captureRefusal = reason) }
+    }
+
+    private suspend fun await(ask: (BackupHistoryUiState) -> BackupHistoryUiState): Boolean {
+        val pending = CompletableDeferred<Boolean>()
+        answer = pending
+        _uiState.update(ask)
+
+        return try {
+            pending.await()
+        } finally {
+            answer = null
+        }
+    }
+
+    private fun confirmRestore() {
+        val pending = answer ?: return
+        answer = null
+        _uiState.update { it.copy(isRestoring = true) }
+        pending.complete(true)
+    }
+
+    private fun answerConfirmation(proceed: Boolean) {
+        val pending = answer ?: return
+        answer = null
+        pending.complete(proceed)
+    }
+
+    private fun answerRefusal(proceed: Boolean) {
+        val pending = answer ?: return
+        answer = null
+        _uiState.update { it.copy(captureRefusal = null) }
+        pending.complete(proceed)
+    }
+
+    private fun fail(error: BackupError) = modalManager.showError(error.toUiText())
+
+    private fun succeed(message: StringResource) = modalManager.showSuccess(UiText.Res(message))
+}

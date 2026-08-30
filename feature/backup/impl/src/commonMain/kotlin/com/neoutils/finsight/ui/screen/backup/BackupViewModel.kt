@@ -6,99 +6,97 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.exception.DatabaseCaptureException
-import com.neoutils.finsight.database.exception.DatabaseRestoreException
-import com.neoutils.finsight.database.exception.DatabaseVerificationException
-import com.neoutils.finsight.database.snapshot.CandidateVerification
-import com.neoutils.finsight.database.snapshot.CandidateVerifier
+import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.database.snapshot.captureInto
-import com.neoutils.finsight.database.snapshot.replaceContentFrom
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.error.toBackupError
 import com.neoutils.finsight.domain.error.toUiText
-import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.model.CaptureOrigin
+import com.neoutils.finsight.domain.restore.ArchiveRestore
+import com.neoutils.finsight.domain.restore.RestoreConfirmation
+import com.neoutils.finsight.domain.restore.RestoreOutcome
+import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.backupFileName
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 /**
- * The two flows of a local backup, end to end: capture then hand the file over, and
- * choose a file then verify, ask, and replace.
+ * The backup screen: the vault as a set of preferences, and the two file operations the
+ * user performs by hand.
  *
- * **Both go through a file of this app's own that nothing else owns**, and removing it is
- * part of the flow rather than an afterthought. The capture writes to a temporary path
- * because it only knows how to write to one, and on two platforms the destination the
- * user picked is not a path; the candidate is a copy because the verification migrates
- * what it is handed. Neither has an owner other than this view model — `:core:database`
- * has no file API and is not getting one — so every way out of both flows removes them,
- * including the ways the user chose: a refused file, and a confirmation dismissed
- * without an answer. Leaving the screen is one of those ways and the one that takes the
- * most care: it cancels the scope both flows run in, and a suspending call in a `finally`
- * does not run once its coroutine is cancelled, so every removal here is made under
- * [NonCancellable].
+ * **The vault is read, never re-decided.** Every rule it has — whether a copy is owed,
+ * which actions are worth one, how many are kept — lives behind [ArchiveRestore],
+ * [com.neoutils.finsight.domain.vault.BackupVault] and the classification in the domain.
+ * What is here is the switch and the settings, which is a screen deciding *whether* a rule
+ * applies and never *which* rule it is.
  *
- * **A flow lasts as long as the file it made.** The restore does not park its candidate in
- * a field and return: one coroutine copies the file in, asks about it, waits there for the
- * answer the sheet sends back, and replaces the archive — so the removal is one `finally`
- * over one body, and a screen that goes away while the sheet is up runs the same way out as
- * a screen whose user said no. A field would be a reference nothing outlives the view model
- * to read.
+ * **The restore is not implemented here.** It is [ArchiveRestore]'s, because the copies
+ * screen offers the same operation over a file that arrives differently, and two screens
+ * offering a restore must not be two decisions about when the person is asked or whether a
+ * failed copy may be walked past. What stays here is the asking: the sheets are this
+ * screen's, and so is the state that keeps them up.
  *
- * **The confirmation is only ever asked about an approved file** (`local-backup` spec).
- * The gate runs first and in full, and its refusals reach the user as one sentence each;
- * asking before it has run would transfer a decision the app cannot yet stand behind.
+ * **The export goes through a file of this app's own that nothing else owns**, and removing
+ * it is part of the flow rather than an afterthought: the capture writes to a temporary
+ * path because it only knows how to write to one, and on two platforms the destination the
+ * user picked is not a path. Leaving the screen cancels the scope it runs in, and a
+ * suspending call in a `finally` does not run once its coroutine is cancelled, so the
+ * removal is made under [NonCancellable].
  *
  * **A failure reaches the user rather than the crash handler.** Everything below runs in
- * [viewModelScope], where an exception that escapes is an uncaught crash and not a
- * message, so each operation catches what it can name, reports whatever else it meets as
- * the failure of the operation that met it, and rethrows [CancellationException] — the
- * one exception that has to keep travelling, and the one every removal here is already
- * written to survive. Removing a file is the exception that needs none: it is best effort
- * by contract, and raises nothing to report.
+ * [viewModelScope], where an exception that escapes is an uncaught crash and not a message,
+ * so each operation catches what it can name, reports whatever else it meets as the failure
+ * of the operation that met it, and rethrows [CancellationException].
  */
 class BackupViewModel(
     private val database: AppDatabase,
-    private val candidateVerifier: CandidateVerifier,
+    private val archiveRestore: ArchiveRestore,
     private val files: BackupFileService,
+    private val destination: BackupDestination,
     private val captureOrigin: CaptureOrigin,
+    private val vault: BackupVaultRepository,
     private val modalManager: ModalManager,
     private val clock: Clock,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BackupUiState())
+    private val _uiState = MutableStateFlow(BackupUiState(vault = vault.observe().value))
     val uiState = _uiState.asStateFlow()
 
     /**
-     * The question the confirmation sheet is being asked, while it is being asked.
+     * The question a sheet is being asked, while it is being asked.
      *
      * The file is not here, and that is the point: it is a local of the flow that made it,
      * which is still running and is what removes it. This is only how the sheet's answer
-     * reaches that flow — completed by [restore] or [discardCandidate], and gone as soon as
-     * one of them has answered, so the second tap finds nothing left to answer.
+     * reaches that flow — completed by one of the four answers, and gone as soon as one of
+     * them has answered, so the second tap finds nothing left to answer.
      */
     private var answer: CompletableDeferred<Boolean>? = null
 
@@ -111,12 +109,71 @@ class BackupViewModel(
         .map { it.isRestoring }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    /** The same arrangement, for the two sheets that outlive a value passed into them. */
+    val vaultState: StateFlow<VaultState> = uiState
+        .map { it.vault }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value)
+
+    val storedCopies: StateFlow<VaultCopies> = uiState
+        .map { it.copies }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, VaultCopies())
+
+    /**
+     * Whether a copy of the current archive is genuinely taken before it is replaced — the
+     * one fact the confirmation may not get wrong.
+     */
+    val keepsCopy: StateFlow<Boolean> = uiState
+        .map { it.vault.keepsCopy }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value.keepsCopy)
+
+    init {
+        vault.observe()
+            .onEach { state -> _uiState.update { it.copy(vault = state) } }
+            .launchIn(viewModelScope)
+
+        readDestination()
+    }
+
     fun onAction(action: BackupAction) {
         when (action) {
             is BackupAction.Export -> export(action.context)
             is BackupAction.ChooseFileToRestore -> chooseFileToRestore(action.context)
             BackupAction.Restore -> restore()
             BackupAction.DiscardCandidate -> discardCandidate()
+            BackupAction.RestoreWithoutCopy -> answerRefusal(proceed = true)
+            BackupAction.AbandonRestore -> answerRefusal(proceed = false)
+            is BackupAction.SetVaultOn -> vault.setOn(action.isOn)
+            is BackupAction.SetPeriodicOn -> vault.setPeriodicOn(action.isOn)
+            is BackupAction.SetPreventiveOn -> vault.setPreventiveOn(action.isOn)
+            is BackupAction.SetInterval -> vault.setInterval(action.interval.duration)
+            is BackupAction.SetRetention -> vault.setRetention(action.retention)
+        }
+    }
+
+    /**
+     * Reads what the destination holds, now.
+     *
+     * A destination that cannot be read leaves the screen saying nothing about it rather
+     * than saying zero: none of the three lines built from this — the count, the room they
+     * take, the newest — is worth inventing, and the instant of the last successful capture
+     * is a fact of this install that survives the folder being unreadable.
+     *
+     * It is dispatched away from the main thread rather than merely suspending on it:
+     * listing a folder is disk work, and the composition that started this screen has
+     * nothing to wait for.
+     */
+    private fun readDestination() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val copies = destination.list().getOrNull() ?: return@launch
+            _uiState.update {
+                it.copy(
+                    copies = VaultCopies(
+                        count = copies.size,
+                        totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
+                        newestAt = copies.firstOrNull()?.savedAt,
+                    )
+                )
+            }
         }
     }
 
@@ -161,7 +218,7 @@ class BackupViewModel(
             )
             files.copyOutCapturedFile(
                 sourcePath = path,
-                suggestedName = backupFileName(today()),
+                suggestedName = backupFileName(now()),
                 context = context,
             ).fold(
                 ifLeft = ::fail,
@@ -175,18 +232,8 @@ class BackupViewModel(
     }
 
     /**
-     * Copies in what the user picked, puts it through the gate, asks about it, and — if
-     * the answer is yes — replaces the archive with it. One body, from the file arriving
-     * to the file being gone.
-     *
-     * The copy is this flow's for the whole of its life, and every way out removes it:
-     * refused, failed, replaced, dismissed, or walked away from. Nobody is coming back for
-     * it, and the archive in use never knew it existed.
-     *
-     * A gate that could not run is not a gate that said no. The file is dropped either way
-     * — nothing here can use it — but the word the user gets is about the check rather
-     * than about what they picked, because a file that was never read has been found
-     * nothing about.
+     * Picks a file and hands it to the restore, which owns everything from the gate to the
+     * archive being replaced.
      *
      * A second run is refused while one is waiting on an answer, and that is what the
      * [answer] arm of the guard is for: the busy flags are down while the user reads the
@@ -198,59 +245,49 @@ class BackupViewModel(
         _uiState.update { it.copy(isVerifying = true) }
 
         viewModelScope.launch {
-            var unclaimed: String? = null
             try {
-                val chosen = files.copyInChosenFile(context).fold(
-                    ifLeft = { error -> fail(error); null },
-                    ifRight = { it },
-                ) ?: return@launch
-
-                unclaimed = chosen
-
-                when (val verification = candidateVerifier.verify(chosen)) {
-                    is CandidateVerification.Accepted -> {
-                        if (!awaitAnswer(verification.toConfirmation())) return@launch
-
-                        val error = replaceArchiveWith(chosen)
-                        unclaimed = null
-                        dropCandidate(chosen)
-                        if (error != null) {
-                            fail(error)
-                        } else {
-                            succeed(Res.string.backup_restore_success)
-                        }
-                    }
-
-                    is CandidateVerification.Rejected -> {
-                        fail(verification.reason.toBackupError())
-                    }
+                when (val outcome = archiveRestore.restoreFrom({ files.copyInChosenFile(context) }, questions)) {
+                    RestoreOutcome.Restored -> succeed(Res.string.backup_restore_success)
+                    RestoreOutcome.Abandoned -> Unit
+                    is RestoreOutcome.Failed -> fail(outcome.error)
                 }
-            } catch (cause: CancellationException) {
-                throw cause
-            } catch (cause: DatabaseVerificationException) {
-                fail(cause.error.toBackupError())
-            } catch (cause: Exception) {
-                fail(BackupError.VERIFICATION_FAILED)
             } finally {
-                unclaimed?.let { dropCandidate(it) }
-                _uiState.update { it.copy(isVerifying = false, isRestoring = false) }
+                _uiState.update {
+                    it.copy(
+                        isVerifying = false,
+                        isRestoring = false,
+                        confirmation = null,
+                        captureRefusal = null,
+                    )
+                }
+                readDestination()
             }
         }
     }
 
     /**
-     * Puts the confirmation up and waits, here, for the answer the sheet sends back: true
-     * to replace the archive, false to walk away from the file.
+     * The two questions this screen puts up, and where the answers come back from.
      *
-     * The screen stops being busy as the waiting starts. What the user asked for — pick a
-     * file and check it — is over, and holding the entries shut while somebody reads a
-     * sheet would say the app is doing something when the only thing still running is this
-     * coroutine, owning a file.
+     * The screen stops being busy as the confirmation goes up. What the user asked for —
+     * pick a file and check it — is over, and holding the entries shut while somebody reads
+     * a sheet would say the app is doing something when the only thing still running is one
+     * coroutine, owning a file. It stays busy for the second question, because by then the
+     * restore was asked for and has not been called off.
      */
-    private suspend fun awaitAnswer(confirmation: RestoreConfirmation): Boolean {
+    private val questions = object : RestoreQuestions {
+
+        override suspend fun confirm(confirmation: RestoreConfirmation): Boolean =
+            await { it.copy(isVerifying = false, confirmation = confirmation) }
+
+        override suspend fun permitWithoutCopy(reason: UiText): Boolean =
+            await { it.copy(captureRefusal = reason) }
+    }
+
+    /** Publishes a question and waits, here, for the answer the sheet sends back. */
+    private suspend fun await(ask: (BackupUiState) -> BackupUiState): Boolean {
         val pending = CompletableDeferred<Boolean>()
         answer = pending
-        _uiState.update { it.copy(isVerifying = false, confirmation = confirmation) }
+        _uiState.update(ask)
 
         return try {
             pending.await()
@@ -260,44 +297,16 @@ class BackupViewModel(
     }
 
     /**
-     * Replaces the archive with the approved file's content, in one transaction and
-     * without closing anything — the screens go on rendering, and reflect the new archive
-     * when it returns. The failure it could not carry out is the answer, rather than an
-     * exception, because the file has to be removed and the user told either way.
-     *
-     * It runs under [NonCancellable] because there is nothing to call off. The swap either
-     * lands or reverts, the sheet that asked for it refuses to be dismissed while it runs,
-     * and the file is attached to the app's only writer connection until it returns — a
-     * screen that went away mid-replacement would otherwise have the removal below race a
-     * transaction still reading from the file.
-     *
-     * A failure leaves the archive exactly as it was, which is what the message says, and
-     * the file that was going to replace it has no second chance to offer: it would have to
-     * be picked and verified again. Either word is still said to a user who walked away
-     * while it ran — the modal manager is the app's, not the screen's, and an archive that
-     * has just become another one is not something to find out about by noticing.
-     */
-    private suspend fun replaceArchiveWith(path: String): BackupError? = try {
-        withContext(NonCancellable) { database.replaceContentFrom(path) }
-        null
-    } catch (cause: CancellationException) {
-        throw cause
-    } catch (cause: DatabaseRestoreException) {
-        cause.error.toBackupError()
-    } catch (cause: Exception) {
-        BackupError.RESTORE_FAILED
-    }
-
-    /**
      * The user answered yes; the flow that owns the file goes on from where it is waiting.
      *
-     * The answer is taken before anything else happens, so a second tap has nothing left to
-     * give one with, and the entry is marked busy before the flow can resume — the
-     * operation is not over for the screen one step before the user hears the result of it.
+     * The answer is taken before anything else, so a second tap has nothing left to give
+     * one with, and the entry is marked busy before the flow can resume: the operation is
+     * not over for the screen one step before the user hears the result of it.
      */
     private fun restore() {
         val pending = answer ?: return
         answer = null
+
         _uiState.update { it.copy(isRestoring = true) }
         pending.complete(true)
     }
@@ -317,37 +326,20 @@ class BackupViewModel(
     }
 
     /**
-     * The file goes first and the state second, so that the screen stops naming a
-     * candidate only once there is no candidate left to name.
+     * The user answered the question about restoring without a copy; the flow that owns the
+     * file goes on from where it is waiting, either into the replacement or out of it.
      */
-    private suspend fun dropCandidate(path: String) {
-        withContext(NonCancellable) { files.discard(path) }
-        _uiState.update { it.copy(confirmation = null) }
+    private fun answerRefusal(proceed: Boolean) {
+        val pending = answer ?: return
+        answer = null
+        _uiState.update { it.copy(captureRefusal = null) }
+        pending.complete(proceed)
     }
 
     private fun fail(error: BackupError) = modalManager.showError(error.toUiText())
 
     private fun succeed(message: StringResource) = modalManager.showSuccess(UiText.Res(message))
 
-    private fun today(): LocalDate =
-        clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private fun now(): LocalDateTime =
+        clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
 }
-
-/**
- * The verification's word about a file, as the confirmation states it.
- *
- * The counts arrive typed by facade and are passed on as they came: which tables they were
- * counted from is `:core:database`'s business, and an entity added to the schema later is
- * not something this screen has to remember.
- */
-private fun CandidateVerification.Accepted.toConfirmation() = RestoreConfirmation(
-    origin = origin?.let {
-        FileOrigin(
-            platform = BackupPlatform.ofId(it.platform),
-            platformId = it.platform,
-            appVersion = it.appVersion,
-            createdAt = Instant.fromEpochMilliseconds(it.createdAt),
-        )
-    },
-    counts = counts,
-)

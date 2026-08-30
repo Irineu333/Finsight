@@ -8,6 +8,8 @@ import com.neoutils.finsight.feature.backup.api.BackupRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
 import com.neoutils.finsight.ui.screen.backup.BackupScreen
+import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryRoute
+import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryScreen
 
 fun NavGraphBuilder.backupGraph() {
     navigation<BackupGraph>(
@@ -18,6 +20,20 @@ fun NavGraphBuilder.backupGraph() {
 
             AnimatedVisibilityScopeProvider {
                 BackupScreen(
+                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateToHistory = { navController.navigate(BackupHistoryRoute) },
+                )
+            }
+        }
+
+        // Internal to this feature, which is what the project's convention reserves the
+        // `api` from: nobody outside backup navigates straight to a list of backup files
+        // (design D15).
+        composable<BackupHistoryRoute> {
+            val navController = LocalNavController.current
+
+            AnimatedVisibilityScopeProvider {
+                BackupHistoryScreen(
                     onNavigateBack = { navController.navigateUp() },
                 )
             }

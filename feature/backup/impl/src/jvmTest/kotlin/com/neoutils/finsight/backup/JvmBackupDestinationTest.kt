@@ -1,0 +1,247 @@
+package com.neoutils.finsight.backup
+
+import com.neoutils.finsight.backup.service.JvmBackupDestination
+import com.neoutils.finsight.database.getDatabaseBuilder
+import com.neoutils.finsight.database.getRoomDatabase
+import com.neoutils.finsight.database.snapshot.CandidateVerifier
+import com.neoutils.finsight.database.snapshot.captureInto
+import com.neoutils.finsight.domain.model.CURRENCY_SEED
+import com.neoutils.finsight.domain.model.CurrencySeeding
+import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import java.io.File
+import java.nio.file.Files
+import kotlin.test.AfterTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
+
+/**
+ * The first step of the vault: a place the app writes to, reads back and removes from,
+ * without a person in front of the screen.
+ *
+ * The gate is the real one, over real captures, because the single promise that separates a
+ * destination from a folder is that it removes only what this app wrote — and a stubbed
+ * gate would answer whatever the test told it to, which is the very question being asked.
+ *
+ * The desktop is where the whole of step one is testable (design D3), and what is tested
+ * here is the step itself: the same three operations, over the same reading of a directory,
+ * are what the other two platforms carry out.
+ */
+class JvmBackupDestinationTest {
+
+    private val temporaries = mutableListOf<File>()
+
+    private val vault: File = Files.createTempDirectory("finsight-vault").toFile()
+
+    private fun temporary(name: String): File =
+        File.createTempFile("finsight-capture-$name", ".db")
+            .also { it.delete(); temporaries += it }
+
+    private fun open(path: String) = getRoomDatabase(
+        builder = getDatabaseBuilder(path = path),
+        baseCurrency = "BRL",
+        currencySeeding = seeding(),
+    )
+
+    private val liveFile = temporary("live")
+    private val live = open(liveFile.absolutePath)
+
+    private val destination = JvmBackupDestination(
+        ownCopy = OwnCopyCheck(CandidateVerifier(::open)),
+        directory = vault,
+    )
+
+    @AfterTest
+    fun tearDown() {
+        live.close()
+        (temporaries + vault.listFiles().orEmpty()).forEach { file ->
+            DATABASE_FILES.forEach { File(file.absolutePath + it).delete() }
+        }
+        vault.delete()
+    }
+
+    /** A file this app captured, at a path of its own, exactly as a trigger would leave it. */
+    private suspend fun capture(name: String = "capture"): String =
+        temporary(name).absolutePath.also {
+            live.captureInto(destinationPath = it, appVersion = "1.2.3", platform = "desktop")
+        }
+
+    private suspend fun putCapture(name: String): StoredBackup = assertNotNull(
+        destination.put(capture(name), name).getOrNull(),
+        "the copy did not land in the destination",
+    )
+
+    private suspend fun names(): List<String> = assertNotNull(
+        destination.list().getOrNull(),
+        "the destination could not be read",
+    ).map { it.name }
+
+    // ------------------------------------------------------------------- writing
+
+    @Test
+    fun `a captured file is put in the destination and listed`() = runTest {
+        val captured = capture()
+
+        val stored = assertNotNull(
+            destination.put(captured, NAME).getOrNull(),
+            "the copy did not land in the destination",
+        )
+
+        assertEquals(NAME, stored.name)
+        assertEquals(File(captured).length(), stored.sizeInBytes, "the whole file went in")
+        assertTrue(stored.sizeInBytes > 0, "an empty copy is not a copy")
+        assertEquals(listOf(NAME), names())
+    }
+
+    /**
+     * The captured file belongs to whoever captured it, and the flow that made it is what
+     * removes it. A destination that moved it would leave that caller removing nothing.
+     */
+    @Test
+    fun `putting a copy leaves the captured file where it was`() = runTest {
+        val captured = capture()
+
+        destination.put(captured, NAME)
+
+        assertTrue(File(captured).exists(), "the temporary is still its owner's to remove")
+    }
+
+    /**
+     * A vault has nobody to ask about replacing a file, so a name already in use is a copy
+     * that has to survive: it is the one that holds what the newer one does not.
+     */
+    @Test
+    fun `a name already in the destination never replaces the copy that holds it`() = runTest {
+        val first = putCapture(NAME)
+        val firstSize = File(vault, first.name).length()
+
+        val second = assertNotNull(destination.put(capture("second"), NAME).getOrNull())
+
+        assertNotEquals(NAME, second.name, "the second copy was written under a name of its own")
+        assertEquals(setOf(NAME, second.name), names().toSet(), "both copies are there")
+        assertEquals(firstSize, File(vault, NAME).length(), "the first copy is untouched")
+    }
+
+    // ------------------------------------------------------------------- listing
+
+    @Test
+    fun `a file that is not named as this app's is not listed`() = runTest {
+        putCapture(NAME)
+        File(vault, "notes.txt").writeText("the user's own file")
+
+        assertEquals(
+            listOf(NAME),
+            names(),
+            "a destination may be a folder with the user's own things in it",
+        )
+    }
+
+    @Test
+    fun `the newest copy is listed first`() = runTest {
+        val older = putCapture(NAME)
+        val newer = putCapture(OTHER_NAME)
+        File(vault, older.name).setLastModified(EPOCH_DAY)
+        File(vault, newer.name).setLastModified(EPOCH_DAY * 2)
+
+        assertEquals(
+            listOf(newer.name, older.name),
+            names(),
+            "retention counts from the newest, and so does the history",
+        )
+    }
+
+    @Test
+    fun `a destination nobody has written to yet lists nothing`() = runTest {
+        assertEquals(emptyList<String>(), names())
+    }
+
+    /** The history is a reading of the destination, never a record kept somewhere else. */
+    @Test
+    fun `a copy deleted from outside stops being listed, without an error`() = runTest {
+        putCapture(NAME)
+        File(vault, NAME).delete()
+
+        assertEquals(emptyList<String>(), names())
+    }
+
+    // ------------------------------------------------------------------ removing
+
+    @Test
+    fun `a copy this app wrote is removed`() = runTest {
+        val stored = putCapture(NAME)
+
+        assertEquals(true, destination.remove(stored).getOrNull(), "the copy was removed")
+        assertEquals(emptyList<String>(), names())
+        DATABASE_FILES.forEach {
+            assertFalse(File(vault, stored.name + it).exists(), "${stored.name}$it is still there")
+        }
+    }
+
+    /**
+     * The promise the whole check exists for. The name says this app wrote the file, and the
+     * name is not authority (design D9): a destination the user pointed at holds files of
+     * theirs, and retention runs there with nobody watching.
+     */
+    @Test
+    fun `a file that is not a copy of this app is never removed`() = runTest {
+        val planted = File(vault, NAME).also { it.writeBytes(ByteArray(IMPOSTOR_BYTES) { 0x7A }) }
+
+        val stored = assertNotNull(
+            assertNotNull(destination.list().getOrNull()).singleOrNull(),
+            "a file named as this app's is worth looking at, which is all the name is for",
+        )
+
+        assertEquals(false, destination.remove(stored).getOrNull(), "the content decided")
+        assertTrue(planted.exists(), "the app removed a file it did not write")
+    }
+
+    @Test
+    fun `a copy the user already deleted is answered as removed`() = runTest {
+        val stored = putCapture(NAME)
+        File(vault, stored.name).delete()
+
+        assertEquals(
+            true,
+            destination.remove(stored).getOrNull(),
+            "there is nothing left to refuse",
+        )
+    }
+
+    @Test
+    fun `removing one copy leaves the others alone`() = runTest {
+        val first = putCapture(NAME)
+        val second = putCapture(OTHER_NAME)
+
+        assertEquals(true, destination.remove(first).getOrNull())
+
+        assertEquals(listOf(second.name), names())
+    }
+
+    private companion object {
+        const val NAME = "finsight-backup-2026-08-20T14-30-05.db"
+        const val OTHER_NAME = "finsight-backup-2026-08-21T14-30-05.db"
+
+        /** A day in milliseconds, only so that two copies carry timestamps that differ. */
+        const val EPOCH_DAY = 86_400_000L
+
+        const val IMPOSTOR_BYTES = 4096
+
+        /**
+         * A database is up to three files while something has it open in write-ahead
+         * logging, and the confirmation opens a copy with Room.
+         */
+        val DATABASE_FILES = listOf("", "-wal", "-shm")
+    }
+}
+
+/** The seeding with the device taken out of it: the seed, and the code as its own glyph. */
+private fun seeding() = object : CurrencySeeding {
+    override fun rows(): List<SeedCurrency> = CURRENCY_SEED.map { SeedCurrency(it, it) }
+    override fun symbolOf(code: String): String = code
+}

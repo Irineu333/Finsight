@@ -263,7 +263,7 @@ private fun privateDirectoryOf(path: String): String? {
 private fun privateRoot() = "${NSTemporaryDirectory().trimEnd('/')}/$PRIVATE_DIRECTORY"
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-private fun copyItem(
+internal fun copyItem(
     sourcePath: String,
     destinationPath: String,
     otherwise: BackupError,
@@ -289,7 +289,7 @@ private fun NSError?.toBackupError(otherwise: BackupError): BackupError =
  * candidate is opened with Room. Removing the main file alone would leave the other two
  * behind in the temporary directory.
  */
-private val DATABASE_FILES = listOf("", "-wal", "-shm")
+internal val DATABASE_FILES = listOf("", "-wal", "-shm")
 
 private const val PRIVATE_DIRECTORY = "finsight-backup"
 private const val CANDIDATE_NAME = "candidate.db"

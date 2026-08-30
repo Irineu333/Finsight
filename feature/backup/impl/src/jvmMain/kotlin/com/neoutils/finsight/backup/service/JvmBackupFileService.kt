@@ -126,7 +126,7 @@ class JvmBackupFileService : BackupFileService {
  * message is what carries it: a write that runs out of room surfaces as an [IOException]
  * naming the condition, either on its own or wrapped by whatever was copying at the time.
  */
-private fun Throwable.toBackupError(otherwise: BackupError): BackupError =
+internal fun Throwable.toBackupError(otherwise: BackupError): BackupError =
     if (isOutOfSpace()) BackupError.NO_SPACE else otherwise
 
 private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.cause }
@@ -138,7 +138,7 @@ private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.caus
  * candidate is opened with Room. Removing the main file alone would leave the other two
  * behind for as long as the temporary directory lives.
  */
-private val DATABASE_FILES = listOf("", "-wal", "-shm")
+internal val DATABASE_FILES = listOf("", "-wal", "-shm")
 
 /**
  * A candidate is opened with Room and migrated in place before anything is decided

@@ -190,7 +190,7 @@ class AndroidBackupFileService(private val appContext: Context) : BackupFileServ
  * message is what carries it: a write that runs out of room surfaces as an [IOException]
  * naming `ENOSPC`, either on its own or wrapped by whatever was copying at the time.
  */
-private fun Throwable.toBackupError(otherwise: BackupError): BackupError =
+internal fun Throwable.toBackupError(otherwise: BackupError): BackupError =
     if (isOutOfSpace()) BackupError.NO_SPACE else otherwise
 
 private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.cause }
@@ -223,7 +223,7 @@ private const val EXPORT_MIME_TYPE = "application/octet-stream"
  * candidate is opened with Room. Removing the main file alone would leave the other two
  * behind until the system next reclaims the cache.
  */
-private val DATABASE_FILES = listOf("", "-wal", "-shm")
+internal val DATABASE_FILES = listOf("", "-wal", "-shm")
 
 private const val REGISTRY_KEY_PREFIX = "backup-file-service-"
 private const val PRIVATE_DIRECTORY = "backup"

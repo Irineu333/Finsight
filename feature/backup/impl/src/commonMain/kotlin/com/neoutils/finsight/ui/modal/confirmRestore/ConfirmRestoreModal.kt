@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.DeviceUnknown
 import androidx.compose.material.icons.outlined.PhoneIphone
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.database.snapshot.ArchiveCounts
 import com.neoutils.finsight.domain.model.BackupPlatform
+import com.neoutils.finsight.domain.restore.FileOrigin
+import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_accounts
 import com.neoutils.finsight.resources.backup_confirm_action
@@ -54,6 +57,7 @@ import com.neoutils.finsight.resources.backup_confirm_credit_cards
 import com.neoutils.finsight.resources.backup_confirm_irreversible
 import com.neoutils.finsight.resources.backup_confirm_message
 import com.neoutils.finsight.resources.backup_confirm_origin_unknown
+import com.neoutils.finsight.resources.backup_confirm_reversible
 import com.neoutils.finsight.resources.backup_confirm_title
 import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_platform_android
@@ -61,8 +65,6 @@ import com.neoutils.finsight.resources.backup_platform_desktop
 import com.neoutils.finsight.resources.backup_platform_ios
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.screen.backup.FileOrigin
-import com.neoutils.finsight.ui.screen.backup.RestoreConfirmation
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlin.time.ExperimentalTime
@@ -78,9 +80,16 @@ import org.jetbrains.compose.resources.stringResource
  * sentence in it — the operation is irreversible, and "restore a backup" is not a
  * question anyone can answer without knowing *which* backup.
  *
+ * **What it says about undoing depends on what the app will actually do.** With a copy of
+ * the current archive kept first, the restore stops being irreversible and the sheet says
+ * so; with none kept, it is the one place in the app that says an operation cannot be
+ * undone (`local-backup` spec). The replacement is total either way — what changed is that
+ * there is something to come back to.
+ *
  * @param isRestoring the flow rather than a value, because a modal is built once and
  * rendered by the manager that holds it: a boolean passed in would still read false while
  * the replacement ran.
+ * @param keepsCopy the flow, for the same reason.
  * @param onDiscard called however the sheet was dismissed — the button, the scrim, the
  * swipe. The file this sheet is about is a copy nobody else owns, so leaving without an
  * answer is what removes it.
@@ -88,6 +97,7 @@ import org.jetbrains.compose.resources.stringResource
 class ConfirmRestoreModal(
     private val confirmation: RestoreConfirmation,
     private val isRestoring: StateFlow<Boolean>,
+    private val keepsCopy: StateFlow<Boolean>,
     private val onConfirm: () -> Unit,
     private val onDiscard: () -> Unit,
 ) : ModalBottomSheet() {
@@ -116,6 +126,7 @@ class ConfirmRestoreModal(
         val manager = LocalModalManager.current
         val modal = this@ConfirmRestoreModal
         val restoring by isRestoring.collectAsStateWithLifecycle()
+        val reversible by keepsCopy.collectAsStateWithLifecycle()
 
         Column(
             modifier = Modifier
@@ -139,7 +150,7 @@ class ConfirmRestoreModal(
 
             FileIdentityCard(confirmation)
 
-            IrreversibleNotice()
+            if (reversible) ReversibleNotice() else IrreversibleNotice()
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
@@ -361,6 +372,38 @@ private fun IrreversibleNotice() {
             )
             Text(
                 text = stringResource(Res.string.backup_confirm_irreversible),
+                style = typography.bodySmall,
+            )
+        }
+    }
+}
+
+/**
+ * What is kept back, now that something is: the replacement is still total, and the way
+ * back is a second restore rather than an undo — so this states where to find it and
+ * claims nothing more.
+ */
+@Composable
+private fun ReversibleNotice() {
+    Surface(
+        color = colorScheme.primary.copy(alpha = 0.12f),
+        contentColor = colorScheme.primary,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("backup_restore_confirm_reversible"),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Shield,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = stringResource(Res.string.backup_confirm_reversible),
                 style = typography.bodySmall,
             )
         }

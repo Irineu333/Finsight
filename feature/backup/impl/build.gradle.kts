@@ -19,6 +19,10 @@ kotlin {
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
+            // What the vault is — on, how often, how many copies, where, and when it last
+            // succeeded — is a preference of this install and not a table: it must not
+            // travel inside a backup file and come back in time with a restore (design D9).
+            implementation(libs.multiplatform.settings)
 
             // The two entries of this screen are settings tiles, and the look they are
             // dressed in comes from `SettingsTileTheme` in `:core:designsystem`. Each
@@ -32,6 +36,7 @@ kotlin {
             // declares.
             implementation(projects.core.model)
             implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.multiplatform.settings.test)
         }
     }
 }

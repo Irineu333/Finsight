@@ -9,7 +9,9 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import arrow.core.Either
+import arrow.core.left
 import arrow.core.right
+import com.neoutils.finsight.backup.service.JvmBackupDestination
 import com.neoutils.finsight.backup.service.JvmBackupFileService
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.CategoryEntity
@@ -17,6 +19,8 @@ import com.neoutils.finsight.database.exception.DatabaseVerificationError
 import com.neoutils.finsight.database.exception.DatabaseVerificationException
 import com.neoutils.finsight.database.getDatabaseBuilder
 import com.neoutils.finsight.database.getRoomDatabase
+import com.neoutils.finsight.database.repository.BackupVaultRepository
+import com.neoutils.finsight.database.repository.RoomArchiveMark
 import com.neoutils.finsight.database.snapshot.CandidateVerification
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.captureInto
@@ -27,6 +31,10 @@ import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.domain.restore.ArchiveRestore
+import com.neoutils.finsight.domain.vault.BackupVault
+import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.SuccessModal
@@ -35,8 +43,11 @@ import com.neoutils.finsight.ui.screen.backup.BackupAction
 import com.neoutils.finsight.ui.screen.backup.BackupUiState
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -59,7 +70,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
@@ -104,26 +114,89 @@ class BackupViewModelTest {
         override val platform = BackupPlatform.DESKTOP
     }
 
+    /**
+     * The vault, real and off, exactly as an install that has never been asked for one has
+     * it. A test that wants the copy taken before a restore turns it on itself, so every
+     * other test here says what it says about an app with no vault at all.
+     */
+    private val vaultFolder: File = Files.createTempDirectory("finsight-viewmodel-vault").toFile()
+    private val vaultState = BackupVaultRepository(MapSettings())
+    private val vaultDestination = JvmBackupDestination(
+        ownCopy = OwnCopyCheck(verifier),
+        directory = vaultFolder,
+    )
+    private val vault = BackupVault(
+        vault = vaultState,
+        archive = RoomArchiveMark(live),
+        destination = vaultDestination,
+        database = live,
+        origin = origin,
+        files = files,
+        clock = Clock.System,
+    )
+
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
+    /**
+     * The main dispatcher is set for every test and taken away from none of them, and that
+     * is deliberate.
+     *
+     * A view model here outlives the test body on purpose, in two ways the app relies on:
+     * the screen reads its destination with nobody waiting for the answer, and every
+     * removal of a temporary file runs under `NonCancellable` so that walking away from the
+     * screen still takes the file with it. Both land back on the dispatcher the coroutine
+     * was launched on. Resetting it between tests takes that dispatcher away mid-flight and
+     * turns the app's own lifetime into an uncaught exception in whichever test happens to
+     * run next — a fixture lying about how long a screen lives, not a defect in the screen.
+     *
+     * Cancelling the scopes first does not help and makes it worse: cancellation is exactly
+     * what runs those `NonCancellable` removals, so it schedules more of the work the reset
+     * would then have nothing to resume onto. Leaving the dispatcher installed costs
+     * nothing — the next test replaces it — and no other class in this module dispatches to
+     * it.
+     */
     @AfterTest
     fun tearDown() {
-        Dispatchers.resetMain()
         live.close()
-        temporaries.forEach { file ->
+        (temporaries + vaultFolder.listFiles().orEmpty()).forEach { file ->
             listOf("", "-wal", "-shm").forEach { File(file.absolutePath + it).delete() }
         }
+        vaultFolder.delete()
     }
 
     private fun viewModel(gate: CandidateVerifier = verifier) = BackupViewModel(
         database = live,
-        candidateVerifier = gate,
+        archiveRestore = ArchiveRestore(
+            database = live,
+            verifier = gate,
+            preventive = VaultPreventiveBackup(vaultState, vault),
+            vault = vault,
+            files = files,
+        ),
         files = files,
+        destination = vaultDestination,
         captureOrigin = origin,
+        vault = vaultState,
         modalManager = modalManager,
         clock = Clock.System,
     )
+
+    private suspend fun copiesInVault(): List<String> = assertNotNull(
+        vaultDestination.list().getOrNull(),
+        "the vault's destination could not be read",
+    ).map { it.name }
+
+    /** What a copy in the vault holds, read back through the gate that would restore it. */
+    private suspend fun vaultCopyHolds(name: String): List<String> {
+        val file = File(vaultFolder, name).also { temporaries += it }
+        val database = open(file.absolutePath)
+        return try {
+            database.categories()
+        } finally {
+            database.close()
+        }
+    }
 
     /** The state once nothing is running any more. */
     private suspend fun BackupViewModel.idle(): BackupUiState = uiState.first { !it.isBusy }
@@ -395,6 +468,217 @@ class BackupViewModelTest {
         )
     }
 
+    // ------------------------------------------------- the copy taken before the restore
+
+    /**
+     * A restore destroys everything typed into the app, and the file it destroys it with is
+     * the user's own — it is not in the vault, and the flow removes it afterwards. So the
+     * one thing that can bring the archive back is the copy taken here, and it has to hold
+     * the state that is about to stop existing.
+     */
+    @Test
+    fun `a restore is preceded by a copy holding the archive it is about to replace`() =
+        runTest {
+            vaultState.setOn(true)
+            live.seedCategory("Mercado")
+            files.chosen = backupOfLive().absolutePath.right()
+            // Entered after the file was taken, so it exists only in the archive — and, if
+            // the copy was taken, in the copy.
+            live.seedCategory("Aluguel")
+            val viewModel = viewModel()
+
+            viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+            assertNotNull(viewModel.idle().confirmation)
+            viewModel.onAction(BackupAction.Restore)
+            viewModel.settled()
+
+            val copy = assertNotNull(
+                copiesInVault().singleOrNull(),
+                "nothing was kept back from a restore",
+            )
+            assertEquals(
+                listOf("Mercado", "Aluguel"),
+                vaultCopyHolds(copy),
+                "the copy is of the archive as it stood before the replacement",
+            )
+            assertEquals(listOf("Mercado"), live.categories(), "the restore still happened")
+        }
+
+    /**
+     * The archive is the one thing that must not be destroyed on the strength of a copy that
+     * was not written. Nothing is replaced, and the person is asked.
+     */
+    @Test
+    fun `a copy that cannot be taken stops the restore and asks about going on`() = runTest {
+        vaultState.setOn(true)
+        live.seedCategory("Mercado")
+        files.chosen = backupOfLive().absolutePath.right()
+        live.seedCategory("Aluguel")
+        files.capturePathRefusal = BackupError.NO_SPACE
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        assertNotNull(viewModel.idle().confirmation)
+        viewModel.onAction(BackupAction.Restore)
+
+        val state = viewModel.uiState.first { it.captureRefusal != null }
+        assertEquals(
+            listOf("Mercado", "Aluguel"),
+            live.categories(),
+            "the archive was replaced with nothing kept back and nobody asked",
+        )
+        assertEquals(emptyList<String>(), copiesInVault())
+        assertNotNull(state.captureRefusal, "the question says why there is no copy")
+    }
+
+    @Test
+    fun `saying to go on without a copy replaces the archive`() = runTest {
+        vaultState.setOn(true)
+        live.seedCategory("Mercado")
+        files.chosen = backupOfLive().absolutePath.right()
+        live.seedCategory("Aluguel")
+        files.capturePathRefusal = BackupError.NO_SPACE
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        viewModel.idle()
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.uiState.first { it.captureRefusal != null }
+
+        viewModel.onAction(BackupAction.RestoreWithoutCopy)
+        val state = viewModel.settled()
+
+        assertNull(state.captureRefusal, "there is nothing left to ask")
+        assertEquals(
+            listOf("Mercado"),
+            live.categories(),
+            "the user said to go on, and the archive became the file's",
+        )
+        assertEquals(emptyList<String>(), copiesInVault(), "no copy was taken, as they were told")
+    }
+
+    @Test
+    fun `saying no leaves the archive alone and takes the file with it`() = runTest {
+        vaultState.setOn(true)
+        live.seedCategory("Mercado")
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        live.seedCategory("Aluguel")
+        files.capturePathRefusal = BackupError.NO_SPACE
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        viewModel.idle()
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.uiState.first { it.captureRefusal != null }
+
+        viewModel.onAction(BackupAction.AbandonRestore)
+        val state = viewModel.settled()
+
+        assertNull(state.captureRefusal)
+        assertEquals(
+            listOf("Mercado", "Aluguel"),
+            live.categories(),
+            "the archive is exactly what it was",
+        )
+        assertEquals(listOf(backup.absolutePath), files.discarded)
+    }
+
+    /**
+     * A restore is the one change to the archive that leaves nothing covering it while
+     * adding nothing: the copy taken a moment before describes the archive that has just
+     * stopped existing, and the file the new one came from is the user's own and is already
+     * gone. Nothing in the archive expresses that, so the next capture only happens if the
+     * replacement said so.
+     */
+    @Test
+    fun `a restored archive is covered by no copy, so the next trigger takes one`() = runTest {
+        vaultState.setOn(true)
+        live.seedCategory("Mercado")
+        files.chosen = backupOfLive().absolutePath.right()
+        live.seedCategory("Aluguel")
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        viewModel.idle()
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.settled()
+        assertEquals(1, copiesInVault().size, "the copy taken before the replacement")
+
+        val outcome = vault.captureIfNeeded()
+
+        assertIs<CaptureOutcome.Captured>(
+            outcome,
+            "the archive the app is running on has no copy of it anywhere",
+        )
+        assertEquals(2, copiesInVault().size)
+        assertEquals(
+            listOf("Mercado"),
+            vaultCopyHolds(outcome.copy.name),
+            "the new copy is of the archive as it is now",
+        )
+    }
+
+    /**
+     * The archive stops being covered *before* the swap runs, never after it.
+     *
+     * The two writes are a SQLite transaction and a settings file, with no atomicity
+     * between them and no way to have any, so the only question is which way round
+     * survives a process killed in the window. Told after the swap, a kill in that window
+     * leaves a mark taken from an archive that no longer exists — and a restore issues no
+     * ids, so that mark can equal the restored archive's and report it as already covered,
+     * silently, forever. Told first, the worst case is a copy that still covers the archive
+     * being forgotten, which costs one file.
+     *
+     * A swap that fails is the same window, held open long enough to assert on: the archive
+     * is untouched and the copy really does still describe it, and the app has given up its
+     * claim anyway. That is the price of the safe direction, and it is what this pins.
+     */
+    @Test
+    fun `a replacement that fails still leaves the archive covered by nothing`() = runTest {
+        vaultState.setOn(true)
+        live.seedCategory("Mercado")
+
+        // The coverage machinery, proven live on this fixture before anything is asserted
+        // about it being dropped: without this, a mark that was never readable would make
+        // the assertion below pass whichever way round the two writes run.
+        assertIs<CaptureOutcome.Captured>(vault.captureIfNeeded())
+        assertNotNull(
+            vaultState.observe().value.markAtLastCapture,
+            "the copy just taken covers the archive",
+        )
+
+        val backup = backupOfLive()
+        files.chosen = backup.absolutePath.right()
+        val viewModel = viewModel()
+
+        viewModel.onAction(BackupAction.ChooseFileToRestore(context))
+        assertNotNull(viewModel.idle().confirmation, "the file was approved as it stood")
+
+        // Broken after the gate approved it and before the swap reads it, which is the one
+        // way to make the replacement fail at the statement rather than at the check.
+        onFile(backup) { it.execSQL("DROP TABLE `categories`") }
+
+        viewModel.onAction(BackupAction.Restore)
+        viewModel.settled()
+
+        assertIs<ErrorModal>(modalManager.top, "the replacement could not be carried out")
+        assertEquals(
+            listOf("Mercado"),
+            live.categories(),
+            "the transaction rolled back, so the archive is exactly what it was",
+        )
+        assertNull(
+            vaultState.observe().value.markAtLastCapture,
+            "coverage is given up before the swap, so a swap that never landed has " +
+                "already given up its claim — one file too many, never one too few",
+        )
+        assertIs<CaptureOutcome.Captured>(
+            vault.captureIfNeeded(),
+            "and the next trigger takes a copy rather than trusting a claim it dropped",
+        )
+    }
+
     // ------------------------------------------------------- the temporary files
 
     @Test
@@ -529,6 +813,9 @@ class BackupViewModelTest {
      */
     @Test
     fun `leaving the screen as the archive is replaced still replaces it`() = runTest {
+        // With no copy owed, the answer and the replacement are next to each other, which
+        // is what this test is about. A vault that captures first puts a step that *can*
+        // be called off between the two, and that step is not the replacement.
         live.seedCategory("Mercado")
         val backup = backupOfLive()
         files.chosen = backup.absolutePath.right()
@@ -654,6 +941,13 @@ private class FakeBackupFileService(
     /** Raised instead of an answer, by a test about a picker that fails outright. */
     var copyInFailure: (() -> Nothing)? = null
 
+    /**
+     * What the app's own temporary area refuses with, when a test needs the copy owed
+     * before a restore to be impossible. A disk cannot be filled on demand, and this is the
+     * step of the capture that touches one.
+     */
+    var capturePathRefusal: BackupError? = null
+
     override suspend fun copyInChosenFile(context: PlatformContext): Either<BackupError, String?> {
         copyInFailure?.invoke()
         return chosen
@@ -671,7 +965,8 @@ private class FakeBackupFileService(
         return true.right()
     }
 
-    override suspend fun newCapturePath() = real.newCapturePath()
+    override suspend fun newCapturePath(): Either<BackupError, String> =
+        capturePathRefusal?.left() ?: real.newCapturePath()
 
     override suspend fun discard(path: String) {
         discardGate?.await()

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -181,33 +182,47 @@ fun BackupScreen(
                     .fillMaxSize()
                     .padding(padding),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(RowGap),
             ) {
+                var isFirstRow = true
+
+                fun row(
+                    key: String,
+                    opensGroup: Boolean = false,
+                    content: @Composable LazyItemScope.(Modifier) -> Unit,
+                ) {
+                    // A group is separated from the one above it, and `Arrangement.spacedBy`
+                    // — what the settings screen's `Column` uses — never puts space before
+                    // its first child. A lazy list has one arrangement for every row, so the
+                    // rule is applied here instead, to the row's position: to the position
+                    // and not to the vault, because which row comes first changes with it.
+                    val leading = if (opensGroup && !isFirstRow) GroupGap - RowGap else 0.dp
+                    isFirstRow = false
+
+                    item(key = key) { content(Modifier.padding(top = leading).animateItem()) }
+                }
+
                 if (uiState.vault.isOn) {
-                    item(key = "last_capture") {
+                    row(key = "last_capture") { modifier ->
                         LastBackupCard(
                             vault = uiState.vault,
                             copies = uiState.copies,
                             now = clock.now(),
-                            modifier = Modifier.animateItem(),
+                            modifier = modifier,
                         )
                     }
                 }
 
-                item(key = "group_automatic") {
+                row(key = "group_automatic", opensGroup = true) { modifier ->
                     GroupTitle(
                         text = stringResource(Res.string.backup_group_automatic),
-                        modifier = Modifier
-                            .padding(top = GroupGap)
-                            .animateItem(),
+                        modifier = modifier,
                     )
                 }
 
-                item(key = "vault") {
+                row(key = "vault") { modifier ->
                     SettingsMenuLink(
-                        modifier = Modifier
-                            .testTag("backup_vault")
-                            .animateItem(),
+                        modifier = modifier.testTag("backup_vault"),
                         shape = TileShape,
                         icon = {
                             Icon(imageVector = Icons.Outlined.Shield, contentDescription = null)
@@ -229,11 +244,9 @@ fun BackupScreen(
                 }
 
                 if (uiState.vault.isOn) {
-                    item(key = "vault_settings") {
+                    row(key = "vault_settings") { modifier ->
                         SettingsMenuLink(
-                            modifier = Modifier
-                                .testTag("backup_vault_settings_tile")
-                                .animateItem(),
+                            modifier = modifier.testTag("backup_vault_settings_tile"),
                             shape = TileShape,
                             icon = {
                                 Icon(imageVector = Icons.Outlined.Tune, contentDescription = null)
@@ -255,11 +268,9 @@ fun BackupScreen(
                         )
                     }
 
-                    item(key = "history") {
+                    row(key = "history") { modifier ->
                         SettingsMenuLink(
-                            modifier = Modifier
-                                .testTag("backup_history_tile")
-                                .animateItem(),
+                            modifier = modifier.testTag("backup_history_tile"),
                             shape = TileShape,
                             icon = {
                                 Icon(imageVector = Icons.Outlined.History, contentDescription = null)
@@ -272,20 +283,16 @@ fun BackupScreen(
                     }
                 }
 
-                item(key = "group_manual") {
+                row(key = "group_manual", opensGroup = true) { modifier ->
                     GroupTitle(
                         text = stringResource(Res.string.backup_group_manual),
-                        modifier = Modifier
-                            .padding(top = GroupGap)
-                            .animateItem(),
+                        modifier = modifier,
                     )
                 }
 
-                item(key = "export") {
+                row(key = "export") { modifier ->
                     SettingsMenuLink(
-                        modifier = Modifier
-                            .testTag("backup_export")
-                            .animateItem(),
+                        modifier = modifier.testTag("backup_export"),
                         enabled = !uiState.isBusy,
                         shape = TileShape,
                         icon = { Icon(imageVector = Icons.Outlined.SaveAlt, contentDescription = null) },
@@ -296,11 +303,9 @@ fun BackupScreen(
                     )
                 }
 
-                item(key = "restore") {
+                row(key = "restore") { modifier ->
                     SettingsMenuLink(
-                        modifier = Modifier
-                            .testTag("backup_restore")
-                            .animateItem(),
+                        modifier = modifier.testTag("backup_restore"),
                         enabled = !uiState.isBusy,
                         shape = TileShape,
                         icon = { Icon(imageVector = Icons.Outlined.Restore, contentDescription = null) },
@@ -574,8 +579,8 @@ private fun TileAction(isRunning: Boolean) {
 /** The corner every card of this app wears. */
 private val TileShape = RoundedCornerShape(12.dp)
 
-/**
- * What a heading adds to the eight points the list already puts between rows, so that a
- * group reads as a break rather than as one more tile.
- */
-private val GroupGap = 12.dp
+/** What the tile library puts between the rows of one group. */
+private val RowGap = 8.dp
+
+/** What the settings screen puts between one group and the next. */
+private val GroupGap = 20.dp

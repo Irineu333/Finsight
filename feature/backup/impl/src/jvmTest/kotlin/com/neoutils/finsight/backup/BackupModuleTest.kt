@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -104,6 +105,18 @@ class BackupModuleTest {
         )
 
         assertNotSame(TransactionRemovalPrelude.None, prelude)
+    }
+
+    /**
+     * The reader the sheet about one kept copy waits on.
+     *
+     * It is asked for inside a `viewModel {}` block, which nothing resolves until somebody
+     * opens the screen — so a missing binding compiles, passes every test here, and crashes
+     * on the first copy anybody taps.
+     */
+    @Test
+    fun `the reader that opens one kept copy is bound`() {
+        assertNotNull(koin.get<KeptCopyReader>())
     }
 
     /**

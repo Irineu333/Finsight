@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.ArchiveMark
 import com.neoutils.finsight.domain.vault.BackupVault
+import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultOfferOnce
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
@@ -137,11 +138,18 @@ val backupModule = module {
         )
     }
 
+    // Reading one kept copy, through the destination's own contract and the same gate the
+    // restore runs. Bound beside that flow rather than inside the screen because both are
+    // one decision about what makes a copy readable — and because a second reader would be
+    // the second way of opening a file that design D2 exists to prevent.
+    factory { KeptCopyReader(destination = get(), files = get(), verifier = get()) }
+
     viewModel {
         BackupHistoryViewModel(
             destination = get(),
             files = get(),
             archiveRestore = get(),
+            reader = get(),
             vault = get(),
             modalManager = get(),
         )

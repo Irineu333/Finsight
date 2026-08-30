@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.backupHistory
 
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.ArchiveCopy
+import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
@@ -46,6 +47,15 @@ data class BackupHistoryUiState(
 
     /** The copy an operation is running on, so its row alone says it is busy. */
     val working: StoredBackup? = null,
+
+    /**
+     * What the copy whose sheet is up holds, read from the file itself when it was tapped.
+     *
+     * One copy, never the list: opening a file is what this costs, and a listing that read
+     * every copy would open one file per row (design D9). It starts over at
+     * [KeptCopyFacts.Reading] on every tap, so a sheet never shows the copy before it.
+     */
+    val facts: KeptCopyFacts = KeptCopyFacts.Reading,
 
     val confirmation: RestoreConfirmation? = null,
 

@@ -12,7 +12,6 @@ import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.replaceContentFrom
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.error.toBackupError
-import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PreventiveBackup
@@ -22,7 +21,6 @@ import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
@@ -263,13 +261,6 @@ sealed interface RestoreOutcome {
  * not something a screen has to remember.
  */
 private fun CandidateVerification.Accepted.toConfirmation() = RestoreConfirmation(
-    origin = origin?.let {
-        FileOrigin(
-            platform = BackupPlatform.ofId(it.platform),
-            platformId = it.platform,
-            appVersion = it.appVersion,
-            createdAt = Instant.fromEpochMilliseconds(it.createdAt),
-        )
-    },
+    origin = origin?.toFileOrigin(),
     counts = counts,
 )

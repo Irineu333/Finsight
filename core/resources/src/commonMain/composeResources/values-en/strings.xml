@@ -1084,4 +1084,9 @@
     <string name="backup_history_current_subtitle">The app's data is this copy's</string>
     <string name="backup_history_newest_label">most recent</string>
     <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
+    <string name="backup_copy_facts_origin">Origin</string>
+    <string name="backup_copy_facts_accounts">Accounts · Cards</string>
+    <string name="backup_copy_facts_size">Size</string>
+    <string name="backup_copy_facts_reading">Reading what this copy holds…</string>
+    <string name="backup_copy_facts_unreadable">This copy could not be opened to see what it holds. It may have left the folder, or be damaged.</string>
 </resources>

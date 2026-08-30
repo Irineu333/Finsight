@@ -226,9 +226,18 @@ fun BackupHistoryScreen(
                                         enabled = !uiState.isBusy,
                                         modifier = modifier,
                                         onClick = {
+                                            // The read starts and the sheet goes up in the
+                                            // same breath, in that order and without
+                                            // waiting: the file is opened for the copy that
+                                            // was tapped, and the sheet fills in when it
+                                            // answers.
+                                            viewModel.onAction(
+                                                BackupHistoryAction.Inspect(copy)
+                                            )
                                             modalManager.show(
                                                 StoredBackupActionsModal(
                                                     backup = copy,
+                                                    facts = viewModel.facts,
                                                     onRestore = {
                                                         modalManager.dismiss()
                                                         viewModel.onAction(

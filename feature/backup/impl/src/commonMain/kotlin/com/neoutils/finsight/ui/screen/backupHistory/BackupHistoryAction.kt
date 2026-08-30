@@ -9,6 +9,15 @@ sealed interface BackupHistoryAction {
     /** Read the destination again — on opening, and after anything that changed it. */
     data object Refresh : BackupHistoryAction
 
+    /**
+     * Read this one copy, because its sheet has just been opened.
+     *
+     * It is the tap and not the listing that opens a file, and the sheet is put up without
+     * waiting for it: what a copy holds is inside the copy, and the answer arrives when it
+     * arrives.
+     */
+    data class Inspect(val backup: StoredBackup) : BackupHistoryAction
+
     /** Replace the archive with this copy's content. */
     data class Restore(val backup: StoredBackup) : BackupHistoryAction
 

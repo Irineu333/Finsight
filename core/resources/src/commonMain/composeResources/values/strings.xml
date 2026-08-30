@@ -1085,4 +1085,9 @@
     <string name="backup_history_current_subtitle">Os dados do app são os desta cópia</string>
     <string name="backup_history_newest_label">mais recente</string>
     <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
+    <string name="backup_copy_facts_origin">Origem</string>
+    <string name="backup_copy_facts_accounts">Contas · Cartões</string>
+    <string name="backup_copy_facts_size">Tamanho</string>
+    <string name="backup_copy_facts_reading">Lendo o que esta cópia guarda…</string>
+    <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>
 </resources>

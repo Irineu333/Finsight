@@ -25,6 +25,7 @@ import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.asArchiveCopy
 import com.neoutils.finsight.extension.PlatformContext
@@ -160,6 +161,7 @@ class CurrentCopyTest {
         destination = destination,
         files = files,
         archiveRestore = archiveRestore,
+        reader = KeptCopyReader(destination, files, verifier),
         vault = state,
         modalManager = modalManager,
     )

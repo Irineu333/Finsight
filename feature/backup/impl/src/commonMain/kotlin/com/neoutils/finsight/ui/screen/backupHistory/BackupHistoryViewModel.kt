@@ -12,6 +12,8 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.vault.KeptCopyFacts
+import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
@@ -25,6 +27,7 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,11 +67,17 @@ import kotlin.coroutines.cancellation.CancellationException
  * **Handing a copy out captures nothing.** It is the same picker the manual export uses,
  * over the file that already exists — which is the way off the device on a platform where
  * the vault is local and no cloud provider appears in a folder picker.
+ *
+ * **One tap opens one file, and the listing opens none.** What a copy holds is inside it,
+ * so the sheet that describes a tapped copy is the only thing here that reads one — and it
+ * reads the copy that was tapped, while the sheet is already up. Reading the folder stays
+ * exactly what it was: a listing, of what the file system says (design D9).
  */
 class BackupHistoryViewModel(
     private val destination: BackupDestination,
     private val files: BackupFileService,
     private val archiveRestore: ArchiveRestore,
+    private val reader: KeptCopyReader,
     private val vault: BackupVaultRepository,
     private val modalManager: ModalManager,
 ) : ViewModel() {
@@ -109,6 +118,22 @@ class BackupHistoryViewModel(
         .map { it.keepsCopy }
         .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value.keepsCopy)
 
+    /**
+     * What the sheet about one copy reads. It is the flow and not a value for the reason
+     * [isRestoring] is: the sheet is built at the tap and rendered by the manager that holds
+     * it, so a value passed in would still say *reading* once the file had answered.
+     */
+    val facts: StateFlow<KeptCopyFacts> = uiState
+        .map { it.facts }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, KeptCopyFacts.Reading)
+
+    /**
+     * The reading a sheet is waiting on. It is held so the next tap can call it off: a copy
+     * nobody is looking at any more is a file being opened for nothing, and its answer must
+     * never land in a sheet about a different one.
+     */
+    private var inspection: Job? = null
+
     init {
         refresh()
     }
@@ -116,6 +141,7 @@ class BackupHistoryViewModel(
     fun onAction(action: BackupHistoryAction) {
         when (action) {
             BackupHistoryAction.Refresh -> refresh()
+            is BackupHistoryAction.Inspect -> inspect(action.backup)
             is BackupHistoryAction.Restore -> restore(action.backup)
             is BackupHistoryAction.Share -> share(action.backup, action.context)
             is BackupHistoryAction.Remove -> remove(action.backup)
@@ -163,6 +189,27 @@ class BackupHistoryViewModel(
     }
 
     /**
+     * Reads [backup] — the one copy whose sheet has just been opened — off the main thread.
+     *
+     * Nothing waits for it. The sheet is already up with what the listing knew, and the
+     * facts land in it when the file answers; a copy that cannot be opened says so, which is
+     * the honest end of a folder the user can also reach with a file manager (design D9).
+     *
+     * The previous reading is called off first and the state goes back to
+     * [KeptCopyFacts.Reading], so a slow answer about the copy tapped before this one cannot
+     * arrive in the sheet about this one.
+     */
+    private fun inspect(backup: StoredBackup) {
+        inspection?.cancel()
+        _uiState.update { it.copy(facts = KeptCopyFacts.Reading) }
+
+        inspection = viewModelScope.launch(Dispatchers.Default) {
+            val facts = reader.read(backup)
+            _uiState.update { it.copy(facts = facts) }
+        }
+    }
+
+    /**
      * Replaces the archive with [backup]'s content, having copied it out of the destination
      * first.
      *
@@ -172,6 +219,7 @@ class BackupHistoryViewModel(
      */
     private fun restore(backup: StoredBackup) {
         if (_uiState.value.isBusy || answer != null) return
+        inspection?.cancel()
         _uiState.update { it.copy(working = backup) }
 
         viewModelScope.launch {
@@ -210,6 +258,7 @@ class BackupHistoryViewModel(
      */
     private fun share(backup: StoredBackup, context: PlatformContext) {
         if (_uiState.value.isBusy) return
+        inspection?.cancel()
         _uiState.update { it.copy(working = backup) }
 
         viewModelScope.launch {
@@ -250,6 +299,7 @@ class BackupHistoryViewModel(
      */
     private fun remove(backup: StoredBackup) {
         if (_uiState.value.isBusy) return
+        inspection?.cancel()
         _uiState.update { it.copy(working = backup) }
 
         viewModelScope.launch {

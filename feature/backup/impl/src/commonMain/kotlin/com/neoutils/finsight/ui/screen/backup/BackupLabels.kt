@@ -3,6 +3,8 @@
 package com.neoutils.finsight.ui.screen.backup
 
 import androidx.compose.runtime.Composable
+import com.neoutils.finsight.domain.model.BackupPlatform
+import com.neoutils.finsight.domain.restore.FileOrigin
 import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultInterval
@@ -18,8 +20,12 @@ import com.neoutils.finsight.resources.backup_age_now
 import com.neoutils.finsight.resources.backup_copies_many
 import com.neoutils.finsight.resources.backup_copies_none
 import com.neoutils.finsight.resources.backup_copies_one
+import com.neoutils.finsight.resources.backup_confirm_origin_unknown
 import com.neoutils.finsight.resources.backup_destination_app
 import com.neoutils.finsight.resources.backup_destination_folder
+import com.neoutils.finsight.resources.backup_platform_android
+import com.neoutils.finsight.resources.backup_platform_desktop
+import com.neoutils.finsight.resources.backup_platform_ios
 import com.neoutils.finsight.resources.backup_retention_everything
 import com.neoutils.finsight.resources.backup_retention_five
 import com.neoutils.finsight.resources.backup_retention_ten
@@ -121,6 +127,23 @@ fun retentionLabel(retention: BackupRetention): String = when (retention) {
     BackupRetention.TEN -> stringResource(Res.string.backup_retention_ten)
     BackupRetention.TWENTY -> stringResource(Res.string.backup_retention_twenty)
     BackupRetention.EVERYTHING -> stringResource(Res.string.backup_retention_everything)
+}
+
+/**
+ * Which device wrote a file, when the file names one this build knows; the raw stamp when
+ * it names one this build does not; and unknown origin when it names none at all. The three
+ * cases are different: only the last is a file that said nothing.
+ *
+ * Two sheets say it about the same stamp — the confirmation before a restore, and the sheet
+ * that describes a kept copy — so it is said once. A second reading of the same field would
+ * be a second way of naming a platform.
+ */
+@Composable
+fun originLabel(origin: FileOrigin?): String = when (origin?.platform) {
+    BackupPlatform.ANDROID -> stringResource(Res.string.backup_platform_android)
+    BackupPlatform.DESKTOP -> stringResource(Res.string.backup_platform_desktop)
+    BackupPlatform.IOS -> stringResource(Res.string.backup_platform_ios)
+    null -> origin?.platformId ?: stringResource(Res.string.backup_confirm_origin_unknown)
 }
 
 /**

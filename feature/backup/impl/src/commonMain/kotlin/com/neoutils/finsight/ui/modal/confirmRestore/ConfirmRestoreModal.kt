@@ -58,17 +58,14 @@ import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_credit_cards
 import com.neoutils.finsight.resources.backup_confirm_irreversible
 import com.neoutils.finsight.resources.backup_confirm_message
-import com.neoutils.finsight.resources.backup_confirm_origin_unknown
 import com.neoutils.finsight.resources.backup_confirm_reversible
 import com.neoutils.finsight.resources.backup_confirm_title
 import com.neoutils.finsight.resources.backup_confirm_transactions
-import com.neoutils.finsight.resources.backup_platform_android
-import com.neoutils.finsight.resources.backup_platform_desktop
-import com.neoutils.finsight.resources.backup_platform_ios
 import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.backup.ageLabel
+import com.neoutils.finsight.ui.screen.backup.originLabel
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlin.time.Clock
@@ -457,19 +454,6 @@ private fun ReversibleNotice() {
             )
         }
     }
-}
-
-/**
- * The name of the platform, when the file names one this build knows; the raw stamp when
- * it names one this build does not; and unknown origin when it names none at all. The
- * three cases are different: only the last is a file that said nothing.
- */
-@Composable
-private fun originLabel(origin: FileOrigin?): String = when (origin?.platform) {
-    BackupPlatform.ANDROID -> stringResource(Res.string.backup_platform_android)
-    BackupPlatform.DESKTOP -> stringResource(Res.string.backup_platform_desktop)
-    BackupPlatform.IOS -> stringResource(Res.string.backup_platform_ios)
-    null -> origin?.platformId ?: stringResource(Res.string.backup_confirm_origin_unknown)
 }
 
 private val FileOrigin?.icon: ImageVector

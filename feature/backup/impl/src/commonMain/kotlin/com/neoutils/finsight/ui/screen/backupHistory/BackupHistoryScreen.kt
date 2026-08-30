@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,12 +50,15 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_history_current_label
+import com.neoutils.finsight.resources.backup_history_current_subtitle
 import com.neoutils.finsight.resources.backup_history_empty_message
 import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_empty_title
 import com.neoutils.finsight.resources.backup_history_failed
 import com.neoutils.finsight.resources.backup_history_migration_label
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
+import com.neoutils.finsight.resources.backup_history_newest_label
 import com.neoutils.finsight.resources.backup_history_summary
 import com.neoutils.finsight.resources.backup_history_title
 import com.neoutils.finsight.resources.backup_today
@@ -65,6 +69,7 @@ import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.storedBackupActions.StoredBackupActionsModal
 import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TileShape
+import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.backupRows
 import com.neoutils.finsight.ui.screen.backup.copiesLabel
 import com.neoutils.finsight.ui.screen.backup.destinationLabel
@@ -76,6 +81,7 @@ import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
@@ -111,8 +117,12 @@ fun BackupHistoryScreen(
     val platformContext = LocalPlatformContext.current
 
     // Read once: the year is what decides whether a month heading has to carry one, and a
-    // list that is being scrolled must not ask the clock again for every heading.
+    // list that is being scrolled must not ask the clock again for every heading. The
+    // instant is read once for the same reason and for one more — every row's "how long
+    // ago" has to be measured against the same present, or two rows taken a minute apart
+    // could be read as the same age.
     val thisYear = remember(clock) { clock.currentYearMonth().year }
+    val now = remember(clock) { clock.now() }
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup_history")
@@ -209,6 +219,9 @@ fun BackupHistoryScreen(
                                 row(key = copy.name) { modifier ->
                                     StoredBackupRow(
                                         backup = copy,
+                                        isCurrent = uiState.isCurrent(copy),
+                                        isNewest = uiState.isNewest(copy),
+                                        now = now,
                                         isWorking = uiState.working == copy,
                                         enabled = !uiState.isBusy,
                                         modifier = modifier,
@@ -328,12 +341,27 @@ private fun MonthTitle(month: YearMonth, thisYear: Int, modifier: Modifier = Mod
 
 /**
  * One copy, said in the least that lets it be recognised without being opened: when it was
- * taken, how big it is, and — for the one taken before a migration — what it is for.
+ * taken, how far back that is, how big it is, and — for the one taken before a migration —
+ * what it is for.
  *
- * That copy is labelled, and in amber rather than in the accent, for the reason the backup
+ * **How far back is the line that decides anything.** The stamp says *when*; choosing
+ * between two copies is choosing how much of what was typed since is lost, and that is a
+ * span rather than a date. The date stays, because a person recognises their own copy by
+ * it; the span is what is read.
+ *
+ * **One mark, and the current copy takes it.** A row can be several things at once — the
+ * one the app is running on, the newest one, the one kept before an update — and stacking
+ * three tags on it would say less than one does. *Current* wins because it is the only one
+ * the list could not say before: it is where the person is standing, whether the copy was
+ * just taken or the archive was restored from it. Then the update copy, which is the one
+ * somebody comes here looking for; then the newest, which the top of a newest-first list
+ * half says already.
+ *
+ * That copy is labelled in amber rather than in the accent, for the reason the backup
  * screen marks an ageing vault in amber: it is the copy somebody goes looking for when a
  * figure stopped adding up after an update, and it is the one retention never counts
- * (design D10).
+ * (design D10). The current one is the accent, because nothing is wrong with it — it is
+ * simply where things are.
  *
  * Nothing else about a copy is shown, because nothing else is known without reading the
  * file, and the file is read when it is reached for. The row is the whole target — the
@@ -342,6 +370,9 @@ private fun MonthTitle(month: YearMonth, thisYear: Int, modifier: Modifier = Mod
 @Composable
 private fun StoredBackupRow(
     backup: StoredBackup,
+    isCurrent: Boolean,
+    isNewest: Boolean,
+    now: Instant,
     isWorking: Boolean,
     enabled: Boolean,
     modifier: Modifier = Modifier,
@@ -351,7 +382,11 @@ private fun StoredBackupRow(
     val isFromMigration = backup.name == PRE_MIGRATION_BACKUP_NAME
 
     Surface(
-        color = colorScheme.surfaceContainer,
+        color = if (isCurrent) {
+            colorScheme.primary.copy(alpha = 0.10f)
+        } else {
+            colorScheme.surfaceContainer
+        },
         shape = TileShape,
         onClick = onClick,
         enabled = enabled,
@@ -367,7 +402,11 @@ private fun StoredBackupRow(
             Icon(
                 imageVector = Icons.Outlined.Inventory2,
                 contentDescription = null,
-                tint = if (isFromMigration) Warning else colorScheme.onSurfaceVariant,
+                tint = when {
+                    isCurrent -> colorScheme.primary
+                    isFromMigration -> Warning
+                    else -> colorScheme.onSurfaceVariant
+                },
                 modifier = Modifier.size(20.dp),
             )
 
@@ -385,19 +424,34 @@ private fun StoredBackupRow(
                     color = colorScheme.onSurface,
                 )
                 Text(
-                    text = if (isFromMigration) {
-                        sizeLabel(backup.sizeInBytes) + " · " +
-                            stringResource(Res.string.backup_history_migration_subtitle)
-                    } else {
-                        sizeLabel(backup.sizeInBytes)
-                    },
+                    text = ageLabel(backup.savedAt, now) + " · " + sizeLabel(backup.sizeInBytes),
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("backup_copy_age"),
                 )
+                // The second line is spent on whichever of the two this row has to say,
+                // and the current copy's takes it: a row saying where the app is standing
+                // is answering the question somebody opened this screen with.
+                if (isCurrent) {
+                    Text(
+                        text = stringResource(Res.string.backup_history_current_subtitle),
+                        style = typography.bodySmall,
+                        color = colorScheme.primary,
+                        modifier = Modifier.testTag("backup_copy_current_subtitle"),
+                    )
+                } else if (isFromMigration) {
+                    Text(
+                        text = stringResource(Res.string.backup_history_migration_subtitle),
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
-            if (isFromMigration) {
-                MigrationTag()
+            when {
+                isCurrent -> CurrentTag()
+                isFromMigration -> MigrationTag()
+                isNewest -> NewestTag()
             }
 
             if (isWorking) {
@@ -422,15 +476,54 @@ private fun StoredBackupRow(
 
 /** What marks the copy taken before a migration out of the run around it. */
 @Composable
-private fun MigrationTag() {
+private fun MigrationTag() = RowTag(
+    text = stringResource(Res.string.backup_history_migration_label),
+    tone = Warning,
+    modifier = Modifier.testTag("backup_copy_migration_label"),
+)
+
+/**
+ * What marks the copy the app is running on — the answer to the question this screen was
+ * silent about: after restoring an older copy, the list looked exactly as it had before.
+ */
+@Composable
+private fun CurrentTag() = RowTag(
+    text = stringResource(Res.string.backup_history_current_label),
+    tone = colorScheme.primary,
+    modifier = Modifier.testTag("backup_copy_current_label"),
+)
+
+/**
+ * What marks the newest copy, on the rows where that is not already said.
+ *
+ * It is only ever on a row that is not the current one, which is exactly when it carries
+ * information: the person is standing on an older copy, and this is how much further
+ * forward the folder goes.
+ */
+@Composable
+private fun NewestTag() = RowTag(
+    text = stringResource(Res.string.backup_history_newest_label),
+    tone = colorScheme.onSurfaceVariant,
+    modifier = Modifier.testTag("backup_copy_newest_label"),
+)
+
+/**
+ * The one shape a row's mark takes, so three marks cannot become three shapes.
+ *
+ * The tag stays at the call site rather than being passed in as text: an `id` a flow
+ * reaches an element by is a `testTag` somebody has to be able to find by searching for
+ * one (`.maestro/README.md`).
+ */
+@Composable
+private fun RowTag(text: String, tone: Color, modifier: Modifier = Modifier) {
     Surface(
-        color = Warning.copy(alpha = 0.15f),
-        contentColor = Warning,
+        color = tone.copy(alpha = 0.15f),
+        contentColor = tone,
         shape = RoundedCornerShape(4.dp),
-        modifier = Modifier.testTag("backup_copy_migration_label"),
+        modifier = modifier,
     ) {
         Text(
-            text = stringResource(Res.string.backup_history_migration_label),
+            text = text,
             style = typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),

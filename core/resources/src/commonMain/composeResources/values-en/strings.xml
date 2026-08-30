@@ -1073,4 +1073,15 @@
     <string name="backup_no_copy_title">The backup copy could not be made</string>
     <string name="backup_no_copy_message">Restoring replaces everything in the app with this file's content, and no copy was kept that could bring it back.</string>
     <string name="backup_no_copy_action">Restore anyway</string>
+    <string name="backup_age_now">just now</string>
+    <string name="backup_age_minutes">%1$d min ago</string>
+    <string name="backup_age_hours">%1$d h ago</string>
+    <string name="backup_age_day">1 day ago</string>
+    <string name="backup_age_days">%1$d days ago</string>
+    <string name="backup_age_month">1 month ago</string>
+    <string name="backup_age_months">%1$d months ago</string>
+    <string name="backup_history_current_label">current</string>
+    <string name="backup_history_current_subtitle">The app's data is this copy's</string>
+    <string name="backup_history_newest_label">most recent</string>
+    <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
 </resources>

@@ -1074,4 +1074,15 @@
     <string name="backup_no_copy_title">Não foi possível guardar a cópia</string>
     <string name="backup_no_copy_message">Restaurar substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia foi guardada que pudesse trazer de volta o que está aqui agora.</string>
     <string name="backup_no_copy_action">Restaurar mesmo assim</string>
+    <string name="backup_age_now">agora mesmo</string>
+    <string name="backup_age_minutes">há %1$d min</string>
+    <string name="backup_age_hours">há %1$d h</string>
+    <string name="backup_age_day">há 1 dia</string>
+    <string name="backup_age_days">há %1$d dias</string>
+    <string name="backup_age_month">há 1 mês</string>
+    <string name="backup_age_months">há %1$d meses</string>
+    <string name="backup_history_current_label">atual</string>
+    <string name="backup_history_current_subtitle">Os dados do app são os desta cópia</string>
+    <string name="backup_history_newest_label">mais recente</string>
+    <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
 </resources>

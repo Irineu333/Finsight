@@ -36,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,6 +52,7 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_accounts
 import com.neoutils.finsight.resources.backup_confirm_action
+import com.neoutils.finsight.resources.backup_confirm_age
 import com.neoutils.finsight.resources.backup_confirm_cancel
 import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_credit_cards
@@ -66,12 +68,15 @@ import com.neoutils.finsight.resources.backup_platform_ios
 import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 /**
  * The last thing between an approved file and an archive that is about to stop existing.
@@ -219,6 +224,12 @@ class ConfirmRestoreModal(
 /** Which file this is: where it came from, how much it holds, and when it was taken. */
 @Composable
 private fun FileIdentityCard(confirmation: RestoreConfirmation) {
+    val clock = koinInject<Clock>()
+
+    // Once, when the sheet appears: the reader is deciding about one file at one moment,
+    // and a span that ticked while they read it would be a different question each frame.
+    val now = remember(clock, confirmation) { clock.now() }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         shape = RoundedCornerShape(16.dp),
@@ -241,7 +252,7 @@ private fun FileIdentityCard(confirmation: RestoreConfirmation) {
             // as information.
             if (confirmation.origin != null) {
                 HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.4f))
-                CapturedAt(confirmation.origin.createdAt)
+                CapturedAt(confirmation.origin.createdAt, now)
             }
         }
     }
@@ -341,25 +352,47 @@ private fun RowScope.CountCell(label: String, value: Long) {
     }
 }
 
+/**
+ * When the file was taken, and — the line that decides — how far back restoring it puts
+ * the person.
+ *
+ * The stamp alone does not answer the question being asked here. "12 ago, 09:15" is a fact
+ * about the file; *what it costs* is the span between then and now, and this is the last
+ * screen before that cost is paid. So the span is said in words, under the stamp, rather
+ * than left to be worked out against today's date.
+ *
+ * It is measured against the moment the sheet was built and not re-read while it is up: a
+ * confirmation whose numbers move under the reader is a confirmation about a different
+ * file every second.
+ */
 @Composable
-private fun CapturedAt(createdAt: Instant) {
+private fun CapturedAt(createdAt: Instant, now: Instant) {
     val dateFormats = LocalDateFormats.current
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.CalendarMonth,
-            contentDescription = null,
-            tint = colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(14.dp),
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.CalendarMonth,
+                contentDescription = null,
+                tint = colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = "${dateFormats.formatInstantDate(createdAt)} · " +
+                    dateFormats.formatInstantTime(createdAt),
+                style = typography.bodySmall,
+                color = colorScheme.onSurfaceVariant,
+            )
+        }
         Text(
-            text = "${dateFormats.formatInstantDate(createdAt)} · " +
-                dateFormats.formatInstantTime(createdAt),
+            text = stringResource(Res.string.backup_confirm_age, ageLabel(createdAt, now)),
             style = typography.bodySmall,
-            color = colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            color = colorScheme.onSurface,
+            modifier = Modifier.testTag("backup_restore_confirm_age"),
         )
     }
 }

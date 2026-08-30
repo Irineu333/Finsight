@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.ui.screen.backup
 
 import androidx.compose.runtime.Composable
@@ -6,6 +8,13 @@ import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultInterval
 import com.neoutils.finsight.domain.vault.label
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_age_day
+import com.neoutils.finsight.resources.backup_age_days
+import com.neoutils.finsight.resources.backup_age_hours
+import com.neoutils.finsight.resources.backup_age_minutes
+import com.neoutils.finsight.resources.backup_age_month
+import com.neoutils.finsight.resources.backup_age_months
+import com.neoutils.finsight.resources.backup_age_now
 import com.neoutils.finsight.resources.backup_copies_many
 import com.neoutils.finsight.resources.backup_copies_none
 import com.neoutils.finsight.resources.backup_copies_one
@@ -19,6 +28,11 @@ import com.neoutils.finsight.resources.backup_size_bytes
 import com.neoutils.finsight.resources.backup_size_kb
 import com.neoutils.finsight.resources.backup_size_mb
 import com.neoutils.finsight.util.stringUiText
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -60,6 +74,43 @@ fun sizeLabel(bytes: Long): String = when {
     else -> stringResource(Res.string.backup_size_bytes, bytes)
 }
 
+/**
+ * How far back a copy reaches, in the unit a person answers the question in.
+ *
+ * It is the one thing about a copy that decides anything: choosing between two of them is
+ * choosing how much of what was typed since is lost, and "12 ago, 09:15" does not say that
+ * — it has to be worked out against today. The exact stamp stays where it is; this is the
+ * reading of it.
+ *
+ * The scale is coarse on purpose and coarsens as it goes: minutes while the copy is minutes
+ * old, then hours, then days, then months. Nobody restoring a copy from March cares whether
+ * it is 94 days or 96, and the row already carries the date for whoever does.
+ *
+ * A copy stamped ahead of now — a device whose clock moved, a file written by another
+ * install — reads as [Res.string.backup_age_now] rather than as a negative span. It is the
+ * closest true thing that can be said: there is nothing between it and the present.
+ */
+@Composable
+fun ageLabel(instant: Instant, now: Instant): String {
+    val elapsed = now - instant
+    val days = elapsed.inWholeDays
+
+    return when {
+        elapsed < 1.minutes -> stringResource(Res.string.backup_age_now)
+
+        elapsed < 1.hours -> stringResource(
+            Res.string.backup_age_minutes,
+            elapsed.inWholeMinutes,
+        )
+
+        elapsed < 1.days -> stringResource(Res.string.backup_age_hours, elapsed.inWholeHours)
+        days == 1L -> stringResource(Res.string.backup_age_day)
+        days < DAYS_PER_MONTH -> stringResource(Res.string.backup_age_days, days)
+        days < 2 * DAYS_PER_MONTH -> stringResource(Res.string.backup_age_month)
+        else -> stringResource(Res.string.backup_age_months, days / DAYS_PER_MONTH)
+    }
+}
+
 /** How long the vault waits before it looks for a reason to take another copy. */
 @Composable
 fun intervalLabel(interval: VaultInterval): String = stringUiText(interval.label)
@@ -81,6 +132,13 @@ fun destinationLabel(destination: VaultDestination): String = when (destination)
     VaultDestination.APP_STORAGE -> stringResource(Res.string.backup_destination_app)
     VaultDestination.USER_FOLDER -> stringResource(Res.string.backup_destination_folder)
 }
+
+/**
+ * What a month is worth when a span is being said out loud: a round thirty days, and not a
+ * calendar. Nothing here is a date arithmetic — it is the width of the bucket "months ago",
+ * and the exact stamp is on the row beside it.
+ */
+private const val DAYS_PER_MONTH = 30L
 
 private const val BYTES_PER_KB = 1_024L
 private const val BYTES_PER_MB = 1_024L * 1_024L

@@ -89,6 +89,17 @@ data class VaultState(
     val markAtLastCapture: Long? = null,
 
     /**
+     * Which kept copy the archive in use is a copy of, or null when no copy describes it —
+     * a picked file was restored, a restore did not land, or nothing has been captured yet.
+     *
+     * It is not [markAtLastCapture] under another name, and the two are apart precisely
+     * when this one is needed: a restore gives coverage up so the next trigger captures,
+     * and answers *nothing covers the archive* about an archive the person is very much
+     * standing somewhere in. See [ArchiveCopy].
+     */
+    val archiveCopy: ArchiveCopy? = null,
+
+    /**
      * Whether the vault has already been offered beside a destructive action's
      * confirmation.
      *

@@ -96,8 +96,25 @@ class BackupVault(
      * The instant of the last capture is untouched, because it has not stopped being true:
      * a copy was taken then, it is still the last one that succeeded, and it is the line the
      * screen shows.
+     *
+     * Which copy the archive *came from* is dropped here too, and put back by
+     * [archiveRestoredFrom] once the replacement has landed. The two facts are different —
+     * see [ArchiveCopy] — but they stop being known at the same instant, and naming a copy
+     * the archive did not come from is the one thing a mark on the list must never do.
      */
     fun archiveReplaced() = vault.forgetCoverage()
+
+    /**
+     * Declares that the archive is now the content of [copy], or of a file no kept copy
+     * describes when it is null — the file the user picked from a device.
+     *
+     * Called only once the replacement has actually landed, which is what makes an
+     * unmarked list mean *unknown* rather than *wrong*. Coverage is deliberately left
+     * given up: the archive the person is standing on is not the archive any copy was
+     * taken from, and the next trigger must still take one.
+     */
+    fun archiveRestoredFrom(copy: StoredBackup?) =
+        vault.recordArchiveCopy(copy?.asArchiveCopy())
 
     /**
      * Writes the archive to [path], hands the file to the destination, and — only once the
@@ -136,7 +153,10 @@ class BackupVault(
         return landed.fold(
             ifLeft = { CaptureOutcome.Failed(it) },
             ifRight = { copy ->
-                vault.recordCapture(at = at, mark = mark)
+                // The copy that landed, not the name it was asked for: a destination may
+                // have written a name of its own, and what is recorded has to be what the
+                // next listing answers with.
+                vault.recordCapture(at = at, mark = mark, copy = copy.asArchiveCopy())
                 sweep(state)
                 CaptureOutcome.Captured(copy)
             },

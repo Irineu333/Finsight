@@ -18,6 +18,7 @@ import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
@@ -72,10 +73,15 @@ class ArchiveRestore(
      * throw away, or null when there is none to restore from — a picker the user closed,
      * or a copy that is no longer in the destination. Whatever it hands back is this
      * call's to remove from then on.
+     * @param from the kept copy [candidate] was taken out of, so that a list of copies can
+     * say which one the archive is standing on afterwards. Null where the file came from a
+     * picker: no kept copy describes the archive then, and the honest answer is that none
+     * is marked.
      */
     suspend fun restoreFrom(
         candidate: suspend () -> Either<BackupError, String?>,
         questions: RestoreQuestions,
+        from: StoredBackup? = null,
     ): RestoreOutcome {
         val produced = try {
             candidate()
@@ -102,7 +108,7 @@ class ArchiveRestore(
                     } else if (!mayReplaceArchive(questions)) {
                         RestoreOutcome.Abandoned
                     } else {
-                        val error = replaceArchiveWith(chosen)
+                        val error = replaceArchiveWith(chosen, from)
                         unclaimed = null
                         drop(chosen)
                         error?.let(RestoreOutcome::Failed) ?: RestoreOutcome.Restored
@@ -175,11 +181,22 @@ class ArchiveRestore(
      * The same is true of a swap that simply fails: the archive is untouched, the copy
      * still describes it, and it costs a file. One direction costs a file, the other costs
      * the guarantee, and only the first is recoverable.
+     *
+     * **Which copy the archive now came from is recorded last, and only where the swap
+     * returned.** It is the one statement here that a person reads directly — a mark on a
+     * list of copies saying *this is the one you are standing on* — so it is written where
+     * it cannot be premature. A swap that failed or a process killed before this line
+     * leaves the list unmarked, which says nothing, rather than marked wrongly, which says
+     * something false; and the next capture puts the mark back on the copy it takes.
      */
-    private suspend fun replaceArchiveWith(path: String): BackupError? = try {
+    private suspend fun replaceArchiveWith(
+        path: String,
+        from: StoredBackup?,
+    ): BackupError? = try {
         withContext(NonCancellable) {
             vault.archiveReplaced()
             database.replaceContentFrom(path)
+            vault.archiveRestoredFrom(from)
         }
         null
     } catch (cause: CancellationException) {

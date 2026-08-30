@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.backupHistory
 
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
+import com.neoutils.finsight.domain.vault.ArchiveCopy
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
@@ -28,6 +29,16 @@ data class BackupHistoryUiState(
     /** Whether copies will go on arriving, which is what the empty state has to say. */
     val isVaultOn: Boolean = false,
 
+    /**
+     * Which copy the archive in use is a copy of, as the vault recorded it when that copy
+     * was taken or restored from — never a reading of the archive, which carries no such
+     * stamp (see [ArchiveCopy]).
+     *
+     * It names a copy without claiming one exists. [isCurrent] is asked only of copies
+     * [copies] already holds, so a name that has left the folder marks nothing.
+     */
+    val archiveCopy: ArchiveCopy? = null,
+
     /** Newest first, as the destination answers and as retention counts. */
     val copies: List<StoredBackup> = emptyList(),
 
@@ -48,4 +59,23 @@ data class BackupHistoryUiState(
      * second operation started beside it would only produce one that has to wait.
      */
     val isBusy: Boolean get() = working != null
+
+    /**
+     * Whether [copy] is the one the app is running on right now — because it was the last
+     * one taken, or because the archive was restored from it.
+     *
+     * False for every row is a legitimate answer and not a defect: a file the user picked
+     * was restored, a restore did not land, or the copy the archive came from has since
+     * left the folder. The list says nothing rather than something untrue.
+     */
+    fun isCurrent(copy: StoredBackup): Boolean = archiveCopy?.describes(copy) == true
+
+    /**
+     * Whether [copy] is the newest one in the destination — the least a person loses by
+     * choosing it.
+     *
+     * It is not asked of the copy that is already the current one: a row that says both is
+     * a row saying the same thing twice, and *current* is the stronger of the two.
+     */
+    fun isNewest(copy: StoredBackup): Boolean = copy == copies.firstOrNull()
 }

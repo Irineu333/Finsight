@@ -77,6 +77,7 @@ class BackupHistoryViewModel(
         BackupHistoryUiState(
             destination = vault.observe().value.destination,
             isVaultOn = vault.observe().value.isOn,
+            archiveCopy = vault.observe().value.archiveCopy,
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -140,6 +141,7 @@ class BackupHistoryViewModel(
                             isUnreadable = true,
                             destination = state.destination,
                             isVaultOn = state.isOn,
+                            archiveCopy = state.archiveCopy,
                         )
                     }
                 },
@@ -150,6 +152,7 @@ class BackupHistoryViewModel(
                             isUnreadable = false,
                             destination = state.destination,
                             isVaultOn = state.isOn,
+                            archiveCopy = state.archiveCopy,
                             copies = copies,
                             totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
                         )
@@ -173,7 +176,14 @@ class BackupHistoryViewModel(
 
         viewModelScope.launch {
             try {
-                when (val outcome = archiveRestore.restoreFrom({ copyOut(backup) }, questions)) {
+                val outcome = archiveRestore.restoreFrom(
+                    candidate = { copyOut(backup) },
+                    questions = questions,
+                    // Which copy the archive will have come from, so the list can say
+                    // where the person is standing once this returns.
+                    from = backup,
+                )
+                when (outcome) {
                     RestoreOutcome.Restored -> succeed(Res.string.backup_restore_success)
                     RestoreOutcome.Abandoned -> Unit
                     is RestoreOutcome.Failed -> fail(outcome.error)

@@ -318,6 +318,28 @@ evita e o que `local-backup` lista como não-objetivo.
 O custo da recusa é concreto e mensurável, e está nos Riscos. Se um dia for reaberta, é como
 opt-in explícito — nunca como padrão (Q3).
 
+### D15 — O histórico é uma tela, não uma seção da tela de backup
+
+A tela de backup é de configuração — tiles, interruptores, escolhas. Um histórico é uma lista de
+conteúdo, e o app tem um padrão próprio para isso: `LazyColumn` com itens keyed e `animateItem()`,
+cabeçalho de data em 18.sp Bold, estado vazio próprio. Misturar os dois aperta os dois.
+
+Três coisas decidem, e nenhuma é estética. A lista **cresce com a retenção configurada** — vinte
+itens, ou todos, se o usuário escolher não remover nada. Cada item **tem ações** — restaurar,
+entregar a um destino, remover — e ações por item numa tela de configuração viram menus escondidos.
+E é a tela do **reencontro**: depois de reinstalar e reapontar a pasta, o que a pessoa faz ali é
+escolher entre quarenta cópias, não ler configurações.
+
+A rota é **interna ao `impl`**, e o subgrafo já estava esperando: `BackupGraph` declara-se como *"the
+node the backup destinations hang from… even though the feature starts with a single screen"*. A
+convenção do projeto reserva a `api` para as rotas externamente navegáveis, e ninguém fora do backup
+precisa navegar direto para o histórico.
+
+Uma consequência que a tela paga sozinha: **entregar uma cópia guardada a um destino**, pelo mesmo
+caminho da exportação manual e sem capturar de novo. É o que dá saída ao usuário de Android, onde o
+cofre é local e nenhum provedor de nuvem aparece no seletor de pastas — a cópia já existe, e só
+precisa de um jeito de sair do aparelho.
+
 ## Risks / Trade-offs
 
 - **No Android, nenhum caminho deste produto cobre perda do aparelho.** Verificado no AOSP: o

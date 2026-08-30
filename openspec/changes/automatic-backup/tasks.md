@@ -61,75 +61,86 @@
       pendente não captura; instalação nova não cria nada para copiar; captura que falha não impede
       a migração
 
-## 6. Histórico e retenção
+## 6. A tela de cópias guardadas
 
-- [ ] 6.1 Listar o destino no momento em que a tela abre; nada de tabela no banco (D9)
-- [ ] 6.2 Ler o `snapshot_meta` de um arquivo só quando o usuário tocar para restaurar
-- [ ] 6.3 Retenção por contagem: fixa e pequena no degrau 1, configurável no degrau 2, com a opção
+- [ ] 6.1 Rota interna no `impl`, pendurada no `BackupGraph` que já existe; a `api` não ganha rota
+      nova, porque ninguém fora do backup navega direto para o histórico (D15)
+- [ ] 6.2 Listar o destino no momento em que a tela abre; nada de tabela no banco (D9)
+- [ ] 6.3 A lista no padrão do app: `LazyColumn` com itens keyed e `animateItem()`, cabeçalho de
+      data, e cabeçalho de destino no topo com a pasta, a contagem e o tamanho total
+- [ ] 6.4 Cada item mostra o que basta para ser reconhecido sem ser aberto — quando, tamanho, e o
+      rótulo da cópia anterior a uma migração
+- [ ] 6.5 Ações por item: restaurar, entregar a um destino escolhido na hora (pelo caminho da
+      exportação manual, sem capturar de novo) e remover
+- [ ] 6.6 Estado vazio próprio, que diz quando a primeira cópia acontece
+- [ ] 6.7 Na tela de backup, o tile que leva até aqui, com a contagem e a mais recente no subtítulo
+
+## 7. Retenção
+
+- [ ] 7.1 Retenção por contagem: fixa e pequena no degrau 1, configurável no degrau 2, com a opção
       de não remover nada
-- [ ] 6.4 Rodar a limpeza somente depois de uma captura bem-sucedida
-- [ ] 6.5 Testes: limite excedido remove os mais antigos e preserva o recém-capturado; retenção
+- [ ] 7.2 Rodar a limpeza somente depois de uma captura bem-sucedida
+- [ ] 7.3 Testes: limite excedido remove os mais antigos e preserva o recém-capturado; retenção
       desligada não remove nada; captura que falha não remove nada; a cópia anterior à migração
       sobrevive à retenção
 
-## 7. A tela
+## 8. A tela de backup
 
-- [ ] 7.1 O interruptor do cofre e os dois gatilhos configuráveis, sobre os tiles que a tela já usa
-- [ ] 7.2 A linha do último backup bem-sucedido, com o destino, e o sinal de atraso quando ela
+- [ ] 8.1 O interruptor do cofre e os dois gatilhos configuráveis, sobre os tiles que a tela já usa
+- [ ] 8.2 A linha do último backup bem-sucedido, com o destino, e o sinal de atraso quando ela
       envelhece além do intervalo
-- [ ] 7.3 O histórico, com data, tamanho e o caminho para restaurar um item
-- [ ] 7.4 A declaração do que o destino em vigor **não** cobre, por degrau
-- [ ] 7.5 A oferta do cofre junto da confirmação de uma ação destrutiva, que liga o cofre inteiro
-- [ ] 7.6 Reescrever as duas frases de `local-backup` que deixaram de ser verdade — que o app não
+- [ ] 8.3 A declaração do que o destino em vigor **não** cobre, por degrau
+- [ ] 8.4 A oferta do cofre junto da confirmação de uma ação destrutiva, que liga o cofre inteiro
+- [ ] 8.5 Reescrever as duas frases de `local-backup` que deixaram de ser verdade — que o app não
       guarda cópias, e que restaurar é irreversível
-- [ ] 7.7 Chaves novas em `values/strings.xml` e `values-en/strings.xml`, as duas no mesmo commit
-- [ ] 7.8 `Modifier.testTag` nos elementos novos, e `Modifier.exposeTestTags()` em qualquer modal
+- [ ] 8.6 Chaves novas em `values/strings.xml` e `values-en/strings.xml`, as duas no mesmo commit
+- [ ] 8.7 `Modifier.testTag` nos elementos novos, e `Modifier.exposeTestTags()` em qualquer modal
       novo que seja raiz de composição
 
-## 8. Fechamento do degrau 1
+## 9. Fechamento do degrau 1
 
-- [ ] 8.1 `./gradlew jvmTest` verde
-- [ ] 8.2 Verificar em app rodando (não só em teste) que ligar o cofre, capturar, listar, restaurar
+- [ ] 9.1 `./gradlew jvmTest` verde
+- [ ] 9.2 Verificar em app rodando (não só em teste) que ligar o cofre, capturar, listar, restaurar
       e reter funcionam ponta a ponta em ao menos uma plataforma
-- [ ] 8.3 Fluxo Maestro para ligar o cofre e ver o histórico, seguindo `.maestro/README.md` §2
+- [ ] 9.3 Fluxo Maestro para ligar o cofre e ver o histórico, seguindo `.maestro/README.md` §2
 
-## 9. Degrau 2 — spikes, antes de qualquer implementação
+## 10. Degrau 2 — spikes, antes de qualquer implementação
 
-- [ ] 9.1 **Q1, iOS, aparelho real**: escolher uma pasta com `UIDocumentPickerViewController` e
+- [ ] 10.1 **Q1, iOS, aparelho real**: escolher uma pasta com `UIDocumentPickerViewController` e
       `UTTypeFolder`, guardar o bookmark, **reiniciar o aparelho**, resolver e escrever. Medir as
       duas variantes de criação do bookmark. Critério: se não sobreviver, o degrau 2 no iOS precisa
       de outro desenho e esta entrega para aqui
-- [ ] 9.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
+- [ ] 10.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
       selecionável em `ACTION_OPEN_DOCUMENT_TREE`; de passagem, confirmar que Drive, OneDrive e
       Dropbox não aparecem no seletor de pasta
-- [ ] 9.3 Registrar os resultados em `design.md`, fechando Q1 e Q2
+- [ ] 10.3 Registrar os resultados em `design.md`, fechando Q1 e Q2
 
-## 10. Degrau 2 — a pasta apontada pelo usuário
+## 11. Degrau 2 — a pasta apontada pelo usuário
 
-- [ ] 10.1 Android: `ActivityResultContracts.OpenDocumentTree` + `takePersistableUriPermission`,
+- [ ] 11.1 Android: `ActivityResultContracts.OpenDocumentTree` + `takePersistableUriPermission`,
       persistindo **apenas o tree URI**; subpasta própria criada dentro da escolhida
-- [ ] 10.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
+- [ ] 11.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
       completa, não com `DocumentFile` (1 + 3N consultas)
-- [ ] 10.3 Android: sugerir `Documents/` ao abrir o seletor — `Download` é proibido desde o
+- [ ] 11.3 Android: sugerir `Documents/` ao abrir o seletor — `Download` é proibido desde o
       Android 11
-- [ ] 10.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
+- [ ] 11.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
       balanceados em `finally`, e `NSFileCoordinator` na escrita e na remoção
-- [ ] 10.5 iOS: a URL security-scoped nunca atravessa `String` em nenhum ponto do percurso
-- [ ] 10.6 Desktop: pasta escolhida como caminho, sem cerimônia
-- [ ] 10.7 Verificar o vínculo na abertura do app, não só ao gravar
-- [ ] 10.8 Vínculo caído: avisar, oferecer reapontar ou guardar dentro do app, e continuar
+- [ ] 11.5 iOS: a URL security-scoped nunca atravessa `String` em nenhum ponto do percurso
+- [ ] 11.6 Desktop: pasta escolhida como caminho, sem cerimônia
+- [ ] 11.7 Verificar o vínculo na abertura do app, não só ao gravar
+- [ ] 11.8 Vínculo caído: avisar, oferecer reapontar ou guardar dentro do app, e continuar
       capturando no degrau 1 enquanto a decisão não vem
-- [ ] 10.9 Reapontar a mesma pasta faz o histórico existente aparecer por inteiro
-- [ ] 10.10 Trocar de pasta: copiar sem remover a origem, apenas o que a retenção do destino
+- [ ] 11.9 Reapontar a mesma pasta faz o histórico existente aparecer por inteiro
+- [ ] 11.10 Trocar de pasta: copiar sem remover a origem, apenas o que a retenção do destino
       comporta, e funcionar com a origem inacessível
-- [ ] 10.11 A frase da tela sobre cobertura, diferente por plataforma — no Android o cofre é local
+- [ ] 11.11 A frase da tela sobre cobertura, diferente por plataforma — no Android o cofre é local
 
-## 11. Fechamento
+## 12. Fechamento
 
-- [ ] 11.1 `./gradlew jvmTest` verde
-- [ ] 11.2 Exercitar o degrau 2 em aparelho nas duas plataformas móveis: escolher pasta, capturar,
+- [ ] 12.1 `./gradlew jvmTest` verde
+- [ ] 12.2 Exercitar o degrau 2 em aparelho nas duas plataformas móveis: escolher pasta, capturar,
       reiniciar o app, capturar de novo, listar, reter, restaurar
-- [ ] 11.3 Exercitar o reencontro: desinstalar, reinstalar, reapontar a pasta, ver o histórico e
+- [ ] 12.3 Exercitar o reencontro: desinstalar, reinstalar, reapontar a pasta, ver o histórico e
       restaurar
-- [ ] 11.4 Revisar `design.md` — fechar Q1 e Q2 com o que foi medido, e deixar Q3 registrada
-- [ ] 11.5 Conferir que `PlatformBackupIsOffTest` continua verde e sem alterações
+- [ ] 12.4 Revisar `design.md` — fechar Q1 e Q2 com o que foi medido, e deixar Q3 registrada
+- [ ] 12.5 Conferir que `PlatformBackupIsOffTest` continua verde e sem alterações

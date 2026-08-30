@@ -200,6 +200,19 @@ capturar enquanto espera uma resposta, e MUST NOT silenciar a perda.
 
 ### Requirement: O histórico é o que está na pasta
 
+O histórico SHALL ter tela própria, alcançada a partir da tela de backup, e MUST NOT ser uma seção
+dentro dela: a lista cresce com a retenção configurada, tem ações por item e é o que se consulta ao
+reencontrar um acervo — nada disso cabe numa tela de configuração.
+
+De cada cópia a lista SHALL mostrar o quanto baste para reconhecê-la sem abri-la: quando foi feita,
+seu tamanho, e o que a distingue das demais. Uma cópia capturada antes de uma migração SHALL ser
+identificada como tal, porque é a que alguém procura quando um número deixou de bater depois de uma
+atualização.
+
+Cada cópia SHALL poder ser restaurada e removida a partir dessa tela, e SHALL poder ser entregue a
+um destino escolhido na hora, pelo mesmo caminho da exportação manual — o que permite tirar do
+aparelho uma cópia que o cofre guardou, sem capturar outra.
+
 O histórico exibido SHALL ser lido do destino no momento em que a tela é aberta. Ele MUST NOT ser
 mantido numa tabela do banco: o backup contém todo o acervo, e uma restauração faria esse registro
 voltar no tempo e passar a divergir da pasta.
@@ -214,6 +227,14 @@ conteúdo, com as mesmas verificações do fluxo de restauração manual.
 #### Scenario: Arquivo apagado por fora
 - **WHEN** o usuário apaga uma cópia pelo gerenciador de arquivos e volta ao app
 - **THEN** o histórico deixa de listá-la, sem erro
+
+#### Scenario: Nenhuma cópia ainda
+- **WHEN** a tela de histórico é aberta logo depois de o cofre ser ligado
+- **THEN** ela declara que ainda não há cópia e diz quando a primeira acontece, sem listar nada
+
+#### Scenario: Uma cópia guardada sai do aparelho
+- **WHEN** o usuário escolhe entregar uma cópia do histórico a um destino
+- **THEN** aquele arquivo é entregue como está, sem que uma nova captura seja feita
 
 #### Scenario: Só o que é do app é removido
 - **WHEN** a retenção remove cópias antigas de uma pasta que contém outros arquivos

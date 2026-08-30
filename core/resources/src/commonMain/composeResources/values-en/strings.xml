@@ -986,8 +986,8 @@
     <string name="backup_restore_success">The data in this app is now the data in this file.</string>
 
     <string name="backup_screen_title">Backup</string>
-    <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets and recurring entries, along with the currencies and exchange rates you have recorded. Preferences of this device — such as the base currency and the dashboard layout — are left out, and each install keeps its own.</string>
-    <string name="backup_no_copies">The vault is off: the app keeps no copies of its own. Getting your data back on another device depends on the file you export.</string>
+    <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets, recurring entries, currencies and rates. Preferences of this device, such as the base currency and the dashboard layout, are left out.</string>
+    <string name="backup_no_copies">With the vault off, the app keeps no copies. Getting your data back depends on the file you export.</string>
     <string name="backup_export_title">Export backup</string>
     <string name="backup_export_subtitle">Saves a file with your data wherever you choose.</string>
     <string name="backup_restore_title">Restore from a file</string>
@@ -1008,7 +1008,7 @@
     <string name="backup_group_automatic">Automatic backup</string>
     <string name="backup_group_manual">Export and restore</string>
     <string name="backup_vault_title">Keep copies automatically</string>
-    <string name="backup_vault_off_subtitle">Off. The app is keeping nothing.</string>
+    <string name="backup_vault_off_subtitle">Off.</string>
     <string name="backup_vault_on_both">Every %1$s, and before deleting anything</string>
     <string name="backup_vault_on_periodic">Every %1$s</string>
     <string name="backup_vault_on_preventive">Before deleting anything</string>

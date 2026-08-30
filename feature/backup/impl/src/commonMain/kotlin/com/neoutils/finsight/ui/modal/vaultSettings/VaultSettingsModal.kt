@@ -58,6 +58,7 @@ import com.neoutils.finsight.ui.screen.backup.intervalLabel
 import com.neoutils.finsight.ui.screen.backup.retentionLabel
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
 import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.ui.theme.finsightSwitchColors
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 
@@ -291,6 +292,7 @@ private fun SwitchRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            colors = finsightSwitchColors(),
             modifier = Modifier.testTag(tag),
         )
     }

@@ -93,6 +93,7 @@ import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.vaultSettings.VaultSettingsModal
 import com.neoutils.finsight.ui.theme.SettingsTileTheme
 import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.ui.theme.finsightSwitchColors
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
@@ -206,6 +207,7 @@ fun BackupScreen(
                             Switch(
                                 checked = uiState.vault.isOn,
                                 onCheckedChange = { viewModel.onAction(BackupAction.SetVaultOn(it)) },
+                                colors = finsightSwitchColors(),
                                 modifier = Modifier.testTag("backup_vault_switch"),
                             )
                         },

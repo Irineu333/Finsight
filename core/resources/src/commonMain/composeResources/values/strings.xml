@@ -987,8 +987,8 @@
     <string name="backup_restore_success">Os dados deste app agora são os deste arquivo.</string>
 
     <string name="backup_screen_title">Backup</string>
-    <string name="backup_scope">O backup contém suas contas, cartões, transações, categorias, orçamentos e recorrências, além das moedas e taxas de câmbio que você registrou. Preferências deste aparelho — como moeda base e o layout do painel — não entram, e cada instalação mantém as suas.</string>
-    <string name="backup_no_copies">O cofre está desligado: o app não guarda nenhuma cópia por conta própria. Recuperar seus dados em outro aparelho depende do arquivo que você exportar.</string>
+    <string name="backup_scope">O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</string>
+    <string name="backup_no_copies">Com o cofre desligado, o app não guarda cópias. Recuperar seus dados depende do arquivo que você exportar.</string>
     <string name="backup_export_title">Exportar backup</string>
     <string name="backup_export_subtitle">Salva um arquivo com seus dados onde você escolher.</string>
     <string name="backup_restore_title">Restaurar de um arquivo</string>
@@ -1009,7 +1009,7 @@
     <string name="backup_group_automatic">Backup automático</string>
     <string name="backup_group_manual">Exportar e restaurar</string>
     <string name="backup_vault_title">Guardar cópias automaticamente</string>
-    <string name="backup_vault_off_subtitle">Desligado. O app não está guardando nada.</string>
+    <string name="backup_vault_off_subtitle">Desligado.</string>
     <string name="backup_vault_on_both">A cada %1$s e antes de excluir algo</string>
     <string name="backup_vault_on_periodic">A cada %1$s</string>
     <string name="backup_vault_on_preventive">Antes de excluir algo</string>

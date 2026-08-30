@@ -2,13 +2,18 @@
 
 package com.neoutils.finsight.ui.modal.storedBackupActions
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
@@ -50,6 +55,9 @@ import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_today
 import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.screen.backup.GroupGap
+import com.neoutils.finsight.ui.screen.backup.RowGap
+import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.originLabel
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
@@ -84,6 +92,13 @@ import org.koin.compose.koinInject
  * read. The file is reached through [StoredBackup] and the destination's own contract;
  * nothing here learns a path into the folder (design D2).
  *
+ * **It is laid out on the beat both backup screens use** (`BackupRows`): the same corner, the
+ * same gap between the rows of one group, and the wider gap only where a group opens. Three
+ * groups stand here — which copy this is, what it holds, and what can be done with it — so
+ * the three actions read as one block rather than as three unrelated cards. Every box inside
+ * the sheet is a step recessed from it, because a card the colour of the sheet it sits on is
+ * not a card.
+ *
  * @param facts the flow rather than a value, because a modal is built once and rendered by
  * the manager that holds it: what was read after the sheet went up would never reach it. The
  * sheet is put up before the read starts and never waits on it.
@@ -101,6 +116,7 @@ class StoredBackupActionsModal(
         val dateFormats = LocalDateFormats.current
         val clock = koinInject<Clock>()
         val held by facts.collectAsStateWithLifecycle()
+        val isFromMigration = backup.name == PRE_MIGRATION_BACKUP_NAME
 
         // Once, when the sheet appears. The span under the stamp answers a question about
         // one copy at one moment, and one that ticked while it was read would be a
@@ -113,7 +129,7 @@ class StoredBackupActionsModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
                 .testTag("backup_copy_actions"),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(RowGap),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
@@ -128,19 +144,24 @@ class StoredBackupActionsModal(
                 // How far back it reaches, which is what choosing between two copies is
                 // about — the row that opened this sheet says the same thing, in the same
                 // words. The copy kept before an update keeps its own sentence instead:
-                // what it is for is the reason somebody went looking for it.
+                // what it is for is the reason somebody went looking for it, and it wears
+                // the amber the list marks it with.
                 Text(
-                    text = if (backup.name == PRE_MIGRATION_BACKUP_NAME) {
+                    text = if (isFromMigration) {
                         stringResource(Res.string.backup_history_migration_subtitle)
                     } else {
                         ageLabel(backup.savedAt, now)
                     },
                     style = typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
+                    color = if (isFromMigration) Warning else colorScheme.onSurfaceVariant,
                 )
             }
 
-            CopyFacts(facts = held, sizeInBytes = backup.sizeInBytes)
+            CopyFacts(
+                facts = held,
+                sizeInBytes = backup.sizeInBytes,
+                modifier = Modifier.padding(top = GroupGap - RowGap),
+            )
 
             ActionRow(
                 icon = Icons.Outlined.Restore,
@@ -149,6 +170,7 @@ class StoredBackupActionsModal(
                 tone = colorScheme.onSurface,
                 tag = "backup_copy_restore",
                 onClick = onRestore,
+                modifier = Modifier.padding(top = GroupGap - RowGap),
             )
 
             ActionRow(
@@ -181,43 +203,59 @@ class StoredBackupActionsModal(
  * the facts, and it is the one that cannot go missing. Everything above it comes out of the
  * copy — the stamp the capture wrote, and how much of the archive is in the file.
  *
+ * **The frame is drawn before the facts arrive.** All four labels stand in every state, so
+ * the box has one shape and the values fill into it: a bar where a value is still coming, a
+ * dash where it never will. A box that grew by three rows the moment the file answered
+ * would move the three actions under the reader's thumb.
+ *
  * There is no *why* row. Which trigger took a copy is not recorded in the file (design D9,
  * and `snapshot_meta` carries a `formatVersion` for the day it is), so the sheet says the
  * one thing about a copy's purpose that is actually known: the copy kept before an update
  * names itself, and it does so above, where the list also says it.
  */
 @Composable
-private fun CopyFacts(facts: KeptCopyFacts, sizeInBytes: Long) {
+private fun CopyFacts(
+    facts: KeptCopyFacts,
+    sizeInBytes: Long,
+    modifier: Modifier = Modifier,
+) {
+    val held = facts as? KeptCopyFacts.Held
+
+    // Nothing was read and nothing will be: the row keeps its label and says so with the
+    // mark for an absent figure. While the file is still open, a value is coming and the
+    // row shows that instead.
+    val absent = if (facts is KeptCopyFacts.Unreadable) MissingValue else null
+
     Surface(
-        color = colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
+        color = colorScheme.background,
+        shape = TileShape,
+        modifier = modifier
             .fillMaxWidth()
+            .animateContentSize()
             .testTag("backup_copy_facts"),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (facts is KeptCopyFacts.Held) {
-                FactRow(
-                    label = stringResource(Res.string.backup_copy_facts_origin),
-                    value = originValue(facts.origin),
-                    tag = "backup_copy_facts_origin",
-                )
-                // Accounts and cards on one line, because they are read together: what a
-                // person recognises is the shape of their own archive, not two figures.
-                FactRow(
-                    label = stringResource(Res.string.backup_copy_facts_accounts),
-                    value = "${facts.counts.accounts} · ${facts.counts.creditCards}",
-                    tag = "backup_copy_facts_accounts",
-                )
-                FactRow(
-                    label = stringResource(Res.string.backup_confirm_transactions),
-                    value = facts.counts.transactions.toString(),
-                    tag = "backup_copy_facts_transactions",
-                )
-            }
+            FactRow(
+                label = stringResource(Res.string.backup_copy_facts_origin),
+                value = held?.let { originValue(it.origin) } ?: absent,
+                tag = "backup_copy_facts_origin",
+            )
+            // Accounts and cards on one line, because they are read together: what a
+            // person recognises is the shape of their own archive, not two figures.
+            FactRow(
+                label = stringResource(Res.string.backup_copy_facts_accounts),
+                value = held?.let { "${it.counts.accounts} · ${it.counts.creditCards}" }
+                    ?: absent,
+                tag = "backup_copy_facts_accounts",
+            )
+            FactRow(
+                label = stringResource(Res.string.backup_confirm_transactions),
+                value = held?.counts?.transactions?.toString() ?: absent,
+                tag = "backup_copy_facts_transactions",
+            )
 
             FactRow(
                 label = stringResource(Res.string.backup_copy_facts_size),
@@ -247,8 +285,15 @@ private fun originValue(origin: FileOrigin?): String {
     }
 }
 
+/**
+ * One label and what stands opposite it: the figure, or the bar that says one is coming.
+ *
+ * The figures are set in tabular numerals so that four values stacked in one column line up
+ * on their digits — a box of numbers that does not is what makes a set of facts read as a
+ * dump of strings.
+ */
 @Composable
-private fun FactRow(label: String, value: String, tag: String) {
+private fun FactRow(label: String, value: String?, tag: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -262,14 +307,39 @@ private fun FactRow(label: String, value: String, tag: String) {
             color = colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Text(
-            text = value,
-            style = typography.bodySmall,
-            fontWeight = FontWeight.Medium,
-            color = colorScheme.onSurface,
-            textAlign = TextAlign.End,
-        )
+        if (value == null) {
+            PendingValue()
+        } else {
+            Text(
+                text = value,
+                style = typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = TabularFigures,
+                ),
+                color = colorScheme.onSurface,
+                textAlign = TextAlign.End,
+            )
+        }
     }
+}
+
+/**
+ * Where a value will be. It takes the height of the line it stands in, so the row it holds
+ * open is exactly the row the figure will occupy.
+ */
+@Composable
+private fun PendingValue() {
+    Box(
+        modifier = Modifier
+            .padding(vertical = 3.dp)
+            .width(56.dp)
+            .height(10.dp)
+            .background(
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(4.dp),
+            )
+            .testTag("backup_copy_facts_pending"),
+    )
 }
 
 /**
@@ -285,7 +355,7 @@ private fun Reading() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.size(12.dp),
+            modifier = Modifier.size(14.dp),
             color = colorScheme.onSurfaceVariant,
             strokeWidth = 1.5.dp,
         )
@@ -325,6 +395,10 @@ private fun Unreadable() {
     }
 }
 
+/**
+ * One thing this sheet can do, as a card of the same make as the row that opened it: the
+ * corner the list uses, the padding the list uses, and a ground a step below the sheet.
+ */
 @Composable
 private fun ActionRow(
     icon: ImageVector,
@@ -333,18 +407,19 @@ private fun ActionRow(
     tone: Color,
     tag: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
-        color = colorScheme.surfaceContainer,
+        color = colorScheme.background,
         contentColor = tone,
-        shape = RoundedCornerShape(12.dp),
+        shape = TileShape,
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag(tag),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -356,8 +431,7 @@ private fun ActionRow(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = title,
-                    style = typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
+                    style = typography.titleMedium,
                 )
                 if (subtitle != null) {
                     Text(
@@ -370,3 +444,9 @@ private fun ActionRow(
         }
     }
 }
+
+/** What stands where a figure would, on a copy that could not be opened to produce one. */
+private const val MissingValue = "—"
+
+/** Digits of one width, so a column of figures lines up on them. */
+private const val TabularFigures = "tnum"

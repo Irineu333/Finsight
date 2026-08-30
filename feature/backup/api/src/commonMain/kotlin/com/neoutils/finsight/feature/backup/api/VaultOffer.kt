@@ -52,11 +52,18 @@ fun interface VaultOffer {
  */
 class VaultOfferTerms(
     val intervalLabel: UiText,
-    private val turnOn: () -> Unit,
+    private val turnOn: suspend () -> Unit,
 ) {
 
-    /** Turns the whole vault on. */
-    fun accept() = turnOn()
+    /**
+     * Turns the whole vault on, and takes the copy that turning it on means.
+     *
+     * It suspends until that copy is either in the destination or has failed, and that is
+     * what keeps a deletion to one file: the action's own trigger asks for the same copy a
+     * moment later and finds the archive already covered (design D8). Accepting and then
+     * deleting is one occasion, however many triggers see it.
+     */
+    suspend fun accept() = turnOn()
 }
 
 /**
@@ -92,9 +99,11 @@ class VaultOfferState(offer: VaultOffer) {
      * otherwise — including where there was never an offer to tick.
      *
      * **Called before the destructive action, never after.** The vault has to be on by the
-     * time the action asks it for the copy, which is the next thing that happens.
+     * time the action asks it for the copy, which is the next thing that happens — and the
+     * copy taken here is that copy, which is why one deletion accepted from the offer still
+     * produces one file.
      */
-    fun acceptIfTicked() {
+    suspend fun acceptIfTicked() {
         if (_isAccepted.value) terms?.accept()
     }
 }

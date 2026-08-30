@@ -35,6 +35,7 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
+import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.SuccessModal
@@ -178,6 +179,7 @@ class BackupViewModelTest {
         destination = vaultDestination,
         captureOrigin = origin,
         vault = vaultState,
+        switch = VaultSwitch(state = vaultState, vault = vault),
         modalManager = modalManager,
         clock = Clock.System,
     )

@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveCoverage
+import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.feature.backup.api.BackupEntry
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PeriodicBackup
@@ -60,6 +61,12 @@ val backupModule = module {
         )
     }
 
+    // Turning the vault on, from wherever it is turned on from: the switch on the backup
+    // screen and the offer beside a destructive confirmation. Bound once because taking the
+    // first copy is what enabling *is* (design D8 decides whether one is owed), and a
+    // caller writing the preference itself would be a vault turned on with nothing in it.
+    factory { VaultSwitch(state = get(), vault = get()) }
+
     // What every other feature reaches the vault through, and the only binding of it: a
     // second implementation would be a second answer to which actions are worth a copy.
     factory<PreventiveBackup> { VaultPreventiveBackup(state = get(), vault = get()) }
@@ -73,7 +80,7 @@ val backupModule = module {
     // The offer a destructive confirmation carries. Bound here because "has it been made
     // already" is the vault's state and not the asking screen's — a feature that decided
     // it for itself would offer again to somebody who already said no.
-    factory<VaultOffer> { VaultOfferOnce(vault = get()) }
+    factory<VaultOffer> { VaultOfferOnce(vault = get(), switch = get()) }
 
     // The occasion the shell announces — the app was opened. It is resolved there in a
     // `LaunchedEffect`, which no compiler checks, so `AppModulesTest` asserts the binding.
@@ -124,6 +131,7 @@ val backupModule = module {
             destination = get(),
             captureOrigin = get(),
             vault = get(),
+            switch = get(),
             modalManager = get(),
             clock = get(),
         )

@@ -14,10 +14,13 @@ import com.neoutils.finsight.feature.backup.api.VaultOfferTerms
  *
  * Accepting turns the whole vault on (design D1). There is nothing narrower to turn on:
  * the switch governs every trigger, and an offer that armed one of them would be promising
- * something the vault cannot be.
+ * something the vault cannot be. It goes through [VaultSwitch] rather than writing the
+ * preference here, because turning the vault on is also what takes the first copy — and a
+ * confirmation is the one place where that copy is the whole point.
  */
 class VaultOfferOnce(
     private val vault: BackupVaultRepository,
+    private val switch: VaultSwitch,
 ) : VaultOffer {
 
     override fun offerOnce(): VaultOfferTerms? {
@@ -30,7 +33,7 @@ class VaultOfferOnce(
 
         return VaultOfferTerms(
             intervalLabel = VaultInterval.nearest(state.interval).label,
-            turnOn = { vault.setOn(true) },
+            turnOn = { switch.setOn(true) },
         )
     }
 }

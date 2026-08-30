@@ -16,7 +16,9 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultState
+import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
@@ -83,6 +85,7 @@ class BackupViewModel(
     private val destination: BackupDestination,
     private val captureOrigin: CaptureOrigin,
     private val vault: BackupVaultRepository,
+    private val switch: VaultSwitch,
     private val modalManager: ModalManager,
     private val clock: Clock,
 ) : ViewModel() {
@@ -142,11 +145,42 @@ class BackupViewModel(
             BackupAction.DiscardCandidate -> discardCandidate()
             BackupAction.RestoreWithoutCopy -> answerRefusal(proceed = true)
             BackupAction.AbandonRestore -> answerRefusal(proceed = false)
-            is BackupAction.SetVaultOn -> vault.setOn(action.isOn)
+            is BackupAction.SetVaultOn -> setVaultOn(action.isOn)
             is BackupAction.SetPeriodicOn -> vault.setPeriodicOn(action.isOn)
             is BackupAction.SetPreventiveOn -> vault.setPreventiveOn(action.isOn)
             is BackupAction.SetInterval -> vault.setInterval(action.interval.duration)
             is BackupAction.SetRetention -> vault.setRetention(action.retention)
+        }
+    }
+
+    /**
+     * Moves the switch, and lets turning the vault on mean what it means.
+     *
+     * The copy is [com.neoutils.finsight.domain.vault.VaultSwitch]'s, not this screen's:
+     * the vault is turned on from here and from the offer beside a destructive
+     * confirmation, and a first copy written here would be one the offer never takes. What
+     * is this screen's is the saying — a vault that is on and holding nothing is the one
+     * outcome the person watching this switch would otherwise never hear about, and the
+     * kept-copies screen would go on promising a copy that already failed to arrive.
+     *
+     * The switch itself has already moved by the time this suspends: the preference is
+     * written before the capture starts, so the toggle is not waiting on a `VACUUM INTO`.
+     * The vault stays on either way. Undoing the person's choice because a file could not
+     * be written would leave a deletion they are about to confirm meeting a vault that is
+     * off — no copy, and no question about going on without one — and the destination they
+     * chose may well be writable at the next trigger.
+     */
+    private fun setVaultOn(isOn: Boolean) {
+        viewModelScope.launch {
+            when (val outcome = switch.setOn(isOn)) {
+                is CaptureOutcome.Failed -> fail(outcome.error)
+
+                // What this screen says about the destination was read before a copy landed
+                // in it, and the copy is this screen's own doing.
+                is CaptureOutcome.Captured -> readDestination()
+
+                CaptureOutcome.AlreadyCovered, CaptureOutcome.VaultOff -> Unit
+            }
         }
     }
 

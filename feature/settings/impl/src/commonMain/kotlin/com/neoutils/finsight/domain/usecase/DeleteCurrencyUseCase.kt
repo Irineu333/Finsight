@@ -9,6 +9,8 @@ import com.neoutils.finsight.domain.error.CurrencyError
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 
 /**
  * What names a currency: what refuses its deletion, and what a deletion would take.
@@ -43,8 +45,15 @@ data class CurrencyUsage(
  * deleting and re-registering an invented one would silently re-attach the old
  * observations to a different concept.
  *
- * The cost is destroying observations the user made, and the mitigation is [ratesToRemove]
- * saying **how many** before it happens instead of hiding it.
+ * The cost is destroying observations the user made, and the mitigation is [CurrencyUsage.rates]
+ * saying **how many** before it happens instead of hiding it — and, since the observations
+ * are typed work, a copy of the archive taken first.
+ *
+ * **The preventive capture is asked for here and not in the repository** (design D6). This is
+ * the one place that knows a user asked for a currency to be deleted; the repository knows a
+ * unit of work, and it opens the write transaction `VACUUM INTO` refuses to run inside. Asking
+ * here is one copy per action, above the transaction, and only once the refusals below have
+ * let the deletion through — a deletion the domain denies destroys nothing to copy.
  */
 class DeleteCurrencyUseCase(
     private val repository: ICurrencyRepository,
@@ -52,6 +61,7 @@ class DeleteCurrencyUseCase(
     private val rateSyncStateRepository: IRateSyncStateRepository,
     private val accountDao: AccountDao,
     private val budgetDao: BudgetDao,
+    private val preventiveBackup: PreventiveBackup,
 ) {
     /**
      * What names this currency today — the single answer both the refusal and the screen
@@ -71,13 +81,28 @@ class DeleteCurrencyUseCase(
         )
     }
 
-    suspend operator fun invoke(code: String): Either<CurrencyError, Unit> {
+    /**
+     * @param withoutCopy the person's answer, after being told that the copy owed before
+     * this deletion could not be taken: delete anyway, with nothing kept back. It says
+     * *whether* the rule applies to this one attempt and never *which* actions it covers —
+     * `DestructiveAction.DELETE_CURRENCY` below is stated here, in the domain, whatever the
+     * answer was (design D7).
+     */
+    suspend operator fun invoke(
+        code: String,
+        withoutCopy: Boolean = false,
+    ): Either<CurrencyError, Unit> {
         val normalized = code.uppercase()
         val usage = usageOf(normalized)
 
         if (usage.accounts > 0) return CurrencyError.DENOMINATED_BY_ACCOUNT.left()
 
         if (usage.budgets > 0) return CurrencyError.DENOMINATED_BY_BUDGET.left()
+
+        // Refused above, so from here the observations are really going. A copy owed and
+        // not taken throws, and letting it out of here is the refusal: the deletion below
+        // never runs, and only a screen may decide to go on without a copy.
+        if (!withoutCopy) preventiveBackup.captureBefore(DestructiveAction.DELETE_CURRENCY)
 
         // The rate archive goes with it, in the same write — which is the repository's
         // promise and not two calls from here. An observation must not outlive the

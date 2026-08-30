@@ -22,6 +22,13 @@ kotlin {
             implementation(projects.feature.categories.api)
             implementation(projects.feature.accounts.api)
 
+            // Two sheets a deletion here puts up come from there: the refusal a failed
+            // preventive capture raises, and the offer to turn the vault on beside the
+            // largest thing this app destroys on one confirmation. Both are one rule with
+            // one owner, and it is the feature that owns the vault. The api, never the
+            // impl, which the dependency rules would refuse anyway.
+            implementation(projects.feature.backup.api)
+
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
         }

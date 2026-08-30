@@ -1,0 +1,509 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
+package com.neoutils.finsight.ui.modal.withoutCopy
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.room.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.entity.CurrencyEntity
+import com.neoutils.finsight.database.mapper.ExchangeRateMapper
+import com.neoutils.finsight.database.repository.CurrencyRepository
+import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
+import com.neoutils.finsight.domain.repository.RateSyncState
+import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
+import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
+import com.neoutils.finsight.feature.backup.api.ProceedWithoutCopyModal
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.currencies_delete_confirm_action
+import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
+import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormAction
+import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
+import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
+import com.neoutils.finsight.feature.backup.api.VaultOffer
+import com.neoutils.finsight.feature.backup.api.VaultOfferTerms
+
+/**
+ * A preventive capture that fails **interrupts the action and asks**, and this is where the
+ * asking half is pinned.
+ *
+ * Every assertion is made against the archive rather than against the exception, because an
+ * exception caught is not the requirement: a screen that swallowed the refusal and deleted
+ * anyway would satisfy "it was caught" and destroy the very thing the copy existed for. So
+ * each test says what is still in the tables while the question is up, and what is in them
+ * after each of the three answers — yes, no, and walking away.
+ */
+class ProceedWithoutCopyTest {
+
+    private val db = Room.inMemoryDatabaseBuilder<AppDatabase>()
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()
+
+    /**
+     * Every view model these tests build, held so it can be cleared at the end.
+     *
+     * The rate form collects the currency catalog for as long as it lives, and in the app
+     * that ends when the sheet is dismissed. A test that never ends it leaves the collector
+     * resuming on a main dispatcher that has already been reset, which fails whichever test
+     * happens to run next rather than the one that leaked.
+     */
+    private val store = ViewModelStore()
+
+    private var built = 0
+
+    private fun <T : ViewModel> T.tracked(): T = also { store.put("vm-${built++}", it) }
+
+    @BeforeTest
+    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
+    @AfterTest
+    fun tearDown() {
+        store.clear()
+        Dispatchers.resetMain()
+        db.close()
+    }
+
+    private class FixedBase(code: String) : IBaseCurrencyRepository {
+        private val state = MutableStateFlow(code)
+        override fun observe(): StateFlow<String> = state
+        override suspend fun set(code: String) { state.value = code }
+    }
+
+    private class FakeSyncState : IRateSyncStateRepository {
+        private val flow = MutableStateFlow(RateSyncState())
+        override fun observe(): StateFlow<RateSyncState> = flow
+        override suspend fun record(state: RateSyncState) { flow.value = state }
+    }
+
+    /**
+     * A vault with nowhere to write, counting the times it was asked.
+     *
+     * The count is what says the second attempt really went **without** a copy: a screen
+     * that answered the question by simply retrying would ask twice and be refused twice,
+     * and would never destroy anything.
+     */
+    private class Refusing : PreventiveBackup {
+
+        var asked = 0
+            private set
+
+        override suspend fun captureBefore(action: DestructiveAction) {
+            asked++
+            throw PreventiveCaptureException(
+                reason = UiText.Raw("nowhere to write"),
+                message = "nowhere to write",
+            )
+        }
+    }
+
+    /**
+     * A vault with an offer to make, once, that records whether it was accepted.
+     *
+     * What turning the vault on actually does is `VaultOfferOnce`'s and is pinned in the
+     * backup module. What is asserted here is the half these screens own: that the offer is
+     * asked for, and that a box left ticked is acted on **before** anything is destroyed.
+     */
+    private class OfferingVault : VaultOffer {
+
+        var accepted = false
+            private set
+
+        private var asked = 0
+
+        override fun offerOnce(): VaultOfferTerms? {
+            asked++
+            if (asked > 1) return null
+
+            return VaultOfferTerms(intervalLabel = UiText.Raw("3 days")) { accepted = true }
+        }
+    }
+
+    /** Reads the offer's answer at the one moment it has to be true already. */
+    private class WatchingBackup(private val vault: OfferingVault) : PreventiveBackup {
+
+        var acceptedWhenAsked: Boolean? = null
+            private set
+
+        override suspend fun captureBefore(action: DestructiveAction) {
+            acceptedWhenAsked = vault.accepted
+        }
+    }
+
+    /**
+     * A vault that covers one action and no other, and remembers which it was asked about.
+     *
+     * It is what pins the half a screen owns: each sheet asks about the action it is a
+     * confirmation of, and shows what it is told. Which actions are worth a copy is decided
+     * behind this and asserted in the backup module.
+     */
+    private class RecordingCoverage(private val covered: DestructiveAction) : PreventiveCoverage {
+
+        var asked: DestructiveAction? = null
+            private set
+
+        override fun keepsCopyBefore(action: DestructiveAction): Boolean {
+            asked = action
+            return action == covered
+        }
+    }
+
+    private val base = FixedBase("BRL")
+
+    private val currencies = CurrencyRepository(
+        database = db,
+        dao = db.currencyDao(),
+        exchangeRateDao = db.exchangeRateDao(),
+    )
+
+    private fun rates(backup: PreventiveBackup) = ExchangeRateRepository(
+        dao = db.exchangeRateDao(),
+        mapper = ExchangeRateMapper(),
+        baseCurrencyRepository = base,
+        preventiveBackup = backup,
+    )
+
+    private fun deleteCurrency(backup: PreventiveBackup) = DeleteCurrencyUseCase(
+        repository = currencies,
+        exchangeRateRepository = rates(backup),
+        rateSyncStateRepository = FakeSyncState(),
+        accountDao = db.accountDao(),
+        budgetDao = db.budgetDao(),
+        preventiveBackup = backup,
+    )
+
+    private fun deleteViewModel(
+        code: String,
+        backup: PreventiveBackup,
+        vaultOffer: VaultOffer = VaultOffer.None,
+        coverage: PreventiveCoverage = PreventiveCoverage.None,
+    ) = DeleteCurrencyViewModel(
+        code = code,
+        deleteCurrency = deleteCurrency(backup),
+        modalManager = ModalManager(),
+        vaultOffer = vaultOffer,
+        coverage = coverage,
+    ).tracked()
+
+    /**
+     * Built and then **settled**: the form reads the currency catalog when it opens, and
+     * that read has to finish inside the test. A Room query still in flight when the test
+     * returns resumes on a main dispatcher the teardown has already reset, and fails
+     * whichever test happens to run next rather than the one that left it.
+     */
+    private suspend fun formViewModel(
+        existing: ExchangeRate?,
+        backup: PreventiveBackup,
+        vaultOffer: VaultOffer = VaultOffer.None,
+        coverage: PreventiveCoverage = PreventiveCoverage.None,
+    ) = ExchangeRateFormViewModel(
+        existing = existing,
+        baseCurrencyRepository = base,
+        exchangeRateRepository = rates(backup),
+        currencyRepository = currencies,
+        modalManager = ModalManager(),
+        vaultOffer = vaultOffer,
+        coverage = coverage,
+    ).tracked().also { it.uiState.first { state -> state.selectableCurrencies.isNotEmpty() } }
+
+    private val march = LocalDate(2026, 3, 14)
+
+    private suspend fun seedCurrencies(vararg codes: String) {
+        codes.forEach { db.currencyDao().upsert(CurrencyEntity(code = it, symbol = it)) }
+    }
+
+    private suspend fun seedRate(from: String, to: String, value: Double): ExchangeRate {
+        val archive = rates(PreventiveBackup.None)
+
+        archive.save(
+            ExchangeRate(
+                currency = from,
+                counterCurrency = to,
+                date = march,
+                rate = value,
+                source = ExchangeRate.Source.USER,
+            )
+        )
+
+        return archive.observeAll().first().first { it.currency == from }
+    }
+
+    // --- deleting a currency ---
+
+    @Test
+    fun `a refused copy stops the deletion and asks, with the currency still there`() = runTest {
+        seedCurrencies("BRL", "USD")
+        seedRate("USD", "BRL", 5.5)
+
+        val viewModel = deleteViewModel("USD", Refusing())
+        viewModel.delete()
+
+        val reason = viewModel.captureRefusal.first { it != null }
+
+        assertNotNull(reason, "the question says why there is no copy")
+        assertTrue(db.currencyDao().exists("USD"), "nothing may be destroyed before the answer")
+        assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
+    }
+
+    @Test
+    fun `saying yes deletes the currency, and takes no copy on the way`() = runTest {
+        seedCurrencies("BRL", "USD")
+        seedRate("USD", "BRL", 5.5)
+
+        val vault = Refusing()
+        val viewModel = deleteViewModel("USD", vault)
+        viewModel.delete()
+        viewModel.captureRefusal.first { it != null }
+
+        viewModel.deleteWithoutCopy()
+
+        // Awaited through the registry the screen observes: the write lands on another
+        // dispatcher, and the row disappearing is what the user is shown.
+        currencies.observeAll().first { all -> all.none { it.code == "USD" } }
+
+        assertEquals(0, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
+        assertNull(viewModel.captureRefusal.value, "there is nothing left to ask")
+        assertEquals(1, vault.asked, "the second attempt went without a copy, not for another one")
+    }
+
+    @Test
+    fun `saying no leaves the currency and its observations exactly as they were`() = runTest {
+        seedCurrencies("BRL", "USD")
+        seedRate("USD", "BRL", 5.5)
+
+        val vault = Refusing()
+        val viewModel = deleteViewModel("USD", vault)
+        viewModel.delete()
+        viewModel.captureRefusal.first { it != null }
+
+        viewModel.abandonDeletion()
+
+        assertNull(viewModel.captureRefusal.first { it == null })
+        assertTrue(db.currencyDao().exists("USD"))
+        assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
+        assertEquals(1, vault.asked)
+    }
+
+    /**
+     * Walking away from the question is answering no. The sheet routes its own dismissal to
+     * the same answer the cancel button gives, so a scrim tap cannot become permission.
+     */
+    @Test
+    fun `dismissing the question is answering no`() = runTest {
+        seedCurrencies("BRL", "USD")
+
+        val viewModel = deleteViewModel("USD", Refusing())
+        viewModel.delete()
+        val reason = viewModel.captureRefusal.first { it != null }
+
+        ProceedWithoutCopyModal(
+            reason = requireNotNull(reason),
+            action = Res.string.currencies_delete_confirm_action,
+            onProceed = viewModel::deleteWithoutCopy,
+            onAbandon = viewModel::abandonDeletion,
+        ).onDismissed()
+
+        assertNull(viewModel.captureRefusal.first { it == null })
+        assertTrue(db.currencyDao().exists("USD"))
+    }
+
+    // --- removing an observation ---
+
+    @Test
+    fun `a refused copy stops the removal and asks, with the observation still there`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+
+        val viewModel = formViewModel(rate, Refusing())
+        viewModel.onAction(ExchangeRateFormAction.Remove)
+
+        assertNotNull(viewModel.captureRefusal.first { it != null })
+        assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
+    }
+
+    @Test
+    fun `saying yes removes the observation, and takes no copy on the way`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+
+        val vault = Refusing()
+        val viewModel = formViewModel(rate, vault)
+        viewModel.onAction(ExchangeRateFormAction.Remove)
+        viewModel.captureRefusal.first { it != null }
+
+        viewModel.onAction(ExchangeRateFormAction.RemoveWithoutCopy)
+
+        rates(PreventiveBackup.None).observeAll().first { it.isEmpty() }
+
+        assertNull(viewModel.captureRefusal.value)
+        assertEquals(1, vault.asked, "the second attempt went without a copy, not for another one")
+    }
+
+    // --- the vault, offered in place ---
+
+    /**
+     * The offer rides on whichever destructive confirmation the person reaches first, and a
+     * currency taking every rate that names it is one of the five that carry it. Accepting
+     * is acted on **before** the removal asks for the copy.
+     */
+    @Test
+    fun `taking the offer beside the currency turns the vault on before it goes`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val vault = OfferingVault()
+        val backup = WatchingBackup(vault)
+
+        val viewModel = deleteViewModel("USD", backup, vaultOffer = vault)
+
+        assertNotNull(viewModel.offer.terms, "a vault that is off is offered beside the risk")
+        assertTrue(viewModel.offer.isAccepted.value, "the offer is made, not merely displayed")
+
+        // Joined rather than watched through the registry: what is asserted below is the
+        // order of two things inside this one coroutine, so the test waits for all of it.
+        viewModel.delete().join()
+
+        assertTrue(vault.accepted, "one yes, and the whole vault is on")
+        assertEquals(
+            true,
+            backup.acceptedWhenAsked,
+            "a vault turned on after the deletion has nothing left to copy",
+        )
+    }
+
+    /**
+     * The gate is the vault's and not a screen's, so the confirmation reached second
+     * carries nothing — across features as much as within one.
+     */
+    @Test
+    fun `an offer made beside the currency leaves the rate form nothing to show`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+        val vault = OfferingVault()
+
+        val first = deleteViewModel("USD", PreventiveBackup.None, vaultOffer = vault)
+        val second = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
+
+        assertNotNull(first.offer.terms, "the confirmation reached first carries it")
+        assertNull(second.offer.terms, "and the next one carries nothing")
+    }
+
+    /**
+     * The offer is made beside a risk or not at all. A form opened to *register* a rate
+     * destroys nothing, so it neither shows the offer nor spends the one chance to make it
+     * — the next real deletion still gets it.
+     */
+    @Test
+    fun `a form opened to register a rate neither offers nor spends the offer`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+        val vault = OfferingVault()
+
+        val registering = formViewModel(null, PreventiveBackup.None, vaultOffer = vault)
+
+        assertNull(registering.offer.terms, "nothing is being destroyed here")
+
+        val removing = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
+
+        assertNotNull(removing.offer.terms, "the offer was spent where there was no risk")
+    }
+
+    @Test
+    fun `taking the offer beside the rate turns the vault on before it goes`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+        val vault = OfferingVault()
+        val backup = WatchingBackup(vault)
+
+        val viewModel = formViewModel(rate, backup, vaultOffer = vault)
+        viewModel.onAction(ExchangeRateFormAction.Remove)
+
+        rates(PreventiveBackup.None).observeAll().first { it.isEmpty() }
+
+        assertTrue(vault.accepted, "one yes, and the whole vault is on")
+        assertEquals(
+            true,
+            backup.acceptedWhenAsked,
+            "a vault turned on after the removal has nothing left to copy",
+        )
+    }
+
+    // --- what the sheets say about undoing it ---
+
+    /**
+     * Each sheet asks about the action it confirms and says what it is told. Neither
+     * carries a list of its own: handed a vault that covers something else, both stop
+     * promising a copy without a line of them changing (design D7).
+     */
+    @Test
+    fun `the two settings confirmations say what they are told about their own action`() =
+        runTest {
+            seedCurrencies("BRL", "USD")
+            val rate = seedRate("USD", "BRL", 5.5)
+
+            val currencyCovered = RecordingCoverage(DestructiveAction.DELETE_CURRENCY)
+            val currency = deleteViewModel(
+                code = "USD",
+                backup = PreventiveBackup.None,
+                coverage = currencyCovered,
+            )
+
+            assertTrue(currency.keepsCopy, "a copy is kept and the sheet was told otherwise")
+            assertEquals(DestructiveAction.DELETE_CURRENCY, currencyCovered.asked)
+
+            val rateCovered = RecordingCoverage(DestructiveAction.REMOVE_EXCHANGE_RATE)
+            val form = formViewModel(rate, PreventiveBackup.None, coverage = rateCovered)
+
+            assertTrue(form.keepsCopy, "a copy is kept and the form was told otherwise")
+            assertEquals(DestructiveAction.REMOVE_EXCHANGE_RATE, rateCovered.asked)
+
+            val elsewhere = deleteViewModel(
+                code = "USD",
+                backup = PreventiveBackup.None,
+                coverage = RecordingCoverage(DestructiveAction.DELETE_TRANSACTION),
+            )
+
+            assertFalse(elsewhere.keepsCopy, "no copy is kept and the sheet still promised one")
+        }
+
+    @Test
+    fun `saying no leaves the observation in the archive`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+
+        val vault = Refusing()
+        val viewModel = formViewModel(rate, vault)
+        viewModel.onAction(ExchangeRateFormAction.Remove)
+        viewModel.captureRefusal.first { it != null }
+
+        viewModel.onAction(ExchangeRateFormAction.AbandonRemoval)
+
+        assertNull(viewModel.captureRefusal.first { it == null })
+        assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
+        assertEquals(1, vault.asked)
+    }
+}

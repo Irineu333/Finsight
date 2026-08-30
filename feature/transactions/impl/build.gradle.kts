@@ -22,6 +22,11 @@ kotlin {
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.settings.api)
 
+            // The refusal a preventive capture raises is the reason for this edge: it is
+            // thrown by `PreventiveBackup`, whose contract lives here. The api, never the
+            // impl, which the dependency rules would refuse anyway.
+            implementation(projects.feature.backup.api)
+
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
         }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import com.neoutils.finsight.FakeCurrencyRepository
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
-import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.database.repository.RateArchive
 import com.neoutils.finsight.ui.component.Modal
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.CompletableDeferred
@@ -27,6 +27,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
+import com.neoutils.finsight.feature.backup.api.VaultOffer
 
 /**
  * **The write owns the dismissal, and this is what says so.**
@@ -181,7 +183,7 @@ class ExchangeRateFormViewModelTest {
     }
 
     private fun viewModel(
-        repository: IExchangeRateRepository,
+        repository: RateArchive,
         manager: ModalManager,
         existing: ExchangeRate? = null,
     ) = ExchangeRateFormViewModel(
@@ -190,6 +192,8 @@ class ExchangeRateFormViewModelTest {
         exchangeRateRepository = repository,
         currencyRepository = FakeCurrencyRepository(),
         modalManager = manager,
+        vaultOffer = VaultOffer.None,
+        coverage = PreventiveCoverage.None,
     )
 }
 
@@ -213,7 +217,7 @@ private class FakeBaseCurrencyRepository : IBaseCurrencyRepository {
 }
 
 /** Suspends every write until [release], so the order of the two steps is observable. */
-private class FakeExchangeRateRepository : IExchangeRateRepository {
+private class FakeExchangeRateRepository : RateArchive {
 
     private val gate = CompletableDeferred<Unit>()
 
@@ -235,7 +239,9 @@ private class FakeExchangeRateRepository : IExchangeRateRepository {
         saved += rate
     }
 
-    override suspend fun remove(rate: ExchangeRate) {
+    override suspend fun remove(rate: ExchangeRate) = remove(rate, withoutCopy = false)
+
+    override suspend fun remove(rate: ExchangeRate, withoutCopy: Boolean) {
         gate.await()
         removed += rate
     }

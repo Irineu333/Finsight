@@ -6,6 +6,7 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.mapper.ExchangeRateMapper
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -46,6 +47,7 @@ class ExchangeRateRepositoryResolutionTest {
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),
         baseCurrencyRepository = base,
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private val march = LocalDate(2026, 3, 14)

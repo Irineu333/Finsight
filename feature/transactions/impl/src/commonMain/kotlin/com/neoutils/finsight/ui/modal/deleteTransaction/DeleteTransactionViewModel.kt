@@ -14,9 +14,29 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
+import com.neoutils.finsight.feature.backup.api.CaptureRefusal
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
+import com.neoutils.finsight.feature.backup.api.VaultOffer
+import com.neoutils.finsight.feature.backup.api.VaultOfferState
 import com.neoutils.finsight.ui.component.ModalManager
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Deleting a transaction — and, when the copy owed before it could not be taken, asking
+ * rather than reporting a generic failure.
+ *
+ * A refused capture is not the same kind of event as a locked invoice: nothing about the
+ * transaction stops it, and the only thing missing is the file that would let the person
+ * undo it. So it reaches them as a question with two answers, and not answering it leaves
+ * the transaction exactly where it is.
+ *
+ * **The vault is offered here too**, when it has never been offered anywhere before. The
+ * offer rides on whichever destructive confirmation the person reaches first, and deleting
+ * a transaction is the one most people reach first of all. What is offered, and whether
+ * there is anything left to offer, are both [VaultOffer]'s.
+ */
 class DeleteTransactionViewModel(
     private val transaction: Transaction,
     private val categoryRepository: ICategoryRepository,
@@ -24,7 +44,31 @@ class DeleteTransactionViewModel(
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
+    vaultOffer: VaultOffer,
+    coverage: PreventiveCoverage,
 ) : ViewModel() {
+
+    private val refusal = CaptureRefusal()
+
+    /** Why no copy could be taken, while the question about deleting anyway is up. */
+    val captureRefusal: StateFlow<UiText?> = refusal.reason
+
+    /**
+     * The vault offered beside this deletion, and the box beside the offer.
+     *
+     * Asked for once, as the sheet is built, because asking is what records that the offer
+     * was made — and the sheet is built when it goes up.
+     */
+    val offer = VaultOfferState(vaultOffer)
+
+    /**
+     * Whether a copy is genuinely kept before the transaction goes, which is what the sheet
+     * says instead of calling the loss permanent.
+     *
+     * Asked about *this* action and answered in the domain: a screen carrying its own idea
+     * of which deletions are worth a copy would be a second owner of that rule (design D7).
+     */
+    val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.DELETE_TRANSACTION)
 
     fun deleteTransaction() = viewModelScope.launch {
         // The analytics event still reports the category by name; the ledger only
@@ -34,14 +78,27 @@ class DeleteTransactionViewModel(
                 categoryRepository.getCategoryByDimensionId(dimensionId)
             }
             ?.name
-        deleteTransactionUseCase(transaction).onRight {
-            analytics.logEvent(DeleteTransaction(transaction, categoryName))
-            modalManager.dismissAll()
-        }.onLeft {
-            crashlytics.recordException(it)
-            modalManager.showError(it.toUiMessage())
+
+        // Before the removal, never after: the vault has to be on by the time the deletion
+        // asks it for the copy, which is the next thing that happens.
+        offer.acceptIfTicked()
+
+        refusal.attempt { withoutCopy ->
+            deleteTransactionUseCase(transaction, withoutCopy).onRight {
+                analytics.logEvent(DeleteTransaction(transaction, categoryName))
+                modalManager.dismissAll()
+            }.onLeft {
+                crashlytics.recordException(it)
+                modalManager.showError(it.toUiMessage())
+            }
         }
     }
+
+    /** The person said to delete with nothing kept back; the deletion goes on from where it waits. */
+    fun deleteWithoutCopy() = refusal.answer(proceed = true)
+
+    /** Answered no, or walked away from the question — which is the same answer. */
+    fun abandonDeletion() = refusal.answer(proceed = false)
 
     /**
      * A refused deletion has a reason the user can act on — a locked invoice, an

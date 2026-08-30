@@ -1,0 +1,1101 @@
+<title>Telas do Cofre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ============================================================
+     TOKENS
+     --app-* replicam Color.kt / Theme.kt do projeto, verbatim.
+     --pg-*  são o chrome desta página, deliberadamente um degrau
+             fora do app para o frame se destacar do fundo.
+     ============================================================ */
+  :root {
+    /* app — light: background=LightSurface2, surface=LightCardBackground */
+    --app-bg:        #F1F5F9;
+    --app-surface:   #FFFFFF;
+    --app-high:      #F8FAFC;
+    --app-on:        #0F172A;
+    --app-on-var:    #475569;
+    --app-outline:   #CBD5E1;
+    --app-out-var:   #94A3B8;
+    --app-primary:   #0D9A8E;
+    --app-on-prim:   #FFFFFF;
+    --app-success:   #14B8A6;
+    --app-warning:   #F59E0B;
+    --app-error:     #DC2626;
+    --app-scrim:     rgba(15,23,42,.32);
+
+    /* página */
+    --pg-ground:     #E4EAF0;
+    --pg-surface:    #FFFFFF;
+    --pg-ink:        #0F172A;
+    --pg-ink-2:      #475569;
+    --pg-ink-3:      #7B8899;
+    --pg-rule:       #CBD5E1;
+    --pg-rule-soft:  #DDE4EC;
+    --pg-accent:     #0B7C72;
+    --pg-shadow:     0 1px 2px rgba(15,23,42,.06), 0 18px 40px -28px rgba(15,23,42,.45);
+
+    --f-display: "Newsreader", Georgia, serif;
+    --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --f-app: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --app-bg:        #0F172A;
+      --app-surface:   #1E293B;
+      --app-high:      #334155;
+      --app-on:        #FFFFFF;
+      --app-on-var:    #94A3B8;
+      --app-outline:   #334155;
+      --app-out-var:   #64748B;
+      --app-primary:   #0D9A8E;
+      --app-on-prim:   #0F172A;
+      --app-success:   #14B8A6;
+      --app-warning:   #F59E0B;
+      --app-error:     #DC2626;
+      --app-scrim:     rgba(0,0,0,.5);
+
+      --pg-ground:     #070C15;
+      --pg-surface:    #131C2B;
+      --pg-ink:        #E9EEF4;
+      --pg-ink-2:      #9FADBE;
+      --pg-ink-3:      #74829A;
+      --pg-rule:       #253243;
+      --pg-rule-soft:  #1B2534;
+      --pg-accent:     #3FD3C0;
+      --pg-shadow:     0 1px 2px rgba(0,0,0,.5), 0 18px 40px -26px rgba(0,0,0,.9);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --app-bg:        #0F172A;
+    --app-surface:   #1E293B;
+    --app-high:      #334155;
+    --app-on:        #FFFFFF;
+    --app-on-var:    #94A3B8;
+    --app-outline:   #334155;
+    --app-out-var:   #64748B;
+    --app-primary:   #0D9A8E;
+    --app-on-prim:   #0F172A;
+    --app-success:   #14B8A6;
+    --app-warning:   #F59E0B;
+    --app-error:     #DC2626;
+    --app-scrim:     rgba(0,0,0,.5);
+
+    --pg-ground:     #070C15;
+    --pg-surface:    #131C2B;
+    --pg-ink:        #E9EEF4;
+    --pg-ink-2:      #9FADBE;
+    --pg-ink-3:      #74829A;
+    --pg-rule:       #253243;
+    --pg-rule-soft:  #1B2534;
+    --pg-accent:     #3FD3C0;
+    --pg-shadow:     0 1px 2px rgba(0,0,0,.5), 0 18px 40px -26px rgba(0,0,0,.9);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--pg-ground);
+    color: var(--pg-ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--pg-accent); color: var(--pg-ground); }
+  a { color: var(--pg-accent); }
+  a:focus-visible { outline: 2px solid var(--pg-accent); outline-offset: 3px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 100px; }
+
+  /* ---------- masthead ---------- */
+  header.top { padding: 64px 0 34px; border-bottom: 1px solid var(--pg-rule); margin-bottom: 52px; }
+  .kicker {
+    font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--pg-ink-3); margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--f-display); font-weight: 400;
+    font-size: clamp(42px, 6.5vw, 68px); line-height: 1.04; letter-spacing: -.02em;
+    margin: 0 0 18px; text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--pg-accent); }
+  .dek {
+    font-family: var(--f-display); font-weight: 300;
+    font-size: clamp(18px, 2.1vw, 21px); line-height: 1.5;
+    color: var(--pg-ink-2); max-width: 60ch; margin: 0 0 26px;
+  }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em;
+    border: 1px solid var(--pg-rule); padding: 3px 10px; color: var(--pg-ink-2);
+    border-radius: 2px;
+  }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: 84px; scroll-margin-top: 20px; }
+  .sh { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sh .n { font-family: var(--f-mono); font-size: 12px; color: var(--pg-accent); flex: none; }
+  h2 {
+    font-family: var(--f-display); font-weight: 500;
+    font-size: clamp(24px, 3vw, 30px); line-height: 1.2; letter-spacing: -.012em;
+    margin: 0; text-wrap: balance;
+  }
+  .intro { color: var(--pg-ink-2); max-width: 66ch; margin: 0 0 30px; font-size: 16px; }
+  .intro strong { color: var(--pg-ink); font-weight: 600; }
+
+  /* ---------- mock stage ---------- */
+  .stage {
+    display: flex; gap: 26px; align-items: flex-start;
+    overflow-x: auto; padding: 4px 4px 16px;
+    scrollbar-width: thin;
+  }
+  .unit { flex: none; width: 340px; }
+  .unit > .cap {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--pg-ink-3); margin: 0 0 10px; display: block;
+  }
+
+  .phone {
+    width: 340px; border-radius: 26px; overflow: hidden;
+    border: 1px solid var(--pg-rule);
+    background: var(--app-bg); color: var(--app-on);
+    font-family: var(--f-app); font-size: 14px; line-height: 1.4;
+    box-shadow: var(--pg-shadow);
+  }
+  .phone.sheetmode { background: var(--app-scrim); }
+
+  /* app bar */
+  .abar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 14px 12px; background: var(--app-bg);
+  }
+  .abar .back { width: 22px; height: 22px; flex: none; opacity: .85; }
+  .abar .ttl { font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
+
+  .body-pad { padding: 6px 14px 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  /* info card = ScopeCard */
+  .infocard {
+    background: var(--app-surface); border-radius: 16px;
+    padding: 14px 14px; display: flex; gap: 12px;
+  }
+  .infocard svg { flex: none; margin-top: 1px; }
+  .infocard .txt { color: var(--app-on-var); font-size: 13px; line-height: 1.45; display: flex; flex-direction: column; gap: 7px; }
+
+  /* settings group */
+  .grp { display: flex; flex-direction: column; gap: 7px; }
+  .grp > .lbl {
+    font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--app-primary); padding-left: 4px;
+  }
+  .tile {
+    background: var(--app-surface); border-radius: 12px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 14px;
+  }
+  .tile.stacked { flex-direction: column; align-items: stretch; gap: 12px; }
+  .tile .ico { flex: none; opacity: .9; }
+  .tile .mid { flex: 1 1 auto; min-width: 0; }
+  .tile .t { font-size: 15px; font-weight: 500; }
+  .tile .s { font-size: 12.5px; color: var(--app-on-var); margin-top: 2px; line-height: 1.35; }
+  .tile .end { flex: none; display: flex; align-items: center; }
+  .tile.off .t, .tile.off .s { opacity: .55; }
+
+  /* switch */
+  .sw { width: 46px; height: 26px; border-radius: 13px; position: relative; flex: none; }
+  .sw.on { background: var(--app-primary); }
+  .sw.off { background: transparent; border: 2px solid var(--app-out-var); }
+  .sw i {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    border-radius: 50%; display: block;
+  }
+  .sw.on i { right: 4px; width: 18px; height: 18px; background: var(--app-on-prim); }
+  .sw.off i { left: 6px; width: 12px; height: 12px; background: var(--app-out-var); }
+
+  /* status line — o elemento central */
+  .status {
+    background: var(--app-surface); border-radius: 16px; padding: 16px 16px 15px;
+    display: flex; gap: 13px; align-items: flex-start;
+    border-left: 3px solid var(--app-success);
+  }
+  .status.warn { border-left-color: var(--app-warning); }
+  .status.bad { border-left-color: var(--app-error); }
+  .status.none { border-left-color: var(--app-out-var); }
+  .status .pulse { flex: none; width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; background: var(--app-success); }
+  .status.warn .pulse { background: var(--app-warning); }
+  .status.bad .pulse { background: var(--app-error); }
+  .status.none .pulse { background: var(--app-out-var); }
+  .status .k { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--app-on-var); }
+  .status .v { font-size: 17px; font-weight: 600; margin-top: 3px; letter-spacing: -.01em; }
+  .status .w { font-size: 12.5px; color: var(--app-on-var); margin-top: 5px; line-height: 1.4; }
+  .status .w b { color: var(--app-warning); font-weight: 600; }
+  .status .w b.err { color: var(--app-error); }
+
+  /* history */
+  .hist { display: flex; flex-direction: column; gap: 7px; }
+  .hrow {
+    background: var(--app-surface); border-radius: 12px; padding: 11px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hrow .hi { flex: none; opacity: .75; }
+  .hrow .hm { flex: 1 1 auto; min-width: 0; }
+  .hrow .hd { font-size: 14px; font-weight: 500; }
+  .hrow .hs { font-size: 12px; color: var(--app-on-var); margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .hrow .tagpill {
+    font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
+    padding: 2px 7px; border-radius: 4px; flex: none;
+    background: color-mix(in srgb, var(--app-primary) 15%, transparent); color: var(--app-primary);
+  }
+  .hrow .tagpill.amber { background: color-mix(in srgb, var(--app-warning) 15%, transparent); color: var(--app-warning); }
+
+  /* list screen chrome */
+  .datehead {
+    font-size: 16px; font-weight: 700; letter-spacing: -.01em;
+    padding: 8px 4px 2px;
+  }
+  .hrow .more { flex: none; opacity: .6; padding-left: 2px; }
+  .empty {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 46px 24px 40px; text-align: center;
+  }
+  .empty .et { font-size: 15px; font-weight: 500; }
+  .empty .es { font-size: 13px; color: var(--app-on-var); line-height: 1.45; max-width: 24ch; }
+
+  /* bottom sheet */
+  .sheet {
+    background: var(--app-surface); border-radius: 26px 26px 0 0;
+    padding: 10px 20px 22px; margin-top: 60px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .sheet .grab { width: 32px; height: 4px; border-radius: 2px; background: var(--app-out-var); align-self: center; margin-bottom: 6px; }
+  .sheet h5 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  .sheet p { font-size: 13.5px; color: var(--app-on-var); margin: 0; line-height: 1.5; }
+  .sheet p b { color: var(--app-on); font-weight: 600; }
+  .factbox {
+    background: var(--app-bg); border-radius: 12px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .factrow { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+  .factrow span:first-child { color: var(--app-on-var); }
+  .factrow span:last-child { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .optin {
+    display: flex; gap: 11px; align-items: flex-start;
+    background: var(--app-bg); border-radius: 12px; padding: 12px 14px;
+  }
+  .optin .box {
+    flex: none; width: 19px; height: 19px; border-radius: 4px; margin-top: 1px;
+    background: var(--app-primary); display: grid; place-items: center;
+  }
+  .optin .box.empty { background: transparent; border: 2px solid var(--app-out-var); }
+  .optin .ol { font-size: 13.5px; font-weight: 500; }
+  .optin .os { font-size: 12px; color: var(--app-on-var); margin-top: 2px; line-height: 1.4; }
+  .btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 2px; }
+  .btn { border-radius: 20px; padding: 9px 20px; font-size: 14px; font-weight: 500; }
+  .btn.text { color: var(--app-on-var); }
+  .btn.tonal { background: var(--app-primary); color: var(--app-on-prim); }
+  .btn.danger { background: var(--app-error); color: #fff; }
+  .btn.outline { border: 1px solid var(--app-outline); color: var(--app-on); }
+  .btn.block { flex: 1 1 auto; text-align: center; }
+
+  /* segmented single-choice */
+  .segwrap { display: flex; flex-direction: column; gap: 8px; }
+  .seglabel { font-size: 13.5px; font-weight: 600; color: var(--app-on); }
+  .seghint { font-size: 12px; color: var(--app-on-var); line-height: 1.4; }
+  .seg {
+    display: flex; border: 1px solid var(--app-outline);
+    border-radius: 18px; overflow: hidden;
+  }
+  .seg > span {
+    flex: 1 1 0; text-align: center; padding: 8px 4px;
+    font-size: 13px; border-right: 1px solid var(--app-outline);
+    color: var(--app-on-var); white-space: nowrap;
+  }
+  .seg > span:last-child { border-right: 0; }
+  .seg > span.on {
+    background: color-mix(in srgb, var(--app-primary) 18%, transparent);
+    color: var(--app-primary); font-weight: 600;
+  }
+
+  /* live outcome of the chosen combination */
+  .outcome {
+    background: var(--app-bg); border-radius: 12px; padding: 11px 14px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .outcome .ov { font-size: 13.5px; font-weight: 600; }
+  .outcome .oh { font-size: 12px; color: var(--app-on-var); line-height: 1.4; }
+  .outcome.warn { background: color-mix(in srgb, var(--app-warning) 12%, transparent); }
+  .outcome.warn .ov { color: var(--app-warning); }
+
+  /* radio rows */
+  .radio { display: flex; align-items: center; gap: 12px; padding: 9px 2px; font-size: 14px; }
+  .radio .r { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--app-out-var); display: grid; place-items: center; }
+  .radio.sel .r { border-color: var(--app-primary); }
+  .radio.sel .r::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--app-primary); }
+  .radio .rl { flex: 1 1 auto; }
+  .radio .rn { font-size: 12.5px; color: var(--app-on-var); }
+
+  /* markers */
+  .mk {
+    display: inline-grid; place-items: center;
+    width: 19px; height: 19px; border-radius: 50%;
+    background: var(--app-primary); color: var(--app-on-prim);
+    font-family: var(--f-mono); font-size: 11px; font-weight: 500;
+    vertical-align: middle; flex: none;
+  }
+  .mk.pg { background: var(--pg-accent); color: var(--pg-ground); }
+
+  /* notes beside the stage */
+  .notes { display: flex; flex-direction: column; gap: 14px; margin-top: 26px; max-width: 68ch; }
+  .note { display: grid; grid-template-columns: 19px 1fr; gap: 12px; align-items: start; }
+  .note .nt { font-size: 14.5px; line-height: 1.55; color: var(--pg-ink-2); }
+  .note .nt b { color: var(--pg-ink); font-weight: 600; }
+
+  .why {
+    border-left: 2px solid var(--pg-rule); padding-left: 18px; margin-top: 26px;
+    max-width: 68ch;
+  }
+  .why p { margin: 0 0 10px; font-size: 14.5px; color: var(--pg-ink-2); }
+  .why p:last-child { margin-bottom: 0; }
+  .why b { color: var(--pg-ink); font-weight: 600; }
+  code {
+    font-family: var(--f-mono); font-size: .86em;
+    background: var(--pg-rule-soft); padding: .1em .35em; color: var(--pg-ink-2);
+    border-radius: 2px;
+  }
+
+  .divider { height: 1px; background: var(--pg-rule); margin: 0 0 52px; }
+
+  footer {
+    border-top: 1px solid var(--pg-rule); padding-top: 22px;
+    font-family: var(--f-mono); font-size: 12.5px; color: var(--pg-ink-3);
+  }
+  footer p { margin: 0 0 6px; max-width: 72ch; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">automatic-backup · proposta visual</p>
+  <h1>Telas <em>do</em> Cofre</h1>
+  <p class="dek">
+    Como o backup automático aparece dentro do Finsight — os estados do cofre, a oferta no momento
+    do risco, e a linha que é o produto inteiro.
+  </p>
+  <div class="badges">
+    <span class="badge">tokens de Color.kt, verbatim</span>
+    <span class="badge">tiles do padrão de Settings</span>
+    <span class="badge">claro e escuro seguem o seu tema</span>
+  </div>
+</header>
+
+<!-- ============================================================ 01 -->
+<section>
+  <div class="sh"><span class="n">01</span><h2>A tela de backup, antes e depois</h2></div>
+  <p class="intro">
+    A tela passa a ter <strong>dois grupos, não quatro</strong>: o que o app faz sozinho, e o que sai
+    e entra pela mão do usuário. E a primeira frase muda — hoje ela promete que o app não guarda
+    cópias, e essa promessa passa a valer só enquanto o cofre está desligado.
+  </p>
+
+  <div class="stage">
+
+    <!-- desligado -->
+    <div class="unit">
+      <span class="cap">Cofre desligado · estado inicial</span>
+      <div class="phone">
+        <div class="abar">
+          <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          <span class="ttl">Backup</span>
+        </div>
+        <div class="body-pad">
+          <div class="infocard">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg>
+            <div class="txt">
+              <span>O arquivo contém todos os seus dados: contas, cartões, lançamentos, categorias, orçamentos e moedas. Preferências de exibição ficam de fora.</span>
+              <span>O app não guarda cópias por conta própria. Recuperar seus dados em outro aparelho depende do arquivo que você exportar.</span>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="lbl">Backup automático</span>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01" stroke-linecap="round"/></svg>
+              <div class="mid">
+                <div class="t">Guardar cópias automaticamente</div>
+                <div class="s">Desligado. O app não está guardando nada.</div>
+              </div>
+              <div class="end"><span class="sw off"><i></i></span></div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="lbl">Exportar e restaurar</span>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+              <div class="mid">
+                <div class="t">Exportar backup</div>
+                <div class="s">Salva um arquivo com seus dados onde você escolher.</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+              <div class="mid">
+                <div class="t">Restaurar de um arquivo</div>
+                <div class="s">Escolha um backup exportado deste app.</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ligado -->
+    <div class="unit">
+      <span class="cap">Cofre ligado · guardando dentro do app</span>
+      <div class="phone">
+        <div class="abar">
+          <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          <span class="ttl">Backup</span>
+        </div>
+        <div class="body-pad">
+
+          <div class="status">
+            <span class="pulse"></span>
+            <div>
+              <div class="k">Último backup</div>
+              <div class="v">Hoje, 14:32</div>
+              <div class="w">Dentro do app · 3 cópias guardadas</div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="lbl">Backup automático</span>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01" stroke-linecap="round"/></svg>
+              <div class="mid">
+                <div class="t">Guardar cópias automaticamente</div>
+                <div class="s">A cada 3 dias e antes de excluir algo</div>
+              </div>
+              <div class="end"><span class="sw on"><i></i></span></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/></svg>
+              <div class="mid">
+                <div class="t">Onde guardar</div>
+                <div class="s">Dentro do app — some se você desinstalar</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round"/></svg>
+              <div class="mid">
+                <div class="t">Ajustes do cofre</div>
+                <div class="s">Intervalo, quantas cópias guardar</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="mid">
+                <div class="t">Cópias guardadas</div>
+                <div class="s">10 cópias · a mais recente hoje, 14:32</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="lbl">Exportar e restaurar</span>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+              <div class="mid">
+                <div class="t">Exportar backup</div>
+                <div class="s">Salva um arquivo com seus dados onde você escolher.</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+              <div class="mid">
+                <div class="t">Restaurar de um arquivo</div>
+                <div class="s">De um backup que veio de outro aparelho.</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O card de escopo perde uma frase e ganha outra.</b> Com o cofre ligado, "o app não guarda cópias por conta própria" deixaria de ser verdade — o card some, e a linha de status assume o lugar dele no topo.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>"Onde guardar" diz a consequência, não o caminho.</b> "Dentro do app — some se você desinstalar" é a informação que o usuário precisa para decidir; o caminho técnico não é.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>O histórico é um destino, não uma seção.</b> A tela de backup é de configuração; uma lista de cópias é conteúdo, com padrão próprio no app e com ações por item. O tile leva para ela e adianta o que ela contém — quantas, e a mais recente.</div></div>
+    <div class="note"><span class="mk pg">4</span><div class="nt"><b>Dois grupos, não quatro.</b> Hoje a tela tem um cabeçalho <code>Exportar</code> sobre um tile "Exportar backup" e um <code>Restaurar</code> sobre "Restaurar de um arquivo" — cabeçalhos que não agrupam nada e repetem o próprio item. Juntos, eles formam o par certo: <b>o que o app faz sozinho</b> e <b>o que sai e entra pela sua mão</b>.</div></div>
+    <div class="note"><span class="mk pg">5</span><div class="nt"><b>"Restaurar de um arquivo" muda de subtítulo quando o cofre está ligado.</b> Com histórico, restaurar do cofre passa a ser o caminho comum, e o tile avulso vira o caso específico — um arquivo que veio de outro aparelho.</div></div>
+  </div>
+
+  <div class="why">
+    <p><b>A objeção considerada:</b> exportar é inofensivo e restaurar é irreversível, e os cabeçalhos separados criavam alguma distância entre os dois.</p>
+    <p>Ela não se sustenta: um cabeçalho nunca impediu toque errado. A proteção real é a confirmação — que existe, mostra o que o arquivo contém antes de perguntar, e fica mais forte ainda com o preventivo. E a ordem dos tiles mantém o destrutivo por último, que é onde a mão erra menos.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 02 -->
+<section>
+  <div class="sh"><span class="n">02</span><h2>O momento em que se liga</h2></div>
+  <p class="intro">
+    O cofre nasce desligado, e um recurso que precisa ser lembrado tem o mesmo problema que o backup
+    manual tem hoje. <strong>A oferta não vai num banner nem num onboarding</strong> — ela chega junto
+    do risco que cobre, na primeira exclusão de verdade.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">Exclusão + oferta · primeira vez</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Excluir este parcelamento?</h5>
+          <p><b>12 lançamentos</b> serão removidos, de setembro de 2025 a agosto de 2026. Isso não pode ser desfeito.</p>
+          <div class="optin">
+            <span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-prim)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <div>
+              <div class="ol">Guardar uma cópia antes</div>
+              <div class="os">E também a cada 3 dias, daqui em diante. Você pode desligar nas configurações.</div>
+            </div>
+          </div>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn danger">Excluir</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Da segunda vez em diante</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Excluir este parcelamento?</h5>
+          <p><b>12 lançamentos</b> serão removidos, de setembro de 2025 a agosto de 2026.</p>
+          <p>Uma cópia dos seus dados é guardada antes, e você pode voltar a ela pela tela de backup.</p>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn danger">Excluir</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>A caixa vem marcada, e o texto diz o preço inteiro.</b> Aceitar liga o cofre completo — não só aquela cópia. Dizer isso na hora é o que separa uma oferta de uma pegadinha.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>Com o cofre ligado, a mesma tela muda de tom.</b> Some "isso não pode ser desfeito" e entra a frase que passou a ser verdade. É a mesma reescrita que a confirmação de restauração recebe.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>A oferta aparece uma vez.</b> Quem recusa não é perguntado de novo a cada exclusão — o interruptor continua nas configurações, e insistir seria transformar proteção em incômodo.</div></div>
+  </div>
+
+  <div class="why">
+    <p><b>Uma decisão que essa tela expõe:</b> o texto de exclusão de parcelamento já diz quantos lançamentos vão junto, e o de fatura não diz. A auditoria mostrou que <code>DeleteFutureInvoiceUseCase</code> apaga transações reais de faturas retroativas sob um texto que a chama de "fatura futura".</p>
+    <p>A correção não é desta entrega, mas o mockup acima assume o formato certo — porque o cofre torna a exclusão reversível, e não seria coerente proteger a ação e continuar mentindo sobre ela.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 03 -->
+<section>
+  <div class="sh"><span class="n">03</span><h2>A linha que é o produto</h2></div>
+  <p class="intro">
+    Um cofre pode parar sozinho, sem defeito e sem ação de ninguém: uma permissão revogada, uma pasta
+    movida, o sistema suspendendo o app. <strong>A data do último backup bem-sucedido é o único meio
+    pelo qual a pessoa descobre isso</strong> — e por isso ela é o elemento mais importante da tela,
+    não o interruptor.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">Em dia</span>
+      <div class="phone">
+        <div class="body-pad" style="padding-top:16px">
+          <div class="status">
+            <span class="pulse"></span>
+            <div>
+              <div class="k">Último backup</div>
+              <div class="v">Hoje, 14:32</div>
+              <div class="w">Documentos/Finsight · 10 cópias guardadas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Atrasado</span>
+      <div class="phone">
+        <div class="body-pad" style="padding-top:16px">
+          <div class="status warn">
+            <span class="pulse"></span>
+            <div>
+              <div class="k">Último backup</div>
+              <div class="v">Há 12 dias</div>
+              <div class="w"><b>Mais antigo que o intervalo de 3 dias.</b> Abra o app com mais frequência, ou verifique se a pasta continua acessível.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Ainda nenhum</span>
+      <div class="phone">
+        <div class="body-pad" style="padding-top:16px">
+          <div class="status none">
+            <span class="pulse"></span>
+            <div>
+              <div class="k">Último backup</div>
+              <div class="v">Ainda nenhum</div>
+              <div class="w">A primeira cópia acontece quando você lançar algo ou na próxima vez que abrir o app.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>"Ainda nenhum" é escrito, não é uma data qualquer.</b> A spec proíbe exibir uma data inventada — um cofre recém-ligado que ainda não capturou precisa dizer exatamente isso.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O atraso é âmbar, não vermelho.</b> Nada quebrou: as cópias antigas continuam lá e continuam válidas. Vermelho fica reservado para quando o cofre não consegue mais gravar.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>A barra colorida à esquerda faz o estado ser lido antes do texto.</b> É o mesmo recurso que os chips de status de fatura já usam no app — cor a 15% com o texto na cor cheia.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 04 -->
+<section>
+  <div class="sh"><span class="n">04</span><h2>As cópias guardadas, numa tela sua</h2></div>
+  <p class="intro">
+    O subgrafo da feature já existe esperando por isso — o KDoc de <code>BackupGraph</code> diz que o
+    nó foi declarado <em>"even though the feature starts with a single screen"</em>.
+    <strong>É aqui que o reencontro acontece</strong>: depois de reinstalar e reapontar a pasta, o que
+    a pessoa precisa é escolher entre quarenta cópias, não ler configurações.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">A lista · agrupada por data</span>
+      <div class="phone">
+        <div class="abar">
+          <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          <span class="ttl">Cópias guardadas</span>
+        </div>
+        <div class="body-pad" style="gap:10px">
+          <div class="infocard" style="padding:12px 14px">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.8"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/></svg>
+            <div class="txt"><span><b style="color:var(--app-on);font-weight:600">Documentos/Finsight</b><br>10 cópias · 41 MB no total</span></div>
+          </div>
+
+          <div class="datehead">Agosto</div>
+          <div class="hist">
+            <div class="hrow">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">Hoje, 14:32</div><div class="hs">4,2 MB · 1.482 lançamentos</div></div>
+              <span class="tagpill">antes de excluir</span>
+              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+            <div class="hrow">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">27 ago, 09:14</div><div class="hs">4,1 MB · 1.474 lançamentos</div></div>
+              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+            <div class="hrow">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-warning)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">21 ago, 20:02</div><div class="hs">3,9 MB · antes da v2.5.0</div></div>
+              <span class="tagpill amber">atualização</span>
+              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+            <div class="hrow">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">18 ago, 11:40</div><div class="hs">3,9 MB · 1.451 lançamentos</div></div>
+              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+          </div>
+
+          <div class="datehead">Julho</div>
+          <div class="hist">
+            <div class="hrow">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">30 jul, 22:05</div><div class="hs">3,7 MB · 1.398 lançamentos</div></div>
+              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Ações de uma cópia</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>21 ago, 20:02</h5>
+          <div class="factbox">
+            <div class="factrow"><span>Motivo</span><span>Antes da atualização</span></div>
+            <div class="factrow"><span>Origem</span><span>Android · v2.4.1</span></div>
+            <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
+            <div class="factrow"><span>Lançamentos</span><span>1.436</span></div>
+            <div class="factrow"><span>Tamanho</span><span>3,9 MB</span></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            <div class="mid"><div class="t">Restaurar esta cópia</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+            <div class="mid"><div class="t">Salvar uma cópia fora do app</div><div class="s">Enviar este arquivo para onde você quiser</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <div class="mid"><div class="t" style="color:var(--app-error)">Excluir esta cópia</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Vazio · logo depois de ligar</span>
+      <div class="phone">
+        <div class="abar">
+          <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          <span class="ttl">Cópias guardadas</span>
+        </div>
+        <div class="empty">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--app-out-var)" stroke-width="1.4"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/><path d="M10 12h4" stroke-linecap="round"/></svg>
+          <div class="et">Nenhuma cópia ainda</div>
+          <div class="es">A primeira acontece quando você lançar algo, ou antes da próxima exclusão.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O cabeçalho da pasta fica no topo, não no título.</b> "Documentos/Finsight · 10 cópias · 41 MB" responde de uma vez onde os arquivos estão e quanto ocupam — a pergunta que sempre vem junto de uma lista de backups.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O subtítulo mostra a contagem de lançamentos, não só o tamanho.</b> "1.482 lançamentos" é o que permite reconhecer uma cópia; megabytes não dizem nada sobre qual delas é a certa. Vem do <code>snapshot_meta</code>, lido só quando a lista abre.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>"Salvar uma cópia fora do app" resolve um buraco real.</b> No Android o cofre é local e não cobre perda do aparelho; poder mandar qualquer cópia do histórico para onde se quiser é a saída, e reusa o fluxo de exportação que já existe — sem capturar de novo.</div></div>
+    <div class="note"><span class="mk pg">4</span><div class="nt"><b>Excluir uma cópia é do usuário, não só da retenção.</b> É a pasta dele; ele pode apagar pelo gerenciador de arquivos de qualquer forma, e o app tolera isso por construção — melhor oferecer o caminho de dentro.</div></div>
+  </div>
+
+  <div class="why">
+    <p><b>Onde a rota vive.</b> Interna à feature, no <code>impl</code>: a convenção do projeto diz que a <code>api</code> declara apenas as rotas <em>externamente navegáveis</em>, e ninguém fora do backup precisa navegar direto para o histórico. <code>BackupGraph</code> continua sendo o único nó que o resto do app conhece.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 05 -->
+<section>
+  <div class="sh"><span class="n">05</span><h2>Quando o vínculo com a pasta cai</h2></div>
+  <p class="intro">
+    Isso vai acontecer — o iOS já expirou todos os bookmarks de pasta numa atualização de sistema, e o
+    usuário pode revogar o acesso nos ajustes do aparelho a qualquer momento.
+    <strong>O app não fica esperando alguém ler um aviso</strong>: ele volta a gravar dentro do app,
+    diz que é provisório, e mantém a pergunta na tela.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">Aviso na abertura do app</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Não consigo mais gravar na pasta</h5>
+          <p>O acesso a <b>Documentos/Finsight</b> foi perdido. Seus backups continuam lá — o que se perdeu foi a permissão do app para escrever neles.</p>
+          <p>Estou guardando as cópias dentro do app até você decidir.</p>
+          <div class="btns">
+            <span class="btn outline block">Guardar dentro do app</span>
+            <span class="btn tonal block">Reconectar a pasta</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Enquanto a decisão não vem</span>
+      <div class="phone">
+        <div class="body-pad" style="padding-top:16px">
+          <div class="status bad">
+            <span class="pulse"></span>
+            <div>
+              <div class="k">Último backup</div>
+              <div class="v">Hoje, 09:20</div>
+              <div class="w"><b class="err">Dentro do app, provisoriamente.</b> Sem acesso a Documentos/Finsight.</div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="tile">
+              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/><path d="M9 12l6 5M15 12l-6 5" stroke-linecap="round"/></svg>
+              <div class="mid">
+                <div class="t">Reconectar a pasta</div>
+                <div class="s">Seus backups anteriores voltam a aparecer aqui</div>
+              </div>
+              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>A frase separa o arquivo da permissão.</b> "Seus backups continuam lá" é a informação que evita pânico, e é literalmente verdade: o que morre é o vínculo, nunca os arquivos.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>Nenhum dos dois botões é destrutivo, então nenhum é vermelho.</b> O vermelho está na barra de status e no ícone da pasta quebrada — onde ele descreve a situação, não uma ação.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>Reconectar é a mesma tela de escolher pasta, usada num terceiro momento</b> — o primeiro é configurar, o segundo é trocar, e o terceiro é reencontrar o histórico depois de reinstalar o app.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 05 -->
+<section>
+  <div class="sh"><span class="n">06</span><h2>Os ajustes, e a pasta</h2></div>
+  <p class="intro">
+    Um interruptor, dois números e uma escolha de lugar. <strong>Não existe uma quinta coisa a
+    ajustar</strong>: quais ações disparam a cópia é decidido no domínio, não na tela — a tela decide
+    se a regra vale, nunca qual regra é.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">Ajustes do cofre</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Ajustes do cofre</h5>
+
+          <div class="tile" style="background:var(--app-bg);padding:12px 14px">
+            <div class="mid">
+              <div class="t">Guardar antes de excluir</div>
+              <div class="s">Lançamentos, parcelamentos, faturas, moedas e cotações.</div>
+            </div>
+            <div class="end"><span class="sw on"><i></i></span></div>
+          </div>
+
+          <div class="segwrap">
+            <span class="seglabel">Verificar a cada</span>
+            <div class="seg">
+              <span>1 dia</span><span class="on">3 dias</span><span>7 dias</span><span>15 dias</span>
+            </div>
+            <span class="seghint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</span>
+          </div>
+
+          <div class="segwrap">
+            <span class="seglabel">Quantas cópias manter</span>
+            <div class="seg">
+              <span>5</span><span class="on">10</span><span>20</span><span>Todas</span>
+            </div>
+          </div>
+
+          <div class="outcome">
+            <span class="ov">Cerca de 1 mês de histórico</span>
+            <span class="oh">10 cópias de ~4 MB ocupam por volta de 42 MB em Documentos/Finsight.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Ajustes · com "Todas" escolhido</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Ajustes do cofre</h5>
+
+          <div class="tile" style="background:var(--app-bg);padding:12px 14px">
+            <div class="mid">
+              <div class="t">Guardar antes de excluir</div>
+              <div class="s">Lançamentos, parcelamentos, faturas, moedas e cotações.</div>
+            </div>
+            <div class="end"><span class="sw on"><i></i></span></div>
+          </div>
+
+          <div class="segwrap">
+            <span class="seglabel">Verificar a cada</span>
+            <div class="seg">
+              <span class="on">1 dia</span><span>3 dias</span><span>7 dias</span><span>15 dias</span>
+            </div>
+            <span class="seghint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</span>
+          </div>
+
+          <div class="segwrap">
+            <span class="seglabel">Quantas cópias manter</span>
+            <div class="seg">
+              <span>5</span><span>10</span><span>20</span><span class="on">Todas</span>
+            </div>
+          </div>
+
+          <div class="outcome warn">
+            <span class="ov">Nenhuma cópia será apagada</span>
+            <span class="oh">Com verificação diária, a pasta cresce cerca de 120 MB por mês. Você mesmo apaga o que não quiser mais.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Escolher onde guardar</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Onde guardar as cópias</h5>
+          <div class="radio sel" style="align-items:flex-start"><span class="r" style="margin-top:3px"></span><span class="rl"><span style="display:block;font-weight:500">Dentro do app</span><span class="rn" style="display:block;line-height:1.4;margin-top:2px">Não pede nada. Some se você desinstalar o Finsight ou limpar os dados.</span></span></div>
+          <div class="radio" style="align-items:flex-start"><span class="r" style="margin-top:3px"></span><span class="rl"><span style="display:block;font-weight:500">Numa pasta que eu escolher</span><span class="rn" style="display:block;line-height:1.4;margin-top:2px">Continua lá mesmo se você desinstalar. Escolha uma pasta que seu serviço de nuvem sincronize para que sobrevivam à perda do aparelho.</span></span></div>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn tonal">Escolher pasta</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>"Verificar a cada", não "fazer uma cópia a cada".</b> A segunda promete periodicidade que nenhuma das três plataformas garante — e era uma frase que desfazia, num rótulo, a honestidade que o resto da proposta comprou caro. A linha de apoio diz por que, sem jargão.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O preventivo sobe para o topo, como interruptor.</b> Ele é o gatilho que torna uma exclusão reversível — o mais consequente dos três. Estava rebaixado a um checkbox de rodapé, abaixo de oito rádios.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>Escolha segmentada no lugar de oito rádios empilhados.</b> Quatro valores curtos e mutuamente exclusivos são exatamente o caso do <code>SingleChoiceSegmentedButtonRow</code>, e o sheet cabe na tela sem rolar.</div></div>
+    <div class="note"><span class="mk pg">4</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "10 cópias" são dois números abstratos; "cerca de 1 mês de histórico, por volta de 42 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
+    <div class="note"><span class="mk pg">5</span><div class="nt"><b>"Todas" avisa em âmbar, e não é impedido.</b> Transforma a retenção em algo que o usuário desliga, em vez de algo que ele sofre — mas quem escolhe não apagar nada merece saber a que taxa a pasta cresce.</div></div>
+    <div class="note"><span class="mk pg">6</span><div class="nt"><b>Cada opção de destino declara o que não cobre</b>, na própria linha. Escolher onde guardar é escolher contra o que se está protegido, e essa informação não pode estar noutra tela.</div></div>
+    <div class="note"><span class="mk pg">7</span><div class="nt"><b>A frase sobre a nuvem difere por plataforma.</b> No iOS ela diz "escolha uma pasta no iCloud Drive", porque lá isso funciona. No Android nenhum provedor de nuvem aparece no seletor de pastas — verificado no código do AOSP —, então a frase é a genérica acima.</div></div>
+  </div>
+
+  <div class="why">
+    <p><b>Sem botão de confirmar, de propósito.</b> Os ajustes valem no toque, como toda preferência do app — nada aqui precisa ser "salvo". O sheet de escolher pasta tem botões porque ele leva a outro lugar: abre o seletor do sistema.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 06 -->
+<section>
+  <div class="sh"><span class="n">07</span><h2>Restaurar, agora que dá para voltar</h2></div>
+  <p class="intro">
+    A confirmação de restauração é hoje o único lugar do app que diz "não pode ser desfeito", e com o
+    cofre ligado <strong>essa frase deixa de ser verdade</strong>. A substituição continua total — o
+    que mudou é que existe uma cópia do estado anterior.
+  </p>
+
+  <div class="stage">
+    <div class="unit">
+      <span class="cap">Cofre desligado · como é hoje</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Restaurar este backup?</h5>
+          <div class="factbox">
+            <div class="factrow"><span>Criado em</span><span>21 ago 2026, 20:02</span></div>
+            <div class="factrow"><span>Origem</span><span>Android · v2.4.1</span></div>
+            <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
+            <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
+          </div>
+          <p>Todos os seus dados atuais serão substituídos pelos deste arquivo. <b>Esta ação não pode ser desfeita.</b></p>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn danger">Restaurar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Cofre ligado · o texto que muda</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Restaurar este backup?</h5>
+          <div class="factbox">
+            <div class="factrow"><span>Criado em</span><span>21 ago 2026, 20:02</span></div>
+            <div class="factrow"><span>Origem</span><span>Android · v2.4.1</span></div>
+            <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
+            <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
+          </div>
+          <p>Todos os seus dados atuais serão substituídos pelos deste arquivo.</p>
+          <p><b>Uma cópia de como está agora é guardada antes</b>, e você pode voltar a ela por esta mesma tela.</p>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn danger">Restaurar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O botão continua vermelho nas duas.</b> Reversível não é inofensivo: a restauração troca o acervo inteiro, e voltar atrás custa outra restauração.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>Se a cópia falhar, o texto volta a ser o da esquerda.</b> A spec é explícita: uma captura que não aconteceu não pode ser apresentada como proteção.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 07 -->
+<section>
+  <div class="sh"><span class="n">08</span><h2>O gatilho que não tem tela</h2></div>
+  <p class="intro">
+    Dos três gatilhos, o que dispara antes de uma migração de schema não tem interface própria — ele
+    acontece durante a abertura do app depois de uma atualização, quando não há tela para mostrar
+    nada, e não há decisão a pedir. <strong>Ele aparece uma vez só: como um item rotulado na lista de
+    cópias</strong>, fora da contagem da retenção.
+  </p>
+
+  <div class="why">
+    <p><b>Por que ela precisa se identificar.</b> Uma migração que falha reverte tudo — o Room envolve a cadeia inteira numa transação. O caso em que essa cópia salva é o outro: a migração conclui sem erro e escreve dado errado, e isso se descobre dias depois, quando um número não bate.</p>
+    <p>Nesse momento, o usuário precisa achar <b>a cópia de antes da atualização</b>, não a mais recente. Um rótulo e a versão do app são o que tornam isso possível.</p>
+    <p>E é por isso que ela não entra na contagem: três capturas periódicas depois, ela teria sumido justamente antes de alguém precisar dela.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ 08 -->
+<section>
+  <div class="sh"><span class="n">09</span><h2>O que isso custa em componentes</h2></div>
+  <p class="intro">
+    Quase nada é novo. A tela de backup já é feita dos tiles de configuração, os modais já são
+    <code>ModalBottomSheet</code> pelo <code>ModalManager</code>, e a paleta é a de
+    <code>Color.kt</code> sem acréscimo.
+  </p>
+
+  <div class="notes">
+    <div class="note"><span class="mk pg">+</span><div class="nt"><b>Uma tela nova</b> — as cópias guardadas, com rota interna ao <code>impl</code> pendurada no <code>BackupGraph</code> que já existe. Segue o padrão de lista do app: <code>LazyColumn</code>, itens keyed com <code>animateItem()</code>, cabeçalho de data 18.sp Bold, estado vazio próprio.</div></div>
+    <div class="note"><span class="mk pg">+</span><div class="nt"><b>Uma linha de status</b> — quatro estados (em dia, atrasado, provisório, ainda nenhum). Barra de 3 dp à esquerda no token do estado, sobre <code>surfaceContainer</code>, no formato do card de escopo que já existe.</div></div>
+    <div class="note"><span class="mk pg">+</span><div class="nt"><b>Uma linha de cópia</b> — o mesmo esqueleto do <code>TransactionCard</code> (ícone, título, subtítulo, marcador à direita), com o chip de rótulo no formato que o <code>CreditCardCard</code> já usa: cor a 15% no fundo, cor cheia no texto, cantos de 4 dp.</div></div>
+    <div class="note"><span class="mk pg">=</span><div class="nt"><b>Todo o resto é reuso:</b> <code>SettingsMenuLink</code> com <code>Switch</code> no slot de ação, sheets com listas de rádio pelo <code>ModalManager</code>, o fluxo de exportação para "salvar fora do app", e os botões que os modais de exclusão já usam.</div></div>
+    <div class="note"><span class="mk pg">~</span><div class="nt"><b>Duas telas mudam de texto sem mudar de forma:</b> o card de escopo da tela de backup e a confirmação de restauração — as duas frases de <code>local-backup</code> que deixaram de ser verdade.</div></div>
+  </div>
+</section>
+
+<footer>
+  <p>Mockups fiéis aos tokens de core/designsystem — Color.kt e Theme.kt. Claro e escuro seguem o tema do seu sistema.</p>
+  <p>Proposta: openspec/changes/automatic-backup/ · commit 4d5b84ebd</p>
+</footer>
+
+</div>

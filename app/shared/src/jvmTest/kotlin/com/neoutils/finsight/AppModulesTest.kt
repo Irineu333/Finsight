@@ -5,7 +5,13 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
+import com.neoutils.finsight.database.snapshot.PreMigrationCopyTarget
+import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
+import com.neoutils.finsight.feature.backup.api.PeriodicBackup
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
+import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
@@ -134,6 +140,52 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
 
         assertNotNull(koin.get<BackupFileService>())
+    }
+
+    /**
+     * The vault's two triggers that nothing in the graph reaches for. `App` resolves the
+     * periodic one in a `LaunchedEffect`, and `:core:database` asks for the other one with
+     * `getOrNull` while it assembles the database — an unclaimed port there is a valid
+     * graph, so nothing would fail. A miss in either is an app that compiles, renders, and
+     * silently stops taking the copies it says it takes.
+     */
+    @Test
+    fun appModulesResolveTheVaultTriggersNobodyCompilesAgainst() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<PeriodicBackup>())
+        assertNotNull(koin.get<PreMigrationCopyTarget>())
+    }
+
+    /**
+     * The third trigger, and the one other features ask for by interface — a deletion in
+     * settings or in a card asks `PreventiveBackup` for a copy without knowing what takes
+     * it. Beside it, the two things every trigger ends up needing: the destination the
+     * copy lands in, which each platform binds for itself, and the check that decides
+     * whether a file in that destination is one this app wrote before retention removes
+     * it. None of the three is reached from composition, so nothing here fails to compile.
+     */
+    @Test
+    fun appModulesResolveTheVaultThePreventiveTriggerWritesInto() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<PreventiveBackup>())
+        assertNotNull(koin.get<BackupDestination>())
+        assertNotNull(koin.get<OwnCopyCheck>())
+    }
+
+    /**
+     * The one ledger port the graph is *allowed* to leave unclaimed: `ledgerModule`
+     * resolves it with `getOrNull()` and falls back to doing nothing, because a removal is
+     * complete without it. That fallback is what makes the binding worth a test — a backup
+     * module that stopped claiming this port would build, start, delete transactions,
+     * installments and invoices with no copy kept back, and leave every ledger test green.
+     */
+    @Test
+    fun appModulesClaimTheLedgersOptionalRemovalPrelude() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<TransactionRemovalPrelude>())
     }
 
     @Test

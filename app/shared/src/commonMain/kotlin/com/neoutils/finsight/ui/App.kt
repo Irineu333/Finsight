@@ -5,6 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -12,6 +13,7 @@ import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
 import com.neoutils.finsight.extension.ProvidePlatformContext
+import com.neoutils.finsight.feature.backup.api.PeriodicBackup
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.ProvideNavController
 import com.neoutils.finsight.ui.component.DetailPaneHost
@@ -29,6 +31,7 @@ fun App() {
     val crashlytics = koinInject<Crashlytics>()
     val authService = koinInject<AuthService>()
     val syncExchangeRates = koinInject<SyncExchangeRatesUseCase>()
+    val periodicBackup = koinInject<PeriodicBackup>()
 
     // The app's cross-cutting, fired and forgotten — and forgotten means the app opens
     // whether or not it succeeds. Resolving the id fails for reasons that have nothing to
@@ -60,6 +63,25 @@ fun App() {
     // they watch; this is a state change of the app, and nobody awaits it.
     LaunchedEffect(Unit) {
         syncExchangeRates.whenDue().collect { syncExchangeRates() }
+    }
+
+    // **The app being opened, told to whoever wants to know it.** This is the whole of the
+    // periodic trigger's cadence, and it is here for the reason the upkeep above is: there
+    // is no `ProcessLifecycleOwner` in this app and nothing runs while it is closed — a
+    // promise of "every N days" is one no supported platform lets an app keep (design D5) —
+    // so the shell is the only place that can say "opened", and it says nothing else.
+    //
+    // **Whether a copy is owed is not decided here.** The switch, the interval and whether
+    // anything was even entered since the last copy all live behind `captureIfDue()`; the
+    // shell would be a second place they could be answered differently.
+    //
+    // The frame is waited for on purpose. The effect starts as the first composition is
+    // applied, and a `VACUUM INTO` of the whole archive would then be competing with the
+    // first thing the user sees; resuming on a frame callback puts it after that frame, and
+    // the capture itself leaves this dispatcher. Nothing awaits it, and it does not throw.
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        periodicBackup.captureIfDue()
     }
 
     FinsightTheme {

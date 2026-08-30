@@ -5,9 +5,12 @@ import com.neoutils.finsight.navigation.NavRoute
 import kotlinx.serialization.Serializable
 
 /**
- * The node the backup destinations hang from, and the stable target of a `popUpTo` —
- * declared even though the feature starts with a single screen, as every feature's
- * subgraph is.
+ * The node the backup destinations hang from, and the stable target of a `popUpTo`.
+ *
+ * It is nested inside settings' subgraph — [BackupEntry] is what puts it there — because
+ * backup is a door inside settings and not a section of its own: hanging from that node is
+ * what keeps the navigation chrome showing settings as the current destination while any
+ * backup screen is up.
  */
 @Serializable
 data object BackupGraph : NavGraphRoute

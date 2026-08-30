@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import com.neoutils.finsight.feature.dashboard.api.DashboardGraph
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.navigation.accountsGraph
-import com.neoutils.finsight.ui.navigation.backupGraph
 import com.neoutils.finsight.ui.navigation.budgetsGraph
 import com.neoutils.finsight.ui.navigation.categoriesGraph
 import com.neoutils.finsight.ui.navigation.creditCardsGraph
@@ -41,8 +40,6 @@ fun AppNavHost(
         recurringGraph()
 
         settingsGraph()
-
-        backupGraph()
 
         supportGraph()
 

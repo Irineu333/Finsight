@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import com.neoutils.finsight.feature.backup.api.BackupEntry
 import com.neoutils.finsight.feature.settings.api.CurrenciesRoute
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
@@ -17,8 +18,13 @@ import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesScreen
 import com.neoutils.finsight.ui.screen.settings.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.koin.mp.KoinPlatform
 
 fun NavGraphBuilder.settingsGraph() {
+    // The graph builder's lambda is not `@Composable`, so the entry point comes from the
+    // Koin instance directly and not from `koinInject()`.
+    val backupEntry = KoinPlatform.getKoin().get<BackupEntry>()
+
     navigation<SettingsGraph>(
         startDestination = SettingsRoute,
     ) {
@@ -70,5 +76,11 @@ fun NavGraphBuilder.settingsGraph() {
                 )
             }
         }
+
+        // Backup's own destinations, hosted here rather than beside settings: backup is not
+        // a section of the app but a door inside this one, and a screen that hangs from this
+        // graph is what makes the chrome keep settings selected while it is open. Settings
+        // sees only `feature:backup:api`, so the registration is asked of the entry point.
+        backupEntry.register()
     }
 }

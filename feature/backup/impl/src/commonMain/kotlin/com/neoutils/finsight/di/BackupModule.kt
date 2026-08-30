@@ -12,11 +12,13 @@ import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveCoverage
+import com.neoutils.finsight.feature.backup.api.BackupEntry
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PeriodicBackup
 import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
 import com.neoutils.finsight.feature.backup.api.VaultOffer
+import com.neoutils.finsight.feature.backup.impl.BackupEntryImpl
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryViewModel
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -32,6 +34,11 @@ expect val backupPlatformModule: Module
 
 val backupModule = module {
     includes(backupPlatformModule)
+
+    // How settings gets these screens into its own graph. Nothing compiles against it —
+    // the graph is assembled at runtime — so a missing binding would be a settings screen
+    // that crashes the moment it is opened.
+    single<BackupEntry> { BackupEntryImpl() }
 
     factory { OwnCopyCheck(verifier = get()) }
 

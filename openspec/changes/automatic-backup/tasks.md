@@ -91,10 +91,13 @@
       envelhece além do intervalo
 - [ ] 8.3 A declaração do que o destino em vigor **não** cobre, por degrau
 - [ ] 8.4 A oferta do cofre junto da confirmação de uma ação destrutiva, que liga o cofre inteiro
-- [ ] 8.5 Reescrever as duas frases de `local-backup` que deixaram de ser verdade — que o app não
+- [ ] 8.5 Unir `backup_group_export` e `backup_group_restore` num grupo só: hoje cada cabeçalho está
+      sobre um tile e repete o próprio item, e juntos eles fazem o par com o backup automático — o
+      que o app faz sozinho, e o que sai e entra pela mão do usuário
+- [ ] 8.6 Reescrever as duas frases de `local-backup` que deixaram de ser verdade — que o app não
       guarda cópias, e que restaurar é irreversível
-- [ ] 8.6 Chaves novas em `values/strings.xml` e `values-en/strings.xml`, as duas no mesmo commit
-- [ ] 8.7 `Modifier.testTag` nos elementos novos, e `Modifier.exposeTestTags()` em qualquer modal
+- [ ] 8.7 Chaves novas em `values/strings.xml` e `values-en/strings.xml`, as duas no mesmo commit
+- [ ] 8.8 `Modifier.testTag` nos elementos novos, e `Modifier.exposeTestTags()` em qualquer modal
       novo que seja raiz de composição
 
 ## 9. Fechamento do degrau 1

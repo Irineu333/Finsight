@@ -63,6 +63,7 @@ import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_platform_android
 import com.neoutils.finsight.resources.backup_platform_desktop
 import com.neoutils.finsight.resources.backup_platform_ios
+import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Warning
@@ -79,6 +80,11 @@ import org.jetbrains.compose.resources.stringResource
  * how much it holds. That is the whole reason it is a sheet rather than a dialog with a
  * sentence in it — the operation is irreversible, and "restore a backup" is not a
  * question anyone can answer without knowing *which* backup.
+ *
+ * It also says what a backup holds and what it leaves behind — the preferences of this
+ * install, which the file never carried and the restore will not touch. That sentence is
+ * owed here rather than on the screen behind, because this is the last moment before the
+ * archive is replaced and the only one at which anybody is asking the question.
  *
  * **What it says about undoing depends on what the app will actually do.** With a copy of
  * the current archive kept first, the restore stops being irreversible and the sheet says
@@ -149,6 +155,16 @@ class ConfirmRestoreModal(
             }
 
             FileIdentityCard(confirmation)
+
+            // What the file carries, and what it deliberately does not, said here because
+            // this is the moment the difference between "my data" and "my app as I left
+            // it" would otherwise be discovered (`local-backup` spec).
+            Text(
+                text = stringResource(Res.string.backup_scope),
+                style = typography.bodySmall,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("backup_restore_confirm_scope"),
+            )
 
             if (reversible) ReversibleNotice() else IrreversibleNotice()
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,14 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.Shield
@@ -75,12 +74,10 @@ import com.neoutils.finsight.resources.backup_no_copies
 import com.neoutils.finsight.resources.backup_restore_subtitle
 import com.neoutils.finsight.resources.backup_restore_subtitle_vault
 import com.neoutils.finsight.resources.backup_restore_title
-import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.resources.backup_screen_title
 import com.neoutils.finsight.resources.backup_settings_subtitle
 import com.neoutils.finsight.resources.backup_settings_title
 import com.neoutils.finsight.resources.backup_today
-import com.neoutils.finsight.resources.backup_vault_off_subtitle
 import com.neoutils.finsight.resources.backup_vault_on_both
 import com.neoutils.finsight.resources.backup_vault_on_periodic
 import com.neoutils.finsight.resources.backup_vault_on_preventive
@@ -119,10 +116,15 @@ import org.koin.compose.viewmodel.koinViewModel
  * user's hand. The two headings this replaced sat over one tile each and repeated the
  * tile's own name, which grouped nothing.
  *
- * **The card says what the file holds and what the destination does not cover.** With the
- * vault off, it also says the app keeps no copies of its own — a promise that stops being
- * true the moment somebody turns the vault on, which is why it is stated as a consequence
- * of the switch rather than as a property of the app.
+ * **It is a list, and it is built as one.** Turning the vault on adds three rows at once —
+ * the status card and the two tiles that only mean something with copies to point at — and
+ * a `Column` had them appear from nothing while everything below jumped. Every row is a
+ * keyed item, so the list fades in what arrives and slides what was already there.
+ *
+ * **Nothing on it explains the feature at rest.** What the destination does not cover rides
+ * with the status card that names the destination, and the consequence of leaving the vault
+ * off is the vault tile's own subtitle. What a backup file holds is said where a file is
+ * about to replace the archive, in the restore confirmation.
  */
 @Composable
 fun BackupScreen(
@@ -174,29 +176,38 @@ fun BackupScreen(
         },
     ) { padding ->
         SettingsTileTheme {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                    .padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (uiState.vault.isOn) {
-                    LastBackupCard(
-                        vault = uiState.vault,
-                        copies = uiState.copies,
-                        now = clock.now(),
+                    item(key = "last_capture") {
+                        LastBackupCard(
+                            vault = uiState.vault,
+                            copies = uiState.copies,
+                            now = clock.now(),
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
+                }
+
+                item(key = "group_automatic") {
+                    GroupTitle(
+                        text = stringResource(Res.string.backup_group_automatic),
+                        modifier = Modifier
+                            .padding(top = GroupGap)
+                            .animateItem(),
                     )
                 }
 
-                ScopeCard(vault = uiState.vault)
-
-                SettingsGroup(
-                    title = { Text(text = stringResource(Res.string.backup_group_automatic)) },
-                ) {
+                item(key = "vault") {
                     SettingsMenuLink(
-                        modifier = Modifier.testTag("backup_vault"),
+                        modifier = Modifier
+                            .testTag("backup_vault")
+                            .animateItem(),
                         shape = TileShape,
                         icon = {
                             Icon(imageVector = Icons.Outlined.Shield, contentDescription = null)
@@ -215,10 +226,14 @@ fun BackupScreen(
                             viewModel.onAction(BackupAction.SetVaultOn(!uiState.vault.isOn))
                         },
                     )
+                }
 
-                    if (uiState.vault.isOn) {
+                if (uiState.vault.isOn) {
+                    item(key = "vault_settings") {
                         SettingsMenuLink(
-                            modifier = Modifier.testTag("backup_vault_settings_tile"),
+                            modifier = Modifier
+                                .testTag("backup_vault_settings_tile")
+                                .animateItem(),
                             shape = TileShape,
                             icon = {
                                 Icon(imageVector = Icons.Outlined.Tune, contentDescription = null)
@@ -238,9 +253,13 @@ fun BackupScreen(
                                 )
                             },
                         )
+                    }
 
+                    item(key = "history") {
                         SettingsMenuLink(
-                            modifier = Modifier.testTag("backup_history_tile"),
+                            modifier = Modifier
+                                .testTag("backup_history_tile")
+                                .animateItem(),
                             shape = TileShape,
                             icon = {
                                 Icon(imageVector = Icons.Outlined.History, contentDescription = null)
@@ -253,11 +272,20 @@ fun BackupScreen(
                     }
                 }
 
-                SettingsGroup(
-                    title = { Text(text = stringResource(Res.string.backup_group_manual)) },
-                ) {
+                item(key = "group_manual") {
+                    GroupTitle(
+                        text = stringResource(Res.string.backup_group_manual),
+                        modifier = Modifier
+                            .padding(top = GroupGap)
+                            .animateItem(),
+                    )
+                }
+
+                item(key = "export") {
                     SettingsMenuLink(
-                        modifier = Modifier.testTag("backup_export"),
+                        modifier = Modifier
+                            .testTag("backup_export")
+                            .animateItem(),
                         enabled = !uiState.isBusy,
                         shape = TileShape,
                         icon = { Icon(imageVector = Icons.Outlined.SaveAlt, contentDescription = null) },
@@ -266,9 +294,13 @@ fun BackupScreen(
                         action = { TileAction(isRunning = uiState.isExporting) },
                         onClick = { viewModel.onAction(BackupAction.Export(platformContext)) },
                     )
+                }
 
+                item(key = "restore") {
                     SettingsMenuLink(
-                        modifier = Modifier.testTag("backup_restore"),
+                        modifier = Modifier
+                            .testTag("backup_restore")
+                            .animateItem(),
                         enabled = !uiState.isBusy,
                         shape = TileShape,
                         icon = { Icon(imageVector = Icons.Outlined.Restore, contentDescription = null) },
@@ -364,8 +396,25 @@ private fun RestoreWithoutCopyHost(
 }
 
 /**
- * When the last copy that actually landed was taken, where it went, and whether it has
- * aged past the interval.
+ * A group heading, standing as a row of its own.
+ *
+ * The tiles it labels are items of the list beside it rather than children of a group,
+ * because a tile that arrives has to arrive on its own; what is left of the group is the
+ * heading, and the tile library still owns how a heading looks. Order is what keeps the
+ * two together — nothing is ever inserted between a heading and the tile under it.
+ */
+@Composable
+private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
+    SettingsGroup(
+        modifier = modifier,
+        title = { Text(text = text) },
+        content = {},
+    )
+}
+
+/**
+ * When the last copy that actually landed was taken, where it went, whether it has aged
+ * past the interval, and what the place it went to does not protect against.
  *
  * Never captured is written out as such and never as a date: "never" and "a long time ago"
  * lead to different actions, and the spec forbids showing a date that stands for neither.
@@ -373,9 +422,18 @@ private fun RestoreWithoutCopyHost(
  * The sign of a copy that has aged is amber rather than red, because nothing is broken —
  * the copies that exist are still there and still valid. Red is what a vault that can no
  * longer write would deserve.
+ *
+ * The coverage sentence is here and not in a card of its own because it is the consequence
+ * of the destination named two lines above it (`automatic-backup` spec), and it is only
+ * ever true while there is a vault to have a destination.
  */
 @Composable
-private fun LastBackupCard(vault: VaultState, copies: VaultCopies, now: Instant) {
+private fun LastBackupCard(
+    vault: VaultState,
+    copies: VaultCopies,
+    now: Instant,
+    modifier: Modifier = Modifier,
+) {
     val dateFormats = LocalDateFormats.current
     val last = vault.lastCapturedAt
     val overdue = last != null && now - last >= vault.interval
@@ -388,7 +446,7 @@ private fun LastBackupCard(vault: VaultState, copies: VaultCopies, now: Instant)
     Surface(
         color = colorScheme.surfaceContainer,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag("backup_last_capture"),
     ) {
@@ -434,51 +492,13 @@ private fun LastBackupCard(vault: VaultState, copies: VaultCopies, now: Instant)
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
-            }
-        }
-    }
-}
-
-/**
- * What the file carries, and what the destination in force leaves uncovered.
- *
- * The second sentence is the switch's consequence: off, the app keeps nothing of its own
- * and moving to another device recovers only what was exported; on, the copies exist and
- * the sentence names what the place they are in does not protect against (design D3).
- */
-@Composable
-private fun ScopeCard(vault: VaultState) {
-    Surface(
-        color = colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("backup_coverage"),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = null,
-                tint = colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = stringResource(Res.string.backup_scope),
-                    style = typography.bodyMedium,
+                    text = coverageOf(vault.destination),
+                    style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = if (vault.isOn) {
-                        coverageOf(vault.destination)
-                    } else {
-                        stringResource(Res.string.backup_no_copies)
-                    },
-                    style = typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .testTag("backup_coverage"),
                 )
             }
         }
@@ -492,10 +512,15 @@ private fun coverageOf(destination: VaultDestination): String = when (destinatio
     VaultDestination.USER_FOLDER -> stringResource(Res.string.backup_coverage_folder)
 }
 
-/** Which occasions produce a copy, said as occasions rather than as switches. */
+/**
+ * Which occasions produce a copy, said as occasions rather than as switches — and, with no
+ * vault, the consequence of that instead: nothing is kept, and getting the data back is
+ * down to the file the user exported (`local-backup` spec). The switch beside it already
+ * shows off, so the subtitle spends its line on what off *means*.
+ */
 @Composable
 private fun vaultSubtitle(vault: VaultState): String {
-    if (!vault.isOn) return stringResource(Res.string.backup_vault_off_subtitle)
+    if (!vault.isOn) return stringResource(Res.string.backup_no_copies)
 
     val interval = intervalLabel(VaultInterval.nearest(vault.interval))
 
@@ -548,3 +573,9 @@ private fun TileAction(isRunning: Boolean) {
 
 /** The corner every card of this app wears. */
 private val TileShape = RoundedCornerShape(12.dp)
+
+/**
+ * What a heading adds to the eight points the list already puts between rows, so that a
+ * group reads as a break rather than as one more tile.
+ */
+private val GroupGap = 12.dp

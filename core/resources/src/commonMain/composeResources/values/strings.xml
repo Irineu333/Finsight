@@ -1009,7 +1009,6 @@
     <string name="backup_group_automatic">Backup automático</string>
     <string name="backup_group_manual">Exportar e restaurar</string>
     <string name="backup_vault_title">Guardar cópias automaticamente</string>
-    <string name="backup_vault_off_subtitle">Desligado.</string>
     <string name="backup_vault_on_both">A cada %1$s e antes de excluir algo</string>
     <string name="backup_vault_on_periodic">A cada %1$s</string>
     <string name="backup_vault_on_preventive">Antes de excluir algo</string>

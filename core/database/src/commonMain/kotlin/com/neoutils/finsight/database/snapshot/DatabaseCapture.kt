@@ -46,7 +46,7 @@ suspend fun AppDatabase.captureInto(
 ) {
     try {
         useWriterConnection { connection ->
-            connection.usePrepared("VACUUM INTO ?1") { statement ->
+            connection.usePrepared(VACUUM_INTO) { statement ->
                 statement.bindText(1, destinationPath)
                 statement.step()
             }
@@ -59,6 +59,13 @@ suspend fun AppDatabase.captureInto(
         stampOrigin(destinationPath, appVersion, platform)
     }
 }
+
+/**
+ * The one statement that produces a captured file, named once because two places run it:
+ * this capture, on Room's writer connection, and the one taken before a migration, on a
+ * connection from the driver because Room's pool must not exist yet.
+ */
+internal const val VACUUM_INTO = "VACUUM INTO ?1"
 
 /**
  * Writes [SnapshotMeta] into the file the capture has just produced, over a throwaway

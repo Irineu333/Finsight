@@ -3,10 +3,20 @@ package com.neoutils.finsight.di
 import android.content.Context
 import com.neoutils.finsight.database.DatabaseBuilderFactory
 import com.neoutils.finsight.database.getDatabaseBuilder
+import com.neoutils.finsight.database.snapshot.PreMigrationCopyTarget
 import org.koin.dsl.module
 
 actual val databasePlatformModule = module {
-    single { getDatabaseBuilder(context = get()) }
+    // Assembling the database is where the copy taken before migrating is decided, and
+    // the decision is only ever passed through: the target answers a path or nothing, and
+    // that answer *is* the whole condition (design D11). Nothing here reads a preference,
+    // and an unclaimed port is a build that takes no such copy.
+    single {
+        getDatabaseBuilder(
+            context = get(),
+            captureInto = getOrNull<PreMigrationCopyTarget>()?.path(),
+        )
+    }
 
     // The `Context` is taken here and held by the factory, because this module is the
     // only one that can see one — which is the entire reason a factory exists instead of

@@ -14,6 +14,8 @@ import com.neoutils.finsight.database.exception.UnbalancedLedgerException
 import com.neoutils.finsight.database.extension.SQLITE_CORRUPT
 import com.neoutils.finsight.database.extension.SQLITE_FULL
 import com.neoutils.finsight.database.extension.SQLITE_IOERR
+import com.neoutils.finsight.database.extension.declaredSchemaVersion
+import com.neoutils.finsight.database.extension.onDatabaseFile
 import com.neoutils.finsight.database.extension.resultCode
 import com.neoutils.finsight.database.extension.scalarLong
 import com.neoutils.finsight.database.extension.verifyDimensionLanding
@@ -66,36 +68,24 @@ class CandidateVerifier(
         }
 
     /**
-     * Layers 1 to 3, over a throwaway connection opened read-only.
-     *
-     * [SQLITE_OPEN_READONLY] is mechanism rather than care: with the default flags SQLite
-     * *creates* the file a missing path names, and the file it creates passes every check
-     * that reads bytes — the verification would manufacture its own false positive. The
-     * same flag makes it impossible, rather than merely unintended, for these layers to
-     * alter the candidate.
+     * Layers 1 to 3, over the throwaway connection [onDatabaseFile] opens — read-only,
+     * which adds to what that helper already refuses to do: the flag makes it impossible,
+     * rather than merely unintended, for these layers to alter the file the user picked.
      *
      * The machine is separated from the file here too, and it has to be: this is the layer
      * that gets to say "there is nothing here to read as a database", and a device that
-     * refused the read says nothing of the kind. Both places a refusal can arrive ask
-     * [raiseIfMachineFailure] first, so only codes about the file reach [toRejection].
+     * refused the read says nothing of the kind. Every refusal — a refused open included —
+     * asks [raiseIfMachineFailure] first, so only codes about the file reach [toRejection].
      */
-    private fun readFile(candidatePath: String): CandidateRejection? {
-        val connection = try {
-            BundledSQLiteDriver().open(candidatePath, SQLITE_OPEN_READONLY)
-        } catch (cause: SQLiteException) {
-            cause.raiseIfMachineFailure()
-            return cause.toRejection()
-        }
-        return try {
+    private fun readFile(candidatePath: String): CandidateRejection? = try {
+        onDatabaseFile(candidatePath, SQLITE_OPEN_READONLY) { connection ->
             connection.integrityRejection()
                 ?: connection.provenanceRejection()
                 ?: connection.schemaVersionRejection()
-        } catch (cause: SQLiteException) {
-            cause.raiseIfMachineFailure()
-            cause.toRejection()
-        } finally {
-            connection.close()
         }
+    } catch (cause: SQLiteException) {
+        cause.raiseIfMachineFailure()
+        cause.toRejection()
     }
 
     /**
@@ -219,7 +209,7 @@ private fun SQLiteConnection.provenanceRejection(): CandidateRejection? =
  * its own; refusing it here is what lets the screen say why.
  */
 private fun SQLiteConnection.schemaVersionRejection(): CandidateRejection? {
-    val declared = scalarLong("PRAGMA user_version")
+    val declared = declaredSchemaVersion()
     return when {
         declared < 1L -> CandidateRejection.NOT_FROM_THIS_APP
         declared > AppSchema.VERSION -> CandidateRejection.SCHEMA_TOO_NEW

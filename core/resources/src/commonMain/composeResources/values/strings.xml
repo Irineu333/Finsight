@@ -404,6 +404,7 @@
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Excluir Transação</string>
     <string name="delete_transaction_message">Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.</string>
+    <string name="delete_transaction_message_reversible">Tem certeza que deseja excluir esta transação?</string>
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
@@ -434,6 +435,7 @@
 
     <string name="delete_installment_title">Excluir Parcelamento</string>
     <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
+    <string name="delete_installment_message_reversible">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas.</string>
     <string name="delete_installment_confirm">Excluir</string>
 
     <!-- Create Invoice Modal -->
@@ -446,6 +448,7 @@
 
     <string name="delete_future_invoice_title">Excluir Fatura</string>
     <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message_reversible">Tem certeza que deseja excluir esta fatura futura?</string>
     <string name="delete_future_invoice_confirm">Excluir</string>
 
     <!-- Pay Invoice Modal -->
@@ -919,6 +922,7 @@
 
     <string name="settings_currencies_title">Moedas</string>
     <string name="settings_currencies_subtitle">Cadastre, edite, arquive ou apague as moedas que o app oferece</string>
+    <string name="settings_no_copy_message">Prosseguir destrói isso definitivamente: nenhuma cópia foi guardada que pudesse trazer de volta.</string>
 
     <string name="currencies_screen_title">Moedas</string>
     <string name="currencies_add">Cadastrar moeda</string>
@@ -928,7 +932,9 @@
     <string name="currencies_archive_confirm_action">Arquivar</string>
     <string name="currencies_delete_confirm_title">Apagar %1$s?</string>
     <string name="currencies_delete_confirm_message">A moeda deixa de existir e não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_message_reversible">A moeda deixa de existir.</string>
     <string name="currencies_delete_confirm_message_rates">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto. Não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_message_rates_reversible">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto.</string>
     <string name="currencies_delete_confirm_action">Apagar</string>
 
     <string name="view_currency_base_label">Moeda base</string>
@@ -982,11 +988,9 @@
 
     <string name="backup_screen_title">Backup</string>
     <string name="backup_scope">O backup contém suas contas, cartões, transações, categorias, orçamentos e recorrências, além das moedas e taxas de câmbio que você registrou. Preferências deste aparelho — como moeda base e o layout do painel — não entram, e cada instalação mantém as suas.</string>
-    <string name="backup_no_copies">O app não guarda cópias por conta própria, em nenhuma plataforma. Para recuperar seus dados em outro aparelho, você vai precisar do arquivo que exportar aqui.</string>
-    <string name="backup_group_export">Exportar</string>
+    <string name="backup_no_copies">O cofre está desligado: o app não guarda nenhuma cópia por conta própria. Recuperar seus dados em outro aparelho depende do arquivo que você exportar.</string>
     <string name="backup_export_title">Exportar backup</string>
     <string name="backup_export_subtitle">Salva um arquivo com seus dados onde você escolher.</string>
-    <string name="backup_group_restore">Restaurar</string>
     <string name="backup_restore_title">Restaurar de um arquivo</string>
     <string name="backup_restore_subtitle">Escolha um backup exportado deste app.</string>
     <string name="backup_confirm_title">Restaurar backup</string>
@@ -1002,4 +1006,73 @@
     <string name="backup_confirm_irreversible">Isso substitui tudo o que está no app agora — não é possível desfazer nem recuperar o estado anterior.</string>
     <string name="backup_confirm_cancel">Cancelar</string>
     <string name="backup_confirm_action">Restaurar</string>
+    <string name="backup_group_automatic">Backup automático</string>
+    <string name="backup_group_manual">Exportar e restaurar</string>
+    <string name="backup_vault_title">Guardar cópias automaticamente</string>
+    <string name="backup_vault_off_subtitle">Desligado. O app não está guardando nada.</string>
+    <string name="backup_vault_on_both">A cada %1$s e antes de excluir algo</string>
+    <string name="backup_vault_on_periodic">A cada %1$s</string>
+    <string name="backup_vault_on_preventive">Antes de excluir algo</string>
+    <string name="backup_vault_on_update_only">Só antes de uma atualização que reescreva o banco</string>
+    <string name="backup_interval_1">1 dia</string>
+    <string name="backup_interval_3">3 dias</string>
+    <string name="backup_interval_7">7 dias</string>
+    <string name="backup_interval_15">15 dias</string>
+    <string name="backup_last_title">Último backup</string>
+    <string name="backup_last_never">Ainda nenhum</string>
+    <string name="backup_last_never_hint">A primeira cópia acontece quando você lançar algo ou na próxima vez que abrir o app.</string>
+    <string name="backup_last_overdue">Mais antigo que o intervalo de %1$s. Abra o app com mais frequência para que uma cópia nova seja feita.</string>
+    <string name="backup_destination_app">Dentro do app</string>
+    <string name="backup_destination_folder">Numa pasta que você escolheu</string>
+    <string name="backup_coverage_app">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</string>
+    <string name="backup_coverage_folder">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</string>
+    <string name="backup_copies_none">Nenhuma cópia ainda</string>
+    <string name="backup_copies_one">1 cópia guardada</string>
+    <string name="backup_copies_many">%1$d cópias guardadas</string>
+    <string name="backup_settings_title">Ajustes do cofre</string>
+    <string name="backup_settings_subtitle">O que dispara uma cópia, e de quanto em quanto tempo</string>
+    <string name="backup_settings_preventive_title">Guardar antes de excluir</string>
+    <string name="backup_settings_preventive_subtitle">Lançamentos, parcelamentos, faturas, moedas e cotações.</string>
+    <string name="backup_settings_periodic_title">Guardar quando você abrir o app</string>
+    <string name="backup_settings_periodic_subtitle">Uma cópia na primeira abertura depois do prazo abaixo.</string>
+    <string name="backup_settings_interval_title">Verificar a cada</string>
+    <string name="backup_settings_interval_hint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</string>
+    <string name="backup_settings_retention_title">Quantas cópias manter</string>
+    <string name="backup_settings_retention_fixed">O app mantém as %1$d cópias mais recentes. Enquanto elas ficam dentro do app isso não é ajustável — são arquivos que você não vê nem administra.</string>
+    <string name="backup_settings_outcome">Cerca de %1$d dias de histórico, ocupando por volta de %2$s.</string>
+    <string name="backup_settings_outcome_unknown">Cerca de %1$d dias de histórico. O quanto ocupa será sabido depois da primeira cópia.</string>
+    <string name="backup_settings_retention_all">Nenhuma cópia será apagada. Nesse ritmo a pasta cresce cerca de %1$s por mês, e é você quem apaga o que não quiser mais.</string>
+    <string name="backup_retention_five">5</string>
+    <string name="backup_retention_ten">10</string>
+    <string name="backup_retention_twenty">20</string>
+    <string name="backup_retention_everything">Todas</string>
+    <string name="backup_history_title">Cópias guardadas</string>
+    <string name="backup_history_subtitle_empty">Nenhuma cópia ainda</string>
+    <string name="backup_history_subtitle">%1$s · a mais recente %2$s</string>
+    <string name="backup_history_summary">%1$s · %2$s no total</string>
+    <string name="backup_history_empty_title">Nenhuma cópia ainda</string>
+    <string name="backup_history_empty_message">A primeira acontece quando você lançar algo, ou antes da próxima exclusão.</string>
+    <string name="backup_history_empty_off">O cofre está desligado. Ligue-o na tela de backup para o app começar a guardar cópias.</string>
+    <string name="backup_history_failed">Não foi possível ler as cópias guardadas.</string>
+    <string name="backup_history_migration_label">atualização</string>
+    <string name="backup_history_migration_subtitle">Guardada antes de uma atualização do app</string>
+    <string name="backup_history_action_restore">Restaurar esta cópia</string>
+    <string name="backup_history_action_share">Salvar uma cópia fora do app</string>
+    <string name="backup_history_action_share_subtitle">Envia este arquivo para onde você quiser, sem fazer uma cópia nova.</string>
+    <string name="backup_history_action_delete">Excluir esta cópia</string>
+    <string name="backup_history_removed">A cópia foi removida.</string>
+    <string name="backup_history_remove_refused">Este arquivo não é uma cópia escrita por este app, então ele não foi removido.</string>
+    <string name="backup_history_gone">Esta cópia não está mais no destino.</string>
+    <string name="backup_today">Hoje</string>
+    <string name="backup_yesterday">Ontem</string>
+    <string name="backup_size_bytes">%1$d B</string>
+    <string name="backup_size_kb">%1$d KB</string>
+    <string name="backup_size_mb">%1$d MB</string>
+    <string name="backup_confirm_reversible">Uma cópia de como o app está agora é guardada antes, e você pode voltar a ela pela tela de backup.</string>
+    <string name="backup_confirm_offer_title">Guardar uma cópia antes</string>
+    <string name="backup_confirm_offer_subtitle">E também a cada %1$s, daqui em diante. Você pode desligar nos ajustes de backup.</string>
+    <string name="backup_restore_subtitle_vault">De um backup que veio de outro aparelho.</string>
+    <string name="backup_no_copy_title">Não foi possível guardar a cópia</string>
+    <string name="backup_no_copy_message">Restaurar substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia foi guardada que pudesse trazer de volta o que está aqui agora.</string>
+    <string name="backup_no_copy_action">Restaurar mesmo assim</string>
 </resources>

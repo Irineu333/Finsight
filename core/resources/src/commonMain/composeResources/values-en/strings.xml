@@ -403,6 +403,7 @@
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Delete Transaction</string>
     <string name="delete_transaction_message">Are you sure you want to delete this transaction? This action cannot be undone.</string>
+    <string name="delete_transaction_message_reversible">Are you sure you want to delete this transaction?</string>
     <string name="delete_transaction_confirm">Delete</string>
 
     <string name="delete_account_title">Delete Account</string>
@@ -433,6 +434,7 @@
 
     <string name="delete_installment_title">Delete Installment</string>
     <string name="delete_installment_message">Are you sure you want to delete this installment? All %1$d installments will be removed. This action cannot be undone.</string>
+    <string name="delete_installment_message_reversible">Are you sure you want to delete this installment? All %1$d installments will be removed.</string>
     <string name="delete_installment_confirm">Delete</string>
 
     <!-- Create Invoice Modal -->
@@ -445,6 +447,7 @@
 
     <string name="delete_future_invoice_title">Delete Invoice</string>
     <string name="delete_future_invoice_message">Are you sure you want to delete this future invoice? This action cannot be undone.</string>
+    <string name="delete_future_invoice_message_reversible">Are you sure you want to delete this future invoice?</string>
     <string name="delete_future_invoice_confirm">Delete</string>
 
     <!-- Pay Invoice Modal -->
@@ -918,6 +921,7 @@
 
     <string name="settings_currencies_title">Currencies</string>
     <string name="settings_currencies_subtitle">Add, edit, archive or delete the currencies the app offers</string>
+    <string name="settings_no_copy_message">Going ahead destroys this for good: no copy was kept that could bring it back.</string>
 
     <string name="currencies_screen_title">Currencies</string>
     <string name="currencies_add">Add currency</string>
@@ -927,7 +931,9 @@
     <string name="currencies_archive_confirm_action">Archive</string>
     <string name="currencies_delete_confirm_title">Delete %1$s?</string>
     <string name="currencies_delete_confirm_message">The currency stops existing, and this cannot be undone.</string>
+    <string name="currencies_delete_confirm_message_reversible">The currency stops existing.</string>
     <string name="currencies_delete_confirm_message_rates">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it. This cannot be undone.</string>
+    <string name="currencies_delete_confirm_message_rates_reversible">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it.</string>
     <string name="currencies_delete_confirm_action">Delete</string>
 
     <string name="view_currency_base_label">Base currency</string>
@@ -981,11 +987,9 @@
 
     <string name="backup_screen_title">Backup</string>
     <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets and recurring entries, along with the currencies and exchange rates you have recorded. Preferences of this device — such as the base currency and the dashboard layout — are left out, and each install keeps its own.</string>
-    <string name="backup_no_copies">The app keeps no copies of its own, on any platform. To get your data back on another device, you will need the file you export here.</string>
-    <string name="backup_group_export">Export</string>
+    <string name="backup_no_copies">The vault is off: the app keeps no copies of its own. Getting your data back on another device depends on the file you export.</string>
     <string name="backup_export_title">Export backup</string>
     <string name="backup_export_subtitle">Saves a file with your data wherever you choose.</string>
-    <string name="backup_group_restore">Restore</string>
     <string name="backup_restore_title">Restore from a file</string>
     <string name="backup_restore_subtitle">Pick a backup exported from this app.</string>
     <string name="backup_confirm_title">Restore backup</string>
@@ -1001,4 +1005,73 @@
     <string name="backup_confirm_irreversible">This replaces everything in the app right now — there is no undo, and the previous state cannot be brought back.</string>
     <string name="backup_confirm_cancel">Cancel</string>
     <string name="backup_confirm_action">Restore</string>
+    <string name="backup_group_automatic">Automatic backup</string>
+    <string name="backup_group_manual">Export and restore</string>
+    <string name="backup_vault_title">Keep copies automatically</string>
+    <string name="backup_vault_off_subtitle">Off. The app is keeping nothing.</string>
+    <string name="backup_vault_on_both">Every %1$s, and before deleting anything</string>
+    <string name="backup_vault_on_periodic">Every %1$s</string>
+    <string name="backup_vault_on_preventive">Before deleting anything</string>
+    <string name="backup_vault_on_update_only">Only before an update that rewrites the database</string>
+    <string name="backup_interval_1">1 day</string>
+    <string name="backup_interval_3">3 days</string>
+    <string name="backup_interval_7">7 days</string>
+    <string name="backup_interval_15">15 days</string>
+    <string name="backup_last_title">Last backup</string>
+    <string name="backup_last_never">None yet</string>
+    <string name="backup_last_never_hint">The first copy happens when you enter something, or the next time you open the app.</string>
+    <string name="backup_last_overdue">Older than the %1$s interval. Open the app more often so that a new copy is taken.</string>
+    <string name="backup_destination_app">Inside the app</string>
+    <string name="backup_destination_folder">In a folder you chose</string>
+    <string name="backup_coverage_app">The copies stay on this device and inside the app. Uninstalling the app takes all of them with it, and getting your data back on another device still depends on the file you export.</string>
+    <string name="backup_coverage_folder">The copies stay in the folder you chose and remain there if you uninstall the app. Covering the loss of the device depends on that folder being synced by some cloud service.</string>
+    <string name="backup_copies_none">No copies yet</string>
+    <string name="backup_copies_one">1 copy kept</string>
+    <string name="backup_copies_many">%1$d copies kept</string>
+    <string name="backup_settings_title">Vault settings</string>
+    <string name="backup_settings_subtitle">What triggers a copy, and how often</string>
+    <string name="backup_settings_preventive_title">Keep a copy before deleting</string>
+    <string name="backup_settings_preventive_subtitle">Transactions, installments, invoices, currencies and rates.</string>
+    <string name="backup_settings_periodic_title">Keep a copy when you open the app</string>
+    <string name="backup_settings_periodic_subtitle">One copy on the first opening after the interval below.</string>
+    <string name="backup_settings_interval_title">Check every</string>
+    <string name="backup_settings_interval_hint">The copy happens when you open the app after that time — the system does not let the app work on its own in the background.</string>
+    <string name="backup_settings_retention_title">How many copies to keep</string>
+    <string name="backup_settings_retention_fixed">The app keeps the %1$d most recent copies. While they live inside the app that is not adjustable — they are files you neither see nor manage.</string>
+    <string name="backup_settings_outcome">About %1$d days of history, taking around %2$s.</string>
+    <string name="backup_settings_outcome_unknown">About %1$d days of history. How much room it takes will be known after the first copy.</string>
+    <string name="backup_settings_retention_all">No copy will be deleted. At this rate the folder grows by about %1$s a month, and you are the one who deletes what you no longer want.</string>
+    <string name="backup_retention_five">5</string>
+    <string name="backup_retention_ten">10</string>
+    <string name="backup_retention_twenty">20</string>
+    <string name="backup_retention_everything">All</string>
+    <string name="backup_history_title">Kept copies</string>
+    <string name="backup_history_subtitle_empty">No copies yet</string>
+    <string name="backup_history_subtitle">%1$s · the newest %2$s</string>
+    <string name="backup_history_summary">%1$s · %2$s in total</string>
+    <string name="backup_history_empty_title">No copies yet</string>
+    <string name="backup_history_empty_message">The first one happens when you enter something, or before the next deletion.</string>
+    <string name="backup_history_empty_off">The vault is off. Turn it on from the backup screen for the app to start keeping copies.</string>
+    <string name="backup_history_failed">The kept copies could not be read.</string>
+    <string name="backup_history_migration_label">update</string>
+    <string name="backup_history_migration_subtitle">Kept before an app update</string>
+    <string name="backup_history_action_restore">Restore this copy</string>
+    <string name="backup_history_action_share">Save a copy outside the app</string>
+    <string name="backup_history_action_share_subtitle">Sends this file wherever you want, without taking a new copy.</string>
+    <string name="backup_history_action_delete">Delete this copy</string>
+    <string name="backup_history_removed">The copy was removed.</string>
+    <string name="backup_history_remove_refused">This file is not a copy written by this app, so it was not removed.</string>
+    <string name="backup_history_gone">This copy is no longer in the destination.</string>
+    <string name="backup_today">Today</string>
+    <string name="backup_yesterday">Yesterday</string>
+    <string name="backup_size_bytes">%1$d B</string>
+    <string name="backup_size_kb">%1$d KB</string>
+    <string name="backup_size_mb">%1$d MB</string>
+    <string name="backup_confirm_reversible">A copy of the app as it is now is kept first, and you can go back to it from the backup screen.</string>
+    <string name="backup_confirm_offer_title">Keep a copy first</string>
+    <string name="backup_confirm_offer_subtitle">And every %1$s from now on. You can switch it off in the backup settings.</string>
+    <string name="backup_restore_subtitle_vault">From a backup that came from another device.</string>
+    <string name="backup_no_copy_title">The backup copy could not be made</string>
+    <string name="backup_no_copy_message">Restoring replaces everything in the app with this file's content, and no copy was kept that could bring it back.</string>
+    <string name="backup_no_copy_action">Restore anyway</string>
 </resources>

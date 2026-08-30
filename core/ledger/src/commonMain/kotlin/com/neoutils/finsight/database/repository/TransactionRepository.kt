@@ -20,7 +20,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
 import com.neoutils.finsight.domain.ledger.LedgerWrite
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
 import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
+import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
@@ -44,6 +46,9 @@ class TransactionRepository(
     private val accountDao: AccountDao,
     private val writeGuard: DimensionWriteGuard,
     private val removalHook: TransactionRemovalHook,
+    // Defaulted, unlike the two ports above: nothing in the ledger goes wrong without
+    // it, so a caller who never asked for the timing simply does not get it.
+    private val removalPrelude: TransactionRemovalPrelude = TransactionRemovalPrelude.None,
     private val transactionMapper: TransactionMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
@@ -291,7 +296,17 @@ class TransactionRepository(
         }
     }
 
-    override suspend fun deleteTransactionById(id: Long) {
+    override suspend fun deleteTransactionById(id: Long) =
+        deleteTransactionById(id, RemovalAnnouncement.Announced)
+
+    override suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) {
+        // Above the writer, not inside it, and that placement is the contract: what
+        // listens here needs the database as it still is *and* no transaction open
+        // around it. Moving this line below `useWriterConnection` compiles and passes
+        // every removal test — it only fails the caller, silently, at the moment a
+        // user destroys something real.
+        if (announcement == RemovalAnnouncement.Announced) removalPrelude.beforeRemoval()
+
         // The removal and whatever a facade has to correct because of it are one
         // transaction: a failure between them would leave that facade describing
         // rows that no longer exist.
@@ -320,7 +335,14 @@ class TransactionRepository(
         removed?.let { removalHook.onRemoved(it) }
     }
 
-    override suspend fun deleteTransactionsByIds(ids: List<Long>) {
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) =
+        deleteTransactionsByIds(ids, RemovalAnnouncement.Announced)
+
+    override suspend fun deleteTransactionsByIds(ids: List<Long>, announcement: RemovalAnnouncement) {
+        // Once for the whole batch, above the writer, for the reason above: the batch
+        // is one removal, and there is no moment inside it that still holds the rows.
+        if (announcement == RemovalAnnouncement.Announced) removalPrelude.beforeRemoval()
+
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 ids.forEach { removeRow(it) }

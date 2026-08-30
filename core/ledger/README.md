@@ -150,8 +150,8 @@ A visibilidade do Kotlin já impede um DAO de importar uma entity de fachada; s�
 `LedgerDatabase` impede o nome da tabela de aparecer **dentro de uma string SQL**, onde o
 compilador de outra forma nunca olharia.
 
-Duas portas deixam uma fachada participar sem o razão saber que ela existe — veja
-[As duas portas](#as-duas-portas).
+Três portas deixam uma fachada participar sem o razão saber que ela existe — veja
+[As três portas](#as-três-portas).
 
 ---
 
@@ -420,11 +420,12 @@ válidos e balanceados — apenas deixam de ser classificados.
 
 ---
 
-## As duas portas
+## As três portas
 
-O razão declara dois `fun interface` que uma fachada implementa e registra no próprio
+O razão declara três `fun interface` que uma fachada implementa e registra no próprio
 módulo Koin. São **contratos separados de propósito**: um formato cada, um implementador
-cada.
+cada, um momento cada — antes de a transação de escrita abrir, dentro dela, e dentro dela
+depois de as linhas sumirem.
 
 ### `DimensionWriteGuard` — recusar
 
@@ -466,17 +467,81 @@ atomicamente com elas.
 Exemplo real: `InstallmentRemovalReconciler` recontabiliza `count`/`totalAmount` de um
 parcelamento, ou apaga o parcelamento quando some a última transação.
 
+### `TransactionRemovalPrelude` — precaver-se
+
+"Uma remoção vai acontecer" — dito **antes** de a transação de escrita abrir.
+
+```kotlin
+fun interface TransactionRemovalPrelude {
+    suspend fun beforeRemoval()   // sem argumento e sem retorno
+}
+```
+
+É chamada uma vez no topo de `deleteTransactionById` e de `deleteTransactionsByIds`,
+**acima** do `useWriterConnection`. Aqui o timing é o contrato inteiro, e é o único que um
+chamador de `ITransactionRepository` não consegue arranjar sozinho: de fora não se enxerga
+onde a transação começa, e há trabalho que só se faz fora dela — `VACUUM INTO`, por
+exemplo, recusa rodar dentro de uma transação.
+
+O anúncio é o único ponto em que o chamador tem voz, e ela é estreita: decide **se** o
+anúncio é feito, nunca *o que ele significa*, que continua sendo da porta. As duas remoções
+têm uma sobrecarga que recebe essa resposta como `RemovalAnnouncement`, e quem cala anuncia
+— `deleteTransactionById(id)` fala, porque esquecer não pode custar o anúncio a ninguém.
+
+Reter é o único valor que o compilador cobra duas vezes:
+
+```kotlin
+@OptIn(WithheldAnnouncement::class)                 // sem isto, não compila
+suspend fun invoke(transaction: Transaction, withoutCopy: Boolean) {
+    transactionRepository.deleteTransactionById(
+        id = transaction.id,
+        announcement = if (withoutCopy) {
+            RemovalAnnouncement.Withheld            // marcado com @RequiresOptIn
+        } else {
+            RemovalAnnouncement.Announced
+        },
+    )
+}
+```
+
+`RemovalAnnouncement.Withheld` carrega o marcador `@WithheldAnnouncement`, então escrevê-lo
+sem o `@OptIn` correspondente é erro de compilação, e o `@OptIn` fica visível em cima do
+código que remove. Um `Boolean` é recusado aqui: deixa `false` ao alcance de um descuido, não
+diz no ponto de chamada qual das duas remoções foi pedida, e põe "reter é deliberado" nas mãos
+de quem revisa; a garantia aqui é a mesma que separa este módulo do resto — do compilador, não
+da disciplina. O razão continua sem aprender por que alguém
+reteria: quem retém já resolveu esse ouvinte nos seus próprios termos, e isso é justamente o
+que a porta não tem como saber sozinha.
+
+Nenhuma das outras duas substitui. `TransactionRemovalHook` fala depois de as linhas
+sumirem e de dentro da transação que as removeu — uma correção, por construção tarde demais
+para ser precaução. `DimensionWriteGuard` é perguntado de dentro dessa mesma transação, e
+só quando dimensões são tocadas.
+
+Sem argumento porque o que uma remoção *é* — uma transação, um parcelamento, uma fatura —
+é conhecimento de fachada que o razão não tem e não precisa repassar. Uma implementação que
+se recusa a deixar a remoção seguir o faz lançando, e nada é removido porque nada começou.
+
+Exemplo real: o cofre de backup captura uma cópia antes de a exclusão apagar o que apaga.
+
 ### Registro
 
-Ambas são **obrigatórias** no grafo do Koin. `DimensionWriteGuard.None` e
-`TransactionRemovalHook.None` existem para testes cujo assunto é outro — **não** são
-defaults: um app sem binding falha ao subir, em vez de perder o veto silenciosamente na
-primeira escrita.
+`DimensionWriteGuard` e `TransactionRemovalHook` são **obrigatórias** no grafo do Koin. Os
+seus `None` existem para testes cujo assunto é outro — **não** são defaults: um app sem
+binding falha ao subir, em vez de perder o veto silenciosamente na primeira escrita.
+
+`TransactionRemovalPrelude` é a exceção: o módulo a resolve com `getOrNull() ?: None`, e
+ninguém a reivindicar é um grafo válido. A assimetria é a consequência de cada ausência —
+faltando o veto perde-se uma regra, faltando a correção uma fachada passa a descrever
+linhas que não existem mais, e faltando o prelúdio nada no razão fica errado, porque a
+remoção já estava completa sem ele. Silêncio aqui é um ouvinte que nunca perguntou, não uma
+garantia perdida em silêncio.
 
 ```kotlin
 // no módulo Koin da feature dona
 single<DimensionWriteGuard> { InvoiceWriteGuard(invoiceRepository = get()) }
 single<TransactionRemovalHook> { InstallmentRemovalReconciler(...) }
+factory<TransactionRemovalPrelude> { TransactionRemovalPrelude { preventive.captureBefore(...) } }
 ```
 
 ---
@@ -520,7 +585,7 @@ Ele fornece `ITransactionRepository`, `IEntryRepository`, `LedgerEntryWriter`,
 O que ele **espera** encontrar no grafo:
 
 - os quatro DAOs e o `RoomDatabase` — vêm de `:core:database`, que monta o banco real;
-- as duas portas — vêm de quem as reivindicar.
+- as três portas — vêm de quem as reivindicar, e só o prelúdio pode não ter reivindicante.
 
 > O `TransactionRepository` recebe o supertipo `RoomDatabase`, não o `AppDatabase`: abrir
 > uma transação de escrita é capacidade do Room, e o razão não tem por que saber de que

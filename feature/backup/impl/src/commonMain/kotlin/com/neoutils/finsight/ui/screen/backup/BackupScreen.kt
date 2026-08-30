@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -184,148 +183,132 @@ fun BackupScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(RowGap),
             ) {
-                var isFirstRow = true
+                backupRows {
+                    if (uiState.vault.isOn) {
+                        row(key = "last_capture") { modifier ->
+                            LastBackupCard(
+                                vault = uiState.vault,
+                                copies = uiState.copies,
+                                now = clock.now(),
+                                modifier = modifier,
+                            )
+                        }
+                    }
 
-                fun row(
-                    key: String,
-                    opensGroup: Boolean = false,
-                    content: @Composable LazyItemScope.(Modifier) -> Unit,
-                ) {
-                    // A group is separated from the one above it, and `Arrangement.spacedBy`
-                    // — what the settings screen's `Column` uses — never puts space before
-                    // its first child. A lazy list has one arrangement for every row, so the
-                    // rule is applied here instead, to the row's position: to the position
-                    // and not to the vault, because which row comes first changes with it.
-                    val leading = if (opensGroup && !isFirstRow) GroupGap - RowGap else 0.dp
-                    isFirstRow = false
-
-                    item(key = key) { content(Modifier.padding(top = leading).animateItem()) }
-                }
-
-                if (uiState.vault.isOn) {
-                    row(key = "last_capture") { modifier ->
-                        LastBackupCard(
-                            vault = uiState.vault,
-                            copies = uiState.copies,
-                            now = clock.now(),
+                    row(key = "group_automatic", opensGroup = true) { modifier ->
+                        GroupTitle(
+                            text = stringResource(Res.string.backup_group_automatic),
                             modifier = modifier,
                         )
                     }
-                }
 
-                row(key = "group_automatic", opensGroup = true) { modifier ->
-                    GroupTitle(
-                        text = stringResource(Res.string.backup_group_automatic),
-                        modifier = modifier,
-                    )
-                }
-
-                row(key = "vault") { modifier ->
-                    SettingsMenuLink(
-                        modifier = modifier.testTag("backup_vault"),
-                        shape = TileShape,
-                        icon = {
-                            Icon(imageVector = Icons.Outlined.Shield, contentDescription = null)
-                        },
-                        title = { Text(text = stringResource(Res.string.backup_vault_title)) },
-                        subtitle = { Text(text = vaultSubtitle(uiState.vault)) },
-                        action = {
-                            Switch(
-                                checked = uiState.vault.isOn,
-                                onCheckedChange = { viewModel.onAction(BackupAction.SetVaultOn(it)) },
-                                colors = finsightSwitchColors(),
-                                modifier = Modifier.testTag("backup_vault_switch"),
-                            )
-                        },
-                        onClick = {
-                            viewModel.onAction(BackupAction.SetVaultOn(!uiState.vault.isOn))
-                        },
-                    )
-                }
-
-                if (uiState.vault.isOn) {
-                    row(key = "vault_settings") { modifier ->
+                    row(key = "vault") { modifier ->
                         SettingsMenuLink(
-                            modifier = modifier.testTag("backup_vault_settings_tile"),
+                            modifier = modifier.testTag("backup_vault"),
                             shape = TileShape,
                             icon = {
-                                Icon(imageVector = Icons.Outlined.Tune, contentDescription = null)
+                                Icon(imageVector = Icons.Outlined.Shield, contentDescription = null)
                             },
-                            title = { Text(text = stringResource(Res.string.backup_settings_title)) },
-                            subtitle = {
-                                Text(text = stringResource(Res.string.backup_settings_subtitle))
-                            },
-                            action = { TileAction(isRunning = false) },
-                            onClick = {
-                                modalManager.show(
-                                    VaultSettingsModal(
-                                        state = viewModel.vaultState,
-                                        copies = viewModel.storedCopies,
-                                        onAction = viewModel::onAction,
-                                    )
+                            title = { Text(text = stringResource(Res.string.backup_vault_title)) },
+                            subtitle = { Text(text = vaultSubtitle(uiState.vault)) },
+                            action = {
+                                Switch(
+                                    checked = uiState.vault.isOn,
+                                    onCheckedChange = { viewModel.onAction(BackupAction.SetVaultOn(it)) },
+                                    colors = finsightSwitchColors(),
+                                    modifier = Modifier.testTag("backup_vault_switch"),
                                 )
                             },
-                        )
-                    }
-
-                    row(key = "history") { modifier ->
-                        SettingsMenuLink(
-                            modifier = modifier.testTag("backup_history_tile"),
-                            shape = TileShape,
-                            icon = {
-                                Icon(imageVector = Icons.Outlined.History, contentDescription = null)
+                            onClick = {
+                                viewModel.onAction(BackupAction.SetVaultOn(!uiState.vault.isOn))
                             },
-                            title = { Text(text = stringResource(Res.string.backup_history_title)) },
-                            subtitle = { Text(text = historySubtitle(uiState.copies)) },
-                            action = { TileAction(isRunning = false) },
-                            onClick = onNavigateToHistory,
                         )
                     }
-                }
 
-                row(key = "group_manual", opensGroup = true) { modifier ->
-                    GroupTitle(
-                        text = stringResource(Res.string.backup_group_manual),
-                        modifier = modifier,
-                    )
-                }
-
-                row(key = "export") { modifier ->
-                    SettingsMenuLink(
-                        modifier = modifier.testTag("backup_export"),
-                        enabled = !uiState.isBusy,
-                        shape = TileShape,
-                        icon = { Icon(imageVector = Icons.Outlined.SaveAlt, contentDescription = null) },
-                        title = { Text(text = stringResource(Res.string.backup_export_title)) },
-                        subtitle = { Text(text = stringResource(Res.string.backup_export_subtitle)) },
-                        action = { TileAction(isRunning = uiState.isExporting) },
-                        onClick = { viewModel.onAction(BackupAction.Export(platformContext)) },
-                    )
-                }
-
-                row(key = "restore") { modifier ->
-                    SettingsMenuLink(
-                        modifier = modifier.testTag("backup_restore"),
-                        enabled = !uiState.isBusy,
-                        shape = TileShape,
-                        icon = { Icon(imageVector = Icons.Outlined.Restore, contentDescription = null) },
-                        title = { Text(text = stringResource(Res.string.backup_restore_title)) },
-                        subtitle = {
-                            // With copies of its own to restore from, picking a file is the
-                            // specific case rather than the only one.
-                            Text(
-                                text = if (uiState.vault.isOn) {
-                                    stringResource(Res.string.backup_restore_subtitle_vault)
-                                } else {
-                                    stringResource(Res.string.backup_restore_subtitle)
-                                }
+                    if (uiState.vault.isOn) {
+                        row(key = "vault_settings") { modifier ->
+                            SettingsMenuLink(
+                                modifier = modifier.testTag("backup_vault_settings_tile"),
+                                shape = TileShape,
+                                icon = {
+                                    Icon(imageVector = Icons.Outlined.Tune, contentDescription = null)
+                                },
+                                title = { Text(text = stringResource(Res.string.backup_settings_title)) },
+                                subtitle = {
+                                    Text(text = stringResource(Res.string.backup_settings_subtitle))
+                                },
+                                action = { TileAction(isRunning = false) },
+                                onClick = {
+                                    modalManager.show(
+                                        VaultSettingsModal(
+                                            state = viewModel.vaultState,
+                                            copies = viewModel.storedCopies,
+                                            onAction = viewModel::onAction,
+                                        )
+                                    )
+                                },
                             )
-                        },
-                        action = { TileAction(isRunning = uiState.isVerifying) },
-                        onClick = {
-                            viewModel.onAction(BackupAction.ChooseFileToRestore(platformContext))
-                        },
-                    )
+                        }
+
+                        row(key = "history") { modifier ->
+                            SettingsMenuLink(
+                                modifier = modifier.testTag("backup_history_tile"),
+                                shape = TileShape,
+                                icon = {
+                                    Icon(imageVector = Icons.Outlined.History, contentDescription = null)
+                                },
+                                title = { Text(text = stringResource(Res.string.backup_history_title)) },
+                                subtitle = { Text(text = historySubtitle(uiState.copies)) },
+                                action = { TileAction(isRunning = false) },
+                                onClick = onNavigateToHistory,
+                            )
+                        }
+                    }
+
+                    row(key = "group_manual", opensGroup = true) { modifier ->
+                        GroupTitle(
+                            text = stringResource(Res.string.backup_group_manual),
+                            modifier = modifier,
+                        )
+                    }
+
+                    row(key = "export") { modifier ->
+                        SettingsMenuLink(
+                            modifier = modifier.testTag("backup_export"),
+                            enabled = !uiState.isBusy,
+                            shape = TileShape,
+                            icon = { Icon(imageVector = Icons.Outlined.SaveAlt, contentDescription = null) },
+                            title = { Text(text = stringResource(Res.string.backup_export_title)) },
+                            subtitle = { Text(text = stringResource(Res.string.backup_export_subtitle)) },
+                            action = { TileAction(isRunning = uiState.isExporting) },
+                            onClick = { viewModel.onAction(BackupAction.Export(platformContext)) },
+                        )
+                    }
+
+                    row(key = "restore") { modifier ->
+                        SettingsMenuLink(
+                            modifier = modifier.testTag("backup_restore"),
+                            enabled = !uiState.isBusy,
+                            shape = TileShape,
+                            icon = { Icon(imageVector = Icons.Outlined.Restore, contentDescription = null) },
+                            title = { Text(text = stringResource(Res.string.backup_restore_title)) },
+                            subtitle = {
+                                // With copies of its own to restore from, picking a file is the
+                                // specific case rather than the only one.
+                                Text(
+                                    text = if (uiState.vault.isOn) {
+                                        stringResource(Res.string.backup_restore_subtitle_vault)
+                                    } else {
+                                        stringResource(Res.string.backup_restore_subtitle)
+                                    }
+                                )
+                            },
+                            action = { TileAction(isRunning = uiState.isVerifying) },
+                            onClick = {
+                                viewModel.onAction(BackupAction.ChooseFileToRestore(platformContext))
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -575,12 +558,3 @@ private fun TileAction(isRunning: Boolean) {
         )
     }
 }
-
-/** The corner every card of this app wears. */
-private val TileShape = RoundedCornerShape(12.dp)
-
-/** What the tile library puts between the rows of one group. */
-private val RowGap = 8.dp
-
-/** What the settings screen puts between one group and the next. */
-private val GroupGap = 20.dp

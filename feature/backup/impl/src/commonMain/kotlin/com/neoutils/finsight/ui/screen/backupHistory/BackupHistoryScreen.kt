@@ -4,19 +4,20 @@ package com.neoutils.finsight.ui.screen.backupHistory
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.extension.currentYearMonth
+import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_history_empty_message
 import com.neoutils.finsight.resources.backup_history_empty_off
@@ -54,19 +57,27 @@ import com.neoutils.finsight.resources.backup_history_migration_label
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_history_summary
 import com.neoutils.finsight.resources.backup_history_title
+import com.neoutils.finsight.resources.backup_today
+import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.storedBackupActions.StoredBackupActionsModal
+import com.neoutils.finsight.ui.screen.backup.RowGap
+import com.neoutils.finsight.ui.screen.backup.TileShape
+import com.neoutils.finsight.ui.screen.backup.backupRows
 import com.neoutils.finsight.ui.screen.backup.copiesLabel
 import com.neoutils.finsight.ui.screen.backup.destinationLabel
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
+import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.UiText
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -79,6 +90,11 @@ import org.koin.compose.viewmodel.koinViewModel
  * actions, and this is the screen of the reunion: after reinstalling and pointing at the
  * folder again, what a person does here is choose between forty copies, not read settings.
  *
+ * **It is content, and the backup screen is configuration** — so its rows are denser than a
+ * settings tile and carry a mark of their own. What the two screens keep in common is the
+ * beat they are laid out on, which is stated once, next to the backup screen that also
+ * reads it (`BackupRows`).
+ *
  * What is listed is what the file system answered when the screen opened. A copy deleted
  * with a file manager is simply not in it and no error is made of that — the history *is*
  * the folder (design D9).
@@ -90,9 +106,13 @@ fun BackupHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val analytics = koinInject<Analytics>()
+    val clock = koinInject<Clock>()
     val modalManager = LocalModalManager.current
     val platformContext = LocalPlatformContext.current
-    val dateFormats = LocalDateFormats.current
+
+    // Read once: the year is what decides whether a month heading has to carry one, and a
+    // list that is being scrolled must not ask the clock again for every heading.
+    val thisYear = remember(clock) { clock.currentYearMonth().year }
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup_history")
@@ -135,7 +155,8 @@ fun BackupHistoryScreen(
             uiState.isLoading -> Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(padding)
+                    .testTag("backup_history_loading"),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
@@ -155,75 +176,75 @@ fun BackupHistoryScreen(
             else -> LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(bottom = 24.dp),
+                    .padding(padding)
+                    .testTag("backup_history_list"),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(RowGap),
             ) {
-                item(key = "destination") {
-                    DestinationHeader(
-                        where = destinationLabel(uiState.destination),
-                        summary = stringResource(
-                            Res.string.backup_history_summary,
-                            copiesLabel(uiState.copies.size),
-                            sizeLabel(uiState.totalBytes),
-                        ),
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .animateItem(),
-                    )
-                }
-
-                uiState.copies
-                    .groupBy { dateFormats.toLocalDate(it.savedAt) }
-                    .forEach { (date, copies) ->
-                        item(key = "date_title_$date") {
-                            Text(
-                                text = dateFormats.formatRelativeDate(date),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .padding(vertical = 8.dp)
-                                    .padding(horizontal = 16.dp)
-                                    .animateItem(),
-                            )
-                        }
-
-                        items(items = copies, key = { it.name }) { copy ->
-                            StoredBackupCard(
-                                backup = copy,
-                                isWorking = uiState.working == copy,
-                                enabled = !uiState.isBusy,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                onClick = {
-                                    modalManager.show(
-                                        StoredBackupActionsModal(
-                                            backup = copy,
-                                            onRestore = {
-                                                modalManager.dismiss()
-                                                viewModel.onAction(
-                                                    BackupHistoryAction.Restore(copy)
-                                                )
-                                            },
-                                            onShare = {
-                                                modalManager.dismiss()
-                                                viewModel.onAction(
-                                                    BackupHistoryAction.Share(copy, platformContext)
-                                                )
-                                            },
-                                            onRemove = {
-                                                modalManager.dismiss()
-                                                viewModel.onAction(
-                                                    BackupHistoryAction.Remove(copy)
-                                                )
-                                            },
-                                        )
-                                    )
-                                },
-                            )
-                        }
+                backupRows {
+                    row(key = "destination") { modifier ->
+                        DestinationHeader(
+                            where = destinationLabel(uiState.destination),
+                            summary = stringResource(
+                                Res.string.backup_history_summary,
+                                copiesLabel(uiState.copies.size),
+                                sizeLabel(uiState.totalBytes),
+                            ),
+                            modifier = modifier,
+                        )
                     }
+
+                    uiState.copies
+                        .groupBy { it.savedAt.toYearMonth() }
+                        .forEach { (month, copies) ->
+                            row(key = "month_$month", opensGroup = true) { modifier ->
+                                MonthTitle(
+                                    month = month,
+                                    thisYear = thisYear,
+                                    modifier = modifier,
+                                )
+                            }
+
+                            copies.forEach { copy ->
+                                row(key = copy.name) { modifier ->
+                                    StoredBackupRow(
+                                        backup = copy,
+                                        isWorking = uiState.working == copy,
+                                        enabled = !uiState.isBusy,
+                                        modifier = modifier,
+                                        onClick = {
+                                            modalManager.show(
+                                                StoredBackupActionsModal(
+                                                    backup = copy,
+                                                    onRestore = {
+                                                        modalManager.dismiss()
+                                                        viewModel.onAction(
+                                                            BackupHistoryAction.Restore(copy)
+                                                        )
+                                                    },
+                                                    onShare = {
+                                                        modalManager.dismiss()
+                                                        viewModel.onAction(
+                                                            BackupHistoryAction.Share(
+                                                                backup = copy,
+                                                                context = platformContext,
+                                                            )
+                                                        )
+                                                    },
+                                                    onRemove = {
+                                                        modalManager.dismiss()
+                                                        viewModel.onAction(
+                                                            BackupHistoryAction.Remove(copy)
+                                                        )
+                                                    },
+                                                )
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                }
             }
         }
     }
@@ -232,6 +253,11 @@ fun BackupHistoryScreen(
 /**
  * Where the files are and what they add up to — the question that always comes with a list
  * of backups, answered once at the top instead of by counting rows.
+ *
+ * Where is the destination said in its own words, never a path: a folder is a
+ * security-scoped handle on iOS and a tree `Uri` on Android, and neither survives being
+ * turned into text (design D2). What the app can name is the rung of protection in force,
+ * and that is what a person recognises anyway.
  */
 @Composable
 private fun DestinationHeader(
@@ -246,36 +272,75 @@ private fun DestinationHeader(
             .fillMaxWidth()
             .testTag("backup_history_destination"),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = where,
-                style = typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = colorScheme.onSurface,
+            Icon(
+                imageVector = Icons.Outlined.FolderOpen,
+                contentDescription = null,
+                tint = colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
             )
-            Text(
-                text = summary,
-                style = typography.bodySmall,
-                color = colorScheme.onSurfaceVariant,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = where,
+                    style = typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface,
+                )
+                Text(
+                    text = summary,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+}
+
+/**
+ * The month a run of copies belongs to.
+ *
+ * The month and not the day: the vault takes a copy every few days, so a heading per day
+ * would be a heading per row and would group nothing. The year is left out while it is the
+ * current one — the same economy `formatRelativeDate` makes — and written where it changes
+ * the meaning.
+ */
+@Composable
+private fun MonthTitle(month: YearMonth, thisYear: Int, modifier: Modifier = Modifier) {
+    val dateFormats = LocalDateFormats.current
+
+    Text(
+        text = if (month.year == thisYear) {
+            dateFormats.monthName(month.month)
+        } else {
+            dateFormats.yearMonth.format(month)
+        },
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier
+            .padding(vertical = 4.dp)
+            .padding(horizontal = 4.dp)
+            .testTag("backup_history_month"),
+    )
 }
 
 /**
  * One copy, said in the least that lets it be recognised without being opened: when it was
  * taken, how big it is, and — for the one taken before a migration — what it is for.
  *
- * That copy is labelled because it is the one somebody goes looking for when a figure
- * stopped adding up after an update, and it is the one retention never counts (design D10).
+ * That copy is labelled, and in amber rather than in the accent, for the reason the backup
+ * screen marks an ageing vault in amber: it is the copy somebody goes looking for when a
+ * figure stopped adding up after an update, and it is the one retention never counts
+ * (design D10).
+ *
  * Nothing else about a copy is shown, because nothing else is known without reading the
- * file, and the file is read when it is reached for.
+ * file, and the file is read when it is reached for. The row is the whole target — the
+ * three actions live in a sheet, and the mark on the right says there are some.
  */
 @Composable
-private fun StoredBackupCard(
+private fun StoredBackupRow(
     backup: StoredBackup,
     isWorking: Boolean,
     enabled: Boolean,
@@ -287,24 +352,36 @@ private fun StoredBackupCard(
 
     Surface(
         color = colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(12.dp),
+        shape = TileShape,
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.testTag("backup_copy"),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("backup_copy"),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                imageVector = Icons.Outlined.Inventory2,
+                contentDescription = null,
+                tint = if (isFromMigration) Warning else colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = dateFormats.formatInstantTime(backup.savedAt),
+                    text = dateFormats.formatDividerDate(
+                        instant = backup.savedAt,
+                        today = stringResource(Res.string.backup_today),
+                        yesterday = stringResource(Res.string.backup_yesterday),
+                    ) + ", " + dateFormats.formatInstantTime(backup.savedAt),
                     style = typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
                 )
                 Text(
@@ -319,28 +396,45 @@ private fun StoredBackupCard(
                 )
             }
 
+            if (isFromMigration) {
+                MigrationTag()
+            }
+
             if (isWorking) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
                     color = colorScheme.onSurfaceVariant,
                     strokeWidth = 2.dp,
                 )
-            } else if (isFromMigration) {
-                Surface(
-                    color = colorScheme.primary.copy(alpha = 0.15f),
-                    contentColor = colorScheme.primary,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.testTag("backup_copy_migration_label"),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.backup_history_migration_label),
-                        style = typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
+            } else {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .testTag("backup_copy_more"),
+                )
             }
         }
+    }
+}
+
+/** What marks the copy taken before a migration out of the run around it. */
+@Composable
+private fun MigrationTag() {
+    Surface(
+        color = Warning.copy(alpha = 0.15f),
+        contentColor = Warning,
+        shape = RoundedCornerShape(4.dp),
+        modifier = Modifier.testTag("backup_copy_migration_label"),
+    ) {
+        Text(
+            text = stringResource(Res.string.backup_history_migration_label),
+            style = typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+        )
     }
 }
 
@@ -357,13 +451,13 @@ private fun Empty(message: String, modifier: Modifier = Modifier) {
                 .padding(horizontal = 24.dp)
                 .testTag("backup_history_empty"),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
                 imageVector = Icons.Outlined.Inventory2,
                 contentDescription = null,
-                tint = colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(40.dp),
+                tint = colorScheme.outlineVariant,
+                modifier = Modifier.size(36.dp),
             )
             Text(
                 text = stringResource(Res.string.backup_history_empty_title),

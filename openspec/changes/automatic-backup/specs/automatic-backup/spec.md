@@ -1,13 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: O cofre nasce desligado, e ligá-lo liga os dois gatilhos
+### Requirement: O cofre nasce desligado, e ligá-lo põe os três gatilhos em vigor
 
 O app MUST NOT guardar cópias do acervo por conta própria antes de o usuário pedir. O cofre SHALL
-começar desligado em toda instalação, inclusive nas que já usavam o backup manual.
+começar desligado em toda instalação, inclusive nas que já usavam o backup manual, e MUST NOT
+capturar por nenhum de seus gatilhos enquanto estiver desligado.
 
-Ligar o cofre SHALL ligar os dois gatilhos — periódico e preventivo — de uma vez, com valores
-padrão. Cada um SHALL poder ser desligado depois, separadamente; nenhum dos dois SHALL exigir
-configuração antes de funcionar.
+Ligar o cofre SHALL pôr os três gatilhos em vigor de uma vez, com valores padrão. O periódico e o
+preventivo SHALL poder ser desligados depois, separadamente; o gatilho anterior a uma migração não
+tem configuração própria e acompanha o cofre. Nenhum deles SHALL exigir configuração antes de
+funcionar.
 
 O app SHALL oferecer o cofre no momento em que o risco que ele cobre aparece, e não apenas numa
 tela de configurações: a primeira ação destrutiva do usuário SHALL trazer a oferta junto da
@@ -25,6 +27,35 @@ confirmação, de modo que aceitar ali ligue o cofre por inteiro.
 #### Scenario: Um gatilho pode ser desligado sem o outro
 - **WHEN** o usuário desliga o gatilho periódico
 - **THEN** o preventivo continua capturando antes das ações destrutivas
+
+### Requirement: Uma atualização que reescreva o banco é precedida de uma cópia
+
+Com o cofre ligado, o app SHALL capturar uma cópia antes de aplicar uma cadeia de migrações de
+schema, o que só ocorre numa atualização do app.
+
+Essa cópia SHALL ir para o armazenamento próprio do app, e não para a pasta apontada pelo usuário:
+na subida do app o destino externo pode não estar acessível, e a captura não SHALL depender dele.
+Ela MUST NOT entrar na contagem da retenção, e SHALL ser substituída apenas pela cópia da migração
+seguinte — o dano que ela existe para desfazer é uma corrupção que conclui sem erro e se descobre
+dias depois.
+
+Uma captura que falhe MUST NOT impedir a atualização de concluir nem o app de abrir.
+
+#### Scenario: Atualização com migração
+- **WHEN** o app é atualizado com o cofre ligado e a nova versão traz migração de schema
+- **THEN** uma cópia do acervo anterior é capturada antes de a migração rodar
+
+#### Scenario: Cofre desligado
+- **WHEN** o app é atualizado com o cofre desligado e a nova versão traz migração de schema
+- **THEN** nenhuma cópia é capturada
+
+#### Scenario: A cópia sobrevive à retenção
+- **WHEN** capturas periódicas suficientes acontecem para exceder o limite de retenção
+- **THEN** a cópia anterior à última migração continua existindo
+
+#### Scenario: Atualização sem migração
+- **WHEN** o app é atualizado e a versão de schema não muda
+- **THEN** nenhuma cópia é capturada por esse gatilho
 
 ### Requirement: O periódico captura na abertura, e a tela promete isso
 

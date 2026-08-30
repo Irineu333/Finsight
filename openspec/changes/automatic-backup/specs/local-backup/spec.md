@@ -13,7 +13,7 @@ operação de irreversível — a substituição continua total, e é o retorno 
 impossível.
 
 Prometer o retorno SHALL depender de a cópia ter sido escrita: uma captura preventiva que falhou
-MUST NOT ser apresentada como rede, e a restauração nesse caso volta a ser oferecida como
+MUST NOT ser apresentada como proteção, e a restauração nesse caso volta a ser oferecida como
 irreversível.
 
 #### Scenario: Nada do acervo anterior sobrevive
@@ -40,13 +40,11 @@ O app MUST NOT depender de mecanismos automáticos de backup do sistema operacio
 acervo, e SHALL desativá-los onde puder — tanto o backup em nuvem quanto a transferência entre
 aparelhos.
 
-O app MUST NOT guardar cópias do acervo por conta própria enquanto o usuário não pedir. Ligado o
-cofre, ele passa a guardar as cópias que o usuário configurou, no destino que o usuário escolheu, e
-a tela SHALL declarar o que aquele destino não cobre. Nenhuma dessas cópias SHALL sair do aparelho
-por iniciativa do app.
-
-Uma cópia mantida pelo app antes de ele próprio reescrever o banco não é cópia do acervo para o
-usuário e não depende do cofre — ela é da operação, e seu contrato é o de `database-snapshot`.
+O app MUST NOT guardar cópias do acervo por conta própria enquanto o usuário não pedir, e isso
+SHALL valer sem exceção — inclusive antes de o próprio app reescrever o banco numa migração de
+schema. Ligado o cofre, ele passa a guardar as cópias que o usuário configurou, no destino que o
+usuário escolheu, e a tela SHALL declarar o que aquele destino não cobre. Nenhuma dessas cópias
+SHALL sair do aparelho por iniciativa do app.
 
 Consequência que o requisito existe para tornar explícita: o comportamento em relação à plataforma
 passa a ser o mesmo nas três, e a recuperação do acervo ao trocar de aparelho SHALL depender

@@ -33,7 +33,7 @@ cartão e recorrente. Exclusão de fachada só é oferecida quando não destrói
 - O app mantém cópias sem que o usuário lembre, quando o usuário liga isso.
 - O usuário aponta onde as cópias ficam, e o app volta lá sem pedir nada de novo.
 - Uma ação destrutiva deixa de ser irreversível — porque a cópia é feita **antes** dela.
-- Uma migração de schema deixa de ser irreversível, com ou sem cofre ligado.
+- Uma atualização que reescreva o banco deixa de ser irreversível, para quem ligou o cofre.
 - A tela diz sempre quando foi o último backup que deu certo, e o que o degrau escolhido não cobre.
 
 **Non-Goals**
@@ -47,20 +47,34 @@ cartão e recorrente. Exclusão de fachada só é oferecida quando não destrói
 
 ## Decisions
 
-### D1 — Duas coisas com o mesmo mecanismo: o cofre e a rede
+### D1 — Tudo o que o cofre faz obedece ao interruptor, sem exceção
 
-O cofre é do usuário: ele liga, escolhe onde, configura, vê o histórico, restaura. A rede é da
-operação: uma cópia antes de o app reescrever o banco por conta própria, que não se liga, não se
-configura e não aparece no histórico.
+Os três gatilhos são do cofre e valem a partir do mesmo sim. Cofre desligado, o app não escreve
+cópia alguma — nem antes de migrar.
 
-A distinção não é burocrática — ela resolve uma contradição que apareceria de outro jeito. O cofre
-nasce desligado, e uma captura pré-migração que dependesse dele não protegeria exatamente quem mais
-precisa. A saída não é abrir exceção no cofre: é reconhecer que ninguém pede permissão para poder
-fazer rollback de uma transação, e que a captura pré-migração é dessa natureza.
+A alternativa foi considerada e recusada: uma captura pré-migração **sempre** ligada, apresentada
+como rede da operação e não como backup do usuário, com o argumento de que ninguém pede permissão
+para poder fazer *rollback* de uma transação. Três coisas a derrubaram.
+
+**A cópia invisível não protege ninguém.** Se ela não aparece no histórico, o usuário nunca a vê e
+nunca a restaura — e o único cenário em que ela salva é justamente o que se descobre dias depois.
+Torná-la visível a transformaria em backup, e a distinção que a justificava desapareceria.
+
+**O Room reverte a cadeia inteira.** `RoomConnectionManager.configureDatabase` abre uma
+`BEGIN EXCLUSIVE TRANSACTION`, chama `onMigrate` para todo o intervalo de versões, escreve o
+`user_version` e só então dá `END TRANSACTION`; qualquer falha cai no `ROLLBACK`. Uma migração que
+lança não deixa banco pela metade: os dados ficam intactos na versão antiga, e a versão seguinte do
+app, com a migração corrigida, migra normalmente. A cópia não é necessária nesse cenário.
+
+**Os invariantes já barram outra fatia.** As migrações encerram verificando o razão — o mesmo
+código que `CandidateVerifier` reutiliza —, e uma migração que desequilibre o razão aborta, o que
+dispara o `ROLLBACK` acima. Sobra a corrupção que conclui sem erro e não viola invariante — o caso
+do `Migration12To13`, que reescreve a moeda de contrapartida de todas as cotações sem condição. É
+um buraco real e estreito, e cobri-lo não vale uma exceção na única promessa que o produto faz.
 
 Consequência na fala: `local-backup` deixa de prometer que o app não guarda cópias por conta
-própria, e passa a dizer que **não guarda cópias do acervo *para o usuário* enquanto o cofre está
-desligado, e mantém uma rede para si mesmo quando vai mexer no banco**.
+própria, e passa a dizer que **não guarda enquanto o cofre está desligado**. Uma frase, sem
+ressalva.
 
 ### D2 — O destino é um objeto opaco de plataforma, nunca um caminho de texto
 
@@ -228,24 +242,30 @@ A limpeza roda **depois de uma captura bem-sucedida**, nunca na abertura por con
 ela está sempre ancorada num momento em que provadamente existe uma cópia nova, e o usuário nunca
 fica com zero.
 
-A cópia da rede (D11) **não entra na contagem** e é substituída apenas pela próxima migração. Se
-entrasse, três capturas periódicas depois ela sumiria — justamente no cenário em que ela é a única
-coisa que salva: a migração concluiu sem erro técnico e escreveu dado errado.
+A cópia anterior a uma migração **não entra na contagem** e é substituída apenas pela próxima
+migração. Se entrasse, três capturas periódicas depois ela sumiria — justamente no cenário em que
+ela é a única coisa que salva: a migração concluiu sem erro técnico e escreveu dado errado, e isso
+se descobre dias depois.
 
-### D11 — A rede pré-migração vive em `:core:database`
+### D11 — A captura anterior à migração vive em `:core:database`, e recebe o destino de fora
 
-É o banco se protegendo de uma operação sua, no vocabulário do módulo que já não conhece a palavra
-"backup" (D7 do design de `local-backup`, que continua valendo).
+O mecanismo é do banco, no vocabulário do módulo que já não conhece a palavra "backup" (D7 do
+design de `local-backup`, que continua valendo).
 
 A ordem importa: a captura precisa acontecer **antes** de o Room abrir o banco e aplicar as
-migrações. A versão gravada no arquivo é lida sem Room, com uma conexão descartável do driver —
-exatamente o que o `CandidateVerifier` já faz para decidir sobre um candidato. Se a versão do
-arquivo for menor que a do app, captura; senão, não há o que proteger.
+migrações — abrir para descobrir já teria migrado. A versão gravada no arquivo é lida sem Room, com
+uma conexão descartável do driver, exatamente como o `CandidateVerifier` já faz com um candidato.
+Se a versão do arquivo for menor que a do app, captura; senão, não há o que proteger.
 
-O destino vem de fora. `:core:database` não tem API de arquivo e não vai ganhar uma — a decisão D7
-de `local-backup` é explícita e continua valendo, inclusive na parte em que remover o arquivo é de
-quem escolheu o caminho. Quem constrói o banco por plataforma já sabe caminhos e é quem fornece o
-da rede.
+**O destino vem de fora, e é assim que o cofre governa sem ser conhecido.** `:core:database` não
+tem API de arquivo e não vai ganhar uma — a decisão D7 de `local-backup` é explícita, inclusive na
+parte em que remover o arquivo é de quem escolheu o caminho. Ele recebe, ou não recebe, um caminho
+onde escrever antes de migrar: **um caminho, e captura; nenhum, e não captura**. Quem monta o banco
+é quem consulta a preferência do cofre e decide o que passar, e o módulo continua sem saber que
+existe cofre.
+
+É o que torna D1 implementável sem que `:core:database` leia configuração de produto alguma, e sem
+uma segunda condição espalhada.
 
 ### D12 — Quando o vínculo cair, avisa, oferece, e não deixa buraco
 
@@ -257,7 +277,7 @@ o acesso.
 
 Somado ao fato de que trabalho de fundo pode parar em silêncio, isso reposiciona a tela: **o
 elemento mais importante dela não é o interruptor, é a linha que diz quando foi o último backup
-bem-sucedido**. É o único mecanismo pelo qual a pessoa descobre que a rede caiu. Um app que mostra
+bem-sucedido**. É o único mecanismo pelo qual a pessoa descobre que a proteção parou. Um app que mostra
 "ativado" enquanto não grava nada há sete meses é pior do que um app sem cofre, porque produz
 confiança sem lastro.
 
@@ -348,9 +368,10 @@ Não há migração de schema: nenhuma entidade é acrescentada e o histórico n
 
 O que muda para quem já usa o app:
 
-1. Nada, até que o usuário ligue o cofre. Ele nasce desligado.
-2. A rede pré-migração passa a existir na primeira atualização que trouxer migração, sem ação e
-   sem aviso — é infraestrutura, no armazenamento privado, uma cópia só.
+1. Nada, até que o usuário ligue o cofre. Ele nasce desligado, e nenhum dos três gatilhos escreve
+   coisa alguma antes disso.
+2. Ligado o cofre, a primeira atualização que trouxer migração passa a ser precedida de uma cópia —
+   uma só, fora da contagem da retenção, substituída pela migração seguinte.
 3. A tela de backup ganha o cofre e a linha do último backup, e reescreve as duas frases que
    deixaram de ser verdade.
 

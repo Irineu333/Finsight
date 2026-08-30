@@ -2,28 +2,21 @@
 
 O backup local existe e funciona, e depende inteiramente de o usuário lembrar de fazê-lo. Quem
 não lembrou não tem arquivo nenhum, e descobre isso no pior momento possível — depois de apagar
-uma conta, depois de trocar de aparelho, depois de uma migração de schema.
+uma conta, depois de trocar de aparelho, depois de uma atualização que reescreveu o banco.
 
 Duas dessas três ameaças o usuário nem pode antecipar. Uma exclusão irreversível acontece num
 toque, sem que a tela diga o tamanho do estrago (ver `DeleteFutureInvoiceUseCase`, que apaga toda
-transação de uma fatura retroativa sob um texto que a chama de "fatura futura"). E uma migração de
-schema reescreve o banco sozinha, na atualização do app, sem ação nem consentimento — é a única
-ameaça em que o agressor é o próprio app, e a única contra a qual o usuário não tem defesa alguma
-hoje.
+transação de uma fatura retroativa sob um texto que a chama de "fatura futura"). E uma atualização
+do app pode trazer uma migração de schema que reescreve dados sem que ninguém peça — o
+`Migration12To13` reescreve a moeda de contrapartida de todas as cotações sem condição, e uma
+migração que conclua sem erro e escreva dado errado não tem volta.
 
 ## What Changes
 
-**O app passa a manter cópias por conta própria** — o que ele hoje declara não fazer. Duas coisas
-distintas nascem do mesmo mecanismo de captura, e a distinção entre elas é o eixo desta entrega:
+**O app passa a manter cópias por conta própria** — o que ele hoje declara não fazer. O cofre nasce
+desligado; ligá-lo é uma escolha do usuário, e tudo o que ele faz obedece a essa escolha.
 
-- **O cofre**, para o usuário: nasce desligado, ele liga com um sim, escolhe onde as cópias ficam,
-  vê o histórico e configura quantas guardar.
-- **A rede**, para a operação: uma captura antes de o app rodar a cadeia de migrações. Não se liga
-  nem se desliga, não se configura, não aparece no histórico. É o que permite desfazer uma
-  operação que o app está prestes a fazer no banco do usuário — a mesma natureza de um rollback de
-  transação, que também não pede permissão.
-
-**Três gatilhos**, dois deles do cofre:
+**Três gatilhos**, todos do cofre e todos em vigor a partir do mesmo sim:
 
 - **Periódico** — captura na primeira abertura depois de N dias (padrão 3). A formulação é essa e
   não "a cada N dias" porque nenhuma das três plataformas garante execução em segundo plano: o
@@ -31,7 +24,8 @@ distintas nascem do mesmo mecanismo de captura, e a distinção entre elas é o 
   fundo de apps hibernados.
 - **Preventivo** — captura **antes** de uma ação destrutiva, nunca depois. Um backup posterior à
   exclusão registra o estado já mutilado e não devolve nada.
-- **Pré-migração** — captura antes de a cadeia de migrações rodar, sempre, independente do cofre.
+- **Pré-migração** — captura antes de o app aplicar uma cadeia de migrações, o que só acontece numa
+  atualização. É o gatilho sem configuração própria: quem ligou o cofre o tem, quem não ligou não.
 
 **Uma regra comum aos três**: só captura se algo foi **acrescentado** desde a última cópia.
 Exclusões não criam necessidade de cópia nova — a cópia anterior é justamente a mais completa das
@@ -42,7 +36,7 @@ quem abre o app todo dia sem lançar nada.
 
 | | onde | cobre | não cobre |
 |---|---|---|---|
-| degrau 1 | armazenamento privado do app | exclusão acidental, corrupção do banco | desinstalação, limpar dados, perda do aparelho |
+| degrau 1 | armazenamento privado do app | exclusão acidental, corrupção do banco, migração que escreve errado | desinstalação, limpar dados, perda do aparelho |
 | degrau 2 | pasta apontada pelo usuário | \+ desinstalação, limpar dados | perda do aparelho, salvo pasta sincronizada |
 
 O degrau 1 é o destino ao ligar o cofre, e no desktop ele já é o degrau 2 — `~/.finance/`
@@ -70,10 +64,10 @@ estabelece, e registrado em `design.md` como pergunta aberta com o argumento pre
 
 ### New Capabilities
 
-- `automatic-backup`: o app mantendo cópias por conta própria — os dois gatilhos do cofre e a
-  regra que decide se há o que capturar, os dois degraus de destino e o que cada um cobre, o
-  vínculo com a pasta e o que fazer quando ele cai, o histórico lido da pasta, a retenção, a
-  troca de pasta, e a obrigação de a tela dizer sempre quando foi o último backup que deu certo.
+- `automatic-backup`: o app mantendo cópias por conta própria — os três gatilhos e a regra que
+  decide se há o que capturar, os dois degraus de destino e o que cada um cobre, o vínculo com a
+  pasta e o que fazer quando ele cai, o histórico lido da pasta, a retenção, a troca de pasta, e a
+  obrigação de a tela dizer sempre quando foi o último backup que deu certo.
 
 ### Modified Capabilities
 
@@ -83,20 +77,23 @@ estabelece, e registrado em `design.md` como pergunta aberta com o argumento pre
   desligado. *"Restaurar substitui todo o acervo"* hoje exige que a operação seja apresentada
   como irreversível e proíbe a tela de sugerir recuperação; passa a distinguir a restauração com
   o preventivo ligado, que tem uma cópia do estado anterior, da restauração sem ele, que não tem.
-- `database-snapshot`: ganha um requisito — o banco captura o próprio conteúdo antes de aplicar a
-  cadeia de migrações, e essa cópia não é do produto nem depende de configuração dele. Cabe aqui
-  e não em `automatic-backup` porque é o banco se protegendo de uma operação sua, no vocabulário
-  do módulo que já não conhece a palavra "backup".
+- `database-snapshot`: ganha um requisito de mecanismo — o banco sabe capturar o próprio conteúdo
+  antes de aplicar a cadeia de migrações, **quando lhe é dado um destino para isso**. Cabe aqui e
+  não em `automatic-backup` porque a captura precisa acontecer antes de o banco ser aberto pela
+  camada que dispara as migrações, e quem sabe fazer isso é o módulo que já sabe capturar. Se há
+  ou não um destino a fornecer é decisão de quem monta o banco, e depende do cofre estar ligado —
+  o módulo continua sem conhecer a palavra "backup" e sem conhecer o cofre.
 
 ## Impact
 
 **Módulos tocados**
 
 - `feature/backup/impl` — o grosso: o destino persistido e suas três implementações de plataforma,
-  os dois gatilhos do cofre, o histórico, a retenção, a tela e seus estados de saúde.
+  os gatilhos, o histórico, a retenção, a tela e seus estados de saúde.
 - `feature/backup/api` — o contrato pelo qual outras features pedem uma captura preventiva sem
   conhecer a implementação.
-- `core/database` — a captura pré-migração, dentro do mecanismo que já existe (`captureInto`).
+- `core/database` — a captura anterior às migrações, dentro do mecanismo que já existe
+  (`captureInto`), condicionada a receber um destino de fora.
 - `core/ledger` — `TransactionRepository.deleteTransactionById` e `deleteTransactionsByIds` ganham
   o gancho preventivo; ele fica **acima** de `useWriterConnection`, porque `VACUUM INTO` recusa
   rodar dentro de transação.

@@ -92,8 +92,10 @@ tags:
       id: "screen_backup_history"
     timeout: 15000
 
-# The list, not the empty state — and the two are exclusive branches of one `when`, so reaching
-# this one is reaching a folder with something in it. Nothing on this screen captures and no
+# The list, not the empty state — of what sits below the header and the two action cards, those
+# two are the exclusive branches of one `when`, so reaching this one is reaching a folder with
+# something in it. The header and the actions stand outside that `when`, in every state, so their
+# presence proves nothing about which branch is on screen. Nothing on this screen captures and no
 # trigger has had an occasion to fire: the file can only have been written by the tap above.
 - extendedWaitUntil:
     visible:

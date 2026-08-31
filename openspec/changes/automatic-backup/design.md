@@ -377,6 +377,13 @@ entregar a um destino, remover — e ações por item numa tela de configuraçã
 E é a tela do **reencontro**: depois de reinstalar e reapontar a pasta, o que a pessoa faz ali é
 escolher entre quarenta cópias, não ler configurações.
 
+**A tela responde duas perguntas, não uma: onde as cópias estão, e o que fazer para haver mais.**
+O cabeçalho nomeia o destino em vigor e abre a escolha entre os dois degraus (D3); ao lado da
+lista, capturar agora e importar um arquivo são as duas portas por onde uma cópia entra nela.
+Nenhuma das duas é uma configuração do cofre — a tela de backup guarda o interruptor, os gatilhos,
+e as operações que saem do app por um seletor — e as duas pertencem à mesma pergunta que a lista
+responde: o que há no destino, agora.
+
 A rota é **interna ao `impl`**, e o subgrafo já estava esperando: `BackupGraph` declara-se como *"the
 node the backup destinations hang from… even though the feature starts with a single screen"*. A
 convenção do projeto reserva a `api` para as rotas externamente navegáveis, e ninguém fora do backup

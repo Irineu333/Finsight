@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.backup
 
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.VaultDestination
+import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.util.UiText
@@ -48,8 +49,8 @@ data class BackupUiState(
     val vault: VaultState = VaultState(),
 
     /**
-     * What the destination holds, read when the screen opens and after anything that
-     * changes it — never a record kept elsewhere (design D9).
+     * The last reading of a destination, whichever one it was of — see [copiesInForce],
+     * which is what the screen says anything from.
      */
     val copies: VaultCopies = VaultCopies(),
 
@@ -74,16 +75,29 @@ data class BackupUiState(
 ) {
 
     /**
-     * Whether the vault is writing to a folder it cannot reach.
+     * Where the copies are going: what was chosen, and the reading taken against it.
      *
-     * Both halves, stated once: a fallen link matters only where the copies are supposed to
-     * be going, and a folder left behind by somebody who moved back to the app's own
-     * storage is not a fault to report. Two screens reading the two values apart would be
-     * two chances to get that pairing wrong.
+     * The rule that pairs the two is [VaultRung]'s and not this screen's — the router that
+     * sends a copy reads the same one — so the card can never name a destination that
+     * nothing is landing in.
      */
-    val isFolderBroken: Boolean
-        get() = vault.destination == VaultDestination.USER_FOLDER &&
-            folderLink == FolderLink.BROKEN
+    val rung: VaultRung get() = VaultRung(vault.destination, folderLink)
+
+    /**
+     * What the destination holds, when the reading is of the rung the copies are actually
+     * going to — read when the screen opens and after anything that changes it, and never a
+     * record kept elsewhere (design D9).
+     *
+     * **A reading of another rung is no reading at all**, and dropping it is the whole
+     * point. A re-read that fails leaves the last answer standing ([copies]), which is right
+     * while the destination is the same one and a lie the moment it is not: the count would
+     * be of the app's own storage under the name of the folder somebody has just pointed at,
+     * or of a folder under the sentence saying the app cannot reach it. Both are the states
+     * a fallen link and a change of destination put people in, which is exactly where the
+     * screen has to be trusted.
+     */
+    val copiesInForce: VaultCopies
+        get() = copies.takeIf { it.rung == rung.inForce } ?: VaultCopies()
 
     /**
      * One flag for both entries: each of the three operations has the database's writer
@@ -104,15 +118,24 @@ data class BackupUiState(
  */
 data class VaultCopies(
     /**
-     * Whether the destination has actually been read.
+     * Which rung this is a reading of, or null when nothing has been read.
      *
-     * It is what separates *nothing was read* from *nothing is there*, and without it every
-     * line built from this asserts an empty folder from the moment the screen opens —
+     * Null is what separates *nothing was read* from *nothing is there*, and without it
+     * every line built from this asserts an empty folder from the moment the screen opens —
      * including on a destination the app never managed to list. Nothing says "no copies yet"
      * until a listing has landed.
+     *
+     * Naming the rung is the other half of the same guard: a reading is about the place it
+     * was taken from, and the place changes under it — somebody points at a folder, or the
+     * link to one falls and the copies start going inside the app. See
+     * [BackupUiState.copiesInForce].
      */
-    val isRead: Boolean = false,
+    val rung: VaultDestination? = null,
     val count: Int = 0,
     val totalBytes: Long = 0,
     val newestAt: Instant? = null,
-)
+) {
+
+    /** Whether a destination has actually been read. */
+    val isRead: Boolean get() = rung != null
+}

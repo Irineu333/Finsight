@@ -10,6 +10,7 @@ import com.neoutils.finsight.backup.service.AndroidMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
 import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
@@ -31,9 +32,10 @@ actual val backupPlatformModule = module {
     // package being removed on its own — the app's own storage goes with it, and so does
     // the persisted grant — but the *files* in a folder the person chose do, and pointing
     // at that folder again is what finds them (design D4).
-    factory<BackupDestination> {
+    factory {
         VaultDestinations(
             state = get(),
+            link = get<VaultFolder>().link,
             appStorage = AndroidBackupDestination(appContext = get<Context>(), ownCopy = get()),
             folder = AndroidFolderBackupDestination(
                 appContext = get<Context>(),
@@ -43,6 +45,10 @@ actual val backupPlatformModule = module {
             ),
         )
     }
+
+    // The concrete type is bound as well as the contract: the migration is the one caller
+    // that addresses both rungs at once, and the router is the only thing that holds them.
+    factory<BackupDestination> { get<VaultDestinations>() }
 
     factory<CaptureOrigin> { AndroidCaptureOrigin(context = get<Context>()) }
     factory<MigrationCopyPlace> { AndroidMigrationCopyPlace(appContext = get<Context>()) }

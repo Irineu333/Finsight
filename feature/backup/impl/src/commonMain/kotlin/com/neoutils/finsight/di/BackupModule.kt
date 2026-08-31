@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.StandingVaultOffer
 import com.neoutils.finsight.domain.vault.VaultAppOpening
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
@@ -103,7 +104,14 @@ val backupModule = module {
 
     // One instance, because it holds the reading of the link that the screen shows and the
     // app's opening writes — two would have the screen watching an answer nobody updates.
+    // It is also the one place that pairs the link with the chosen rung, which is what the
+    // router and both screens read to know where the copies are actually going.
     single { VaultFolder(state = get(), folder = get()) }
+
+    // Carrying the history to a destination somebody has just moved to. It resolves the
+    // router rather than a rung, because it is the only thing that addresses both at once —
+    // and the router is the one place that knows which two they are (design D13).
+    factory { VaultMigration(state = get(), destinations = get(), files = get()) }
 
     // `:core:database`'s port, claimed here and nowhere else. Whoever assembles the
     // database asks it for a path and passes on what it says; this is what puts the copy
@@ -150,6 +158,7 @@ val backupModule = module {
             vault = get(),
             switch = get(),
             folder = get(),
+            migration = get(),
             modalManager = get(),
             clock = get(),
         )
@@ -168,6 +177,7 @@ val backupModule = module {
             archiveRestore = get(),
             reader = get(),
             state = get(),
+            folder = get(),
             vault = get(),
             modalManager = get(),
         )

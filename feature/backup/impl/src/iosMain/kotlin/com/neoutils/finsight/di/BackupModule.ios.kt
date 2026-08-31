@@ -7,6 +7,7 @@ import com.neoutils.finsight.backup.service.IosMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
 import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
@@ -26,13 +27,18 @@ actual val backupPlatformModule = module {
     // `finally` — under the shared subfolder name `BACKUP_FOLDER_NAME`.
     factory<BackupFolder> { NoBackupFolder }
 
-    factory<BackupDestination> {
+    factory {
         VaultDestinations(
             state = get(),
+            link = get<VaultFolder>().link,
             appStorage = IosBackupDestination(ownCopy = get()),
             folder = UnreachableDestination,
         )
     }
+
+    // The concrete type is bound as well as the contract: the migration is the one caller
+    // that addresses both rungs at once, and the router is the only thing that holds them.
+    factory<BackupDestination> { get<VaultDestinations>() }
 
     factory<CaptureOrigin> { IosCaptureOrigin() }
     factory<MigrationCopyPlace> { IosMigrationCopyPlace() }

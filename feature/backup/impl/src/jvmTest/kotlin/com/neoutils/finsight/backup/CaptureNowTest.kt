@@ -24,12 +24,14 @@ import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.component.SuccessModal
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryAction
@@ -179,6 +181,7 @@ class CaptureNowTest {
         ),
         reader = KeptCopyReader(destination, files, verifier),
         state = state,
+        folder = VaultFolder(state = state, folder = NoBackupFolder),
         vault = vault,
         modalManager = modalManager,
     )

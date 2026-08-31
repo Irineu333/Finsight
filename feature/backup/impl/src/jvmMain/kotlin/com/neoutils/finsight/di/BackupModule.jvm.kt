@@ -9,6 +9,7 @@ import com.neoutils.finsight.backup.service.JvmMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
 import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
@@ -27,13 +28,18 @@ actual val backupPlatformModule = module {
     // platform where the first rung already survives everything (design D3), so the second
     // adds reach rather than durability — a folder somebody syncs is what covers the
     // machine being lost.
-    factory<BackupDestination> {
+    factory {
         VaultDestinations(
             state = get(),
+            link = get<VaultFolder>().link,
             appStorage = JvmBackupDestination(ownCopy = get()),
             folder = JvmFolderBackupDestination(folder = get<JvmBackupFolder>(), ownCopy = get()),
         )
     }
+
+    // The concrete type is bound as well as the contract: the migration is the one caller
+    // that addresses both rungs at once, and the router is the only thing that holds them.
+    factory<BackupDestination> { get<VaultDestinations>() }
 
     factory<CaptureOrigin> { JvmCaptureOrigin() }
     factory<MigrationCopyPlace> { JvmMigrationCopyPlace() }

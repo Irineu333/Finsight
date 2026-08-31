@@ -18,24 +18,24 @@ import kotlinx.coroutines.flow.StateFlow
  * is everything that follows from an answer — which rung the copies go to, and what the
  * screen is told about the link.
  *
- * **The rung moves only because somebody said so.** A link that has fallen is reported and
- * never acted upon: nothing here switches the vault back to the app's own storage on its
- * own, because that would move somebody's backups to another place without a word, and the
- * design says the app *asks* (design D12). Task 11.8 is what puts the question and what
- * writes provisionally inside the app while it goes unanswered; until it exists, a fallen
- * link is a sentence on the screen and captures that fail — which is exactly what the
- * instant of the last successful copy is on the screen to reveal.
+ * **The choice moves only because somebody said so.** A link that has fallen is reported
+ * and never written down: nothing here changes the preference on its own, because that would
+ * decide on somebody's behalf where their backups live, and the design says the app *asks*
+ * (design D12). What a fallen link does move is [rung] — the copies go on being taken inside
+ * the app while the question stands, provisionally and saying so — and that is a derivation
+ * of the same two values rather than a second record of them (see [VaultRung]).
  *
  * **A folder once pointed at is never forgotten.** Moving back to the app's own storage
  * leaves the remembered folder remembered, because the copies in it are still there and
  * pointing at it again is how they are found (design D4). Forgetting would be the app
  * throwing away the only thing that leads back to an archive it does not hold.
  *
- * **Changing rung copies nothing and removes nothing.** The copies on the rung left behind
- * stay where they are, unlisted and unswept but intact; carrying them across is task 11.10,
- * which design D13 says copies and never moves. The order here is what keeps that safe: the
- * preference moves only after a folder has actually been pointed at, so a picker somebody
- * closed leaves the vault exactly as it was.
+ * **Changing rung removes nothing, here or anywhere.** The copies on the rung left behind
+ * stay exactly where they are; carrying a set of them across is
+ * [VaultMigration]'s, which copies and never moves (design D13), and it is offered rather
+ * than performed. The order here is what keeps that safe: the preference moves only after a
+ * folder has actually been pointed at, so a picker somebody closed leaves the vault exactly
+ * as it was.
  */
 class VaultFolder(
     private val state: BackupVaultRepository,
@@ -55,6 +55,16 @@ class VaultFolder(
      * a screen must not read *not linked* out of it before either has run.
      */
     val link: StateFlow<FolderLink> = _link
+
+    /**
+     * Where the copies are going right now — the choice, and the reading taken against it.
+     *
+     * It is read at the moment it is asked and never held, for the reason
+     * [VaultDestinations] reads the rung per operation: both halves of it move while the app
+     * is running, and an answer resolved once is an answer that goes on being given after it
+     * has stopped being true.
+     */
+    val rung: VaultRung get() = VaultRung(state.observe().value.destination, _link.value)
 
     /**
      * Asks whether the folder is still reachable, and publishes the answer.

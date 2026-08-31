@@ -52,9 +52,10 @@ import org.jetbrains.compose.resources.stringResource
  *
  * **Neither direction removes anything.** Moving to a folder leaves the copies inside the
  * app where they are; moving back leaves the copies in the folder where they are, and the
- * folder itself remembered, so choosing it again finds them (design D4). What is not built
- * yet is carrying copies across, which copies and never moves (design D13, task 11.10) — so
- * the worst this can do today is leave a set of copies unlisted, never gone.
+ * folder itself remembered, so choosing it again finds them (design D4). Whether any of them
+ * are *also* written into the destination being moved to is a question put afterwards, over
+ * this sheet's own dismissal, and answered by the person — carrying copies and never moving
+ * them is design D13, and asking first is design D12's rule about somebody else's backups.
  *
  * @param selected the rung in force when the sheet was opened, which is all it needs: every
  * choice on it closes it.

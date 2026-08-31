@@ -10,14 +10,20 @@ import com.neoutils.finsight.feature.backup.api.PeriodicBackup
  * together. Checking the link only when something is written means finding out that a
  * folder was deleted, unmounted or renamed at the moment a capture fails — with nobody
  * watching, since two of the three triggers fire without anybody asking for anything (task
- * 11.7, design D12). Checking first also puts the answer in front of whatever task 11.8
- * builds, which is the offer to point at the folder again or to keep copies inside the app.
+ * 11.7, design D12). Checking first is also what the rest of the opening depends on: the
+ * reading it publishes is what decides where this opening's copy lands ([VaultRung]), and
+ * what the screen puts the two ways out beside — point at the folder again, or keep the
+ * copies inside the app.
  *
  * **The check is unconditional and the capture is not.** A fallen link is a fact about this
  * install whichever rung is in force, whether the periodic trigger is on, and whether the
- * interval has run out — so it is read before any of [VaultPeriodicBackup]'s conditions are.
- * Nothing follows from it here: it is published for a screen to say, and moving the vault
- * on its own would be the app choosing where somebody's backups live.
+ * interval has run out — so it is read before any of [VaultPeriodicBackup]'s conditions are,
+ * and the copy this opening may owe is then taken somewhere that exists rather than failing
+ * against a folder that does not.
+ *
+ * **Nothing is decided here, and nothing is written down.** The reading is published; what
+ * follows from it is a derivation ([VaultRung]) and a question on the screen. The choice of
+ * where somebody's backups live is never changed on their behalf (design D12).
  *
  * **Neither half can stop the app opening.** The check is a reading of the file system and
  * the capture is fired and forgotten; this adds no failure of its own, which is what lets

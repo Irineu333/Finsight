@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -56,12 +59,16 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultInterval
+import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_coverage_app
 import com.neoutils.finsight.resources.backup_coverage_folder
 import com.neoutils.finsight.resources.backup_destination_title
+import com.neoutils.finsight.resources.backup_folder_keep_in_app
+import com.neoutils.finsight.resources.backup_folder_reconnect
 import com.neoutils.finsight.resources.backup_folder_unreachable
 import com.neoutils.finsight.resources.backup_export_subtitle
 import com.neoutils.finsight.resources.backup_export_title
@@ -204,9 +211,11 @@ fun BackupScreen(
                         row(key = "last_capture") { modifier ->
                             LastBackupCard(
                                 vault = uiState.vault,
-                                copies = uiState.copies,
-                                isFolderBroken = uiState.isFolderBroken,
+                                copies = uiState.copiesInForce,
+                                rung = uiState.rung,
                                 now = clock.now(),
+                                onAction = viewModel::onAction,
+                                platformContext = platformContext,
                                 modifier = modifier,
                             )
                         }
@@ -312,7 +321,7 @@ fun BackupScreen(
                                 // Nothing is said about the folder until it has been read.
                                 // "No copies yet" is an answer, and there is none to give
                                 // before the first listing lands.
-                                subtitle = uiState.copies.takeIf { it.isRead }?.let { copies ->
+                                subtitle = uiState.copiesInForce.takeIf { it.isRead }?.let { copies ->
                                     { Text(text = historySubtitle(copies)) }
                                 },
                                 action = { TileAction(isRunning = false) },
@@ -476,23 +485,31 @@ private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
  * The coverage sentence is here and not in a card of its own because it is the consequence
  * of the destination named two lines above it (`automatic-backup` spec), and it is only
  * ever true while there is a vault to have a destination.
+ *
+ * **A folder that cannot be reached is announced here, with both ways out beside it**
+ * (design D12). The destination this names is then the one the copies are actually landing
+ * in — inside the app, provisionally — because a card saying *in a folder you chose* over
+ * copies going somewhere else is the failure this card exists to catch. Neither way out is
+ * taken on anybody's behalf, and the capturing does not stop while the question stands.
  */
 @Composable
 private fun LastBackupCard(
     vault: VaultState,
     copies: VaultCopies,
-    isFolderBroken: Boolean,
+    rung: VaultRung,
     now: Instant,
+    onAction: (BackupAction) -> Unit,
+    platformContext: PlatformContext,
     modifier: Modifier = Modifier,
 ) {
     val dateFormats = LocalDateFormats.current
     val last = vault.lastCapturedAt
     val overdue = vault.isLastCopyOverdue(now)
     val tone = when {
-        // Red is what a vault that can no longer write deserves, and this is that case:
-        // the copies that exist are still in a folder this app cannot reach, and nothing
-        // new is landing anywhere (design D12).
-        isFolderBroken -> colorScheme.error
+        // Red is what a folder that cannot be reached deserves: the copies already in it
+        // are out of the app's reach, and the new ones are landing somewhere the person did
+        // not choose (design D12).
+        rung.isProvisional -> colorScheme.error
         last == null -> colorScheme.onSurfaceVariant
         overdue -> Warning
         else -> colorScheme.primary
@@ -541,16 +558,18 @@ private fun LastBackupCard(
                             intervalLabel(VaultInterval.nearest(vault.interval)),
                         )
 
-                        // The count joins the destination once the folder has answered,
-                        // and not before: an unread destination has no number to state.
-                        else -> destinationLabel(vault.destination) +
+                        // The destination named is the one the copies are going to, which
+                        // is not the one that was chosen while the folder behind it cannot
+                        // be reached. The count joins it once that destination has answered,
+                        // and not before: an unread one has no number to state.
+                        else -> destinationLabel(rung.inForce) +
                             if (copies.isRead) " · " + copiesLabel(copies.count) else ""
                     },
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = coverageOf(vault.destination),
+                    text = coverageOf(rung.inForce),
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -558,11 +577,11 @@ private fun LastBackupCard(
                         .testTag("backup_coverage"),
                 )
 
-                // Said, and not acted upon. What to do about a folder that has gone —
-                // point at it again, or keep copies inside the app meanwhile — is the
-                // offer task 11.8 puts; moving somebody's backups without asking is the
-                // one answer design D12 rules out.
-                if (isFolderBroken) {
+                // The loss, and the two ways out of it, in the place the loss is
+                // announced (design D12). Neither is taken on anybody's behalf: the app
+                // goes on capturing inside the app meanwhile — which the sentence says —
+                // and moving where somebody's backups live is theirs to answer.
+                if (rung.isProvisional) {
                     Text(
                         text = stringResource(Res.string.backup_folder_unreachable),
                         style = typography.bodySmall,
@@ -571,6 +590,40 @@ private fun LastBackupCard(
                             .padding(top = 4.dp)
                             .testTag("backup_folder_unreachable"),
                     )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(top = 4.dp),
+                    ) {
+                        Button(
+                            onClick = {
+                                onAction(BackupAction.ChooseFolder(platformContext))
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.testTag("backup_folder_reconnect"),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.backup_folder_reconnect),
+                                style = typography.labelLarge,
+                            )
+                        }
+
+                        TextButton(
+                            onClick = { onAction(BackupAction.KeepInsideApp) },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = colorScheme.onSurfaceVariant,
+                            ),
+                            modifier = Modifier.testTag("backup_folder_keep_in_app"),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.backup_folder_keep_in_app),
+                                style = typography.labelLarge,
+                            )
+                        }
+                    }
                 }
             }
         }

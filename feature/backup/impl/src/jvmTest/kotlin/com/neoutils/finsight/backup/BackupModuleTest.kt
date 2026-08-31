@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -187,6 +188,14 @@ class BackupModuleTest {
         try {
             assertIs<VaultDestinations>(real.get<BackupDestination>())
             assertNotNull(real.get<VaultFolder>(), "nothing could point at a folder")
+
+            // The one thing that addresses both rungs at once. Unbound, the offer to carry
+            // the history to a destination somebody moved to would only fail when a person
+            // actually opened the screen.
+            assertNotNull(
+                real.get<VaultMigration>(),
+                "nothing could carry the history to a new destination",
+            )
         } finally {
             real.close()
         }

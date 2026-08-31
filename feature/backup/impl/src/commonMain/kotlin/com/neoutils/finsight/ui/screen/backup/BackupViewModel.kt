@@ -17,15 +17,21 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.MigrationOutcome
+import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_carry_done
+import com.neoutils.finsight.resources.backup_carry_partial
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.backupFileName
@@ -89,6 +95,7 @@ class BackupViewModel(
     private val vault: BackupVaultRepository,
     private val switch: VaultSwitch,
     private val folder: VaultFolder,
+    private val migration: VaultMigration,
     private val modalManager: ModalManager,
     private val clock: Clock,
 ) : ViewModel() {
@@ -121,7 +128,7 @@ class BackupViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value)
 
     val storedCopies: StateFlow<VaultCopies> = uiState
-        .map { it.copies }
+        .map { it.copiesInForce }
         .stateIn(viewModelScope, SharingStarted.Eagerly, VaultCopies())
 
     /**
@@ -217,6 +224,111 @@ class BackupViewModel(
     }
 
     /**
+     * Puts the folder picker up and, if a folder was chosen, moves the vault onto it.
+     *
+     * **Nothing is carried across on its own, and nothing is ever removed.** The copies
+     * already in the destination being left stay exactly where they are; whether any of them
+     * are *also* written into the new one is a question put to the person afterwards
+     * ([offerToCarry]), because a preference moving is not somebody asking for their backups
+     * to be duplicated somewhere (design D13).
+     *
+     * A picker somebody closed changes nothing and says nothing. Only a real failure — the
+     * folder could not be prepared — reaches the person, because only that one leaves them
+     * with something to do.
+     *
+     * The rung is read before the picker goes up, because after it the answer is the new
+     * one, and what was left behind is the whole subject of the offer. It is the rung *in
+     * force* rather than the one chosen: somebody re-pointing at a folder that had fallen
+     * away has been capturing inside the app meanwhile, and those copies are the ones worth
+     * carrying into the folder that came back.
+     */
+    private fun chooseFolder(context: PlatformContext) {
+        viewModelScope.launch {
+            val before = folder.rung.inForce
+            folder.pointAt(context).fold(
+                ifLeft = ::fail,
+                ifRight = { chosen ->
+                    if (chosen) {
+                        readDestination()
+                        offerToCarry(from = before)
+                    }
+                },
+            )
+        }
+    }
+
+    /**
+     * Moves the vault back to the app's own storage.
+     *
+     * It removes nothing and forgets nothing: the copies in the folder stay in it, and the
+     * folder stays remembered so that choosing it again leads back to them (design D4). It
+     * is also one of the two answers to a folder that has gone (design D12), and there the
+     * offer that follows finds nothing to carry — an unreadable folder is not one anything
+     * can be read out of.
+     */
+    private fun keepInsideApp() {
+        val before = folder.rung.inForce
+        folder.keepInsideApp()
+        readDestination()
+
+        viewModelScope.launch { offerToCarry(from = before) }
+    }
+
+    /**
+     * Asks whether the copies left behind should be written into the destination that is now
+     * in force.
+     *
+     * **The question is only put where there is something to answer.** A source that holds
+     * nothing, a source that cannot be read, and a destination that has not actually changed
+     * all arrive here as an empty list, and none of them is worth a sheet: the most common
+     * reason for pointing at a different folder is that the last one stopped being reachable,
+     * and interrupting that with an offer to carry copies out of it would be the app asking
+     * a question it already knows the answer to.
+     *
+     * The count comes from a listing taken now. Nothing is copied from it — [carry] reads
+     * the source again — because between the offer and the answer a copy can leave by a hand
+     * that is not this app's (design D9).
+     */
+    private suspend fun offerToCarry(from: VaultDestination) {
+        val to = folder.rung.inForce
+        val copies = withContext(Dispatchers.Default) { migration.carriable(from, to) }
+        if (copies.isEmpty()) return
+
+        modalManager.show(
+            CarryCopiesModal(
+                copies = copies.size,
+                onCarry = { carry(from = from, to = to) },
+            )
+        )
+    }
+
+    /**
+     * Carries the copies across, and says what came of it.
+     *
+     * Both outcomes are worth a word and they are different words: everything arrived, or it
+     * stopped partway — and the second one is a sentence the spec asks for by name, because
+     * a person who said yes to carrying twenty copies has to learn that some of them are
+     * still only in the old place. Neither says anything about the source, because nothing
+     * anywhere was removed from it.
+     *
+     * The destination is read again on the way out: what the card counts has just grown.
+     */
+    private fun carry(from: VaultDestination, to: VaultDestination) {
+        viewModelScope.launch {
+            when (withContext(Dispatchers.Default) { migration.carry(from, to) }) {
+                is MigrationOutcome.Carried -> succeed(Res.string.backup_carry_done)
+
+                is MigrationOutcome.Interrupted ->
+                    modalManager.showError(UiText.Res(Res.string.backup_carry_partial))
+
+                MigrationOutcome.NothingToCarry -> Unit
+            }
+
+            readDestination()
+        }
+    }
+
+    /**
      * Reads what the destination holds, now.
      *
      * **Now includes coming back to this screen.** The copies screen sits on top of this
@@ -228,57 +340,28 @@ class BackupViewModel(
      * A destination that cannot be read leaves the screen saying nothing about it rather
      * than saying zero: none of the three lines built from this — the count, the room they
      * take, the newest — is worth inventing, and the instant of the last successful capture
-     * is a fact of this install that survives the folder being unreadable. That is what
-     * [VaultCopies.isRead] carries: an unread destination is left unread, and a re-read that
-     * fails leaves the last answer standing rather than replacing it with zero.
+     * is a fact of this install that survives the folder being unreadable. So an unread
+     * destination is left unread, and a re-read that fails leaves the last answer standing
+     * rather than replacing it with zero.
+     *
+     * **The rung it was a reading of travels with it**, and it is read before the listing
+     * rather than after, because that is the one the router used. Standing on is only right
+     * while the destination is the same one: a reading kept across a change of rung is the
+     * app's own storage counted under the name of a folder, which is the state a fallen link
+     * and a change of destination both produce (see [BackupUiState.copiesInForce]).
      *
      * It is dispatched away from the main thread rather than merely suspending on it:
      * listing a folder is disk work, and the composition that started this screen has
      * nothing to wait for.
      */
-    /**
-     * Puts the folder picker up and, if a folder was chosen, moves the vault onto it.
-     *
-     * **Nothing is copied across, and nothing is removed.** The copies already inside the
-     * app stay inside the app, unlisted from here on but intact — carrying them over is
-     * task 11.10, which copies and never moves (design D13). This is the direction a
-     * half-built feature is allowed to be wrong in: a duplicate costs a file, and a move
-     * that fails costs the archive.
-     *
-     * A picker somebody closed changes nothing and says nothing. Only a real failure — the
-     * folder could not be prepared — reaches the person, because only that one leaves them
-     * with something to do.
-     *
-     * The destination is read again on the way out, because what the card counts is now a
-     * different folder.
-     */
-    private fun chooseFolder(context: PlatformContext) {
-        viewModelScope.launch {
-            folder.pointAt(context).fold(
-                ifLeft = ::fail,
-                ifRight = { chosen -> if (chosen) readDestination() },
-            )
-        }
-    }
-
-    /**
-     * Moves the vault back to the app's own storage.
-     *
-     * It removes nothing and forgets nothing: the copies in the folder stay in it, and the
-     * folder stays remembered so that choosing it again leads back to them (design D4).
-     */
-    private fun keepInsideApp() {
-        folder.keepInsideApp()
-        readDestination()
-    }
-
     private fun readDestination() {
         viewModelScope.launch(Dispatchers.Default) {
+            val rung = folder.rung.inForce
             val copies = destination.list().getOrNull() ?: return@launch
             _uiState.update {
                 it.copy(
                     copies = VaultCopies(
-                        isRead = true,
+                        rung = rung,
                         count = copies.size,
                         totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
                         newestAt = copies.firstOrNull()?.savedAt,

@@ -1034,7 +1034,15 @@
     <string name="backup_coverage_app">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</string>
     <string name="backup_coverage_folder">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</string>
     <string name="backup_destination_title">Onde as cópias ficam</string>
-    <string name="backup_folder_unreachable">Não foi possível chegar até a pasta escolhida. As cópias novas não estão sendo guardadas nela.</string>
+    <string name="backup_folder_unreachable">Não foi possível chegar até a pasta escolhida. As cópias novas estão sendo guardadas dentro do app, provisoriamente, até você decidir.</string>
+    <string name="backup_folder_reconnect">Apontar a pasta de novo</string>
+    <string name="backup_folder_keep_in_app">Guardar dentro do app</string>
+    <string name="backup_carry_title">Levar as cópias junto?</string>
+    <string name="backup_carry_message">%1$s no destino anterior. Levar copia as mais recentes que a retenção comporta, e não remove nenhuma de lá.</string>
+    <string name="backup_carry_action">Levar</string>
+    <string name="backup_carry_leave">Deixar onde estão</string>
+    <string name="backup_carry_done">As cópias foram copiadas para o novo destino, e nenhuma foi removida do anterior.</string>
+    <string name="backup_carry_partial">Nem tudo foi copiado. O que foi já está no novo destino, e nada foi removido do anterior.</string>
     <string name="backup_copies_none">Nenhuma cópia ainda</string>
     <string name="backup_copies_one">1 cópia guardada</string>
     <string name="backup_copies_many">%1$d cópias guardadas</string>

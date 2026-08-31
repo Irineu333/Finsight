@@ -9,12 +9,14 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
+import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 
 /**
@@ -64,6 +66,7 @@ class VaultDestinationsTest {
 
     private val destinations = VaultDestinations(
         state = state,
+        link = MutableStateFlow(FolderLink.NONE),
         appStorage = Recorder("app", calls),
         folder = Recorder("folder", calls),
     )

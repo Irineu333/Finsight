@@ -55,6 +55,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
@@ -108,6 +109,7 @@ class FolderVaultTest {
 
     private val destination = VaultDestinations(
         state = state,
+        link = MutableStateFlow(FolderLink.NONE),
         appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
         folder = JvmFolderBackupDestination(folder = backupFolder, ownCopy = ownCopy),
     )
@@ -325,6 +327,7 @@ class FolderVaultTest {
         val restartedFolder = JvmBackupFolder(settings) { chosen }
         val restartedDestination = VaultDestinations(
             state = restartedState,
+            link = MutableStateFlow(FolderLink.NONE),
             appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
             folder = JvmFolderBackupDestination(folder = restartedFolder, ownCopy = ownCopy),
         )

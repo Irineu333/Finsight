@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
@@ -85,13 +86,21 @@ class BackupHistoryViewModel(
     private val archiveRestore: ArchiveRestore,
     private val reader: KeptCopyReader,
     private val state: BackupVaultRepository,
+    /**
+     * Which rung the listing is of, from the one place that pairs the choice with the
+     * reading of the link ([VaultFolder.rung]). The screen names the destination it lists,
+     * and while a chosen folder cannot be reached the copies it lists are the ones inside
+     * the app — so reading the preference alone would put the folder's name over the app's
+     * own files.
+     */
+    private val folder: VaultFolder,
     private val vault: BackupVault,
     private val modalManager: ModalManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         BackupHistoryUiState(
-            destination = state.observe().value.destination,
+            destination = folder.rung.inForce,
             isVaultOn = state.observe().value.isOn,
             archiveCopy = state.observe().value.archiveCopy,
         )
@@ -184,13 +193,14 @@ class BackupHistoryViewModel(
     private fun refresh() {
         viewModelScope.launch(Dispatchers.Default) {
             val vaultState = state.observe().value
+            val rung = folder.rung.inForce
             destination.list().fold(
                 ifLeft = {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isUnreadable = true,
-                            destination = vaultState.destination,
+                            destination = rung,
                             isVaultOn = vaultState.isOn,
                             archiveCopy = vaultState.archiveCopy,
                         )
@@ -201,7 +211,7 @@ class BackupHistoryViewModel(
                         it.copy(
                             isLoading = false,
                             isUnreadable = false,
-                            destination = vaultState.destination,
+                            destination = rung,
                             isVaultOn = vaultState.isOn,
                             archiveCopy = vaultState.archiveCopy,
                             copies = copies,

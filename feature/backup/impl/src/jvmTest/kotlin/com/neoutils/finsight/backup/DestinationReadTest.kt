@@ -22,9 +22,13 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
+import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultSwitch
+import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.BackupAction
@@ -54,6 +58,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
@@ -162,6 +167,16 @@ class DestinationReadTest {
         vault = state,
         switch = VaultSwitch(state = state, vault = vault),
         folder = VaultFolder(state = state, folder = NoBackupFolder),
+        migration = VaultMigration(
+            state = state,
+            destinations = VaultDestinations(
+                state = state,
+                link = MutableStateFlow(FolderLink.NONE),
+                appStorage = destination,
+                folder = UnreachableDestination,
+            ),
+            files = files,
+        ),
         modalManager = ModalManager(),
         clock = clock,
     )

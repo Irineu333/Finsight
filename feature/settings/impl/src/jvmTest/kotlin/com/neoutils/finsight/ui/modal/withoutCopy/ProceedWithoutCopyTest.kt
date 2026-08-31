@@ -124,9 +124,9 @@ class ProceedWithoutCopyTest {
     }
 
     /**
-     * A vault with an offer to make, once, that records whether it was accepted.
+     * A vault that is off, can be turned on, and remembers both answers it was given.
      *
-     * What turning the vault on actually does is `VaultOfferOnce`'s and is pinned in the
+     * What turning the vault on actually does is `StandingVaultOffer`'s and is pinned in the
      * backup module. What is asserted here is the half these screens own: that the offer is
      * asked for, and that a box left ticked is acted on **before** anything is destroyed.
      */
@@ -135,13 +135,19 @@ class ProceedWithoutCopyTest {
         var accepted = false
             private set
 
-        private var asked = 0
+        var declined = false
+            private set
 
-        override fun offerOnce(): VaultOfferTerms? {
-            asked++
-            if (asked > 1) return null
+        // Accepting is what turns the vault on, and a vault that is on has nothing left to
+        // offer — which is the only thing that stops the offer being made.
+        override fun offer(): VaultOfferTerms? {
+            if (accepted) return null
 
-            return VaultOfferTerms(intervalLabel = UiText.Raw("3 days")) { accepted = true }
+            return VaultOfferTerms(
+                intervalLabel = UiText.Raw("3 days"),
+                wasDeclined = declined,
+                decline = { declined = true },
+            ) { accepted = true }
         }
     }
 
@@ -396,29 +402,55 @@ class ProceedWithoutCopyTest {
     }
 
     /**
-     * The gate is the vault's and not a screen's, so the confirmation reached second
-     * carries nothing — across features as much as within one.
+     * The gate is the vault's and not a screen's, and one yes closes it everywhere: the
+     * confirmation reached after an acceptance carries nothing — across features as much as
+     * within one.
      */
     @Test
-    fun `an offer made beside the currency leaves the rate form nothing to show`() = runTest {
+    fun `an offer accepted beside the currency leaves the rate form nothing to show`() = runTest {
         seedCurrencies("BRL", "USD")
         val rate = seedRate("USD", "BRL", 5.5)
         val vault = OfferingVault()
 
         val first = deleteViewModel("USD", PreventiveBackup.None, vaultOffer = vault)
+        assertNotNull(first.offer.terms, "the confirmation reached first carries it")
+        first.delete().join()
+
         val second = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
 
-        assertNotNull(first.offer.terms, "the confirmation reached first carries it")
-        assertNull(second.offer.terms, "and the next one carries nothing")
+        assertNull(second.offer.terms, "the vault is on; the next one carries nothing")
+    }
+
+    /**
+     * A refusal changes what the offer looks like, never whether it is put: the next
+     * removal still carries it, with the box empty and the reminder in place of the
+     * proposal.
+     */
+    @Test
+    fun `a removal after a refusal still offers, unticked`() = runTest {
+        seedCurrencies("BRL", "USD")
+        val rate = seedRate("USD", "BRL", 5.5)
+        val vault = OfferingVault()
+
+        val first = deleteViewModel("USD", PreventiveBackup.None, vaultOffer = vault)
+        first.offer.setAccepted(false)
+        first.delete().join()
+
+        val second = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
+
+        val terms = assertNotNull(second.offer.terms, "the offer stands while the vault is off")
+
+        assertFalse(second.offer.isAccepted.value, "and it arrives with the answer given last")
+        assertTrue(terms.wasDeclined, "worded as the reminder it is")
     }
 
     /**
      * The offer is made beside a risk or not at all. A form opened to *register* a rate
-     * destroys nothing, so it neither shows the offer nor spends the one chance to make it
-     * — the next real deletion still gets it.
+     * destroys nothing, so it shows no offer — while the same form opened on a rate that
+     * can be removed does.
      */
     @Test
-    fun `a form opened to register a rate neither offers nor spends the offer`() = runTest {
+    fun `a form opened to register a rate makes no offer`() = runTest {
         seedCurrencies("BRL", "USD")
         val rate = seedRate("USD", "BRL", 5.5)
         val vault = OfferingVault()
@@ -429,7 +461,7 @@ class ProceedWithoutCopyTest {
 
         val removing = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
 
-        assertNotNull(removing.offer.terms, "the offer was spent where there was no risk")
+        assertNotNull(removing.offer.terms, "and the removal beside it is a risk")
     }
 
     @Test

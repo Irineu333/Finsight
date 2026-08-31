@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.ArchiveMark
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.KeptCopyReader
-import com.neoutils.finsight.domain.vault.VaultOfferOnce
+import com.neoutils.finsight.domain.vault.StandingVaultOffer
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
@@ -81,7 +81,7 @@ val backupModule = module {
     // The offer a destructive confirmation carries. Bound here because "has it been made
     // already" is the vault's state and not the asking screen's — a feature that decided
     // it for itself would offer again to somebody who already said no.
-    factory<VaultOffer> { VaultOfferOnce(vault = get(), switch = get()) }
+    factory<VaultOffer> { StandingVaultOffer(vault = get(), switch = get()) }
 
     // The occasion the shell announces — the app was opened. It is resolved there in a
     // `LaunchedEffect`, which no compiler checks, so `AppModulesTest` asserts the binding.

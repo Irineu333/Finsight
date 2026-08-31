@@ -27,6 +27,14 @@ internal val RowGap = 8.dp
 internal val GroupGap = 20.dp
 
 /**
+ * Digits of one width, so that a column of figures lines up on them.
+ *
+ * The feature shows a size, a span and a count in three places, and a list of numbers set in
+ * proportional figures reads as a dump of strings rather than as a column.
+ */
+internal const val TabularFigures = "tnum"
+
+/**
  * The rows of one list, where a group is separated from the one above it.
  *
  * `Arrangement.spacedBy` — what the settings screen's `Column` uses — never puts space

@@ -20,14 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_confirm_offer_reminder
 import com.neoutils.finsight.resources.backup_confirm_offer_subtitle
 import com.neoutils.finsight.resources.backup_confirm_offer_title
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The vault, offered where the risk it covers is: one box, already taken, and a sentence
- * that says the whole of what accepting does.
+ * The vault, offered where the risk it covers is: one box and a sentence that says the
+ * whole of what accepting does.
  *
  * It sits inside the confirmation rather than over it. The sheet underneath is what states
  * what is about to go; this adds the one thing that can still be changed about it, and the
@@ -37,9 +38,14 @@ import org.jetbrains.compose.resources.stringResource
  * trick — accepting turns the vault on, not this one copy — and it is why the sentence
  * names the interval and where to switch it off.
  *
- * **A confirmation with nothing to offer renders nothing**, including whatever spacing this
- * was given: whether there is still an offer to make is [VaultOfferState]'s answer, and a
- * sheet that asked it a second time would be a second gate.
+ * **It is a card of the same make as every other in this feature**, and it is a step
+ * recessed from the sheet rather than the colour of it: `surface` and `surfaceContainer` are
+ * one colour in this theme, so a box painted the second inside a sheet painted the first is
+ * an invisible box. The recessed ground is `background`, which is what the drawing uses.
+ *
+ * **A vault that is already on renders nothing**, including whatever spacing this was
+ * given: whether there is anything left to offer is [VaultOfferState]'s answer, and a sheet
+ * that asked it a second time would be a second gate.
  */
 @Composable
 fun VaultOfferRow(
@@ -51,7 +57,7 @@ fun VaultOfferRow(
     val isAccepted by state.isAccepted.collectAsStateWithLifecycle()
 
     Surface(
-        color = colorScheme.surfaceContainer,
+        color = colorScheme.background,
         shape = RoundedCornerShape(12.dp),
         onClick = { state.setAccepted(!isAccepted) },
         enabled = enabled,
@@ -60,7 +66,7 @@ fun VaultOfferRow(
             .testTag("backup_vault_offer"),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -77,9 +83,15 @@ fun VaultOfferRow(
                     fontWeight = FontWeight.Medium,
                     color = colorScheme.onSurface,
                 )
+                // The offer somebody has already turned down says so, and still states the
+                // price: it is the same offer, put again without insisting.
                 Text(
                     text = stringResource(
-                        Res.string.backup_confirm_offer_subtitle,
+                        if (terms.wasDeclined) {
+                            Res.string.backup_confirm_offer_reminder
+                        } else {
+                            Res.string.backup_confirm_offer_subtitle
+                        },
                         stringUiText(terms.intervalLabel),
                     ),
                     style = typography.bodySmall,

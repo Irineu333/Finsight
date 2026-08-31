@@ -21,7 +21,7 @@ import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
-import com.neoutils.finsight.domain.vault.VaultOfferOnce
+import com.neoutils.finsight.domain.vault.StandingVaultOffer
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
@@ -231,10 +231,10 @@ class VaultSwitchTest {
     @Test
     fun `accepting the offer and deleting produce one copy, not two`() = runTest {
         val entered = enter("rent")
-        val offer = VaultOfferState(VaultOfferOnce(vault = state, switch = switch))
+        val offer = VaultOfferState(StandingVaultOffer(vault = state, switch = switch))
         assertNotNull(offer.terms, "a vault that is off is offered beside a deletion")
 
-        offer.acceptIfTicked()
+        offer.settle()
         instant += 1.minutes
         preventive.captureBefore(DestructiveAction.DELETE_TRANSACTION)
 

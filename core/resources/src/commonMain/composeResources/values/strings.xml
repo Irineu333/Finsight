@@ -1070,6 +1070,7 @@
     <string name="backup_confirm_reversible">Uma cópia de como o app está agora é guardada antes, e você pode voltar a ela pela tela de backup.</string>
     <string name="backup_confirm_offer_title">Guardar uma cópia antes</string>
     <string name="backup_confirm_offer_subtitle">E também a cada %1$s, daqui em diante. Você pode desligar nos ajustes de backup.</string>
+    <string name="backup_confirm_offer_reminder">Você deixou isto desmarcado. Marque e uma cópia é guardada antes desta e das próximas, a cada %1$s.</string>
     <string name="backup_restore_subtitle_vault">De um backup que veio de outro aparelho.</string>
     <string name="backup_no_copy_title">Não foi possível guardar a cópia</string>
     <string name="backup_no_copy_message">Restaurar substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia foi guardada que pudesse trazer de volta o que está aqui agora.</string>

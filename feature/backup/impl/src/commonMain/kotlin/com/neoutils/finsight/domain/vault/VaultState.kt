@@ -100,18 +100,19 @@ data class VaultState(
     val archiveCopy: ArchiveCopy? = null,
 
     /**
-     * Whether the vault has already been offered beside a destructive action's
-     * confirmation.
+     * Whether the offer beside a destructive confirmation has been left unticked and gone
+     * past.
      *
-     * The offer is made where the risk it covers appears, and it is made once (spec: *a
-     * primeira ação destrutiva do usuário SHALL trazer a oferta*). Somebody who said no is
-     * not asked again every time they delete something — the switch stays on the backup
-     * screen, and insisting would turn protection into nagging.
+     * It does not decide whether the offer appears — [isOfferable] does, and the offer
+     * stands for as long as there is a vault to turn on. What it decides is the shape the
+     * offer takes: an offer nobody has turned down arrives ticked, and one somebody has
+     * arrives unticked and says so. Insisting would turn protection into nagging;
+     * disappearing would take the offer out of the one place it means anything.
      *
-     * It is recorded when the offer is *shown*, not when it is accepted: what must not
-     * happen twice is the asking.
+     * It is recorded when the action goes ahead with the box unticked, and never when the
+     * offer is merely shown: somebody who reads it and cancels has answered nothing.
      */
-    val wasOffered: Boolean = false,
+    val wasDeclined: Boolean = false,
 ) {
 
     /**
@@ -139,10 +140,13 @@ data class VaultState(
         keepsCopy && action.classification.isCoveredByPreventiveCapture
 
     /**
-     * Whether this is the moment to offer the vault beside a destructive action: it is off,
-     * and it has not been offered there before.
+     * Whether there is anything to offer beside a destructive action: a vault that is off.
+     *
+     * There is no second half to this. An offer withdrawn after one refusal costs the only
+     * discoverable way in — the switch is on a screen nobody visits — so what a refusal
+     * changes is [wasDeclined] and the tone that reads it, never whether the offer is put.
      */
-    val isOfferable: Boolean get() = !isOn && !wasOffered
+    val isOfferable: Boolean get() = !isOn
 
     /**
      * Whether [interval] has run out since the last copy that landed — the periodic

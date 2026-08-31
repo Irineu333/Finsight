@@ -57,6 +57,7 @@ import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.backup.GroupGap
 import com.neoutils.finsight.ui.screen.backup.RowGap
+import com.neoutils.finsight.ui.screen.backup.TabularFigures
 import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.originLabel
@@ -448,5 +449,3 @@ private fun ActionRow(
 /** What stands where a figure would, on a copy that could not be opened to produce one. */
 private const val MissingValue = "—"
 
-/** Digits of one width, so a column of figures lines up on them. */
-private const val TabularFigures = "tnum"

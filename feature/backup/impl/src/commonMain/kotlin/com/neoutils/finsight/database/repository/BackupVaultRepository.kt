@@ -61,10 +61,11 @@ class BackupVaultRepository(
     fun setPreventiveOn(isOn: Boolean) = update { it.copy(isPreventiveOn = isOn) }
 
     /**
-     * Records that the vault has been offered beside a destructive action, so that it is
-     * never offered there again — whatever the answer was.
+     * Records that the offer beside a destructive action was left unticked and the action
+     * went ahead — so the next one arrives unticked and worded as a reminder rather than as
+     * a fresh proposal. The offer itself keeps being made for as long as the vault is off.
      */
-    fun markOffered() = update { it.copy(wasOffered = true) }
+    fun markDeclined() = update { it.copy(wasDeclined = true) }
 
     fun setInterval(interval: Duration) = update { it.copy(interval = interval) }
 
@@ -125,7 +126,7 @@ class BackupVaultRepository(
         settings.putBoolean(KEY_ON, next.isOn)
         settings.putBoolean(KEY_PERIODIC_ON, next.isPeriodicOn)
         settings.putBoolean(KEY_PREVENTIVE_ON, next.isPreventiveOn)
-        settings.putBoolean(KEY_OFFERED, next.wasOffered)
+        settings.putBoolean(KEY_DECLINED, next.wasDeclined)
         settings.putLong(KEY_INTERVAL_SECONDS, next.interval.inWholeSeconds)
         settings.putString(KEY_RETENTION, next.retention.name)
         settings.putString(KEY_DESTINATION, next.destination.name)
@@ -160,16 +161,19 @@ class BackupVaultRepository(
                 ArchiveCopy(name = name, savedAt = Instant.fromEpochMilliseconds(savedAt))
             }
         },
-        // False where every other switch is true: the offer not having been made is what a
-        // fresh install has, and an unreadable value asks once rather than never.
-        wasOffered = settings.getBoolean(KEY_OFFERED, defaultValue = false),
+        // False where every other switch is true: nothing having been turned down is what
+        // a fresh install has, and an unreadable value offers rather than reminds.
+        wasDeclined = settings.getBoolean(KEY_DECLINED, defaultValue = false),
     )
 
     private companion object {
         const val KEY_ON = "backup_vault_on"
         const val KEY_PERIODIC_ON = "backup_vault_periodic_on"
         const val KEY_PREVENTIVE_ON = "backup_vault_preventive_on"
-        const val KEY_OFFERED = "backup_vault_offered"
+        // The stored name is older than what the value means, and is kept because the two
+        // agree on every install that has one: the offer had been put and the vault was
+        // still off, which is a refusal.
+        const val KEY_DECLINED = "backup_vault_offered"
         const val KEY_INTERVAL_SECONDS = "backup_vault_interval_seconds"
         const val KEY_RETENTION = "backup_vault_retention"
         const val KEY_DESTINATION = "backup_vault_destination"

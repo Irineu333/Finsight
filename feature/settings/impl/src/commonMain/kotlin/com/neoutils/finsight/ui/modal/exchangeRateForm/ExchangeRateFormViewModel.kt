@@ -179,9 +179,10 @@ class ExchangeRateFormViewModel(
     private fun remove() {
         val rate = existing ?: return
         viewModelScope.launch {
-            // Before the removal, never after: the vault has to be on by the time the
-            // removal asks it for the copy, which is the next thing that happens.
-            offer.acceptIfTicked()
+            // The offer is answered before the removal and never after: a box left ticked
+            // has to have turned the vault on by the time the removal asks it for the copy,
+            // and a box left unticked is a refusal only once the removal goes ahead.
+            offer.settle()
 
             refusal.attempt { withoutCopy ->
                 exchangeRateRepository.remove(rate, withoutCopy)

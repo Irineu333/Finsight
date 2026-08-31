@@ -125,9 +125,9 @@ class PreventiveDeletionTest {
     }
 
     /**
-     * A vault with an offer to make, once, that records whether it was accepted.
+     * A vault that is off, can be turned on, and remembers both answers it was given.
      *
-     * What turning the vault on actually does is `VaultOfferOnce`'s and is pinned in the
+     * What turning the vault on actually does is `StandingVaultOffer`'s and is pinned in the
      * backup module. What is asserted here is the half this screen owns: that the offer is
      * asked for, and that a box left ticked is acted on **before** the removal.
      */
@@ -136,13 +136,19 @@ class PreventiveDeletionTest {
         var accepted = false
             private set
 
-        private var asked = 0
+        var declined = false
+            private set
 
-        override fun offerOnce(): VaultOfferTerms? {
-            asked++
-            if (asked > 1) return null
+        // Accepting is what turns the vault on, and a vault that is on has nothing left to
+        // offer — which is the only thing that stops the offer being made.
+        override fun offer(): VaultOfferTerms? {
+            if (accepted) return null
 
-            return VaultOfferTerms(intervalLabel = UiText.Raw("3 days")) { accepted = true }
+            return VaultOfferTerms(
+                intervalLabel = UiText.Raw("3 days"),
+                wasDeclined = declined,
+                decline = { declined = true },
+            ) { accepted = true }
         }
     }
 
@@ -398,22 +404,48 @@ class PreventiveDeletionTest {
         viewModel.deleteTransaction().join()
 
         assertFalse(vault.accepted, "the box was cleared")
+        assertTrue(vault.declined, "and going ahead with it cleared is the answer")
         assertNull(db.transactionDao().getById(entered.id))
     }
 
     /**
-     * The gate is the vault's and not this screen's, so a second confirmation carries
-     * nothing — whether the first one was this sheet or one of the other four.
+     * Declining does not withdraw the offer, it changes its tone. The switch lives on a
+     * screen nobody visits, so a deletion is the only place the vault is met — and what a
+     * refusal buys is a box that arrives empty rather than one that stops arriving.
      */
     @Test
-    fun `a confirmation with nothing to offer shows no offer`() = runTest {
+    fun `a deletion after a refusal still offers, unticked`() = runTest {
+        val entered = enter("rent")
+        val vault = OfferingVault()
+
+        val first = viewModel(entered, TransactionRemovalPrelude.None, vaultOffer = vault)
+        first.offer.setAccepted(false)
+        first.deleteTransaction().join()
+
+        val second = viewModel(enter("water"), TransactionRemovalPrelude.None, vaultOffer = vault)
+
+        val terms = assertNotNull(second.offer.terms, "the offer stands while the vault is off")
+
+        assertFalse(second.offer.isAccepted.value, "and it arrives with the answer given last")
+        assertTrue(terms.wasDeclined, "worded as the reminder it is")
+    }
+
+    /**
+     * The gate is the vault's and not this screen's: what stops the offer is there being
+     * nothing left to turn on, and one yes anywhere is enough.
+     */
+    @Test
+    fun `a confirmation on a vault already on shows no offer`() = runTest {
         val entered = enter("rent")
         val vault = OfferingVault()
 
         viewModel(entered, TransactionRemovalPrelude.None, vaultOffer = vault)
-        val second = viewModel(entered, TransactionRemovalPrelude.None, vaultOffer = vault)
+            .deleteTransaction()
+            .join()
 
-        assertNull(second.offer.terms, "the offer was already made once")
+        val second = viewModel(enter("water"), TransactionRemovalPrelude.None, vaultOffer = vault)
+
+        assertNull(second.offer.terms, "the vault is on; there is nothing to offer")
         assertFalse(second.offer.isAccepted.value, "and there is nothing ticked to act on")
     }
 

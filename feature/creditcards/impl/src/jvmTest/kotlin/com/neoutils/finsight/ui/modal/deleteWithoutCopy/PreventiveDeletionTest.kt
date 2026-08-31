@@ -136,25 +136,30 @@ class PreventiveDeletionTest {
     }
 
     /**
-     * A vault with an offer to make, once, that records whether it was accepted.
+     * A vault that is off, can be turned on, and remembers both answers it was given.
      *
-     * What turning the vault on actually does is `VaultOfferOnce`'s and is pinned in the
+     * What turning the vault on actually does is `StandingVaultOffer`'s and is pinned in the
      * backup module. What is asserted here is the half this screen owns: that the offer is
-     * asked for, and that a box left ticked is acted on **before** the deletion — a vault
-     * turned on afterwards protects nothing.
+     * asked for, and that a box left ticked is acted on **before** the deletion — a vault turned on afterwards protects nothing.
      */
     private class OfferingVault : VaultOffer {
 
         var accepted = false
             private set
 
-        private var asked = 0
+        var declined = false
+            private set
 
-        override fun offerOnce(): VaultOfferTerms? {
-            asked++
-            if (asked > 1) return null
+        // Accepting is what turns the vault on, and a vault that is on has nothing left to
+        // offer — which is the only thing that stops the offer being made.
+        override fun offer(): VaultOfferTerms? {
+            if (accepted) return null
 
-            return VaultOfferTerms(intervalLabel = UiText.Raw("3 days")) { accepted = true }
+            return VaultOfferTerms(
+                intervalLabel = UiText.Raw("3 days"),
+                wasDeclined = declined,
+                decline = { declined = true },
+            ) { accepted = true }
         }
     }
 
@@ -515,36 +520,48 @@ class PreventiveDeletionTest {
         viewModel.deleteInstallment().join()
 
         assertFalse(vault.accepted, "the box was cleared")
+        assertTrue(vault.declined, "and going ahead with it cleared is the answer")
         assertEquals(0, living(), "the deletion is the user's answer either way")
     }
 
     /**
-     * Somebody who said no is not asked again every time they delete something. The screen
-     * shows what it is handed, so a second sheet with nothing to show carries nothing.
+     * Somebody who said no is not asked again as though nothing had happened — but they are
+     * still asked. The screen shows what it is handed, and after a refusal what it is handed
+     * is the same offer with the box empty.
      */
     @Test
-    fun `a confirmation with nothing to offer shows no offer`() = runTest {
+    fun `a deletion after a refusal still offers, unticked`() = runTest {
         val transactions = enterTwelve(installmentId = INSTALLMENT.id)
         val vault = OfferingVault()
 
-        installmentViewModel(transactions, TransactionRemovalPrelude.None, vaultOffer = vault)
+        val first = installmentViewModel(
+            transactions = transactions,
+            prelude = TransactionRemovalPrelude.None,
+            vaultOffer = vault,
+        )
+        first.offer.setAccepted(false)
+        first.deleteInstallment().join()
+
         val second = installmentViewModel(
             transactions = transactions,
             prelude = TransactionRemovalPrelude.None,
             vaultOffer = vault,
         )
 
-        assertNull(second.offer.terms, "the offer was already made once")
-        assertFalse(second.offer.isAccepted.value, "and there is nothing ticked to act on")
+        val terms = assertNotNull(second.offer.terms, "the offer stands while the vault is off")
+
+        assertFalse(second.offer.isAccepted.value, "and it arrives with the answer given last")
+        assertTrue(terms.wasDeclined, "worded as the reminder it is")
     }
 
     /**
-     * The offer rides on **whichever** destructive confirmation comes first, and the gate
-     * is one gate. An installment sheet that made the offer leaves an invoice sheet with
-     * nothing to show, and the reverse is true too — neither feature owns the question.
+     * The offer rides on **whichever** destructive confirmation comes first, and one yes
+     * ends it everywhere. An installment sheet whose offer was accepted leaves an invoice
+     * sheet with nothing to show, and the reverse is true too — neither feature owns the
+     * question.
      */
     @Test
-    fun `an offer made beside the installment leaves the invoice sheet nothing to show`() =
+    fun `an offer accepted beside the installment leaves the invoice sheet nothing to show`() =
         runTest {
             val transactions = enterTwelve(installmentId = INSTALLMENT.id)
             val vault = OfferingVault()
@@ -554,10 +571,12 @@ class PreventiveDeletionTest {
                 prelude = TransactionRemovalPrelude.None,
                 vaultOffer = vault,
             )
+            assertNotNull(first.offer.terms, "the confirmation reached first carries it")
+            first.deleteInstallment().join()
+
             val second = invoiceViewModel(TransactionRemovalPrelude.None, vaultOffer = vault)
 
-            assertNotNull(first.offer.terms, "the confirmation reached first carries it")
-            assertNull(second.offer.terms, "and the next one carries nothing")
+            assertNull(second.offer.terms, "the vault is on; the next one carries nothing")
         }
 
     /**

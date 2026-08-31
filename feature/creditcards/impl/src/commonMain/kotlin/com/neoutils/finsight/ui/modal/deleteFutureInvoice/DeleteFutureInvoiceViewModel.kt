@@ -47,8 +47,8 @@ class DeleteFutureInvoiceViewModel(
     /**
      * The vault offered beside this deletion, and the box beside the offer.
      *
-     * Asked for once, as the sheet is built, because asking is what records that the offer
-     * was made — and the sheet is built when it goes up.
+     * Asked for as the sheet is built, and answered as the deletion starts: whether the
+     * offer stands at all, and whether it arrives ticked, are the vault's own.
      */
     val offer = VaultOfferState(vaultOffer)
 
@@ -62,9 +62,11 @@ class DeleteFutureInvoiceViewModel(
     val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.DELETE_INVOICE)
 
     fun deleteInvoice() = viewModelScope.launch {
-        // Before the removal, never after: the vault has to be on by the time the deletion
-        // asks it for the copy, which is the next thing that happens.
-        offer.acceptIfTicked()
+        // The offer is answered before the removal and never after: a box left ticked has
+        // to have turned the vault on by the time the deletion asks it for the copy, which
+        // is the next thing that happens, and a box left unticked is a refusal only once
+        // the deletion actually goes ahead.
+        offer.settle()
 
         refusal.attempt { withoutCopy ->
             deleteFutureInvoiceUseCase(

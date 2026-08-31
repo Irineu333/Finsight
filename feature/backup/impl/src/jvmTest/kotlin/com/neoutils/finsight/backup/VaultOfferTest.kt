@@ -18,11 +18,12 @@ import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.vault.BackupVault
+import com.neoutils.finsight.domain.vault.StandingVaultOffer
 import com.neoutils.finsight.domain.vault.VaultInterval
-import com.neoutils.finsight.domain.vault.VaultOfferOnce
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.domain.vault.label
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.backup.api.VaultOfferState
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.russhwolf.settings.MapSettings
@@ -42,12 +43,16 @@ import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 
 /**
- * The offer beside a destructive confirmation: what it costs to accept, and the fact that
- * it is put once.
+ * The offer beside a destructive confirmation: what it costs to accept, what a refusal
+ * changes, and the one thing that ends it.
  *
  * The asserting is against the vault rather than against the return value, because the
  * requirement is what accepting *does*: an offer that said yes and left the vault off, or
  * one that armed a single trigger, would satisfy "it returned terms" and protect nobody.
+ *
+ * The refusals are asserted through [VaultOfferState], because that is where the answer is
+ * given: the two together are the rule — the offer states what was answered last time, and
+ * the box acts on it before the destructive action and records it after being left empty.
  *
  * Accepting also takes the copy that turning the vault on means, so the vault here is the
  * real one over a real destination. What that copy is worth beside a deletion — one file
@@ -115,7 +120,10 @@ class VaultOfferTest {
         ),
     )
 
-    private val offer = VaultOfferOnce(vault = vault, switch = switch)
+    private val offer = StandingVaultOffer(vault = vault, switch = switch)
+
+    /** A confirmation going up: it asks for the offer and gets the box that goes with it. */
+    private fun confirmation() = VaultOfferState(StandingVaultOffer(vault, switch))
 
     @AfterTest
     fun tearDown() {
@@ -128,7 +136,7 @@ class VaultOfferTest {
 
     @Test
     fun `one yes turns the whole vault on`() = runTest {
-        val terms = assertNotNull(offer.offerOnce(), "a vault that is off is offered")
+        val terms = assertNotNull(offer.offer(), "a vault that is off is offered")
 
         assertFalse(vault.observe().value.isOn, "showing the offer decides nothing")
 
@@ -141,50 +149,121 @@ class VaultOfferTest {
     }
 
     /**
-     * Somebody who said no is not asked again every time they destroy something. What must
-     * not happen twice is the asking, so it is the showing that is recorded and not the
-     * answer.
+     * The box is ticked the first time, because the offer is made rather than merely
+     * displayed — and nothing is recorded by showing it. Somebody who reads the sheet and
+     * cancels the deletion has answered nothing.
      */
     @Test
-    fun `the offer is made once, whatever the answer was`() {
-        assertNotNull(offer.offerOnce(), "the first time")
+    fun `the first confirmation offers, ticked, and records nothing by asking`() {
+        val first = confirmation()
 
-        assertNull(offer.offerOnce(), "and not again, though nobody ever accepted")
-        assertFalse(vault.observe().value.isOn)
+        assertNotNull(first.terms, "a vault that is off is offered")
+        assertTrue(first.isAccepted.value, "the offer is made, not merely displayed")
+        assertFalse(vault.observe().value.wasDeclined, "showing it is not an answer")
+    }
+
+    /**
+     * The offer does not disappear after a no, and that is the whole point of it: the switch
+     * lives on a screen somebody has to go looking for, so a deletion is the only place the
+     * vault is met by the people who most need it. What the refusal buys is the tone — the
+     * box arrives empty, and the sentence beside it is a reminder rather than a proposal.
+     */
+    @Test
+    fun `a confirmation after a refusal still offers, unticked`() = runTest {
+        val first = confirmation()
+        first.setAccepted(false)
+        first.settle()
+
+        assertTrue(vault.observe().value.wasDeclined, "going ahead unticked is the answer")
+
+        val second = confirmation()
+        val terms = assertNotNull(second.terms, "the offer stands while the vault is off")
+
+        assertTrue(terms.wasDeclined, "and it says which answer it is carrying")
+        assertFalse(second.isAccepted.value, "so the box arrives with the answer given last")
+        assertFalse(vault.observe().value.isOn, "and nothing was turned on behind anybody")
+    }
+
+    /**
+     * The refusal is a fact and not a countdown: the third and fourth deletions carry the
+     * same reminder as the second, because there is exactly one thing recorded about it.
+     */
+    @Test
+    fun `every later confirmation carries the same reminder`() = runTest {
+        confirmation().also { it.setAccepted(false) }.settle()
+
+        repeat(3) {
+            val next = confirmation()
+            assertNotNull(next.terms).let { terms ->
+                assertTrue(terms.wasDeclined, "the reminder is not spent by being shown")
+            }
+            next.settle()
+        }
+
+        assertNotNull(confirmation().terms, "the offer is still there")
+    }
+
+    /**
+     * A box left ticked can follow a refusal. Nothing about having said no once narrows what
+     * accepting does: it is the same offer, and it turns the whole vault on.
+     */
+    @Test
+    fun `the reminder can still be accepted, and turns the whole vault on`() = runTest {
+        confirmation().also { it.setAccepted(false) }.settle()
+
+        val second = confirmation()
+        second.setAccepted(true)
+        second.settle()
+
+        val state = vault.observe().value
+        assertTrue(state.isOn, "accepting a reminder is accepting")
+        assertTrue(state.isPeriodicOn, "and every trigger with it (design D1)")
+        assertTrue(state.isPreventiveOn)
     }
 
     /**
      * Five confirmations across three features carry the offer, and the person meets
-     * whichever they reach first. The gate is the vault's own state, so the second, third
-     * and fifth sheet find nothing to show however many of them are built — one gate, and
-     * never one per confirmation.
+     * whichever they reach first. Every one of them offers, because the only thing that
+     * stops the offer is there being nothing left to turn on.
      */
     @Test
-    fun `the offer rides on whichever of the five comes first, and on none of the rest`() {
-        val confirmations = List(5) { VaultOfferOnce(vault = vault, switch = switch) }
+    fun `all five of the confirmations offer while the vault is off`() {
+        val confirmations = List(5) { StandingVaultOffer(vault = vault, switch = switch) }
 
-        val offered = confirmations.mapNotNull { it.offerOnce() }
+        val offered = confirmations.mapNotNull { it.offer() }
 
-        assertEquals(1, offered.size, "the offer was made more than once, or not at all")
-        assertTrue(vault.observe().value.wasOffered, "and the asking is what is recorded")
+        assertEquals(5, offered.size, "a confirmation was left with nothing to offer")
     }
 
     /**
-     * A confirmation reached after the vault is on has nothing to offer either, and that is
-     * the same question rather than a second one: there is nothing left to turn on.
+     * A confirmation reached after the vault is on has nothing to offer, and that is the
+     * one thing that ends the offer: there is nothing left to turn on.
      */
     @Test
     fun `accepting on the first stops every later confirmation from offering`() = runTest {
-        assertNotNull(offer.offerOnce()).accept()
+        assertNotNull(offer.offer()).accept()
 
-        assertNull(VaultOfferOnce(vault = vault, switch = switch).offerOnce())
+        assertNull(StandingVaultOffer(vault = vault, switch = switch).offer())
     }
 
     @Test
     fun `a vault that is already on has nothing to offer`() {
         vault.setOn(true)
 
-        assertNull(offer.offerOnce())
+        assertNull(offer.offer())
+    }
+
+    /**
+     * A sheet that was read and dismissed carries no answer. Only a destructive action that
+     * actually went ahead past an empty box is a refusal — so the next confirmation still
+     * arrives ticked.
+     */
+    @Test
+    fun `a confirmation that is abandoned records nothing`() {
+        confirmation().setAccepted(false)
+
+        assertFalse(vault.observe().value.wasDeclined, "nothing was gone ahead with")
+        assertTrue(confirmation().isAccepted.value, "so the next one is still a proposal")
     }
 
     /**
@@ -197,7 +276,7 @@ class VaultOfferTest {
 
         assertEquals(
             VaultInterval.SEVEN_DAYS.label,
-            assertNotNull(offer.offerOnce()).intervalLabel,
+            assertNotNull(offer.offer()).intervalLabel,
         )
     }
 

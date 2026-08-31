@@ -182,7 +182,7 @@ private fun Retention(vault: VaultState, onAction: (BackupAction) -> Unit) {
                 vault.copiesKept() ?: 0,
             ),
             tone = colorScheme.onSurfaceVariant,
-            container = colorScheme.surfaceContainer,
+            container = colorScheme.background,
             icon = Icons.Outlined.Info,
             tag = "backup_retention_fixed",
         )
@@ -254,7 +254,7 @@ private fun Outcome(vault: VaultState, copies: VaultCopies) {
             stringResource(Res.string.backup_settings_outcome_unknown, days * kept)
         },
         tone = colorScheme.onSurfaceVariant,
-        container = colorScheme.surfaceContainer,
+        container = colorScheme.background,
         icon = Icons.Outlined.Info,
         tag = "backup_settings_outcome",
     )
@@ -322,6 +322,13 @@ private fun Choice(
     }
 }
 
+/**
+ * A statement the sheet makes about itself, in a box a step recessed from it.
+ *
+ * The ground is `background` and not `surfaceContainer`: the two names are one colour in
+ * this theme, so a box painted the second inside a sheet painted `surface` is a box nobody
+ * can see. The warning tone paints its own tint instead, and needs no such step.
+ */
 @Composable
 private fun Notice(
     text: String,

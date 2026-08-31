@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.CircularProgressIndicator
@@ -68,6 +67,7 @@ import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.storedBackupActions.StoredBackupActionsModal
 import com.neoutils.finsight.ui.screen.backup.RowGap
+import com.neoutils.finsight.ui.screen.backup.TabularFigures
 import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.backupRows
@@ -373,8 +373,10 @@ private fun MonthTitle(month: YearMonth, thisYear: Int, modifier: Modifier = Mod
  * simply where things are.
  *
  * Nothing else about a copy is shown, because nothing else is known without reading the
- * file, and the file is read when it is reached for. The row is the whole target — the
- * three actions live in a sheet, and the mark on the right says there are some.
+ * file, and the file is read when it is reached for. **The row is the whole target**, and it
+ * carries no mark of its own for that: a glyph on the right would promise a menu that
+ * belongs to it, when what opens is the sheet the whole row opens. What stands there is the
+ * spinner, while this copy is the one being worked on.
  */
 @Composable
 private fun StoredBackupRow(
@@ -432,9 +434,13 @@ private fun StoredBackupRow(
                     style = typography.titleSmall,
                     color = colorScheme.onSurface,
                 )
+                // Set in tabular figures, so that a column of spans and sizes lines up on
+                // its digits: the line is read down the list rather than row by row.
                 Text(
                     text = ageLabel(backup.savedAt, now) + " · " + sizeLabel(backup.sizeInBytes),
-                    style = typography.bodySmall,
+                    style = typography.bodySmall.copy(
+                        fontFeatureSettings = TabularFigures,
+                    ),
                     color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.testTag("backup_copy_age"),
                 )
@@ -468,15 +474,6 @@ private fun StoredBackupRow(
                     modifier = Modifier.size(18.dp),
                     color = colorScheme.onSurfaceVariant,
                     strokeWidth = 2.dp,
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .testTag("backup_copy_more"),
                 )
             }
         }

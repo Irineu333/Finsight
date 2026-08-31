@@ -128,8 +128,9 @@
 - [x] 10.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
       selecionável em `ACTION_OPEN_DOCUMENT_TREE`; e estabelecer o que decide quais raízes o
       seletor de pasta oferece
-- [x] 10.3 Registrar os resultados em `design.md`, fechando Q2; Q1 segue aberta por falta de
-      aparelho, e o arquivo diz isso
+- [x] 10.3 Registrar os resultados em `design.md`, fechando Q2; Q1 foi medida depois, em aparelho
+      real (12.4) — o critério que pararia a entrega não disparou, e o arquivo diz qual metade do
+      par de resolução ficou sem medição
 
 ## 11. Degrau 2 — a pasta apontada pelo usuário
 

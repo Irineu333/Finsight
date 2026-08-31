@@ -4,6 +4,7 @@ import android.content.Context
 import com.neoutils.finsight.database.defaultDatabasePath
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.ui.screen.backup.service.STAGED_PRE_MIGRATION_NAME
 import java.io.File
 
 /**
@@ -26,11 +27,37 @@ class AndroidMigrationCopyPlace(
 
     override val archivePath: String get() = defaultDatabasePath(appContext)
 
-    override fun clearedCopyPath(): String? = try {
-        val copy = File(backupDirectory(appContext), PRE_MIGRATION_BACKUP_NAME)
-        DATABASE_FILES.forEach { suffix -> File(copy.absolutePath + suffix).delete() }
-        copy.absolutePath.takeIf { !copy.exists() }
+    override fun stagedCopyPath(): String? = try {
+        val staged = staged()
+        DATABASE_FILES.forEach { suffix -> File(staged.absolutePath + suffix).delete() }
+        staged.absolutePath.takeIf { !staged.exists() }
     } catch (cause: SecurityException) {
         null
     }
+
+    /**
+     * The rename replaces the copy in force in one step — a rename over an existing file is
+     * an atomic replace on the file systems Android serves an app's own storage from — so
+     * there is no instant at which neither file is there, which is the whole reason the new
+     * one was written beside it. The journal files of the copy that was replaced go
+     * afterwards, because they describe a file that no longer exists.
+     */
+    override fun settleStagedCopy(keep: Boolean) {
+        val staged = staged()
+        try {
+            if (keep && staged.isFile) {
+                val copy = File(backupDirectory(appContext), PRE_MIGRATION_BACKUP_NAME)
+                if (staged.renameTo(copy)) {
+                    JOURNAL_FILES.forEach { suffix -> File(copy.absolutePath + suffix).delete() }
+                }
+            }
+        } catch (cause: SecurityException) {
+            // The copy in force is untouched by a rename that did not happen, which is the
+            // outcome this whole shape exists to guarantee.
+        } finally {
+            DATABASE_FILES.forEach { suffix -> File(staged.absolutePath + suffix).delete() }
+        }
+    }
+
+    private fun staged() = File(backupDirectory(appContext), STAGED_PRE_MIGRATION_NAME)
 }

@@ -28,10 +28,17 @@ import kotlinx.coroutines.withContext
  * have been, and the destination the person chose stands (spec: *o app MUST NOT impedir a
  * escolha de um destino novo por isso*).
  *
- * **Only what the destination's retention holds** — the newest ones, in the order a listing
- * already answers in. Carrying forty across so the next sweep can remove twenty of them is
- * traffic thrown away (design D13), and the limit is read from the one place that owns it
- * ([copiesKept]) rather than restated.
+ * **Only what the destination's retention holds** — the newest ones a listing answers with.
+ * Carrying forty across so the next sweep can remove twenty of them is traffic thrown away
+ * (design D13), and the limit is read from the one place that owns it ([copiesKept]) rather
+ * than restated.
+ *
+ * **They are handed over oldest first, and that order is what keeps the history intact.** A
+ * destination stamps what it writes with the moment it wrote it on two of the three
+ * platforms, so the order the copies go in is the order the destination will read them back
+ * out in — and retention counts in that order. Replaying the history newest first would make
+ * the newest copy the oldest thing in the new destination, and the first sweep after the move
+ * would take it.
  *
  * **Nothing is swept at the far end.** Retention runs behind a capture that landed and never
  * on its own (design D10), so a destination that ends up holding more than the limit is left
@@ -93,7 +100,7 @@ class VaultMigration(
         if (copies.isEmpty()) return MigrationOutcome.NothingToCarry
 
         var carried = 0
-        for (copy in copies) {
+        for (copy in copies.asReversed()) {
             when (val outcome = carryOne(copy, source, target)) {
                 null -> carried++
                 else -> return MigrationOutcome.Interrupted(copies = carried, error = outcome)
@@ -136,11 +143,12 @@ class VaultMigration(
 
     /**
      * The newest copies the destination's retention holds, or all of them where the person
-     * has asked that nothing be removed.
+     * has asked that nothing be removed — newest first, as a listing answers.
      *
      * A listing already answers newest first ([com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST]),
      * so the limit is a `take` and never a second ordering — two ways of deciding which copy
-     * is the newest is two ways of disagreeing about which one is dropped.
+     * is the newest is two ways of disagreeing about which one is dropped. Which end the
+     * copying starts at is [carry]'s, and it is the other one.
      */
     private fun withinRetention(copies: List<StoredBackup>): List<StoredBackup> =
         state.observe().value.copiesKept()?.let(copies::take) ?: copies

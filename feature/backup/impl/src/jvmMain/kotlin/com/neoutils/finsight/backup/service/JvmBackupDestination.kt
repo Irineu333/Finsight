@@ -9,11 +9,13 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.STAGED_SUFFIX
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
 import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +45,7 @@ class JvmBackupDestination(
         Either.catch {
             directory.mkdirs()
             val free = freeBackupFileName(name) { File(directory, it).exists() }
-            File(capturedPath).copyTo(File(directory, free)).asStoredBackup()
+            copyIntoPlace(File(capturedPath), File(directory, free)).asStoredBackup()
         }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
     }
 
@@ -90,6 +92,11 @@ class JvmBackupDestination(
      * something has it open in write-ahead logging — and the confirmation above opens it
      * with Room. Removing the main file alone would leave two behind that nothing lists
      * and nothing else will ever remove.
+     *
+     * **False means one thing only: the content check refused.** A deletion that did not
+     * happen is a failure and leaves as one — the screen turns false into a sentence about
+     * what the file *is*, and saying that over a file the app never managed to unlink would
+     * be a claim it has no evidence for.
      */
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
         val file = File(directory, backup.name)
@@ -100,9 +107,40 @@ class JvmBackupDestination(
         return withContext(Dispatchers.IO) {
             Either.catch {
                 DATABASE_FILES.forEach { suffix -> File(file.absolutePath + suffix).delete() }
-                !file.exists()
+                if (file.exists()) throw IOException("The copy could not be removed")
+                true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
+    }
+}
+
+/**
+ * Copies [source] into [target] through a name nothing lists, and puts it in place only once
+ * every byte is there.
+ *
+ * A copy written straight to its final name carries a name the app recognises from its first
+ * byte. A write cut short — a full disk, a volume detached, a process killed — then leaves a
+ * truncated file that [BackupDestination.list] shows, that retention counts inside the
+ * window it keeps, and that [BackupDestination.remove] refuses for good: a truncated
+ * database reads as corrupt, and corruption is not proof a file is this app's
+ * ([OwnCopyCheck]). One such file costs one real copy at every capture from then on.
+ *
+ * Putting it in place is a rename inside one directory, which is the file system's own
+ * single step, and it refuses a target that is already there rather than replacing it — the
+ * name was free a moment ago, and a copy that arrived meanwhile is not this one's to
+ * overwrite. Whatever did not get there is removed on the way out.
+ *
+ * `internal` because both rungs of the desktop write the same way, and a second spelling
+ * would be a second answer to when a copy becomes a copy.
+ */
+internal fun copyIntoPlace(source: File, target: File): File {
+    val staged = File(target.absolutePath + STAGED_SUFFIX)
+    return try {
+        source.copyTo(staged, overwrite = true)
+        Files.move(staged.toPath(), target.toPath())
+        target
+    } finally {
+        staged.delete()
     }
 }
 

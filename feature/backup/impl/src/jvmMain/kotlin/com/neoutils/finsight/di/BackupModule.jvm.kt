@@ -33,7 +33,11 @@ actual val backupPlatformModule = module {
             state = get(),
             link = get<VaultFolder>().link,
             appStorage = JvmBackupDestination(ownCopy = get()),
-            folder = JvmFolderBackupDestination(folder = get<JvmBackupFolder>(), ownCopy = get()),
+            folder = JvmFolderBackupDestination(
+                folder = get<JvmBackupFolder>(),
+                ownCopy = get(),
+                files = get(),
+            ),
         )
     }
 

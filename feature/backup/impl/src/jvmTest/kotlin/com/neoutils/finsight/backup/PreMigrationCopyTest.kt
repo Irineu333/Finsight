@@ -31,6 +31,8 @@ import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.ui.screen.backup.service.STAGED_PRE_MIGRATION_NAME
+import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.nio.file.Files
@@ -169,7 +171,17 @@ class PreMigrationCopyTest {
 
     /** A copy left by the previous migration, under the one name reserved for it. */
     private fun copyFromTheLastMigration(): File =
-        File(folder, PRE_MIGRATION_BACKUP_NAME).apply { writeText("the last migration's copy") }
+        File(folder, PRE_MIGRATION_BACKUP_NAME).apply { writeText(THE_LAST_MIGRATIONS_COPY) }
+
+    /**
+     * What `VACUUM INTO` leaves on a volume with no room: a file SQLite opens, that reports
+     * `ok`, and that declares no schema and holds nothing.
+     */
+    private fun emptyDatabaseAt(path: String) {
+        BundledSQLiteDriver().open(path).use { connection ->
+            connection.execSQL("PRAGMA user_version = 0")
+        }
+    }
 
     private fun titleInsideCopy(copy: File): String =
         BundledSQLiteDriver().open(copy.absolutePath).use { connection ->
@@ -217,25 +229,123 @@ class PreMigrationCopyTest {
         assertFalse(archive.exists(), "and asking must not bring the archive into being")
     }
 
+    // --------------------------------------- the copy in force outlives its replacement
+
+    /**
+     * Answering must not destroy the copy that is in force, because nothing guarantees a
+     * replacement ever arrives. The `VACUUM` that follows is refused by a full disk — the
+     * very condition that makes somebody want the copy — it is swallowed where it happens,
+     * and the process can be killed between the two. Whoever is left has neither.
+     */
+    @Test
+    fun `answering leaves the copy from the last migration where it is`() {
+        archiveDeclaring(OLDER_VERSION)
+        state.setOn(true)
+        val previous = copyFromTheLastMigration()
+
+        target.path()
+
+        assertTrue(
+            previous.exists(),
+            "the copy in force went before anything had replaced it",
+        )
+    }
+
     // ------------------------------------------------------------- what the answer is worth
 
     @Test
-    fun `a pending migration answers a path under the one name retention spares`() {
+    fun `a pending migration answers a path beside the copy in force`() {
         archiveDeclaring(OLDER_VERSION)
         state.setOn(true)
-        copyFromTheLastMigration()
+        val previous = copyFromTheLastMigration()
 
         val path = assertNotNull(target.path(), "the vault is on and the archive is behind")
 
         assertEquals(
-            File(folder, PRE_MIGRATION_BACKUP_NAME).absolutePath,
+            File(folder, STAGED_PRE_MIGRATION_NAME).absolutePath,
             path,
-            "a copy under any other name is counted by retention and swept",
+            "the new copy is written over the one that is still in force",
         )
+        assertFalse(
+            isBackupFileName(File(path).name),
+            "a half-written copy is listed, counted and offered as a way back",
+        )
+        assertTrue(previous.exists(), "the copy in force went before it had a replacement")
         assertFalse(
             File(path).exists(),
             "`VACUUM INTO` refuses a destination that already holds a file",
         )
+    }
+
+    /**
+     * The whole road as the app walks it, in the order it walks it: the target answers, the
+     * database module takes that answer as its only instruction, and the copy goes in force
+     * only once something has been written and read as a database.
+     */
+    @Test
+    fun `the copy in force is replaced once a new one has been written`() {
+        archiveDeclaring(OLDER_VERSION)
+        state.setOn(true)
+        copyFromTheLastMigration()
+
+        getDatabaseBuilder(path = archive.absolutePath, captureInto = target.path())
+        target.settle()
+
+        val copy = File(folder, PRE_MIGRATION_BACKUP_NAME)
+        assertEquals(
+            WHAT_THE_USER_HAD,
+            titleInsideCopy(copy),
+            "the copy in force is still the one from the migration before",
+        )
+        assertFalse(
+            File(folder, STAGED_PRE_MIGRATION_NAME).exists(),
+            "the staged file outlived the copy it became",
+        )
+    }
+
+    /**
+     * The failure this shape exists for. The `VACUUM` is swallowed where it happens, so
+     * nothing downstream ever hears about it — and what a person is left with must be the
+     * copy they already had.
+     */
+    @Test
+    fun `a copy that was never written leaves the last one in force`() {
+        archiveDeclaring(OLDER_VERSION)
+        state.setOn(true)
+        val previous = copyFromTheLastMigration()
+
+        target.path()
+        target.settle()
+
+        assertEquals(
+            THE_LAST_MIGRATIONS_COPY,
+            previous.readText(),
+            "the copy in force went for a replacement that never arrived",
+        )
+    }
+
+    /**
+     * What a full volume actually leaves behind, which is worse than nothing: a database
+     * that opens, passes an integrity check and holds no schema and no tables. Under the
+     * reserved name it would be listed as a plausible copy, never swept, and offered to
+     * somebody as a way back.
+     */
+    @Test
+    fun `a well-formed empty database is not put in force`() {
+        archiveDeclaring(OLDER_VERSION)
+        state.setOn(true)
+        val previous = copyFromTheLastMigration()
+
+        val staged = assertNotNull(target.path())
+        emptyDatabaseAt(staged)
+        target.settle()
+
+        assertEquals(
+            THE_LAST_MIGRATIONS_COPY,
+            previous.readText(),
+            "an empty database took the place of the copy in force",
+        )
+        assertFalse(File(staged).exists(), "the file that was refused was left where it was")
     }
 
     /**
@@ -248,6 +358,7 @@ class PreMigrationCopyTest {
         state.setOn(true)
 
         getDatabaseBuilder(path = archive.absolutePath, captureInto = target.path())
+        target.settle()
 
         val copy = File(folder, PRE_MIGRATION_BACKUP_NAME)
         assertTrue(copy.exists(), "nothing was written where the target pointed")
@@ -264,6 +375,7 @@ class PreMigrationCopyTest {
         archiveDeclaring(OLDER_VERSION)
 
         getDatabaseBuilder(path = archive.absolutePath, captureInto = target.path())
+        target.settle()
 
         assertFalse(
             File(folder, PRE_MIGRATION_BACKUP_NAME).exists(),
@@ -286,6 +398,7 @@ class PreMigrationCopyTest {
         state.setOn(true)
         state.setRetention(BackupRetention.FIVE)
         getDatabaseBuilder(path = archive.absolutePath, captureInto = target.path())
+        target.settle()
 
         repeat(SIX) { index ->
             instant += 1.minutes
@@ -309,6 +422,7 @@ class PreMigrationCopyTest {
         val DATE = LocalDate(2026, 8, 30)
 
         const val WHAT_THE_USER_HAD = "what the user had"
+        const val THE_LAST_MIGRATIONS_COPY = "the last migration's copy"
 
         /** Behind this build by one, which is all "there is a migration to run" means. */
         val OLDER_VERSION = AppSchema.VERSION.toLong() - 1

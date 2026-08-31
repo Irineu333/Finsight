@@ -214,6 +214,13 @@ internal fun NSError?.toBackupError(otherwise: BackupError): BackupError =
  */
 internal val DATABASE_FILES = listOf("", "-wal", "-shm")
 
+/**
+ * What a database opening leaves *beside* the file it opened. It is what has to go when a
+ * copy is replaced rather than removed: the main file is overwritten by the replacement, and
+ * these belong to the copy that was there before it.
+ */
+internal val JOURNAL_FILES = DATABASE_FILES.drop(1)
+
 private const val PRIVATE_DIRECTORY = "finsight-backup"
 private const val CANDIDATE_NAME = "candidate.db"
 private const val CAPTURE_NAME = "capture.db"

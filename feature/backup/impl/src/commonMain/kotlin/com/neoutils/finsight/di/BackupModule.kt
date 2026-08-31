@@ -140,7 +140,12 @@ val backupModule = module {
     // taken before a migration under the same switch as the other two triggers (design D1)
     // without that module learning a vault exists (design D11). Nobody claiming it would
     // compile, pass every test, and quietly stop protecting an update.
-    factory<PreMigrationCopyTarget> {
+    //
+    // A `single` because the port is two calls and not one — asked where the copy goes, and
+    // told afterwards that the attempt is over — and the second call is about what the first
+    // one answered. A factory would hand the two calls two objects, and the second would
+    // settle nothing.
+    single<PreMigrationCopyTarget> {
         VaultPreMigrationCopy(state = get(), place = get())
     }
 

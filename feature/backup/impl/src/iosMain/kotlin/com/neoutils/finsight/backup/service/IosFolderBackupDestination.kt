@@ -12,6 +12,7 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.STAGED_SUFFIX
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
 import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
@@ -106,15 +107,34 @@ class IosFolderBackupDestination(
             val free = freeBackupFileName(name) { own.holds(it) }
             val target = own.URLByAppendingPathComponent(free)
                 ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
+            // Where the copy is written until every byte of it is there. It is built off the
+            // folder's own url like the target is, never off the target's text: a scoped url
+            // that goes through a string comes back opening nothing (design D2).
+            val staged = own.URLByAppendingPathComponent(free + STAGED_SUFFIX)
+                ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
 
             coordinateWriting(
                 url = target,
                 options = NSFileCoordinatorWritingForReplacing,
                 otherwise = BackupError.EXPORT_FAILED,
             ) { url ->
-                copyUrl(NSURL.fileURLWithPath(capturedPath), url).flatMap {
-                    url.describedAs(free)?.right() ?: BackupError.EXPORT_FAILED.left()
+                // A write cut short under the final name leaves a truncated file in the
+                // person's own folder that the history shows, retention counts inside the
+                // window it keeps, and removal refuses for good — a truncated database reads
+                // as corrupt, and corruption is not proof a file is this app's. One such
+                // file costs one real copy at every capture from then on.
+                NSFileManager.defaultManager.removeItemAtURL(staged, error = null)
+
+                val landed = copyUrl(NSURL.fileURLWithPath(capturedPath), staged).flatMap {
+                    if (NSFileManager.defaultManager.moveItemAtURL(staged, url, error = null)) {
+                        url.describedAs(free)?.right() ?: BackupError.EXPORT_FAILED.left()
+                    } else {
+                        BackupError.EXPORT_FAILED.left()
+                    }
                 }
+
+                NSFileManager.defaultManager.removeItemAtURL(staged, error = null)
+                landed
             }
         }
     }

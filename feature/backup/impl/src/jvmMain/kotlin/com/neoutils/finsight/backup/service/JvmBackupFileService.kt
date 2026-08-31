@@ -148,6 +148,13 @@ private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.caus
 internal val DATABASE_FILES = listOf("", "-wal", "-shm", ".lck")
 
 /**
+ * What a database opening leaves *beside* the file it opened. It is what has to go when a
+ * copy is replaced rather than removed: the main file is overwritten by the replacement, and
+ * these belong to the copy that was there before it.
+ */
+internal val JOURNAL_FILES = DATABASE_FILES.drop(1)
+
+/**
  * A candidate is opened with Room and migrated in place before anything is decided
  * about it, and a capture only lives until it has been handed over, so both live where
  * the system throws files away rather than beside the database one of them might come

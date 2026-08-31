@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.STAGED_SUFFIX
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
 import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
@@ -56,19 +57,47 @@ class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestinatio
             NSFileManager.defaultManager.fileExistsAtPath("$directory/$it")
         }
 
-        copyItem(capturedPath, "$directory/$free", BackupError.EXPORT_FAILED).flatMap { path ->
-            storedBackupAt(path, free)?.right() ?: BackupError.EXPORT_FAILED.left()
+        // Through a name nothing lists, and into place only once every byte is there. A
+        // write cut short under the final name leaves a truncated file the history shows,
+        // retention counts inside the window it keeps, and removal refuses for good — a
+        // truncated database reads as corrupt, and corruption is not proof a file is this
+        // app's. One such file costs one real copy at every capture from then on.
+        val staged = "$directory/$free$STAGED_SUFFIX"
+        NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+
+        val landed = copyItem(capturedPath, staged, BackupError.EXPORT_FAILED).flatMap {
+            val target = "$directory/$free"
+            if (NSFileManager.defaultManager.moveItemAtPath(staged, target, error = null)) {
+                storedBackupAt(target, free)?.right() ?: BackupError.EXPORT_FAILED.left()
+            } else {
+                BackupError.EXPORT_FAILED.left()
+            }
         }
+
+        NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+        landed
     }
 
+    /**
+     * What the folder holds — and a refusal wherever the reading did not happen.
+     *
+     * `contentsOfDirectoryAtPath` answers null for a directory it could not read, and
+     * turning that into an empty list would have the screen say "no copies yet" over a
+     * folder it never managed to read, the card overwritten with zero, and a migration
+     * report nothing to carry (design D9). There is no "not there yet" for it to mean
+     * either — [backupDirectory] makes the folder on the way in, and answers null itself
+     * when it cannot.
+     */
     override suspend fun list(): Either<BackupError, List<StoredBackup>> =
         withContext(Dispatchers.Default) {
             val directory = backupDirectory()
                 ?: return@withContext BackupError.EXPORT_FAILED.left()
 
-            NSFileManager.defaultManager.contentsOfDirectoryAtPath(directory, error = null)
-                .orEmpty()
-                .filterIsInstance<String>()
+            val entries = NSFileManager.defaultManager
+                .contentsOfDirectoryAtPath(directory, error = null)
+                ?: return@withContext BackupError.EXPORT_FAILED.left()
+
+            entries.filterIsInstance<String>()
                 .filter(::isBackupFileName)
                 .mapNotNull { storedBackupAt("$directory/$it", it) }
                 .sortedWith(NEWEST_FIRST)
@@ -100,6 +129,11 @@ class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestinatio
      * something has it open in write-ahead logging — and the confirmation above opens it
      * with Room. Removing the main file alone would leave two behind that nothing lists
      * and nothing else will ever remove.
+     *
+     * **False means one thing only: the content check refused.** A deletion that did not
+     * happen is a failure and leaves as one — the screen turns false into a sentence about
+     * what the file *is*, and saying that over a file the app never managed to unlink would
+     * be a claim it has no evidence for.
      */
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
         val directory = withContext(Dispatchers.Default) { backupDirectory() }
@@ -116,7 +150,11 @@ class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestinatio
             DATABASE_FILES.forEach { suffix ->
                 NSFileManager.defaultManager.removeItemAtPath(path + suffix, error = null)
             }
-            (!NSFileManager.defaultManager.fileExistsAtPath(path)).right()
+            if (NSFileManager.defaultManager.fileExistsAtPath(path)) {
+                BackupError.EXPORT_FAILED.left()
+            } else {
+                true.right()
+            }
         }
     }
 }

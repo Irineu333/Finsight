@@ -2,10 +2,12 @@ package com.neoutils.finsight.backup.service
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
+import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
@@ -14,6 +16,7 @@ import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 /**
@@ -36,13 +39,23 @@ import kotlinx.coroutines.withContext
  * it is supposed to be adding to sits on the disk that is missing — the desktop's own shape
  * of the split archive design D9 refuses.
  *
- * **The copies in the folder are read and never moved.** Retention confirms by content
+ * **The copies in the folder are read and never written to.** Retention confirms by content
  * before removing anything ([OwnCopyCheck]), so a folder holding the user's own files loses
- * none of them, which is the whole reason the app keeps to a subfolder of its own.
+ * none of them, which is the whole reason the app keeps to a subfolder of its own — and the
+ * confirmation itself is run over a copy in the app's own area, never over the file in the
+ * folder. See [remove].
  */
 class JvmFolderBackupDestination(
     private val folder: JvmBackupFolder,
     private val ownCopy: OwnCopyCheck,
+    /**
+     * Where a copy is written to be read. The gate that proves a file is this app's migrates
+     * what it is handed, so what it is handed must be a copy that may be lost — which a file
+     * sitting in somebody's own folder is not. It comes into the app's own temporary area
+     * through the service that already owns that decision and already knows every file a
+     * database opening leaves behind.
+     */
+    private val files: BackupFileService,
 ) : BackupDestination {
 
     override suspend fun put(
@@ -52,7 +65,7 @@ class JvmFolderBackupDestination(
         reachable().flatMap { directory ->
             Either.catch {
                 val free = freeBackupFileName(name) { File(directory, it).exists() }
-                File(capturedPath).copyTo(File(directory, free)).asStoredBackup()
+                copyIntoPlace(File(capturedPath), File(directory, free)).asStoredBackup()
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
     }
@@ -72,10 +85,10 @@ class JvmFolderBackupDestination(
         withContext(Dispatchers.IO) {
             reachable().flatMap { directory ->
                 Either.catch {
-                    val files = directory.listFiles()
+                    val entries = directory.listFiles()
                         ?: throw IOException("The folder could not be read")
 
-                    files.filter { it.isFile && isBackupFileName(it.name) }
+                    entries.filter { it.isFile && isBackupFileName(it.name) }
                         .map { it.asStoredBackup() }
                         .sortedWith(NEWEST_FIRST)
                 }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
@@ -101,10 +114,25 @@ class JvmFolderBackupDestination(
      * Removes one copy, once the file has been confirmed by its content to be one this app
      * wrote — the promise that lets the vault sweep a folder full of somebody's own files.
      *
+     * Proving it costs a copy: the gate opens a database with Room, Room writes to what it
+     * opens, and the file in the folder is one the app may turn out not to be allowed to
+     * touch at all. So the copy comes into the app's own temporary area, is read there, and
+     * leaves with everything a database opening put beside it — a refusal then leaves the
+     * person's folder exactly as it found it, bytes and entries both.
+     *
      * A copy that is already gone is answered as removed: the folder is one the user can
      * also reach with a file manager, and there is nothing left to refuse. A folder that
      * cannot be reached at all is a different answer, and refuses, because nothing is known
      * about the file either way.
+     *
+     * The journal files are swept beside the copy even though nothing puts them there any
+     * more: a folder that was swept by an earlier build may still be holding a pair, and
+     * this is the only thing that ever looks at that name again.
+     *
+     * **False means one thing only: the content check refused.** A deletion that did not
+     * happen is a failure and leaves as one — the screen turns false into a sentence about
+     * what the file *is*, and saying that over a file the app never managed to unlink would
+     * be a claim it has no evidence for.
      */
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
         val directory = withContext(Dispatchers.IO) { reachable() }
@@ -113,12 +141,21 @@ class JvmFolderBackupDestination(
         val file = File(directory, backup.name)
         val exists = withContext(Dispatchers.IO) { file.exists() }
         if (!exists) return true.right()
-        if (!ownCopy.confirms(file.absolutePath)) return false.right()
+
+        val scratch = files.newCapturePath().getOrElse { return it.left() }
+        try {
+            val read = copyOut(backup, scratch).getOrElse { return it.left() }
+            if (!read) return true.right()
+            if (!ownCopy.confirms(scratch)) return false.right()
+        } finally {
+            withContext(NonCancellable) { files.discard(scratch) }
+        }
 
         return withContext(Dispatchers.IO) {
             Either.catch {
                 DATABASE_FILES.forEach { suffix -> File(file.absolutePath + suffix).delete() }
-                !file.exists()
+                if (file.exists()) throw IOException("The copy could not be removed")
+                true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
     }

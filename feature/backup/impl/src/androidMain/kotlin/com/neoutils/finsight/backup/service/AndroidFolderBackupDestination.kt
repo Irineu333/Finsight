@@ -100,14 +100,26 @@ class AndroidFolderBackupDestination(
                     name,
                 ) ?: throw IOException("The provider created no document for the copy")
 
-                resolver.openOutputStream(document, "wt").use { sink ->
-                    checkNotNull(sink) { "The provider opened no stream for the copy" }
-                    File(capturedPath).inputStream().use { source -> source.copyTo(sink) }
-                }
+                try {
+                    resolver.openOutputStream(document, "wt").use { sink ->
+                        checkNotNull(sink) { "The provider opened no stream for the copy" }
+                        File(capturedPath).inputStream().use { source -> source.copyTo(sink) }
+                    }
 
-                val written = resolver.documentAt(document)
-                    ?: throw IOException("The provider will not describe the copy it wrote")
-                written.asStoredBackup()
+                    resolver.documentAt(document)
+                        ?.asStoredBackup()
+                        ?: throw IOException("The provider will not describe the copy it wrote")
+                } catch (cause: Exception) {
+                    // The document already carries a name the app recognises, and what is in
+                    // it is however far the copy got. Left there it would be listed as a
+                    // copy, counted inside the window retention keeps, and refused by every
+                    // removal from then on — a truncated database reads as corrupt, and
+                    // corruption is not proof a file is this app's. Taking it back is the
+                    // whole of what a provider allows here: there is no rename into place to
+                    // lean on, so a process killed mid-write still leaves one.
+                    DocumentsContract.deleteDocument(resolver, document)
+                    throw cause
+                }
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
     }
@@ -150,6 +162,11 @@ class AndroidFolderBackupDestination(
      * one the person can also reach with a file manager, and there is nothing left to
      * refuse. A folder that could not be read at all is a different answer and refuses,
      * because nothing is known about the file either way.
+     *
+     * **False means one thing only: the content check refused.** A deletion that did not
+     * happen is a failure and leaves as one — the screen turns false into a sentence about
+     * what the file *is*, and saying that over a file the app never managed to unlink would
+     * be a claim it has no evidence for.
      */
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
         val own = reachable().getOrElse { return it.left() }
@@ -175,7 +192,10 @@ class AndroidFolderBackupDestination(
 
         return withContext(Dispatchers.IO) {
             Either.catch {
-                DocumentsContract.deleteDocument(appContext.contentResolver, document)
+                val deleted =
+                    DocumentsContract.deleteDocument(appContext.contentResolver, document)
+                if (!deleted) throw IOException("The provider would not remove the copy")
+                true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
     }

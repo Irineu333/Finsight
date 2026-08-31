@@ -15,12 +15,18 @@ package com.neoutils.finsight.database.snapshot
  * in its own Koin module, and unclaimed is a valid graph — nobody registering one means no
  * copy is ever taken, which is exactly what a build with nothing to decide from should do.
  *
- * The file at the path is the caller's from beginning to end. Removing whatever the
- * previous migration left there is part of answering — `VACUUM INTO` refuses a destination
- * that already holds a file — and this module neither creates nor removes one, here as
- * everywhere else.
+ * The file at the path is the caller's from beginning to end. Making a path free to write
+ * to is part of answering — `VACUUM INTO` refuses a destination that already holds a file —
+ * and this module neither creates nor removes one, here as everywhere else.
+ *
+ * **It is two calls and not one, because a capture that does not happen must cost nothing.**
+ * The `VACUUM` behind [path] is refused by a full disk, which is the very condition that
+ * makes somebody want the copy they already have, and it is swallowed where it happens; the
+ * process can also be killed between the two. So [path] answers somewhere a failure is
+ * harmless and [settle] is what puts a copy in force, once the attempt has been made and
+ * whatever it produced can be looked at.
  */
-fun interface PreMigrationCopyTarget {
+interface PreMigrationCopyTarget {
 
     /**
      * Where to write the copy, or null for nowhere.
@@ -28,6 +34,19 @@ fun interface PreMigrationCopyTarget {
      * Asked once, as the builder is put together, and therefore before anything opens the
      * database. An implementation that touches the file system does so on the thread that
      * first asks for the database.
+     *
+     * It is never the copy already in force: answering is not the moment to destroy
+     * anything, because nothing yet guarantees a replacement.
      */
     fun path(): String?
+
+    /**
+     * Says that the attempt at [path] is over, whatever came of it — so that what it wrote
+     * may be put in force, or thrown away.
+     *
+     * Called once, immediately after the builder is assembled and therefore after the
+     * capture has been tried, on every opening: an opening that was answered *nowhere* has
+     * nothing to settle and this does nothing.
+     */
+    fun settle()
 }

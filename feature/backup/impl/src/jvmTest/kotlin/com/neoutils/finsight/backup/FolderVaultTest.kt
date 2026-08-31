@@ -108,13 +108,6 @@ class FolderVaultTest {
 
     private val backupFolder = JvmBackupFolder(settings) { chosen }
 
-    private val destination = VaultDestinations(
-        state = state,
-        link = MutableStateFlow(FolderLink.NONE),
-        appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
-        folder = JvmFolderBackupDestination(folder = backupFolder, ownCopy = ownCopy),
-    )
-
     private var pathsHandedOut = 0
 
     private val files = object : BackupFileService {
@@ -135,6 +128,17 @@ class FolderVaultTest {
             context: PlatformContext,
         ) = error("the vault never puts a picker in front of anybody")
     }
+
+    private val destination = VaultDestinations(
+        state = state,
+        link = MutableStateFlow(FolderLink.NONE),
+        appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
+        folder = JvmFolderBackupDestination(
+            folder = backupFolder,
+            ownCopy = ownCopy,
+            files = files,
+        ),
+    )
 
     private val vault = BackupVault(
         vault = state,
@@ -370,7 +374,11 @@ class FolderVaultTest {
             state = restartedState,
             link = MutableStateFlow(FolderLink.NONE),
             appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
-            folder = JvmFolderBackupDestination(folder = restartedFolder, ownCopy = ownCopy),
+            folder = JvmFolderBackupDestination(
+                folder = restartedFolder,
+                ownCopy = ownCopy,
+                files = files,
+            ),
         )
 
         assertEquals(VaultDestination.USER_FOLDER, restartedState.observe().value.destination)

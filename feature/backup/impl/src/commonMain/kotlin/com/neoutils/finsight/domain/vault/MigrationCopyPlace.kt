@@ -15,9 +15,9 @@ package com.neoutils.finsight.domain.vault
  * cannot suspend and so cannot ask a destination for anything.
  *
  * The copy is written under one reserved name
- * ([com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME]) and is the
- * only file this app ever writes there, so nothing of the user's is within reach of what
- * [clearedCopyPath] removes.
+ * ([com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME]), reached
+ * through one staging name beside it, and those two are the only files this app ever writes
+ * there — so nothing of the user's is within reach of anything below.
  */
 interface MigrationCopyPlace {
 
@@ -28,18 +28,37 @@ interface MigrationCopyPlace {
     val archivePath: String
 
     /**
-     * Where to write the copy, with whatever the previous migration left under that name
-     * already removed — or null when the app's own storage cannot be reached.
+     * Where a new copy is written, with whatever an earlier attempt left there already
+     * removed — or null when the app's own storage cannot be reached.
      *
-     * Clearing is part of answering, and it is the caller's job by the same rule that keeps
-     * `:core:database` free of a file API: `VACUUM INTO` refuses a destination that already
-     * holds a file, and the module that runs it neither creates nor removes one. It is why
-     * the answer is only ever asked for when a migration really is pending — the copy from
-     * the last one stands until the next one replaces it (design D10), and clearing it on an
-     * opening that migrates nothing would destroy the very thing retention is told to spare.
+     * **It is never the copy in force.** The file lands under a name nothing lists, nothing
+     * counts and nothing sweeps
+     * ([com.neoutils.finsight.ui.screen.backup.service.STAGED_PRE_MIGRATION_NAME]), so a
+     * `VACUUM` refused by a full disk, a process killed halfway, or the well-formed empty
+     * database a full volume leaves behind all cost nothing at all: the copy from the last
+     * migration is still there, still listed, still the one a restore reaches.
      *
-     * The journal files go with it, because whatever confirmed or restored that copy opened
-     * it with Room, and Room opens in write-ahead logging.
+     * Clearing what an earlier attempt left is part of answering, by the same rule that
+     * keeps `:core:database` free of a file API: `VACUUM INTO` refuses a destination that
+     * already holds a file, and the module that runs it neither creates nor removes one.
+     *
+     * The journal files go with it, because whatever confirmed or restored a copy opened it
+     * with Room, and Room opens in write-ahead logging.
      */
-    fun clearedCopyPath(): String?
+    fun stagedCopyPath(): String?
+
+    /**
+     * Puts what [stagedCopyPath] answered in force when [keep], and removes the staged file
+     * either way.
+     *
+     * Whether it is worth keeping is not decided here — it is
+     * [VaultPreMigrationCopy]'s, which asks the same question of the staged file that it
+     * asked of the archive. This is only the file work: replace the copy under the reserved
+     * name, and take the journal files of the copy that was replaced with it.
+     *
+     * Nothing is removed when [keep] is false. A copy in force is only ever replaced by one
+     * that has been read as a database, which is the whole point of writing the new one
+     * somewhere else first.
+     */
+    fun settleStagedCopy(keep: Boolean)
 }

@@ -35,10 +35,24 @@ class VaultPreventiveBackup(
         if (!state.observe().value.isPreventiveOn) return
         if (!action.classification.isCoveredByPreventiveCapture) return
 
-        when (val outcome = vault.captureIfNeeded()) {
+        // A restore is never treated as already covered, and it is the one occasion that
+        // is not. Coverage is a claim about a file the vault has not looked at — a copy
+        // deleted from a file manager leaves the mark standing (design D9) — and the mark
+        // itself is a sum over `sqlite_sequence`, which a session of pure edits does not
+        // move at all: closing an invoice, archiving a category, changing a budget. Both
+        // gaps are survivable behind a deletion, which takes one row and leaves the rest;
+        // behind a replacement of the whole archive they are the difference between a way
+        // back and none, and the sheet in front of the person promises the way back.
+        val outcome = when (action) {
+            DestructiveAction.RESTORE_BACKUP -> vault.captureNow()
+            else -> vault.captureIfNeeded()
+        }
+
+        when (outcome) {
             // A copy landed, the vault is off, or the one in the destination still holds
             // everything the archive does. The action goes ahead in all three: in none of
-            // them would another file protect anything.
+            // them would another file protect anything — and a restore never reaches the
+            // third.
             is CaptureOutcome.Captured,
             CaptureOutcome.VaultOff,
             CaptureOutcome.AlreadyCovered -> Unit

@@ -74,6 +74,27 @@ fun isBackupFileName(name: String): Boolean =
 const val PRE_MIGRATION_BACKUP_NAME: String = "${NAME_PREFIX}migration$NAME_SUFFIX"
 
 /**
+ * What is appended to the name a copy is going to have, for as long as it is being written.
+ *
+ * It goes *after* the extension, and that is the whole of the design: [isBackupFileName]
+ * asks for the extension at the end, so a file under a staged name is listed by nothing,
+ * counted by nothing and swept by nothing. That is exactly what a file that may still turn
+ * out to be half a copy has to be — a truncated database is refused by the content check
+ * for good, so one left under a name the app recognises would occupy a place in retention
+ * that no capture can ever free.
+ */
+internal const val STAGED_SUFFIX: String = ".part"
+
+/**
+ * The name a pre-migration copy is written under while it is being written.
+ *
+ * It becomes the reserved name only once it has been read as a database of an older schema,
+ * and until then the copy from the last migration is the one in force.
+ */
+internal const val STAGED_PRE_MIGRATION_NAME: String =
+    "$PRE_MIGRATION_BACKUP_NAME$STAGED_SUFFIX"
+
+/**
  * [name], or the first name near it that [isTaken] answers no to.
  *
  * A destination writes without asking, so a name already in use is not a question to put to

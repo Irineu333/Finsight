@@ -149,6 +149,13 @@ internal const val EXPORT_MIME_TYPE = "application/octet-stream"
  */
 internal val DATABASE_FILES = listOf("", "-wal", "-shm", ".lck")
 
+/**
+ * What a database opening leaves *beside* the file it opened. It is what has to go when a
+ * copy is replaced rather than removed: the main file is overwritten by the replacement, and
+ * these belong to the copy that was there before it.
+ */
+internal val JOURNAL_FILES = DATABASE_FILES.drop(1)
+
 private const val PRIVATE_DIRECTORY = "backup"
 private const val CANDIDATE_PREFIX = "candidate-"
 private const val CANDIDATE_SUFFIX = ".db"

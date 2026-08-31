@@ -134,17 +134,6 @@ class FolderRecoveryTest {
 
     private val folder = VaultFolder(state = state, folder = backupFolder)
 
-    private val appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder)
-
-    private val userFolder = JvmFolderBackupDestination(folder = backupFolder, ownCopy = ownCopy)
-
-    private val destinations = VaultDestinations(
-        state = state,
-        link = folder.link,
-        appStorage = appStorage,
-        folder = userFolder,
-    )
-
     private var pathsHandedOut = 0
 
     private val files = object : BackupFileService {
@@ -165,6 +154,18 @@ class FolderRecoveryTest {
             context: PlatformContext,
         ) = error("the vault never puts a picker in front of anybody")
     }
+
+    private val appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder)
+
+    private val userFolder =
+        JvmFolderBackupDestination(folder = backupFolder, ownCopy = ownCopy, files = files)
+
+    private val destinations = VaultDestinations(
+        state = state,
+        link = folder.link,
+        appStorage = appStorage,
+        folder = userFolder,
+    )
 
     private val vault = BackupVault(
         vault = state,
@@ -464,7 +465,11 @@ class FolderRecoveryTest {
             state = freshState,
             link = freshVaultFolder.link,
             appStorage = JvmBackupDestination(ownCopy = ownCopy, directory = appStorageFolder),
-            folder = JvmFolderBackupDestination(folder = freshFolder, ownCopy = ownCopy),
+            folder = JvmFolderBackupDestination(
+                folder = freshFolder,
+                ownCopy = ownCopy,
+                files = files,
+            ),
         )
 
         assertEquals(
@@ -551,6 +556,86 @@ class FolderRecoveryTest {
         assertEquals(MigrationOutcome.Carried(FIVE), outcome)
         assertEquals(all.takeLast(FIVE).sorted(), namesIn(chosen), "the oldest was carried")
         assertEquals(all.sorted(), namesInApp(), "the source was swept by a call that copies")
+    }
+
+    /**
+     * The order a carry hands the copies over in is the order the destination will read
+     * them back in, because every rung but one stamps what it writes with the moment it
+     * wrote it. So the history is replayed oldest first: a run that hands the newest copy
+     * over first makes it the oldest thing in the new folder, and retention counts from
+     * the wrong end.
+     */
+    @Test
+    fun `a carry replays the history oldest first`() = runTest {
+        state.setOn(true)
+        val kept = List(THREE) { captureSomethingNew("entry $it") }
+        pointAt(chosen)
+
+        val recorder = Recording(userFolder)
+        val recording = VaultMigration(
+            state = state,
+            destinations = VaultDestinations(
+                state = state,
+                link = folder.link,
+                appStorage = appStorage,
+                folder = recorder,
+            ),
+            files = files,
+        )
+
+        recording.carry(
+            from = VaultDestination.APP_STORAGE,
+            to = VaultDestination.USER_FOLDER,
+        )
+
+        assertEquals(kept, recorder.handedOver, "the newest copy was written first")
+    }
+
+    /**
+     * The whole reason the order matters: the next capture sweeps, and what it sweeps is
+     * decided by the order the destination lists in. A history replayed backwards puts the
+     * newest copy where `.drop(keep)` reaches it first, and every capture after a change of
+     * folder then eats the most recent copy that survived.
+     */
+    @Test
+    fun `the sweep after a carry removes the oldest copy and not the newest`() = runTest {
+        state.setOn(true)
+        state.setRetention(BackupRetention.EVERYTHING)
+        val carried = List(FIVE) { captureSomethingNew("entry $it") }
+        state.setRetention(BackupRetention.FIVE)
+
+        pointAt(chosen)
+        assertEquals(
+            MigrationOutcome.Carried(FIVE),
+            migration.carry(
+                from = VaultDestination.APP_STORAGE,
+                to = VaultDestination.USER_FOLDER,
+            ),
+        )
+
+        val next = captureSomethingNew("one more")
+
+        assertEquals(
+            (carried.drop(1) + next).sorted(),
+            namesIn(chosen),
+            "the sweep behind the first capture in the new folder took the newest copy",
+        )
+    }
+
+    /** A destination that remembers, in order, the names it was asked to write. */
+    private class Recording(
+        private val delegate: BackupDestination,
+    ) : BackupDestination by delegate {
+
+        val handedOver = mutableListOf<String>()
+
+        override suspend fun put(
+            capturedPath: String,
+            name: String,
+        ): Either<BackupError, StoredBackup> {
+            handedOver += name
+            return delegate.put(capturedPath, name)
+        }
     }
 
     /**

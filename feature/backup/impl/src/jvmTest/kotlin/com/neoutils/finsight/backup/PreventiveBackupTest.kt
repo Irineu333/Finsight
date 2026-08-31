@@ -219,6 +219,45 @@ class PreventiveBackupTest {
             assertEquals(0, pathsHandedOut, "an action that is not covered reached the vault")
         }
 
+    /**
+     * A restore replaces the archive whole, and the sheet in front of the person calls that
+     * reversible. What the promise rests on is a claim about a file nothing has looked at:
+     * a copy the person removed with a file manager leaves the mark standing (design D9),
+     * so the vault answers *already covered* over a folder holding nothing at all. The copy
+     * owed before a replacement is therefore always written.
+     */
+    @Test
+    fun `a restore is preceded by a copy even where the vault believes one covers`() = runTest {
+        state.setOn(true)
+        val entered = enter("rent")
+        preventive.captureBefore(DestructiveAction.DELETE_TRANSACTION)
+        val taken = assertNotNull(copies().singleOrNull(), "nothing was there to be covered by")
+        assertTrue(File(folder, taken).delete(), "the copy could not be removed by hand")
+
+        preventive.captureBefore(DestructiveAction.RESTORE_BACKUP)
+
+        val copy = assertNotNull(
+            copies().singleOrNull(),
+            "the archive was about to be replaced with nothing standing behind it",
+        )
+        assertTrue(holds(copy, entered), "the copy does not hold what was about to go")
+    }
+
+    /**
+     * And the other five still stand on the copy already there, which is the whole of what
+     * design D8 buys: a run of twenty deletions does not leave twenty identical files.
+     */
+    @Test
+    fun `a deletion still stands on the copy already in the destination`() = runTest {
+        state.setOn(true)
+        enter("rent")
+
+        preventive.captureBefore(DestructiveAction.DELETE_TRANSACTION)
+        preventive.captureBefore(DestructiveAction.DELETE_TRANSACTION)
+
+        assertEquals(1, copies().size, "a second copy was taken with nothing added between")
+    }
+
     /** The switch governs the preventive trigger as it governs the other two (design D1). */
     @Test
     fun `a vault that is off lets the action through, without a copy`() = runTest {

@@ -2,6 +2,10 @@
 
 package com.neoutils.finsight.backup
 
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
+import arrow.core.Either
+import arrow.core.right
 import com.neoutils.finsight.backup.service.JvmBackupFolder
 import com.neoutils.finsight.backup.service.JvmFolderBackupDestination
 import com.neoutils.finsight.database.getDatabaseBuilder
@@ -10,8 +14,11 @@ import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
+import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
+import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.russhwolf.settings.MapSettings
@@ -19,6 +26,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -63,9 +71,33 @@ class JvmFolderBackupDestinationTest {
 
     private val folder = JvmBackupFolder(settings)
 
+    /**
+     * The app's own temporary area, which is where the gate reads a copy: the folder under
+     * test is the person's, and nothing of this app's working files may land in it.
+     */
+    private val files = object : BackupFileService {
+
+        override suspend fun newCapturePath(): Either<BackupError, String> =
+            temporary("scratch").absolutePath.right()
+
+        override suspend fun discard(path: String) {
+            DATABASE_FILES.forEach { File(path + it).delete() }
+        }
+
+        override suspend fun copyInChosenFile(context: PlatformContext) =
+            error("no picker is raised here")
+
+        override suspend fun copyOutCapturedFile(
+            sourcePath: String,
+            suggestedName: String,
+            context: PlatformContext,
+        ) = error("no picker is raised here")
+    }
+
     private val destination = JvmFolderBackupDestination(
         folder = folder,
         ownCopy = OwnCopyCheck(CandidateVerifier(::roomAt)),
+        files = files,
     )
 
     private val own get() = File(chosen, BACKUP_FOLDER_NAME)
@@ -73,6 +105,7 @@ class JvmFolderBackupDestinationTest {
     @AfterTest
     fun tearDown() {
         live.close()
+        own.setWritable(true)
         temporaries.forEach { file ->
             DATABASE_FILES.forEach { File(file.absolutePath + it).delete() }
         }
@@ -133,6 +166,128 @@ class JvmFolderBackupDestinationTest {
 
         assertFalse(File(own, NAME).exists())
         assertTrue(theirs.exists(), "the folder is the user's, and their files stay in it")
+    }
+
+    // -------------------------------------------------- a refusal leaves the folder alone
+
+    /**
+     * The gate that decides whether a file is this app's *migrates* what it is handed, so
+     * what it is handed must be a copy the caller is willing to lose
+     * ([com.neoutils.finsight.database.snapshot.CandidateVerifier]). A copy sitting in
+     * somebody's own folder is not that, and a refusal is exactly the case in which it is
+     * not removed afterwards either — so a check run over it in place rewrites a file the
+     * app has just decided it may not touch.
+     */
+    @Test
+    fun `a copy the check refuses comes back with its bytes untouched`() = runTest {
+        pointAtChosenFolder()
+        val stored = put(NAME)
+        val file = File(own, NAME)
+        notThisSchema(file.absolutePath)
+        val before = file.readBytes()
+
+        assertEquals(
+            false,
+            destination.remove(stored).getOrNull(),
+            "the check should have refused a file whose schema is not this one's",
+        )
+
+        assertTrue(file.exists(), "a refused removal took the file anyway")
+        assertContentEquals(before, file.readBytes(), "the check rewrote the copy it refused")
+    }
+
+    /**
+     * The other half of the same rule, and the one nothing downstream can clean up: the
+     * folder is the person's, nothing in the app lists what is not a copy, and nothing ever
+     * removes it. A database opening leaves up to three files beside the one it opened.
+     */
+    @Test
+    fun `a refused removal leaves nothing beside the copy`() = runTest {
+        pointAtChosenFolder()
+        val stored = put(NAME)
+        notThisSchema(File(own, NAME).absolutePath)
+
+        destination.remove(stored)
+
+        assertEquals(
+            listOf(NAME),
+            own.listFiles().orEmpty().map { it.name }.sorted(),
+            "the check left its working files in the person's own folder",
+        )
+    }
+
+    /**
+     * Why a copy is never written under its final name until every byte is there. A file cut
+     * short carries a name the app recognises, so it is listed, and retention counts it
+     * inside the window it keeps — and this is the other half: it can never be taken away
+     * again. A truncated database reads as corrupt, corruption is not proof a file is this
+     * app's, and the refusal is permanent. One of them costs one real copy at every capture,
+     * for as long as the destination exists.
+     */
+    @Test
+    fun `a copy cut short can never be removed again`() = runTest {
+        pointAtChosenFolder()
+        val stored = put(NAME)
+        val file = File(own, NAME)
+        file.writeBytes(file.readBytes().copyOf(file.length().toInt() / 2))
+
+        assertEquals(
+            false,
+            destination.remove(stored).getOrNull(),
+            "a half-written copy could be swept, so writing one would cost nothing",
+        )
+        assertTrue(file.exists(), "and it is still there, holding a place in the retention")
+    }
+
+    /** A removal that goes through leaves the folder as it found it, minus the copy. */
+    @Test
+    fun `a removal that goes through leaves nothing behind`() = runTest {
+        pointAtChosenFolder()
+        val stored = put(NAME)
+
+        assertEquals(true, destination.remove(stored).getOrNull())
+
+        assertEquals(
+            emptyList(),
+            own.listFiles().orEmpty().map { it.name }.sorted(),
+            "the check left its working files in the person's own folder",
+        )
+    }
+
+    /**
+     * A copy of this app's own making whose schema identity is another one's — the file
+     * that gets past every layer that reads without writing and is refused by the layer
+     * that migrates.
+     */
+    private fun notThisSchema(path: String) {
+        val connection = BundledSQLiteDriver().open(path)
+        try {
+            connection.execSQL("UPDATE `room_master_table` SET `identity_hash` = 'elsewhere'")
+        } finally {
+            connection.close()
+        }
+    }
+
+    /**
+     * `false` is the destination saying *this file is not one I wrote*, and the screen turns
+     * it into exactly that sentence. A file the app proved was its own and then could not
+     * unlink is a failure of the machine and says nothing whatever about the content, so it
+     * leaves as one — the alternative is telling somebody their own backup is a stranger's
+     * file because a folder went read-only.
+     */
+    @Test
+    fun `a removal the file system refused is a failure and not a verdict`() = runTest {
+        pointAtChosenFolder()
+        val stored = put(NAME)
+        assertTrue(own.setWritable(false), "the folder could not be made read-only")
+
+        val outcome = destination.remove(stored)
+
+        assertTrue(
+            outcome.isLeft(),
+            "a deletion that did not happen was answered as a file this app did not write",
+        )
+        assertTrue(File(own, NAME).exists(), "the copy is still there, which is the point")
     }
 
     // ----------------------------------------------------- absence is never emptiness
@@ -210,7 +365,7 @@ class JvmFolderBackupDestinationTest {
 
         val NOW = kotlin.time.Instant.fromEpochMilliseconds(0)
 
-        val DATABASE_FILES = listOf("", "-wal", "-shm")
+        val DATABASE_FILES = listOf("", "-wal", "-shm", ".lck")
     }
 }
 

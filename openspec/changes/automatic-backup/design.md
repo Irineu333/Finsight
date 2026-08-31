@@ -232,9 +232,14 @@ verificador do fluxo de restauração. O app só apaga o que ele mesmo escreveu.
 
 E uma listagem não é prova de ausência. No Android, a consulta pelos filhos de uma pasta pode
 devolver um cursor não-nulo e vazio para uma pasta que existe e aceita escrita no instante seguinte
-(Q2). Zero itens significa **não consegui ler**, nunca **não há cópias**: a tela diz que não
-conseguiu listar em vez de mostrar o estado vazio, e nada que apague ou crie parte de uma listagem
-tomada como completa. Em particular, o app **não recria a subpasta própria** por não a ter
+(Q2). O que decide não é o cursor vazio, e sim **quantas perguntas já foram feitas**: a subpasta
+própria só existe como objeto porque a árvore foi listada e a nomeou entre os filhos, de modo que
+toda consulta pelos filhos dela vem microssegundos depois de linhas reais do mesmo provedor, da
+mesma concessão e do mesmo volume. Zero itens ali é ausência, e a tela mostra o estado vazio.
+Uma pasta apagada, renomeada ou desmontada não chega a esse ponto — ela some da árvore, o vínculo
+cai, e toda operação recusa. Recusar a segunda listagem não pegava esse caso, que a primeira já
+pega, e custava o único estado que ela não sabe distinguir. **Nada que apague ou crie parte de uma
+listagem tomada como completa.** Em particular, o app **não recria a subpasta própria** por não a ter
 enxergado — `createDocument` renomeia para não conflitar, a segunda pasta passa a receber as cópias
 novas, e o acervo anterior fica órfão exatamente no reencontro (D4).
 

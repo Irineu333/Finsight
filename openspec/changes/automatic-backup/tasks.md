@@ -149,8 +149,9 @@
 
 - [x] 12.1 `./gradlew jvmTest` verde
 - [ ] 12.2 Exercitar o degrau 2 em aparelho nas duas plataformas móveis: escolher pasta, capturar,
-      reiniciar o app, capturar de novo, listar, reter, restaurar
-- [ ] 12.3 Exercitar o reencontro: desinstalar, reinstalar, reapontar a pasta, ver o histórico e
+      reiniciar o app, capturar de novo, listar, reter, restaurar. **Metade**: Android exercitado
+      ponta a ponta; iOS não existe enquanto Q1 não for medida em aparelho
+- [x] 12.3 Exercitar o reencontro: desinstalar, reinstalar, reapontar a pasta, ver o histórico e
       restaurar
 - [ ] 12.4 Revisar `design.md` — fechar Q1 e Q2 com o que foi medido, e deixar Q3 registrada
 - [x] 12.5 Conferir que `PlatformBackupIsOffTest` continua verde e sem alterações

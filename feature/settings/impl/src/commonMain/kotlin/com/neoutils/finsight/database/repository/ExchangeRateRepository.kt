@@ -158,14 +158,4 @@ class ExchangeRateRepository(
 
     override suspend fun countNaming(currency: String): Int =
         dao.countByCurrencyOnEitherEnd(currency)
-
-    /**
-     * No capture of its own: this is the rate half of **deleting a currency**, and that
-     * action's copy is taken once by `DeleteCurrencyUseCase`, above the transaction the
-     * pair is written in. A second one here would be a second file for one user action —
-     * and, reached from inside that transaction, a `VACUUM INTO` that cannot run.
-     */
-    override suspend fun removeAllNaming(currency: String) {
-        dao.deleteByCurrencyOnEitherEnd(currency)
-    }
 }

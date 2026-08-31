@@ -212,7 +212,6 @@ class ViewCategoryViewModelTest {
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
         override suspend fun countNaming(currency: String) = 0
-        override suspend fun removeAllNaming(currency: String) = Unit
     }
 
     private class FakeRecurringRepository(private val has: Boolean = false) : IRecurringRepository {

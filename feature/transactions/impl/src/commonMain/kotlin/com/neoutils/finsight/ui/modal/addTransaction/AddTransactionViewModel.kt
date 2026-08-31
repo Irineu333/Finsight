@@ -305,6 +305,7 @@ class AddTransactionViewModel(
                 installments = form.installments,
             ).onLeft {
                 crashlytics.recordException(it)
+                modalManager.showError(it.toUiMessage())
             }.onRight {
                 analytics.logEvent(CreateInstallments(form, count = form.installments))
                 modalManager.dismiss()

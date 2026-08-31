@@ -246,5 +246,4 @@ private class FakeExchangeRateRepository : RateArchive {
         removed += rate
     }
     override suspend fun countNaming(currency: String) = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }

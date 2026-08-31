@@ -239,6 +239,12 @@ class DatabaseCaptureTest {
 
         val other = BundledSQLiteDriver().open(liveFile.absolutePath)
         try {
+            // The seed above returns before Room is finished with the writer: every write,
+            // and `useWriterConnection` itself, ends by launching an invalidation refresh
+            // that takes the connection in a `BEGIN IMMEDIATE` of its own. Without a timeout
+            // this `BEGIN IMMEDIATE` fails outright the moment it lands in that window, and
+            // it wants the same lock, so waiting is the whole answer.
+            other.execSQL("PRAGMA busy_timeout = 5000")
             other.execSQL("BEGIN IMMEDIATE")
             other.execSQL("INSERT INTO `dimensions` (`kind`) VALUES ('CATEGORY')")
 
@@ -250,7 +256,10 @@ class DatabaseCaptureTest {
                 "only what was committed at capture time is in the file",
             )
         } finally {
-            other.execSQL("ROLLBACK")
+            // Best effort, and deliberately not allowed to speak: a transaction that never
+            // began makes this throw "cannot rollback", which would replace whatever the
+            // body was failing over — the one thing a reader of the failure needs.
+            runCatching { other.execSQL("ROLLBACK") }
             other.close()
         }
     }

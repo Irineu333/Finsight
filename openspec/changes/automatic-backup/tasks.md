@@ -147,10 +147,8 @@
 - [x] 11.8 Vínculo caído: avisar, oferecer reapontar ou guardar dentro do app, e continuar
       capturando no degrau 1 enquanto a decisão não vem
 - [x] 11.9 Reapontar a mesma pasta faz o histórico existente aparecer por inteiro
-- [ ] 11.10 Trocar de pasta: copiar sem remover a origem, apenas o que a retenção do destino
-      comporta, e funcionar com a origem inacessível. **Parcial**: a troca entre degraus faz isso;
-      pasta A -> pasta B não, porque cada plataforma guarda um vínculo só e `point()` sobrescreve
-      o antigo — carregar exigiria ler a origem inteira para temporários antes de trocar
+- [x] 11.10 Trocar de pasta: copiar sem remover a origem, apenas o que a retenção do destino
+      comporta, e funcionar com a origem inacessível
 - [x] 11.11 A frase da tela sobre cobertura, por destino e não por plataforma: nenhuma regra do
       Android mantém o cofre local, então a frase diz o que a pasta escolhida não cobre (D16)
 

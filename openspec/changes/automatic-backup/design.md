@@ -406,9 +406,10 @@ nos dois sentidos. Ninguém construiu isso.
   (`ExchangeRateFormModal.kt:348-349`). É a única exclusão de dado do usuário sem confirmação no
   app, e está entre as seis do preventivo.
   → Idem: coberta aqui, corrigida noutra entrega.
-- **O bookmark do iOS pode não sobreviver a reboot.** A documentação da Apple se contradiz, e a
-  frase sobre escopo implícito *"válido até o reboot, no máximo"* é o maior risco em aberto do
-  degrau 2.
+- **O bookmark do iOS pode não sobreviver a reboot.** A única frase da documentação da Apple que se
+  aplica ao iOS — a de `withoutImplicitSecurityScope`, sobre o escopo implícito que todo bookmark
+  sem `.withSecurityScope` carrega automaticamente ali — diz que esse escopo vale *"até o reboot, no
+  máximo"*, e é o maior risco em aberto do degrau 2.
   → Q1, spike obrigatório e primeira tarefa do degrau 2. Se não sobreviver, o degrau 2 no iOS não
   existe na forma desenhada.
 - **O gatilho preventivo entra no caminho crítico de uma exclusão.** `VACUUM INTO` precisa de
@@ -451,18 +452,35 @@ segunda, e começa pelos dois spikes.
 
 ### Q1 — O bookmark de pasta do iOS sobrevive a reboot?
 
-A Apple afirma persistência entre reinícios em documentação de **macOS**; para iOS não há
-afirmação equivalente, e a página de `withoutImplicitSecurityScope` diz que o escopo implícito vale
-*"until reboot at the latest"*. As duas variantes de criação precisam ser medidas
-(`[]`/`.minimalBookmark` e `.withSecurityScope`), porque a própria documentação da Apple se
-contradiz sobre qual usar no iOS.
+Não há duas variantes de criação a comparar no iOS. `NSURLBookmarkCreationWithSecurityScope` é
+`API_UNAVAILABLE(ios, watchos, tvos)` (`NSURL.h:425` do SDK do iOS 18.5) e a documentação da Apple
+lista o símbolo como disponível só a partir do macOS 10.7 — não é uma opção que o iOS ofereça e
+descarte às vezes, é um símbolo que não existe fora do macOS. A afirmação de persistência entre
+reinícios também é de documentação de **macOS**, e está presa a essa mesma opção; ela nunca falou
+de iOS porque a opção a que se prende não chega ao iOS.
+
+A variação real no iOS é outra: todo bookmark criado sem essa opção — `[]`, e `.minimalBookmark`
+junto, que só encolhe o dado e não toca o escopo — carrega automaticamente um escopo de segurança
+implícito e efêmero; `.withoutImplicitSecurityScope` é a opção que suprime esse embutimento. É do
+primeiro, o escopo implícito automático, que o degrau 2 depende, e é sobre ele que a página de
+`withoutImplicitSecurityScope` escreve, na única frase da documentação da Apple que se aplica ao
+iOS: *"Bookmarks that you create without security scope automatically carry implicit ephemeral
+security scope. This security scope is valid until reboot at the latest, and confers access to the
+resource to any other process that resolves the bookmark."* Não é uma medição — é a única fonte que
+existe até hoje, e ela aponta para o lado que o critério abaixo já trata como falha.
 
 **Critério de aceitação**: escolher uma pasta, reiniciar o aparelho, resolver o bookmark e
 escrever. Se falhar, o degrau 2 no iOS precisa de outro desenho — e o degrau 1 segue intacto.
 
 **Segue aberta.** Medir exige um iPhone real, reiniciado entre guardar o bookmark e resolvê-lo, e
-não há aparelho disponível. Até que haja, o degrau 2 no iOS é desenho não verificado, e o critério
-acima continua sendo o que decide se ele existe na forma desenhada.
+não há aparelho disponível. O simulador foi tentado e não serve de atalho — vale registrar por que,
+para que ninguém gaste o esforço de novo: ele roda sem sandbox (uma sonda gravou na pasta do
+usuário do host e enxergou os contêineres de dados de outros 133 apps), um controle negativo que
+devia falhar passou, e `kern.boottime` lido de dentro do app é o do host, não o do dispositivo
+simulado — reiniciar o simulador não é um reboot do ponto de vista do processo. O bookmark que ele
+produz é um bookmark de macOS sobre o APFS do host, não uma medição de iOS. Até que haja um aparelho
+real, o degrau 2 no iOS é desenho não verificado, e o critério acima continua sendo o que decide se
+ele existe na forma desenhada.
 
 ### Q2 — Uma subpasta de `Download` é selecionável no Android 11+?
 

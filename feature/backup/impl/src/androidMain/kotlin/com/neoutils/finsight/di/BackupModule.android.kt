@@ -4,6 +4,8 @@ import android.content.Context
 import com.neoutils.finsight.backup.AndroidCaptureOrigin
 import com.neoutils.finsight.backup.service.AndroidBackupDestination
 import com.neoutils.finsight.backup.service.AndroidBackupFileService
+import com.neoutils.finsight.backup.service.AndroidBackupFolder
+import com.neoutils.finsight.backup.service.AndroidFolderBackupDestination
 import com.neoutils.finsight.backup.service.AndroidMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
@@ -11,8 +13,6 @@ import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import org.koin.dsl.module
 
 actual val backupPlatformModule = module {
@@ -21,20 +21,26 @@ actual val backupPlatformModule = module {
     // declared version, neither of which belongs to a screen.
     factory<BackupFileService> { AndroidBackupFileService(appContext = get<Context>()) }
 
-    // The second rung is not built here yet (tasks 11.1–11.3). Both halves of it say so:
-    // no picker is offered, so nothing can move the vault onto the folder, and the folder
-    // destination refuses every operation rather than quietly writing into the app's own
-    // storage. What 11.1 supplies is a `BackupFolder` over
-    // `ActivityResultContracts.OpenDocumentTree` with the tree `Uri` persisted, and a
-    // `BackupDestination` over `DocumentsContract` — under the shared subfolder name
-    // `BACKUP_FOLDER_NAME`, which is what lets a reinstall find the archive again.
-    factory<BackupFolder> { NoBackupFolder }
+    // The concrete type is bound as well as the contract, and only Android's own folder
+    // destination resolves it: the tree `Uri` is a handle, and the two classes that may
+    // know it are in one module together (design D2).
+    single { AndroidBackupFolder(appContext = get<Context>(), settings = get()) }
+    factory<BackupFolder> { get<AndroidBackupFolder>() }
 
+    // Both rungs, and the preference that says which is in force. Neither survives the
+    // package being removed on its own — the app's own storage goes with it, and so does
+    // the persisted grant — but the *files* in a folder the person chose do, and pointing
+    // at that folder again is what finds them (design D4).
     factory<BackupDestination> {
         VaultDestinations(
             state = get(),
             appStorage = AndroidBackupDestination(appContext = get<Context>(), ownCopy = get()),
-            folder = UnreachableDestination,
+            folder = AndroidFolderBackupDestination(
+                appContext = get<Context>(),
+                folder = get<AndroidBackupFolder>(),
+                ownCopy = get(),
+                files = get(),
+            ),
         )
     }
 

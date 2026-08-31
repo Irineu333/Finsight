@@ -12,7 +12,13 @@ import java.io.File
  * granted and nothing mounted, and the app is coming up.
  *
  * Both paths come from what `:core:database` and [AndroidBackupDestination] already decide,
- * so the copy lands in the folder the history lists and retention sweeps.
+ * rather than being spelled out again, so the copy cannot drift into a directory of its own.
+ *
+ * **It is the first rung's directory, whichever rung the vault is on.** `VACUUM INTO` writes
+ * to a path and the app is still coming up, so there is no folder to write to and nothing
+ * yet that could ask a provider for one. While the vault is pointed at a folder the person
+ * chose, this copy is therefore somewhere the history does not list and retention does not
+ * sweep — it is kept, and it is not reachable from the screen.
  */
 class AndroidMigrationCopyPlace(
     private val appContext: Context,

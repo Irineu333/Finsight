@@ -18,7 +18,7 @@ import com.neoutils.finsight.domain.error.BackupError
  * copies means *could not read*, never *there is nothing here*, and a destination that has
  * never existed has certainly not been read.
  *
- * Android replaces it in tasks 11.1–11.3 and iOS in 11.4–11.5.
+ * iOS is the platform still on it; tasks 11.4–11.5 are what replace it there.
  */
 object UnreachableDestination : BackupDestination {
 

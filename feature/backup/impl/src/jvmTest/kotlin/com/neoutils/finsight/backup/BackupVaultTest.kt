@@ -374,6 +374,27 @@ class BackupVaultTest {
     }
 
     /**
+     * A sweep declares what it removes, so a copy carried off by retention cannot leave a
+     * mark standing on a file that is no longer there. It never reaches the one that
+     * covers — that is the copy just captured, so it is the newest, and the smallest limit
+     * on offer is five — and this is what says so rather than the ordering being argued.
+     */
+    @Test
+    fun `retention never sweeps the copy that covers the archive`() = runTest {
+        turnOn()
+        state.setRetention(BackupRetention.FIVE)
+
+        List(SIX) { captureSomethingNew("entry $it") }
+
+        val covering = assertNotNull(
+            state.observe().value.archiveCopy,
+            "the last capture recorded no copy",
+        )
+        assertTrue(covering.name in copies(), "the sweep carried off the copy that covers")
+        assertEquals(CaptureOutcome.AlreadyCovered, asked(), "and it still covers the archive")
+    }
+
+    /**
      * The copy taken before a migration is outside the count and is never swept: the damage
      * it exists to undo is found out days later, by which time the periodic captures would
      * have carried it off (design D10).

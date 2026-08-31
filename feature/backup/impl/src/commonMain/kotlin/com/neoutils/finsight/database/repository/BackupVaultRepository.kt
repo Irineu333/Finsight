@@ -94,15 +94,19 @@ class BackupVaultRepository(
      * Forgets both of the things a copy could have been to the archive — that one covers it,
      * and that it came from one — while keeping the fact that a capture happened and when.
      *
-     * Those two are separate facts about separate copies, and they are dropped together for
-     * one moment only: the archive is about to be replaced, and until the replacement has
-     * landed neither is known. The instant is untouched, because it has not stopped being
-     * true — a copy was taken then, it is still the last one that succeeded, and that is the
-     * line the screen shows.
+     * Those two are separate facts about separate copies, and they stop being true together
+     * on the two occasions this is called from. The archive is about to be replaced, and
+     * until the replacement has landed neither is known; or the copy both were about has
+     * been removed from the destination by this app, and a file that is gone neither covers
+     * the archive nor is one the archive can be said to be standing on
+     * ([com.neoutils.finsight.domain.vault.BackupVault.copyRemoved]). The instant is
+     * untouched in both, because it has not stopped being true — a copy was taken then, it
+     * is still the last one that succeeded, and that is the line the screen shows.
      *
-     * Clearing before rather than after is what keeps the screen from ever naming a copy the
-     * archive did not come from: a replacement that fails leaves an unmarked list, which is
-     * *unknown* rather than wrong, and the next capture says where the archive is again.
+     * On the replacement, clearing before rather than after is what keeps the screen from
+     * ever naming a copy the archive did not come from: a replacement that fails leaves an
+     * unmarked list, which is *unknown* rather than wrong, and the next capture says where
+     * the archive is again.
      */
     fun forgetCoverage() = update { it.copy(markAtLastCapture = null, archiveCopy = null) }
 

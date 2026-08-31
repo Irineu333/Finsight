@@ -150,6 +150,7 @@ val backupModule = module {
             files = get(),
             archiveRestore = get(),
             reader = get(),
+            state = get(),
             vault = get(),
             modalManager = get(),
         )

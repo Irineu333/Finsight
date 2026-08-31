@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.extension.PlatformContext
@@ -80,15 +81,16 @@ class BackupHistoryViewModel(
     private val files: BackupFileService,
     private val archiveRestore: ArchiveRestore,
     private val reader: KeptCopyReader,
-    private val vault: BackupVaultRepository,
+    private val state: BackupVaultRepository,
+    private val vault: BackupVault,
     private val modalManager: ModalManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         BackupHistoryUiState(
-            destination = vault.observe().value.destination,
-            isVaultOn = vault.observe().value.isOn,
-            archiveCopy = vault.observe().value.archiveCopy,
+            destination = state.observe().value.destination,
+            isVaultOn = state.observe().value.isOn,
+            archiveCopy = state.observe().value.archiveCopy,
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -123,12 +125,12 @@ class BackupHistoryViewModel(
      * coincidence. A refusal then takes the promise away for the rest of the flow, because
      * from that moment there is nothing to promise.
      */
-    val keepsCopy: StateFlow<Boolean> = combine(vault.observe(), uiState) { state, screen ->
-        state.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP) && !screen.copyRefused
+    val keepsCopy: StateFlow<Boolean> = combine(state.observe(), uiState) { vaultState, screen ->
+        vaultState.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP) && !screen.copyRefused
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        vault.observe().value.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP),
+        state.observe().value.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP),
     )
 
     /**
@@ -177,16 +179,16 @@ class BackupHistoryViewModel(
      */
     private fun refresh() {
         viewModelScope.launch(Dispatchers.Default) {
-            val state = vault.observe().value
+            val vaultState = state.observe().value
             destination.list().fold(
                 ifLeft = {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isUnreadable = true,
-                            destination = state.destination,
-                            isVaultOn = state.isOn,
-                            archiveCopy = state.archiveCopy,
+                            destination = vaultState.destination,
+                            isVaultOn = vaultState.isOn,
+                            archiveCopy = vaultState.archiveCopy,
                         )
                     }
                 },
@@ -195,9 +197,9 @@ class BackupHistoryViewModel(
                         it.copy(
                             isLoading = false,
                             isUnreadable = false,
-                            destination = state.destination,
-                            isVaultOn = state.isOn,
-                            archiveCopy = state.archiveCopy,
+                            destination = vaultState.destination,
+                            isVaultOn = vaultState.isOn,
+                            archiveCopy = vaultState.archiveCopy,
                             copies = copies,
                             totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
                         )
@@ -315,6 +317,13 @@ class BackupHistoryViewModel(
      * A refusal is said out loud rather than swallowed: the folder may be the user's own,
      * the app removes only its own files there, and somebody who asked for a removal that
      * did not happen is owed the reason.
+     *
+     * **A removal that happened is reported to the vault, and the vault decides what it
+     * meant.** Whether the file that has just gone was the one holding the archive covered
+     * is design D8's question and not a screen's, so what is said here is the fact — this
+     * copy is no longer in the destination — and [BackupVault.copyRemoved] is what draws
+     * anything from it. Saying nothing would leave the vault covered by a file the user
+     * watched this screen delete.
      */
     private fun remove(backup: StoredBackup) {
         if (_uiState.value.isBusy) return
@@ -326,6 +335,7 @@ class BackupHistoryViewModel(
                 destination.remove(backup).fold(
                     ifLeft = ::fail,
                     ifRight = { removed ->
+                        if (removed) vault.copyRemoved(backup)
                         succeed(
                             if (removed) {
                                 Res.string.backup_history_removed

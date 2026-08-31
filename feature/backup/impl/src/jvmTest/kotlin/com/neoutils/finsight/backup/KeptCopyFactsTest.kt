@@ -162,7 +162,8 @@ class KeptCopyFactsTest {
             files = files,
         ),
         reader = reader,
-        vault = state,
+        state = state,
+        vault = vault,
         modalManager = modalManager,
     )
 

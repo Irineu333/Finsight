@@ -117,6 +117,33 @@ class BackupVault(
         vault.recordArchiveCopy(copy?.asArchiveCopy())
 
     /**
+     * Declares that [copy] has been taken out of the destination by this app.
+     *
+     * Coverage is a claim about a file, and it cannot outlive the file. A copy that is no
+     * longer there holds nothing, so a mark left standing on it answers *already covered*
+     * for an archive nothing is behind — and every trigger then writes nothing at all until
+     * an unrelated insert happens to move the archive past it. Somebody who removes their
+     * only copy would be unprotected and told nothing. Ending it here costs at most one
+     * file, which is the direction this precondition is allowed to be wrong in (design D8).
+     *
+     * Only the copy the state is about is of any consequence: removing any other one leaves
+     * the copy that covers where it was, still holding everything the archive does, and
+     * nothing here moves.
+     *
+     * **It is said by whoever removed the file, and never gone looking for.** No reading of
+     * the archive says a file has left the folder, and a vault that listed the destination
+     * to check on its own copy before every decision would be answering a question its
+     * caller already knows the answer to (see [ArchiveCopy]). The consequence is the one
+     * design D9 accepts everywhere else: a copy that leaves by another hand — a file
+     * manager, another install sweeping the same folder — is not this, and the mark stands
+     * until something is added.
+     */
+    fun copyRemoved(copy: StoredBackup) {
+        if (vault.observe().value.archiveCopy?.describes(copy) != true) return
+        vault.forgetCoverage()
+    }
+
+    /**
      * Writes the archive to [path], hands the file to the destination, and — only once the
      * copy is in — records the capture and sweeps.
      *
@@ -177,6 +204,12 @@ class BackupVault(
      * A destination that cannot be listed loses nothing. The capture still happened and is
      * still reported as such — retention is upkeep, and failing at it is not a reason to
      * tell somebody their backup did not work.
+     *
+     * What it removes it declares removed, through [copyRemoved] like any other removal
+     * this app makes. Nothing here can reach the copy that covers — it is the one just
+     * captured, so it is the newest, and the smallest limit on offer is five — but that is
+     * an argument about ordering rather than a rule, and a sweep that ever did reach it
+     * would otherwise leave a mark on a file it had itself deleted.
      */
     private suspend fun sweep(state: VaultState) {
         val keep = state.copiesKept() ?: return
@@ -185,7 +218,9 @@ class BackupVault(
         copies.asSequence()
             .filterNot { it.name == PRE_MIGRATION_BACKUP_NAME }
             .drop(keep)
-            .forEach { destination.remove(it) }
+            .forEach { copy ->
+                if (destination.remove(copy).getOrNull() == true) copyRemoved(copy)
+            }
     }
 
     /**

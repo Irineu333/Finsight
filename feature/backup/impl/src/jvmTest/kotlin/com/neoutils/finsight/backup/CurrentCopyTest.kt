@@ -162,7 +162,8 @@ class CurrentCopyTest {
         files = files,
         archiveRestore = archiveRestore,
         reader = KeptCopyReader(destination, files, verifier),
-        vault = state,
+        state = state,
+        vault = vault,
         modalManager = modalManager,
     )
 
@@ -185,15 +186,19 @@ class CurrentCopyTest {
         live.transactionDao().insert(TransactionEntity(title = title, date = DATE))
 
     /**
-     * A copy of the archive as it stands, taken the way the three triggers take one.
+     * One occasion on which a trigger asks the vault for a copy.
      *
      * Time moves first: the name a copy is written under carries the second it was asked
      * for, and two copies asked for in the same one would only differ by a suffix.
      */
-    private suspend fun capture(): StoredBackup {
+    private suspend fun asked(): CaptureOutcome {
         instant += 1.minutes
-        return assertIs<CaptureOutcome.Captured>(vault.captureIfNeeded()).copy
+        return vault.captureIfNeeded()
     }
+
+    /** A copy of the archive as it stands, taken the way the three triggers take one. */
+    private suspend fun capture(): StoredBackup =
+        assertIs<CaptureOutcome.Captured>(asked()).copy
 
     private suspend fun listed(): List<StoredBackup> = assertNotNull(
         destination.list().getOrNull(),
@@ -210,6 +215,17 @@ class CurrentCopyTest {
         onAction(BackupHistoryAction.ConfirmRestore)
         await("the restore of ${copy.name} never finished") {
             !it.isBusy && !it.isRestoring && it.confirmation == null
+        }
+    }
+
+    /**
+     * Removes [copy] the way the screen does: the row's own action, and then the listing
+     * the removal leaves behind.
+     */
+    private suspend fun BackupHistoryViewModel.removeFromList(copy: StoredBackup) {
+        onAction(BackupHistoryAction.Remove(copy))
+        await("the removal of ${copy.name} never finished") { ui ->
+            !ui.isLoading && !ui.isBusy && ui.copies.none { it.name == copy.name }
         }
     }
 
@@ -352,6 +368,87 @@ class CurrentCopyTest {
         assertNotNull(after.lastCapturedAt, "a copy was still taken, and when is still true")
     }
 
+    // -------------------------------------------------- a copy that is taken away
+
+    /**
+     * The defect this section exists for. Coverage is a claim about a file, and the file
+     * can go: a mark left standing on a copy the user has just deleted answers *already
+     * covered* for an archive nothing is behind, and every trigger then writes nothing at
+     * all until an unrelated insert happens to move the archive past it (design D8).
+     */
+    @Test
+    fun `removing the copy that covers makes the next occasion capture`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val older = capture()
+        enter("rent")
+        val covering = capture()
+
+        val viewModel = viewModel()
+        viewModel.awaitCurrent(covering)
+        assertEquals(CaptureOutcome.AlreadyCovered, asked(), "that copy did cover the archive")
+
+        viewModel.removeFromList(covering)
+
+        assertNull(
+            state.observe().value.markAtLastCapture,
+            "a copy that has left the destination covers nothing",
+        )
+        val fresh = assertIs<CaptureOutcome.Captured>(asked())
+        assertEquals(
+            setOf(older.name, fresh.copy.name),
+            listed().map { it.name }.toSet(),
+            "the archive was left with a copy of itself again",
+        )
+    }
+
+    /**
+     * The only copy there was. What survives it is the instant — a capture did happen, and
+     * when is still the line the screen shows — while nothing is left claiming to hold the
+     * archive.
+     */
+    @Test
+    fun `removing the last copy leaves the archive with nothing behind it`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val only = capture()
+
+        val viewModel = viewModel()
+        viewModel.awaitCurrent(only)
+        viewModel.removeFromList(only)
+
+        val after = state.observe().value
+        assertNull(after.markAtLastCapture, "nothing covers an archive whose only copy is gone")
+        assertNull(after.archiveCopy, "and no copy describes it either")
+        assertNotNull(after.lastCapturedAt, "a copy was still taken, and when is still true")
+        assertIs<CaptureOutcome.Captured>(asked())
+        assertEquals(1, listed().size, "the vault started protecting the archive again")
+    }
+
+    /**
+     * The other side of it, and the reason the copy is named rather than the removal
+     * counted: what covers the archive is one file, and taking a different one away leaves
+     * it holding everything it held.
+     */
+    @Test
+    fun `removing a copy that covers nothing leaves the coverage where it was`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val older = capture()
+        enter("rent")
+        val covering = capture()
+        val mark = state.observe().value.markAtLastCapture
+
+        val viewModel = viewModel()
+        viewModel.awaitCurrent(covering)
+        viewModel.removeFromList(older)
+
+        val after = state.observe().value
+        assertEquals(mark, after.markAtLastCapture, "the copy that covers was not the one removed")
+        assertEquals(covering.asArchiveCopy(), after.archiveCopy, "and it still describes it")
+        assertEquals(CaptureOutcome.AlreadyCovered, asked(), "so no file is owed")
+    }
+
     // -------------------------------------------------------- what nothing may claim
 
     /**
@@ -387,6 +484,11 @@ class CurrentCopyTest {
      * stays the only thing that says what is there, so once the copy the archive came from
      * has left it, no row is marked — and nothing had to go looking for files to make that
      * true.
+     *
+     * The removal is made on the destination and not through the screen, because that is
+     * the case: a file manager, or another install sweeping the same folder. A removal this
+     * app makes is told to the vault and clears the recording with it, which is the section
+     * above.
      */
     @Test
     fun `a copy that left the folder marks no row`() = runTest {

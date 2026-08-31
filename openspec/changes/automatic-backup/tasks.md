@@ -116,10 +116,11 @@
       `UTTypeFolder`, guardar o bookmark, **reiniciar o aparelho**, resolver e escrever. Medir as
       duas variantes de criação do bookmark. Critério: se não sobreviver, o degrau 2 no iOS precisa
       de outro desenho e esta entrega para aqui
-- [ ] 10.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
-      selecionável em `ACTION_OPEN_DOCUMENT_TREE`; de passagem, confirmar que Drive, OneDrive e
-      Dropbox não aparecem no seletor de pasta
-- [ ] 10.3 Registrar os resultados em `design.md`, fechando Q1 e Q2
+- [x] 10.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
+      selecionável em `ACTION_OPEN_DOCUMENT_TREE`; e estabelecer o que decide quais raízes o
+      seletor de pasta oferece
+- [x] 10.3 Registrar os resultados em `design.md`, fechando Q2; Q1 segue aberta por falta de
+      aparelho, e o arquivo diz isso
 
 ## 11. Degrau 2 — a pasta apontada pelo usuário
 
@@ -127,8 +128,8 @@
       persistindo **apenas o tree URI**; subpasta própria criada dentro da escolhida
 - [ ] 11.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
       completa, não com `DocumentFile` (1 + 3N consultas)
-- [ ] 11.3 Android: sugerir `Documents/` ao abrir o seletor — `Download` é proibido desde o
-      Android 11
+- [ ] 11.3 Android: sugerir `Documents/` ao abrir o seletor — conveniência, não correção: só
+      `Download` em si é recusada, e uma subpasta dela serve como destino
 - [ ] 11.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
       balanceados em `finally`, e `NSFileCoordinator` na escrita e na remoção
 - [ ] 11.5 iOS: a URL security-scoped nunca atravessa `String` em nenhum ponto do percurso
@@ -139,7 +140,8 @@
 - [ ] 11.9 Reapontar a mesma pasta faz o histórico existente aparecer por inteiro
 - [ ] 11.10 Trocar de pasta: copiar sem remover a origem, apenas o que a retenção do destino
       comporta, e funcionar com a origem inacessível
-- [ ] 11.11 A frase da tela sobre cobertura, diferente por plataforma — no Android o cofre é local
+- [ ] 11.11 A frase da tela sobre cobertura, por destino e não por plataforma: nenhuma regra do
+      Android mantém o cofre local, então a frase diz o que a pasta escolhida não cobre (D16)
 
 ## 12. Fechamento
 

@@ -142,6 +142,35 @@ class VaultMigration(
     }
 
     /**
+     * Notices that [to] already held copies before anything of this move had a chance to
+     * put one there, and defers the sweep behind the next capture that lands in it.
+     *
+     * **It is asked once, from [VaultDestinationChange.pointAtFolder], at the one instant
+     * this is knowable:** right after the rung has moved and strictly before [carry] —
+     * offered separately, and only ever run on somebody's yes — could have added anything
+     * of its own. What it finds already there is therefore never this move's own doing.
+     * On the folder rung it is, most often, a previous install's whole history, found
+     * again by pointing at the same folder (design D4) — reached by somebody who has just
+     * lost everything, and exactly who a sweep must not surprise on the strength of a
+     * limit they have not even seen yet.
+     *
+     * A folder that answers empty, or one that cannot be listed at all, arms nothing:
+     * there is nothing on it yet that a sweep landing next could take by surprise, and the
+     * ordinary first capture into a freshly chosen folder goes on sweeping exactly as
+     * before.
+     *
+     * It is [to] the deferral is armed for ([BackupVaultRepository.deferNextSweep]), not
+     * "the next sweep, whichever destination it lands in" — the flag this used to be armed
+     * and spent no destination at all, which is what let it protect a folder nobody had
+     * just adopted, or fail to protect the one that was owed the wait (see
+     * [BackupVaultRepository.consumeSweepDeferral]).
+     */
+    suspend fun deferSweepIfAlreadyHolding(to: VaultDestination) {
+        val already = destinations.rungFor(to).list().getOrNull()
+        if (!already.isNullOrEmpty()) state.deferNextSweep(to)
+    }
+
+    /**
      * The newest copies the destination's retention holds, or all of them where the person
      * has asked that nothing be removed — newest first, as a listing answers.
      *

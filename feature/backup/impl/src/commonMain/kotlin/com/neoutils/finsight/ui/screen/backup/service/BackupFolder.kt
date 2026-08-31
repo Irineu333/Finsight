@@ -63,6 +63,17 @@ interface BackupFolder {
      * describes it at the instant of the call.
      */
     suspend fun link(): FolderLink
+
+    /**
+     * Which folder is remembered right now, or null when nothing is — see [FolderIdentity]
+     * for what this may and may not be used for.
+     *
+     * It is read off the same token [point] persists, and nothing more: a stronger answer
+     * would need the folder itself read, which is [link]'s and costs a listing this must
+     * not, since it is asked on every comparison a caller wants to make and not only when
+     * something changed.
+     */
+    val identity: FolderIdentity?
 }
 
 /**
@@ -115,4 +126,6 @@ object NoBackupFolder : BackupFolder {
         false.right()
 
     override suspend fun link(): FolderLink = FolderLink.NONE
+
+    override val identity: FolderIdentity? = null
 }

@@ -6,7 +6,9 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.Settings
 import java.awt.Component
 import java.io.File
@@ -95,6 +97,15 @@ class JvmBackupFolder(
         val own = ownFolder() ?: return@withContext FolderLink.NONE
         if (own.isDirectory) FolderLink.LINKED else FolderLink.BROKEN
     }
+
+    /**
+     * The chosen path's own text, fingerprinted — never the path itself, which stays
+     * `internal` to this module (design D2). It is stable across everything that leaves
+     * [KEY_FOLDER] untouched: a path never rewrites itself, so a folder chosen twice reads
+     * the same text both times.
+     */
+    override val identity: FolderIdentity?
+        get() = settings.getStringOrNull(KEY_FOLDER)?.let(::folderIdentity)
 
     /**
      * The folder the copies go in — the app's own inside the one that was chosen — or null

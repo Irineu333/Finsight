@@ -12,7 +12,9 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.Settings
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +103,16 @@ class AndroidBackupFolder(
         if (storedTree() == null) return FolderLink.NONE
         return if (ownFolder() != null) FolderLink.LINKED else FolderLink.BROKEN
     }
+
+    /**
+     * The tree `Uri`'s own text, fingerprinted — never the `Uri` itself, which stays
+     * `internal` to this module (design D2). It is stable across everything that leaves
+     * [KEY_TREE] untouched, which on this platform is everything but [pointAt] itself: the
+     * persisted grant is re-taken rather than re-issued, so a folder chosen twice reads the
+     * same tree both times.
+     */
+    override val identity: FolderIdentity?
+        get() = settings.getStringOrNull(KEY_TREE)?.let(::folderIdentity)
 
     /**
      * The app's own subfolder as the provider describes it now, or null when nothing has

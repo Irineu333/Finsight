@@ -5,6 +5,7 @@ import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,6 +83,22 @@ class VaultFolder(
     val rung: VaultRung get() = VaultRung(state.observe().value.destination, _link.value)
 
     /**
+     * [rung]'s [VaultRung.inForce], with which folder that is when it is
+     * [VaultDestination.USER_FOLDER] — see [VaultLocation]. It is read fresh for the same
+     * reason [rung] is: this is the one comparison that can tell a folder traded for another
+     * apart from a folder merely reported on again, and a value held past the call that
+     * changes it could no longer do that.
+     */
+    val location: VaultLocation
+        get() {
+            val inForce = rung.inForce
+            return VaultLocation(
+                destination = inForce,
+                folder = if (inForce == VaultDestination.USER_FOLDER) folder.identity else null,
+            )
+        }
+
+    /**
      * Asks whether the folder is still reachable, and publishes the answer.
      *
      * This is the second of design D4's three moments, and task 11.7: it runs when the app
@@ -92,6 +109,15 @@ class VaultFolder(
      * It is asked whichever rung is in force. A folder that was pointed at is a fact about
      * this install whether or not the vault is currently writing to it, and it is what the
      * way back to those copies is made of.
+     *
+     * **The comparison stays [VaultDestination], deliberately, and not [VaultLocation].**
+     * Nothing here ever points at a folder — the same one is only ever re-read — so the
+     * physical place cannot have changed; what can is only whether it answers. Comparing by
+     * [FolderIdentity] here as well would cost nothing on Android or the desktop and would
+     * cost something real on iOS: [BackupFolder]'s own iOS implementation rewrites the
+     * bookmark, in place, exactly where this reading can trigger it (a resolution that comes
+     * back stale), so an identity taken before and after could disagree about a folder that
+     * never moved and end a coverage nothing here earned ending.
      */
     suspend fun check() {
         val before = rung.inForce
@@ -111,15 +137,23 @@ class VaultFolder(
      * and changes nothing. The preference is written only on a true, and after the folder
      * has been prepared — a vault pointed at a folder it could not open would be a vault
      * that stops writing at the next trigger.
+     *
+     * **This is the one call that compares by [VaultLocation], and the only one that needs
+     * to.** It is the sole place a *different* folder can become the one in force — every
+     * other move is between here and the app's own storage, where [VaultDestination] alone
+     * already says everything there is to say. A rung that reads [VaultDestination.USER_FOLDER]
+     * both before and after this call used to read as unmoved regardless of which folder
+     * either one names, which is the whole of what let pointing at a second folder leave a
+     * stale coverage standing over an archive the new one has never seen.
      */
     suspend fun pointAt(context: PlatformContext): Either<BackupError, Boolean> {
-        val before = rung.inForce
+        val before = location
 
         return folder.point(context).onRight { chosen ->
             if (chosen) {
                 state.setDestination(VaultDestination.USER_FOLDER)
                 _link.value = folder.link()
-                endCoverageIfMoved(before)
+                endCoverageIfFolderChanged(before)
             }
         }
     }
@@ -150,5 +184,10 @@ class VaultFolder(
      */
     private fun endCoverageIfMoved(before: VaultDestination) {
         if (rung.inForce != before) state.forgetCoverage()
+    }
+
+    /** [endCoverageIfMoved]'s counterpart for [pointAt] — see its own comment for why. */
+    private fun endCoverageIfFolderChanged(before: VaultLocation) {
+        if (location != before) state.forgetCoverage()
     }
 }

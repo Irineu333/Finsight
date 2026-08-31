@@ -16,6 +16,7 @@ import com.neoutils.finsight.database.getRoomDatabase
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.database.repository.RoomArchiveMark
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
+import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
@@ -188,6 +189,8 @@ class FolderRecoveryTest {
         files = files,
     )
 
+    private val destinationChange = VaultDestinationChange(folder = folder, migration = migration)
+
     private val context = PlatformContext(
         object : WindowScope {
             override val window: ComposeWindow get() = error("no picker is raised here")
@@ -216,7 +219,7 @@ class FolderRecoveryTest {
         vault = state,
         switch = VaultSwitch(state = state, vault = vault),
         folder = folder,
-        destinationChange = VaultDestinationChange(folder = folder, migration = migration),
+        destinationChange = destinationChange,
         modalManager = modalManager,
         clock = object : Clock {
             override fun now(): Instant = instant
@@ -251,7 +254,7 @@ class FolderRecoveryTest {
                 override fun now(): Instant = instant
             },
         ),
-        destinationChange = VaultDestinationChange(folder = folder, migration = migration),
+        destinationChange = destinationChange,
         modalManager = modalManager,
     )
 
@@ -506,6 +509,227 @@ class FolderRecoveryTest {
             assertNotNull(destinations.list().getOrNull()).map { it.name }.sorted(),
         )
     }
+
+    // ------------------------------------- adopting a folder that already holds copies
+
+    /**
+     * A copy written straight into the chosen folder's subfolder, standing in for a
+     * previous install that used the same folder before this test's own vault ever pointed
+     * at it. It is real content under a real name, aged well before anything this test
+     * itself goes on to capture, so ordering by date is never in doubt.
+     */
+    private suspend fun priorInstallCopies(count: Int): List<String> {
+        val own = File(chosen, BACKUP_FOLDER_NAME).apply { mkdirs() }
+        return List(count) { index ->
+            val captured = temporary("prior-$index").absolutePath
+            live.captureInto(destinationPath = captured, appVersion = "1.2.3", platform = "desktop")
+            val name = "finsight-backup-2020-01-${(index + 1).toString().padStart(2, '0')}T10-00-00.db"
+            File(captured).copyTo(File(own, name))
+            File(own, name).setLastModified(PRIOR_INSTALL_EPOCH_MILLIS + index * 1_000L)
+            name
+        }
+    }
+
+    /**
+     * The scenario itself. A fresh install turns the vault on — which captures once into
+     * its own storage, since nothing has been pointed at yet — and then points at the
+     * folder the previous install used, which is already full of that install's own
+     * copies. Somebody accepts the offer to carry the fresh copy across, exactly as the
+     * screen would let them.
+     *
+     * The first capture that lands afterward must not be the thing that decides which of
+     * those five copies retention has no room for: nobody has even opened the kept-copies
+     * screen yet to see what is there.
+     */
+    @Test
+    fun `adopting a folder full of a previous install's copies does not sweep on the first capture`() =
+        runTest {
+            val previous = priorInstallCopies(FIVE)
+            state.setRetention(BackupRetention.FIVE)
+            VaultSwitch(state = state, vault = vault).setOn(true)
+
+            picked = chosen
+            val offer = assertNotNull(
+                destinationChange.pointAtFolder(context).getOrNull(),
+                "the app-storage copy taken on enabling should have been offered to carry",
+            )
+            destinationChange.carry(offer)
+
+            val landed = captureSomethingNew("first entry after adopting")
+
+            val kept = namesIn(chosen)
+            assertTrue(
+                previous.all { it in kept },
+                "a previous install's copy was swept before the person ever saw it: $kept",
+            )
+            assertTrue(landed in kept, "the capture that was supposed to land is not there")
+        }
+
+    /**
+     * Retention has not stopped meaning something — it has only been asked to wait one
+     * capture. The sweep skipped by adoption is spent, and the very next capture sweeps
+     * normally, converging the folder back toward the limit the person chose.
+     */
+    @Test
+    fun `retention resumes on the capture after the one adoption deferred`() = runTest {
+        priorInstallCopies(FIVE)
+        state.setRetention(BackupRetention.FIVE)
+        VaultSwitch(state = state, vault = vault).setOn(true)
+
+        picked = chosen
+        val offer = assertNotNull(destinationChange.pointAtFolder(context).getOrNull())
+        destinationChange.carry(offer)
+        captureSomethingNew("first entry after adopting")
+
+        captureSomethingNew("second entry after adopting")
+
+        assertEquals(
+            FIVE,
+            namesIn(chosen).size,
+            "the folder never converged back to the limit once the deferral was spent",
+        )
+    }
+
+    /**
+     * Pointing at an empty folder — the ordinary case, nothing adopted — is never deferred:
+     * copies carried into it afterward are swept on the very first capture that lands. The
+     * deferral is about what a folder already held the instant it was pointed at, never
+     * about pointing at a folder as such.
+     */
+    @Test
+    fun `pointing at an empty folder does not defer the sweep once copies are carried into it`() =
+        runTest {
+            state.setOn(true)
+            state.setRetention(BackupRetention.EVERYTHING)
+            List(SIX) { captureSomethingNew("entry $it") }
+            state.setRetention(BackupRetention.FIVE)
+
+            picked = chosen
+            val offer = assertNotNull(destinationChange.pointAtFolder(context).getOrNull())
+            destinationChange.carry(offer)
+
+            val landed = captureSomethingNew("first entry after pointing at an empty folder")
+
+            assertEquals(
+                FIVE,
+                namesIn(chosen).size,
+                "the first capture into a freshly adopted, empty folder did not sweep",
+            )
+            assertTrue(landed in namesIn(chosen))
+        }
+
+    // ------------------------------------ the root: a rung is not a folder, over real disk
+
+    /**
+     * Proved by running code against two real, distinct temp folders: pointing folder A
+     * then folder B used to be invisible to the vault, because `VaultRung.inForce` reads
+     * `USER_FOLDER` both before and after — the folder underneath changed completely and the
+     * rung never moved. Coverage stood over an archive folder B had never seen, and the
+     * automatic trigger answered `AlreadyCovered` over a folder that had never been written
+     * to at all — the "changing from one folder to another is invisible" defect.
+     */
+    @Test
+    fun `pointing at a genuinely different folder ends coverage and the automatic trigger writes into it`() =
+        runTest {
+            state.setOn(true)
+            picked = chosen
+            destinationChange.pointAtFolder(context)
+            val landedInA = captureSomethingNew("in the first folder")
+            assertEquals(listOf(landedInA), namesIn(chosen))
+            assertNotNull(
+                state.observe().value.markAtLastCapture,
+                "the capture into the first folder was never recorded",
+            )
+
+            picked = elsewhere
+            val offer = destinationChange.pointAtFolder(context).getOrNull()
+
+            assertNull(
+                state.observe().value.markAtLastCapture,
+                "coverage from the folder left behind still stood over a folder never written to",
+            )
+            assertNull(
+                state.observe().value.archiveCopy,
+                "a copy in the folder left behind was still named as covering the new one",
+            )
+
+            val outcome = vault.captureIfNeeded()
+
+            assertIs<CaptureOutcome.Captured>(
+                outcome,
+                "the automatic trigger answered AlreadyCovered over a folder never captured into",
+            )
+            assertEquals(1, namesIn(elsewhere).size, "nothing landed in the folder just pointed at")
+
+            // The offer stays null here, and is not asserted to have become anything else:
+            // once `pointAtFolder` has moved the vault onto `elsewhere`, every reader of
+            // "the folder in force" — VaultDestinations.rungFor included — reads `elsewhere`,
+            // so a listing of "the folder being left" is no longer reachable through this
+            // app's one remembered token for it. Ending coverage does not depend on being
+            // able to list the folder left behind, which is why it is fixed above; actually
+            // carrying its copies across would need this app to remember more than one
+            // folder's token at a time, which by design (task 11.1/11.3/11.5) it does not —
+            // see the return contract's stopped-and-reporting note for the reasoning.
+            assertNull(offer, "an offer promising a carry this app cannot execute is worse than none")
+        }
+
+    /**
+     * Proved by test: the deferral used to arm on nothing more than "the folder is not
+     * empty," with no check that the folder had actually changed — so reconnecting a folder
+     * this install already manages, sitting at its own steady state, re-armed a skip that
+     * protected nothing this install had not written itself, and cost the next sweep a copy
+     * it should have removed.
+     */
+    @Test
+    fun `reconnecting a folder already at its steady state does not defer the next sweep`() =
+        runTest {
+            state.setOn(true)
+            state.setRetention(BackupRetention.FIVE)
+            picked = chosen
+            destinationChange.pointAtFolder(context)
+            repeat(FIVE) { captureSomethingNew("entry $it") }
+            assertEquals(FIVE, namesIn(chosen).size, "the folder was not at its steady state yet")
+
+            // The reconnect button's own call (BackupViewModel.chooseFolder /
+            // BackupHistoryViewModel), over the folder already in force.
+            destinationChange.pointAtFolder(context)
+
+            captureSomethingNew("one more, after reconnecting")
+
+            assertEquals(
+                FIVE,
+                namesIn(chosen).size,
+                "the reconnect armed a deferral over copies this install wrote itself",
+            )
+        }
+
+    /**
+     * Proved by test: the deferral was armed and spent with no destination attached to it
+     * at all, so a skip earned by a folder just adopted could be spent by an entirely
+     * different destination's sweep — the app's own storage, switched to before the folder
+     * that earned the skip ever had a capture land in it.
+     */
+    @Test
+    fun `a deferral armed for the folder is not spent by a sweep in the app's own storage`() =
+        runTest {
+            state.setOn(true)
+            state.setRetention(BackupRetention.EVERYTHING)
+            List(SIX) { captureSomethingNew("app storage entry $it") }
+            state.setRetention(BackupRetention.FIVE)
+
+            priorInstallCopies(FIVE)
+            picked = chosen
+            destinationChange.pointAtFolder(context)
+            destinationChange.keepInsideApp()
+
+            captureSomethingNew("the first capture back in the app's own storage")
+
+            assertEquals(
+                FIVE,
+                namesInApp().size,
+                "a sweep the app's own storage owed was skipped by a deferral armed for the folder",
+            )
+        }
 
     // ------------------------------------------------- 11.10 · carrying the history across
 
@@ -941,6 +1165,9 @@ class FolderRecoveryTest {
         const val THREE = 3
         const val FIVE = 5
         const val SIX = 6
+
+        /** Long before anything this test itself captures, so ordering is never ambiguous. */
+        const val PRIOR_INSTALL_EPOCH_MILLIS = 1_577_836_800_000L // 2020-01-01T00:00:00Z
 
         val DATABASE_FILES = listOf("", "-wal", "-shm")
     }

@@ -16,7 +16,9 @@ import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.PeriodicBackup
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -62,6 +64,13 @@ class VaultFolderTest {
         }
 
         override suspend fun link(): FolderLink = linked
+
+        // The stub only ever plays one folder, so a constant identity whenever something
+        // has been pointed at is the whole of the truth it can tell — this file's own
+        // tests never switch between two different ones; `FolderRecoveryTest` does, over a
+        // real path.
+        override val identity: FolderIdentity?
+            get() = if (linked == FolderLink.NONE) null else folderIdentity("stub-folder")
     }
 
     private val folder = VaultFolder(state = state, folder = stub)

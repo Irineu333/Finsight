@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.vault
 
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 
 /**
@@ -58,3 +59,30 @@ data class VaultRung(
     val inForce: VaultDestination
         get() = if (isProvisional) VaultDestination.APP_STORAGE else chosen
 }
+
+/**
+ * Which physical place the copies actually go to, right now — [VaultRung.inForce] with the
+ * one thing it cannot say: [VaultDestination] has exactly two values, and one of them can
+ * name any number of folders. This is *the root* everything in `VaultDestinationChange` and
+ * `VaultMigration` used to be missing (see their own comments): a rung that has not moved is
+ * not the same claim as a folder that has not moved, and only this can tell the two apart.
+ *
+ * **Equality is the whole of what this is for**, which plain [Any.equals] already gives it
+ * correctly, on one condition its only constructor ([VaultFolder.location]) keeps: [folder]
+ * is null exactly when [destination] is [VaultDestination.APP_STORAGE] — the one place this
+ * app always keeps, so two locations naming it are equal by [destination] alone, with nothing
+ * further for [folder] to disagree about.
+ *
+ * **It is a value taken at an instant, never held.** [VaultFolder.location] computes it fresh
+ * on every read, for the same reason [VaultRung] is derived rather than stored: a location
+ * kept across the very call that moves it would be the call unable to tell before from after.
+ */
+data class VaultLocation(
+    val destination: VaultDestination,
+    /**
+     * Which folder, when [destination] is [VaultDestination.USER_FOLDER] — see
+     * [FolderIdentity]. Null there means nothing is known to be pointed at; null because
+     * [destination] is [VaultDestination.APP_STORAGE] means the question does not apply.
+     */
+    val folder: FolderIdentity?,
+)

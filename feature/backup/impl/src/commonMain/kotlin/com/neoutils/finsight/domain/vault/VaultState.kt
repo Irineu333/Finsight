@@ -116,6 +116,35 @@ data class VaultState(
      * offer is merely shown: somebody who reads it and cancels has answered nothing.
      */
     val wasDeclined: Boolean = false,
+
+    /**
+     * Which destination the sweep behind the next capture landing *there* is skipped for,
+     * once — or null when nothing is owed a skip.
+     *
+     * It is armed the moment a folder is pointed at and is found already holding copies
+     * this install never wrote — most likely a previous install's whole history, found
+     * again the way design D4 exists to make possible — so that the very first capture
+     * into that folder is not also the first thing to decide, on nobody's behalf, which of
+     * those copies retention no longer has room for.
+     *
+     * **It is scoped to the destination it was armed for, and spent only by a capture that
+     * lands there.** A flag with no destination on it is a flag that cannot tell "the
+     * folder just adopted" from "wherever the next capture happens to land" — which is what
+     * let switching back to the app's own storage before the folder's first capture spend a
+     * skip the folder earned and the app's own storage did not, and let reconnecting a
+     * folder already at its limit re-arm a skip over copies this install wrote itself (see
+     * [BackupVaultRepository.deferNextSweep], armed only by
+     * [VaultMigration.deferSweepIfAlreadyHolding], and never for a folder merely reconnected
+     * — [VaultDestinationChange.pointAtFolder] arms it only when the folder actually
+     * changed).
+     *
+     * [BackupVault] both reads and clears it in the same capture, the one that lands, in the
+     * destination it names, right after it was armed: a flag only ever read would protect a
+     * destination forever rather than for the single occasion this buys, and a destination
+     * that silently stopped being swept is exactly the other broken promise design D10
+     * exists to prevent.
+     */
+    val skipsNextSweepFor: VaultDestination? = null,
 ) {
 
     /**

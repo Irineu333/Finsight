@@ -32,6 +32,20 @@ import kotlinx.coroutines.withContext
  * that holds nothing, one that cannot be listed, and a destination that did not actually
  * move all arrive as no offer — and none of the three is worth a question somebody has to
  * dismiss.
+ *
+ * **A folder pointed at may already be somebody's whole history**, and never only this
+ * move's own doing — a reinstall pointing at the folder it used to write to is the case
+ * design D4 exists for. What that folder already holds is read once, here, before a carry
+ * could add anything of its own, and it defers the sweep behind the next capture that
+ * lands so that copies nobody here wrote are not the first thing retention decides about
+ * (see [VaultMigration.deferSweepIfAlreadyHolding]).
+ *
+ * **That reading, and the offer built from it, run only when the folder actually changed —
+ * by [VaultLocation], not by [VaultDestination].** Reconnecting a folder the app already
+ * manages is [VaultFolder.pointAt] called again over the one it was already pointed at, and
+ * it must cost nothing: arming the deferral over five copies this install wrote itself would
+ * spare them from a sweep they were never in danger from, and an offer to carry a folder's
+ * copies into itself is not a question anybody can sensibly answer.
  */
 class VaultDestinationChange(
     private val folder: VaultFolder,
@@ -48,10 +62,25 @@ class VaultDestinationChange(
      * the person wants a different folder: one machine, three moments (design D4).
      */
     suspend fun pointAtFolder(context: PlatformContext): Either<BackupError, CarryOffer?> {
-        val before = folder.rung.inForce
+        val before = folder.location
 
         return folder.pointAt(context).map { chosen ->
-            if (chosen) offerFrom(before) else null
+            val after = folder.location
+
+            if (chosen && after != before) {
+                // Read before the carry is ever offered, let alone answered: what the
+                // folder already holds at this instant is never this call's own doing,
+                // and it is what a fresh install adopting somebody's old folder looks
+                // like from here (see VaultMigration.deferSweepIfAlreadyHolding).
+                //
+                // Gated on the folder having actually changed, by identity and not only
+                // by rung — a reconnect of the one already in force answers `chosen` too,
+                // and would otherwise re-arm this over copies this install wrote itself.
+                migration.deferSweepIfAlreadyHolding(after.destination)
+                offerFrom(before.destination)
+            } else {
+                null
+            }
         }
     }
 

@@ -419,6 +419,32 @@ class BackupVaultTest {
         )
     }
 
+    /**
+     * However far over the limit the destination already is, one sweep only ever removes a
+     * handful of copies — the safeguard against a lowered limit landing on a destination
+     * that was allowed to grow well past it, or a folder adopted already holding far more
+     * than this install's own choice, turning into a single sweep that empties most of what
+     * was there in one pass. The destination still converges on the limit; it just takes a
+     * few sweeps rather than one.
+     */
+    @Test
+    fun `a single sweep never removes the whole excess at once, but retention still converges`() =
+        runTest {
+            List(FIFTEEN) { plant(plantedName(it)) }
+            turnOn()
+            state.setRetention(BackupRetention.FIVE)
+
+            assertIs<CaptureOutcome.Captured>(asked())
+            assertTrue(
+                copies().size > FIVE,
+                "a single sweep removed the whole excess of eleven copies in one pass",
+            )
+
+            repeat(FOUR) { index -> captureSomethingNew("entry $index") }
+
+            assertEquals(FIVE, copies().size, "retention never converged on the limit it was given")
+        }
+
     /** Enters something and asks — the one shape that reliably produces a copy. */
     private suspend fun captureSomethingNew(title: String): String {
         enter(title)
@@ -432,11 +458,15 @@ class BackupVaultTest {
         const val FOUR = 4
         const val FIVE = 5
         const val SIX = 6
+        const val FIFTEEN = 15
 
         /** Older than anything this test captures, so the ordering is not a coincidence. */
         const val LONG_BEFORE = 86_400_000L
 
         fun datedName(index: Int) = "finsight-backup-2026-08-2${index}T14-30-05.db"
+
+        /** A name for a copy planted directly, bypassing the vault, with no date to trip on. */
+        fun plantedName(index: Int) = "finsight-backup-planted-$index.db"
 
         /**
          * A database is up to three files while something has it open in write-ahead

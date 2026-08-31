@@ -53,6 +53,15 @@ import kotlinx.datetime.toLocalDateTime
  * that can empty a destination without first having filled it. A failed capture removes
  * nothing because there is no code path in which it could.
  *
+ * **A sweep neither surprises a folder just adopted nor ever moves more than a handful of
+ * files at once.** The capture that lands right after a folder is pointed at spends a
+ * deferral armed only when that folder already held copies this install never wrote —
+ * see [VaultMigration.deferSweepIfAlreadyHolding] — so a previous install's whole history,
+ * found again, is not swept before anybody has had a capture's worth of time to see it.
+ * Every sweep after that is capped at [MAX_REMOVED_PER_SWEEP], so a limit lowered onto a
+ * destination already holding far more than it now allows converges over several sweeps
+ * instead of losing the difference in one.
+ *
  * The flow is the one the manual export already uses and for the same reasons: capture
  * into a file of this app's own, because `VACUUM INTO` only writes to a path and on two
  * platforms the destination is not one; hand it over; remove the temporary whatever
@@ -288,7 +297,23 @@ class BackupVault(
         // written a name of its own, and what is recorded has to be what the next listing
         // answers with.
         vault.recordCapture(at = at, mark = mark, copy = copy.asArchiveCopy())
-        sweep(state, sparing)
+
+        // A deferral armed by pointing at a folder that already held copies is spent by
+        // whichever capture lands first *in that destination* — this one, when it is —
+        // and it is spent by skipping the sweep outright rather than by raising the limit
+        // for it: the point is that nothing decides about those copies until the person
+        // has had a capture's worth of time to see what is there (see
+        // VaultMigration.deferSweepIfAlreadyHolding). A deferral armed for the other
+        // destination is left standing: this capture did not land where it was owed and
+        // has nothing to spend it on.
+        //
+        // Scoped by [VaultState.destination], the preference, and not by the rung actually
+        // written to: the two differ only while a folder's link is provisional, and only
+        // for however long that takes to notice — a sweep skipped once more than it had to
+        // be there costs a copy kept a little longer, never one lost (design D10's safe
+        // direction).
+        if (!vault.consumeSweepDeferral(state.destination)) sweep(state, sparing)
+
         return CaptureOutcome.Captured(copy)
     }
 
@@ -352,6 +377,22 @@ class BackupVault(
      * count [keep] enforces, and never protected again on the sweep after this one — so
      * the cost of sparing it is at most one copy over the limit until the next capture,
      * of any kind, sweeps with nothing left to spare.
+     *
+     * **No single pass removes more than [MAX_REMOVED_PER_SWEEP], however far over the
+     * limit the destination is.** A limit lowered onto a destination that already holds
+     * many more copies than that — the same shape a folder somebody has just adopted can
+     * take, once its one deferred sweep has been spent — would otherwise answer with a
+     * single sweep wide enough to be a second, silent way of losing history: the person
+     * who moved the limit sees the number they chose, never the one the destination held
+     * a moment before. Capping it turns that into several ordinary sweeps instead of one
+     * outsized one, so the destination still converges on [keep] and does so without a
+     * capture that removes more than a handful of files nobody was shown first.
+     *
+     * The cap is taken *after* every other filter, which is what keeps it removing the
+     * copies closest to the limit rather than the very oldest: on a sequence read newest
+     * first, what [drop] leaves is ordered from the newest excess copy to the oldest, so
+     * a `take` here spares the oldest, most irreplaceable copies for a later sweep rather
+     * than reaching for them first.
      */
     private suspend fun sweep(state: VaultState, sparing: StoredBackup? = null) {
         val keep = state.copiesKept() ?: return
@@ -361,6 +402,7 @@ class BackupVault(
             .filterNot { it.name == PRE_MIGRATION_BACKUP_NAME }
             .drop(keep)
             .filterNot { sparing != null && it.name == sparing.name && it.savedAt == sparing.savedAt }
+            .take(MAX_REMOVED_PER_SWEEP)
             .forEach { copy ->
                 if (destination.remove(copy).getOrNull() == true) copyRemoved(copy)
             }
@@ -395,4 +437,19 @@ class BackupVault(
     }
 
     private fun Instant.local() = toLocalDateTime(TimeZone.currentSystemDefault())
+
+    private companion object {
+
+        /**
+         * How many copies one call to [sweep] may remove, whatever the gap between what
+         * the destination holds and what [BackupRetention] now allows.
+         *
+         * "Some small number" is deliberately smaller than every retention tier but the
+         * smallest: [BackupRetention.FIVE] is both the least anybody can choose to keep
+         * and the most a single sweep may ever take away, so lowering the limit — or
+         * adopting a folder that already held more than it — costs a few sweeps' worth of
+         * patience rather than one capture's worth of history.
+         */
+        const val MAX_REMOVED_PER_SWEEP = 5
+    }
 }

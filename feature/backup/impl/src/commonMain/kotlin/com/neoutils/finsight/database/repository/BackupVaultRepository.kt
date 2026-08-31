@@ -120,6 +120,28 @@ class BackupVaultRepository(
      */
     fun recordArchiveCopy(copy: ArchiveCopy?) = update { it.copy(archiveCopy = copy) }
 
+    /** Arms [VaultState.skipsNextSweepFor], for the capture that next lands in [destination] to spend. */
+    fun deferNextSweep(destination: VaultDestination) =
+        update { it.copy(skipsNextSweepFor = destination) }
+
+    /**
+     * Answers whether the sweep behind a capture landing in [destination] is owed a skip
+     * right now, and — only when it is — clears the flag as well as answering true, so the
+     * capture that finds it armed *for the place it just wrote to* is the one that spends
+     * it, and every capture after that finds nothing left to spend there.
+     *
+     * A deferral armed for a different destination is left standing rather than spent or
+     * cleared: it is not this capture's to answer for, and it may still be owed to whatever
+     * it was armed for — the folder pointed at and then left again before anything had
+     * landed in it, most often.
+     */
+    fun consumeSweepDeferral(destination: VaultDestination): Boolean {
+        val armed = state.value.skipsNextSweepFor
+        if (armed != destination) return false
+        update { it.copy(skipsNextSweepFor = null) }
+        return true
+    }
+
     private fun update(transform: (VaultState) -> VaultState) {
         val next = transform(state.value)
         write(next)
@@ -141,6 +163,7 @@ class BackupVaultRepository(
             KEY_ARCHIVE_COPY_SAVED_AT,
             next.archiveCopy?.savedAt?.toEpochMilliseconds(),
         )
+        settings.putStringOrRemove(KEY_SKIPS_NEXT_SWEEP_FOR, next.skipsNextSweepFor?.name)
     }
 
     private fun read() = VaultState(
@@ -168,6 +191,11 @@ class BackupVaultRepository(
         // False where every other switch is true: nothing having been turned down is what
         // a fresh install has, and an unreadable value offers rather than reminds.
         wasDeclined = settings.getBoolean(KEY_DECLINED, defaultValue = false),
+        // Null is also what a fresh install has here: nothing has been pointed at yet, so
+        // there is nothing a sweep could take by surprise. A name this build no longer has
+        // reads the same way — an armed deferral is upkeep, not a promise worth crashing a
+        // capture over.
+        skipsNextSweepFor = settings.enumOrNull(KEY_SKIPS_NEXT_SWEEP_FOR, VaultDestination.entries),
     )
 
     private companion object {
@@ -185,6 +213,12 @@ class BackupVaultRepository(
         const val KEY_CAPTURED_MARK = "backup_vault_captured_mark"
         const val KEY_ARCHIVE_COPY_NAME = "backup_vault_archive_copy_name"
         const val KEY_ARCHIVE_COPY_SAVED_AT = "backup_vault_archive_copy_saved_at"
+
+        // A destination's name now, where an install already carrying the old boolean
+        // reads the key gone and the deferral it named as never armed — a stricter default
+        // than the one it replaces (design D10's safe direction only ever costs a copy kept
+        // a little longer), so nothing about the switch needs a migration of its own.
+        const val KEY_SKIPS_NEXT_SWEEP_FOR = "backup_vault_skips_next_sweep_for"
     }
 }
 

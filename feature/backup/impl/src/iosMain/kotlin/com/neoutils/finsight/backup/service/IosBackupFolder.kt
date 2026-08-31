@@ -10,14 +10,18 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,6 +34,7 @@ import platform.Foundation.NSURLBookmarkResolutionWithoutImplicitStartAccessing
 import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIDocumentPickerViewController
 import platform.UniformTypeIdentifiers.UTTypeFolder
+import platform.posix.memcpy
 
 /**
  * iOS's half of design D4's machine: the document picker opened on folders, a bookmark of
@@ -145,6 +150,20 @@ class IosBackupFolder(
         val reached = withOwnFolder(BackupError.EXPORT_FAILED) { true.right() }
         if (reached.isRight()) FolderLink.LINKED else FolderLink.BROKEN
     }
+
+    /**
+     * The bookmark's own bytes, fingerprinted — never the bytes themselves, and never the
+     * url they resolve to, whose `path` or `absoluteString` nothing here ever asks for
+     * either (design D2).
+     *
+     * **This is the one platform where that answer moves on its own.** [withOwnFolder]
+     * rewrites the bookmark in place when a resolution comes back stale — the same folder,
+     * addressed differently now — so two readings of a folder nobody has re-pointed at can
+     * still fingerprint apart. Nothing here can promise otherwise; see [FolderIdentity]'s
+     * own comment for which comparison that leaves safe to make.
+     */
+    override val identity: FolderIdentity?
+        get() = defaults.dataForKey(KEY_BOOKMARK)?.let { folderIdentity(it.toByteArray()) }
 
     /**
      * Runs [block] against the app's own subfolder inside the folder somebody pointed at,
@@ -293,6 +312,20 @@ private inline fun <T> NSURL.withAccess(block: () -> T): T {
         if (claimed) {
             stopAccessingSecurityScopedResource()
         }
+    }
+}
+
+/**
+ * A plain copy of the bytes, for [IosBackupFolder.identity] to fingerprint — the one reason
+ * this exists, since every other reader of a bookmark here reads it as [NSData] and hands it
+ * straight to Foundation.
+ */
+private fun NSData.toByteArray(): ByteArray {
+    val size = length.toInt()
+    if (size == 0) return ByteArray(0)
+
+    return ByteArray(size).apply {
+        usePinned { pinned -> memcpy(pinned.addressOf(0), bytes, length) }
     }
 }
 

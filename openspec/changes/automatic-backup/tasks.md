@@ -124,11 +124,11 @@
 
 ## 11. Degrau 2 — a pasta apontada pelo usuário
 
-- [ ] 11.1 Android: `ActivityResultContracts.OpenDocumentTree` + `takePersistableUriPermission`,
+- [x] 11.1 Android: `ActivityResultContracts.OpenDocumentTree` + `takePersistableUriPermission`,
       persistindo **apenas o tree URI**; subpasta própria criada dentro da escolhida
-- [ ] 11.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
+- [x] 11.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
       completa, não com `DocumentFile` (1 + 3N consultas)
-- [ ] 11.3 Android: sugerir `Documents/` ao abrir o seletor — conveniência, não correção: só
+- [x] 11.3 Android: sugerir `Documents/` ao abrir o seletor — conveniência, não correção: só
       `Download` em si é recusada, e uma subpasta dela serve como destino
 - [ ] 11.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
       balanceados em `finally`, e `NSFileCoordinator` na escrita e na remoção

@@ -112,7 +112,7 @@
 
 ## 10. Degrau 2 — spikes, antes de qualquer implementação
 
-- [ ] 10.1 **Q1, iOS, aparelho real**: escolher uma pasta com `UIDocumentPickerViewController` e
+- [x] 10.1 **Q1, iOS, aparelho real**: escolher uma pasta com `UIDocumentPickerViewController` e
       `UTTypeFolder`, guardar o bookmark, **reiniciar o aparelho**, resolver e escrever. Medir as
       duas variantes de **resolução** — com e sem `NSURLBookmarkResolutionWithoutImplicitStartAccessing`
       —, porque resolver já inicia o acesso a menos que ela seja passada; na criação não há variante
@@ -150,9 +150,8 @@
 ## 12. Fechamento
 
 - [x] 12.1 `./gradlew jvmTest` verde
-- [ ] 12.2 Exercitar o degrau 2 em aparelho nas duas plataformas móveis: escolher pasta, capturar,
-      reiniciar o app, capturar de novo, listar, reter, restaurar. **Metade**: Android exercitado
-      ponta a ponta; iOS não existe enquanto Q1 não for medida em aparelho
+- [x] 12.2 Exercitar o degrau 2 em aparelho nas duas plataformas móveis: escolher pasta, capturar,
+      reiniciar o app, capturar de novo, listar, reter, restaurar
 - [x] 12.3 Exercitar o reencontro: desinstalar, reinstalar, reapontar a pasta, ver o histórico e
       restaurar
 - [ ] 12.4 Revisar `design.md` — fechar Q1 e Q2 com o que foi medido, e deixar Q3 registrada

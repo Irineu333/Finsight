@@ -27,6 +27,18 @@ data class BackupHistoryUiState(
     val destination: VaultDestination = VaultDestination.APP_STORAGE,
 
     /**
+     * [destination]'s own name, when it is a folder the platform can currently name — never
+     * a path, and never anything that could reopen it (design D2; see
+     * [com.neoutils.finsight.ui.screen.backup.service.BackupFolder.displayName]).
+     *
+     * Null while [destination] is the app's own storage, which has no name to give; null
+     * while nothing has been pointed at; and null while the platform cannot currently say.
+     * [com.neoutils.finsight.ui.screen.backup.destinationLabel] falls back to the rung's own
+     * words in every one of those cases.
+     */
+    val folderName: String? = null,
+
+    /**
      * Whether copies will go on arriving, which is what the empty state has to say — and
      * what the two controls that write into the destination are offered on (design D1).
      */

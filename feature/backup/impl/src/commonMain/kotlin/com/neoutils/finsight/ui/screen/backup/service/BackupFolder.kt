@@ -17,10 +17,11 @@ import com.neoutils.finsight.extension.PlatformContext
  * thing this feature does, because it is reached by somebody who has just lost everything.
  *
  * **Nothing here hands out a path, or anything else that could open the folder** (design
- * D2). What a caller can learn is [FolderLink] — three words about the link — and what it
- * can do is [point] at a folder or ask. Where the copies actually go is
- * [BackupDestination]'s, and each platform's implementation of that is what holds the tree
- * `Uri`, the security-scoped `NSURL` or the path, privately.
+ * D2). What a caller can learn is [FolderLink] — three words about the link — [displayName]
+ * — the folder's own name, which is not a handle and opens nothing — and what it can do is
+ * [point] at a folder or ask. Where the copies actually go is [BackupDestination]'s, and each
+ * platform's implementation of that is what holds the tree `Uri`, the security-scoped
+ * `NSURL` or the path, privately.
  *
  * **It is not the destination, and the split is deliberate.** A destination is asked to
  * write, list and remove with nobody in front of the screen; this is the one part of the
@@ -75,6 +76,23 @@ interface BackupFolder {
      * something changed.
      */
     val identity: FolderIdentity?
+
+    /**
+     * What the folder is called, as far as this platform can say without handing out
+     * anything that could open it (design D2) — never a path, an absolute address, or
+     * anything that would double as one.
+     *
+     * Null when nothing is pointed at, and null when this platform cannot currently read a
+     * name for it — a reason to fall back to a generic sentence, never one to report as a
+     * refusal: a caller that only wants something readable does not need the failure a
+     * listing would have to explain.
+     *
+     * It is `suspend` because two of the three platforms cannot answer without asking the
+     * file system: Android queries the provider for the display name, and iOS resolves the
+     * bookmark far enough to read `lastPathComponent` off the url. The desktop already holds
+     * the last segment of a path it never hands out, so answering there costs nothing.
+     */
+    suspend fun displayName(): String?
 }
 
 /**
@@ -116,4 +134,6 @@ object NoBackupFolder : BackupFolder {
     override suspend fun link(): FolderLink = FolderLink.NONE
 
     override val identity: FolderIdentity? = null
+
+    override suspend fun displayName(): String? = null
 }

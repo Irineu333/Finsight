@@ -99,6 +99,21 @@ class VaultFolder(
         }
 
     /**
+     * The folder's own name, for a screen to show — never a path, and never anything that
+     * could reopen it (design D2; see [BackupFolder.displayName] for what each platform may
+     * answer with).
+     *
+     * Null on the same terms [location] leaves [VaultLocation.folder] null: while
+     * [VaultRung.inForce] is [VaultDestination.APP_STORAGE] the question does not apply,
+     * since that rung has no name of its own to give. It is asked fresh rather than cached,
+     * for the same reason
+     * every other read here is: a name held past the call that moves the rung is a name that
+     * can go on describing a folder no longer in force.
+     */
+    suspend fun displayName(): String? =
+        if (rung.inForce == VaultDestination.USER_FOLDER) folder.displayName() else null
+
+    /**
      * Asks whether the folder is still reachable, and publishes the answer.
      *
      * This is the second of design D4's three moments, and task 11.7: it runs when the app

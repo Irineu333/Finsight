@@ -104,6 +104,15 @@ class JvmBackupFolder(
         get() = settings.getStringOrNull(KEY_FOLDER)?.let(::folderIdentity)
 
     /**
+     * The chosen path's own last segment — never the path itself, which stays `internal` to
+     * this module (design D2). Unlike [identity] this asks nothing of the file system: a
+     * path's name is a property of its text, so a folder that has since been renamed or
+     * removed still answers the name it was chosen under.
+     */
+    override suspend fun displayName(): String? =
+        chosenFolder()?.name?.takeIf { it.isNotBlank() }
+
+    /**
      * The folder the copies go in, or null when nothing has been pointed at.
      *
      * `internal` and answering a [File] is the one concession to the platform, and it goes

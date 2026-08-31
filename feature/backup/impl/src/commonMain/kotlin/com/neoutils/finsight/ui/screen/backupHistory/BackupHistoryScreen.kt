@@ -203,7 +203,7 @@ fun BackupHistoryScreen(
             verticalArrangement = Arrangement.spacedBy(RowGap),
         ) {
             DestinationHeader(
-                where = destinationLabel(uiState.destination),
+                where = destinationLabel(uiState.destination, uiState.folderName),
                 // Only once the destination has answered. A summary built before that would
                 // be counting a folder nobody has read, and "no copies" is an answer there
                 // is none to give yet (design D9).
@@ -483,10 +483,13 @@ private fun ActionTile(
  * repeated it. Tapping it opens the two rungs side by side with what each does *not* cover,
  * which is where that comparison belongs — at the moment of choosing (design D3).
  *
- * Where is the destination said in its own words, never a path: a folder is a
- * security-scoped handle on iOS and a tree `Uri` on Android, and neither survives being
- * turned into text (design D2). What the app can name is the rung of protection in force,
- * and that is what a person recognises anyway.
+ * Where is the folder's own name, once the destination has answered with one — a display
+ * name is not a handle, so naming it is not what design D2 forbids: a folder is still never
+ * a security-scoped handle on iOS or a tree `Uri` on Android, neither of which survives being
+ * turned into text, but the word a person reads on a folder in Files or in a file manager is
+ * neither. What falls back to the rung's own sentence is everything else — nothing pointed
+ * at yet, a platform that cannot currently say, or the app's own storage, which has no name
+ * to give.
  *
  * **The summary is absent until the destination has answered**, rather than reading zero: a
  * count over a folder nothing has read would be design D9's forbidden sentence at the top of

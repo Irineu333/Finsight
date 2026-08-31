@@ -71,6 +71,9 @@ class VaultFolderTest {
         // real path.
         override val identity: FolderIdentity?
             get() = if (linked == FolderLink.NONE) null else folderIdentity("stub-folder")
+
+        override suspend fun displayName(): String? =
+            if (linked == FolderLink.NONE) null else "stub-folder"
     }
 
     private val folder = VaultFolder(state = state, folder = stub)
@@ -125,6 +128,37 @@ class VaultFolderTest {
         assertTrue(folder.pointAt(context).isLeft())
 
         assertEquals(VaultDestination.APP_STORAGE, destination)
+    }
+
+    // ----------------------------------------------------------------------- naming it
+
+    /**
+     * The question does not apply while the copies are going inside the app — see
+     * [VaultLocation.folder], which [displayName] follows the same reasoning as.
+     */
+    @Test
+    fun `there is no name while the copies are going inside the app`() = runTest {
+        assertEquals(null, folder.displayName())
+    }
+
+    @Test
+    fun `the name is the stub folder's once one is pointed at`() = runTest {
+        folder.pointAt(context)
+
+        assertEquals("stub-folder", folder.displayName())
+    }
+
+    @Test
+    fun `moving back inside the app gives up the name along with the rung`() = runTest {
+        folder.pointAt(context)
+
+        folder.keepInsideApp()
+
+        assertEquals(
+            null,
+            folder.displayName(),
+            "the app's own storage was named after a folder it does not use",
+        )
     }
 
     // ------------------------------------------------------------ moving back and forth

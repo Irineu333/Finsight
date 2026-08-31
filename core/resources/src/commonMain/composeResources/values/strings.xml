@@ -1031,6 +1031,7 @@
     <string name="backup_last_overdue">Mais antigo que o intervalo de %1$s. Abra o app com mais frequência para que uma cópia nova seja feita.</string>
     <string name="backup_destination_app">Dentro do app</string>
     <string name="backup_destination_folder">Numa pasta que você escolheu</string>
+    <string name="backup_destination_folder_named">Na pasta "%1$s"</string>
     <string name="backup_coverage_app">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</string>
     <string name="backup_coverage_folder">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</string>
     <string name="backup_destination_title">Onde as cópias ficam</string>

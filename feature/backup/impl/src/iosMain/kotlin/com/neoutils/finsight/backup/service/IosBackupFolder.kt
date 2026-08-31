@@ -164,6 +164,21 @@ class IosBackupFolder(
         get() = defaults.dataForKey(KEY_BOOKMARK)?.let { folderIdentity(it.toByteArray()) }
 
     /**
+     * The chosen folder's own `lastPathComponent`, or null when nothing is pointed at or the
+     * bookmark will not resolve to something that still lists — the same reading [link]
+     * takes, so a name is never offered for a folder that is not actually there.
+     *
+     * `lastPathComponent` is the one property this reads off the url. Everything else here
+     * goes on refusing `path` and `absoluteString` (design D2): a last path segment names the
+     * folder without addressing it, and nothing here can turn it back into a location.
+     */
+    override suspend fun displayName(): String? = withContext(Dispatchers.Default) {
+        withChosenFolder(BackupError.EXPORT_FAILED) { url ->
+            url.lastPathComponent?.right() ?: BackupError.EXPORT_FAILED.left()
+        }.getOrNull()
+    }
+
+    /**
      * Runs [block] against the folder somebody pointed at, with access to it claimed for
      * exactly that long.
      *

@@ -102,6 +102,22 @@ class AndroidBackupFolder(
         get() = settings.getStringOrNull(KEY_TREE)?.let(::folderIdentity)
 
     /**
+     * What the provider calls the chosen folder, or null when nothing is pointed at or the
+     * provider will no longer describe it.
+     *
+     * It costs one query over the tree's own root document — [ChosenFolder.uri] built from
+     * the remembered tree, never from a listing — and not [chosenFolder]'s full reachability
+     * check: a caller asking for a name is asking something readable, not proof the folder
+     * can currently be written into.
+     */
+    override suspend fun displayName(): String? = withContext(Dispatchers.IO) {
+        val tree = storedTree() ?: return@withContext null
+        Either.catch {
+            appContext.contentResolver.documentAt(ChosenFolder(tree).uri)?.name
+        }.getOrNull()
+    }
+
+    /**
      * The chosen folder as the provider describes it now, or null when nothing has been
      * pointed at and when what was pointed at cannot be reached.
      *

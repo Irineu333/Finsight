@@ -23,6 +23,7 @@ import com.neoutils.finsight.resources.backup_copies_one
 import com.neoutils.finsight.resources.backup_confirm_origin_unknown
 import com.neoutils.finsight.resources.backup_destination_app
 import com.neoutils.finsight.resources.backup_destination_folder
+import com.neoutils.finsight.resources.backup_destination_folder_named
 import com.neoutils.finsight.resources.backup_platform_android
 import com.neoutils.finsight.resources.backup_platform_desktop
 import com.neoutils.finsight.resources.backup_platform_ios
@@ -168,12 +169,23 @@ fun originWithVersion(origin: FileOrigin?): String {
 /**
  * Where the copies are, said as the place a person recognises rather than as a path — the
  * consequence of choosing it is what the coverage sentence beside it is for.
+ *
+ * **[folderName] is the folder's own name, and it replaces the generic sentence once a
+ * caller has one to give.** It is never a path and never anything that could reopen the
+ * folder (design D2) — see
+ * [com.neoutils.finsight.ui.screen.backup.service.BackupFolder.displayName]. Left null, the
+ * generic sentence stands: not every caller has read the destination, and a settings row that
+ * names the rung without waiting on a folder to answer is a decision of its own (see the
+ * backup screen's own tile).
  */
 @Composable
-fun destinationLabel(destination: VaultDestination): String = when (destination) {
-    VaultDestination.APP_STORAGE -> stringResource(Res.string.backup_destination_app)
-    VaultDestination.USER_FOLDER -> stringResource(Res.string.backup_destination_folder)
-}
+fun destinationLabel(destination: VaultDestination, folderName: String? = null): String =
+    when (destination) {
+        VaultDestination.APP_STORAGE -> stringResource(Res.string.backup_destination_app)
+        VaultDestination.USER_FOLDER -> folderName
+            ?.let { stringResource(Res.string.backup_destination_folder_named, it) }
+            ?: stringResource(Res.string.backup_destination_folder)
+    }
 
 /**
  * What a month is worth when a span is being said out loud: a round thirty days, and not a

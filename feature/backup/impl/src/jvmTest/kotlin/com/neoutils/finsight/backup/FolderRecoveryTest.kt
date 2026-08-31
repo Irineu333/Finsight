@@ -1006,6 +1006,56 @@ class FolderRecoveryTest {
         assertEquals(0, after.copiesInForce.count, "the app's own count survived the move")
     }
 
+    // -------------------------------------------------------------- the folder's own name
+
+    /**
+     * The complaint this rung exists to answer: somebody who pointed at a folder can read
+     * which one from the screen, not only that a folder was chosen (design D2 — a display
+     * name is not a handle).
+     */
+    @Test
+    fun `the header names the folder somebody actually pointed at`() = runTest {
+        pointAt(chosen)
+        state.setOn(true)
+
+        val screen = historyViewModel()
+        val after = screen.awaitHistory("the folder was never named") { it.folderName != null }
+
+        assertEquals(chosen.name, after.folderName)
+    }
+
+    /** The app's own storage has no name to give, and the header must not invent one. */
+    @Test
+    fun `there is no name over the app's own storage`() = runTest {
+        state.setOn(true)
+
+        val screen = historyViewModel()
+        val after = screen.awaitHistory("the first listing never landed") { !it.isLoading }
+
+        assertEquals(VaultDestination.APP_STORAGE, after.destination)
+        assertNull(after.folderName)
+    }
+
+    /**
+     * The same guard [BackupUiState.copiesInForce] stands for a count applies to the name: a
+     * folder's name must not be shown over copies that are actually landing inside the app
+     * while the link is down (design D12).
+     */
+    @Test
+    fun `a fallen link is never named over the app's own storage it fell back to`() = runTest {
+        pointAt(chosen)
+        state.setOn(true)
+        captureSomethingNew("coffee")
+        folderGoesAway()
+
+        val screen = historyViewModel()
+        val after = screen.awaitHistory("the fallback was never read") {
+            it.destination == VaultDestination.APP_STORAGE
+        }
+
+        assertNull(after.folderName, "the folder that fell was named over the app's own storage")
+    }
+
     // --------------------------------------------------- nothing moves without being asked
 
     /**

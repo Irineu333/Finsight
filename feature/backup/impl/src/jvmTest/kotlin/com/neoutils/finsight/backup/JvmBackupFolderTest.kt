@@ -116,4 +116,35 @@ class JvmBackupFolderTest {
             notADirectory.delete()
         }
     }
+
+    // ------------------------------------------------------------------- naming it
+
+    @Test
+    fun `there is no name until something is pointed at`() = runTest {
+        assertEquals(null, folder.displayName())
+    }
+
+    @Test
+    fun `the name is the chosen folder's own last segment, never its path`() = runTest {
+        folder.pointAt(chosen)
+
+        assertEquals(chosen.name, folder.displayName())
+        assertFalse(
+            folder.displayName().orEmpty().contains(File.separator),
+            "the name carried the path it is not allowed to be",
+        )
+    }
+
+    /**
+     * A path's name is a property of its text, not a claim about the file system — the same
+     * reason [displayName] costs nothing, unlike [FolderIdentity]. A folder somebody deleted
+     * still answers the name it was chosen under; [link] is what says it is gone.
+     */
+    @Test
+    fun `the name still answers after the folder is deleted`() = runTest {
+        folder.pointAt(chosen)
+        chosen.deleteRecursively()
+
+        assertEquals(chosen.name, folder.displayName())
+    }
 }

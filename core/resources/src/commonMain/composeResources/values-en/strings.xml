@@ -1030,6 +1030,7 @@
     <string name="backup_last_overdue">Older than the %1$s interval. Open the app more often so that a new copy is taken.</string>
     <string name="backup_destination_app">Inside the app</string>
     <string name="backup_destination_folder">In a folder you chose</string>
+    <string name="backup_destination_folder_named">In the folder "%1$s"</string>
     <string name="backup_coverage_app">The copies stay on this device and inside the app. Uninstalling the app takes all of them with it, and getting your data back on another device still depends on the file you export.</string>
     <string name="backup_coverage_folder">The copies stay in the folder you chose and remain there if you uninstall the app. Covering the loss of the device depends on that folder being synced by some cloud service.</string>
     <string name="backup_destination_title">Where the copies are kept</string>

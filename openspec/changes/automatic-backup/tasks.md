@@ -114,8 +114,10 @@
 
 - [ ] 10.1 **Q1, iOS, aparelho real**: escolher uma pasta com `UIDocumentPickerViewController` e
       `UTTypeFolder`, guardar o bookmark, **reiniciar o aparelho**, resolver e escrever. Medir as
-      duas variantes de criação do bookmark. Critério: se não sobreviver, o degrau 2 no iOS precisa
-      de outro desenho e esta entrega para aqui
+      duas variantes de **resolução** — com e sem `NSURLBookmarkResolutionWithoutImplicitStartAccessing`
+      —, porque resolver já inicia o acesso a menos que ela seja passada; na criação não há variante
+      que valha comparar no iOS. Critério: se não sobreviver, o degrau 2 no iOS precisa de outro
+      desenho e esta entrega para aqui
 - [x] 10.2 **Q2, Android, aparelho ou emulador**: verificar se uma subpasta de `Download` é
       selecionável em `ACTION_OPEN_DOCUMENT_TREE`; e estabelecer o que decide quais raízes o
       seletor de pasta oferece

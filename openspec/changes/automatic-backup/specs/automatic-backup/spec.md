@@ -274,11 +274,18 @@ O app MUST NOT apresentar o cofre como ativo sem exibir essa informação. Um co
 funcionar sem defeito e sem ação do usuário — acesso revogado, pasta removida, app suspenso pelo
 sistema —, e esse instante é o único meio pelo qual a pessoa descobre que a proteção parou.
 
-O app SHALL sinalizar quando esse instante for mais antigo que o intervalo configurado.
+O app SHALL sinalizar quando esse instante for mais antigo que o intervalo configurado,
+enquanto a verificação na abertura estiver ligada. Desligada, não há intervalo em vigor contra o
+qual atrasar, e o aviso mandaria a pessoa abrir o app para uma cópia que abrir o app não produz.
 
 #### Scenario: O cofre parou em silêncio
-- **WHEN** nenhuma captura acontece por um período maior que o intervalo configurado
+- **WHEN** a verificação na abertura está ligada e nenhuma captura acontece por um período maior
+  que o intervalo configurado
 - **THEN** a tela mostra o instante antigo e sinaliza que a última cópia está atrasada
+
+#### Scenario: Sem verificação na abertura, nada está atrasado
+- **WHEN** a verificação na abertura está desligada e a última captura é antiga
+- **THEN** a tela mostra o instante e o destino, e não sinaliza atraso
 
 #### Scenario: Nunca capturou
 - **WHEN** o cofre acaba de ser ligado e nenhuma cópia foi feita ainda

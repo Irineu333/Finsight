@@ -100,9 +100,13 @@ round-trip exatamente onde ele é proibido.
 
 O degrau 1 é o armazenamento privado do app; o degrau 2 é a pasta que o usuário aponta. O degrau 1
 não sobrevive à desinstalação em nenhuma plataforma móvel — `getExternalFilesDir()` é documentado
-como removido na desinstalação, e o sandbox do iOS é apagado inteiro, com o keychain como única
-exceção. No desktop os dois degraus coincidem: `~/.finance/` (`Database.jvm.kt:12`) sobrevive por
-natureza.
+como removido na desinstalação, e o sandbox do iOS é apagado com o app. O que sobrevive no iOS
+sobrevive **por estar fora do sandbox**, não por exceção dentro dele — o container iCloud do app
+(recusado adiante), o banco privado do CloudKit, os containers de *app group* —, e o keychain não
+entra nessa conta como garantia: a Apple nunca o prometeu como contrato, e Quinn descreve a
+sobrevivência como *"an artefact of the implementation rather than a designed-in feature"*. Nada do
+cofre se apoia nisso. No desktop os dois degraus coincidem: `~/.finance/`
+(`Database.jvm.kt:12`) sobrevive por natureza.
 
 Isso é escada de proteção com custo crescente, e a tela nomeia os degraus. O ganho de escopo é o
 argumento decisivo: **o produto inteiro — os três gatilhos, a regra da cópia, o histórico, a
@@ -115,8 +119,32 @@ não, e o app reinstalado precisa de diálogo do sistema por operação para apa
 criou; em Android 13+ com `targetSdk 36` não existe permissão que devolva acesso a um `.db`, porque
 as granulares cobrem imagem, vídeo e áudio. `MANAGE_EXTERNAL_STORAGE` — a política do Google exige
 *core functionality* ("sem a qual o app está quebrado"), que um app de finanças não satisfaz.
-Container iCloud do app — exige entitlement e conta paga, depende de o usuário estar logado, e a
-Apple não documenta o que acontece com esses dados na desinstalação.
+
+**Container iCloud do app — recusado, e vale registrar por quê, porque o mecanismo funciona.** Ele
+alcança o objetivo do degrau 2 sem seletor, sem bookmark e sem a pergunta do reboot:
+`URLForUbiquityContainerIdentifier:` (`NSFileManager.h:315`, `ios(5.0)`) devolve a raiz do container
+a partir do identificador, e é a primeira chamada que faz o sistema estender o sandbox do app para
+incluí-lo; publicando `Documents/` com `NSUbiquitousContainerIsDocumentScopePublic`, as cópias
+aparecem para a pessoa no app Arquivos. Não há vínculo a cair porque não há vínculo — há um
+identificador, e ele encontra a pasta.
+
+O que o recusa é o preço somado à incógnita. **O preço:** três entitlements; conta **paga** de
+desenvolvedor, porque o nível gratuito não carrega a capability; perfil de provisionamento regerado,
+porque um App ID modificado invalida os perfis existentes; os 5 GB de iCloud da própria pessoa,
+disputados com o resto do aparelho dela; e a pessoa logada, com o interruptor do app ligado. Contra
+isso, um projeto que hoje **não tem arquivo de entitlements algum** — `iosApp/project.yml` não
+declara nenhum, e `iosApp/iosApp/Info.plist` não traz `UIFileSharingEnabled` nem
+`LSSupportsOpeningDocumentsInPlace`. Seria o primeiro degrau a custar dinheiro para existir. **E a
+incógnita não some com o pagamento:** se os arquivos do container sobrevivem a apagar e reinstalar o
+app não está documentado — nem que sobrevivem, nem que não —, de modo que ele não escapa da mesma
+lacuna que o degrau 1 já tem. Por fim, ele tensiona o argumento com que D14 e D16 aceitam nuvem,
+*"quem espalha é o usuário, escolhendo uma pasta externa"*: o container é a nuvem **do próprio app**,
+não uma que a pessoa apontou. *Do que está acima, foram lidos na fonte o símbolo
+(`NSFileManager.h:315`) e o estado do projeto; entitlements, conta paga e reemissão de perfil vêm de
+relato, não de leitura direta da documentação.*
+
+Se Q1 voltar negativa em aparelho real, esta recusa merece ser reexaminada — e o container é o
+primeiro lugar a olhar.
 
 ### D4 — Apontar a pasta é uma máquina só, usada em três momentos
 
@@ -286,11 +314,13 @@ uma segunda condição espalhada.
 
 ### D12 — Quando o vínculo cair, avisa, oferece, e não deixa buraco
 
-O vínculo **vai** cair, e isso é comportamento documentado, não defeito: no iOS o bookmark pode
-expirar num update maior do sistema (precedente real — a Apple force-expirou todos os bookmarks no
-iOS 14 e fechou o relato como "funcionando conforme esperado") e o usuário pode revogar em
-*Ajustes › Privacidade › Arquivos e Pastas*; nas duas plataformas, mover ou apagar a pasta invalida
-o acesso.
+O vínculo **vai** cair, e isso não é defeito: no iOS o usuário pode revogar o acesso em
+*Ajustes › Privacidade › Arquivos e Pastas*, e nas duas plataformas mover ou apagar a pasta o
+invalida. Corre também o relato de que um update maior do sistema expira bookmarks — de que a Apple
+teria force-expirado todos os bookmarks no iOS 14 e fechado o caso como "funcionando conforme
+esperado". *Esse precedente está sem fonte rastreável: ninguém o releu na origem, e ele não deve
+sustentar sozinho nenhuma decisão nova.* O que sustenta esta decisão são a revogação e o caminho da
+pasta, que não dependem dele.
 
 Somado ao fato de que trabalho de fundo pode parar em silêncio, isso reposiciona a tela: **o
 elemento mais importante dela não é o interruptor, é a linha que diz quando foi o último backup
@@ -411,10 +441,12 @@ nos dois sentidos. Ninguém construiu isso.
   (`ExchangeRateFormModal.kt:348-349`). É a única exclusão de dado do usuário sem confirmação no
   app, e está entre as seis do preventivo.
   → Idem: coberta aqui, corrigida noutra entrega.
-- **O bookmark do iOS pode não sobreviver a reboot.** A única frase da documentação da Apple que se
-  aplica ao iOS — a de `withoutImplicitSecurityScope`, sobre o escopo implícito que todo bookmark
-  sem `.withSecurityScope` carrega automaticamente ali — diz que esse escopo vale *"até o reboot, no
-  máximo"*, e é o maior risco em aberto do degrau 2.
+- **O bookmark do iOS pode não sobreviver a reboot, e a documentação não diz.** A Apple documenta
+  persistência entre *lançamentos* do app e não afirma nem nega nada sobre reinício do aparelho; a
+  única frase que fala em reboot é um teto sobre o escopo implícito, não uma previsão de duração
+  (Q1). É o maior risco em aberto do degrau 2. Um caso já se sabe negativo — pasta em volume externo
+  ou removível, que quebra na remontagem por bug reconhecido da Apple —, e ele cai dentro do desenho
+  aceito (D16), não contra ele.
   → Q1, spike obrigatório e primeira tarefa do degrau 2. Se não sobreviver, o degrau 2 no iOS não
   existe na forma desenhada.
 - **O gatilho preventivo entra no caminho crítico de uma exclusão.** `VACUUM INTO` precisa de
@@ -457,25 +489,50 @@ segunda, e começa pelos dois spikes.
 
 ### Q1 — O bookmark de pasta do iOS sobrevive a reboot?
 
-Não há duas variantes de criação a comparar no iOS. `NSURLBookmarkCreationWithSecurityScope` é
-`API_UNAVAILABLE(ios, watchos, tvos)` (`NSURL.h:425` do SDK do iOS 18.5) e a documentação da Apple
-lista o símbolo como disponível só a partir do macOS 10.7 — não é uma opção que o iOS ofereça e
-descarte às vezes, é um símbolo que não existe fora do macOS. A afirmação de persistência entre
-reinícios também é de documentação de **macOS**, e está presa a essa mesma opção; ela nunca falou
-de iOS porque a opção a que se prende não chega ao iOS.
+**O que se mede é a resolução, não a criação.** No iOS não existem duas variantes de criação a
+comparar: `NSURLBookmarkCreationWithSecurityScope` é `API_UNAVAILABLE(ios, watchos, tvos)`
+(`NSURL.h:425`, SDK do iOS 18.5) — não é uma opção que o iOS ofereça e descarte às vezes, é um
+símbolo que não existe fora do macOS. A única opção de criação que o iOS aceita e que mexe em escopo
+é `NSURLBookmarkCreationWithoutImplicitSecurityScope` (`NSURL.h:427`, `ios(5.0)`), e ela **suprime**
+o escopo implícito: passá-la é garantir a falha, não medi-la. O eixo real está do outro lado.
+`NSURLBookmarkResolutionWithoutImplicitStartAccessing` (`NSURL.h:434`, `ios(14.2)`) existe porque
+resolver no iOS **inicia o acesso implicitamente**, a menos que a opção seja passada — o próprio
+cabeçalho chama o que é iniciado ali de *"the ephemeral security-scoped resource"*. É essa opção que
+a medição varia, e é ela que decide também se o par `start`/`stop` em volta do uso está balanceado
+ou está parando um acesso que nunca abriu.
 
-A variação real no iOS é outra: todo bookmark criado sem essa opção — `[]`, e `.minimalBookmark`
-junto, que só encolhe o dado e não toca o escopo — carrega automaticamente um escopo de segurança
-implícito e efêmero; `.withoutImplicitSecurityScope` é a opção que suprime esse embutimento. É do
-primeiro, o escopo implícito automático, que o degrau 2 depende, e é sobre ele que a página de
-`withoutImplicitSecurityScope` escreve, na única frase da documentação da Apple que se aplica ao
-iOS: *"Bookmarks that you create without security scope automatically carry implicit ephemeral
-security scope. This security scope is valid until reboot at the latest, and confers access to the
-resource to any other process that resolves the bookmark."* Não é uma medição — é a única fonte que
-existe até hoje, e ela aponta para o lado que o critério abaixo já trata como falha.
+**A documentação não responde, em nenhuma direção.** A Apple documenta que o bookmark sobrevive a
+*lançamentos* do app; sobre reinício do aparelho, não afirma nem nega. A única frase que alguém
+tomaria por resposta é a da página de `withoutImplicitSecurityScope`, sobre o escopo implícito que
+todo bookmark criado sem `.withSecurityScope` carrega automaticamente ali: *"Bookmarks that you
+create without security scope automatically carry implicit ephemeral security scope. This security
+scope is valid until reboot at the latest, and confers access to the resource to any other process
+that resolves the bookmark."* Ela é um **teto** sobre uma conveniência transitória entre processos —
+o assunto da página é impedir que outro processo ganhe acesso resolvendo um bookmark entregue a ele
+—, e um teto não é uma previsão: dizer que algo não passa do reboot não é dizer que chega até lá.
+Quem responde pela área na Apple trata a persistência como coisa a medir, não a ler. No fórum de
+desenvolvedores (thread 797469, *"iOS folder bookmarks"*, ago/set de 2025), a instrução de Kevin
+Elliott, engenheiro do DTS, é *"Make sure you test how things work after you reboot the device."*, e
+sobre o escopo em si ele escreve que `NSURLBookmarkCreationWithSecurityScope` *"isn't defined on iOS
+because the system doesn't really allow you to create bookmarks that DON'T have security scope, at
+least not in the way macOS does."* — no iOS o bookmark carrega escopo por construção, e **quanto
+tempo esse escopo dura é o que ninguém documentou**. A pergunta está genuinamente em aberto: nenhum
+dos dois lados tem fonte, e a documentação não é prova de nenhum deles.
 
-**Critério de aceitação**: escolher uma pasta, reiniciar o aparelho, resolver o bookmark e
-escrever. Se falhar, o degrau 2 no iOS precisa de outro desenho — e o degrau 1 segue intacto.
+**Um caso já está fechado, e é negativo.** Bookmark para volume externo ou removível não sobrevive à
+remontagem, e reiniciar remonta. No mesmo thread, Elliott atribui isso a um bug reconhecido — *"The
+problem here is that due to a bug (r.102995804), NSURL isn't able to resolve bookmarks across volume
+mounts."* —, com a consequência dita em seguida: *"bookmarks within the device work fine and
+bookmarks to other volumes initially work... but then break completely once the volume has been
+unmounted."* Isso não bloqueia nada. D16 já diz que o app não julga o provedor que a pessoa apontar,
+de modo que esse modo de falha está **dentro** do desenho aceito, e é a razão de o caminho de vínculo
+caído (D12) ser exercitado na prática, não só em teoria.
+
+**Critério de aceitação**: escolher uma pasta, guardar o bookmark, reiniciar o aparelho, resolver e
+escrever — **nas duas resoluções**, com e sem `NSURLBookmarkResolutionWithoutImplicitStartAccessing`,
+porque a que inicia o acesso sozinha pode passar onde a outra falha, e é de saber qual das duas vale
+que depende o par `start`/`stop` do destino. Se falhar, o degrau 2 no iOS precisa de outro desenho —
+e o degrau 1 segue intacto.
 
 **Segue aberta.** Medir exige um iPhone real, reiniciado entre guardar o bookmark e resolvê-lo, e
 não há aparelho disponível. O simulador foi tentado e não serve de atalho — vale registrar por que,

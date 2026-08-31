@@ -106,9 +106,9 @@
 ## 9. Fechamento do degrau 1
 
 - [x] 9.1 `./gradlew jvmTest` verde
-- [ ] 9.2 Verificar em app rodando (não só em teste) que ligar o cofre, capturar, listar, restaurar
+- [x] 9.2 Verificar em app rodando (não só em teste) que ligar o cofre, capturar, listar, restaurar
       e reter funcionam ponta a ponta em ao menos uma plataforma
-- [ ] 9.3 Fluxo Maestro para ligar o cofre e ver o histórico, seguindo `.maestro/README.md` §2
+- [x] 9.3 Fluxo Maestro para ligar o cofre e ver o histórico, seguindo `.maestro/README.md` §2
 
 ## 10. Degrau 2 — spikes, antes de qualquer implementação
 

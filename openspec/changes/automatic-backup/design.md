@@ -233,7 +233,7 @@ justamente para permitir acrescentá-lo depois sem falhar de modo obscuro.
 Contagem, não idade: o espaço fica previsível, nunca chega a zero por construção, e é o que a
 pessoa quer dizer quando pede que backups parem de acumular.
 
-**O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 10.** O espaço é do usuário nos
+**O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 20.** O espaço é do usuário nos
 dois casos, e um limite que a tela mostra é um limite que ela deixa escolher. "Tudo" transforma a
 retenção em algo que ele desliga em vez de sofrer.
 
@@ -291,8 +291,8 @@ Migrar é copiar para o destino novo e **deixar a origem intacta**. Se falhar no
 estão nos dois lugares: o pior caso é duplicata, nunca perda. Apagar a origem depois de copiar
 transformaria qualquer falha num jeito de perder o histórico.
 
-Migra apenas os N mais recentes que a retenção do destino comporta — copiar vinte para apagar dez
-em seguida é tráfego jogado fora.
+Migra apenas os N mais recentes que a retenção do destino comporta — copiar quarenta para
+apagar vinte em seguida é tráfego jogado fora.
 
 E o fluxo de troca **funciona sem acesso à origem**, porque o caso mais comum a longo prazo é
 justamente trocar de pasta *porque* o acesso à anterior caiu (D12).

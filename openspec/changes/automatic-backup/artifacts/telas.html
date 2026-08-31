@@ -963,7 +963,7 @@
   <div class="sh"><span class="n">06</span><h2>Os ajustes, e a pasta</h2></div>
   <p class="intro">
     Um interruptor, um intervalo e quantas cópias manter.
-    <strong>O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 10</strong> — o espaço é
+    <strong>O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 20</strong> — o espaço é
     do usuário nos dois casos, e um limite que a tela mostra é um limite que ela deixa escolher. Fora
     isso, não existe uma quinta coisa a ajustar: quais ações disparam a cópia é decidido no domínio,
     não na tela — a tela decide se a regra vale, nunca qual regra é.
@@ -996,13 +996,13 @@
           <div class="segwrap">
             <span class="seglabel">Quantas cópias manter</span>
             <div class="seg">
-              <span>5</span><span class="on">10</span><span>20</span><span>Todas</span>
+              <span>5</span><span>10</span><span class="on">20</span><span>Todas</span>
             </div>
           </div>
 
           <div class="outcome">
-            <span class="ov">Cerca de 30 dias de histórico</span>
-            <span class="oh">10 cópias de ~4 MB ocupam por volta de 42 MB.</span>
+            <span class="ov">Cerca de 60 dias de histórico</span>
+            <span class="oh">20 cópias de ~4 MB ocupam por volta de 84 MB.</span>
           </div>
         </div>
       </div>
@@ -1068,7 +1068,7 @@
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>"Verificar a cada", não "fazer uma cópia a cada".</b> A segunda promete periodicidade que nenhuma das três plataformas garante — e era uma frase que desfazia, num rótulo, a honestidade que o resto da proposta comprou caro. A linha de apoio diz por que, sem jargão.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>O preventivo sobe para o topo, como interruptor.</b> Ele é o gatilho que torna uma exclusão reversível — o mais consequente dos três. Estava rebaixado a um checkbox de rodapé, abaixo de oito rádios.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Escolha segmentada no lugar de oito rádios empilhados.</b> Quatro valores curtos e mutuamente exclusivos são exatamente o caso do <code>SingleChoiceSegmentedButtonRow</code>, e o sheet cabe na tela sem rolar.</div></div>
-    <div class="note"><span class="mk pg">5</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "10 cópias" são dois números abstratos; "cerca de 30 dias de histórico, por volta de 42 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
+    <div class="note"><span class="mk pg">5</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "20 cópias" são dois números abstratos; "cerca de 60 dias de histórico, por volta de 84 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
     <div class="note"><span class="mk pg">6</span><div class="nt"><b>"Todas" avisa em âmbar, e não é impedido.</b> Transforma a retenção em algo que o usuário desliga, em vez de algo que ele sofre — mas quem escolhe não apagar nada merece saber a que taxa a pasta cresce.</div></div>
     <div class="note"><span class="mk pg">7</span><div class="nt"><b>Cada opção de destino declara o que não cobre</b>, na própria linha. Escolher onde guardar é escolher contra o que se está protegido, e essa informação não pode estar noutra tela.</div></div>
     <div class="note"><span class="mk pg">8</span><div class="nt"><b>A frase sobre a nuvem difere por plataforma.</b> No iOS ela diz "escolha uma pasta no iCloud Drive", porque lá isso funciona. No Android nenhum provedor de nuvem aparece no seletor de pastas — verificado no código do AOSP —, então a frase é a genérica acima.</div></div>

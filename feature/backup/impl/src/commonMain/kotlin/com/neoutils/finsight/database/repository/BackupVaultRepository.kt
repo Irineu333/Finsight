@@ -152,7 +152,7 @@ class BackupVaultRepository(
         isPreventiveOn = settings.getBoolean(KEY_PREVENTIVE_ON, defaultValue = true),
         interval = settings.getLongOrNull(KEY_INTERVAL_SECONDS)?.seconds ?: DEFAULT_INTERVAL,
         retention = settings.enumOrNull(KEY_RETENTION, BackupRetention.entries)
-            ?: BackupRetention.TEN,
+            ?: BackupRetention.TWENTY,
         destination = settings.enumOrNull(KEY_DESTINATION, VaultDestination.entries)
             ?: VaultDestination.APP_STORAGE,
         lastCapturedAt = settings.getLongOrNull(KEY_CAPTURED_AT)

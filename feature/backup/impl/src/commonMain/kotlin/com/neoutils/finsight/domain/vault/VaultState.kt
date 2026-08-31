@@ -66,7 +66,7 @@ data class VaultState(
      * How many copies the vault keeps, wherever it writes them (design D10) — including
      * the choice to remove nothing at all.
      */
-    val retention: BackupRetention = BackupRetention.TEN,
+    val retention: BackupRetention = BackupRetention.TWENTY,
 
     /** Which of the two rungs the copies are going to (design D3). */
     val destination: VaultDestination = VaultDestination.APP_STORAGE,

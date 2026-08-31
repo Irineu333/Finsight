@@ -447,8 +447,10 @@
     <string name="create_invoice_confirm">Criar</string>
 
     <string name="delete_future_invoice_title">Excluir Fatura</string>
-    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>
-    <string name="delete_future_invoice_message_reversible">Tem certeza que deseja excluir esta fatura futura?</string>
+    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura? Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message_reversible">Tem certeza que deseja excluir esta fatura?</string>
+    <string name="delete_future_invoice_message_transactions">Tem certeza que deseja excluir esta fatura? A(s) %1$d transação(ões) lançada(s) nela serão removidas junto. Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message_transactions_reversible">Tem certeza que deseja excluir esta fatura? A(s) %1$d transação(ões) lançada(s) nela serão removidas junto.</string>
     <string name="delete_future_invoice_confirm">Excluir</string>
 
     <!-- Pay Invoice Modal -->
@@ -882,7 +884,7 @@
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>
     <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
     <string name="settings_backup_title">Backup</string>
-    <string name="settings_backup_subtitle">Exporte seus dados para um arquivo ou restaure a partir de um</string>
+    <string name="settings_backup_subtitle">Mantenha cópias automáticas, exporte seus dados para um arquivo ou restaure a partir de um</string>
 
     <string name="exchange_rates_screen_title">Taxas de câmbio</string>
     <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
@@ -935,6 +937,10 @@
     <string name="currencies_delete_confirm_message_rates">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto. Não é possível desfazer.</string>
     <string name="currencies_delete_confirm_message_rates_reversible">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto.</string>
     <string name="currencies_delete_confirm_action">Apagar</string>
+    <string name="delete_exchange_rate_title">Remover a taxa %1$s/%2$s?</string>
+    <string name="delete_exchange_rate_message">A taxa deixa de existir e não é possível desfazer.</string>
+    <string name="delete_exchange_rate_message_reversible">A taxa deixa de existir.</string>
+    <string name="delete_exchange_rate_confirm">Remover</string>
 
     <string name="view_currency_base_label">Moeda base</string>
     <string name="view_currency_accounts">Contas nesta moeda</string>
@@ -1018,7 +1024,10 @@
     <string name="backup_interval_15">15 dias</string>
     <string name="backup_last_title">Último backup</string>
     <string name="backup_last_never">Ainda nenhum</string>
-    <string name="backup_last_never_hint">A primeira cópia acontece quando você lançar algo ou na próxima vez que abrir o app.</string>
+    <string name="backup_last_never_hint">A primeira cópia é feita na próxima vez que você abrir o app ou antes de você excluir algo.</string>
+    <string name="backup_last_never_hint_periodic">A primeira cópia é feita na próxima vez que você abrir o app.</string>
+    <string name="backup_last_never_hint_preventive">A primeira cópia é feita antes de você excluir algo.</string>
+    <string name="backup_last_never_hint_update_only">A primeira cópia é feita apenas antes de uma atualização que reescreve o banco de dados.</string>
     <string name="backup_last_overdue">Mais antigo que o intervalo de %1$s. Abra o app com mais frequência para que uma cópia nova seja feita.</string>
     <string name="backup_destination_app">Dentro do app</string>
     <string name="backup_destination_folder">Numa pasta que você escolheu</string>
@@ -1051,9 +1060,10 @@
     <string name="backup_history_subtitle">%1$s · a mais recente %2$s</string>
     <string name="backup_history_summary">%1$s · %2$s no total</string>
     <string name="backup_history_empty_title">Nenhuma cópia ainda</string>
-    <string name="backup_history_empty_message">A primeira acontece quando você lançar algo, ou antes da próxima exclusão.</string>
+    <string name="backup_history_empty_message">A primeira é feita na próxima vez que você abrir o app, ou antes da próxima exclusão.</string>
     <string name="backup_history_empty_off">O cofre está desligado. Ligue-o na tela de backup para o app começar a guardar cópias.</string>
     <string name="backup_history_failed">Não foi possível ler as cópias guardadas.</string>
+    <string name="backup_history_failed_title">Não foi possível ler as cópias</string>
     <string name="backup_history_migration_label">atualização</string>
     <string name="backup_history_migration_subtitle">Guardada antes de uma atualização do app</string>
     <string name="backup_history_action_restore">Restaurar esta cópia</string>

@@ -20,6 +20,8 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.delete_future_invoice_confirm
 import com.neoutils.finsight.resources.delete_future_invoice_message
 import com.neoutils.finsight.resources.delete_future_invoice_message_reversible
+import com.neoutils.finsight.resources.delete_future_invoice_message_transactions
+import com.neoutils.finsight.resources.delete_future_invoice_message_transactions_reversible
 import com.neoutils.finsight.resources.delete_future_invoice_title
 import com.neoutils.finsight.feature.backup.api.KeptCopyNotice
 import com.neoutils.finsight.feature.backup.api.ProceedWithoutCopyHost
@@ -28,8 +30,21 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/**
+ * Deleting an invoice, and **saying what it takes with it**.
+ *
+ * The wording says "invoice" and never "future invoice": the action is offered for a
+ * `RETROACTIVE` invoice too ([Invoice.Status.isDeletable]), and that is precisely the case
+ * where real transactions are posted to it. Calling it future exactly when the deletion is
+ * most destructive is how a person walks past it.
+ *
+ * The transactions are stated because they go: the use case removes every one posted to
+ * the invoice's dimension. The number arrives already counted from the screen that opened
+ * this — the count and the invoice are one answer, read once.
+ */
 class DeleteFutureInvoiceModal(
-    private val invoice: Invoice
+    private val invoice: Invoice,
+    private val transactionsToRemove: Int = 0,
 ) : ModalBottomSheet() {
 
     @Composable
@@ -64,13 +79,24 @@ class DeleteFutureInvoiceModal(
             // loss is not permanent, so the sentence saying it is goes rather than standing
             // beside one that contradicts it.
             Text(
-                text = stringResource(
-                    if (viewModel.keepsCopy) {
-                        Res.string.delete_future_invoice_message_reversible
-                    } else {
-                        Res.string.delete_future_invoice_message
-                    }
-                ),
+                text = if (transactionsToRemove > 0) {
+                    stringResource(
+                        if (viewModel.keepsCopy) {
+                            Res.string.delete_future_invoice_message_transactions_reversible
+                        } else {
+                            Res.string.delete_future_invoice_message_transactions
+                        },
+                        transactionsToRemove,
+                    )
+                } else {
+                    stringResource(
+                        if (viewModel.keepsCopy) {
+                            Res.string.delete_future_invoice_message_reversible
+                        } else {
+                            Res.string.delete_future_invoice_message
+                        }
+                    )
+                },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )

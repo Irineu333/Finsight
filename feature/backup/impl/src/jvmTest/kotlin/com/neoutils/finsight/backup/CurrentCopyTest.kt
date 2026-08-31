@@ -29,6 +29,7 @@ import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.asArchiveCopy
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -423,6 +424,50 @@ class CurrentCopyTest {
         assertNotNull(after.lastCapturedAt, "a copy was still taken, and when is still true")
         assertIs<CaptureOutcome.Captured>(asked())
         assertEquals(1, listed().size, "the vault started protecting the archive again")
+    }
+
+    /**
+     * A removal the destination refuses, said as a refusal.
+     *
+     * It sits with the removals because that is the action it is about, and because the
+     * fact and the sentence are the same decision: the destination answers that the file
+     * is not this app's, nothing is reported to the vault, and the screen must not put the
+     * tick that means *it worked* over the words that say it did not. The two together are
+     * what a person reads, and a success modal makes them contradict each other.
+     */
+    @Test
+    fun `a file the app did not write is refused out loud, not ticked`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val mine = capture()
+
+        val foreign = File(folder, "finsight-backup-2026-08-31T09-00-00.db")
+            .also { it.writeText("not a database at all"); temporaries += it }
+
+        val viewModel = viewModel()
+        val listed = viewModel.await("the destination never listed the foreign file") { ui ->
+            !ui.isLoading && !ui.isBusy && ui.copies.any { it.name == foreign.name }
+        }
+
+        viewModel.onAction(
+            BackupHistoryAction.Remove(
+                assertNotNull(listed.copies.find { it.name == foreign.name })
+            )
+        )
+        viewModel.await("the removal never finished") { ui ->
+            !ui.isLoading && !ui.isBusy && ui.copies.any { it.name == foreign.name }
+        }
+
+        assertIs<ErrorModal>(
+            modalManager.top,
+            "a removal that did not happen is a refusal, not a success",
+        )
+        assertTrue(foreign.exists(), "the file the app did not write is still in the folder")
+        assertEquals(
+            mine.asArchiveCopy(),
+            state.observe().value.archiveCopy,
+            "nothing was removed, so the vault was told nothing",
+        )
     }
 
     /**

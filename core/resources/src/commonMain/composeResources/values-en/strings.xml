@@ -446,8 +446,10 @@
     <string name="create_invoice_confirm">Create</string>
 
     <string name="delete_future_invoice_title">Delete Invoice</string>
-    <string name="delete_future_invoice_message">Are you sure you want to delete this future invoice? This action cannot be undone.</string>
-    <string name="delete_future_invoice_message_reversible">Are you sure you want to delete this future invoice?</string>
+    <string name="delete_future_invoice_message">Are you sure you want to delete this invoice? This action cannot be undone.</string>
+    <string name="delete_future_invoice_message_reversible">Are you sure you want to delete this invoice?</string>
+    <string name="delete_future_invoice_message_transactions">Are you sure you want to delete this invoice? The %1$d transaction(s) posted to it will be removed along with it. This action cannot be undone.</string>
+    <string name="delete_future_invoice_message_transactions_reversible">Are you sure you want to delete this invoice? The %1$d transaction(s) posted to it will be removed along with it.</string>
     <string name="delete_future_invoice_confirm">Delete</string>
 
     <!-- Pay Invoice Modal -->
@@ -881,7 +883,7 @@
     <string name="settings_exchange_rates_title">Exchange rates</string>
     <string name="settings_exchange_rates_subtitle">Register, correct or remove the rates used in conversions</string>
     <string name="settings_backup_title">Backup</string>
-    <string name="settings_backup_subtitle">Export your data to a file or restore it from one</string>
+    <string name="settings_backup_subtitle">Keep copies automatically, export your data to a file, or restore it from one</string>
 
     <string name="exchange_rates_screen_title">Exchange rates</string>
     <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>
@@ -934,6 +936,10 @@
     <string name="currencies_delete_confirm_message_rates">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it. This cannot be undone.</string>
     <string name="currencies_delete_confirm_message_rates_reversible">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it.</string>
     <string name="currencies_delete_confirm_action">Delete</string>
+    <string name="delete_exchange_rate_title">Remove the %1$s/%2$s rate?</string>
+    <string name="delete_exchange_rate_message">The rate stops existing, and this cannot be undone.</string>
+    <string name="delete_exchange_rate_message_reversible">The rate stops existing.</string>
+    <string name="delete_exchange_rate_confirm">Remove</string>
 
     <string name="view_currency_base_label">Base currency</string>
     <string name="view_currency_accounts">Accounts in this currency</string>
@@ -1017,7 +1023,10 @@
     <string name="backup_interval_15">15 days</string>
     <string name="backup_last_title">Last backup</string>
     <string name="backup_last_never">None yet</string>
-    <string name="backup_last_never_hint">The first copy happens when you enter something, or the next time you open the app.</string>
+    <string name="backup_last_never_hint">The first copy is taken the next time you open the app, or before you delete anything.</string>
+    <string name="backup_last_never_hint_periodic">The first copy is taken the next time you open the app.</string>
+    <string name="backup_last_never_hint_preventive">The first copy is taken before you delete anything.</string>
+    <string name="backup_last_never_hint_update_only">The first copy is taken only before an update that rewrites the database.</string>
     <string name="backup_last_overdue">Older than the %1$s interval. Open the app more often so that a new copy is taken.</string>
     <string name="backup_destination_app">Inside the app</string>
     <string name="backup_destination_folder">In a folder you chose</string>
@@ -1050,9 +1059,10 @@
     <string name="backup_history_subtitle">%1$s · the newest %2$s</string>
     <string name="backup_history_summary">%1$s · %2$s in total</string>
     <string name="backup_history_empty_title">No copies yet</string>
-    <string name="backup_history_empty_message">The first one happens when you enter something, or before the next deletion.</string>
+    <string name="backup_history_empty_message">The first one is taken the next time you open the app, or before the next deletion.</string>
     <string name="backup_history_empty_off">The vault is off. Turn it on from the backup screen for the app to start keeping copies.</string>
     <string name="backup_history_failed">The kept copies could not be read.</string>
+    <string name="backup_history_failed_title">The copies could not be read</string>
     <string name="backup_history_migration_label">update</string>
     <string name="backup_history_migration_subtitle">Kept before an app update</string>
     <string name="backup_history_action_restore">Restore this copy</string>

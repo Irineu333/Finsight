@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
@@ -68,6 +69,9 @@ import com.neoutils.finsight.resources.backup_history_subtitle_empty
 import com.neoutils.finsight.resources.backup_history_title
 import com.neoutils.finsight.resources.backup_last_never
 import com.neoutils.finsight.resources.backup_last_never_hint
+import com.neoutils.finsight.resources.backup_last_never_hint_periodic
+import com.neoutils.finsight.resources.backup_last_never_hint_preventive
+import com.neoutils.finsight.resources.backup_last_never_hint_update_only
 import com.neoutils.finsight.resources.backup_last_overdue
 import com.neoutils.finsight.resources.backup_last_title
 import com.neoutils.finsight.resources.backup_no_copies
@@ -140,6 +144,14 @@ fun BackupScreen(
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup")
+    }
+
+    // What the destination holds is read from a folder, not observed from a table, so
+    // nothing tells this screen that the copies screen on top of it deleted one. Coming
+    // back is the occasion, and the entry's own lifecycle is what says so.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onAction(BackupAction.Refresh)
+        onPauseOrDispose {}
     }
 
     ConfirmRestoreHost(
@@ -255,7 +267,12 @@ fun BackupScreen(
                                     Icon(imageVector = Icons.Outlined.History, contentDescription = null)
                                 },
                                 title = { Text(text = stringResource(Res.string.backup_history_title)) },
-                                subtitle = { Text(text = historySubtitle(uiState.copies)) },
+                                // Nothing is said about the folder until it has been read.
+                                // "No copies yet" is an answer, and there is none to give
+                                // before the first listing lands.
+                                subtitle = uiState.copies.takeIf { it.isRead }?.let { copies ->
+                                    { Text(text = historySubtitle(copies)) }
+                                },
                                 action = { TileAction(isRunning = false) },
                                 onClick = onNavigateToHistory,
                             )
@@ -471,14 +488,16 @@ private fun LastBackupCard(
                 )
                 Text(
                     text = when {
-                        last == null -> stringResource(Res.string.backup_last_never_hint)
+                        last == null -> neverHint(vault)
                         overdue -> stringResource(
                             Res.string.backup_last_overdue,
                             intervalLabel(VaultInterval.nearest(vault.interval)),
                         )
 
+                        // The count joins the destination once the folder has answered,
+                        // and not before: an unread destination has no number to state.
                         else -> destinationLabel(vault.destination) +
-                            " · " + copiesLabel(copies.count)
+                            if (copies.isRead) " · " + copiesLabel(copies.count) else ""
                     },
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
@@ -501,6 +520,32 @@ private fun LastBackupCard(
 private fun coverageOf(destination: VaultDestination): String = when (destination) {
     VaultDestination.APP_STORAGE -> stringResource(Res.string.backup_coverage_app)
     VaultDestination.USER_FOLDER -> stringResource(Res.string.backup_coverage_folder)
+}
+
+/**
+ * When the copy that has not happened yet will happen — read off the triggers that are
+ * actually on, and never off a trigger the app does not have.
+ *
+ * The sentence used to promise two things at once: a copy "when you enter something", which
+ * no trigger of this app does — every `DestructiveAction` is a deletion, a rewrite or a
+ * restore — and one "the next time you open the app", which is the periodic trigger's and is
+ * silent when that switch is off. The branch beside this one already refuses to make the
+ * second promise for exactly that reason (see [LastBackupCard]), and a card cannot keep one
+ * standard in one line and another in the next.
+ *
+ * With both triggers off what is left is the copy taken before a migration, which has no
+ * switch of its own and rides on the vault (design D1) — the same occasion
+ * [vaultSubtitle] names there, and the only one that would still produce this card's first
+ * copy.
+ */
+@Composable
+private fun neverHint(vault: VaultState): String = when {
+    vault.isPeriodicOn && vault.isPreventiveOn ->
+        stringResource(Res.string.backup_last_never_hint)
+
+    vault.isPeriodicOn -> stringResource(Res.string.backup_last_never_hint_periodic)
+    vault.isPreventiveOn -> stringResource(Res.string.backup_last_never_hint_preventive)
+    else -> stringResource(Res.string.backup_last_never_hint_update_only)
 }
 
 /**

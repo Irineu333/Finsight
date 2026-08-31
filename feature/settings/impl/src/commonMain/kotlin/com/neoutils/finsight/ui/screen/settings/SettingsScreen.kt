@@ -223,8 +223,17 @@ private fun CurrenciesTile(onClick: () -> Unit) {
 
 /**
  * The way to the backup screen, which lives in another feature: settings only names the
- * route, and the icon is the archive-with-a-turning-arrow rather than a cloud — the file
- * goes wherever the user puts it, and the app keeps no copy anywhere.
+ * route, and the icon is the archive-with-a-turning-arrow rather than a cloud — every copy
+ * stays on this device, in the app's own storage or in a folder the user chose, and none of
+ * it goes to a server.
+ *
+ * **The subtitle names all three things behind the tile**, the copies the app keeps on its
+ * own included: this is the only door into the feature, and a subtitle that offers only
+ * exporting and restoring leaves the vault to be discovered by someone who opened the
+ * screen for something else.
+ *
+ * What it does **not** say is whether the vault is on. That is the vault's own state, and
+ * settings reads no backup state to draw a tile with.
  */
 @Composable
 private fun BackupTile(onClick: () -> Unit) {

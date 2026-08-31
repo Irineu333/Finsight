@@ -165,6 +165,7 @@ class BackupViewModel(
             is BackupAction.SetPreventiveOn -> vault.setPreventiveOn(action.isOn)
             is BackupAction.SetInterval -> vault.setInterval(action.interval.duration)
             is BackupAction.SetRetention -> vault.setRetention(action.retention)
+            BackupAction.Refresh -> readDestination()
         }
     }
 
@@ -202,10 +203,18 @@ class BackupViewModel(
     /**
      * Reads what the destination holds, now.
      *
+     * **Now includes coming back to this screen.** The copies screen sits on top of this
+     * one while a copy is deleted there, and this route is still in the back stack when it
+     * closes — so a read taken only at init leaves the card counting a file that is no
+     * longer in the folder, over wording the two screens share precisely so they cannot
+     * disagree about it (`BackupLabels`).
+     *
      * A destination that cannot be read leaves the screen saying nothing about it rather
      * than saying zero: none of the three lines built from this — the count, the room they
      * take, the newest — is worth inventing, and the instant of the last successful capture
-     * is a fact of this install that survives the folder being unreadable.
+     * is a fact of this install that survives the folder being unreadable. That is what
+     * [VaultCopies.isRead] carries: an unread destination is left unread, and a re-read that
+     * fails leaves the last answer standing rather than replacing it with zero.
      *
      * It is dispatched away from the main thread rather than merely suspending on it:
      * listing a folder is disk work, and the composition that started this screen has
@@ -217,6 +226,7 @@ class BackupViewModel(
             _uiState.update {
                 it.copy(
                     copies = VaultCopies(
+                        isRead = true,
                         count = copies.size,
                         totalBytes = copies.sumOf { copy -> copy.sizeInBytes },
                         newestAt = copies.firstOrNull()?.savedAt,

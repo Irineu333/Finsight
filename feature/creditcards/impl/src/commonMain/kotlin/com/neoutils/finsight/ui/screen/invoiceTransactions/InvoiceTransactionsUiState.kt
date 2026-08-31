@@ -99,6 +99,15 @@ data class InvoiceTransactionsUiState(
         val closingDate: LocalDate,
         val isClosable: Boolean,
         val canReopen: Boolean = false,
+        /**
+         * How many transactions are posted to this invoice, before any filter.
+         *
+         * It exists for one sentence: the deletion confirmation states what the invoice
+         * takes with it, and the transactions it takes are the invoice's own, not the ones
+         * the chips happen to be leaving standing. Reading it from
+         * [ListState.Content.transactions] would count the cut instead.
+         */
+        val transactionCount: Int = 0,
     ) {
         val invoiceId = invoice.id
         val status = invoice.status

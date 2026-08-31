@@ -366,7 +366,10 @@ class BackupHistoryViewModel(
      *
      * A refusal is said out loud rather than swallowed: the folder may be the user's own,
      * the app removes only its own files there, and somebody who asked for a removal that
-     * did not happen is owed the reason.
+     * did not happen is owed the reason. **It is said as a refusal**, in the shape this app
+     * gives one, and never under the tick that means an operation did what was asked: a
+     * green check above "it was not removed" leaves the person to decide which half to
+     * believe.
      *
      * **A removal that happened is reported to the vault, and the vault decides what it
      * meant.** Whether the file that has just gone was the one holding the archive covered
@@ -385,14 +388,14 @@ class BackupHistoryViewModel(
                 destination.remove(backup).fold(
                     ifLeft = ::fail,
                     ifRight = { removed ->
-                        if (removed) vault.copyRemoved(backup)
-                        succeed(
-                            if (removed) {
-                                Res.string.backup_history_removed
-                            } else {
-                                Res.string.backup_history_remove_refused
-                            }
-                        )
+                        if (removed) {
+                            vault.copyRemoved(backup)
+                            succeed(Res.string.backup_history_removed)
+                        } else {
+                            modalManager.showError(
+                                UiText.Res(Res.string.backup_history_remove_refused)
+                            )
+                        }
                     },
                 )
             } finally {

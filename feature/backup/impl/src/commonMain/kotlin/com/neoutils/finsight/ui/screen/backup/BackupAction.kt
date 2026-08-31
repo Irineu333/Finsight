@@ -16,6 +16,13 @@ import com.neoutils.finsight.extension.PlatformContext
  */
 sealed interface BackupAction {
 
+    /**
+     * Read the destination again — on opening, after anything that changed it, and on
+     * coming back to this screen, which the copies screen is reached from and where a copy
+     * may have been deleted.
+     */
+    data object Refresh : BackupAction
+
     data class Export(val context: PlatformContext) : BackupAction
 
     data class ChooseFileToRestore(val context: PlatformContext) : BackupAction

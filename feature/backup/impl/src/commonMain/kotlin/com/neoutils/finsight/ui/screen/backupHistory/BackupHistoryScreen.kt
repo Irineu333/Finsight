@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.FolderOff
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,6 +58,7 @@ import com.neoutils.finsight.resources.backup_history_empty_message
 import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_empty_title
 import com.neoutils.finsight.resources.backup_history_failed
+import com.neoutils.finsight.resources.backup_history_failed_title
 import com.neoutils.finsight.resources.backup_history_migration_label
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_history_newest_label
@@ -177,6 +179,7 @@ fun BackupHistoryScreen(
             }
 
             uiState.copies.isEmpty() -> Empty(
+                isUnreadable = uiState.isUnreadable,
                 message = when {
                     uiState.isUnreadable -> stringResource(Res.string.backup_history_failed)
                     uiState.isVaultOn -> stringResource(Res.string.backup_history_empty_message)
@@ -590,9 +593,15 @@ private fun RowTag(text: String, tone: Color, modifier: Modifier = Modifier) {
 /**
  * Nothing kept yet — which is not an error and is not a list of zero items. It says when the
  * first copy happens, or that nothing will be kept until the vault is turned on.
+ *
+ * **A destination that could not be read is the other state, whole.** The headline and the
+ * glyph change with the sentence rather than staying behind it: an empty box over "no copies
+ * yet" says the folder is empty, which is a claim nothing read, and the two lead to
+ * different actions — nothing yet means wait, cannot read means go and look
+ * ([BackupHistoryUiState.isUnreadable]).
  */
 @Composable
-private fun Empty(message: String, modifier: Modifier = Modifier) {
+private fun Empty(isUnreadable: Boolean, message: String, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier
@@ -603,13 +612,23 @@ private fun Empty(message: String, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
-                imageVector = Icons.Outlined.Inventory2,
+                imageVector = if (isUnreadable) {
+                    Icons.Outlined.FolderOff
+                } else {
+                    Icons.Outlined.Inventory2
+                },
                 contentDescription = null,
                 tint = colorScheme.outlineVariant,
                 modifier = Modifier.size(36.dp),
             )
             Text(
-                text = stringResource(Res.string.backup_history_empty_title),
+                text = stringResource(
+                    if (isUnreadable) {
+                        Res.string.backup_history_failed_title
+                    } else {
+                        Res.string.backup_history_empty_title
+                    }
+                ),
                 style = typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = colorScheme.onSurface,

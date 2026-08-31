@@ -24,8 +24,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.currencies_delete_confirm_action
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
-import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormAction
-import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
+import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,10 +68,10 @@ class ProceedWithoutCopyTest {
     /**
      * Every view model these tests build, held so it can be cleared at the end.
      *
-     * The rate form collects the currency catalog for as long as it lives, and in the app
-     * that ends when the sheet is dismissed. A test that never ends it leaves the collector
-     * resuming on a main dispatcher that has already been reset, which fails whichever test
-     * happens to run next rather than the one that leaked.
+     * A view model that collects for as long as it lives ends, in the app, when its sheet is
+     * dismissed. A test that never ends one leaves the collector resuming on a main
+     * dispatcher that has already been reset, which fails whichever test happens to run next
+     * rather than the one that leaked.
      */
     private val store = ViewModelStore()
 
@@ -218,25 +217,21 @@ class ProceedWithoutCopyTest {
     ).tracked()
 
     /**
-     * Built and then **settled**: the form reads the currency catalog when it opens, and
-     * that read has to finish inside the test. A Room query still in flight when the test
-     * returns resumes on a main dispatcher the teardown has already reset, and fails
-     * whichever test happens to run next rather than the one that left it.
+     * The sheet the form's remove button opens. The removal lives here and nowhere else,
+     * so this is what the questions below are asked of.
      */
-    private suspend fun formViewModel(
-        existing: ExchangeRate?,
+    private fun removeRateViewModel(
+        rate: ExchangeRate,
         backup: PreventiveBackup,
         vaultOffer: VaultOffer = VaultOffer.None,
         coverage: PreventiveCoverage = PreventiveCoverage.None,
-    ) = ExchangeRateFormViewModel(
-        existing = existing,
-        baseCurrencyRepository = base,
+    ) = DeleteExchangeRateViewModel(
+        rate = rate,
         exchangeRateRepository = rates(backup),
-        currencyRepository = currencies,
         modalManager = ModalManager(),
         vaultOffer = vaultOffer,
         coverage = coverage,
-    ).tracked().also { it.uiState.first { state -> state.selectableCurrencies.isNotEmpty() } }
+    ).tracked()
 
     private val march = LocalDate(2026, 3, 14)
 
@@ -346,8 +341,8 @@ class ProceedWithoutCopyTest {
         seedCurrencies("BRL", "USD")
         val rate = seedRate("USD", "BRL", 5.5)
 
-        val viewModel = formViewModel(rate, Refusing())
-        viewModel.onAction(ExchangeRateFormAction.Remove)
+        val viewModel = removeRateViewModel(rate, Refusing())
+        viewModel.remove()
 
         assertNotNull(viewModel.captureRefusal.first { it != null })
         assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))
@@ -359,11 +354,11 @@ class ProceedWithoutCopyTest {
         val rate = seedRate("USD", "BRL", 5.5)
 
         val vault = Refusing()
-        val viewModel = formViewModel(rate, vault)
-        viewModel.onAction(ExchangeRateFormAction.Remove)
+        val viewModel = removeRateViewModel(rate, vault)
+        viewModel.remove()
         viewModel.captureRefusal.first { it != null }
 
-        viewModel.onAction(ExchangeRateFormAction.RemoveWithoutCopy)
+        viewModel.removeWithoutCopy()
 
         rates(PreventiveBackup.None).observeAll().first { it.isEmpty() }
 
@@ -407,7 +402,7 @@ class ProceedWithoutCopyTest {
      * within one.
      */
     @Test
-    fun `an offer accepted beside the currency leaves the rate form nothing to show`() = runTest {
+    fun `an offer accepted beside the currency leaves the rate removal nothing to show`() = runTest {
         seedCurrencies("BRL", "USD")
         val rate = seedRate("USD", "BRL", 5.5)
         val vault = OfferingVault()
@@ -416,7 +411,7 @@ class ProceedWithoutCopyTest {
         assertNotNull(first.offer.terms, "the confirmation reached first carries it")
         first.delete().join()
 
-        val second = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
+        val second = removeRateViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
 
         assertNull(second.offer.terms, "the vault is on; the next one carries nothing")
     }
@@ -436,7 +431,7 @@ class ProceedWithoutCopyTest {
         first.offer.setAccepted(false)
         first.delete().join()
 
-        val second = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
+        val second = removeRateViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
 
         val terms = assertNotNull(second.offer.terms, "the offer stands while the vault is off")
 
@@ -445,23 +440,21 @@ class ProceedWithoutCopyTest {
     }
 
     /**
-     * The offer is made beside a risk or not at all. A form opened to *register* a rate
-     * destroys nothing, so it shows no offer — while the same form opened on a rate that
-     * can be removed does.
+     * The offer is made beside a risk or not at all, and the confirmation is where the risk
+     * is: it exists only because something is about to be removed. A form opened to
+     * register a rate makes no offer because it holds none at all — which the compiler
+     * enforces now that the removal, the copy and the offer have left it together.
      */
     @Test
-    fun `a form opened to register a rate makes no offer`() = runTest {
+    fun `the offer rides on the confirmation, which only a removal opens`() = runTest {
         seedCurrencies("BRL", "USD")
         val rate = seedRate("USD", "BRL", 5.5)
         val vault = OfferingVault()
 
-        val registering = formViewModel(null, PreventiveBackup.None, vaultOffer = vault)
+        val removing = removeRateViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
 
-        assertNull(registering.offer.terms, "nothing is being destroyed here")
-
-        val removing = formViewModel(rate, PreventiveBackup.None, vaultOffer = vault)
-
-        assertNotNull(removing.offer.terms, "and the removal beside it is a risk")
+        assertNotNull(removing.offer.terms, "the removal it confirms is a risk")
+        assertTrue(removing.offer.isAccepted.value, "the offer is made, not merely displayed")
     }
 
     @Test
@@ -471,8 +464,8 @@ class ProceedWithoutCopyTest {
         val vault = OfferingVault()
         val backup = WatchingBackup(vault)
 
-        val viewModel = formViewModel(rate, backup, vaultOffer = vault)
-        viewModel.onAction(ExchangeRateFormAction.Remove)
+        val viewModel = removeRateViewModel(rate, backup, vaultOffer = vault)
+        viewModel.remove().join()
 
         rates(PreventiveBackup.None).observeAll().first { it.isEmpty() }
 
@@ -508,9 +501,13 @@ class ProceedWithoutCopyTest {
             assertEquals(DestructiveAction.DELETE_CURRENCY, currencyCovered.asked)
 
             val rateCovered = RecordingCoverage(DestructiveAction.REMOVE_EXCHANGE_RATE)
-            val form = formViewModel(rate, PreventiveBackup.None, coverage = rateCovered)
+            val rateRemoval = removeRateViewModel(
+                rate = rate,
+                backup = PreventiveBackup.None,
+                coverage = rateCovered,
+            )
 
-            assertTrue(form.keepsCopy, "a copy is kept and the form was told otherwise")
+            assertTrue(rateRemoval.keepsCopy, "a copy is kept and the sheet was told otherwise")
             assertEquals(DestructiveAction.REMOVE_EXCHANGE_RATE, rateCovered.asked)
 
             val elsewhere = deleteViewModel(
@@ -528,11 +525,11 @@ class ProceedWithoutCopyTest {
         val rate = seedRate("USD", "BRL", 5.5)
 
         val vault = Refusing()
-        val viewModel = formViewModel(rate, vault)
-        viewModel.onAction(ExchangeRateFormAction.Remove)
+        val viewModel = removeRateViewModel(rate, vault)
+        viewModel.remove()
         viewModel.captureRefusal.first { it != null }
 
-        viewModel.onAction(ExchangeRateFormAction.AbandonRemoval)
+        viewModel.abandonRemoval()
 
         assertNull(viewModel.captureRefusal.first { it == null })
         assertEquals(1, db.exchangeRateDao().countByCurrencyOnEitherEnd("USD"))

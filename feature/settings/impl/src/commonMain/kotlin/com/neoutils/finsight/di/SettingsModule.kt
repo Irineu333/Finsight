@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.ui.modal.archiveCurrency.ArchiveCurrencyViewModel
 import com.neoutils.finsight.ui.modal.currencyForm.CurrencyFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
+import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel
 import com.neoutils.finsight.ui.modal.viewCurrency.ViewCurrencyViewModel
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
 import com.neoutils.finsight.ui.screen.currencies.CurrenciesViewModel
@@ -139,11 +140,19 @@ val settingsModule = module {
         ExchangeRateFormViewModel(
             existing = it.getOrNull<ExchangeRate>(),
             baseCurrencyRepository = get(),
+            exchangeRateRepository = get<ExchangeRateRepository>(),
+            currencyRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        DeleteExchangeRateViewModel(
+            rate = it.get(),
             // The concrete binding, for the same reason the rates screen takes it: the
             // removal that carries the person's answer about the copy is this feature's,
             // not something `IExchangeRateRepository` obliges every module to answer.
             exchangeRateRepository = get<ExchangeRateRepository>(),
-            currencyRepository = get(),
             modalManager = get(),
             vaultOffer = get(),
             coverage = get(),

@@ -690,7 +690,17 @@ private fun InvoiceActions(
 
         if (summary.status.isDeletable) {
             OutlinedButton(
-                onClick = { modalManager.show(DeleteFutureInvoiceModal(invoice)) },
+                onClick = {
+                    modalManager.show(
+                        DeleteFutureInvoiceModal(
+                            invoice = invoice,
+                            // Counted where the invoice's own transactions are already
+                            // known, and handed over: the sheet states what the deletion
+                            // takes, and the count and the invoice are one answer.
+                            transactionsToRemove = summary.transactionCount,
+                        )
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(

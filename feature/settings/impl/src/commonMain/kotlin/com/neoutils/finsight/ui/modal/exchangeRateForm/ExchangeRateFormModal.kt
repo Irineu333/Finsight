@@ -65,9 +65,7 @@ import com.neoutils.finsight.resources.exchange_rate_form_title_new
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.feature.backup.api.KeptCopyNotice
-import com.neoutils.finsight.feature.backup.api.ProceedWithoutCopyHost
-import com.neoutils.finsight.feature.backup.api.VaultOfferRow
+import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateModal
 import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -114,17 +112,7 @@ class ExchangeRateFormModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<ExchangeRateFormViewModel> { parametersOf(existing) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-        val captureRefusal by viewModel.captureRefusal.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
-
-        // Over this sheet rather than in place of it: the observation being removed is
-        // still stated here, and the question only adds that nothing is being kept back.
-        ProceedWithoutCopyHost(
-            reason = captureRefusal,
-            action = Res.string.exchange_rate_form_remove,
-            onProceed = { viewModel.onAction(ExchangeRateFormAction.RemoveWithoutCopy) },
-            onAbandon = { viewModel.onAction(ExchangeRateFormAction.AbandonRemoval) },
-        )
 
         // **A rate is money** — so many of the counterpart currency per one unit of the
         // priced one — and it *reads* through the app's one formatter, with the
@@ -355,29 +343,18 @@ class ExchangeRateFormModal(
             // `ViewBudgetModal`, `ViewTransactionModal`, `ViewCategoryModal` and
             // `ViewRecurringModal` all wear. It used to be a bare `TextButton` with
             // coloured text, the one place in the app where deleting looked like a link.
-            if (uiState.isEditing) {
+            //
+            // **It asks first.** The button starts the removal; it does not perform it.
+            // What it takes away is typed work with no other path back to it, so it is
+            // confirmed in the sheet every other deletion of this app is confirmed in —
+            // which is also where the copy kept first is promised and the vault offered,
+            // beside the risk rather than beside a form that may only be registering a
+            // rate.
+            existing?.let { rate ->
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // What the form says about undoing the removal follows what the app will
-                // actually do. With the copy kept first there is a way back, and this is
-                // the only thing the form has to say about it; with the vault off it says
-                // nothing, exactly as before.
-                if (viewModel.keepsCopy) {
-                    KeptCopyNotice(modifier = Modifier.fillMaxWidth())
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // Beside the one destructive thing this form does, which is where the
-                // offer belongs. It renders nothing, spacing included, where there is
-                // nothing left to offer.
-                VaultOfferRow(
-                    state = viewModel.offer,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-
                 OutlinedButton(
-                    onClick = { viewModel.onAction(ExchangeRateFormAction.Remove) },
+                    onClick = { modalManager.show(DeleteExchangeRateModal(rate)) },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,

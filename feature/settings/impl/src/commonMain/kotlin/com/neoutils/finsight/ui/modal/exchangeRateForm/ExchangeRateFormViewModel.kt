@@ -9,14 +9,7 @@ import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.feature.backup.api.CaptureRefusal
-import com.neoutils.finsight.feature.backup.api.DestructiveAction
-import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
-import com.neoutils.finsight.feature.backup.api.VaultOffer
-import com.neoutils.finsight.feature.backup.api.VaultOfferState
-import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,14 +37,12 @@ import kotlin.time.ExperimentalTime
  * know how to resolve paths — knowledge that belongs to the archive — in order to
  * prevent a harmless row.
  *
- * **Removing is the one destructive thing this form does**, and the copy owed before it may
- * fail. This is the screen the person is standing in front of, so it is where that refusal
- * becomes a question instead of a crash — and an unanswered question leaves the observation
- * in the archive.
- *
- * **It is also where the vault may be offered**, when it has never been offered anywhere
- * before — but only on a form that can remove something. Registering a rate takes nothing
- * away, and the offer is made beside a risk or not at all.
+ * **Removing is not here.** The form offers it and
+ * [com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel] performs
+ * it, behind the confirmation every other deletion of this app is confirmed behind — which
+ * is also where the copy owed first is promised, where its refusal becomes a question, and
+ * where the vault is offered. All three belong beside the risk, and a form opened to
+ * register a rate carries none.
  */
 class ExchangeRateFormViewModel(
     private val existing: ExchangeRate?,
@@ -59,33 +50,9 @@ class ExchangeRateFormViewModel(
     private val exchangeRateRepository: RateArchive,
     private val currencyRepository: ICurrencyRepository,
     private val modalManager: ModalManager,
-    vaultOffer: VaultOffer,
-    coverage: PreventiveCoverage,
 ) : ViewModel() {
 
     private val base = baseCurrencyRepository.observe().value
-
-    private val refusal = CaptureRefusal()
-
-    /** Why no copy could be taken, while the question about removing anyway is up. */
-    val captureRefusal: StateFlow<UiText?> = refusal.reason
-
-    /**
-     * The vault offered beside the removal this form allows, and the box beside the offer.
-     *
-     * Asked for only where there is something to remove: a form opened to register a rate
-     * destroys nothing, and an offer spent there would be spent on nobody's risk.
-     */
-    val offer = VaultOfferState(vaultOffer.takeIf { existing != null } ?: VaultOffer.None)
-
-    /**
-     * Whether a copy is genuinely kept before the observation goes, which is what the form
-     * says beside the button that removes it.
-     *
-     * Asked about *this* action and answered in the domain: a screen carrying its own idea
-     * of which removals are worth a copy would be a second owner of that rule (design D7).
-     */
-    val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.REMOVE_EXCHANGE_RATE)
 
     private val _uiState = MutableStateFlow(
         ExchangeRateFormUiState(
@@ -138,9 +105,6 @@ class ExchangeRateFormViewModel(
                 _uiState.update { it.copy(rate = action.rate) }
 
             ExchangeRateFormAction.Submit -> submit()
-            ExchangeRateFormAction.Remove -> remove()
-            ExchangeRateFormAction.RemoveWithoutCopy -> refusal.answer(proceed = true)
-            ExchangeRateFormAction.AbandonRemoval -> refusal.answer(proceed = false)
         }
     }
 
@@ -173,21 +137,6 @@ class ExchangeRateFormViewModel(
                 )
             )
             modalManager.dismissAll()
-        }
-    }
-
-    private fun remove() {
-        val rate = existing ?: return
-        viewModelScope.launch {
-            // The offer is answered before the removal and never after: a box left ticked
-            // has to have turned the vault on by the time the removal asks it for the copy,
-            // and a box left unticked is a refusal only once the removal goes ahead.
-            offer.settle()
-
-            refusal.attempt { withoutCopy ->
-                exchangeRateRepository.remove(rate, withoutCopy)
-                modalManager.dismissAll()
-            }
         }
     }
 

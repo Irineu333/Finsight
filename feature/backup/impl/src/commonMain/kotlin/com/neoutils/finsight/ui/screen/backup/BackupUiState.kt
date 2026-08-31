@@ -70,6 +70,15 @@ data class BackupUiState(
  * it matters, when somebody removes files from outside the app.
  */
 data class VaultCopies(
+    /**
+     * Whether the destination has actually been read.
+     *
+     * It is what separates *nothing was read* from *nothing is there*, and without it every
+     * line built from this asserts an empty folder from the moment the screen opens —
+     * including on a destination the app never managed to list. Nothing says "no copies yet"
+     * until a listing has landed.
+     */
+    val isRead: Boolean = false,
     val count: Int = 0,
     val totalBytes: Long = 0,
     val newestAt: Instant? = null,

@@ -27,8 +27,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
-import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
-import com.neoutils.finsight.feature.backup.api.VaultOffer
 
 /**
  * **The write owns the dismissal, and this is what says so.**
@@ -70,30 +68,6 @@ class ExchangeRateFormViewModelTest {
         assertTrue(modal.isDismissed)
         assertEquals(5.4, repository.saved.single().rate)
         assertEquals(ExchangeRate.Source.USER, repository.saved.single().source)
-    }
-
-    @Test
-    fun `removing dismisses only after the write returns`() = runTest {
-        val existing = ExchangeRate(
-            id = 1,
-            currency = "USD",
-            counterCurrency = "BRL",
-            date = date,
-            rate = 5.4,
-            source = ExchangeRate.Source.USER,
-        )
-        val repository = FakeExchangeRateRepository()
-        val modal = RecordingModal()
-        val manager = ModalManager().apply { show(modal) }
-
-        viewModel(repository, manager, existing).onAction(ExchangeRateFormAction.Remove)
-
-        assertFalse(modal.isDismissed, "dismissed before the write returned")
-
-        repository.release()
-
-        assertTrue(modal.isDismissed)
-        assertEquals(listOf(existing), repository.removed)
     }
 
     /** A form that cannot state a rate has nothing to write, and nothing to dismiss for. */
@@ -192,8 +166,6 @@ class ExchangeRateFormViewModelTest {
         exchangeRateRepository = repository,
         currencyRepository = FakeCurrencyRepository(),
         modalManager = manager,
-        vaultOffer = VaultOffer.None,
-        coverage = PreventiveCoverage.None,
     )
 }
 

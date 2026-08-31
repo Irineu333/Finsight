@@ -75,6 +75,7 @@ import com.neoutils.finsight.resources.backup_history_title
 import com.neoutils.finsight.resources.backup_today
 import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.modal.confirmRemoveCopy.ConfirmRemoveCopyModal
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.storedBackupActions.StoredBackupActionsModal
@@ -163,6 +164,11 @@ fun BackupHistoryScreen(
 
     RestoreWithoutCopyHost(
         refusal = uiState.captureRefusal,
+        onAction = viewModel::onAction,
+    )
+
+    ConfirmRemoveHost(
+        backup = uiState.pendingRemoval,
         onAction = viewModel::onAction,
     )
 
@@ -848,6 +854,34 @@ private fun ConfirmRestoreHost(
                 keepsCopy = keepsCopy,
                 onConfirm = { onAction(BackupHistoryAction.ConfirmRestore) },
                 onDiscard = { onAction(BackupHistoryAction.DiscardCandidate) },
+            )
+        }
+
+        DisposableEffect(modal) {
+            modalManager.show(modal)
+            onDispose { modalManager.dismiss(modal) }
+        }
+    }
+}
+
+/**
+ * Puts the removal question up while there is one, and takes it down when there is not —
+ * the same arrangement the two restore sheets use, because a modal is rendered by the
+ * manager outside this tree and the state is what keeps the two in step.
+ */
+@Composable
+private fun ConfirmRemoveHost(
+    backup: StoredBackup?,
+    onAction: (BackupHistoryAction) -> Unit,
+) {
+    val modalManager = LocalModalManager.current
+
+    if (backup != null) {
+        val modal = remember(backup) {
+            ConfirmRemoveCopyModal(
+                backup = backup,
+                onConfirm = { onAction(BackupHistoryAction.ConfirmRemove) },
+                onAbandon = { onAction(BackupHistoryAction.AbandonRemoval) },
             )
         }
 

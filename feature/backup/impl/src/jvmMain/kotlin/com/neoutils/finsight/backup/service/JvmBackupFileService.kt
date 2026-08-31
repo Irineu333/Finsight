@@ -4,13 +4,20 @@ import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_confirm_cancel
+import com.neoutils.finsight.resources.backup_export_replace_action
+import com.neoutils.finsight.resources.backup_export_replace_message
+import com.neoutils.finsight.resources.backup_export_replace_title
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.util.UiText
 import java.awt.Component
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JFileChooser
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +70,20 @@ class JvmBackupFileService : BackupFileService {
         }
     }
 
+    /**
+     * The save dialog picks a path, and a path the user picked may already hold a file of
+     * theirs.
+     *
+     * `JFileChooser` warns about none of that: it approves a name that is taken exactly as
+     * it approves a free one, and the copy that follows replaces whatever was there. So the
+     * replacement is put to the person before it happens, and it is put as a statement of
+     * what the save will do rather than as a question about a file — the file is theirs and
+     * this app knows nothing about it beyond its name.
+     *
+     * Declining leaves the file alone and leaves as `false` — the same answer a closed save
+     * dialog gives, because both are somebody deciding not to export and neither is a
+     * failure anybody should be shown an error about.
+     */
     override suspend fun copyOutCapturedFile(
         sourcePath: String,
         suggestedName: String,
@@ -73,10 +94,52 @@ class JvmBackupFileService : BackupFileService {
             show = JFileChooser::showSaveDialog,
         ) ?: return false.right()
 
+        val taken = withContext(Dispatchers.IO) { destination.exists() }
+        if (taken && !context.permitsReplacing(destination)) return false.right()
+
         return withContext(Dispatchers.IO) {
             Either.catch { File(sourcePath).copyTo(destination, overwrite = true) }
                 .map { true }
                 .mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+        }
+    }
+
+    /**
+     * Says what saving here would do to [file], and answers true only where the person
+     * pressed the one button that says to do it.
+     *
+     * Every sentence on it is resolved before the event dispatch thread is reached, because
+     * reading a string resource suspends and a dialog on the EDT cannot wait for anything.
+     * The two buttons are named rather than left to `showConfirmDialog`: that one draws a
+     * yes and a no out of the look-and-feel, which follows the JVM's locale and not the
+     * language this app is being read in.
+     *
+     * They are laid out the way every confirmation in this app is — the way out on the
+     * left, the destructive act on the right — and the way out is the one the dialog opens
+     * on. Everything that is not that button, the window's own close included, leaves the
+     * file alone.
+     */
+    private suspend fun PlatformContext.permitsReplacing(file: File): Boolean {
+        val title = UiText.Res(Res.string.backup_export_replace_title).asString()
+        val message =
+            UiText.ResWithArgs(Res.string.backup_export_replace_message, file.name).asString()
+        val cancel = UiText.Res(Res.string.backup_confirm_cancel).asString()
+        val replace = UiText.Res(Res.string.backup_export_replace_action).asString()
+
+        return suspendCancellableCoroutine { continuation ->
+            SwingUtilities.invokeLater {
+                val answer = JOptionPane.showOptionDialog(
+                    windowScope.window,
+                    message,
+                    title,
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    arrayOf(cancel, replace),
+                    cancel,
+                )
+                continuation.resume(answer == REPLACE_OPTION)
+            }
         }
     }
 
@@ -186,6 +249,13 @@ private val privateDirectory: Path by lazy {
 
 /** The prefix of the drawn directory name, not a name of its own. */
 private const val PRIVATE_DIRECTORY = "finsight-backup"
+/**
+ * Where the button that replaces the file sits in the pair the save warning offers — second,
+ * because the way out is offered first, and [JOptionPane.showOptionDialog] answers with the
+ * index of what was pressed.
+ */
+private const val REPLACE_OPTION = 1
+
 private const val CANDIDATE_PREFIX = "candidate-"
 private const val CANDIDATE_SUFFIX = ".db"
 private const val MAX_CAUSE_DEPTH = 8

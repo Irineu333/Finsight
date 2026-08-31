@@ -1,5 +1,7 @@
 package com.neoutils.finsight.backup
 
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import com.neoutils.finsight.backup.service.JvmBackupDestination
 import com.neoutils.finsight.database.getDatabaseBuilder
 import com.neoutils.finsight.database.getRoomDatabase
@@ -14,6 +16,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
@@ -208,6 +211,11 @@ class JvmBackupDestinationTest {
         DATABASE_FILES.forEach {
             assertFalse(File(vault, stored.name + it).exists(), "${stored.name}$it is still there")
         }
+        assertEquals(
+            emptyList(),
+            vault.listFiles().orEmpty().map { it.name }.sorted(),
+            "the check left its working files in the folder the vault reads",
+        )
     }
 
     /**
@@ -248,6 +256,60 @@ class JvmBackupDestinationTest {
         assertEquals(true, destination.remove(first).getOrNull())
 
         assertEquals(listOf(second.name), names())
+    }
+
+    /**
+     * The gate that proves a file is this app's *migrates* what it is handed
+     * ([com.neoutils.finsight.database.snapshot.CandidateVerifier]), and a refusal is
+     * precisely the case in which the copy is still there afterwards. Run over the copy
+     * where it lies, the check rewrites a file the app has just decided it may not remove,
+     * and leaves everything a database opening puts beside it standing in the folder the
+     * vault reads — files nothing lists and nothing else will ever take away.
+     */
+    @Test
+    fun `a copy the check refuses comes back with its bytes untouched`() = runTest {
+        val stored = putCapture(NAME)
+        val file = File(vault, NAME)
+        notThisSchema(file.absolutePath)
+        val before = file.readBytes()
+
+        assertEquals(
+            false,
+            destination.remove(stored).getOrNull(),
+            "the check should have refused a file whose schema is not this one's",
+        )
+
+        assertTrue(file.exists(), "a refused removal took the file anyway")
+        assertContentEquals(before, file.readBytes(), "the check rewrote the copy it refused")
+    }
+
+    /** The other half of the same rule: nothing of the check's is left in the folder. */
+    @Test
+    fun `a refused removal leaves nothing beside the copy`() = runTest {
+        val stored = putCapture(NAME)
+        notThisSchema(File(vault, NAME).absolutePath)
+
+        destination.remove(stored)
+
+        assertEquals(
+            listOf(NAME),
+            vault.listFiles().orEmpty().map { it.name }.sorted(),
+            "the check left its working files in the folder the vault reads",
+        )
+    }
+
+    /**
+     * A copy of this app's own making whose schema identity is another one's — the file
+     * that gets past every layer that reads without writing and is refused by the layer
+     * that migrates.
+     */
+    private fun notThisSchema(path: String) {
+        val connection = BundledSQLiteDriver().open(path)
+        try {
+            connection.execSQL("UPDATE `room_master_table` SET `identity_hash` = 'elsewhere'")
+        } finally {
+            connection.close()
+        }
     }
 
     private companion object {

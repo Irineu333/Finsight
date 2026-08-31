@@ -1115,4 +1115,11 @@
     <string name="backup_copy_facts_accounts">Accounts · Cards</string>
     <string name="backup_copy_facts_size">Size</string>
     <string name="backup_copy_facts_unreadable">This copy could not be opened to see what it holds. It may have left the folder, or be damaged.</string>
+    <string name="backup_remove_confirm_title">This copy will be deleted</string>
+    <string name="backup_remove_confirm_message">The copy from %1$s leaves where the backups are kept, and there is no bringing it back. The others stay where they are.</string>
+    <string name="backup_remove_confirm_migration">This is the copy kept before the last app update — the only way back if that update got something wrong. It is replaced by the next update's copy and by nothing else.</string>
+    <string name="backup_remove_confirm_action">Delete</string>
+    <string name="backup_export_replace_title">This replaces a file that is already there</string>
+    <string name="backup_export_replace_message">There is already a file called %1$s in that folder. Saving the backup here writes over it, and what is in it now is lost.</string>
+    <string name="backup_export_replace_action">Replace</string>
 </resources>

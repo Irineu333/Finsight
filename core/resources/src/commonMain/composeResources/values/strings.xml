@@ -1116,4 +1116,11 @@
     <string name="backup_copy_facts_accounts">Contas · Cartões</string>
     <string name="backup_copy_facts_size">Tamanho</string>
     <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>
+    <string name="backup_remove_confirm_title">Esta cópia vai ser excluída</string>
+    <string name="backup_remove_confirm_message">A cópia de %1$s sai de onde os backups são guardados, e não dá para trazê-la de volta. As outras continuam onde estão.</string>
+    <string name="backup_remove_confirm_migration">Esta é a cópia guardada antes da última atualização do app — a única forma de voltar se a atualização tiver estragado alguma coisa. Ela é substituída pela cópia da próxima atualização, e por mais nada.</string>
+    <string name="backup_remove_confirm_action">Excluir</string>
+    <string name="backup_export_replace_title">Isto substitui um arquivo que já está lá</string>
+    <string name="backup_export_replace_message">Já existe um arquivo chamado %1$s nessa pasta. Salvar o backup aqui escreve por cima dele, e o que estava nele se perde.</string>
+    <string name="backup_export_replace_action">Substituir</string>
 </resources>

@@ -262,11 +262,15 @@ class CurrentCopyTest {
     }
 
     /**
-     * Removes [copy] the way the screen does: the row's own action, and then the listing
-     * the removal leaves behind.
+     * Removes [copy] the way the screen does: the row's own action, the confirmation it
+     * raises, and then the listing the removal leaves behind.
      */
     private suspend fun BackupHistoryViewModel.removeFromList(copy: StoredBackup) {
         onAction(BackupHistoryAction.Remove(copy))
+        await("the removal of ${copy.name} was never put to the person") {
+            it.pendingRemoval == copy
+        }
+        onAction(BackupHistoryAction.ConfirmRemove)
         await("the removal of ${copy.name} never finished") { ui ->
             !ui.isLoading && !ui.isBusy && ui.copies.none { it.name == copy.name }
         }
@@ -496,6 +500,8 @@ class CurrentCopyTest {
                 assertNotNull(listed.copies.find { it.name == foreign.name })
             )
         )
+        viewModel.await("the removal was never put to the person") { it.pendingRemoval != null }
+        viewModel.onAction(BackupHistoryAction.ConfirmRemove)
         viewModel.await("the removal never finished") { ui ->
             !ui.isLoading && !ui.isBusy && ui.copies.any { it.name == foreign.name }
         }

@@ -210,7 +210,9 @@ class BackupHistoryViewModel(
             is BackupHistoryAction.Inspect -> inspect(action.backup)
             is BackupHistoryAction.Restore -> restore(action.backup)
             is BackupHistoryAction.Share -> share(action.backup, action.context)
-            is BackupHistoryAction.Remove -> remove(action.backup)
+            is BackupHistoryAction.Remove -> askToRemove(action.backup)
+            BackupHistoryAction.ConfirmRemove -> confirmRemoval()
+            BackupHistoryAction.AbandonRemoval -> abandonRemoval()
             BackupHistoryAction.ConfirmRestore -> confirmRestore()
             BackupHistoryAction.DiscardCandidate -> answerConfirmation(proceed = false)
             BackupHistoryAction.RestoreWithoutCopy -> answerRefusal(proceed = true)
@@ -508,6 +510,38 @@ class BackupHistoryViewModel(
     }
 
     /**
+     * Puts the removal to the person, and removes nothing.
+     *
+     * The copy is the only thing on this screen that cannot be made again — the history is
+     * a reading of the folder rather than a record (design D9), so a copy that leaves has
+     * left and nothing here can put it back. One tap on a list is where that costs the
+     * most, and every other destructive act in this app is confirmed first.
+     *
+     * The reading opened by the sheet that was just closed is called off here rather than
+     * at the answer: nobody is looking at it any more the moment this question goes up.
+     */
+    private fun askToRemove(backup: StoredBackup) {
+        if (_uiState.value.isBusy) return
+        inspection?.cancel()
+        _uiState.update { it.copy(pendingRemoval = backup) }
+    }
+
+    /** The question was answered by leaving the copy where it is. */
+    private fun abandonRemoval() {
+        _uiState.update { it.copy(pendingRemoval = null) }
+    }
+
+    /**
+     * The answer, over the copy the question was asked about — never over whatever the row
+     * under the sheet has become since.
+     */
+    private fun confirmRemoval() {
+        val backup = _uiState.value.pendingRemoval ?: return
+        _uiState.update { it.copy(pendingRemoval = null) }
+        remove(backup)
+    }
+
+    /**
      * Removes [backup], if the destination confirms by reading it that this app wrote it.
      *
      * A refusal is said out loud rather than swallowed: the folder may be the user's own,
@@ -526,7 +560,6 @@ class BackupHistoryViewModel(
      */
     private fun remove(backup: StoredBackup) {
         if (_uiState.value.isBusy) return
-        inspection?.cancel()
         _uiState.update { it.copy(working = backup) }
 
         viewModelScope.launch {

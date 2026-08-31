@@ -4,6 +4,8 @@ package com.neoutils.finsight.backup.service
 
 import android.content.Context
 import arrow.core.Either
+import arrow.core.getOrElse
+import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
@@ -18,6 +20,7 @@ import java.io.IOException
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 /**
@@ -88,10 +91,28 @@ class AndroidBackupDestination(
     }
 
     /**
-     * The journal files go with the copy, because a copy is up to three files while
-     * something has it open in write-ahead logging — and the confirmation above opens it
-     * with Room. Removing the main file alone would leave two behind that nothing lists
-     * and nothing else will ever remove.
+     * Removes one copy, once the file has been confirmed by its content to be one this app
+     * wrote.
+     *
+     * **Proving it costs a copy, even here.** The gate opens a database with Room and lets
+     * the migration chain run over it ([OwnCopyCheck]), so what it is handed has to be a
+     * file that may come back changed — and a copy the check *refuses* is one that stays in
+     * the folder afterwards. Run where it lies, the check rewrites a file the app has just
+     * decided it may not remove, and strands a `-wal`, a `-shm` and a `.lck` beside it that
+     * nothing lists and nothing else will ever take away — in a folder a person can open
+     * with a file manager. It is the same rule the folder rung states
+     * ([AndroidFolderBackupDestination.remove]) for a different reason: there the file is
+     * somebody else's, here it is one this app is about to be told to keep.
+     *
+     * The staging goes beside the copy rather than into the app's temporary area, under the
+     * name [STAGED_SUFFIX] reserves: this folder is the app's own, the name is listed by
+     * nothing and counted by nothing, and the copy stays on the volume it is already on. It
+     * is removed on every way out — the journal files with it — which leaves the same
+     * window a capture already accepts ([copyIntoPlace]): a process killed mid-copy strands
+     * one staged file that no listing shows.
+     *
+     * The journal files go with the copy on the way out too, because a folder swept by an
+     * earlier build may still be holding a pair.
      *
      * **False means one thing only: the content check refused.** A deletion that did not
      * happen is a failure and leaves as one — the screen turns false into a sentence about
@@ -103,7 +124,19 @@ class AndroidBackupDestination(
             File(directory(), backup.name).takeIf { it.exists() }
         } ?: return true.right()
 
-        if (!ownCopy.confirms(file.absolutePath)) return false.right()
+        val staged = File(file.absolutePath + STAGED_SUFFIX)
+        try {
+            withContext(Dispatchers.IO) {
+                Either.catch { file.copyTo(staged, overwrite = true) }
+                    .mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+            }.getOrElse { return it.left() }
+
+            if (!ownCopy.confirms(staged.absolutePath)) return false.right()
+        } finally {
+            withContext(NonCancellable + Dispatchers.IO) {
+                DATABASE_FILES.forEach { File(staged.absolutePath + it).delete() }
+            }
+        }
 
         return withContext(Dispatchers.IO) {
             Either.catch {

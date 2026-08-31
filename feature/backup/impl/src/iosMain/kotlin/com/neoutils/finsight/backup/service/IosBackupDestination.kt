@@ -4,6 +4,7 @@ package com.neoutils.finsight.backup.service
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
@@ -18,6 +19,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSDate
@@ -125,10 +127,27 @@ class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestinatio
     }
 
     /**
-     * The journal files go with the copy, because a copy is up to three files while
-     * something has it open in write-ahead logging — and the confirmation above opens it
-     * with Room. Removing the main file alone would leave two behind that nothing lists
-     * and nothing else will ever remove.
+     * Removes one copy, once the file has been confirmed by its content to be one this app
+     * wrote.
+     *
+     * **Proving it costs a copy, even here.** The gate opens a database with Room and lets
+     * the migration chain run over it ([OwnCopyCheck]), so what it is handed has to be a
+     * file that may come back changed — and a copy the check *refuses* is one that stays in
+     * the sandbox afterwards. Run where it lies, the check rewrites a file the app has just
+     * decided it may not remove, and strands a `-wal` and a `-shm` beside it that nothing
+     * lists and nothing else will ever take away. It is the same rule the folder rung states
+     * ([IosFolderBackupDestination.remove]) for a different reason: there the file is
+     * somebody else's, here it is one this app is about to be told to keep.
+     *
+     * The staging goes beside the copy rather than into the app's temporary area, under the
+     * name [STAGED_SUFFIX] reserves: this folder is the app's own, the name is listed by
+     * nothing and counted by nothing, and the copy stays where it already is. It is removed
+     * on every way out — the journal files with it — which leaves the same window a capture
+     * already accepts in [put]: a process killed mid-copy strands one staged file that no
+     * listing shows.
+     *
+     * The journal files go with the copy on the way out too, because a folder swept by an
+     * earlier build may still be holding a pair.
      *
      * **False means one thing only: the content check refused.** A deletion that did not
      * happen is a failure and leaves as one — the screen turns false into a sentence about
@@ -144,7 +163,25 @@ class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestinatio
             NSFileManager.defaultManager.fileExistsAtPath(path)
         }
         if (!exists) return true.right()
-        if (!ownCopy.confirms(path)) return false.right()
+
+        val staged = path + STAGED_SUFFIX
+        try {
+            val copied = withContext(Dispatchers.Default) {
+                // `copyItemAtPath` refuses a destination that already holds a file, and
+                // anything under this name is a leftover of this app's own.
+                NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+                copyItem(path, staged, BackupError.EXPORT_FAILED)
+            }
+            copied.getOrElse { return it.left() }
+
+            if (!ownCopy.confirms(staged)) return false.right()
+        } finally {
+            withContext(NonCancellable + Dispatchers.Default) {
+                DATABASE_FILES.forEach {
+                    NSFileManager.defaultManager.removeItemAtPath(staged + it, error = null)
+                }
+            }
+        }
 
         return withContext(Dispatchers.Default) {
             DATABASE_FILES.forEach { suffix ->

@@ -78,6 +78,16 @@ data class BackupHistoryUiState(
      */
     val isFolderOffered: Boolean = false,
 
+    /**
+     * The copy a removal has been asked about and not yet answered for.
+     *
+     * It is the copy and not a flag, because the sheet has to say *which* one — and it is
+     * held here rather than passed to a sheet the row builds, for the reason
+     * [confirmation] is: a modal is rendered outside the screen's tree and the state is
+     * what keeps the two in step.
+     */
+    val pendingRemoval: StoredBackup? = null,
+
     val confirmation: RestoreConfirmation? = null,
 
     val captureRefusal: UiText? = null,

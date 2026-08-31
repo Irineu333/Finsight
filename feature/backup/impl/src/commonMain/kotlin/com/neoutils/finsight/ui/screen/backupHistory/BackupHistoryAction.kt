@@ -73,7 +73,20 @@ sealed interface BackupHistoryAction {
         val context: PlatformContext,
     ) : BackupHistoryAction
 
+    /**
+     * Ask whether this copy should go — it is the tap on the delete row, not the deletion.
+     *
+     * A removal destroys the only thing on this screen that cannot be made again: the
+     * history is a reading of the folder, not a record, so a copy that leaves has left. The
+     * question is put before anything happens, and [ConfirmRemove] is the answer.
+     */
     data class Remove(val backup: StoredBackup) : BackupHistoryAction
+
+    /** The user answered the removal confirmation by saying to take the copy away. */
+    data object ConfirmRemove : BackupHistoryAction
+
+    /** The same question, answered by leaving the copy where it is. */
+    data object AbandonRemoval : BackupHistoryAction
 
     /** The user answered the restore confirmation. */
     data object ConfirmRestore : BackupHistoryAction

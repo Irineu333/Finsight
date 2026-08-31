@@ -58,6 +58,7 @@ import com.neoutils.finsight.ui.screen.backup.originWithVersion
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
+import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlin.time.Clock
@@ -342,6 +343,11 @@ private fun Unreadable() {
  * ground decides the state layer — here that is `contentColorFor(background)`, which is
  * what the two neutral rows were asking for anyway — and the tone stays where it means
  * something, on the glyph and the label.
+ *
+ * How far that layer moves from rest is [BackgroundTileRipple]'s to say, not this row's: the
+ * card sits on `background`, the darkest ground the dark scheme has, and Material's own
+ * state-layer alphas over that ground read as the card replacing itself rather than
+ * responding to a touch.
  */
 @Composable
 private fun ActionRow(
@@ -353,37 +359,39 @@ private fun ActionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        color = colorScheme.background,
-        shape = TileShape,
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(tag),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    BackgroundTileRipple {
+        Surface(
+            color = colorScheme.background,
+            shape = TileShape,
+            onClick = onClick,
+            modifier = modifier
+                .fillMaxWidth()
+                .testTag(tag),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tone,
-                modifier = Modifier.size(20.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = title,
-                    style = typography.titleMedium,
-                    color = tone,
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tone,
+                    modifier = Modifier.size(20.dp),
                 )
-                if (subtitle != null) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = subtitle,
-                        style = typography.bodySmall,
-                        color = colorScheme.onSurfaceVariant,
+                        text = title,
+                        style = typography.titleMedium,
+                        color = tone,
                     )
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle,
+                            style = typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

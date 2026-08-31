@@ -55,6 +55,7 @@ import com.neoutils.finsight.ui.screen.backup.VaultCopies
 import com.neoutils.finsight.ui.screen.backup.intervalLabel
 import com.neoutils.finsight.ui.screen.backup.retentionLabel
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
+import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.ui.theme.finsightSwitchColors
 import kotlinx.coroutines.flow.StateFlow
@@ -277,6 +278,10 @@ private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier =
  *
  * The tag is on the row for the same reason: it names the control, and the control is the
  * row. A driver taps what it finds under that id and the setting flips.
+ *
+ * The ripple itself is [BackgroundTileRipple]'s to size: `background` is the darkest ground
+ * the dark scheme has, and Material's own state-layer alphas painted white over it read as
+ * the card replacing itself rather than responding to a touch.
  */
 @Composable
 private fun SwitchTile(
@@ -287,43 +292,45 @@ private fun SwitchTile(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        color = colorScheme.background,
-        shape = TileShape,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier
-                .toggleable(
-                    value = checked,
-                    role = Role.Switch,
-                    onValueChange = onCheckedChange,
-                )
-                .testTag(tag)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    BackgroundTileRipple {
+        Surface(
+            color = colorScheme.background,
+            shape = TileShape,
+            modifier = modifier.fillMaxWidth(),
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+            Row(
+                modifier = Modifier
+                    .toggleable(
+                        value = checked,
+                        role = Role.Switch,
+                        onValueChange = onCheckedChange,
+                    )
+                    .testTag(tag)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = title,
-                    style = typography.titleMedium,
-                    color = colorScheme.onSurface,
-                )
-                Text(
-                    text = subtitle,
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style = typography.titleMedium,
+                        color = colorScheme.onSurface,
+                    )
+                    Text(
+                        text = subtitle,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = checked,
+                    onCheckedChange = null,
+                    colors = finsightSwitchColors(),
                 )
             }
-            Switch(
-                checked = checked,
-                onCheckedChange = null,
-                colors = finsightSwitchColors(),
-            )
         }
     }
 }

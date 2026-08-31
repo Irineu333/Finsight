@@ -132,9 +132,9 @@
       completa, não com `DocumentFile` (1 + 3N consultas)
 - [x] 11.3 Android: sugerir `Documents/` ao abrir o seletor — conveniência, não correção: só
       `Download` em si é recusada, e uma subpasta dela serve como destino
-- [ ] 11.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
+- [x] 11.4 iOS: seleção de pasta, bookmark persistido, `start`/`stopAccessingSecurityScopedResource`
       balanceados em `finally`, e `NSFileCoordinator` na escrita e na remoção
-- [ ] 11.5 iOS: a URL security-scoped nunca atravessa `String` em nenhum ponto do percurso
+- [x] 11.5 iOS: a URL security-scoped nunca atravessa `String` em nenhum ponto do percurso
 - [x] 11.6 Desktop: pasta escolhida como caminho, sem cerimônia
 - [x] 11.7 Verificar o vínculo na abertura do app, não só ao gravar
 - [x] 11.8 Vínculo caído: avisar, oferecer reapontar ou guardar dentro do app, e continuar

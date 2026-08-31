@@ -2,12 +2,14 @@
 
 package com.neoutils.finsight.ui.modal.vaultSettings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -23,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.vault.BackupRetention
@@ -75,18 +78,31 @@ import org.jetbrains.compose.resources.stringResource
  * the app cannot keep (design D5); the line under the choice says why in the same words a
  * person would.
  *
+ * **The wait is shown only while the trigger that reads it is on.** One thing consults the
+ * interval — the periodic trigger's question about time (`VaultPeriodicBackup`) — so with
+ * that switch off it governs nothing, and a wait on screen would say that something happens
+ * every so many days when nothing does. It arrives and leaves with the switch rather than
+ * greying out: a disabled control still asserts that the setting matters, and this one
+ * stops mattering entirely.
+ *
  * **How many copies are kept is a choice wherever they are kept.** One preference governs
  * both rungs and the sweep reads it, so the number on the picker is the number in force —
  * including the choice to remove nothing, which is stated in amber rather than prevented.
+ * It is asked unconditionally because retention hangs off any capture that landed, whichever
+ * trigger produced it (`BackupVault`).
  *
  * **The combination says what it produces.** "Three days" and "ten copies" are two abstract
  * numbers; "about a month of history, around 42 MB" is a decision — and the size is the
- * real one, averaged over the copies already taken, rather than a guess.
+ * real one, averaged over the copies already taken, rather than a guess. It stands exactly
+ * while both halves of the combination do: with no wait in force there is no combination,
+ * and every sentence it could make — days of history, megabytes a month — is arithmetic on
+ * a number that decides nothing.
  *
  * **It is laid out on the beat both backup screens use** (`BackupRows`): the same corner,
  * the same gap between the rows of one group, and the wider gap only where a group opens.
  * Four groups stand here — the triggers, the wait, the limit, and what the two of them
- * produce together.
+ * produce together — of which the wait and the outcome come and go with the periodic
+ * trigger, growing and collapsing rather than appearing under the reader's thumb.
  *
  * Nothing here is saved, because nothing here is edited: every control writes the
  * preference as it is touched, which is what every other preference in this app does. There
@@ -138,16 +154,18 @@ class VaultSettingsModal(
                 onCheckedChange = { onAction(BackupAction.SetPeriodicOn(it)) },
             )
 
-            SegmentedChoice(
-                title = stringResource(Res.string.backup_settings_interval_title),
-                hint = stringResource(Res.string.backup_settings_interval_hint),
-                options = VaultInterval.entries,
-                selected = VaultInterval.nearest(vault.interval),
-                label = { intervalLabel(it) },
-                tag = { "backup_interval_${it.name}" },
-                onSelect = { onAction(BackupAction.SetInterval(it)) },
-                modifier = Modifier.padding(top = GroupGap - RowGap),
-            )
+            AnimatedVisibility(visible = vault.isPeriodicOn) {
+                SegmentedChoice(
+                    title = stringResource(Res.string.backup_settings_interval_title),
+                    hint = stringResource(Res.string.backup_settings_interval_hint),
+                    options = VaultInterval.entries,
+                    selected = VaultInterval.nearest(vault.interval),
+                    label = { intervalLabel(it) },
+                    tag = { "backup_interval_${it.name}" },
+                    onSelect = { onAction(BackupAction.SetInterval(it)) },
+                    modifier = Modifier.padding(top = GroupGap - RowGap),
+                )
+            }
 
             SegmentedChoice(
                 title = stringResource(Res.string.backup_settings_retention_title),
@@ -160,11 +178,13 @@ class VaultSettingsModal(
                 modifier = Modifier.padding(top = GroupGap - RowGap),
             )
 
-            Outcome(
-                vault = vault,
-                copies = stored,
-                modifier = Modifier.padding(top = GroupGap - RowGap),
-            )
+            AnimatedVisibility(visible = vault.isPeriodicOn) {
+                Outcome(
+                    vault = vault,
+                    copies = stored,
+                    modifier = Modifier.padding(top = GroupGap - RowGap),
+                )
+            }
         }
     }
 }
@@ -180,6 +200,10 @@ class VaultSettingsModal(
  * Keeping everything is not prevented and is not silent: it turns retention into something
  * the user switched off rather than something they put up with, and somebody who chooses it
  * is owed the rate their copies pile up at.
+ *
+ * Both readings are measured in waits, so both belong to a vault whose periodic trigger is
+ * on — which is why the caller shows this beside the wait and not without it. A rate stated
+ * per month out of an interval nothing consults would be a number with no source.
  */
 @Composable
 private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier = Modifier) {
@@ -228,6 +252,15 @@ private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier =
  * The ground is `background` and not `surfaceContainer`: the two names are one colour in
  * this theme, so a card painted the second inside a sheet painted `surface` is a card
  * nobody can see.
+ *
+ * **The tile is the switch, and not a switch with words beside it.** The whole row is
+ * `toggleable` with [Role.Switch], and the [Switch] takes no callback of its own — so there
+ * is one target where the eye sees one control, one ripple over the card rather than a spot
+ * in its corner, and one thing announced to a screen reader. Giving the switch a callback
+ * as well would put a second target inside the first and state the same control twice.
+ *
+ * The tag is on the row for the same reason: it names the control, and the control is the
+ * row. A driver taps what it finds under that id and the setting flips.
  */
 @Composable
 private fun SwitchTile(
@@ -244,7 +277,14 @@ private fun SwitchTile(
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier
+                .toggleable(
+                    value = checked,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange,
+                )
+                .testTag(tag)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -265,9 +305,8 @@ private fun SwitchTile(
             }
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange,
+                onCheckedChange = null,
                 colors = finsightSwitchColors(),
-                modifier = Modifier.testTag(tag),
             )
         }
     }

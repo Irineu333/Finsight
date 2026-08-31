@@ -34,7 +34,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -50,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import com.alorma.compose.settings.ui.SettingsSwitch
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.VaultDestination
@@ -202,8 +202,11 @@ fun BackupScreen(
                         )
                     }
 
+                    // The one tile that is a switch says so: the whole row toggles, under
+                    // one id and announced once. A tile that carried its own switch would
+                    // put a second target inside the first.
                     row(key = "vault") { modifier ->
-                        SettingsMenuLink(
+                        SettingsSwitch(
                             modifier = modifier.testTag("backup_vault"),
                             shape = TileShape,
                             icon = {
@@ -211,17 +214,11 @@ fun BackupScreen(
                             },
                             title = { Text(text = stringResource(Res.string.backup_vault_title)) },
                             subtitle = { Text(text = vaultSubtitle(uiState.vault)) },
-                            action = {
-                                Switch(
-                                    checked = uiState.vault.isOn,
-                                    onCheckedChange = { viewModel.onAction(BackupAction.SetVaultOn(it)) },
-                                    colors = finsightSwitchColors(),
-                                    modifier = Modifier.testTag("backup_vault_switch"),
-                                )
-                            },
-                            onClick = {
-                                viewModel.onAction(BackupAction.SetVaultOn(!uiState.vault.isOn))
-                            },
+                            state = uiState.vault.isOn,
+                            // The tile's accent is spent on the glyph, so a switch left to
+                            // take its colours from the tile would have no accent at all.
+                            switchColors = finsightSwitchColors(),
+                            onCheckedChange = { viewModel.onAction(BackupAction.SetVaultOn(it)) },
                         )
                     }
 

@@ -480,7 +480,7 @@
             <div>
               <div class="k">Último backup</div>
               <div class="v">Hoje, 14:32</div>
-              <div class="w">Dentro do app · 3 cópias guardadas</div>
+              <div class="w">Dentro do app · 10 cópias guardadas</div>
               <div class="w">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</div>
             </div>
           </div>
@@ -961,52 +961,16 @@
 <section>
   <div class="sh"><span class="n">06</span><h2>Os ajustes, e a pasta</h2></div>
   <p class="intro">
-    Um interruptor, um intervalo e — só na pasta escolhida — quantas cópias manter.
-    <strong>Dentro do app esse número nem existe</strong>: o limite é fixo, sem controle, porque são
-    arquivos que ninguém vê nem administra. Fora isso, não existe uma quinta coisa a ajustar: quais
-    ações disparam a cópia é decidido no domínio, não na tela — a tela decide se a regra vale, nunca
-    qual regra é.
+    Um interruptor, um intervalo e quantas cópias manter.
+    <strong>O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 10</strong> — o espaço é
+    do usuário nos dois casos, e um limite que a tela mostra é um limite que ela deixa escolher. Fora
+    isso, não existe uma quinta coisa a ajustar: quais ações disparam a cópia é decidido no domínio,
+    não na tela — a tela decide se a regra vale, nunca qual regra é.
   </p>
 
   <div class="stage">
     <div class="unit">
-      <span class="cap">Dentro do app · retenção fixa</span>
-      <div class="phone sheetmode">
-        <div class="sheet">
-          <span class="grab"></span>
-          <h5>Ajustes do cofre</h5>
-
-          <div class="tile" style="background:var(--app-bg);padding:12px 14px">
-            <div class="mid">
-              <div class="t">Guardar antes de excluir</div>
-              <div class="s">Lançamentos, parcelamentos, faturas, moedas e cotações.</div>
-            </div>
-            <div class="end"><span class="sw on"><i></i></span></div>
-          </div>
-
-          <div class="segwrap">
-            <span class="seglabel">Verificar a cada</span>
-            <div class="seg">
-              <span>1 dia</span><span class="on">3 dias</span><span>7 dias</span><span>15 dias</span>
-            </div>
-            <span class="seghint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</span>
-          </div>
-
-          <div class="outcome">
-            <span class="ov">O app mantém as 3 cópias mais recentes.</span>
-            <span class="oh">Enquanto elas ficam dentro do app isso não é ajustável — são arquivos que você não vê nem administra.</span>
-          </div>
-
-          <div class="outcome">
-            <span class="ov">Cerca de 9 dias de histórico</span>
-            <span class="oh">3 cópias de ~4 MB ocupam por volta de 12 MB dentro do app.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="unit">
-      <span class="cap">Pasta escolhida · retenção ajustável</span>
+      <span class="cap">Ajustes do cofre · os dois degraus</span>
       <div class="phone sheetmode">
         <div class="sheet">
           <span class="grab"></span>
@@ -1036,15 +1000,15 @@
           </div>
 
           <div class="outcome">
-            <span class="ov">Cerca de 1 mês de histórico</span>
-            <span class="oh">10 cópias de ~4 MB ocupam por volta de 42 MB em Documentos/Finsight.</span>
+            <span class="ov">Cerca de 30 dias de histórico</span>
+            <span class="oh">10 cópias de ~4 MB ocupam por volta de 42 MB.</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="unit">
-      <span class="cap">Pasta escolhida · retenção "Todas"</span>
+      <span class="cap">Ajustes do cofre · retenção "Todas"</span>
       <div class="phone sheetmode">
         <div class="sheet">
           <span class="grab"></span>
@@ -1075,7 +1039,7 @@
 
           <div class="outcome warn">
             <span class="ov">Nenhuma cópia será apagada</span>
-            <span class="oh">Com verificação diária, a pasta cresce cerca de 120 MB por mês. Você mesmo apaga o que não quiser mais.</span>
+            <span class="oh">Nesse ritmo, cerca de 120 MB por mês se acumulam — e é você quem apaga o que não quiser mais.</span>
           </div>
         </div>
       </div>
@@ -1099,11 +1063,11 @@
   </div>
 
   <div class="notes">
-    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O limite de cópias só é uma escolha na pasta.</b> Dentro do app ele é fixo em três, sem controle — a spec chama isso de configuração sem propósito, e uma retenção que ninguém pode escrever não tem por que aparecer como uma.</div></div>
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O limite passa a valer nos dois degraus.</b> Antes ele só existia na pasta, com o argumento de que arquivos que ninguém vê nem administra não mereciam um controle. O espaço é do usuário nos dois casos, porém — e um limite que a tela mostra é um limite que ela deveria deixar escolher.</div></div>
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>"Verificar a cada", não "fazer uma cópia a cada".</b> A segunda promete periodicidade que nenhuma das três plataformas garante — e era uma frase que desfazia, num rótulo, a honestidade que o resto da proposta comprou caro. A linha de apoio diz por que, sem jargão.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>O preventivo sobe para o topo, como interruptor.</b> Ele é o gatilho que torna uma exclusão reversível — o mais consequente dos três. Estava rebaixado a um checkbox de rodapé, abaixo de oito rádios.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Escolha segmentada no lugar de oito rádios empilhados.</b> Quatro valores curtos e mutuamente exclusivos são exatamente o caso do <code>SingleChoiceSegmentedButtonRow</code>, e o sheet cabe na tela sem rolar.</div></div>
-    <div class="note"><span class="mk pg">5</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "10 cópias" são dois números abstratos; "cerca de 1 mês de histórico, por volta de 42 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
+    <div class="note"><span class="mk pg">5</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "10 cópias" são dois números abstratos; "cerca de 30 dias de histórico, por volta de 42 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
     <div class="note"><span class="mk pg">6</span><div class="nt"><b>"Todas" avisa em âmbar, e não é impedido.</b> Transforma a retenção em algo que o usuário desliga, em vez de algo que ele sofre — mas quem escolhe não apagar nada merece saber a que taxa a pasta cresce.</div></div>
     <div class="note"><span class="mk pg">7</span><div class="nt"><b>Cada opção de destino declara o que não cobre</b>, na própria linha. Escolher onde guardar é escolher contra o que se está protegido, e essa informação não pode estar noutra tela.</div></div>
     <div class="note"><span class="mk pg">8</span><div class="nt"><b>A frase sobre a nuvem difere por plataforma.</b> No iOS ela diz "escolha uma pasta no iCloud Drive", porque lá isso funciona. No Android nenhum provedor de nuvem aparece no seletor de pastas — verificado no código do AOSP —, então a frase é a genérica acima.</div></div>

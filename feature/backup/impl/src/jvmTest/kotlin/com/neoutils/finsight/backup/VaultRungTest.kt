@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.backup
 
 import com.neoutils.finsight.domain.vault.VaultDestination
@@ -9,7 +11,10 @@ import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * Where the copies go, out of the two facts that decide it: what the person chose, and what
@@ -119,5 +124,72 @@ class VaultRungTest {
 
         assertTrue(state.rung.isProvisional)
         assertFalse(state.copiesInForce.isRead)
+    }
+
+    // ------------------------------------------------- what the card names as the last copy
+
+    /**
+     * The instant sits between the destination's name and its count. An instant belonging to
+     * the rung left behind is the card saying a copy taken inside the app is in the folder
+     * somebody has just pointed at — the same failure [BackupUiState.copiesInForce] catches
+     * one line up, in the field beside it.
+     */
+    @Test
+    fun `the card names the newest copy standing where the copies now go`() {
+        val state = BackupUiState(
+            vault = VaultState(
+                destination = VaultDestination.USER_FOLDER,
+                lastCapturedAt = CAPTURED_INSIDE_THE_APP,
+            ),
+            folderLink = FolderLink.LINKED,
+            copies = VaultCopies(
+                rung = VaultDestination.USER_FOLDER,
+                count = 5,
+                newestAt = NEWEST_IN_THE_FOLDER,
+            ),
+        )
+
+        assertEquals(
+            NEWEST_IN_THE_FOLDER,
+            state.lastCopyAt,
+            "the card put an instant from the app's own storage over the folder's count",
+        )
+    }
+
+    /**
+     * A destination that answered and holds nothing is empty, and the card says so — the
+     * state a freshly chosen folder is in, where this install's own last capture went
+     * somewhere else entirely.
+     */
+    @Test
+    fun `a destination that answered and holds nothing is named as holding nothing`() {
+        val state = BackupUiState(
+            vault = VaultState(
+                destination = VaultDestination.USER_FOLDER,
+                lastCapturedAt = CAPTURED_INSIDE_THE_APP,
+            ),
+            folderLink = FolderLink.LINKED,
+            copies = VaultCopies(rung = VaultDestination.USER_FOLDER, count = 0),
+        )
+
+        assertNull(state.lastCopyAt, "an empty folder was named with a copy taken elsewhere")
+    }
+
+    /**
+     * Until a listing lands there is nothing to name but this install's own capture, which is
+     * a fact about the install rather than about the destination — and it is replaced the
+     * moment the reading arrives.
+     */
+    @Test
+    fun `a destination that has not answered leaves this install's own capture standing`() {
+        val state = BackupUiState(vault = VaultState(lastCapturedAt = CAPTURED_INSIDE_THE_APP))
+
+        assertFalse(state.copiesInForce.isRead)
+        assertEquals(CAPTURED_INSIDE_THE_APP, state.lastCopyAt)
+    }
+
+    private companion object {
+        val CAPTURED_INSIDE_THE_APP: Instant = Instant.parse("2026-03-01T04:27:00Z")
+        val NEWEST_IN_THE_FOLDER: Instant = Instant.parse("2026-03-08T09:10:00Z")
     }
 }

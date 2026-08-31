@@ -100,6 +100,31 @@ data class BackupUiState(
         get() = copies.takeIf { it.rung == rung.inForce } ?: VaultCopies()
 
     /**
+     * The copy the card names as the last backup: the newest one standing where the copies
+     * are going, and this install's own last capture only while that destination has not
+     * answered.
+     *
+     * **It is the reading and not [VaultState.lastCapturedAt], because of where it is read.**
+     * The instant sits between the destination's name and the count of what is in it, so an
+     * instant belonging to the other rung is the card saying that a copy taken inside the app
+     * is in the folder somebody has just pointed at. That is the failure [copiesInForce]
+     * exists to prevent, one field over, and the reading answers it the same way: it is about
+     * the place it was taken from, so it cannot be shown over another one.
+     *
+     * It is also the only one of the two that a folder emptied from a file manager moves. The
+     * vault's instant is a fact about this install that no listing can contradict, and the
+     * card's line is a claim about what is there to come back to.
+     *
+     * **A destination that has not answered leaves the vault's instant standing**, which is
+     * what the card said before any reading landed and is true of the install if not of the
+     * folder. It is replaced the moment the listing arrives, and there is nothing else to put
+     * there: a card that said *none yet* over a destination it has not read would be design
+     * D9's forbidden sentence, moved up one line.
+     */
+    val lastCopyAt: Instant?
+        get() = if (copiesInForce.isRead) copiesInForce.newestAt else vault.lastCapturedAt
+
+    /**
      * One flag for both entries: each of the three operations has the database's writer
      * connection to itself, and offering the other while one runs would only produce a
      * second one that has to wait.

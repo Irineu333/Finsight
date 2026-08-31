@@ -36,6 +36,21 @@ import kotlinx.coroutines.flow.StateFlow
  * than performed. The order here is what keeps that safe: the preference moves only after a
  * folder has actually been pointed at, so a picker somebody closed leaves the vault exactly
  * as it was.
+ *
+ * **What a change of rung does end is coverage.** [VaultState.markAtLastCapture] says a copy
+ * holds everything the archive holds, and a copy is somewhere: once the copies start landing
+ * on the other rung, that file is in the rung left behind, and everything reading the claim
+ * is reading it about the rung now in force. The preventive trigger would take no copy before
+ * a restore because one already covers, and the confirmation would promise a way back through
+ * a screen that lists only the rung in force — a sentence said over somebody's whole archive,
+ * a moment before it is replaced. So the claim ends where its place does, here, in the one
+ * place both halves of [rung] move.
+ *
+ * It costs at most one copy, which is the direction design D8's precondition is allowed to be
+ * wrong in, and it is the movement that ends it rather than the preference: a folder that
+ * fell away and a folder that came back both move the copies without anybody choosing to
+ * (design D12), and answering *keep them inside the app* while the folder is already
+ * unreachable moves nothing and ends nothing.
  */
 class VaultFolder(
     private val state: BackupVaultRepository,
@@ -79,7 +94,9 @@ class VaultFolder(
      * way back to those copies is made of.
      */
     suspend fun check() {
+        val before = rung.inForce
         _link.value = folder.link()
+        endCoverageIfMoved(before)
     }
 
     /**
@@ -95,13 +112,17 @@ class VaultFolder(
      * has been prepared — a vault pointed at a folder it could not open would be a vault
      * that stops writing at the next trigger.
      */
-    suspend fun pointAt(context: PlatformContext): Either<BackupError, Boolean> =
-        folder.point(context).onRight { chosen ->
+    suspend fun pointAt(context: PlatformContext): Either<BackupError, Boolean> {
+        val before = rung.inForce
+
+        return folder.point(context).onRight { chosen ->
             if (chosen) {
                 state.setDestination(VaultDestination.USER_FOLDER)
                 _link.value = folder.link()
+                endCoverageIfMoved(before)
             }
         }
+    }
 
     /**
      * Moves the vault back to the app's own storage.
@@ -110,5 +131,24 @@ class VaultFolder(
      * folder stays remembered, and [pointAt] over the same folder brings the vault back to
      * them. It is the reverse of a choice rather than the undoing of one.
      */
-    fun keepInsideApp() = state.setDestination(VaultDestination.APP_STORAGE)
+    fun keepInsideApp() {
+        val before = rung.inForce
+        state.setDestination(VaultDestination.APP_STORAGE)
+        endCoverageIfMoved(before)
+    }
+
+    /**
+     * Gives the coverage up when the copies have started landing somewhere else.
+     *
+     * It is the movement of [VaultRung.inForce] and not of the preference, because the two
+     * part company exactly where this matters: a folder that stops answering sends the copies
+     * inside the app with the choice untouched, and a folder that answers again takes them
+     * back. Both are a copy that covers being left on a rung nothing is reading any more.
+     *
+     * What is given up is the claim, never the capture: the instant a copy was taken stands,
+     * because it has not stopped being true ([BackupVaultRepository.forgetCoverage]).
+     */
+    private fun endCoverageIfMoved(before: VaultDestination) {
+        if (rung.inForce != before) state.forgetCoverage()
+    }
 }

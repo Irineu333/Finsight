@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.backup
 
 import arrow.core.Either
@@ -7,6 +9,7 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.window.WindowScope
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.ArchiveCopy
 import com.neoutils.finsight.domain.vault.VaultAppOpening
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultFolder
@@ -17,7 +20,11 @@ import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 
 /**
@@ -70,6 +77,13 @@ class VaultFolderTest {
     )
 
     private val destination get() = state.observe().value.destination
+
+    /** A vault holding a copy that covers the archive, taken while the rung was in force. */
+    private fun coverTheArchive() = state.recordCapture(
+        at = COVERED_AT,
+        mark = 42,
+        copy = ArchiveCopy(name = "finsight-backup-2026-08-30T14-30-05.db", savedAt = COVERED_AT),
+    )
 
     // ----------------------------------------------------------------- choosing a folder
 
@@ -159,5 +173,100 @@ class VaultFolderTest {
         VaultAppOpening(folder = folder, periodic = { captured = true }).captureIfDue()
 
         assertTrue(captured, "checking the link replaced the trigger instead of preceding it")
+    }
+
+    // ------------------------------------------ coverage is a claim about a place, not a file
+
+    /**
+     * The one thing a restore confirmation may not get wrong. Coverage says *a copy holds
+     * everything the archive holds*, so the preventive trigger takes none — and the sheet
+     * promises the person finds that copy in the kept copies screen, which lists the rung in
+     * force. A claim carried across a change of rung is a promise about a copy in the rung
+     * left behind.
+     */
+    @Test
+    fun `pointing at a folder gives up a coverage that was taken inside the app`() = runTest {
+        coverTheArchive()
+
+        folder.pointAt(context)
+
+        assertNull(
+            state.observe().value.markAtLastCapture,
+            "a copy inside the app was left covering an archive whose copies go to a folder",
+        )
+        assertNull(state.observe().value.archiveCopy, "and it was left named on the new rung")
+        assertEquals(COVERED_AT, state.observe().value.lastCapturedAt, "the capture still happened")
+    }
+
+    @Test
+    fun `moving back inside the app gives up a coverage that was taken in the folder`() = runTest {
+        folder.pointAt(context)
+        coverTheArchive()
+
+        folder.keepInsideApp()
+
+        assertNull(state.observe().value.markAtLastCapture)
+    }
+
+    /**
+     * The link falling moves the rung without anybody choosing to (design D12), so the copy
+     * that covers stays in a folder the app cannot reach while the copies land inside it.
+     */
+    @Test
+    fun `a link that falls gives up the coverage it left in the folder`() = runTest {
+        folder.pointAt(context)
+        coverTheArchive()
+        linked = FolderLink.BROKEN
+
+        folder.check()
+
+        assertNull(state.observe().value.markAtLastCapture)
+    }
+
+    @Test
+    fun `a link that comes back gives up the coverage taken while it was down`() = runTest {
+        folder.pointAt(context)
+        linked = FolderLink.BROKEN
+        folder.check()
+        coverTheArchive()
+
+        linked = FolderLink.LINKED
+        folder.check()
+
+        assertNull(state.observe().value.markAtLastCapture)
+    }
+
+    /**
+     * Nothing moved, so nothing is given up: while the folder cannot be reached the copies
+     * are already going inside the app, and answering the question with *keep them there*
+     * leaves them landing exactly where they were.
+     */
+    @Test
+    fun `a rung that does not move keeps the coverage it has`() = runTest {
+        folder.pointAt(context)
+        linked = FolderLink.BROKEN
+        folder.check()
+        coverTheArchive()
+
+        folder.keepInsideApp()
+
+        assertNotNull(
+            state.observe().value.markAtLastCapture,
+            "a copy that still covers was thrown away by a rung that never moved",
+        )
+    }
+
+    @Test
+    fun `checking a link that has not changed keeps the coverage`() = runTest {
+        folder.pointAt(context)
+        coverTheArchive()
+
+        folder.check()
+
+        assertNotNull(state.observe().value.markAtLastCapture)
+    }
+
+    private companion object {
+        val COVERED_AT: Instant = Instant.fromEpochMilliseconds(1_700_000_000_000)
     }
 }

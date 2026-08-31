@@ -156,6 +156,28 @@ class JvmFolderBackupDestinationTest {
         )
     }
 
+    /**
+     * The other side of the same rule, and the state every chosen folder is in between being
+     * pointed at and the first copy landing in it.
+     *
+     * Absence may be said once it has been established, and here it has: the app's own
+     * subfolder is there, [JvmFolderBackupDestination] has just confirmed it, and a directory
+     * that answers with no entries holds none. Refusing this would tell somebody the folder
+     * they had just chosen could not be read — and it is the same answer the Android rung
+     * gives, along a road of its own, so the two rungs cannot start disagreeing about what an
+     * empty folder is.
+     */
+    @Test
+    fun `a folder the app has just made is empty rather than unreadable`() = runTest {
+        pointAtChosenFolder()
+
+        assertEquals(
+            emptyList(),
+            destination.list().getOrNull(),
+            "a folder that was just chosen and is still empty refused the listing",
+        )
+    }
+
     @Test
     fun `a destination nobody has pointed at refuses every operation`() = runTest {
         assertTrue(destination.list().isLeft())

@@ -30,20 +30,31 @@ import kotlinx.coroutines.withContext
  * the folder somebody pointed at instead of the one the uninstaller empties.
  *
  * **It is a class of its own and not the first rung over another directory**, because the
- * two disagree about the one thing that matters, which is what *absence* means. The app's
- * own folder is absent because nothing has been captured yet, and answering an empty list
- * is the truth. A folder somebody chose is absent because a grant was revoked, a folder was
- * renamed, a volume was unmounted or a provider is still waking up — and answering an empty
- * list there is design D9's forbidden sentence: **zero copies means "could not read", never
- * "there is nothing here"**.
+ * two disagree about what has to be established before *absence* may be said. The app's own
+ * folder is there because the app makes it and nothing else can take it away, so an empty
+ * listing of it is the truth on its own. A folder somebody chose can have had its grant
+ * revoked, been renamed, been unmounted or be sitting behind a provider that is still waking
+ * up, and every one of those is design D9's forbidden sentence waiting to be said: **zero
+ * copies must never be read as "there is nothing here" until the app has established that the
+ * folder is there**.
  *
- * **A cursor with no rows is refused here, and that is the sharp edge of the rule.** A
- * folder that provably existed and accepted a write moments later answered a complete-looking
- * cursor with no rows at all, once, right after a reboot, and it did not reproduce. So the
- * cost is paid where it is cheap: between pointing at a fresh folder and the first copy
- * landing in it, the history says it could not read the folder rather than that the folder
- * is empty. The alternative is the expensive mistake — "no copies yet" over an archive that
- * is sitting right there, and a retention sweep counting from zero.
+ * **One listing is never proof of absence; two are.** Nothing here asks the provider a single
+ * question. [reachable] cannot answer without the tree being listed and the app's own
+ * subfolder being found among its children by name ([AndroidBackupFolder.ownFolder]), so
+ * every operation below has already had rows out of this provider, over this grant, on this
+ * volume, a moment earlier. A children query that then comes back with a live cursor saying
+ * it is finished, reporting no error, and holding nothing is a folder with nothing in it.
+ *
+ * That pairing is what covers the case design D9 is written for, and it covers it better than
+ * refusing an empty answer did. A folder that was deleted, renamed or unmounted does not
+ * reliably answer null: Android's own `FileSystemProvider` hands back an *empty* cursor for a
+ * parent it can no longer stat, which is exactly the complete-looking empty answer a folder
+ * that provably existed gave once after a reboot. What catches all of them is the first
+ * listing — the subfolder is not among the tree's children, the link reads broken, and every
+ * operation here refuses before a child is ever asked for. Refusing the second listing as well
+ * caught nothing the first had not, and cost the one state it cannot tell apart: a folder
+ * somebody has just chosen, which is empty until the first copy lands in it and was told it
+ * could not be read.
  *
  * **Nothing here creates a directory.** Not on a write, not after a listing came back empty,
  * not ever: only [AndroidBackupFolder.point] makes the app's own subfolder, with a person in
@@ -182,19 +193,20 @@ class AndroidFolderBackupDestination(
         folder.ownFolder()?.right() ?: BackupError.EXPORT_FAILED.left()
 
     /**
-     * Everything the folder holds, refusing an answer with no rows in it.
+     * Everything the folder holds, which may be nothing.
      *
-     * @throws IOException when the listing cannot be trusted, an empty one included — see
-     * the class comment for why emptiness is counted among the failures on this rung and
-     * on no other.
+     * Emptiness is an answer here only because of what had to happen for this to be reached:
+     * the [OwnFolder] it is asked of comes from [reachable] alone, and that means the tree was
+     * listed and named this subfolder among its children. See the class comment.
+     *
+     * @throws IOException when the listing cannot be trusted — no cursor, or a cursor saying
+     * through its own extras that it is still loading or has failed.
      */
-    private fun OwnFolder.contents() = appContext.contentResolver
-        .childrenOf(tree, documentId)
-        .ifEmpty { throw IOException("The folder answered no children at all") }
+    private fun OwnFolder.contents() = appContext.contentResolver.childrenOf(tree, documentId)
 
     /**
-     * One copy by the name a listing gave it, or null when a listing that can be trusted
-     * does not hold it.
+     * One copy by the name a listing gave it, or null when a listing that can be trusted —
+     * an empty one included — does not hold it.
      */
     private fun OwnFolder.documentNamed(name: String): Uri? = contents()
         .firstOrNull { !it.isDirectory && it.name == name }

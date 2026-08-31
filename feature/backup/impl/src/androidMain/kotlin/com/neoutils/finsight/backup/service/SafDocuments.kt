@@ -20,10 +20,13 @@ import java.io.IOException
  * cannot believe rather than answering a short list, because everything above reasons from
  * a listing: the history would say *no copies yet* over an archive that is sitting right
  * there, and retention would count from zero (design D9). The three ways a provider says it
- * is not finished are all here — no cursor at all, `EXTRA_LOADING`, and `EXTRA_ERROR` —
- * and a fourth, the empty answer that a folder which provably existed gave once after a
- * reboot, is judged by the caller, because *empty* means different things to somebody
- * choosing a folder and to somebody taking an inventory of one.
+ * is not finished are all here — no cursor at all, `EXTRA_LOADING`, and `EXTRA_ERROR`.
+ *
+ * **An answer with no rows in it is not one of them, and is left to the caller.** A cursor
+ * that is finished and holds nothing is what an empty folder gives and also what a folder the
+ * provider can no longer stat gives, and nothing in the cursor separates them. What separates
+ * them is what the caller already knows about the folder it is asking about — see
+ * [AndroidFolderBackupDestination], which never asks about one it has not just found.
  */
 
 /**

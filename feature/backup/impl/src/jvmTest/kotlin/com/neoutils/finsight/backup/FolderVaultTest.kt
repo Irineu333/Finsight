@@ -36,6 +36,7 @@ import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
@@ -310,6 +311,46 @@ class FolderVaultTest {
         )
     }
 
+    /**
+     * The sentence a restore confirmation carries: *a copy of the app as it is now is kept
+     * first, and you go back to it in the kept copies screen*. That screen lists the rung in
+     * force, so the copy has to be on it — and design D8 takes no copy at all when one
+     * already covers the archive.
+     *
+     * Nothing here touches the archive between the two, which is the whole point: the copy
+     * that covers is real, it holds everything, and it is inside the app while the copies
+     * now go to a folder. Believed across the move it buys silence exactly where the app is
+     * about to replace somebody's entire archive.
+     */
+    @Test
+    fun `the copy owed before a restore lands where the kept copies screen lists`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        assertIs<CaptureOutcome.Captured>(asked())
+        assertEquals(
+            ONE,
+            appStorageFolder.listFiles().orEmpty().size,
+            "the first copy was supposed to go inside the app",
+        )
+
+        pointAtFolder()
+        assertEquals(emptyList(), namesInFolder(), "the folder starts out holding nothing")
+
+        instant += 1.minutes
+        VaultPreventiveBackup(state, vault).captureBefore(DestructiveAction.RESTORE_BACKUP)
+
+        assertEquals(
+            ONE,
+            namesInFolder().size,
+            "the confirmation promised a copy in the kept copies screen and none landed there",
+        )
+        assertEquals(
+            namesInFolder(),
+            assertNotNull(destination.list().getOrNull()).map { it.name },
+            "and what landed is not what a listing of the rung in force answers with",
+        )
+    }
+
     // ---------------------------------------------------------------- across a restart
 
     /**
@@ -394,6 +435,7 @@ class FolderVaultTest {
     private companion object {
         val DATE = LocalDate(2026, 8, 30)
 
+        const val ONE = 1
         const val FIVE = 5
         const val SIX = 6
 

@@ -212,6 +212,7 @@ fun BackupScreen(
                             LastBackupCard(
                                 vault = uiState.vault,
                                 copies = uiState.copiesInForce,
+                                last = uiState.lastCopyAt,
                                 rung = uiState.rung,
                                 now = clock.now(),
                                 onAction = viewModel::onAction,
@@ -496,6 +497,11 @@ private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
 private fun LastBackupCard(
     vault: VaultState,
     copies: VaultCopies,
+    /**
+     * The copy this names, from [BackupUiState.lastCopyAt] — the newest one standing where
+     * the copies go, never an instant belonging to the rung left behind.
+     */
+    last: Instant?,
     rung: VaultRung,
     now: Instant,
     onAction: (BackupAction) -> Unit,
@@ -503,8 +509,7 @@ private fun LastBackupCard(
     modifier: Modifier = Modifier,
 ) {
     val dateFormats = LocalDateFormats.current
-    val last = vault.lastCapturedAt
-    val overdue = vault.isLastCopyOverdue(now)
+    val overdue = vault.isCopyOverdue(newest = last, now = now)
     val tone = when {
         // Red is what a folder that cannot be reached deserves: the copies already in it
         // are out of the app's reach, and the new ones are landing somewhere the person did

@@ -164,26 +164,36 @@ data class VaultState(
      */
     fun isIntervalDue(now: Instant): Boolean {
         val last = lastCapturedAt ?: return true
-        return now - last >= interval
+        return hasWaitElapsed(since = last, now = now)
     }
 
     /**
-     * Whether the copy the screen names has been standing longer than the trigger that
-     * would replace it allows — the sign that the protection may have stopped (design D12).
+     * Whether [newest] — the copy the screen names — has been standing longer than the
+     * trigger that would replace it allows, which is the sign that the protection may have
+     * stopped (design D12).
      *
-     * It is [isIntervalDue] with the two conditions a *sign* has and a *decision to
-     * capture* does not. A vault that has never captured is due but not late: the screen
-     * says so in words of its own, and "never" and "a long time ago" lead to different
-     * actions. And late is measured against the wait, which is the periodic trigger's own
-     * question — with that trigger off nothing was going to capture on a clock, so a copy
-     * standing while the vault captures only before deletions is exactly as recent as the
-     * archive let it be.
+     * **The copy is passed in rather than read off [lastCapturedAt], because the card names
+     * the newest copy standing where the copies now go and this is the amber over that
+     * line.** Reading a different instant here would put the warning about one copy over the
+     * date of another — the state a folder somebody has just pointed at is in, where this
+     * install's own last capture went somewhere else entirely.
      *
-     * The comparison itself is not restated here, and that is the point: a second reading
-     * of the same wait is a second reading that can disagree with the trigger's.
+     * Two conditions separate a *sign* from a *decision to capture*. Nothing standing is due
+     * but not late: the screen says that one in words of its own, and "never" and "a long
+     * time ago" lead to different actions. And late is measured against the wait, which is
+     * the periodic trigger's own question — with that trigger off nothing was going to
+     * capture on a clock, so a copy standing while the vault captures only before deletions
+     * is exactly as recent as the archive let it be.
+     *
+     * The wait itself is compared in one place ([hasWaitElapsed]) and never restated: a
+     * second reading of the same wait is a second reading that can disagree with the
+     * trigger's.
      */
-    fun isLastCopyOverdue(now: Instant): Boolean =
-        isPeriodicOn && lastCapturedAt != null && isIntervalDue(now)
+    fun isCopyOverdue(newest: Instant?, now: Instant): Boolean =
+        isPeriodicOn && newest != null && hasWaitElapsed(since = newest, now = now)
+
+    /** The one comparison of [interval], for both questions that ask it. */
+    private fun hasWaitElapsed(since: Instant, now: Instant): Boolean = now - since >= interval
 }
 
 /**

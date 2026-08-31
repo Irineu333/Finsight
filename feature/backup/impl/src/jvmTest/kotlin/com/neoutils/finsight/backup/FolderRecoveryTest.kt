@@ -47,7 +47,6 @@ import com.neoutils.finsight.ui.screen.backup.BackupViewModel
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryAction
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryUiState
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryViewModel
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
@@ -197,8 +196,6 @@ class FolderRecoveryTest {
         }
     )
 
-    private val own get() = File(chosen, BACKUP_FOLDER_NAME)
-
     private val modalManager = ModalManager()
 
     private fun viewModel() = BackupViewModel(
@@ -329,7 +326,7 @@ class FolderRecoveryTest {
     }
 
     private fun namesIn(directory: File): List<String> =
-        File(directory, BACKUP_FOLDER_NAME).listFiles().orEmpty().map { it.name }.sorted()
+        directory.listFiles().orEmpty().map { it.name }.sorted()
 
     private fun namesInApp(): List<String> =
         appStorageFolder.listFiles().orEmpty().map { it.name }.sorted()
@@ -451,8 +448,9 @@ class FolderRecoveryTest {
     /**
      * The most valuable thing this feature does, and the one reached by somebody who has just
      * lost everything: a fresh install, pointing at the folder it used to write to, finds the
-     * whole archive. Nothing is renewed and nothing is remembered across it — the shared
-     * subfolder name is the whole of the mechanism (design D4).
+     * whole archive. Nothing is renewed and nothing is remembered across it — the copies sit
+     * directly in the folder, matched by their name, which is the whole of the mechanism
+     * (design D4).
      */
     @Test
     fun `a reinstall pointing at the same folder finds the whole history`() = runTest {
@@ -488,9 +486,9 @@ class FolderRecoveryTest {
             "the archive that outlived the install was not found again",
         )
         assertEquals(
-            listOf(BACKUP_FOLDER_NAME),
+            emptyList(),
             chosen.listFiles().orEmpty().filter { it.isDirectory }.map { it.name },
-            "pointing again made a second folder beside the archive",
+            "pointing again made a folder of the app's own beside the archive",
         )
     }
 
@@ -513,19 +511,19 @@ class FolderRecoveryTest {
     // ------------------------------------- adopting a folder that already holds copies
 
     /**
-     * A copy written straight into the chosen folder's subfolder, standing in for a
-     * previous install that used the same folder before this test's own vault ever pointed
-     * at it. It is real content under a real name, aged well before anything this test
-     * itself goes on to capture, so ordering by date is never in doubt.
+     * A copy written straight into the chosen folder, standing in for a previous install
+     * that used the same folder before this test's own vault ever pointed at it. It is real
+     * content under a real name, aged well before anything this test itself goes on to
+     * capture, so ordering by date is never in doubt.
      */
     private suspend fun priorInstallCopies(count: Int): List<String> {
-        val own = File(chosen, BACKUP_FOLDER_NAME).apply { mkdirs() }
+        chosen.mkdirs()
         return List(count) { index ->
             val captured = temporary("prior-$index").absolutePath
             live.captureInto(destinationPath = captured, appVersion = "1.2.3", platform = "desktop")
             val name = "finsight-backup-2020-01-${(index + 1).toString().padStart(2, '0')}T10-00-00.db"
-            File(captured).copyTo(File(own, name))
-            File(own, name).setLastModified(PRIOR_INSTALL_EPOCH_MILLIS + index * 1_000L)
+            File(captured).copyTo(File(chosen, name))
+            File(chosen, name).setLastModified(PRIOR_INSTALL_EPOCH_MILLIS + index * 1_000L)
             name
         }
     }

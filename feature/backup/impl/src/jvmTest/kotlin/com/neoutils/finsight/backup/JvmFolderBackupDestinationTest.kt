@@ -17,7 +17,6 @@ import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
@@ -36,15 +35,14 @@ import kotlinx.coroutines.test.runTest
 
 /**
  * The second rung on the desktop: the same four operations as the first, over a folder
- * somebody chose rather than one the app owns.
+ * somebody chose rather than one the app owns. The copies go straight into that folder —
+ * there is no subfolder of the app's own inside it.
  *
  * What is under test is not the four operations — those are the first rung's and are proven
  * in `JvmBackupDestinationTest`. It is the one thing the two rungs disagree about: **what
  * absence means**. A folder that is not there is a folder that was not read, and design D9
  * is explicit that zero copies must never be said over one. The other half of the same rule
- * is that nothing rebuilds the app's own subfolder on the way into a write, because a
- * mountpoint left behind by a detached volume answers every question the way an empty
- * folder does.
+ * is that nothing rebuilds the chosen folder on the way into a write.
  *
  * The gate is the real one over real captures, because "removes only what this app wrote"
  * is a claim about reading files rather than about this code.
@@ -100,12 +98,10 @@ class JvmFolderBackupDestinationTest {
         files = files,
     )
 
-    private val own get() = File(chosen, BACKUP_FOLDER_NAME)
-
     @AfterTest
     fun tearDown() {
         live.close()
-        own.setWritable(true)
+        chosen.setWritable(true)
         temporaries.forEach { file ->
             DATABASE_FILES.forEach { File(file.absolutePath + it).delete() }
         }
@@ -130,13 +126,13 @@ class JvmFolderBackupDestinationTest {
     // ------------------------------------------------------ the copies go in the folder
 
     @Test
-    fun `a captured file lands in the app's own folder inside the chosen one`() = runTest {
+    fun `a captured file lands directly in the chosen folder`() = runTest {
         pointAtChosenFolder()
 
         val stored = put(NAME)
 
         assertEquals(NAME, stored.name)
-        assertTrue(File(own, NAME).isFile, "the copy is in the folder the person chose")
+        assertTrue(File(chosen, NAME).isFile, "the copy is in the folder the person chose")
         assertEquals(listOf(NAME), destination.list().getOrNull()?.map { it.name })
     }
 
@@ -148,14 +144,14 @@ class JvmFolderBackupDestinationTest {
 
         assertEquals(true, destination.copyOut(stored, out.absolutePath).getOrNull())
 
-        assertEquals(File(own, NAME).length(), out.length(), "the whole copy came back")
+        assertEquals(File(chosen, NAME).length(), out.length(), "the whole copy came back")
     }
 
     @Test
     fun `a copy this app wrote is removed, and a file it did not write is refused`() = runTest {
         pointAtChosenFolder()
         val mine = put(NAME)
-        val theirs = File(own, OTHER_NAME).apply { writeText("a spreadsheet, not a backup") }
+        val theirs = File(chosen, OTHER_NAME).apply { writeText("a spreadsheet, not a backup") }
 
         assertEquals(true, destination.remove(mine).getOrNull())
         assertEquals(
@@ -164,7 +160,7 @@ class JvmFolderBackupDestinationTest {
                 .getOrNull(),
         )
 
-        assertFalse(File(own, NAME).exists())
+        assertFalse(File(chosen, NAME).exists())
         assertTrue(theirs.exists(), "the folder is the user's, and their files stay in it")
     }
 
@@ -182,7 +178,7 @@ class JvmFolderBackupDestinationTest {
     fun `a copy the check refuses comes back with its bytes untouched`() = runTest {
         pointAtChosenFolder()
         val stored = put(NAME)
-        val file = File(own, NAME)
+        val file = File(chosen, NAME)
         notThisSchema(file.absolutePath)
         val before = file.readBytes()
 
@@ -205,13 +201,13 @@ class JvmFolderBackupDestinationTest {
     fun `a refused removal leaves nothing beside the copy`() = runTest {
         pointAtChosenFolder()
         val stored = put(NAME)
-        notThisSchema(File(own, NAME).absolutePath)
+        notThisSchema(File(chosen, NAME).absolutePath)
 
         destination.remove(stored)
 
         assertEquals(
             listOf(NAME),
-            own.listFiles().orEmpty().map { it.name }.sorted(),
+            chosen.listFiles().orEmpty().map { it.name }.sorted(),
             "the check left its working files in the person's own folder",
         )
     }
@@ -228,7 +224,7 @@ class JvmFolderBackupDestinationTest {
     fun `a copy cut short can never be removed again`() = runTest {
         pointAtChosenFolder()
         val stored = put(NAME)
-        val file = File(own, NAME)
+        val file = File(chosen, NAME)
         file.writeBytes(file.readBytes().copyOf(file.length().toInt() / 2))
 
         assertEquals(
@@ -249,7 +245,7 @@ class JvmFolderBackupDestinationTest {
 
         assertEquals(
             emptyList(),
-            own.listFiles().orEmpty().map { it.name }.sorted(),
+            chosen.listFiles().orEmpty().map { it.name }.sorted(),
             "the check left its working files in the person's own folder",
         )
     }
@@ -279,7 +275,7 @@ class JvmFolderBackupDestinationTest {
     fun `a removal the file system refused is a failure and not a verdict`() = runTest {
         pointAtChosenFolder()
         val stored = put(NAME)
-        assertTrue(own.setWritable(false), "the folder could not be made read-only")
+        assertTrue(chosen.setWritable(false), "the folder could not be made read-only")
 
         val outcome = destination.remove(stored)
 
@@ -287,7 +283,7 @@ class JvmFolderBackupDestinationTest {
             outcome.isLeft(),
             "a deletion that did not happen was answered as a file this app did not write",
         )
-        assertTrue(File(own, NAME).exists(), "the copy is still there, which is the point")
+        assertTrue(File(chosen, NAME).exists(), "the copy is still there, which is the point")
     }
 
     // ----------------------------------------------------- absence is never emptiness
@@ -315,15 +311,15 @@ class JvmFolderBackupDestinationTest {
      * The other side of the same rule, and the state every chosen folder is in between being
      * pointed at and the first copy landing in it.
      *
-     * Absence may be said once it has been established, and here it has: the app's own
-     * subfolder is there, [JvmFolderBackupDestination] has just confirmed it, and a directory
-     * that answers with no entries holds none. Refusing this would tell somebody the folder
-     * they had just chosen could not be read — and it is the same answer the Android rung
-     * gives, along a road of its own, so the two rungs cannot start disagreeing about what an
-     * empty folder is.
+     * Absence may be said once it has been established, and here it has: the chosen folder
+     * is there, [JvmFolderBackupDestination] has just confirmed it, and a directory that
+     * answers with no entries holds none. Refusing this would tell somebody the folder they
+     * had just chosen could not be read — and it is the same answer the Android rung gives,
+     * along a road of its own, so the two rungs cannot start disagreeing about what an empty
+     * folder is.
      */
     @Test
-    fun `a folder the app has just made is empty rather than unreadable`() = runTest {
+    fun `a folder that was just chosen is empty rather than unreadable`() = runTest {
         pointAtChosenFolder()
 
         assertEquals(
@@ -343,20 +339,20 @@ class JvmFolderBackupDestinationTest {
 
     /**
      * The other half of design D9, and the one that costs an archive rather than a
-     * sentence: a write must never rebuild the app's own subfolder. A network volume that
-     * is not mounted leaves a directory behind at its mountpoint, so the chosen folder
-     * still answers *yes*; a destination that made its own folder there would take every
-     * copy from then on while the real archive sat on the disk that was missing.
+     * sentence: a write must never rebuild the folder somebody chose. A destination that did
+     * would, on the day a network volume is not mounted and leaves a directory behind at its
+     * mountpoint, write copies into that local stub while the archive it is supposed to be
+     * adding to sits on the disk that is missing (see [JvmBackupFolder]'s own comment on why
+     * a plain path cannot tell the two apart once there is no marker subfolder to check).
      */
     @Test
-    fun `a write never rebuilds the app's own folder`() = runTest {
+    fun `a write into a folder that has gone refuses and rebuilds nothing`() = runTest {
         pointAtChosenFolder()
-        own.deleteRecursively()
+        chosen.deleteRecursively()
 
         assertTrue(destination.put(capture(), NAME).isLeft(), "the write should have refused")
 
-        assertFalse(own.exists(), "the app rebuilt its own folder over a folder that had gone")
-        assertTrue(chosen.isDirectory, "the mountpoint stands, which is exactly the trap")
+        assertFalse(chosen.exists(), "the app rebuilt a folder somebody had taken away")
     }
 
     private companion object {

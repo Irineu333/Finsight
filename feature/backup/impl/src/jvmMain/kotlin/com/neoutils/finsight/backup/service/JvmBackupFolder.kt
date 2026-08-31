@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
@@ -22,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * The desktop's half of design D4's machine: a Swing chooser set to directories, and a path
- * remembered in the app's preferences.
+ * remembered in the app's preferences. The copies go straight into that path — there is no
+ * subfolder of the app's own inside it.
  *
  * **Without ceremony, and that is the whole of the desktop** (task 11.6). There is no
  * permission to persist, no bookmark to resolve and nothing to revoke: what the person
@@ -36,12 +36,12 @@ import kotlinx.coroutines.withContext
  * visible to [JvmFolderBackupDestination] beside it and to nothing in common code. That is
  * the compiler holding the rule rather than a comment asking for it.
  *
- * **Only this creates the app's own subfolder, and only with a person in front of the
- * screen.** Nothing on the writing path ever makes it (design D9): a mountpoint that is
- * still a directory after the volume behind it has gone answers every question the way an
- * empty folder does, and a subfolder rebuilt into it would take the copies while the real
- * archive sits on a disk that is no longer attached. Rebuilding it is therefore an act
- * somebody performs, through the same picker they chose the folder with.
+ * **A mountpoint left standing by a detached volume reads as a live, empty directory, and
+ * nothing here can tell the two apart.** `File.isDirectory` is the only signal a plain path
+ * gives, and a network share that has gone answers it exactly as a folder that is genuinely
+ * still empty does. Keeping a self-made subfolder as a marker used to be what told them
+ * apart; writing straight into the chosen path gives that up, so a capture that lands on a
+ * stale mountpoint is not caught here.
  */
 class JvmBackupFolder(
     private val settings: Settings,
@@ -62,22 +62,21 @@ class JvmBackupFolder(
      * Everything pointing at a folder means, once one has been pointed at.
      *
      * It is apart from [point] because the dialog is the only half that needs a person in
-     * front of the screen, and every rule is in this half: what null means, which folder is
-     * made, and when the preference is written. Splitting them is also what makes those
-     * rules provable without a window — a folder chooser cannot be driven by a test on any
-     * platform, and the rules are what would break.
+     * front of the screen, and every rule is in this half: what null means and when the
+     * preference is written. Splitting them is also what makes those rules provable without
+     * a window — a folder chooser cannot be driven by a test on any platform, and the rules
+     * are what would break.
      */
     internal suspend fun pointAt(chosen: File?): Either<BackupError, Boolean> {
         if (chosen == null) return false.right()
 
         return withContext(Dispatchers.IO) {
             Either.catch {
-                val own = File(chosen, BACKUP_FOLDER_NAME)
-                if (!own.isDirectory && !own.mkdirs()) {
-                    throw IOException("The folder for backups could not be made")
+                if (!chosen.isDirectory) {
+                    throw IOException("The chosen folder is not a directory")
                 }
-                // Written last: a preference naming a folder this app could not prepare
-                // would be a vault pointed somewhere it cannot write.
+                // Written last: a preference naming a folder this app could not read would
+                // be a vault pointed somewhere it cannot write.
                 settings.putString(KEY_FOLDER, chosen.absolutePath)
                 true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
@@ -85,17 +84,14 @@ class JvmBackupFolder(
     }
 
     /**
-     * The link is the app's own subfolder being there, not the chosen folder being there.
+     * The link is the chosen folder being there, read fresh every time.
      *
-     * The stricter of the two readings is the right one, and for the reason above: a
-     * chosen folder that answers *yes, a directory* while the subfolder inside it has gone
-     * is the shape a detached volume takes, and it is also the shape of somebody having
-     * deleted the copies. Both are a link that has fallen, and neither is something to
-     * repair without asking.
+     * A path that no longer answers *yes, a directory* is the shape a deleted or detached
+     * folder takes, and it is not repaired without asking (design D12).
      */
     override suspend fun link(): FolderLink = withContext(Dispatchers.IO) {
-        val own = ownFolder() ?: return@withContext FolderLink.NONE
-        if (own.isDirectory) FolderLink.LINKED else FolderLink.BROKEN
+        val chosen = chosenFolder() ?: return@withContext FolderLink.NONE
+        if (chosen.isDirectory) FolderLink.LINKED else FolderLink.BROKEN
     }
 
     /**
@@ -108,15 +104,13 @@ class JvmBackupFolder(
         get() = settings.getStringOrNull(KEY_FOLDER)?.let(::folderIdentity)
 
     /**
-     * The folder the copies go in — the app's own inside the one that was chosen — or null
-     * when nothing has been pointed at.
+     * The folder the copies go in, or null when nothing has been pointed at.
      *
      * `internal` and answering a [File] is the one concession to the platform, and it goes
      * no further than this module: design D2 is about what a *caller* of the destination
      * can learn, and what it can learn stays [FolderLink].
      */
-    internal fun ownFolder(): File? =
-        settings.getStringOrNull(KEY_FOLDER)?.let { File(File(it), BACKUP_FOLDER_NAME) }
+    internal fun chosenFolder(): File? = settings.getStringOrNull(KEY_FOLDER)?.let(::File)
 
     private companion object {
 

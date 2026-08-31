@@ -157,8 +157,36 @@ O terceiro momento é o de maior valor do produto inteiro: alguém acabou de per
 aparelho novo. É por isso que "escolher a pasta", que chegou como requisito negociável, não é
 negociável — sem essa máquina, os arquivos sobrevivem e ninguém os encontra.
 
-O app cria uma **subpasta própria** dentro da escolhida. A retenção nunca chega perto de um arquivo
-do usuário, e a listagem não varre a pasta de documentos inteira.
+O app escreve as cópias direto na pasta apontada, sem subpasta alguma no caminho. Reencontrar o
+acervo depende de duas coisas só: apontar de novo para a mesma pasta, e reconhecer o que está nela
+pelo nome (`isBackupFileName`, design `local-backup`) — é essa dupla que sustenta os três momentos,
+e uma pasta própria dentro da escolhida não somaria nada a ela.
+
+A retenção continua sem chegar perto de um arquivo do usuário, e sem subpasta para se esconder
+atrás disso: o nome primeiro reduz a listagem a um punhado de candidatos, e antes de qualquer
+remoção o conteúdo tem que se provar um banco deste app, pelo mesmo verificador que o fluxo de
+restauração já usa (`CandidateVerifier`, via `OwnCopyCheck`). O que essa leitura prova é que o
+arquivo é um banco do **schema** deste app — nunca que foi **esta instalação** que o escreveu, e
+não precisa provar isso: um arquivo trazido de outra instalação que apontou a mesma pasta, ou
+importado por um `ArchiveImport`, passa pelo mesmo gate e é tratado como cópia igual. O que o gate
+recusa é exatamente o que não é um banco deste app, e um arquivo do usuário nunca chega a essa
+prova, esteja a pasta cheia de outras coisas ou vazia.
+
+*Alternativa recusada: uma subpasta própria dentro da escolhida.* Nenhum dos dois motivos que a
+sustentariam se confirma. Reencontrar o acervo não precisa dela — o nome já é a máquina inteira, e
+uma pasta apontada de novo entrega o mesmo resultado com ou sem uma pasta a mais no caminho. E a
+retenção não precisa dela — o gate por conteúdo barra um arquivo do usuário do mesmo jeito, com ou
+sem uma pasta só do app para se retirar para dentro. Sobra não poluir uma pasta usada para outra
+coisa, e isso deixou de ser problema do app para resolver por conta própria: escolher uma pasta que
+não está em uso para mais nada é trabalho de quem escolhe, como é em qualquer outro app com o mesmo
+tipo de destino. O que a subpasta comprava e fica sem substituto é listagem mais barata — uma
+consulta sobre um punhado de arquivos vira uma consulta com filtro sobre uma pasta que pode ter
+mais. E, no desktop, uma pasta que o app mesmo criava era prova de que a pasta apontada existia de
+verdade: `java.io.File.isDirectory` não distingue uma pasta vazia de um ponto de montagem local que
+sobrou de um volume de rede desconectado, e a subpasta distinguia. Sem ela, o vínculo pode ler
+`LINKED` e uma captura pode aterrissar no stub — nada é apagado, e as cópias reais seguem no volume
+que as guarda, mas alguém pode se achar protegido por um arquivo escrito no lugar errado. Esses
+dois custos são o que a subpasta comprava, e juntos não a sustentavam.
 
 Qual pasta o seletor abre primeiro é conveniência, não correção. No Android, uma subpasta de
 `Download` serve tão bem quanto `Documents/`: o que o seletor deixa escolher, ele deixa usar, e
@@ -256,20 +284,19 @@ daqueles dados de qualquer forma. A lista mostra o que o sistema de arquivos ent
 tamanho.
 
 A retenção usa o nome como filtro barato e **confirma pelo conteúdo antes de apagar**, com o mesmo
-verificador do fluxo de restauração. O app só apaga o que ele mesmo escreveu.
+verificador do fluxo de restauração — o mesmo gate que D4 descreve. O que ele prova é que o arquivo
+é um banco do schema deste app, nunca que foi esta instalação que o escreveu; um arquivo do usuário
+não chega a essa prova, esteja a pasta cheia de outras coisas ou não.
 
 E uma listagem não é prova de ausência. No Android, a consulta pelos filhos de uma pasta pode
 devolver um cursor não-nulo e vazio para uma pasta que existe e aceita escrita no instante seguinte
-(Q2). O que decide não é o cursor vazio, e sim **quantas perguntas já foram feitas**: a subpasta
-própria só existe como objeto porque a árvore foi listada e a nomeou entre os filhos, de modo que
-toda consulta pelos filhos dela vem microssegundos depois de linhas reais do mesmo provedor, da
-mesma concessão e do mesmo volume. Zero itens ali é ausência, e a tela mostra o estado vazio.
-Uma pasta apagada, renomeada ou desmontada não chega a esse ponto — ela some da árvore, o vínculo
-cai, e toda operação recusa. Recusar a segunda listagem não pegava esse caso, que a primeira já
-pega, e custava o único estado que ela não sabe distinguir. **Nada que apague ou crie parte de uma
-listagem tomada como completa.** Em particular, o app **não recria a subpasta própria** por não a ter
-enxergado — `createDocument` renomeia para não conflitar, a segunda pasta passa a receber as cópias
-novas, e o acervo anterior fica órfão exatamente no reencontro (D4).
+(Q2). O que decide não é o cursor vazio, e sim **se a pasta já foi confirmada alcançável antes de
+perguntar pelos filhos dela** — é o que `FolderLink` responde, e é ele que corre primeiro em cada
+operação. Zero itens depois disso é ausência, e a tela mostra o estado vazio. Uma pasta apagada,
+renomeada ou desmontada não sobrevive a essa confirmação — ela some, o vínculo cai, e toda operação
+recusa antes de perguntar por um filho, sem custar o único estado que a confirmação não sabe
+distinguir de um cursor legítimo: uma pasta que a pessoa acabou de apontar, vazia porque nada foi
+capturado nela ainda. **Nada que apague ou crie faz parte de uma listagem tomada como completa.**
 
 O gatilho de origem não é persistido nesta entrega. O `formatVersion` do `snapshot_meta` existe
 justamente para permitir acrescentá-lo depois sem falhar de modo obscuro.
@@ -574,8 +601,8 @@ a medição fala de escrita continuando depois do reboot; nada foi dito sobre li
 rodar ou sobre restaurar uma cópia, e este parágrafo não estica o resultado até lá.
 
 **Isso pesa porque uma falha teria aparecido.** O veredito sobre o vínculo não é "o bookmark
-resolveu": é uma listagem da subpasta própria do app, feita de novo a cada operação
-(`IosBackupFolder.kt:143-147`), e quando o vínculo cai a tela troca a linha de destino para *Dentro
+resolveu": é uma listagem da própria pasta apontada, feita de novo a cada operação
+(`IosBackupFolder.kt`), e quando o vínculo cai a tela troca a linha de destino para *Dentro
 do app*, com uma régua vermelha e duas saídas — reconectar a pasta ou manter dentro do app (design
 D12; `backup_destination_app`; `BackupScreen.kt:513-517,589-632`). Um caminho desenhado para
 anunciar a própria falha, que não anunciou nada, é um resultado que carrega peso mesmo sendo uma

@@ -144,17 +144,20 @@ A tela SHALL declarar, para o destino em vigor, o que ele **não** protege. Um d
 sobrevive à desinstalação do app SHALL ser apresentado como tal, e o app MUST NOT apresentar o
 cofre como proteção contra perda do aparelho quando as cópias ficam apenas nele.
 
-Onde as cópias fiquem numa pasta apontada pelo usuário, o app SHALL escrever dentro de uma subpasta
-própria, e MUST NOT tratar como suas quaisquer outros arquivos da pasta escolhida.
+Onde as cópias fiquem numa pasta apontada pelo usuário, o app SHALL escrever direto nela, sem
+subpasta própria no caminho, e MUST NOT tratar como suas quaisquer outros arquivos da pasta
+escolhida: o nome filtra o que é candidato, e o conteúdo — verificado pelo mesmo gate do fluxo de
+restauração — é o que autoriza mexer nele antes de qualquer remoção.
 
 #### Scenario: O degrau padrão diz que morre com o app
 - **WHEN** o usuário liga o cofre sem escolher pasta
 - **THEN** a tela declara que as cópias ficam dentro do app e que desinstalar o app as leva junto
 
-#### Scenario: Subpasta própria
+#### Scenario: Uma pasta com arquivos do usuário
 - **WHEN** o usuário aponta uma pasta que contém arquivos seus
-- **THEN** o app cria uma subpasta própria e escreve apenas nela, e os arquivos do usuário na pasta
-  escolhida permanecem intocados
+- **THEN** o app escreve as cópias direto nela, e os arquivos do usuário permanecem intocados porque
+  nenhum deles passa pelo filtro de nome e pela confirmação de conteúdo que a retenção exige antes
+  de apagar qualquer coisa
 
 ### Requirement: O usuário aponta a pasta uma vez, e o app a reencontra
 

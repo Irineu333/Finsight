@@ -21,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * The second rung on the desktop: the same four operations as [JvmBackupDestination], over
- * the folder somebody pointed at instead of the app's own.
+ * the folder somebody pointed at instead of the app's own. The copies go straight into it —
+ * there is no subfolder of the app's own inside it.
  *
  * **It is a class of its own and not the first rung with a different directory**, because
  * the two disagree about the one thing that matters, which is what *absence* means. The
@@ -32,18 +33,15 @@ import kotlinx.coroutines.withContext
  * nothing here"**. Parameterising one class over that difference would hide the only rule
  * in this file worth reading.
  *
- * **Nothing here creates a directory.** Not on a write, not after a listing came back
- * empty, not ever: only [JvmBackupFolder.point] makes the app's own subfolder, with a
- * person in front of the screen. A destination that rebuilt it would, on the day a network
- * volume is not mounted, write copies into a mountpoint on the local disk while the archive
- * it is supposed to be adding to sits on the disk that is missing — the desktop's own shape
- * of the split archive design D9 refuses.
+ * **Nothing here creates a directory.** A folder that is not there refuses rather than being
+ * rebuilt — see [JvmBackupFolder]'s own comment for the one case this cannot catch: a
+ * mountpoint a detached volume left standing reads as a live, empty directory, no
+ * differently from a folder that is genuinely still empty.
  *
  * **The copies in the folder are read and never written to.** Retention confirms by content
  * before removing anything ([OwnCopyCheck]), so a folder holding the user's own files loses
- * none of them, which is the whole reason the app keeps to a subfolder of its own — and the
- * confirmation itself is run over a copy in the app's own area, never over the file in the
- * folder. See [remove].
+ * none of them — and the confirmation itself is run over a copy in the app's own area, never
+ * over the file in the folder. See [remove].
  */
 class JvmFolderBackupDestination(
     private val folder: JvmBackupFolder,
@@ -161,8 +159,7 @@ class JvmFolderBackupDestination(
     }
 
     /**
-     * The app's own subfolder inside the chosen one, as it stands — never as it could be
-     * made to stand.
+     * The chosen folder as it stands — never as it could be made to stand.
      *
      * Both refusals are the same to a caller and different in kind: nothing was ever
      * pointed at, or what was pointed at is not there now. What separates them for a person
@@ -170,8 +167,8 @@ class JvmFolderBackupDestination(
      * reads, and this stays the destination's own flat "I cannot".
      */
     private fun reachable(): Either<BackupError, File> {
-        val own = folder.ownFolder() ?: return BackupError.EXPORT_FAILED.left()
-        return if (own.isDirectory) own.right() else BackupError.EXPORT_FAILED.left()
+        val chosen = folder.chosenFolder() ?: return BackupError.EXPORT_FAILED.left()
+        return if (chosen.isDirectory) chosen.right() else BackupError.EXPORT_FAILED.left()
     }
 }
 

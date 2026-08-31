@@ -134,7 +134,7 @@
 ## 11. Degrau 2 — a pasta apontada pelo usuário
 
 - [x] 11.1 Android: `ActivityResultContracts.OpenDocumentTree` + `takePersistableUriPermission`,
-      persistindo **apenas o tree URI**; subpasta própria criada dentro da escolhida
+      persistindo **apenas o tree URI**; as cópias vão direto na pasta apontada
 - [x] 11.2 Android: listar com `DocumentsContract.buildChildDocumentsUriUsingTree` e projeção
       completa, não com `DocumentFile` (1 + 3N consultas)
 - [x] 11.3 Android: sugerir `Documents/` ao abrir o seletor — conveniência, não correção: só

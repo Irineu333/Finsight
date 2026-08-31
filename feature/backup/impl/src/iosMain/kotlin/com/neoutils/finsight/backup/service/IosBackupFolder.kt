@@ -3,12 +3,10 @@
 package com.neoutils.finsight.backup.service
 
 import arrow.core.Either
-import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
@@ -37,8 +35,9 @@ import platform.UniformTypeIdentifiers.UTTypeFolder
 import platform.posix.memcpy
 
 /**
- * iOS's half of design D4's machine: the document picker opened on folders, a bookmark of
- * what was pointed at, and the app's own subfolder made inside it.
+ * iOS's half of design D4's machine: the document picker opened on folders, and a bookmark
+ * of what was pointed at. The copies go straight into that folder — there is no subfolder of
+ * the app's own inside it.
  *
  * **Only the bookmark is written down, and it is written as bytes** (task 11.5). A url the
  * picker grants carries its permission out of band from the text of its address — the
@@ -48,7 +47,7 @@ import platform.posix.memcpy
  * bookmark goes into [NSUserDefaults] as [NSData], every file operation below uses
  * Foundation's url-taking API rather than its path-taking one, and the one member that hands
  * a folder out is `internal` and hands it to a lambda that cannot outlive the access
- * ([withOwnFolder]).
+ * ([withChosenFolder]).
  *
  * **Creation takes no options, because on iOS there are none to take.**
  * `NSURLBookmarkCreationWithSecurityScope` is macOS's — `API_UNAVAILABLE(ios, watchos,
@@ -81,14 +80,9 @@ import platform.posix.memcpy
  *
  * **The verdict on the link is a reading of the folder and never of the bookmark.** A
  * bookmark that resolves is not access, and access that is claimed is not a folder that is
- * there: only listing the app's own subfolder settles it, so a scope that expired while
+ * there: only listing the chosen folder itself settles it, so a scope that expired while
  * resolution went on working reads [FolderLink.BROKEN] like any other loss, and the screen
  * says so (design D12). Nothing here repairs anything or moves anybody's choice.
- *
- * **Only this creates the app's own subfolder, and only with a person in front of the
- * screen.** Nothing on the writing path ever makes it (design D9): a folder that has gone
- * away must fail rather than be built again somewhere it never was, which on iOS is a
- * provider that has been signed out of or an external volume that is no longer attached.
  */
 class IosBackupFolder(
     /**
@@ -115,27 +109,31 @@ class IosBackupFolder(
      * Everything pointing at a folder means, once one has been pointed at.
      *
      * It is apart from [point] because the picker is the only half that needs a person in
-     * front of the screen, and every rule is in this half: what a closed picker means, which
-     * folder is made, and when the bookmark is written.
+     * front of the screen, and every rule is in this half: what a closed picker means, and
+     * when the bookmark is written.
      *
-     * The bookmark is written last, after the subfolder is there, for the reason the other
-     * two platforms write their token last — a vault pointed at a folder it could not
-     * prepare would be a vault that stops writing at the next trigger.
+     * The bookmark is written last, after the folder is confirmed listable, for the reason
+     * the other two platforms write their token last — a vault pointed at a folder it could
+     * not read would be a vault that stops writing at the next trigger.
      */
     internal suspend fun pointAt(chosen: NSURL?): Either<BackupError, Boolean> {
         if (chosen == null) return false.right()
 
         return withContext(Dispatchers.Default) {
             chosen.withAccess {
-                prepareOwnFolder(chosen).flatMap {
-                    if (remember(chosen)) true.right() else BackupError.EXPORT_FAILED.left()
+                if (!chosen.lists()) {
+                    BackupError.EXPORT_FAILED.left()
+                } else if (remember(chosen)) {
+                    true.right()
+                } else {
+                    BackupError.EXPORT_FAILED.left()
                 }
             }
         }
     }
 
     /**
-     * The link is the app's own subfolder answering a listing, not the bookmark resolving.
+     * The link is the chosen folder answering a listing, not the bookmark resolving.
      *
      * The strictest of the readings is the right one, and on iOS there are three that can
      * part company: a bookmark that no longer resolves, one that resolves to a url access
@@ -147,7 +145,7 @@ class IosBackupFolder(
      */
     override suspend fun link(): FolderLink = withContext(Dispatchers.Default) {
         if (defaults.dataForKey(KEY_BOOKMARK) == null) return@withContext FolderLink.NONE
-        val reached = withOwnFolder(BackupError.EXPORT_FAILED) { true.right() }
+        val reached = withChosenFolder(BackupError.EXPORT_FAILED) { true.right() }
         if (reached.isRight()) FolderLink.LINKED else FolderLink.BROKEN
     }
 
@@ -156,7 +154,7 @@ class IosBackupFolder(
      * url they resolve to, whose `path` or `absoluteString` nothing here ever asks for
      * either (design D2).
      *
-     * **This is the one platform where that answer moves on its own.** [withOwnFolder]
+     * **This is the one platform where that answer moves on its own.** [withChosenFolder]
      * rewrites the bookmark in place when a resolution comes back stale — the same folder,
      * addressed differently now — so two readings of a folder nobody has re-pointed at can
      * still fingerprint apart. Nothing here can promise otherwise; see [FolderIdentity]'s
@@ -166,18 +164,17 @@ class IosBackupFolder(
         get() = defaults.dataForKey(KEY_BOOKMARK)?.let { folderIdentity(it.toByteArray()) }
 
     /**
-     * Runs [block] against the app's own subfolder inside the folder somebody pointed at,
-     * with access to it claimed for exactly that long.
+     * Runs [block] against the folder somebody pointed at, with access to it claimed for
+     * exactly that long.
      *
      * **The shape is the guarantee.** The folder is resolved, claimed, handed to a lambda
      * and released in a `finally`, so no caller can hold a url past its access or forget to
      * balance one (task 11.4) — and no caller is ever given a url it could write down,
      * because it is given one only inside a call that is about to end (task 11.5).
      *
-     * **It never creates anything**, and it refuses on everything: nothing was pointed at,
-     * the bookmark will not resolve, the folder will not list. To a destination those are
-     * one flat *I cannot*; what separates them for a person is [FolderLink], which the
-     * screen reads.
+     * **It refuses on everything**: nothing was pointed at, the bookmark will not resolve,
+     * the folder will not list. To a destination those are one flat *I cannot*; what
+     * separates them for a person is [FolderLink], which the screen reads.
      *
      * **A folder that answers a listing is a folder that is there**, which is what lets the
      * destination beside this treat an empty answer as an empty folder rather than as design
@@ -185,7 +182,7 @@ class IosBackupFolder(
      * already had a complete directory read out of this provider, over this scope, a moment
      * earlier.
      */
-    internal fun <T> withOwnFolder(
+    internal fun <T> withChosenFolder(
         otherwise: BackupError,
         block: (NSURL) -> Either<BackupError, T>,
     ): Either<BackupError, T> {
@@ -198,46 +195,7 @@ class IosBackupFolder(
             // is not a failure to read, so the answer below does not depend on it.
             if (resolved.isStale) remember(resolved.url)
 
-            val own = resolved.url.URLByAppendingPathComponent(BACKUP_FOLDER_NAME, true)
-            if (own == null || !own.lists()) otherwise.left() else block(own)
-        }
-    }
-
-    /**
-     * Makes sure the app's own subfolder is inside [chosen], creating it only when a listing
-     * of the chosen folder says it is not there.
-     *
-     * Re-pointing at a folder that already holds one must find the archive rather than build
-     * a second place for it (design D4), and the order is what guarantees that: a chosen
-     * folder that cannot be listed at all fails before anything is created, so a reading
-     * that never happened never becomes a folder somewhere it never was.
-     *
-     * Creation is coordinated like every other write here, and asks for intermediate
-     * directories so that a subfolder which appeared between the reading and the writing is
-     * an outcome rather than an error.
-     */
-    private fun prepareOwnFolder(chosen: NSURL): Either<BackupError, Unit> {
-        if (!chosen.lists()) return BackupError.EXPORT_FAILED.left()
-
-        val own = chosen.URLByAppendingPathComponent(BACKUP_FOLDER_NAME, true)
-            ?: return BackupError.EXPORT_FAILED.left()
-        if (own.lists()) return Unit.right()
-
-        return coordinateWriting(own, NO_WRITING_OPTIONS, BackupError.EXPORT_FAILED) { url ->
-            memScoped {
-                val failure = alloc<ObjCObjectVar<NSError?>>()
-                val created = NSFileManager.defaultManager.createDirectoryAtURL(
-                    url = url,
-                    withIntermediateDirectories = true,
-                    attributes = null,
-                    error = failure.ptr,
-                )
-                if (created) {
-                    Unit.right()
-                } else {
-                    failure.value.toBackupError(BackupError.EXPORT_FAILED).left()
-                }
-            }
+            if (!resolved.url.lists()) otherwise.left() else block(resolved.url)
         }
     }
 
@@ -425,6 +383,3 @@ internal suspend fun chooseFolderWithPicker(context: PlatformContext): NSURL? =
     context.awaitPickedUrls(BackupError.EXPORT_FAILED) {
         UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeFolder))
     }.getOrNull()?.firstOrNull()
-
-/** The plain coordinated write: not a deletion, not a move, not a replacement. */
-private const val NO_WRITING_OPTIONS: ULong = 0uL

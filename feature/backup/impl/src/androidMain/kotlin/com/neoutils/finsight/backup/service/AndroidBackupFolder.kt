@@ -4,13 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.provider.DocumentsContract.Document
 import androidx.activity.result.contract.ActivityResultContracts
 import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
@@ -21,14 +19,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Android's half of design D4's machine: the system folder picker, a tree `Uri` whose
- * permission is taken to be kept, and the app's own subfolder made inside whatever was
- * pointed at.
+ * Android's half of design D4's machine: the system folder picker, and a tree `Uri` whose
+ * permission is taken to be kept.
  *
- * **Only the tree `Uri` is written down** (task 11.1). The app's own subfolder is found
- * again by name on each use rather than remembered by document id, because the id is the
- * provider's to reissue and the grant is over the tree — a remembered child would be a
- * second thing that can go stale, and the one thing it would save is a query.
+ * **Only the tree `Uri` is written down** (task 11.1). The copies go straight into what was
+ * chosen — there is no subfolder of the app's own inside it.
  *
  * **The `Uri` never leaves this module** (design D2). [BackupFolder] answers three words
  * about the link; the member that hands out a handle is `internal`, visible to
@@ -42,15 +37,6 @@ import kotlinx.coroutines.withContext
  * pointing at a folder again costs nothing, and releasing the previous one on a switch was
  * refused: a release is irreversible without the person going back through the picker, and
  * the folder it would drop is the one holding an archive this app can no longer see.
- *
- * **Only this creates the app's own subfolder, and only with a person in front of the
- * screen.** Nothing on the writing path ever makes it (design D9). What makes that safe
- * here is not the listing — a folder that provably existed once answered a complete-looking
- * cursor with no rows at all — but the provider's own reply to [DocumentsContract.createDocument]:
- * a provider handed a name that is already taken creates the folder under a different one,
- * and that different name is proof that the listing was wrong. The duplicate is removed and
- * the real folder is looked for again, so nobody ends up with an archive split in two at the
- * moment they are trying to recover it (design D4).
  */
 class AndroidBackupFolder(
     private val appContext: Context,
@@ -71,8 +57,8 @@ class AndroidBackupFolder(
      * Everything pointing at a folder means, once one has been pointed at.
      *
      * It is apart from [point] because the picker is the only half that needs a person in
-     * front of the screen, and every rule is in this half: what a closed picker means, what
-     * is kept, which folder is made, and when the preference is written.
+     * front of the screen, and every rule is in this half: what a closed picker means and
+     * when the preference is written.
      */
     internal suspend fun pointAt(tree: Uri?): Either<BackupError, Boolean> {
         if (tree == null) return false.right()
@@ -81,9 +67,10 @@ class AndroidBackupFolder(
             Either.catch {
                 appContext.contentResolver
                     .takePersistableUriPermission(tree, PERSISTED_ACCESS)
-                prepareOwnFolder(tree)
-                // Written last: a preference naming a folder this app could not prepare
-                // would be a vault pointed somewhere it cannot write.
+                // Confirmed before the preference is written, and not after: a vault
+                // pointed at a folder it cannot even list would be a vault that stops
+                // writing at the next trigger.
+                listChildren(tree)
                 settings.putString(KEY_TREE, tree.toString())
                 true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
@@ -91,8 +78,8 @@ class AndroidBackupFolder(
     }
 
     /**
-     * The link is the app's own subfolder being reachable inside the tree, not the tree
-     * being remembered.
+     * The link is the chosen folder answering a listing, not the tree `Uri` being
+     * remembered.
      *
      * The stricter of the two readings is the right one: a grant that was revoked, a folder
      * the person deleted from a file manager and a volume that is not mounted all leave the
@@ -101,7 +88,7 @@ class AndroidBackupFolder(
      */
     override suspend fun link(): FolderLink {
         if (storedTree() == null) return FolderLink.NONE
-        return if (ownFolder() != null) FolderLink.LINKED else FolderLink.BROKEN
+        return if (chosenFolder() != null) FolderLink.LINKED else FolderLink.BROKEN
     }
 
     /**
@@ -115,76 +102,29 @@ class AndroidBackupFolder(
         get() = settings.getStringOrNull(KEY_TREE)?.let(::folderIdentity)
 
     /**
-     * The app's own subfolder as the provider describes it now, or null when nothing has
-     * been pointed at and when what was pointed at cannot be reached.
+     * The chosen folder as the provider describes it now, or null when nothing has been
+     * pointed at and when what was pointed at cannot be reached.
      *
      * The two are one answer on purpose, exactly as they are on the desktop: to a
      * destination they are the same refusal, and what separates them for a person is
      * [FolderLink], which the screen reads.
-     *
-     * **It never creates anything.** A folder that has gone must fail rather than be built
-     * again somewhere it never was (design D9).
      */
-    internal suspend fun ownFolder(): OwnFolder? = withContext(Dispatchers.IO) {
+    internal suspend fun chosenFolder(): ChosenFolder? = withContext(Dispatchers.IO) {
         val tree = storedTree() ?: return@withContext null
-        val documentId = Either.catch { findOwnFolder(tree) }.getOrNull()
-        documentId?.let { OwnFolder(tree = tree, documentId = it) }
+        val reachable = Either.catch { listChildren(tree) }.isRight()
+        if (reachable) ChosenFolder(tree) else null
     }
 
     private fun storedTree(): Uri? = settings.getStringOrNull(KEY_TREE)?.let(Uri::parse)
 
     /**
-     * The document id of the app's own subfolder inside [tree], or null when the tree was
-     * read and does not hold one.
+     * Every child of the chosen folder's own root document, which is what proves it can
+     * currently be read.
      *
-     * @throws IOException when the tree could not be read at all, which is not the same
-     * answer and must never be turned into one.
+     * @throws IOException when the tree could not be read at all — see [childrenOf].
      */
-    private fun findOwnFolder(tree: Uri): String? = appContext.contentResolver
+    private fun listChildren(tree: Uri) = appContext.contentResolver
         .childrenOf(tree, DocumentsContract.getTreeDocumentId(tree))
-        .firstOrNull { it.isDirectory && it.name == BACKUP_FOLDER_NAME }
-        ?.documentId
-
-    /**
-     * Makes sure the app's own subfolder is inside [tree], and settles what to do when the
-     * provider says it was already there.
-     *
-     * The order is the whole of it. A tree that cannot be read throws before anything is
-     * created, so a listing that never happened never becomes a second folder. A tree that
-     * reads as not holding one is where a folder is created — and the name the provider
-     * gives back is checked, because that is the only evidence available that a listing
-     * which looked complete was not: a provider asked for a name already in use creates the
-     * folder under another one. When that happens the duplicate goes and the real folder is
-     * looked for again; a second reading that still cannot see it refuses, leaving the
-     * preference unwritten and the archive untouched.
-     */
-    private fun prepareOwnFolder(tree: Uri) {
-        val resolver = appContext.contentResolver
-        if (findOwnFolder(tree) != null) return
-
-        val root = DocumentsContract.buildDocumentUriUsingTree(
-            tree,
-            DocumentsContract.getTreeDocumentId(tree),
-        )
-        val created = DocumentsContract.createDocument(
-            resolver,
-            root,
-            Document.MIME_TYPE_DIR,
-            BACKUP_FOLDER_NAME,
-        ) ?: throw IOException("The folder for backups could not be made")
-
-        if (resolver.documentAt(created)?.name == BACKUP_FOLDER_NAME) return
-
-        // Renamed, which means the name was taken and the listing above was wrong. The
-        // duplicate is empty and this app made it a moment ago, so removing it takes
-        // nothing away from anybody; a removal that fails leaves an empty folder behind,
-        // which is litter and not a split archive, and is not worth abandoning the
-        // recovery over.
-        Either.catch { DocumentsContract.deleteDocument(resolver, created) }
-
-        if (findOwnFolder(tree) != null) return
-        throw IOException("The folder for backups is there and the provider will not list it")
-    }
 
     private companion object {
 
@@ -205,14 +145,17 @@ class AndroidBackupFolder(
 }
 
 /**
- * The app's own subfolder, as the two handles that address it: the tree the grant is held
- * over, and the document id inside that tree.
+ * The chosen folder, addressed as the two handles [DocumentsContract] needs: the tree the
+ * grant is held over, and the document id of its own root — derivable from the tree without
+ * a query, since it is the tree's own id.
  *
- * Both are needed together and neither is useful alone — `DocumentsContract` builds every
- * `Uri` for a child from the tree it was reached through, and a document `Uri` built any
- * other way is one the grant does not cover.
+ * There is no subfolder of the app's own to search for any more: this *is* the folder
+ * somebody chose, and [AndroidBackupFolder.chosenFolder] only ever hands one out once a
+ * listing of it has actually succeeded.
  */
-internal class OwnFolder(val tree: Uri, val documentId: String) {
+internal class ChosenFolder(val tree: Uri) {
+
+    val documentId: String get() = DocumentsContract.getTreeDocumentId(tree)
 
     val uri: Uri get() = DocumentsContract.buildDocumentUriUsingTree(tree, documentId)
 }

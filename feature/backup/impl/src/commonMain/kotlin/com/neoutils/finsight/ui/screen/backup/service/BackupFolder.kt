@@ -47,10 +47,11 @@ interface BackupFolder {
      * closes a picker has not hit an error and has nothing to be told — the same shape
      * [BackupFileService] gives the two dialogs it raises.
      *
-     * The app's own subfolder ([BACKUP_FOLDER_NAME]) is made here, once, at the moment
-     * there is a person to report a failure to. It is deliberately not made on the way
-     * into a write: a folder that has gone away must fail rather than be built again
-     * somewhere it never was (design D9).
+     * The copies go straight into the folder chosen here — there is no subfolder of the
+     * app's own inside it. What this does before the preference is written is confirm the
+     * folder can actually be listed, once, at the moment there is a person to report a
+     * failure to: a vault pointed at a folder it cannot even read would be a vault that
+     * stops writing at the next trigger.
      */
     suspend fun point(context: PlatformContext): Either<BackupError, Boolean>
 
@@ -95,19 +96,6 @@ enum class FolderLink {
     /** A folder was pointed at and the app cannot reach it. */
     BROKEN,
 }
-
-/**
- * The app's own subfolder inside the folder somebody chose.
- *
- * It is here, in common code, because it has to be the same word on all three platforms:
- * finding the history again after a reinstall is pointing at the same folder and reading
- * the same subfolder of it (design D4), and a platform that spelled it differently would
- * answer "no copies" over an archive that is right there.
- *
- * The subfolder exists so that retention never goes near a file of the user's and a
- * listing never sweeps a whole documents folder.
- */
-const val BACKUP_FOLDER_NAME = "Finsight backups"
 
 /**
  * The seam where a platform's folder picker is not written yet: it offers nothing, points

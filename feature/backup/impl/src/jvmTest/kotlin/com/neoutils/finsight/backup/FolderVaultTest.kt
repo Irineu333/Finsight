@@ -37,7 +37,6 @@ import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -163,8 +162,6 @@ class FolderVaultTest {
         }
     )
 
-    private val own get() = File(chosen, BACKUP_FOLDER_NAME)
-
     @AfterTest
     fun tearDown() {
         live.close()
@@ -197,7 +194,7 @@ class FolderVaultTest {
     }
 
     private fun namesInFolder(): List<String> =
-        own.listFiles().orEmpty().map { it.name }.sorted()
+        chosen.listFiles().orEmpty().map { it.name }.sorted()
 
     // ---------------------------------------------------------------- the copies land
 
@@ -239,7 +236,7 @@ class FolderVaultTest {
         state.setOn(true)
         val name = captureSomethingNew("coffee")
 
-        File(own, name).delete()
+        File(chosen, name).delete()
 
         assertEquals(emptyList(), assertNotNull(destination.list().getOrNull()))
     }
@@ -273,7 +270,7 @@ class FolderVaultTest {
         pointAtFolder()
         state.setOn(true)
         state.setRetention(BackupRetention.FIVE)
-        val theirs = File(own, "finsight-backup-notes.db")
+        val theirs = File(chosen, "finsight-backup-notes.db")
             .apply { writeText("their own file, sitting in their own folder") }
 
         List(SIX) { captureSomethingNew("entry $it") }

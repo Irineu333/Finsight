@@ -1,7 +1,6 @@
 package com.neoutils.finsight.backup
 
 import com.neoutils.finsight.backup.service.JvmBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.russhwolf.settings.MapSettings
 import java.io.File
@@ -33,11 +32,8 @@ class JvmBackupFolderTest {
 
     private val folder = JvmBackupFolder(settings)
 
-    private val own get() = File(chosen, BACKUP_FOLDER_NAME)
-
     @AfterTest
     fun tearDown() {
-        own.deleteRecursively()
         chosen.deleteRecursively()
     }
 
@@ -49,10 +45,9 @@ class JvmBackupFolderTest {
     }
 
     @Test
-    fun `pointing at a folder makes the app's own inside it and links to that`() = runTest {
+    fun `pointing at a folder links to it directly`() = runTest {
         assertEquals(true, folder.pointAt(chosen).getOrNull())
 
-        assertTrue(own.isDirectory, "the app keeps to a subfolder of its own (design D4)")
         assertEquals(FolderLink.LINKED, folder.link())
     }
 
@@ -65,7 +60,6 @@ class JvmBackupFolderTest {
         assertEquals(false, folder.pointAt(null).getOrNull())
 
         assertEquals(FolderLink.NONE, folder.link())
-        assertFalse(own.exists(), "nothing was made for a choice nobody made")
     }
 
     /**
@@ -94,22 +88,6 @@ class JvmBackupFolderTest {
     }
 
     /**
-     * The stricter reading, and deliberately so. A chosen folder that is still a directory
-     * while the app's own inside it has gone is the shape a detached volume takes as well
-     * as the shape of somebody deleting the copies, and neither is repaired without asking
-     * (design D9).
-     */
-    @Test
-    fun `the chosen folder standing empty is still a link that has fallen`() = runTest {
-        folder.pointAt(chosen)
-
-        own.deleteRecursively()
-
-        assertEquals(FolderLink.BROKEN, folder.link())
-        assertTrue(chosen.isDirectory, "the folder the person chose is untouched")
-    }
-
-    /**
      * A fallen link is still a link. The path stays written down, because the copies that
      * were written to it are still in it and pointing at the same folder again is the only
      * thing that leads back to them (design D4).
@@ -122,7 +100,20 @@ class JvmBackupFolderTest {
         folder.link()
 
         chosen.mkdirs()
-        own.mkdirs()
         assertEquals(FolderLink.LINKED, folder.link(), "the same folder is found again")
+        assertTrue(chosen.isDirectory)
+    }
+
+    @Test
+    fun `a folder that is not a directory is refused`() = runTest {
+        val notADirectory = File.createTempFile("finsight-not-a-folder", ".txt")
+        try {
+            assertFalse(
+                folder.pointAt(notADirectory).isRight(),
+                "a file was accepted as though it were a folder",
+            )
+        } finally {
+            notADirectory.delete()
+        }
     }
 }

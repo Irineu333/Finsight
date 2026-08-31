@@ -38,27 +38,11 @@ import kotlinx.coroutines.withContext
  * copies must never be read as "there is nothing here" until the app has established that the
  * folder is there**.
  *
- * **One listing is never proof of absence; two are.** Nothing here asks the provider a single
- * question. [reachable] cannot answer without the tree being listed and the app's own
- * subfolder being found among its children by name ([AndroidBackupFolder.ownFolder]), so
- * every operation below has already had rows out of this provider, over this grant, on this
- * volume, a moment earlier. A children query that then comes back with a live cursor saying
- * it is finished, reporting no error, and holding nothing is a folder with nothing in it.
- *
- * That pairing is what covers the case design D9 is written for, and it covers it better than
- * refusing an empty answer did. A folder that was deleted, renamed or unmounted does not
- * reliably answer null: Android's own `FileSystemProvider` hands back an *empty* cursor for a
- * parent it can no longer stat, which is exactly the complete-looking empty answer a folder
- * that provably existed gave once after a reboot. What catches all of them is the first
- * listing — the subfolder is not among the tree's children, the link reads broken, and every
- * operation here refuses before a child is ever asked for. Refusing the second listing as well
- * caught nothing the first had not, and cost the one state it cannot tell apart: a folder
- * somebody has just chosen, which is empty until the first copy lands in it and was told it
- * could not be read.
- *
- * **Nothing here creates a directory.** Not on a write, not after a listing came back empty,
- * not ever: only [AndroidBackupFolder.point] makes the app's own subfolder, with a person in
- * front of the screen and with the provider's own reply as evidence rather than a listing.
+ * **[reachable] establishes that before anything else does.** It cannot answer without the
+ * chosen folder's own root document already having been listed
+ * ([AndroidBackupFolder.chosenFolder]), so every operation below has already had a real
+ * answer out of this provider, over this grant, on this volume, a moment earlier — and the
+ * listing an operation itself performs follows immediately after, over the same node.
  *
  * **The copies in the folder are read and never moved, and only this app's are removed.**
  * The folder belongs to the person and may hold their files; [remove] proves a file is this
@@ -90,12 +74,12 @@ class AndroidFolderBackupDestination(
         capturedPath: String,
         name: String,
     ): Either<BackupError, StoredBackup> = withContext(Dispatchers.IO) {
-        reachable().flatMap { own ->
+        reachable().flatMap { chosen ->
             Either.catch {
                 val resolver = appContext.contentResolver
                 val document = DocumentsContract.createDocument(
                     resolver,
-                    own.uri,
+                    chosen.uri,
                     EXPORT_MIME_TYPE,
                     name,
                 ) ?: throw IOException("The provider created no document for the copy")
@@ -126,9 +110,9 @@ class AndroidFolderBackupDestination(
 
     override suspend fun list(): Either<BackupError, List<StoredBackup>> =
         withContext(Dispatchers.IO) {
-            reachable().flatMap { own ->
+            reachable().flatMap { chosen ->
                 Either.catch {
-                    own.contents()
+                    chosen.contents()
                         .filter { !it.isDirectory && isBackupFileName(it.name) }
                         .map { it.asStoredBackup() }
                         .sortedWith(NEWEST_FIRST)
@@ -140,9 +124,9 @@ class AndroidFolderBackupDestination(
         backup: StoredBackup,
         destinationPath: String,
     ): Either<BackupError, Boolean> = withContext(Dispatchers.IO) {
-        reachable().flatMap { own ->
+        reachable().flatMap { chosen ->
             Either.catch {
-                val document = own.documentNamed(backup.name) ?: return@catch false
+                val document = chosen.documentNamed(backup.name) ?: return@catch false
                 readOut(document, destinationPath)
                 true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
@@ -169,10 +153,10 @@ class AndroidFolderBackupDestination(
      * be a claim it has no evidence for.
      */
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
-        val own = reachable().getOrElse { return it.left() }
+        val chosen = reachable().getOrElse { return it.left() }
 
         val found = withContext(Dispatchers.IO) {
-            Either.catch { own.documentNamed(backup.name) }
+            Either.catch { chosen.documentNamed(backup.name) }
                 .mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
         }
         val document = found.getOrElse { return it.left() } ?: return true.right()
@@ -201,34 +185,33 @@ class AndroidFolderBackupDestination(
     }
 
     /**
-     * The app's own subfolder inside the chosen one, as it stands — never as it could be
-     * made to stand.
+     * The chosen folder as it stands — never as it could be made to stand.
      *
      * Both refusals behind it are the same to a caller and different in kind: nothing was
      * ever pointed at, or what was pointed at cannot be reached now. What separates them
      * for a person is [com.neoutils.finsight.ui.screen.backup.service.FolderLink], which
      * the screen reads, and this stays the destination's own flat "I cannot".
      */
-    private suspend fun reachable(): Either<BackupError, OwnFolder> =
-        folder.ownFolder()?.right() ?: BackupError.EXPORT_FAILED.left()
+    private suspend fun reachable(): Either<BackupError, ChosenFolder> =
+        folder.chosenFolder()?.right() ?: BackupError.EXPORT_FAILED.left()
 
     /**
      * Everything the folder holds, which may be nothing.
      *
      * Emptiness is an answer here only because of what had to happen for this to be reached:
-     * the [OwnFolder] it is asked of comes from [reachable] alone, and that means the tree was
-     * listed and named this subfolder among its children. See the class comment.
+     * the [ChosenFolder] it is asked of comes from [reachable] alone, and that means a
+     * listing of this same node already succeeded a moment earlier. See the class comment.
      *
      * @throws IOException when the listing cannot be trusted — no cursor, or a cursor saying
      * through its own extras that it is still loading or has failed.
      */
-    private fun OwnFolder.contents() = appContext.contentResolver.childrenOf(tree, documentId)
+    private fun ChosenFolder.contents() = appContext.contentResolver.childrenOf(tree, documentId)
 
     /**
      * One copy by the name a listing gave it, or null when a listing that can be trusted —
      * an empty one included — does not hold it.
      */
-    private fun OwnFolder.documentNamed(name: String): Uri? = contents()
+    private fun ChosenFolder.documentNamed(name: String): Uri? = contents()
         .firstOrNull { !it.isDirectory && it.name == name }
         ?.let { DocumentsContract.buildDocumentUriUsingTree(tree, it.documentId) }
 

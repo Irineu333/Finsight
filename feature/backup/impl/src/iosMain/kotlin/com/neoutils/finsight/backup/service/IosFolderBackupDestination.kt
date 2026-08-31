@@ -54,15 +54,13 @@ import platform.Foundation.timeIntervalSince1970
  * said: **zero copies must never be read as "there is nothing here" until the app has
  * established that the folder is there.**
  *
- * **One listing is never proof of absence; two are.** Nothing here asks the file system a
- * single question. [IosBackupFolder.withOwnFolder] cannot hand over a folder without having
- * enumerated it a moment earlier, over this scope and through this provider, so a listing
- * that then comes back empty is a folder with nothing in it rather than a folder nobody
- * could read.
+ * **Nothing here asks the file system a single question without a listing behind it.**
+ * [IosBackupFolder.withChosenFolder] cannot hand a folder over without having enumerated it a
+ * moment earlier, over this scope and through this provider, so a listing that then comes
+ * back empty is a folder with nothing in it rather than a folder nobody could read.
  *
- * **Nothing here creates a directory.** Not on a write, not after a listing came back empty,
- * not ever: only [IosBackupFolder.point] makes the app's own subfolder, with a person in
- * front of the screen.
+ * **Nothing here creates a directory.** There is no subfolder of the app's own any more —
+ * the copies go straight into the folder somebody pointed at, and this rung never makes one.
  *
  * **Every write and every removal is coordinated** (task 11.4). The folder is one the person
  * also reaches from Files and whatever sync client they use, so a change to it is announced
@@ -103,15 +101,15 @@ class IosFolderBackupDestination(
         capturedPath: String,
         name: String,
     ): Either<BackupError, StoredBackup> = withContext(Dispatchers.Default) {
-        folder.withOwnFolder(BackupError.EXPORT_FAILED) { own ->
-            val free = freeBackupFileName(name) { own.holds(it) }
-            val target = own.URLByAppendingPathComponent(free)
-                ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
+        folder.withChosenFolder(BackupError.EXPORT_FAILED) { chosen ->
+            val free = freeBackupFileName(name) { chosen.holds(it) }
+            val target = chosen.URLByAppendingPathComponent(free)
+                ?: return@withChosenFolder BackupError.EXPORT_FAILED.left()
             // Where the copy is written until every byte of it is there. It is built off the
             // folder's own url like the target is, never off the target's text: a scoped url
             // that goes through a string comes back opening nothing (design D2).
-            val staged = own.URLByAppendingPathComponent(free + STAGED_SUFFIX)
-                ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
+            val staged = chosen.URLByAppendingPathComponent(free + STAGED_SUFFIX)
+                ?: return@withChosenFolder BackupError.EXPORT_FAILED.left()
 
             coordinateWriting(
                 url = target,
@@ -150,8 +148,8 @@ class IosFolderBackupDestination(
      */
     override suspend fun list(): Either<BackupError, List<StoredBackup>> =
         withContext(Dispatchers.Default) {
-            folder.withOwnFolder(BackupError.EXPORT_FAILED) { own ->
-                coordinateReading(own, BackupError.EXPORT_FAILED) { url ->
+            folder.withChosenFolder(BackupError.EXPORT_FAILED) { chosen ->
+                coordinateReading(chosen, BackupError.EXPORT_FAILED) { url ->
                     val children = memScoped {
                         val failure = alloc<ObjCObjectVar<NSError?>>()
                         NSFileManager.defaultManager.contentsOfDirectoryAtURL(
@@ -187,11 +185,11 @@ class IosFolderBackupDestination(
         backup: StoredBackup,
         destinationPath: String,
     ): Either<BackupError, Boolean> = withContext(Dispatchers.Default) {
-        folder.withOwnFolder(BackupError.EXPORT_FAILED) { own ->
-            val source = own.URLByAppendingPathComponent(backup.name)
-                ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
+        folder.withChosenFolder(BackupError.EXPORT_FAILED) { chosen ->
+            val source = chosen.URLByAppendingPathComponent(backup.name)
+                ?: return@withChosenFolder BackupError.EXPORT_FAILED.left()
             if (!source.checkResourceIsReachableAndReturnError(null)) {
-                return@withOwnFolder false.right()
+                return@withChosenFolder false.right()
             }
 
             coordinateReading(source, BackupError.EXPORT_FAILED) { url ->
@@ -223,9 +221,9 @@ class IosFolderBackupDestination(
         }
 
         return withContext(Dispatchers.Default) {
-            folder.withOwnFolder(BackupError.EXPORT_FAILED) { own ->
-                val target = own.URLByAppendingPathComponent(backup.name)
-                    ?: return@withOwnFolder BackupError.EXPORT_FAILED.left()
+            folder.withChosenFolder(BackupError.EXPORT_FAILED) { chosen ->
+                val target = chosen.URLByAppendingPathComponent(backup.name)
+                    ?: return@withChosenFolder BackupError.EXPORT_FAILED.left()
 
                 coordinateWriting(
                     url = target,

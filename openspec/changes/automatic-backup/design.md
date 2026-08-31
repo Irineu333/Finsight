@@ -132,6 +132,11 @@ negociável — sem essa máquina, os arquivos sobrevivem e ninguém os encontra
 O app cria uma **subpasta própria** dentro da escolhida. A retenção nunca chega perto de um arquivo
 do usuário, e a listagem não varre a pasta de documentos inteira.
 
+Qual pasta o seletor abre primeiro é conveniência, não correção. No Android, uma subpasta de
+`Download` serve tão bem quanto `Documents/`: o que o seletor deixa escolher, ele deixa usar, e
+nenhum destino aceito falha em silêncio depois (Q2). Sugerir uma pasta poupa quem esbarraria no
+bloqueio do `Download` em si — não é o que separa funcionar de não funcionar.
+
 ### D5 — O periódico roda na abertura; nada em segundo plano
 
 A promessa é *"na primeira abertura depois de N dias"*, e não *"a cada N dias"*, porque a segunda é
@@ -224,6 +229,14 @@ tamanho.
 
 A retenção usa o nome como filtro barato e **confirma pelo conteúdo antes de apagar**, com o mesmo
 verificador do fluxo de restauração. O app só apaga o que ele mesmo escreveu.
+
+E uma listagem não é prova de ausência. No Android, a consulta pelos filhos de uma pasta pode
+devolver um cursor não-nulo e vazio para uma pasta que existe e aceita escrita no instante seguinte
+(Q2). Zero itens significa **não consegui ler**, nunca **não há cópias**: a tela diz que não
+conseguiu listar em vez de mostrar o estado vazio, e nada que apague ou crie parte de uma listagem
+tomada como completa. Em particular, o app **não recria a subpasta própria** por não a ter
+enxergado — `createDocument` renomeia para não conflitar, a segunda pasta passa a receber as cópias
+novas, e o acervo anterior fica órfão exatamente no reencontro (D4).
 
 O gatilho de origem não é persistido nesta entrega. O `formatVersion` do `snapshot_meta` existe
 justamente para permitir acrescentá-lo depois sem falhar de modo obscuro.
@@ -335,24 +348,54 @@ convenção do projeto reserva a `api` para as rotas externamente navegáveis, e
 precisa navegar direto para o histórico.
 
 Uma consequência que a tela paga sozinha: **entregar uma cópia guardada a um destino**, pelo mesmo
-caminho da exportação manual e sem capturar de novo. É o que dá saída ao usuário de Android, onde o
-cofre é local e nenhum provedor de nuvem aparece no seletor de pastas — a cópia já existe, e só
-precisa de um jeito de sair do aparelho.
+caminho da exportação manual e sem capturar de novo. É o que dá saída ao usuário de Android quando o
+seletor de pastas não oferece raiz sincronizada alguma (D16) — a cópia já existe, e só precisa de um
+jeito de sair do aparelho.
+
+### D16 — O app aceita a pasta que a pessoa escolher, e não julga o provedor
+
+O destino do degrau 2 não é filtrado pelo app: ele recebe do seletor a árvore que a pessoa apontou e
+a usa. Não pergunta de quem é a raiz, não separa nuvem de local, não recusa.
+
+O sinal em que um bloqueio se apoiaria não serve. O DocumentsUI oferece as raízes que declaram
+`Root.FLAG_SUPPORTS_IS_CHILD`, e essa bandeira é declarada **por cada provedor sobre si mesmo** (Q2)
+— erra nos dois sentidos: uma raiz de nuvem pode aparecer, e uma pasta local pode não aparecer. Um
+bloqueio construído sobre ela trocaria uma frase verdadeira e incerta por uma frase falsa e segura.
+
+**D14 sustenta isto, não o contrário.** O que aquela decisão recusa é subir dados *por padrão, sem
+ninguém decidir*; o caminho que ela nomeia como aceitável é o oposto — *"quem espalha é o usuário,
+escolhendo uma pasta externa"*. Uma pasta escolhida no seletor é exatamente esse opt-in explícito.
+
+E é a razão de existir do degrau 2. O backup de um app de finanças existe para o aparelho perdido,
+roubado ou quebrado, e uma pasta sincronizada é o único destino do degrau 2 que cobre isso. Recusá-la
+esvaziaria o próprio degrau.
+
+Na tela isso não acrescenta frase alguma, e retira uma: a cobertura é dita por destino, não por
+plataforma, e a do degrau 2 já diz que cobrir a perda do aparelho depende de a pasta ser sincronizada
+por algum serviço (`backup_coverage_folder`). Não há ramo por plataforma a escrever, e não há
+promessa de que o cofre seja local a manter.
+
+*Direção, não decisão:* no momento da escolha o sistema sabe qual provedor a pessoa abriu, e sabe
+dizer o nome dele. Mostrar esse nome é honesto e barato, onde o app adivinhar "local ou nuvem" erra
+nos dois sentidos. Ninguém construiu isso.
 
 ## Risks / Trade-offs
 
-- **No Android, nenhum caminho deste produto cobre perda do aparelho.** Verificado no AOSP: o
-  DocumentsUI filtra do seletor de pasta toda raiz que não declare `FLAG_SUPPORTS_IS_CHILD`, e
-  Google Drive, OneDrive e Dropbox não a declaram (Proton Drive, MEGA e ownCloud confirmados no
-  código-fonte; os três primeiros por evidência convergente). Nextcloud, Seafile e wrappers rclone
-  aparecem, mas exigem um app extra fora da Play Store.
-  → Sem remédio do lado do app. A tela **diz**: os backups ficam neste aparelho, e cobrir a perda
-  dele depende de escolher uma pasta que algum serviço de nuvem sincronize.
-- **A cobertura passa a diferir entre plataformas**, o que `local-backup` evitou de propósito
-  (D11 daquele design). No iOS o iCloud Drive aparece no seletor de pasta; no Android nada
-  equivalente aparece.
-  → Trade-off aceito, com a fala da tela diferindo por plataforma em vez de uma frase única e vaga
-  o bastante para valer nas duas.
+- **No Android, cobrir a perda do aparelho depende do que o seletor de pastas oferecer, e isso varia
+  por aparelho.** O DocumentsUI lista as raízes que declaram `Root.FLAG_SUPPORTS_IS_CHILD`, bandeira
+  que cada provedor declara sobre si — medido com um provedor escrito para a medição, que apareceu,
+  foi selecionável e teve o tree URI persistido (Q2). Proton Drive, MEGA e ownCloud não a declaram,
+  confirmado no código-fonte; Nextcloud, Seafile e wrappers rclone aparecem, mas exigem um app extra
+  fora da Play Store; de Google Drive, OneDrive e Dropbox não há leitura direta — no aparelho medido
+  nenhum dos três contribuiu raiz, o Drive por não ter conta conectada.
+  → Fora do alcance do app, que aceita a pasta apontada sem julgar a origem dela (D16). Onde nenhuma
+  raiz sincronizada for oferecida, o degrau 2 guarda no próprio aparelho — e é isso, e não uma
+  promessa, que a frase de cobertura diz.
+- **A cobertura pode diferir entre plataformas**, o que `local-backup` evitou de propósito
+  (D11 daquele design). No iOS o iCloud Drive aparece no seletor de pasta; no Android o que aparece
+  depende dos provedores instalados, e os de maior alcance podem não aparecer.
+  → Trade-off aceito, e a tela não o traduz em fala por plataforma: uma frase por destino, que
+  descreve a pasta escolhida em vez de prometer o que a plataforma não garante (D16).
 - **`DeleteFutureInvoiceUseCase` apaga transações reais sob um texto que chama a fatura de
   "futura".** Verificado: `Invoice.Status.isDeletable` inclui `RETROACTIVE` (`Invoice.kt:85-87`),
   o use case apaga toda transação da dimensão da fatura (`:28-32`), e a confirmação não diz
@@ -417,6 +460,10 @@ contradiz sobre qual usar no iOS.
 **Critério de aceitação**: escolher uma pasta, reiniciar o aparelho, resolver o bookmark e
 escrever. Se falhar, o degrau 2 no iOS precisa de outro desenho — e o degrau 1 segue intacto.
 
+**Segue aberta.** Medir exige um iPhone real, reiniciado entre guardar o bookmark e resolvê-lo, e
+não há aparelho disponível. Até que haja, o degrau 2 no iOS é desenho não verificado, e o critério
+acima continua sendo o que decide se ele existe na forma desenhada.
+
 ### Q2 — Uma subpasta de `Download` é selecionável no Android 11+?
 
 A documentação proíbe `ACTION_OPEN_DOCUMENT_TREE` sobre *"o diretório `Download`"*, e escreve *"e
@@ -427,6 +474,35 @@ Interessa por um motivo lateral: há relato de julho/2026 de que o Android passo
 de `Downloads` para uma pasta "Android backups" no Drive. Se as duas coisas se confirmarem, o
 Android ganharia cobertura de nuvem sem esforço. **Duas incertezas empilhadas, uma de fonte
 jornalística única** — não é plano, é um teste de dois minutos a mais no mesmo spike.
+
+**Respondida: sim.** Medido em Android 16 (API 36), emulador, DocumentsUI de fábrica. Uma subpasta
+de `Download` escolhida por `ACTION_OPEN_DOCUMENT_TREE` aceita `takePersistableUriPermission`,
+aceita que o app crie a subpasta dele dentro e escreva, e a permissão sobreviveu a **dois
+reinícios** — leitura e escrita ainda válidas, e uma gravação nova bem-sucedida depois deles. O
+bloqueio é do diretório, não da árvore: o seletor recusa `Download` **em si** e a raiz do volume,
+com *"Can't use this folder"* e `USE THIS FOLDER` desabilitado. `CREATE NEW FOLDER` continua
+disponível nessa mesma tela bloqueada, de modo que quem cai nela está a uma pasta de um destino
+válido. `Documents` é selecionável e gravável como qualquer outra.
+
+**A pergunta lateral não foi medida, e mudou de tamanho.** Se o Android sobe documentos de
+`Downloads` para o Drive continua com fonte única e jornalística. O que foi medido é o mecanismo do
+seletor: ele filtra as raízes por `Root.FLAG_SUPPORTS_IS_CHILD`, uma bandeira que **cada provedor
+declara por si** — um `DocumentsProvider` escrito para a medição apareceu no seletor, foi
+selecionável e teve o tree URI persistido. **Não existe regra de plataforma que mantenha o cofre
+local no Android**; existe um conjunto de provedores instalados que não se oferecem. O que isso faz
+com a fala da tela está em D16.
+
+**Os limites da medição são parte do resultado.** Do Google Drive não há leitura: o app estava
+instalado (2.25.100) e registra um provedor, mas, sem conta conectada, não contribuiu raiz alguma;
+OneDrive e Dropbox não estavam instalados. Nenhum seletor de OEM foi exercitado, e Samsung e Xiaomi
+embarcam DocumentsUI modificado. E só o Android 16 foi medido — que o bloqueio de `Download` valha
+desde o Android 11 é o que a documentação diz, não o que se viu.
+
+**Uma anomalia, sem explicação.** Logo depois do primeiro reinício, a consulta pelos filhos da
+subpasta devolveu um cursor não-nulo e vazio enquanto uma árvore vizinha listava normalmente, e um
+`createDocument` em seguida provou que a pasta estava lá. Não reproduziu em quatro tentativas nem
+num segundo reinício. Fica sem causa conhecida, e é por isso que D9 proíbe ler "vazio" como "não há
+cópias".
 
 ### Q3 — O Auto Backup da plataforma volta um dia, como opt-in?
 

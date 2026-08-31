@@ -9,6 +9,8 @@ import com.neoutils.finsight.domain.vault.ArchiveMark
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.StandingVaultOffer
+import com.neoutils.finsight.domain.vault.VaultAppOpening
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
@@ -29,8 +31,13 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
- * The file dialogs and what the running app knows about itself: two things every platform
- * answers differently, and the only two this feature cannot state in common code.
+ * The file dialogs, the folder somebody points at, where copies land, and what the running
+ * app knows about itself: everything this feature cannot state in common code.
+ *
+ * The destination each platform binds is the two rungs behind
+ * [com.neoutils.finsight.domain.vault.VaultDestinations], never one of them: which rung is
+ * in force is a preference, and a platform that bound a single rung would put that decision
+ * somewhere the vault cannot see it.
  */
 expect val backupPlatformModule: Module
 
@@ -85,9 +92,18 @@ val backupModule = module {
 
     // The occasion the shell announces — the app was opened. It is resolved there in a
     // `LaunchedEffect`, which no compiler checks, so `AppModulesTest` asserts the binding.
+    // What the occasion is worth to the vault is `VaultAppOpening`'s: the link to the
+    // folder is checked before the periodic trigger's own conditions are asked (task 11.7).
     factory<PeriodicBackup> {
-        VaultPeriodicBackup(state = get(), vault = get(), clock = get())
+        VaultAppOpening(
+            folder = get(),
+            periodic = VaultPeriodicBackup(state = get(), vault = get(), clock = get()),
+        )
     }
+
+    // One instance, because it holds the reading of the link that the screen shows and the
+    // app's opening writes — two would have the screen watching an answer nobody updates.
+    single { VaultFolder(state = get(), folder = get()) }
 
     // `:core:database`'s port, claimed here and nowhere else. Whoever assembles the
     // database asks it for a path and passes on what it says; this is what puts the copy
@@ -133,6 +149,7 @@ val backupModule = module {
             captureOrigin = get(),
             vault = get(),
             switch = get(),
+            folder = get(),
             modalManager = get(),
             clock = get(),
         )

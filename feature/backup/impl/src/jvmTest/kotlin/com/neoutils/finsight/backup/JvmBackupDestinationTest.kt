@@ -52,8 +52,10 @@ class JvmBackupDestinationTest {
     private val liveFile = temporary("live")
     private val live = open(liveFile.absolutePath)
 
+    private val gate = OwnCopyCheck(CandidateVerifier(::open))
+
     private val destination = JvmBackupDestination(
-        ownCopy = OwnCopyCheck(CandidateVerifier(::open)),
+        ownCopy = gate,
         directory = vault,
     )
 
@@ -111,6 +113,31 @@ class JvmBackupDestinationTest {
 
         assertTrue(File(captured).exists(), "the temporary is still its owner's to remove")
     }
+
+    /**
+     * The app's own folder is empty before the first capture makes it, and empty is the
+     * honest answer there. Anything else that stops a listing from being taken is not:
+     * design D9 draws the line at *zero copies means could not read*, and a destination
+     * that answered an empty list over a folder it never read would have the screen say
+     * "no copies yet" and retention count from nothing.
+     */
+    @Test
+    fun `a folder that has not been made yet is empty, and one that cannot be read refuses`() =
+        runTest {
+            val unmade = File(vault, "not made yet")
+            assertEquals(
+                emptyList(),
+                JvmBackupDestination(ownCopy = gate, directory = unmade).list().getOrNull(),
+                "nothing has been captured, so there is nothing in it",
+            )
+
+            val notAFolder = File(vault, "a file where the folder should be")
+                .apply { writeText("something else entirely") }
+            assertTrue(
+                JvmBackupDestination(ownCopy = gate, directory = notAFolder).list().isLeft(),
+                "a listing that could not be taken was answered as an empty folder",
+            )
+        }
 
     /**
      * A vault has nobody to ask about replacing a file, so a name already in use is a copy

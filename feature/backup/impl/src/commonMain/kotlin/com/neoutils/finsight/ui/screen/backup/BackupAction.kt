@@ -7,9 +7,9 @@ import com.neoutils.finsight.extension.PlatformContext
 /**
  * What the screen asks for.
  *
- * Two of them carry a [PlatformContext], which no other action in this app does. Picking
- * a file is the platform's own dialog and it needs the window, the activity or the view
- * controller to come up over; the order of the work around it — capture, verify, replace,
+ * Three of them carry a [PlatformContext], which no other action in this app does. Picking
+ * a file or a folder is the platform's own dialog, and it needs the window, the activity
+ * or the view controller to come up over; the order of the work around it — capture, verify, replace,
  * and remove the temporary file whatever happened — is one flow and belongs to one place.
  * The context travels with the call that needs it and is never held: a view model that
  * kept a handle on the screen's window would outlive it.
@@ -57,4 +57,23 @@ sealed interface BackupAction {
     data class SetInterval(val interval: VaultInterval) : BackupAction
 
     data class SetRetention(val retention: BackupRetention) : BackupAction
+
+    /**
+     * Point at a folder to keep the copies in, and move the vault onto it.
+     *
+     * It carries a [PlatformContext] for the reason the two file actions above do: a folder
+     * picker is the platform's own dialog and needs the window, the activity or the view
+     * controller to come up over. It is the same action whether nothing has ever been
+     * pointed at, the link has fallen, or the person wants a different folder — one machine,
+     * three moments (design D4).
+     */
+    data class ChooseFolder(val context: PlatformContext) : BackupAction
+
+    /**
+     * Keep the copies inside the app instead.
+     *
+     * Nothing is removed and the folder stays remembered: the copies already in it are
+     * still there, and choosing it again is what leads back to them.
+     */
+    data object KeepInsideApp : BackupAction
 }

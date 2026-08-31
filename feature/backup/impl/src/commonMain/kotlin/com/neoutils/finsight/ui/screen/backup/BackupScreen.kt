@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SaveAlt
@@ -60,6 +61,8 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_coverage_app
 import com.neoutils.finsight.resources.backup_coverage_folder
+import com.neoutils.finsight.resources.backup_destination_title
+import com.neoutils.finsight.resources.backup_folder_unreachable
 import com.neoutils.finsight.resources.backup_export_subtitle
 import com.neoutils.finsight.resources.backup_export_title
 import com.neoutils.finsight.resources.backup_group_automatic
@@ -91,6 +94,7 @@ import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
+import com.neoutils.finsight.ui.modal.vaultDestination.VaultDestinationModal
 import com.neoutils.finsight.ui.modal.vaultSettings.VaultSettingsModal
 import com.neoutils.finsight.ui.theme.SettingsTileTheme
 import com.neoutils.finsight.ui.theme.Warning
@@ -201,6 +205,7 @@ fun BackupScreen(
                             LastBackupCard(
                                 vault = uiState.vault,
                                 copies = uiState.copies,
+                                isFolderBroken = uiState.isFolderBroken,
                                 now = clock.now(),
                                 modifier = modifier,
                             )
@@ -257,6 +262,43 @@ fun BackupScreen(
                                     )
                                 },
                             )
+                        }
+
+                        if (uiState.isFolderOffered) {
+                            row(key = "destination") { modifier ->
+                                SettingsMenuLink(
+                                    modifier = modifier.testTag("backup_destination_tile"),
+                                    shape = TileShape,
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.FolderOpen,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    title = {
+                                        Text(text = stringResource(Res.string.backup_destination_title))
+                                    },
+                                    subtitle = {
+                                        Text(text = destinationLabel(uiState.vault.destination))
+                                    },
+                                    action = { TileAction(isRunning = false) },
+                                    onClick = {
+                                        modalManager.show(
+                                            VaultDestinationModal(
+                                                selected = uiState.vault.destination,
+                                                onChooseFolder = {
+                                                    viewModel.onAction(
+                                                        BackupAction.ChooseFolder(platformContext)
+                                                    )
+                                                },
+                                                onKeepInsideApp = {
+                                                    viewModel.onAction(BackupAction.KeepInsideApp)
+                                                },
+                                            )
+                                        )
+                                    },
+                                )
+                            }
                         }
 
                         row(key = "history") { modifier ->
@@ -439,6 +481,7 @@ private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
 private fun LastBackupCard(
     vault: VaultState,
     copies: VaultCopies,
+    isFolderBroken: Boolean,
     now: Instant,
     modifier: Modifier = Modifier,
 ) {
@@ -446,6 +489,10 @@ private fun LastBackupCard(
     val last = vault.lastCapturedAt
     val overdue = vault.isLastCopyOverdue(now)
     val tone = when {
+        // Red is what a vault that can no longer write deserves, and this is that case:
+        // the copies that exist are still in a folder this app cannot reach, and nothing
+        // new is landing anywhere (design D12).
+        isFolderBroken -> colorScheme.error
         last == null -> colorScheme.onSurfaceVariant
         overdue -> Warning
         else -> colorScheme.primary
@@ -510,6 +557,21 @@ private fun LastBackupCard(
                         .padding(top = 4.dp)
                         .testTag("backup_coverage"),
                 )
+
+                // Said, and not acted upon. What to do about a folder that has gone —
+                // point at it again, or keep copies inside the app meanwhile — is the
+                // offer task 11.8 puts; moving somebody's backups without asking is the
+                // one answer design D12 rules out.
+                if (isFolderBroken) {
+                    Text(
+                        text = stringResource(Res.string.backup_folder_unreachable),
+                        style = typography.bodySmall,
+                        color = colorScheme.error,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .testTag("backup_folder_unreachable"),
+                    )
+                }
             }
         }
     }

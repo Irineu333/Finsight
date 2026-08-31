@@ -22,7 +22,9 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultSwitch
+import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.BackupAction
@@ -159,6 +161,7 @@ class DestinationReadTest {
         captureOrigin = origin,
         vault = state,
         switch = VaultSwitch(state = state, vault = vault),
+        folder = VaultFolder(state = state, folder = NoBackupFolder),
         modalManager = ModalManager(),
         clock = clock,
     )

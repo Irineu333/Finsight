@@ -6,13 +6,34 @@ import com.neoutils.finsight.backup.service.IosBackupFileService
 import com.neoutils.finsight.backup.service.IosMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
+import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import org.koin.dsl.module
 
 actual val backupPlatformModule = module {
     factory<BackupFileService> { IosBackupFileService() }
-    factory<BackupDestination> { IosBackupDestination(ownCopy = get()) }
+
+    // The second rung is not built here yet (tasks 11.4–11.5), and it is the one blocked on
+    // an unanswered spike: Q1 asks whether a folder bookmark survives a reboot, and nobody
+    // has run it on a device. What it will supply is a `BackupFolder` over
+    // `UIDocumentPickerViewController` with `UTTypeFolder`, keeping the bookmark and never
+    // letting the security-scoped `NSURL` through a `String` (design D2), and a
+    // `BackupDestination` that balances `start`/`stopAccessingSecurityScopedResource` in a
+    // `finally` — under the shared subfolder name `BACKUP_FOLDER_NAME`.
+    factory<BackupFolder> { NoBackupFolder }
+
+    factory<BackupDestination> {
+        VaultDestinations(
+            state = get(),
+            appStorage = IosBackupDestination(ownCopy = get()),
+            folder = UnreachableDestination,
+        )
+    }
+
     factory<CaptureOrigin> { IosCaptureOrigin() }
     factory<MigrationCopyPlace> { IosMigrationCopyPlace() }
 }

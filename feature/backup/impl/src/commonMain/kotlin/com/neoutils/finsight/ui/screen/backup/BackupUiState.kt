@@ -3,7 +3,9 @@
 package com.neoutils.finsight.ui.screen.backup
 
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
+import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultState
+import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -50,7 +52,38 @@ data class BackupUiState(
      * changes it — never a record kept elsewhere (design D9).
      */
     val copies: VaultCopies = VaultCopies(),
+
+    /**
+     * Whether this platform can put a folder picker up at all — so the choice of where
+     * copies are kept is offered where it works and simply absent where it is not built
+     * yet, rather than shown as a control that does nothing.
+     *
+     * It is not a judgement about folders or providers, which the app never makes
+     * (design D16).
+     */
+    val isFolderOffered: Boolean = false,
+
+    /**
+     * What the last reading said about the folder somebody pointed at.
+     *
+     * Read when the app opens rather than only when something is written (task 11.7), so a
+     * folder that was deleted, unmounted or renamed is noticed before a capture fails with
+     * nobody watching.
+     */
+    val folderLink: FolderLink = FolderLink.NONE,
 ) {
+
+    /**
+     * Whether the vault is writing to a folder it cannot reach.
+     *
+     * Both halves, stated once: a fallen link matters only where the copies are supposed to
+     * be going, and a folder left behind by somebody who moved back to the app's own
+     * storage is not a fault to report. Two screens reading the two values apart would be
+     * two chances to get that pairing wrong.
+     */
+    val isFolderBroken: Boolean
+        get() = vault.destination == VaultDestination.USER_FOLDER &&
+            folderLink == FolderLink.BROKEN
 
     /**
      * One flag for both entries: each of the three operations has the database's writer

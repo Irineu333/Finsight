@@ -1032,6 +1032,8 @@
     <string name="backup_destination_folder">In a folder you chose</string>
     <string name="backup_coverage_app">The copies stay on this device and inside the app. Uninstalling the app takes all of them with it, and getting your data back on another device still depends on the file you export.</string>
     <string name="backup_coverage_folder">The copies stay in the folder you chose and remain there if you uninstall the app. Covering the loss of the device depends on that folder being synced by some cloud service.</string>
+    <string name="backup_destination_title">Where the copies are kept</string>
+    <string name="backup_folder_unreachable">The folder you chose could not be reached. New copies are not being kept in it.</string>
     <string name="backup_copies_none">No copies yet</string>
     <string name="backup_copies_one">1 copy kept</string>
     <string name="backup_copies_many">%1$d copies kept</string>

@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
@@ -87,6 +88,7 @@ class BackupViewModel(
     private val captureOrigin: CaptureOrigin,
     private val vault: BackupVaultRepository,
     private val switch: VaultSwitch,
+    private val folder: VaultFolder,
     private val modalManager: ModalManager,
     private val clock: Clock,
 ) : ViewModel() {
@@ -149,6 +151,18 @@ class BackupViewModel(
             .onEach { state -> _uiState.update { it.copy(vault = state) } }
             .launchIn(viewModelScope)
 
+        folder.link
+            .onEach { link -> _uiState.update { it.copy(folderLink = link) } }
+            .launchIn(viewModelScope)
+
+        _uiState.update { it.copy(isFolderOffered = folder.isOffered) }
+
+        // The link is checked when the app opens (`VaultAppOpening`), and again here: this
+        // is the screen that says where the copies go, and a folder that stopped being
+        // reachable since the app was opened would otherwise be reported by a line that is
+        // hours old.
+        viewModelScope.launch { folder.check() }
+
         readDestination()
     }
 
@@ -165,6 +179,8 @@ class BackupViewModel(
             is BackupAction.SetPreventiveOn -> vault.setPreventiveOn(action.isOn)
             is BackupAction.SetInterval -> vault.setInterval(action.interval.duration)
             is BackupAction.SetRetention -> vault.setRetention(action.retention)
+            is BackupAction.ChooseFolder -> chooseFolder(action.context)
+            BackupAction.KeepInsideApp -> keepInsideApp()
             BackupAction.Refresh -> readDestination()
         }
     }
@@ -220,6 +236,42 @@ class BackupViewModel(
      * listing a folder is disk work, and the composition that started this screen has
      * nothing to wait for.
      */
+    /**
+     * Puts the folder picker up and, if a folder was chosen, moves the vault onto it.
+     *
+     * **Nothing is copied across, and nothing is removed.** The copies already inside the
+     * app stay inside the app, unlisted from here on but intact — carrying them over is
+     * task 11.10, which copies and never moves (design D13). This is the direction a
+     * half-built feature is allowed to be wrong in: a duplicate costs a file, and a move
+     * that fails costs the archive.
+     *
+     * A picker somebody closed changes nothing and says nothing. Only a real failure — the
+     * folder could not be prepared — reaches the person, because only that one leaves them
+     * with something to do.
+     *
+     * The destination is read again on the way out, because what the card counts is now a
+     * different folder.
+     */
+    private fun chooseFolder(context: PlatformContext) {
+        viewModelScope.launch {
+            folder.pointAt(context).fold(
+                ifLeft = ::fail,
+                ifRight = { chosen -> if (chosen) readDestination() },
+            )
+        }
+    }
+
+    /**
+     * Moves the vault back to the app's own storage.
+     *
+     * It removes nothing and forgets nothing: the copies in the folder stay in it, and the
+     * folder stays remembered so that choosing it again leads back to them (design D4).
+     */
+    private fun keepInsideApp() {
+        folder.keepInsideApp()
+        readDestination()
+    }
+
     private fun readDestination() {
         viewModelScope.launch(Dispatchers.Default) {
             val copies = destination.list().getOrNull() ?: return@launch

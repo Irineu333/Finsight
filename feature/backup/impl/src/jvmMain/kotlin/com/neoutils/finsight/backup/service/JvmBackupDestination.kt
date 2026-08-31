@@ -13,6 +13,7 @@ import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
 import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
 import java.io.File
+import java.io.IOException
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -46,11 +47,26 @@ class JvmBackupDestination(
         }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
     }
 
+    /**
+     * What the folder holds — and a refusal wherever the reading did not happen.
+     *
+     * A directory that is not there yet is empty and says so: this one is the app's own, it
+     * is made by the first [put], and nothing has been captured before that. A directory
+     * that *is* there and answers null to `listFiles` is the other case entirely, and it is
+     * a refusal: null covers a read that failed as well as a path that is not a directory,
+     * and turning it into an empty list would have the screen say "no copies yet" over a
+     * folder it never managed to read (design D9).
+     */
     override suspend fun list(): Either<BackupError, List<StoredBackup>> =
         withContext(Dispatchers.IO) {
             Either.catch {
-                directory.listFiles().orEmpty()
-                    .filter { it.isFile && isBackupFileName(it.name) }
+                val files = when {
+                    !directory.exists() -> emptyArray()
+                    else -> directory.listFiles()
+                        ?: throw IOException("The folder could not be read")
+                }
+
+                files.filter { it.isFile && isBackupFileName(it.name) }
                     .map { it.asStoredBackup() }
                     .sortedWith(NEWEST_FIRST)
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
@@ -90,7 +106,12 @@ class JvmBackupDestination(
     }
 }
 
-private fun File.asStoredBackup() = StoredBackup(
+/**
+ * What the file system says about one copy. `internal` because both rungs of the desktop
+ * read it the same way, and a second spelling would be a second answer to when a copy was
+ * written.
+ */
+internal fun File.asStoredBackup() = StoredBackup(
     name = name,
     savedAt = Instant.fromEpochMilliseconds(lastModified()),
     sizeInBytes = length(),

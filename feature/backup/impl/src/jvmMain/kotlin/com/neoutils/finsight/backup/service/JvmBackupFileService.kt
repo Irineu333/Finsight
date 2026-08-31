@@ -134,11 +134,18 @@ private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.caus
     .any { cause -> cause is IOException && OUT_OF_SPACE.any { it in cause.message.orEmpty() } }
 
 /**
- * A database is up to three files while it is open in write-ahead logging, and a
- * candidate is opened with Room. Removing the main file alone would leave the other two
- * behind for as long as the temporary directory lives.
+ * Everything that appears beside a database file on this platform once something opens it,
+ * and a candidate is opened with Room.
+ *
+ * Three of them are SQLite's own: the database, the write-ahead log and its shared-memory
+ * index. The fourth is Room's, and it is the one that matters outside this app's own
+ * areas — on the JVM, Room takes a `.lck` file next to the database it opens and leaves it
+ * there afterwards. Removing the main file alone would leave a `finsight-backup-….db.lck`
+ * standing in the folder the user chose, for a copy that is no longer in it: litter in
+ * somebody's own documents, from a vault whose whole promise is to keep to a folder of its
+ * own (design D4).
  */
-internal val DATABASE_FILES = listOf("", "-wal", "-shm")
+internal val DATABASE_FILES = listOf("", "-wal", "-shm", ".lck")
 
 /**
  * A candidate is opened with Room and migrated in place before anything is decided

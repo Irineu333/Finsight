@@ -15,6 +15,8 @@ import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -25,6 +27,7 @@ import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.time.Clock
@@ -154,6 +157,39 @@ class BackupModuleTest {
         koin.get<TransactionRemovalPrelude>().beforeRemoval()
 
         assertEquals(emptyList(), destination.list().getOrNull())
+    }
+
+    /**
+     * The destination the app resolves is both rungs and the preference that says which is
+     * in force, never one of them.
+     *
+     * It is asserted through the real graph and not the one above, which swaps the
+     * destination out: a platform module that went back to binding a single rung would
+     * compile, pass everything else here, and leave the folder somebody chose unreachable
+     * from every screen — with no test anywhere noticing, because the first rung would go
+     * on working perfectly.
+     */
+    @Test
+    fun `the destination the app resolves is the two rungs`() {
+        val real = koinApplication {
+            modules(
+                backupModule,
+                module {
+                    single<AppDatabase> { live }
+                    single { CandidateVerifier(::roomAt) }
+                    single<Settings> { MapSettings() }
+                    single<Clock> { Clock.System }
+                    single { ModalManager() }
+                },
+            )
+        }.koin
+
+        try {
+            assertIs<VaultDestinations>(real.get<BackupDestination>())
+            assertNotNull(real.get<VaultFolder>(), "nothing could point at a folder")
+        } finally {
+            real.close()
+        }
     }
 
     private companion object {

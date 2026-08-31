@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultSwitch
@@ -167,15 +168,18 @@ class DestinationReadTest {
         vault = state,
         switch = VaultSwitch(state = state, vault = vault),
         folder = VaultFolder(state = state, folder = NoBackupFolder),
-        migration = VaultMigration(
-            state = state,
-            destinations = VaultDestinations(
+        destinationChange = VaultDestinationChange(
+            folder = VaultFolder(state = state, folder = NoBackupFolder),
+            migration = VaultMigration(
                 state = state,
-                link = MutableStateFlow(FolderLink.NONE),
-                appStorage = destination,
-                folder = UnreachableDestination,
+                destinations = VaultDestinations(
+                    state = state,
+                    link = MutableStateFlow(FolderLink.NONE),
+                    appStorage = destination,
+                    folder = UnreachableDestination,
+                ),
+                files = files,
             ),
-            files = files,
         ),
         modalManager = ModalManager(),
         clock = clock,

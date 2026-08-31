@@ -55,16 +55,6 @@ data class BackupUiState(
     val copies: VaultCopies = VaultCopies(),
 
     /**
-     * Whether this platform can put a folder picker up at all — so the choice of where
-     * copies are kept is offered where it works and simply absent where it is not built
-     * yet, rather than shown as a control that does nothing.
-     *
-     * It is not a judgement about folders or providers, which the app never makes
-     * (design D16).
-     */
-    val isFolderOffered: Boolean = false,
-
-    /**
      * What the last reading said about the folder somebody pointed at.
      *
      * Read when the app opens rather than only when something is written (task 11.7), so a

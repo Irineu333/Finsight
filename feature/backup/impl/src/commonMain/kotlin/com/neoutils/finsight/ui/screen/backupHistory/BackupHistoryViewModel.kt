@@ -12,22 +12,31 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.CarryOffer
+import com.neoutils.finsight.domain.vault.ImportOutcome
+import com.neoutils.finsight.domain.vault.MigrationOutcome
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_carry_done
+import com.neoutils.finsight.resources.backup_carry_partial
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_history_capture_done
+import com.neoutils.finsight.resources.backup_history_import_done
 import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_gone
 import com.neoutils.finsight.resources.backup_history_remove_refused
 import com.neoutils.finsight.resources.backup_history_removed
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
@@ -50,7 +59,18 @@ import org.jetbrains.compose.resources.StringResource
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * The copies the vault keeps, and the three things a person does with one of them.
+ * The copies the vault keeps: where they are kept, what a person does with one of them, and
+ * the two ways another one arrives.
+ *
+ * **Where they are kept is chosen here now, and the choice is not implemented here.** It is
+ * [VaultDestinationChange]'s, for the reason the restore is [ArchiveRestore]'s: the backup
+ * screen offers the same change from the card that announces a fallen link (design D12), and
+ * two screens offering it must not be two readings of where the copies were going before the
+ * move.
+ *
+ * **Bringing a file in is not restoring one.** [ArchiveImport] checks it at the restore's own
+ * gate and puts it where the copies live; the archive is untouched, and nothing about which
+ * copy the running app came from moves — an imported file is not one.
  *
  * **The listing is a reading of the destination, never a record.** It is taken when the
  * screen opens and again after anything that could have changed it, so a copy removed with
@@ -95,6 +115,14 @@ class BackupHistoryViewModel(
      */
     private val folder: VaultFolder,
     private val vault: BackupVault,
+    /** Bringing a file in, which is the one thing here that starts outside the destination. */
+    private val archiveImport: ArchiveImport,
+    /**
+     * Moving where the copies are kept, and offering the ones left behind. It is the same
+     * object the backup screen's recovery buttons use, because the reading taken before a
+     * move is the one thing two screens offering the change may not each hold.
+     */
+    private val destinationChange: VaultDestinationChange,
     private val modalManager: ModalManager,
 ) : ViewModel() {
 
@@ -168,6 +196,7 @@ class BackupHistoryViewModel(
     private var inspection: Job? = null
 
     init {
+        _uiState.update { it.copy(isFolderOffered = folder.isOffered) }
         refresh()
     }
 
@@ -175,6 +204,9 @@ class BackupHistoryViewModel(
         when (action) {
             BackupHistoryAction.Refresh -> refresh()
             BackupHistoryAction.Capture -> capture()
+            is BackupHistoryAction.Import -> importFile(action.context)
+            is BackupHistoryAction.ChooseFolder -> chooseFolder(action.context)
+            BackupHistoryAction.KeepInsideApp -> keepInsideApp()
             is BackupHistoryAction.Inspect -> inspect(action.backup)
             is BackupHistoryAction.Restore -> restore(action.backup)
             is BackupHistoryAction.Share -> share(action.backup, action.context)
@@ -266,6 +298,110 @@ class BackupHistoryViewModel(
                 _uiState.update { it.copy(isCapturing = false) }
                 refresh()
             }
+        }
+    }
+
+    /**
+     * Brings a file the person picks into the destination, and reads the destination again
+     * so the copy that landed is in the list.
+     *
+     * **Nothing about what a valid file is gets decided here.** The gate is
+     * [ArchiveImport]'s and it is the restore's own, so a file this screen accepts is a file
+     * the restore would accept — and a file it refuses is refused in the words that refusal
+     * already has, because somebody who picked a file the app will not keep is owed the
+     * reason.
+     *
+     * **It does not restore, and it does not mark.** The archive is untouched, and the copy
+     * that lands takes no mark of any kind: the mark says which copy the running app came
+     * from, and an imported file is not that (see [BackupHistoryUiState.archiveCopy]).
+     */
+    private fun importFile(context: PlatformContext) {
+        if (_uiState.value.isBusy) return
+        inspection?.cancel()
+        _uiState.update { it.copy(isImporting = true) }
+
+        viewModelScope.launch {
+            try {
+                when (val outcome = archiveImport.importChosenFile(context)) {
+                    is ImportOutcome.Imported -> succeed(Res.string.backup_history_import_done)
+                    is ImportOutcome.Failed -> fail(outcome.error)
+
+                    // A picker somebody closed is not a failure and has nothing to say.
+                    ImportOutcome.Abandoned -> Unit
+
+                    // The vault is off, so nothing may be written into its destination
+                    // (design D1). The control is not offered then, but the refusal is the
+                    // vault's rather than the screen's, and one that said nothing would be
+                    // a button that looks broken.
+                    ImportOutcome.VaultOff ->
+                        modalManager.showError(UiText.Res(Res.string.backup_history_empty_off))
+                }
+            } finally {
+                _uiState.update { it.copy(isImporting = false) }
+                refresh()
+            }
+        }
+    }
+
+    /**
+     * Points at a folder to keep the copies in, and offers to carry the ones left behind.
+     *
+     * The move and the offer are [VaultDestinationChange]'s. A picker somebody closed
+     * changes nothing and says nothing; only a folder that could not be prepared reaches the
+     * person, because only that leaves them with something to do.
+     */
+    private fun chooseFolder(context: PlatformContext) {
+        viewModelScope.launch {
+            destinationChange.pointAtFolder(context).fold(
+                ifLeft = ::fail,
+                ifRight = { offer ->
+                    refresh()
+                    offer?.let(::offerToCarry)
+                },
+            )
+        }
+    }
+
+    /**
+     * Moves the copies back inside the app.
+     *
+     * Nothing is removed and nothing is forgotten: the copies in the folder stay in it, and
+     * the folder stays remembered, so pointing at it again leads back to them (design D4).
+     */
+    private fun keepInsideApp() {
+        viewModelScope.launch {
+            val offer = destinationChange.keepInsideApp()
+            refresh()
+            offer?.let(::offerToCarry)
+        }
+    }
+
+    /**
+     * Asks whether the copies left behind should be written into the destination now in
+     * force — a question, never a step taken on the way past (design D13).
+     */
+    private fun offerToCarry(offer: CarryOffer) {
+        modalManager.show(
+            CarryCopiesModal(copies = offer.copies, onCarry = { carry(offer) })
+        )
+    }
+
+    /**
+     * Carries the copies across, and says how far it got. A run that stopped partway is a
+     * sentence of its own: some of them are still only in the place they were.
+     */
+    private fun carry(offer: CarryOffer) {
+        viewModelScope.launch {
+            when (destinationChange.carry(offer)) {
+                is MigrationOutcome.Carried -> succeed(Res.string.backup_carry_done)
+
+                is MigrationOutcome.Interrupted ->
+                    modalManager.showError(UiText.Res(Res.string.backup_carry_partial))
+
+                MigrationOutcome.NothingToCarry -> Unit
+            }
+
+            refresh()
         }
     }
 

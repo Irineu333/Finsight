@@ -34,6 +34,13 @@ import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
+import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
+import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryAction
@@ -160,14 +167,46 @@ class CurrentCopyTest {
         files = files,
     )
 
+    private val vaultFolder = VaultFolder(state = state, folder = NoBackupFolder)
+
+    /**
+     * Nothing here changes destination, and this is what says so: one rung, and a folder
+     * that cannot be reached, so no move and no offer is ever produced.
+     */
+    private val destinationChange = VaultDestinationChange(
+        folder = vaultFolder,
+        migration = VaultMigration(
+            state = state,
+            destinations = VaultDestinations(
+                state = state,
+                link = MutableStateFlow(FolderLink.NONE),
+                appStorage = destination,
+                folder = UnreachableDestination,
+            ),
+            files = files,
+        ),
+    )
+
+    private val archiveImport = ArchiveImport(
+        state = state,
+        destination = destination,
+        verifier = verifier,
+        files = files,
+        clock = object : Clock {
+            override fun now(): Instant = instant
+        },
+    )
+
     private fun viewModel() = BackupHistoryViewModel(
         destination = destination,
         files = files,
         archiveRestore = archiveRestore,
         reader = KeptCopyReader(destination, files, verifier),
         state = state,
-        folder = VaultFolder(state = state, folder = NoBackupFolder),
+        folder = vaultFolder,
         vault = vault,
+        archiveImport = archiveImport,
+        destinationChange = destinationChange,
         modalManager = modalManager,
     )
 

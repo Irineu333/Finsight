@@ -34,6 +34,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_copy_facts_accounts
+import com.neoutils.finsight.resources.backup_copy_facts_captured
 import com.neoutils.finsight.resources.backup_copy_facts_origin
 import com.neoutils.finsight.resources.backup_copy_facts_size
 import com.neoutils.finsight.resources.backup_copy_facts_unreadable
@@ -239,6 +240,7 @@ private fun CopyFacts(
     modifier: Modifier = Modifier,
 ) {
     val held = facts as? KeptCopyFacts.Held
+    val dateFormats = LocalDateFormats.current
 
     // Nothing was read and nothing will be: the row keeps its label and says so with the
     // mark for an absent figure. While the file is still open, a value is coming and the
@@ -250,6 +252,23 @@ private fun CopyFacts(
             label = stringResource(Res.string.backup_copy_facts_origin),
             value = held?.let { originWithVersion(it.origin) } ?: absent,
             tag = "backup_copy_facts_origin",
+        )
+        // When the archive inside the file was actually read out of a running app, which is
+        // not the same instant as the one above the box. That one is the file system's — when
+        // this file arrived in this folder — and the two part company for every copy that
+        // did not land here by being captured here: one carried across from another
+        // destination, and one brought in from somewhere else entirely. The file's own stamp
+        // is the only thing that says how old the data in it is.
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_captured),
+            value = held?.origin?.let { origin ->
+                dateFormats.formatDividerDate(
+                    instant = origin.createdAt,
+                    today = stringResource(Res.string.backup_today),
+                    yesterday = stringResource(Res.string.backup_yesterday),
+                ) + ", " + dateFormats.formatInstantTime(origin.createdAt)
+            } ?: absent,
+            tag = "backup_copy_facts_captured",
         )
         // Accounts and cards on one line, because they are read together: what a person
         // recognises is the shape of their own archive, not two figures.

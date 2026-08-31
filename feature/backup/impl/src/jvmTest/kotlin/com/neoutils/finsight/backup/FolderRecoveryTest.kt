@@ -24,11 +24,14 @@ import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.BackupRetention
+import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.MigrationOutcome
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
@@ -40,6 +43,9 @@ import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
 import com.neoutils.finsight.ui.screen.backup.BackupAction
 import com.neoutils.finsight.ui.screen.backup.BackupUiState
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
+import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryAction
+import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryUiState
+import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryViewModel
 import com.neoutils.finsight.ui.screen.backup.service.BACKUP_FOLDER_NAME
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
@@ -209,12 +215,56 @@ class FolderRecoveryTest {
         vault = state,
         switch = VaultSwitch(state = state, vault = vault),
         folder = folder,
-        migration = migration,
+        destinationChange = VaultDestinationChange(folder = folder, migration = migration),
         modalManager = modalManager,
         clock = object : Clock {
             override fun now(): Instant = instant
         },
     )
+
+    /**
+     * The kept-copies screen, which is where the destination is chosen from. It resolves the
+     * same [VaultDestinationChange] the backup screen does, which is the point of the two
+     * tests that drive it: the choice moved screens without becoming a second machine.
+     */
+    private fun historyViewModel() = BackupHistoryViewModel(
+        destination = destinations,
+        files = files,
+        archiveRestore = ArchiveRestore(
+            database = live,
+            verifier = verifier,
+            preventive = VaultPreventiveBackup(state, vault),
+            vault = vault,
+            files = files,
+        ),
+        reader = KeptCopyReader(destinations, files, verifier),
+        state = state,
+        folder = folder,
+        vault = vault,
+        archiveImport = ArchiveImport(
+            state = state,
+            destination = destinations,
+            verifier = verifier,
+            files = files,
+            clock = object : Clock {
+                override fun now(): Instant = instant
+            },
+        ),
+        destinationChange = VaultDestinationChange(folder = folder, migration = migration),
+        modalManager = modalManager,
+    )
+
+    /** The first state of the copies screen that satisfies [condition]. */
+    private suspend fun BackupHistoryViewModel.awaitHistory(
+        what: String,
+        condition: (BackupHistoryUiState) -> Boolean,
+    ): BackupHistoryUiState = withContext(Dispatchers.Default) {
+        try {
+            withTimeout(WAIT_MILLIS) { uiState.first(condition) }
+        } catch (cause: TimeoutCancellationException) {
+            fail(what)
+        }
+    }
 
     /** The first state that satisfies [condition], or a failure saying [what] never held. */
     private suspend fun BackupViewModel.await(
@@ -706,6 +756,92 @@ class FolderRecoveryTest {
             modalManager.top,
             "a sheet went up over a folder nothing can be read from",
         )
+    }
+
+
+    // ------------------------------------------ the destination is chosen where the copies are
+
+    /**
+     * The selector's new home. Choosing a folder from the kept-copies screen moves the vault
+     * onto it and puts the same offer up — the change is one machine
+     * ([VaultDestinationChange]) whichever screen reaches it, and neither screen decides on
+     * anybody's behalf what happens to the copies left behind (design D13).
+     */
+    @Test
+    fun `the copies screen chooses the destination and offers to carry`() = runTest {
+        state.setOn(true)
+        val kept = List(THREE) { captureSomethingNew("entry $it") }.sorted()
+
+        val screen = historyViewModel()
+        screen.awaitHistory("the first listing never landed") { !it.isLoading }
+
+        picked = chosen
+        screen.onAction(BackupHistoryAction.ChooseFolder(context))
+
+        screen.awaitHistory("the destination never moved") {
+            it.destination == VaultDestination.USER_FOLDER
+        }
+        assertIs<CarryCopiesModal>(
+            awaitOffer("no offer was put to anybody"),
+            "the sheet that went up was not the offer",
+        )
+        assertEquals(emptyList(), namesIn(chosen), "copies moved without anybody saying so")
+        assertEquals(kept, namesInApp())
+    }
+
+    /**
+     * The other direction, from the same screen: back inside the app, with the folder still
+     * remembered. It is the answer somebody gives to a folder that has gone, and it is
+     * offered here as well as on the card that announces the loss.
+     */
+    @Test
+    fun `the copies screen keeps the copies inside the app`() = runTest {
+        pointAt(chosen)
+        state.setOn(true)
+        captureSomethingNew("coffee")
+
+        val screen = historyViewModel()
+        screen.awaitHistory("the first listing never landed") { !it.isLoading }
+
+        screen.onAction(BackupHistoryAction.KeepInsideApp)
+
+        screen.awaitHistory("the destination never moved") {
+            it.destination == VaultDestination.APP_STORAGE
+        }
+        assertEquals(
+            VaultDestination.APP_STORAGE,
+            state.observe().value.destination,
+            "the choice was not written",
+        )
+        assertTrue(chosen.exists(), "the folder somebody chose was destroyed")
+    }
+
+    /**
+     * The sharp edge of moving the selector: the two ways out of a fallen link are on the
+     * backup screen's own card (design D12), not behind a door that a fallen link closes.
+     * This is that exit, driven the way the button drives it — while the link is down, from
+     * the screen that announces it, with no visit to the copies screen anywhere in it.
+     */
+    @Test
+    fun `a folder that vanished is re-pointed from the backup screen itself`() = runTest {
+        pointAt(chosen)
+        state.setOn(true)
+        captureSomethingNew("coffee")
+        folderGoesAway()
+        captureSomethingNew("bread")
+
+        val screen = viewModel()
+        screen.await("the first listing never landed") { it.copies.isRead }
+        assertTrue(screen.uiState.value.rung.isProvisional, "the card had nothing to announce")
+
+        chosen.mkdirs()
+        picked = chosen
+        screen.onAction(BackupAction.ChooseFolder(context))
+
+        screen.await("the link never came back") { !it.rung.isProvisional }
+
+        val back = captureSomethingNew("milk")
+        assertEquals(listOf(back), namesIn(chosen), "the copies did not go back to the folder")
     }
 
     private companion object {

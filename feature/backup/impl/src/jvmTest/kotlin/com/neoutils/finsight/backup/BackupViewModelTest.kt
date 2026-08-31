@@ -36,6 +36,7 @@ import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultSwitch
@@ -188,15 +189,18 @@ class BackupViewModelTest {
         vault = vaultState,
         switch = VaultSwitch(state = vaultState, vault = vault),
         folder = VaultFolder(state = vaultState, folder = NoBackupFolder),
-        migration = VaultMigration(
-            state = vaultState,
-            destinations = VaultDestinations(
+        destinationChange = VaultDestinationChange(
+            folder = VaultFolder(state = vaultState, folder = NoBackupFolder),
+            migration = VaultMigration(
                 state = vaultState,
-                link = MutableStateFlow(FolderLink.NONE),
-                appStorage = vaultDestination,
-                folder = UnreachableDestination,
+                destinations = VaultDestinations(
+                    state = vaultState,
+                    link = MutableStateFlow(FolderLink.NONE),
+                    appStorage = vaultDestination,
+                    folder = UnreachableDestination,
+                ),
+                files = files,
             ),
-            files = files,
         ),
         modalManager = modalManager,
         clock = Clock.System,

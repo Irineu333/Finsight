@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.screen.backupHistory
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.FolderOff
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Inventory2
@@ -39,7 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,10 +53,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_destination_title
 import com.neoutils.finsight.resources.backup_history_capture
+import com.neoutils.finsight.resources.backup_history_import
 import com.neoutils.finsight.resources.backup_history_current_label
 import com.neoutils.finsight.resources.backup_history_current_subtitle
 import com.neoutils.finsight.resources.backup_history_empty_message
@@ -70,6 +78,8 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
 import com.neoutils.finsight.ui.modal.storedBackupActions.StoredBackupActionsModal
+import com.neoutils.finsight.ui.modal.vaultDestination.VaultDestinationModal
+import com.neoutils.finsight.ui.screen.backup.GroupGap
 import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TabularFigures
 import com.neoutils.finsight.ui.screen.backup.TileShape
@@ -104,6 +114,18 @@ import org.koin.compose.viewmodel.koinViewModel
  * settings tile and carry a mark of their own. What the two screens keep in common is the
  * beat they are laid out on, which is stated once, next to the backup screen that also
  * reads it (`BackupRows`).
+ *
+ * **It is where the copies live, and the backup screen is whether they happen.** That line
+ * is what puts three things on this screen and not on the other one: where they are kept,
+ * which is chosen from the header that already names it; a copy taken now; and a file
+ * brought in from elsewhere. The backup screen keeps the switch, the triggers, and the two
+ * operations that leave the app by a picker.
+ *
+ * **The header and the two actions stand in every state**, above the branch that draws the
+ * copies — while the folder is being read, while it holds nothing, and while it cannot be
+ * read at all. Each of those is a state somebody arrives in *wanting* one of them: a folder
+ * with nothing in it is exactly when a person reaches for the import, and a destination that
+ * will not answer is when they reach for the selector.
  *
  * What is listed is what the file system answered when the screen opened. A copy deleted
  * with a file manager is simply not in it and no error is made of that — the history *is*
@@ -163,117 +185,158 @@ fun BackupHistoryScreen(
                         )
                     }
                 },
-                actions = { CaptureAction(uiState = uiState, onAction = viewModel::onAction) },
             )
         },
     ) { padding ->
-        when {
-            uiState.isLoading -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .testTag("backup_history_loading"),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-
-            uiState.copies.isEmpty() -> Empty(
-                isUnreadable = uiState.isUnreadable,
-                message = when {
-                    uiState.isUnreadable -> stringResource(Res.string.backup_history_failed)
-                    uiState.isVaultOn -> stringResource(Res.string.backup_history_empty_message)
-                    else -> stringResource(Res.string.backup_history_empty_off)
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            )
-
-            else -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .testTag("backup_history_list"),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(RowGap),
-            ) {
-                backupRows {
-                    row(key = "destination") { modifier ->
-                        DestinationHeader(
-                            where = destinationLabel(uiState.destination),
-                            summary = stringResource(
-                                Res.string.backup_history_summary,
-                                copiesLabel(uiState.copies.size),
-                                sizeLabel(uiState.totalBytes),
-                            ),
-                            modifier = modifier,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(RowGap),
+        ) {
+            DestinationHeader(
+                where = destinationLabel(uiState.destination),
+                // Only once the destination has answered. A summary built before that would
+                // be counting a folder nobody has read, and "no copies" is an answer there
+                // is none to give yet (design D9).
+                summary = uiState.copies
+                    .takeIf { !uiState.isLoading && !uiState.isUnreadable }
+                    ?.let { copies ->
+                        stringResource(
+                            Res.string.backup_history_summary,
+                            copiesLabel(copies.size),
+                            sizeLabel(uiState.totalBytes),
+                        )
+                    },
+                onChange = if (uiState.isFolderOffered) {
+                    {
+                        modalManager.show(
+                            VaultDestinationModal(
+                                selected = uiState.destination,
+                                onChooseFolder = {
+                                    viewModel.onAction(
+                                        BackupHistoryAction.ChooseFolder(platformContext)
+                                    )
+                                },
+                                onKeepInsideApp = {
+                                    viewModel.onAction(BackupHistoryAction.KeepInsideApp)
+                                },
+                            )
                         )
                     }
+                } else {
+                    null
+                },
+                modifier = Modifier.padding(top = 8.dp),
+            )
 
-                    uiState.copies
-                        .groupBy { it.savedAt.toYearMonth() }
-                        .forEach { (month, copies) ->
-                            row(key = "month_$month", opensGroup = true) { modifier ->
-                                MonthTitle(
-                                    month = month,
-                                    thisYear = thisYear,
-                                    modifier = modifier,
-                                )
-                            }
+            Actions(
+                uiState = uiState,
+                platformContext = platformContext,
+                onAction = viewModel::onAction,
+            )
 
-                            copies.forEach { copy ->
-                                row(key = copy.name) { modifier ->
-                                    StoredBackupRow(
-                                        backup = copy,
-                                        isCurrent = uiState.isCurrent(copy),
-                                        isNewest = uiState.isNewest(copy),
-                                        now = now,
-                                        isWorking = uiState.working == copy,
-                                        enabled = !uiState.isBusy,
+            when {
+                uiState.isLoading -> Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .testTag("backup_history_loading"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                uiState.copies.isEmpty() -> Empty(
+                    isUnreadable = uiState.isUnreadable,
+                    message = when {
+                        uiState.isUnreadable -> stringResource(Res.string.backup_history_failed)
+                        uiState.isVaultOn -> stringResource(Res.string.backup_history_empty_message)
+                        else -> stringResource(Res.string.backup_history_empty_off)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .testTag("backup_history_list"),
+                    // The first month heading opens a group like every other one, and
+                    // `BackupRows` deliberately gives the first row of a list no leading gap
+                    // — so the beat between the actions above and the copies below is set
+                    // here, to exactly what the headings after it take.
+                    contentPadding = PaddingValues(top = GroupGap - RowGap, bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(RowGap),
+                ) {
+                    backupRows {
+                        uiState.copies
+                            .groupBy { it.savedAt.toYearMonth() }
+                            .forEach { (month, copies) ->
+                                row(key = "month_$month", opensGroup = true) { modifier ->
+                                    MonthTitle(
+                                        month = month,
+                                        thisYear = thisYear,
                                         modifier = modifier,
-                                        onClick = {
-                                            // The read starts and the sheet goes up in the
-                                            // same breath, in that order and without
-                                            // waiting: the file is opened for the copy that
-                                            // was tapped, and the sheet fills in when it
-                                            // answers.
-                                            viewModel.onAction(
-                                                BackupHistoryAction.Inspect(copy)
-                                            )
-                                            modalManager.show(
-                                                StoredBackupActionsModal(
-                                                    backup = copy,
-                                                    isCurrent = uiState.isCurrent(copy),
-                                                    facts = viewModel.facts,
-                                                    onRestore = {
-                                                        modalManager.dismiss()
-                                                        viewModel.onAction(
-                                                            BackupHistoryAction.Restore(copy)
-                                                        )
-                                                    },
-                                                    onShare = {
-                                                        modalManager.dismiss()
-                                                        viewModel.onAction(
-                                                            BackupHistoryAction.Share(
-                                                                backup = copy,
-                                                                context = platformContext,
-                                                            )
-                                                        )
-                                                    },
-                                                    onRemove = {
-                                                        modalManager.dismiss()
-                                                        viewModel.onAction(
-                                                            BackupHistoryAction.Remove(copy)
-                                                        )
-                                                    },
-                                                )
-                                            )
-                                        },
                                     )
                                 }
+
+                                copies.forEach { copy ->
+                                    row(key = copy.name) { modifier ->
+                                        StoredBackupRow(
+                                            backup = copy,
+                                            isCurrent = uiState.isCurrent(copy),
+                                            isNewest = uiState.isNewest(copy),
+                                            now = now,
+                                            isWorking = uiState.working == copy,
+                                            enabled = !uiState.isBusy,
+                                            modifier = modifier,
+                                            onClick = {
+                                                // The read starts and the sheet goes up in
+                                                // the same breath, in that order and without
+                                                // waiting: the file is opened for the copy
+                                                // that was tapped, and the sheet fills in
+                                                // when it answers.
+                                                viewModel.onAction(
+                                                    BackupHistoryAction.Inspect(copy)
+                                                )
+                                                modalManager.show(
+                                                    StoredBackupActionsModal(
+                                                        backup = copy,
+                                                        isCurrent = uiState.isCurrent(copy),
+                                                        facts = viewModel.facts,
+                                                        onRestore = {
+                                                            modalManager.dismiss()
+                                                            viewModel.onAction(
+                                                                BackupHistoryAction.Restore(copy)
+                                                            )
+                                                        },
+                                                        onShare = {
+                                                            modalManager.dismiss()
+                                                            viewModel.onAction(
+                                                                BackupHistoryAction.Share(
+                                                                    backup = copy,
+                                                                    context = platformContext,
+                                                                )
+                                                            )
+                                                        },
+                                                        onRemove = {
+                                                            modalManager.dismiss()
+                                                            viewModel.onAction(
+                                                                BackupHistoryAction.Remove(copy)
+                                                            )
+                                                        },
+                                                    )
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
                             }
-                        }
+                    }
                 }
             }
         }
@@ -281,63 +344,150 @@ fun BackupHistoryScreen(
 }
 
 /**
- * The one thing this screen does that is not about a copy already in it: take another.
+ * The two things this screen does that are not about a copy already in it: take another,
+ * and bring one in.
  *
- * **A press produces a copy, and never a sentence explaining why it did not.** The vault
- * skips a capture while the copy it already has still holds everything the archive does,
- * which is what stops a run of deletions leaving a folder of identical files — and it is
- * the wrong answer to somebody who just pressed a button. `BackupVault.captureNow` is the
- * intent without that comparison, and it is where the difference lives so that no screen
- * has to know about it.
+ * **They are labelled, side by side, and in the list rather than in the bar.** A glyph alone
+ * in a top bar is a control nobody finds: it has no word on it, it sits where a screen's
+ * navigation lives rather than where its subject does, and a bare `+` over a list of files
+ * says *add* without saying what. Two of them side by side would have been twice the
+ * ambiguity — take a copy and bring one in are precisely the two things a `+` could mean.
+ * So each carries its own sentence, and the pair reads as what the screen offers.
  *
- * It is in the bar rather than a floating button because the list underneath is the
- * subject: a FAB would stand over the rows this screen exists to show, and the copies are
- * the content while this is one action on them.
+ * They sit under the destination and above the copies because that is the order the screen
+ * is read in: where the copies are kept, what can be done about that, and then what is
+ * there. It is also what keeps them reachable on a folder holding nothing at all, which is
+ * exactly when somebody is looking for one of them.
  *
- * **It is offered while there is a vault to write into.** With the vault off nothing is
- * captured at all (design D1) — the vault refuses on its own, and the screen does not put
- * up a control whose only answer would be that refusal. While a capture runs, the spinner
- * takes the glyph's place and the same [BackupHistoryUiState.isBusy] that stills the rows
- * stops a second press.
+ * **A capture is offered while there is a vault to write into**, and so is an import: with
+ * the vault off nothing lands in the destination at all (design D1). Both refuse in the
+ * vault's own words rather than the screen's, and the screen simply does not offer a control
+ * whose only answer would be that refusal.
+ *
+ * While either runs, a spinner takes its glyph's place and the same
+ * [BackupHistoryUiState.isBusy] that stills the rows stops a second press — of it or of the
+ * other, because both end by rearranging the same folder.
  */
 @Composable
-private fun CaptureAction(
+private fun Actions(
     uiState: BackupHistoryUiState,
+    platformContext: PlatformContext,
     onAction: (BackupHistoryAction) -> Unit,
 ) {
-    IconButton(
-        onClick = { onAction(BackupHistoryAction.Capture) },
-        enabled = uiState.isVaultOn && !uiState.isBusy,
-        modifier = Modifier.testTag("backup_history_capture"),
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(RowGap),
     ) {
-        if (uiState.isCapturing) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                color = colorScheme.onBackground,
-                strokeWidth = 2.dp,
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Outlined.AddCircleOutline,
-                contentDescription = stringResource(Res.string.backup_history_capture),
+        ActionTile(
+            icon = Icons.Outlined.AddCircleOutline,
+            // The vault skips a capture while the copy it already has still holds
+            // everything the archive does, which is what stops a run of deletions leaving a
+            // folder of identical files — and it is the wrong answer to somebody who has
+            // just pressed a button. `BackupVault.captureNow` is the intent without that
+            // comparison, and it is where the difference lives so that no screen has to
+            // know about it.
+            label = stringResource(Res.string.backup_history_capture),
+            isRunning = uiState.isCapturing,
+            enabled = uiState.isVaultOn && !uiState.isBusy,
+            tag = "backup_history_capture",
+            onClick = { onAction(BackupHistoryAction.Capture) },
+            modifier = Modifier.weight(1f),
+        )
+
+        ActionTile(
+            icon = Icons.Outlined.FileOpen,
+            label = stringResource(Res.string.backup_history_import),
+            isRunning = uiState.isImporting,
+            enabled = uiState.isVaultOn && !uiState.isBusy,
+            tag = "backup_history_import",
+            onClick = { onAction(BackupHistoryAction.Import(platformContext)) },
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/**
+ * One of the two, as a card of the same make as the rows below it: the corner the list
+ * wears, the ground the list wears, and a label that says what pressing it does.
+ *
+ * The glyph is the only thing the spinner replaces. A control whose label vanished while it
+ * ran would be a second thing to read on the frame the person is waiting on, and the label
+ * is what identifies which of the two is busy.
+ */
+@Composable
+private fun ActionTile(
+    icon: ImageVector,
+    label: String,
+    isRunning: Boolean,
+    enabled: Boolean,
+    tag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tone = if (enabled) colorScheme.primary else colorScheme.onSurfaceVariant
+
+    Surface(
+        color = colorScheme.surfaceContainer,
+        shape = TileShape,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.testTag(tag),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (isRunning) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = tone,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tone,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Text(
+                text = label,
+                style = typography.labelLarge,
+                color = if (enabled) colorScheme.onSurface else colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
 /**
- * Where the files are and what they add up to — the question that always comes with a list
- * of backups, answered once at the top instead of by counting rows.
+ * Where the copies are kept, what they add up to, and the way to keep them somewhere else.
+ *
+ * **It is the header and the selector at once, and that is the whole of why the choice moved
+ * here.** The question "where do my copies live" has one answer on one screen, said in the
+ * place the answer is already given rather than in a settings row two screens away that
+ * repeated it. Tapping it opens the two rungs side by side with what each does *not* cover,
+ * which is where that comparison belongs — at the moment of choosing (design D3).
  *
  * Where is the destination said in its own words, never a path: a folder is a
  * security-scoped handle on iOS and a tree `Uri` on Android, and neither survives being
  * turned into text (design D2). What the app can name is the rung of protection in force,
  * and that is what a person recognises anyway.
+ *
+ * **The summary is absent until the destination has answered**, rather than reading zero: a
+ * count over a folder nothing has read would be design D9's forbidden sentence at the top of
+ * the screen that is most about it.
+ *
+ * @param onChange null on a platform that cannot raise a folder picker at all, where there
+ * is one rung and therefore nothing to choose between. It is not a judgement about folders
+ * or providers, which the app never makes (design D16).
  */
 @Composable
 private fun DestinationHeader(
     where: String,
-    summary: String,
+    summary: String?,
+    onChange: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -348,8 +498,21 @@ private fun DestinationHeader(
             .testTag("backup_history_destination"),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            // The whole card is the target where there is one, so the eye sees one control
+            // where a screen reader announces one — and where there is nothing to choose
+            // between, it is a header and is announced as one rather than as a button
+            // nobody may press.
+            modifier = Modifier
+                .then(
+                    if (onChange != null) {
+                        Modifier.clickable(role = Role.Button, onClick = onChange)
+                    } else {
+                        Modifier
+                    }
+                )
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Outlined.FolderOpen,
@@ -357,17 +520,36 @@ private fun DestinationHeader(
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                // The question the card answers, written out, so that somebody looking for
+                // where their copies are kept finds the words they were looking for.
+                Text(
+                    text = stringResource(Res.string.backup_destination_title),
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                )
                 Text(
                     text = where,
                     style = typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
                 )
-                Text(
-                    text = summary,
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
+                if (summary != null) {
+                    Text(
+                        text = summary,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (onChange != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
                 )
             }
         }

@@ -1065,8 +1065,6 @@
     <string name="backup_retention_twenty">20</string>
     <string name="backup_retention_everything">All</string>
     <string name="backup_history_title">Kept copies</string>
-    <string name="backup_history_subtitle_empty">No copies yet</string>
-    <string name="backup_history_subtitle">%1$s · the newest %2$s</string>
     <string name="backup_history_summary">%1$s · %2$s in total</string>
     <string name="backup_history_empty_title">No copies yet</string>
     <string name="backup_history_empty_message">The first one is taken the next time you open the app, or before the next deletion.</string>
@@ -1084,6 +1082,8 @@
     <string name="backup_history_gone">This copy is no longer in the destination.</string>
     <string name="backup_history_capture">Create a copy now</string>
     <string name="backup_history_capture_done">The copy was created.</string>
+    <string name="backup_history_import">Import a file</string>
+    <string name="backup_history_import_done">The file was imported and is now a kept copy.</string>
     <string name="backup_today">Today</string>
     <string name="backup_yesterday">Yesterday</string>
     <string name="backup_size_bytes">%1$d B</string>
@@ -1111,6 +1111,7 @@
     <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
     <string name="backup_confirm_file_age">This file was created %1$s.</string>
     <string name="backup_copy_facts_origin">Origin</string>
+    <string name="backup_copy_facts_captured">Captured on</string>
     <string name="backup_copy_facts_accounts">Accounts · Cards</string>
     <string name="backup_copy_facts_size">Size</string>
     <string name="backup_copy_facts_unreadable">This copy could not be opened to see what it holds. It may have left the folder, or be damaged.</string>

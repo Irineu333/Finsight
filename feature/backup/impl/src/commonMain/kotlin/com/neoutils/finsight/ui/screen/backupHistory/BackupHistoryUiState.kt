@@ -26,7 +26,10 @@ data class BackupHistoryUiState(
 
     val destination: VaultDestination = VaultDestination.APP_STORAGE,
 
-    /** Whether copies will go on arriving, which is what the empty state has to say. */
+    /**
+     * Whether copies will go on arriving, which is what the empty state has to say — and
+     * what the two controls that write into the destination are offered on (design D1).
+     */
     val isVaultOn: Boolean = false,
 
     /**
@@ -57,6 +60,24 @@ data class BackupHistoryUiState(
      */
     val isCapturing: Boolean = false,
 
+    /**
+     * Whether a file is being brought in right now — beside [isCapturing] and not folded
+     * into it for the reason it is a separate control: the two produce the same kind of
+     * file and are the same kind of wait, but only one of them is running, and the spinner
+     * belongs on the control that was pressed.
+     */
+    val isImporting: Boolean = false,
+
+    /**
+     * Whether this platform can put a folder picker up at all — so the choice of where the
+     * copies are kept is offered where it works and simply absent where it is not built yet,
+     * rather than shown as a control that does nothing.
+     *
+     * It is not a judgement about folders or providers, which the app never makes
+     * (design D16).
+     */
+    val isFolderOffered: Boolean = false,
+
     val confirmation: RestoreConfirmation? = null,
 
     val captureRefusal: UiText? = null,
@@ -84,8 +105,12 @@ data class BackupHistoryUiState(
      * the destination, so a restore or a removal started beside it would be working on a
      * folder being rearranged underneath — and it is the same flag that stops the control
      * being pressed a second time while the first press is still running.
+     *
+     * An import is one of them for the second half of that reason rather than the first: it
+     * writes into the same folder, through a gate that opens the file with the database's
+     * own machinery, and it ends with the same re-reading of the destination.
      */
-    val isBusy: Boolean get() = working != null || isCapturing
+    val isBusy: Boolean get() = working != null || isCapturing || isImporting
 
     /**
      * Whether [copy] is the one the app is running on right now — because it was the last

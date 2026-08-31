@@ -18,9 +18,9 @@ import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.MigrationOutcome
-import com.neoutils.finsight.domain.vault.VaultDestination
+import com.neoutils.finsight.domain.vault.CarryOffer
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
-import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
@@ -95,7 +95,7 @@ class BackupViewModel(
     private val vault: BackupVaultRepository,
     private val switch: VaultSwitch,
     private val folder: VaultFolder,
-    private val migration: VaultMigration,
+    private val destinationChange: VaultDestinationChange,
     private val modalManager: ModalManager,
     private val clock: Clock,
 ) : ViewModel() {
@@ -162,8 +162,6 @@ class BackupViewModel(
             .onEach { link -> _uiState.update { it.copy(folderLink = link) } }
             .launchIn(viewModelScope)
 
-        _uiState.update { it.copy(isFolderOffered = folder.isOffered) }
-
         // The link is checked when the app opens (`VaultAppOpening`), and again here: this
         // is the screen that says where the copies go, and a folder that stopped being
         // reachable since the app was opened would otherwise be reported by a line that is
@@ -226,32 +224,23 @@ class BackupViewModel(
     /**
      * Puts the folder picker up and, if a folder was chosen, moves the vault onto it.
      *
-     * **Nothing is carried across on its own, and nothing is ever removed.** The copies
-     * already in the destination being left stay exactly where they are; whether any of them
-     * are *also* written into the new one is a question put to the person afterwards
-     * ([offerToCarry]), because a preference moving is not somebody asking for their backups
-     * to be duplicated somewhere (design D13).
+     * **Nothing is carried across on its own, and nothing is ever removed.** The move and
+     * the offer that follows it are [VaultDestinationChange]'s, which is what keeps the
+     * destination the copies were going to from being read twice — the other screen offers
+     * the same change, and the reading that has to be taken before the move is the one thing
+     * neither of them may hold (design D13).
      *
      * A picker somebody closed changes nothing and says nothing. Only a real failure — the
      * folder could not be prepared — reaches the person, because only that one leaves them
      * with something to do.
-     *
-     * The rung is read before the picker goes up, because after it the answer is the new
-     * one, and what was left behind is the whole subject of the offer. It is the rung *in
-     * force* rather than the one chosen: somebody re-pointing at a folder that had fallen
-     * away has been capturing inside the app meanwhile, and those copies are the ones worth
-     * carrying into the folder that came back.
      */
     private fun chooseFolder(context: PlatformContext) {
         viewModelScope.launch {
-            val before = folder.rung.inForce
-            folder.pointAt(context).fold(
+            destinationChange.pointAtFolder(context).fold(
                 ifLeft = ::fail,
-                ifRight = { chosen ->
-                    if (chosen) {
-                        readDestination()
-                        offerToCarry(from = before)
-                    }
+                ifRight = { offer ->
+                    readDestination()
+                    offer?.let(::offerToCarry)
                 },
             )
         }
@@ -262,42 +251,29 @@ class BackupViewModel(
      *
      * It removes nothing and forgets nothing: the copies in the folder stay in it, and the
      * folder stays remembered so that choosing it again leads back to them (design D4). It
-     * is also one of the two answers to a folder that has gone (design D12), and there the
-     * offer that follows finds nothing to carry — an unreadable folder is not one anything
-     * can be read out of.
+     * is also one of the two answers to a folder that has gone (design D12).
      */
     private fun keepInsideApp() {
-        val before = folder.rung.inForce
-        folder.keepInsideApp()
-        readDestination()
-
-        viewModelScope.launch { offerToCarry(from = before) }
+        viewModelScope.launch {
+            val offer = destinationChange.keepInsideApp()
+            readDestination()
+            offer?.let(::offerToCarry)
+        }
     }
 
     /**
      * Asks whether the copies left behind should be written into the destination that is now
      * in force.
      *
-     * **The question is only put where there is something to answer.** A source that holds
-     * nothing, a source that cannot be read, and a destination that has not actually changed
-     * all arrive here as an empty list, and none of them is worth a sheet: the most common
-     * reason for pointing at a different folder is that the last one stopped being reachable,
-     * and interrupting that with an offer to carry copies out of it would be the app asking
-     * a question it already knows the answer to.
-     *
-     * The count comes from a listing taken now. Nothing is copied from it — [carry] reads
-     * the source again — because between the offer and the answer a copy can leave by a hand
-     * that is not this app's (design D9).
+     * The question is only put where there is something to answer, and that is decided
+     * before this is reached: an offer exists only when a listing counted copies on the rung
+     * being left (design D13).
      */
-    private suspend fun offerToCarry(from: VaultDestination) {
-        val to = folder.rung.inForce
-        val copies = withContext(Dispatchers.Default) { migration.carriable(from, to) }
-        if (copies.isEmpty()) return
-
+    private fun offerToCarry(offer: CarryOffer) {
         modalManager.show(
             CarryCopiesModal(
-                copies = copies.size,
-                onCarry = { carry(from = from, to = to) },
+                copies = offer.copies,
+                onCarry = { carry(offer) },
             )
         )
     }
@@ -313,9 +289,9 @@ class BackupViewModel(
      *
      * The destination is read again on the way out: what the card counts has just grown.
      */
-    private fun carry(from: VaultDestination, to: VaultDestination) {
+    private fun carry(offer: CarryOffer) {
         viewModelScope.launch {
-            when (withContext(Dispatchers.Default) { migration.carry(from, to) }) {
+            when (destinationChange.carry(offer)) {
                 is MigrationOutcome.Carried -> succeed(Res.string.backup_carry_done)
 
                 is MigrationOutcome.Interrupted ->

@@ -19,6 +19,37 @@ sealed interface BackupHistoryAction {
     data object Capture : BackupHistoryAction
 
     /**
+     * Bring a backup file the person has somewhere else into the destination, so it becomes
+     * one of the copies kept here.
+     *
+     * It is not a restore. Nothing is read back into the archive — the file is checked and
+     * put where the copies live, and what to do with it afterwards is a separate decision,
+     * taken from the row it arrives as.
+     *
+     * It carries a [PlatformContext] for the reason the share does: the picker is the
+     * platform's own and needs the window, the activity or the view controller to come up
+     * over. It is never held.
+     */
+    data class Import(val context: PlatformContext) : BackupHistoryAction
+
+    /**
+     * Point at a folder to keep the copies in, and move the vault onto it.
+     *
+     * It is the same act whether nothing has ever been pointed at, the link has fallen, or
+     * the person wants a different folder — one machine, three moments (design D4) — and it
+     * carries a [PlatformContext] because a folder picker is the platform's own dialog.
+     */
+    data class ChooseFolder(val context: PlatformContext) : BackupHistoryAction
+
+    /**
+     * Keep the copies inside the app instead.
+     *
+     * Nothing is removed and the folder stays remembered: the copies already in it are
+     * still there, and choosing it again is what leads back to them.
+     */
+    data object KeepInsideApp : BackupHistoryAction
+
+    /**
      * Read this one copy, because its sheet has just been opened.
      *
      * It is the tap and not the listing that opens a file, and the sheet is put up without

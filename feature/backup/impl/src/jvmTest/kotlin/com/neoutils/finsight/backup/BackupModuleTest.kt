@@ -14,7 +14,9 @@ import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultMigration
@@ -121,6 +123,27 @@ class BackupModuleTest {
     @Test
     fun `the reader that opens one kept copy is bound`() {
         assertNotNull(koin.get<KeptCopyReader>())
+    }
+
+    /**
+     * Bringing a file in, which the copies screen asks for inside its `viewModel {}` block —
+     * so a missing binding compiles, passes every other test here, and crashes on the first
+     * press of a control the screen shows anyway.
+     */
+    @Test
+    fun `the import that brings a file into the destination is bound`() {
+        assertNotNull(koin.get<ArchiveImport>())
+    }
+
+    /**
+     * Moving where the copies are kept, which both screens resolve inside their own
+     * `viewModel {}` block: the copies screen, where the destination is chosen, and the
+     * backup screen, whose card is the way out of a fallen link (design D12). Missing, the
+     * second one takes the recovery with it.
+     */
+    @Test
+    fun `the change of destination both screens offer is bound`() {
+        assertNotNull(koin.get<VaultDestinationChange>())
     }
 
     /**

@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SaveAlt
@@ -66,7 +65,6 @@ import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_coverage_app
 import com.neoutils.finsight.resources.backup_coverage_folder
-import com.neoutils.finsight.resources.backup_destination_title
 import com.neoutils.finsight.resources.backup_folder_keep_in_app
 import com.neoutils.finsight.resources.backup_folder_reconnect
 import com.neoutils.finsight.resources.backup_folder_unreachable
@@ -74,8 +72,6 @@ import com.neoutils.finsight.resources.backup_export_subtitle
 import com.neoutils.finsight.resources.backup_export_title
 import com.neoutils.finsight.resources.backup_group_automatic
 import com.neoutils.finsight.resources.backup_group_manual
-import com.neoutils.finsight.resources.backup_history_subtitle
-import com.neoutils.finsight.resources.backup_history_subtitle_empty
 import com.neoutils.finsight.resources.backup_history_title
 import com.neoutils.finsight.resources.backup_last_never
 import com.neoutils.finsight.resources.backup_last_never_hint
@@ -101,7 +97,6 @@ import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.confirmRestore.ConfirmRestoreModal
 import com.neoutils.finsight.ui.modal.restoreWithoutCopy.RestoreWithoutCopyModal
-import com.neoutils.finsight.ui.modal.vaultDestination.VaultDestinationModal
 import com.neoutils.finsight.ui.modal.vaultSettings.VaultSettingsModal
 import com.neoutils.finsight.ui.theme.SettingsTileTheme
 import com.neoutils.finsight.ui.theme.Warning
@@ -274,43 +269,6 @@ fun BackupScreen(
                             )
                         }
 
-                        if (uiState.isFolderOffered) {
-                            row(key = "destination") { modifier ->
-                                SettingsMenuLink(
-                                    modifier = modifier.testTag("backup_destination_tile"),
-                                    shape = TileShape,
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.FolderOpen,
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    title = {
-                                        Text(text = stringResource(Res.string.backup_destination_title))
-                                    },
-                                    subtitle = {
-                                        Text(text = destinationLabel(uiState.vault.destination))
-                                    },
-                                    action = { TileAction(isRunning = false) },
-                                    onClick = {
-                                        modalManager.show(
-                                            VaultDestinationModal(
-                                                selected = uiState.vault.destination,
-                                                onChooseFolder = {
-                                                    viewModel.onAction(
-                                                        BackupAction.ChooseFolder(platformContext)
-                                                    )
-                                                },
-                                                onKeepInsideApp = {
-                                                    viewModel.onAction(BackupAction.KeepInsideApp)
-                                                },
-                                            )
-                                        )
-                                    },
-                                )
-                            }
-                        }
-
                         row(key = "history") { modifier ->
                             SettingsMenuLink(
                                 modifier = modifier.testTag("backup_history_tile"),
@@ -319,12 +277,13 @@ fun BackupScreen(
                                     Icon(imageVector = Icons.Outlined.History, contentDescription = null)
                                 },
                                 title = { Text(text = stringResource(Res.string.backup_history_title)) },
-                                // Nothing is said about the folder until it has been read.
-                                // "No copies yet" is an answer, and there is none to give
-                                // before the first listing lands.
-                                subtitle = uiState.copiesInForce.takeIf { it.isRead }?.let { copies ->
-                                    { Text(text = historySubtitle(copies)) }
-                                },
+                                // Where they are, which is also what is behind this door
+                                // now that choosing the destination happens on the screen it
+                                // opens. It needs no listing — the rung in force is known
+                                // before the folder answers — so the tile never opens with a
+                                // blank line under its name, and it says nothing about how
+                                // many copies there are, which the card above already counts.
+                                subtitle = { Text(text = destinationLabel(uiState.rung.inForce)) },
                                 action = { TileAction(isRunning = false) },
                                 onClick = onNavigateToHistory,
                             )
@@ -691,23 +650,6 @@ private fun vaultSubtitle(vault: VaultState): String {
         // lie about the one occasion that is left.
         else -> stringResource(Res.string.backup_vault_on_update_only)
     }
-}
-
-/** How many copies are kept, and when the newest of them landed. */
-@Composable
-private fun historySubtitle(copies: VaultCopies): String {
-    val newest = copies.newestAt ?: return stringResource(Res.string.backup_history_subtitle_empty)
-    val dateFormats = LocalDateFormats.current
-
-    return stringResource(
-        Res.string.backup_history_subtitle,
-        copiesLabel(copies.count),
-        dateFormats.formatDividerDate(
-            instant = newest,
-            today = stringResource(Res.string.backup_today),
-            yesterday = stringResource(Res.string.backup_yesterday),
-        ) + ", " + dateFormats.formatInstantTime(newest),
-    )
 }
 
 /** The chevron, or the wait it turns into while the entry's own operation runs. */

@@ -1066,8 +1066,6 @@
     <string name="backup_retention_twenty">20</string>
     <string name="backup_retention_everything">Todas</string>
     <string name="backup_history_title">Cópias guardadas</string>
-    <string name="backup_history_subtitle_empty">Nenhuma cópia ainda</string>
-    <string name="backup_history_subtitle">%1$s · a mais recente %2$s</string>
     <string name="backup_history_summary">%1$s · %2$s no total</string>
     <string name="backup_history_empty_title">Nenhuma cópia ainda</string>
     <string name="backup_history_empty_message">A primeira é feita na próxima vez que você abrir o app, ou antes da próxima exclusão.</string>
@@ -1085,6 +1083,8 @@
     <string name="backup_history_gone">Esta cópia não está mais no destino.</string>
     <string name="backup_history_capture">Criar uma cópia agora</string>
     <string name="backup_history_capture_done">A cópia foi criada.</string>
+    <string name="backup_history_import">Importar um arquivo</string>
+    <string name="backup_history_import_done">O arquivo foi importado e agora é uma cópia guardada.</string>
     <string name="backup_today">Hoje</string>
     <string name="backup_yesterday">Ontem</string>
     <string name="backup_size_bytes">%1$d B</string>
@@ -1112,6 +1112,7 @@
     <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
     <string name="backup_confirm_file_age">Este arquivo foi criado %1$s.</string>
     <string name="backup_copy_facts_origin">Origem</string>
+    <string name="backup_copy_facts_captured">Capturada em</string>
     <string name="backup_copy_facts_accounts">Contas · Cartões</string>
     <string name="backup_copy_facts_size">Tamanho</string>
     <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>

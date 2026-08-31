@@ -5,11 +5,13 @@ import com.neoutils.finsight.database.repository.RoomArchiveMark
 import com.neoutils.finsight.database.snapshot.PreMigrationCopyTarget
 import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.restore.ArchiveRestore
+import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.ArchiveMark
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.StandingVaultOffer
 import com.neoutils.finsight.domain.vault.VaultAppOpening
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
@@ -113,6 +115,26 @@ val backupModule = module {
     // and the router is the one place that knows which two they are (design D13).
     factory { VaultMigration(state = get(), destinations = get(), files = get()) }
 
+    // Moving where the copies are kept, and offering the ones left behind — bound once
+    // because two screens offer the change: the kept-copies screen, which is where the
+    // destination is chosen, and the backup screen's card, where a fallen link is announced
+    // with its two ways out (design D12). What neither of them may hold is the reading of
+    // where the copies were going before the move.
+    factory { VaultDestinationChange(folder = get(), migration = get()) }
+
+    // Bringing a file the person has elsewhere into the destination. It resolves the same
+    // verifier the restore does, because a file this app keeps is a file it can take back
+    // and — through `OwnCopyCheck`, which reads the same gate — one it can remove again.
+    factory {
+        ArchiveImport(
+            state = get(),
+            destination = get(),
+            verifier = get(),
+            files = get(),
+            clock = get(),
+        )
+    }
+
     // `:core:database`'s port, claimed here and nowhere else. Whoever assembles the
     // database asks it for a path and passes on what it says; this is what puts the copy
     // taken before a migration under the same switch as the other two triggers (design D1)
@@ -158,7 +180,7 @@ val backupModule = module {
             vault = get(),
             switch = get(),
             folder = get(),
-            migration = get(),
+            destinationChange = get(),
             modalManager = get(),
             clock = get(),
         )
@@ -179,6 +201,8 @@ val backupModule = module {
             state = get(),
             folder = get(),
             vault = get(),
+            archiveImport = get(),
+            destinationChange = get(),
             modalManager = get(),
         )
     }

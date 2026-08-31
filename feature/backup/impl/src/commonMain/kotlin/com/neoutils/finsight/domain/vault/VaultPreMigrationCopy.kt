@@ -25,7 +25,7 @@ import com.neoutils.finsight.database.snapshot.isMigrationPending
  *
  * The name it lands under is not decoration either: retention recognises the copy it must
  * not sweep by that name, so a path ending in anything else would be counted with the
- * periodic copies and carried off in three captures.
+ * periodic copies and carried off as soon as they exceeded the limit in force.
  */
 class VaultPreMigrationCopy(
     private val state: BackupVaultRepository,

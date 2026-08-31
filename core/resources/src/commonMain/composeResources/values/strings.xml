@@ -1037,10 +1037,11 @@
     <string name="backup_settings_interval_title">Verificar a cada</string>
     <string name="backup_settings_interval_hint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</string>
     <string name="backup_settings_retention_title">Quantas cópias manter</string>
-    <string name="backup_settings_retention_fixed">O app mantém as %1$d cópias mais recentes. Enquanto elas ficam dentro do app isso não é ajustável — são arquivos que você não vê nem administra.</string>
-    <string name="backup_settings_outcome">Cerca de %1$d dias de histórico, ocupando por volta de %2$s.</string>
-    <string name="backup_settings_outcome_unknown">Cerca de %1$d dias de histórico. O quanto ocupa será sabido depois da primeira cópia.</string>
-    <string name="backup_settings_retention_all">Nenhuma cópia será apagada. Nesse ritmo a pasta cresce cerca de %1$s por mês, e é você quem apaga o que não quiser mais.</string>
+    <string name="backup_settings_outcome">Cerca de %1$d dias de histórico</string>
+    <string name="backup_settings_outcome_size">%1$d cópias de ~%2$s ocupam por volta de %3$s.</string>
+    <string name="backup_settings_outcome_unknown">O quanto ocupa será sabido depois da primeira cópia.</string>
+    <string name="backup_settings_retention_all">Nenhuma cópia será apagada</string>
+    <string name="backup_settings_retention_all_hint">Nesse ritmo, cerca de %1$s por mês se acumulam — e é você quem apaga o que não quiser mais.</string>
     <string name="backup_retention_five">5</string>
     <string name="backup_retention_ten">10</string>
     <string name="backup_retention_twenty">20</string>

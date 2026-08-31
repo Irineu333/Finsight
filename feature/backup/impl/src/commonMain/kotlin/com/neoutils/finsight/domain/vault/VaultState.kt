@@ -13,8 +13,8 @@ import kotlin.time.Instant
  * already done.
  *
  * It is one value rather than five preferences read one at a time, because every rule the
- * vault has is about a combination of them — the limit in force depends on [destination]
- * and [retention] together, and whether a copy is still enough depends on
+ * vault has is about a combination of them — whether a copy is due depends on [interval]
+ * and [lastCapturedAt] together, and whether a copy is still enough depends on
  * [markAtLastCapture] and nothing else. A screen and a trigger reading the same snapshot
  * cannot disagree about what the vault is.
  *
@@ -62,7 +62,10 @@ data class VaultState(
      */
     val interval: Duration = DEFAULT_INTERVAL,
 
-    /** How many copies the destination the user points at keeps (design D10). */
+    /**
+     * How many copies the vault keeps, wherever it writes them (design D10) — including
+     * the choice to remove nothing at all.
+     */
     val retention: BackupRetention = BackupRetention.TEN,
 
     /** Which of the two rungs the copies are going to (design D3). */

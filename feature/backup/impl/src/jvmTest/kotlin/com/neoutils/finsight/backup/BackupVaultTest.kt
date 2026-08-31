@@ -280,43 +280,85 @@ class BackupVaultTest {
     // ------------------------------------------------------------------------ retention
 
     /**
-     * Four copies against a limit of three. The oldest goes, and what has just been
-     * captured is what the destination is left holding.
+     * Six copies against a limit of five. The oldest goes, and what has just been captured
+     * is what the destination is left holding.
      */
     @Test
     fun `copies past the limit are removed oldest first, and the newest stays`() = runTest {
         turnOn()
-        val taken = List(FOUR) { captureSomethingNew("entry $it") }
+        state.setRetention(BackupRetention.FIVE)
 
-        assertEquals(COPIES_KEPT, copies().size)
+        val taken = List(SIX) { captureSomethingNew("entry $it") }
+
+        assertEquals(FIVE, copies().size)
         assertEquals(taken.drop(1).toSet(), copies().toSet())
         assertTrue(taken.first() !in copies(), "the oldest copy is the one that goes")
     }
 
+    /**
+     * The limit the user chose is the limit the sweep applies, in the app's own storage as
+     * much as in a folder of theirs: one preference, read by whoever is about to remove
+     * something. The vault is in its starting destination here, which is the rung this is
+     * about.
+     */
+    @Test
+    fun `the app's own storage keeps as many copies as retention says`() = runTest {
+        turnOn()
+        state.setRetention(BackupRetention.FIVE)
+
+        List(SIX) { captureSomethingNew("entry $it") }
+
+        assertEquals(FIVE, copies().size)
+        assertEquals(VaultDestination.APP_STORAGE, state.observe().value.destination)
+    }
+
+    /** And nothing is removed anywhere when the user asks for nothing to be removed. */
     @Test
     fun `retention switched off removes nothing`() = runTest {
         turnOn()
-        state.setDestination(VaultDestination.USER_FOLDER)
         state.setRetention(BackupRetention.EVERYTHING)
 
-        val taken = List(FOUR) { captureSomethingNew("entry $it") }
+        val taken = List(SIX) { captureSomethingNew("entry $it") }
 
         assertEquals(taken.toSet(), copies().toSet())
     }
 
     /**
-     * The app's own storage keeps three and offers no say in it (design D10). A retention
-     * the user set for a folder of theirs does not follow the copies into a place they
-     * never see.
+     * Choosing a smaller number is not a deletion. The sweep runs after a capture that
+     * landed and nowhere else (spec: *a remoção MUST NOT ser executada em nenhum outro
+     * momento*), so a lowered limit takes effect the next time a copy lands — not under the
+     * finger that lowered it, and not on the next opening either.
      */
     @Test
-    fun `the app's own storage keeps three whatever the configured retention says`() = runTest {
+    fun `lowering the limit removes nothing until the next copy lands`() = runTest {
         turnOn()
         state.setRetention(BackupRetention.TWENTY)
+        val taken = List(SIX) { captureSomethingNew("entry $it") }
 
-        List(FOUR) { captureSomethingNew("entry $it") }
+        state.setRetention(BackupRetention.FIVE)
 
-        assertEquals(COPIES_KEPT, copies().size)
+        assertEquals(taken.toSet(), copies().toSet(), "the copies went as the limit was set")
+        assertEquals(CaptureOutcome.AlreadyCovered, asked())
+        assertEquals(taken.toSet(), copies().toSet(), "an opening swept behind no new copy")
+
+        val next = captureSomethingNew("one more")
+
+        assertEquals(FIVE, copies().size)
+        assertTrue(next in copies(), "the copy that triggered the sweep is what stays")
+    }
+
+    /** Raising it takes nothing away, and lets the copies pile up to the new number. */
+    @Test
+    fun `raising the limit keeps what is there and lets more pile up`() = runTest {
+        turnOn()
+        state.setRetention(BackupRetention.FIVE)
+        List(SIX) { captureSomethingNew("entry $it") }
+        val held = copies().toSet()
+
+        state.setRetention(BackupRetention.TWENTY)
+        val next = captureSomethingNew("one more")
+
+        assertEquals(held + next, copies().toSet())
     }
 
     @Test
@@ -342,14 +384,15 @@ class BackupVaultTest {
         plant(PRE_MIGRATION_BACKUP_NAME)
         File(folder, PRE_MIGRATION_BACKUP_NAME).setLastModified(LONG_BEFORE)
 
-        List(FOUR) { captureSomethingNew("entry $it") }
+        state.setRetention(BackupRetention.FIVE)
+        List(SIX) { captureSomethingNew("entry $it") }
 
         assertTrue(
             PRE_MIGRATION_BACKUP_NAME in copies(),
             "the oldest copy was the one that mattered",
         )
         assertEquals(
-            COPIES_KEPT,
+            FIVE,
             copies().count { it != PRE_MIGRATION_BACKUP_NAME },
             "it was counted against the limit it is supposed to be outside of",
         )
@@ -366,9 +409,8 @@ class BackupVaultTest {
 
         const val THREE = 3
         const val FOUR = 4
-
-        /** What the app's own storage keeps, as the design fixes it. */
-        const val COPIES_KEPT = 3
+        const val FIVE = 5
+        const val SIX = 6
 
         /** Older than anything this test captures, so the ordering is not a coincidence. */
         const val LONG_BEFORE = 86_400_000L

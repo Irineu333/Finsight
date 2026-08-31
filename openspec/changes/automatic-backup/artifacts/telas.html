@@ -250,6 +250,8 @@
   .hrow .hm { flex: 1 1 auto; min-width: 0; }
   .hrow .hd { font-size: 14px; font-weight: 500; }
   .hrow .hs { font-size: 12px; color: var(--app-on-var); margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .hrow .hn { font-size: 12px; color: var(--app-on-var); margin-top: 1px; }
+  .hrow.current { background: color-mix(in srgb, var(--app-primary) 10%, transparent); }
   .hrow .tagpill {
     font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
     padding: 2px 7px; border-radius: 4px; flex: none;
@@ -262,7 +264,6 @@
     font-size: 16px; font-weight: 700; letter-spacing: -.01em;
     padding: 8px 4px 2px;
   }
-  .hrow .more { flex: none; opacity: .6; padding-left: 2px; }
   .empty {
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     padding: 46px 24px 40px; text-align: center;
@@ -287,6 +288,14 @@
   .factrow { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
   .factrow span:first-child { color: var(--app-on-var); }
   .factrow span:last-child { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .factrow .pending {
+    display: inline-block; width: 56px; height: 10px; border-radius: 4px;
+    background: color-mix(in srgb, var(--app-on-var) 20%, transparent);
+  }
+  .factreading {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--app-on-var); padding-top: 1px;
+  }
   .optin {
     display: flex; gap: 11px; align-items: flex-start;
     background: var(--app-bg); border-radius: 12px; padding: 12px 14px;
@@ -555,7 +564,7 @@
 
   <div class="stage">
     <div class="unit">
-      <span class="cap">Exclusão + oferta · primeira vez</span>
+      <span class="cap">Cofre desligado · nunca recusada</span>
       <div class="phone sheetmode">
         <div class="sheet">
           <span class="grab"></span>
@@ -565,7 +574,7 @@
             <span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-prim)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
             <div>
               <div class="ol">Guardar uma cópia antes</div>
-              <div class="os">E também a cada 3 dias, daqui em diante. Você pode desligar nas configurações.</div>
+              <div class="os">E também a cada 3 dias, daqui em diante. Você pode desligar nos ajustes de backup.</div>
             </div>
           </div>
           <div class="btns">
@@ -577,7 +586,29 @@
     </div>
 
     <div class="unit">
-      <span class="cap">Da segunda vez em diante</span>
+      <span class="cap">Cofre desligado · recusada antes</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>Excluir este parcelamento?</h5>
+          <p><b>12 lançamentos</b> serão removidos, de setembro de 2025 a agosto de 2026. Isso não pode ser desfeito.</p>
+          <div class="optin">
+            <span class="box empty"></span>
+            <div>
+              <div class="ol">Guardar uma cópia antes</div>
+              <div class="os">Você deixou isto desmarcado. Marque e uma cópia é guardada antes desta e das próximas, a cada 3 dias.</div>
+            </div>
+          </div>
+          <div class="btns">
+            <span class="btn text">Cancelar</span>
+            <span class="btn danger">Excluir</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Cofre ligado</span>
       <div class="phone sheetmode">
         <div class="sheet">
           <span class="grab"></span>
@@ -596,7 +627,8 @@
   <div class="notes">
     <div class="note"><span class="mk pg">1</span><div class="nt"><b>A caixa vem marcada, e o texto diz o preço inteiro.</b> Aceitar liga o cofre completo — não só aquela cópia. Dizer isso na hora é o que separa uma oferta de uma pegadinha.</div></div>
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>Com o cofre ligado, a mesma tela muda de tom.</b> Some "isso não pode ser desfeito" e entra a frase que passou a ser verdade. É a mesma reescrita que a confirmação de restauração recebe.</div></div>
-    <div class="note"><span class="mk pg">3</span><div class="nt"><b>A oferta aparece uma vez.</b> Quem recusa não é perguntado de novo a cada exclusão — o interruptor continua nas configurações, e insistir seria transformar proteção em incômodo.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>A oferta continua a cada exclusão, enquanto o cofre estiver desligado.</b> Aparecer uma vez custava o próprio motivo de existir: o interruptor mora numa tela que raramente se visita, e quem recusasse no primeiro susto perderia, dali em diante, o único lugar em que alguém que precisa do cofre volta a encontrá-lo.</div></div>
+    <div class="note"><span class="mk pg">4</span><div class="nt"><b>Quem já recusou vê a mesma oferta sem marca.</b> O título continua o mesmo, mas o texto de apoio vira lembrete — "Você deixou isto desmarcado…" — em vez de insistir a cada tela. E a recusa só é gravada quando a exclusão segue adiante com a caixa vazia: abrir a folha e cancelar não conta como resposta.</div></div>
   </div>
 
   <div class="why">
@@ -705,27 +737,23 @@
 
           <div class="datehead">Agosto</div>
           <div class="hist">
-            <div class="hrow">
-              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
-              <div class="hm"><div class="hd">Hoje, 14:32</div><div class="hs">4,2 MB · 1.482 lançamentos</div></div>
-              <span class="tagpill">antes de excluir</span>
-              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            <div class="hrow current">
+              <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
+              <div class="hm"><div class="hd">Hoje, 14:32</div><div class="hs">agora mesmo · 4,2 MB</div><div class="hn" style="color:var(--app-primary)">Os dados do app são os desta cópia</div></div>
+              <span class="tagpill">atual</span>
             </div>
             <div class="hrow">
               <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
-              <div class="hm"><div class="hd">27 ago, 09:14</div><div class="hs">4,1 MB · 1.474 lançamentos</div></div>
-              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              <div class="hm"><div class="hd">27 ago, 09:14</div><div class="hs">há 3 dias · 4,1 MB</div></div>
             </div>
             <div class="hrow">
               <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-warning)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
-              <div class="hm"><div class="hd">21 ago, 20:02</div><div class="hs">3,9 MB · antes da v2.5.0</div></div>
+              <div class="hm"><div class="hd">21 ago, 20:02</div><div class="hs">há 9 dias · 3,9 MB</div><div class="hn">Guardada antes de uma atualização do app</div></div>
               <span class="tagpill amber">atualização</span>
-              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
             </div>
             <div class="hrow">
               <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
-              <div class="hm"><div class="hd">18 ago, 11:40</div><div class="hs">3,9 MB · 1.451 lançamentos</div></div>
-              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              <div class="hm"><div class="hd">18 ago, 11:40</div><div class="hs">há 12 dias · 3,9 MB</div></div>
             </div>
           </div>
 
@@ -733,8 +761,7 @@
           <div class="hist">
             <div class="hrow">
               <svg class="hi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
-              <div class="hm"><div class="hd">30 jul, 22:05</div><div class="hs">3,7 MB · 1.398 lançamentos</div></div>
-              <svg class="more" width="16" height="16" viewBox="0 0 24 24" fill="var(--app-on-var)"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              <div class="hm"><div class="hd">30 jul, 22:05</div><div class="hs">há 1 mês · 3,7 MB</div></div>
             </div>
           </div>
         </div>
@@ -747,8 +774,8 @@
         <div class="sheet">
           <span class="grab"></span>
           <h5>21 ago, 20:02</h5>
+          <p style="color:var(--app-warning)">Guardada antes de uma atualização do app</p>
           <div class="factbox">
-            <div class="factrow"><span>Motivo</span><span>Antes da atualização</span></div>
             <div class="factrow"><span>Origem</span><span>Android · v2.4.1</span></div>
             <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
             <div class="factrow"><span>Lançamentos</span><span>1.436</span></div>
@@ -760,7 +787,73 @@
           </div>
           <div class="tile" style="background:var(--app-bg)">
             <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
-            <div class="mid"><div class="t">Salvar uma cópia fora do app</div><div class="s">Enviar este arquivo para onde você quiser</div></div>
+            <div class="mid"><div class="t">Salvar uma cópia fora do app</div><div class="s">Envia este arquivo para onde você quiser, sem fazer uma cópia nova.</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <div class="mid"><div class="t" style="color:var(--app-error)">Excluir esta cópia</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Ações · lendo o arquivo</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>27 ago, 09:14</h5>
+          <p>há 3 dias</p>
+          <div class="factbox">
+            <div class="factrow"><span>Origem</span><span class="pending"></span></div>
+            <div class="factrow"><span>Contas · Cartões</span><span class="pending"></span></div>
+            <div class="factrow"><span>Lançamentos</span><span class="pending"></span></div>
+            <div class="factrow"><span>Tamanho</span><span>4,1 MB</span></div>
+            <div class="factreading">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="3" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+              <span>Lendo o que esta cópia guarda…</span>
+            </div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            <div class="mid"><div class="t">Restaurar esta cópia</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+            <div class="mid"><div class="t">Salvar uma cópia fora do app</div><div class="s">Envia este arquivo para onde você quiser, sem fazer uma cópia nova.</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <div class="mid"><div class="t" style="color:var(--app-error)">Excluir esta cópia</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="unit">
+      <span class="cap">Ações · cópia ilegível</span>
+      <div class="phone sheetmode">
+        <div class="sheet">
+          <span class="grab"></span>
+          <h5>27 ago, 09:14</h5>
+          <p>há 3 dias</p>
+          <div class="factbox">
+            <div class="factrow"><span>Origem</span><span>—</span></div>
+            <div class="factrow"><span>Contas · Cartões</span><span>—</span></div>
+            <div class="factrow"><span>Lançamentos</span><span>—</span></div>
+            <div class="factrow"><span>Tamanho</span><span>4,1 MB</span></div>
+            <div class="factreading" style="color:var(--app-warning)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--app-warning)" stroke="none"><path d="M12 2 1 21h22L12 2zm0 6.5 5.5 9.5h-11L12 8.5zM11 11h2v4h-2v-4zm0 5h2v2h-2v-2z"/></svg>
+              <span>Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</span>
+            </div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            <div class="mid"><div class="t">Restaurar esta cópia</div></div>
+          </div>
+          <div class="tile" style="background:var(--app-bg)">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-on)" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+            <div class="mid"><div class="t">Salvar uma cópia fora do app</div><div class="s">Envia este arquivo para onde você quiser, sem fazer uma cópia nova.</div></div>
           </div>
           <div class="tile" style="background:var(--app-bg)">
             <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -788,9 +881,10 @@
 
   <div class="notes">
     <div class="note"><span class="mk pg">1</span><div class="nt"><b>O cabeçalho da pasta fica no topo, não no título.</b> "Documentos/Finsight · 10 cópias · 41 MB" responde de uma vez onde os arquivos estão e quanto ocupam — a pergunta que sempre vem junto de uma lista de backups.</div></div>
-    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O subtítulo mostra a contagem de lançamentos, não só o tamanho.</b> "1.482 lançamentos" é o que permite reconhecer uma cópia; megabytes não dizem nada sobre qual delas é a certa. Vem do <code>snapshot_meta</code>, lido só quando a lista abre.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O subtítulo é o quanto atrás, não só o tamanho.</b> "Há 9 dias" é o que decide entre duas cópias — quanto do que foi digitado desde então se perde; megabytes não dizem isso. A contagem de lançamentos não está aqui: abriria um arquivo por linha, e é o que sobra para o toque abrir a folha.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>"Salvar uma cópia fora do app" resolve um buraco real.</b> No Android o cofre é local e não cobre perda do aparelho; poder mandar qualquer cópia do histórico para onde se quiser é a saída, e reusa o fluxo de exportação que já existe — sem capturar de novo.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Excluir uma cópia é do usuário, não só da retenção.</b> É a pasta dele; ele pode apagar pelo gerenciador de arquivos de qualquer forma, e o app tolera isso por construção — melhor oferecer o caminho de dentro.</div></div>
+    <div class="note"><span class="mk pg">5</span><div class="nt"><b>Um selo só, e quem o leva é a atual.</b> Uma cópia pode ser várias coisas ao mesmo tempo — a que o app está rodando, a mais recente, a de antes de uma atualização — e empilhar as três diria menos do que uma sozinha. "Atual" vence porque é a única coisa que a lista não dizia antes: onde a pessoa está parada, mesmo depois de restaurar uma cópia antiga.</div></div>
   </div>
 
   <div class="why">
@@ -1044,6 +1138,7 @@
             <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
             <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
           </div>
+          <p><b>Restaurar leva o app de volta a como ele estava há 9 dias.</b></p>
           <p>O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</p>
           <p>Todos os seus dados atuais serão substituídos pelos deste arquivo. <b>Esta ação não pode ser desfeita.</b></p>
           <div class="btns">
@@ -1066,6 +1161,7 @@
             <div class="factrow"><span>Contas · Cartões</span><span>6 · 2</span></div>
             <div class="factrow"><span>Lançamentos</span><span>1.482</span></div>
           </div>
+          <p><b>Restaurar leva o app de volta a como ele estava há 9 dias.</b></p>
           <p>O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</p>
           <p>Todos os seus dados atuais serão substituídos pelos deste arquivo.</p>
           <p><b>Uma cópia de como está agora é guardada antes</b>, e você pode voltar a ela por esta mesma tela.</p>
@@ -1081,6 +1177,7 @@
   <div class="notes">
     <div class="note"><span class="mk pg">1</span><div class="nt"><b>O botão continua vermelho nas duas.</b> Reversível não é inofensivo: a restauração troca o acervo inteiro, e voltar atrás custa outra restauração.</div></div>
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>Se a cópia falhar, o texto volta a ser o da esquerda.</b> A spec é explícita: uma captura que não aconteceu não pode ser apresentada como proteção.</div></div>
+    <div class="note"><span class="mk pg">3</span><div class="nt"><b>A data sozinha não responde à pergunta que importa.</b> "21 ago, 20:02" é um fato sobre o arquivo; o que restaurar custa é o intervalo até agora, e é isso que decide entre duas cópias. Por isso o span vem escrito por extenso, e nas duas versões — reversível ou não, é sempre um retrocesso no tempo.</div></div>
   </div>
 </section>
 

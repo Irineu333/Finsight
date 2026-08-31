@@ -60,7 +60,7 @@ fun isBackupFileName(name: String): Boolean =
  * There is only ever one such copy: it is replaced by the copy the *next* migration takes
  * and by nothing else (design D10), because the damage it exists to undo is a migration
  * that finished without an error and wrote something wrong, which is found out days later
- * — by which time three periodic captures would have carried a dated copy away.
+ * — by which time the periodic captures would have carried a dated copy away.
  *
  * Being outside the dated shape is what keeps it out of retention's count. Retention
  * removes the copies the vault takes on a schedule, so it recognises them by the name it

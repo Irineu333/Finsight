@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
  * belong to the install, which is what every value here is a fact about.
  *
  * The whole state is read once and written whole, and observed as one [StateFlow]. The
- * rules the vault has are about combinations of these values — the limit in force needs
- * the destination and the retention together — so a screen and a trigger reading the same
+ * rules the vault has are about combinations of these values — whether a copy is due needs
+ * the interval and the last capture together — so a screen and a trigger reading the same
  * snapshot cannot disagree about what the vault is.
  *
  * A value that cannot be read falls back to what a fresh install would have, and never to

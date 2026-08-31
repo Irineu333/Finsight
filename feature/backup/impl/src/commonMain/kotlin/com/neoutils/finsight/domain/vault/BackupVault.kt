@@ -170,7 +170,7 @@ class BackupVault(
      * The copy taken before a migration is not in the count and is never removed here
      * (design D10): the damage it exists to undo is a migration that finished without an
      * error and wrote something wrong, which is found out days later — exactly the span in
-     * which three periodic captures would otherwise have carried it away. It is replaced
+     * which the periodic captures would otherwise have carried it away. It is replaced
      * by the next migration's copy and by nothing else, which is why it is recognised by
      * carrying the one name reserved for it rather than a dated one.
      *

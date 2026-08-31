@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
+import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
@@ -275,7 +276,7 @@ class PreMigrationCopyTest {
     /**
      * The join the name exists for, over the two things that have to agree about it: the
      * copy this trigger writes, and the sweep that runs behind every capture that lands.
-     * Four captures against a limit of three, and what is still there is the copy from
+     * Six captures against a limit of five, and what is still there is the copy from
      * before the migration — outside the count, and replaced only by the next migration
      * (design D10).
      */
@@ -283,9 +284,10 @@ class PreMigrationCopyTest {
     fun `the copy this trigger writes is the one retention refuses to sweep`() = runTest {
         archiveDeclaring(OLDER_VERSION)
         state.setOn(true)
+        state.setRetention(BackupRetention.FIVE)
         getDatabaseBuilder(path = archive.absolutePath, captureInto = target.path())
 
-        repeat(FOUR) { index ->
+        repeat(SIX) { index ->
             instant += 1.minutes
             live.transactionDao().insert(TransactionEntity(title = "entry $index", date = DATE))
             assertIs<CaptureOutcome.Captured>(vault.captureIfNeeded())
@@ -297,7 +299,7 @@ class PreMigrationCopyTest {
             "the copy taken before the migration was counted and swept away",
         )
         assertEquals(
-            COPIES_KEPT,
+            FIVE,
             kept.count { it != PRE_MIGRATION_BACKUP_NAME },
             "and the copies that are in the count are still held to their limit",
         )
@@ -311,10 +313,8 @@ class PreMigrationCopyTest {
         /** Behind this build by one, which is all "there is a migration to run" means. */
         val OLDER_VERSION = AppSchema.VERSION.toLong() - 1
 
-        const val FOUR = 4
-
-        /** What the app's own storage keeps, as the design fixes it. */
-        const val COPIES_KEPT = 3
+        const val FIVE = 5
+        const val SIX = 6
 
         /**
          * A database is up to three files while something has it open in write-ahead

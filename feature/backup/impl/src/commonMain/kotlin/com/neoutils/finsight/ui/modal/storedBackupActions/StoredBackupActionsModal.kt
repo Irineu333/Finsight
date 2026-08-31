@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -41,16 +40,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.restore.FileOrigin
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_copy_facts_accounts
 import com.neoutils.finsight.resources.backup_copy_facts_origin
-import com.neoutils.finsight.resources.backup_copy_facts_reading
 import com.neoutils.finsight.resources.backup_copy_facts_size
 import com.neoutils.finsight.resources.backup_copy_facts_unreadable
 import com.neoutils.finsight.resources.backup_history_action_delete
 import com.neoutils.finsight.resources.backup_history_action_restore
 import com.neoutils.finsight.resources.backup_history_action_share
 import com.neoutils.finsight.resources.backup_history_action_share_subtitle
+import com.neoutils.finsight.resources.backup_history_current_subtitle
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_today
 import com.neoutils.finsight.resources.backup_yesterday
@@ -100,12 +100,16 @@ import org.koin.compose.koinInject
  * the sheet is a step recessed from it, because a card the colour of the sheet it sits on is
  * not a card.
  *
+ * @param isCurrent whether the archive in use already is this copy — a value and not a flow,
+ * because it cannot change while the sheet is up: the only thing that moves it is a restore,
+ * and a restore closes this sheet on its way to the confirmation.
  * @param facts the flow rather than a value, because a modal is built once and rendered by
  * the manager that holds it: what was read after the sheet went up would never reach it. The
  * sheet is put up before the read starts and never waits on it.
  */
 class StoredBackupActionsModal(
     private val backup: StoredBackup,
+    private val isCurrent: Boolean,
     private val facts: StateFlow<KeptCopyFacts>,
     private val onRestore: () -> Unit,
     private val onShare: () -> Unit,
@@ -144,18 +148,32 @@ class StoredBackupActionsModal(
                 )
                 // How far back it reaches, which is what choosing between two copies is
                 // about — the row that opened this sheet says the same thing, in the same
-                // words. The copy kept before an update keeps its own sentence instead:
-                // what it is for is the reason somebody went looking for it, and it wears
-                // the amber the list marks it with.
+                // words. It stands on every copy here, the one kept before an update
+                // included: the list row had one line to spend and had to choose, and this
+                // sheet does not.
                 Text(
-                    text = if (isFromMigration) {
-                        stringResource(Res.string.backup_history_migration_subtitle)
-                    } else {
-                        ageLabel(backup.savedAt, now)
-                    },
+                    text = ageLabel(backup.savedAt, now),
                     style = typography.bodyMedium,
-                    color = if (isFromMigration) Warning else colorScheme.onSurfaceVariant,
+                    color = colorScheme.onSurfaceVariant,
                 )
+                // What the age cannot say, on the two copies that have something more to
+                // say. The current one takes the line when a copy is both, exactly as the
+                // list orders them: that the archive already *is* this copy settles what
+                // restoring it would do, and nothing else on the sheet states it.
+                when {
+                    isCurrent -> Text(
+                        text = stringResource(Res.string.backup_history_current_subtitle),
+                        style = typography.bodyMedium,
+                        color = colorScheme.primary,
+                        modifier = Modifier.testTag("backup_copy_actions_current"),
+                    )
+
+                    isFromMigration -> Text(
+                        text = stringResource(Res.string.backup_history_migration_subtitle),
+                        style = typography.bodyMedium,
+                        color = Warning,
+                    )
+                }
             }
 
             CopyFacts(
@@ -204,10 +222,17 @@ class StoredBackupActionsModal(
  * the facts, and it is the one that cannot go missing. Everything above it comes out of the
  * copy — the stamp the capture wrote, and how much of the archive is in the file.
  *
- * **The frame is drawn before the facts arrive.** All four labels stand in every state, so
- * the box has one shape and the values fill into it: a bar where a value is still coming, a
- * dash where it never will. A box that grew by three rows the moment the file answered
- * would move the three actions under the reader's thumb.
+ * **The frame is drawn before the facts arrive.** Every label stands in every state, so the
+ * box has one shape and the values fill into it: a bar where a value is still coming, a dash
+ * where it never will. A box that grew by three rows the moment the file answered would move
+ * the three actions under the reader's thumb.
+ *
+ * **The bars are the only thing that says a value is coming**, and the box is exactly as
+ * tall while they stand as it is once the figures land. A spinner on a line of its own said
+ * the same thing a second time and cost the rule above: the file answers in tens of
+ * milliseconds — well inside the sheet's own entrance — so the row it added was removed
+ * again while the sheet was still animating in, changing the content's height under an
+ * animation whose target is computed from it.
  *
  * There is no *why* row. Which trigger took a copy is not recorded in the file (design D9,
  * and `snapshot_meta` carries a `formatVersion` for the day it is), so the sheet says the
@@ -257,6 +282,15 @@ private fun CopyFacts(
                 value = held?.counts?.transactions?.toString() ?: absent,
                 tag = "backup_copy_facts_transactions",
             )
+            // Read out of every copy since the file has held one, and the fourth facade a
+            // person recognises their own archive by — the restore confirmation counts it
+            // for exactly that reason, and a sheet that dropped it was describing three
+            // quarters of the same file.
+            FactRow(
+                label = stringResource(Res.string.backup_confirm_categories),
+                value = held?.counts?.categories?.toString() ?: absent,
+                tag = "backup_copy_facts_categories",
+            )
 
             FactRow(
                 label = stringResource(Res.string.backup_copy_facts_size),
@@ -264,11 +298,7 @@ private fun CopyFacts(
                 tag = "backup_copy_facts_size",
             )
 
-            when (facts) {
-                KeptCopyFacts.Reading -> Reading()
-                KeptCopyFacts.Unreadable -> Unreadable()
-                is KeptCopyFacts.Held -> Unit
-            }
+            if (facts is KeptCopyFacts.Unreadable) Unreadable()
         }
     }
 }
@@ -344,31 +374,6 @@ private fun PendingValue() {
 }
 
 /**
- * The file is being opened. It is said inside the box rather than in place of it, because
- * the size above is true already and replacing the whole box would take a fact away to show
- * that another one is coming.
- */
-@Composable
-private fun Reading() {
-    Row(
-        modifier = Modifier.testTag("backup_copy_facts_reading"),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(14.dp),
-            color = colorScheme.onSurfaceVariant,
-            strokeWidth = 1.5.dp,
-        )
-        Text(
-            text = stringResource(Res.string.backup_copy_facts_reading),
-            style = typography.bodySmall,
-            color = colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/**
  * The copy could not be opened, which is a thing that happens to a folder the user can also
  * reach with a file manager — and is not an error to put a dialog over.
  *
@@ -399,6 +404,15 @@ private fun Unreadable() {
 /**
  * One thing this sheet can do, as a card of the same make as the row that opened it: the
  * corner the list uses, the padding the list uses, and a ground a step below the sheet.
+ *
+ * **[tone] colours the content and nothing else.** Material derives a card's press and
+ * hover layer from the content colour in scope, so handing a tone to `Surface` as its
+ * `contentColor` also repaints every tap in it: the destructive row washed `error` red
+ * across the whole card while the two above it washed neutral, which is one card of three
+ * flashing a different colour for a difference the icon and the label already state. The
+ * ground decides the state layer — here that is `contentColorFor(background)`, which is
+ * what the two neutral rows were asking for anyway — and the tone stays where it means
+ * something, on the glyph and the label.
  */
 @Composable
 private fun ActionRow(
@@ -412,7 +426,6 @@ private fun ActionRow(
 ) {
     Surface(
         color = colorScheme.background,
-        contentColor = tone,
         shape = TileShape,
         onClick = onClick,
         modifier = modifier
@@ -427,12 +440,14 @@ private fun ActionRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
+                tint = tone,
                 modifier = Modifier.size(20.dp),
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = title,
                     style = typography.titleMedium,
+                    color = tone,
                 )
                 if (subtitle != null) {
                     Text(

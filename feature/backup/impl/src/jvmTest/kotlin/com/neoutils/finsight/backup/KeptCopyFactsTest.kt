@@ -205,12 +205,25 @@ class KeptCopyFactsTest {
         it.await("the listing never settled") { state -> !state.isLoading }
     }
 
+    /**
+     * The first reading that is no longer in flight, or a failure saying [what] never came.
+     *
+     * It is awaited on the flow the sheet reads and not on the screen's state: what one copy
+     * holds is the sheet's and the list is not subscribed to it.
+     */
+    private suspend fun BackupHistoryViewModel.awaitFacts(what: String): KeptCopyFacts =
+        withContext(Dispatchers.Default) {
+            try {
+                withTimeout(WAIT_MILLIS) { facts.first { it != KeptCopyFacts.Reading } }
+            } catch (cause: TimeoutCancellationException) {
+                fail(what)
+            }
+        }
+
     /** What the sheet ends up showing about [copy], once the read has answered. */
     private suspend fun BackupHistoryViewModel.factsOf(copy: StoredBackup): KeptCopyFacts {
         onAction(BackupHistoryAction.Inspect(copy))
-        return await("the copy ${copy.name} was never described") {
-            it.facts != KeptCopyFacts.Reading
-        }.facts
+        return awaitFacts("the copy ${copy.name} was never described")
     }
 
     // --------------------------------------------------------- what the list still costs
@@ -352,9 +365,7 @@ class KeptCopyFactsTest {
         )
 
         held.complete(Unit)
-        val facts = viewModel.await("the second copy was never described") {
-            it.facts != KeptCopyFacts.Reading
-        }.facts
+        val facts = viewModel.awaitFacts("the second copy was never described")
         assertEquals(2, assertIs<KeptCopyFacts.Held>(facts).counts.transactions)
     }
 

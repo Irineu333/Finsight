@@ -122,10 +122,16 @@ class BackupHistoryViewModel(
      * What the sheet about one copy reads. It is the flow and not a value for the reason
      * [isRestoring] is: the sheet is built at the tap and rendered by the manager that holds
      * it, so a value passed in would still say *reading* once the file had answered.
+     *
+     * **It is not part of [uiState], and that is what keeps the list still.** A reading of
+     * one file changes state twice — once when it starts, once when it answers — and both
+     * land inside the entrance of the sheet that asked for it. Carried in the screen's own
+     * state, each of them recomposed the whole history behind the sheet on exactly the
+     * frames the sheet is animating over it. Nothing in the list reads this; only the sheet
+     * does, so only the sheet is subscribed to it.
      */
-    val facts: StateFlow<KeptCopyFacts> = uiState
-        .map { it.facts }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, KeptCopyFacts.Reading)
+    private val _facts = MutableStateFlow<KeptCopyFacts>(KeptCopyFacts.Reading)
+    val facts = _facts.asStateFlow()
 
     /**
      * The reading a sheet is waiting on. It is held so the next tap can call it off: a copy
@@ -201,11 +207,10 @@ class BackupHistoryViewModel(
      */
     private fun inspect(backup: StoredBackup) {
         inspection?.cancel()
-        _uiState.update { it.copy(facts = KeptCopyFacts.Reading) }
+        _facts.value = KeptCopyFacts.Reading
 
         inspection = viewModelScope.launch(Dispatchers.Default) {
-            val facts = reader.read(backup)
-            _uiState.update { it.copy(facts = facts) }
+            _facts.value = reader.read(backup)
         }
     }
 

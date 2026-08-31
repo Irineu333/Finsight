@@ -1091,6 +1091,5 @@
     <string name="backup_copy_facts_origin">Origem</string>
     <string name="backup_copy_facts_accounts">Contas · Cartões</string>
     <string name="backup_copy_facts_size">Tamanho</string>
-    <string name="backup_copy_facts_reading">Lendo o que esta cópia guarda…</string>
     <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>
 </resources>

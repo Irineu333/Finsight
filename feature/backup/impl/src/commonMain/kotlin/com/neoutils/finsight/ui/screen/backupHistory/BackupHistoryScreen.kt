@@ -237,6 +237,7 @@ fun BackupHistoryScreen(
                                             modalManager.show(
                                                 StoredBackupActionsModal(
                                                     backup = copy,
+                                                    isCurrent = uiState.isCurrent(copy),
                                                     facts = viewModel.facts,
                                                     onRestore = {
                                                         modalManager.dismiss()

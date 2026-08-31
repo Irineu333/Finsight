@@ -192,6 +192,9 @@
   }
   .infocard svg { flex: none; margin-top: 1px; }
   .infocard .txt { color: var(--app-on-var); font-size: 13px; line-height: 1.45; display: flex; flex-direction: column; gap: 7px; }
+  .infocard.dhead { align-items: center; }
+  .infocard.dhead .dval { color: var(--app-on); font-size: 14.5px; font-weight: 600; }
+  .infocard.dhead .chev { flex: none; opacity: .8; }
 
   /* settings group */
   .grp { display: flex; flex-direction: column; gap: 7px; }
@@ -210,6 +213,10 @@
   .tile .s { font-size: 12.5px; color: var(--app-on-var); margin-top: 2px; line-height: 1.35; }
   .tile .end { flex: none; display: flex; align-items: center; }
   .tile.off .t, .tile.off .s { opacity: .55; }
+
+  /* the two actions on the copies screen: take one, bring one in */
+  .acts { display: flex; gap: 8px; }
+  .acts .tile { flex: 1 1 0; }
 
   /* switch */
   .sw { width: 46px; height: 26px; border-radius: 13px; position: relative; flex: none; }
@@ -508,7 +515,7 @@
               <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.7"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/></svg>
               <div class="mid">
                 <div class="t">Cópias guardadas</div>
-                <div class="s">10 cópias guardadas · a mais recente Hoje, 14:32</div>
+                <div class="s">Dentro do app</div>
               </div>
               <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
             </div>
@@ -541,7 +548,7 @@
 
   <div class="notes">
     <div class="note"><span class="mk pg">1</span><div class="nt"><b>O card de escopo não muda: ele desaparece.</b> Suas três frases se mudam para onde cada uma faz mais sentido — o alcance do arquivo para a confirmação de restaurar, "sem cofre não há cópias" para o subtítulo do interruptor, e o que o destino não cobre para o card do último backup.</div></div>
-    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O histórico é um destino, não uma seção.</b> A tela de backup é de configuração; uma lista de cópias é conteúdo, com padrão próprio no app e com ações por item. O tile leva para ela e adianta o que ela contém — quantas, e a mais recente.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>O histórico é um destino, não uma seção.</b> A tela de backup é de configuração; uma lista de cópias é conteúdo, com padrão próprio no app e com ações por item. O tile leva para ela e diz onde elas ficam — quantas há e qual é a mais recente, a própria lista já responde.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>Dois grupos, não quatro.</b> Hoje a tela tem um cabeçalho <code>Exportar</code> sobre um tile "Exportar backup" e um <code>Restaurar</code> sobre "Restaurar de um arquivo" — cabeçalhos que não agrupam nada e repetem o próprio item. Juntos, eles formam o par certo: <b>o que o app faz sozinho</b> e <b>o que sai e entra pela sua mão</b>.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>"Restaurar de um arquivo" muda de subtítulo quando o cofre está ligado.</b> Com histórico, restaurar do cofre passa a ser o caminho comum, e o tile avulso vira o caso específico — um arquivo que veio de outro aparelho.</div></div>
   </div>
@@ -731,9 +738,25 @@
           <span class="ttl">Cópias guardadas</span>
         </div>
         <div class="body-pad" style="gap:10px">
-          <div class="infocard" style="padding:12px 14px">
+          <div class="infocard dhead">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.8"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/></svg>
-            <div class="txt"><span><b style="color:var(--app-on);font-weight:600">Documentos/Finsight</b><br>10 cópias · 41 MB no total</span></div>
+            <div class="txt">
+              <span>Onde as cópias ficam</span>
+              <span class="dval">Numa pasta que você escolheu</span>
+              <span>10 cópias guardadas · 41 MB no total</span>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+
+          <div class="acts">
+            <div class="tile">
+              <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              <div class="mid"><div class="t">Criar uma cópia agora</div></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 17v-5M9.5 14.5L12 12l2.5 2.5"/></svg>
+              <div class="mid"><div class="t">Importar um arquivo</div></div>
+            </div>
           </div>
 
           <div class="datehead">Agosto</div>
@@ -871,21 +894,44 @@
           <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           <span class="ttl">Cópias guardadas</span>
         </div>
+        <div class="body-pad" style="gap:10px">
+          <div class="infocard dhead">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="1.8"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/></svg>
+            <div class="txt">
+              <span>Onde as cópias ficam</span>
+              <span class="dval">Numa pasta que você escolheu</span>
+              <span>Nenhuma cópia ainda · 0 B no total</span>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+
+          <div class="acts">
+            <div class="tile">
+              <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              <div class="mid"><div class="t">Criar uma cópia agora</div></div>
+            </div>
+            <div class="tile">
+              <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-primary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 17v-5M9.5 14.5L12 12l2.5 2.5"/></svg>
+              <div class="mid"><div class="t">Importar um arquivo</div></div>
+            </div>
+          </div>
+        </div>
         <div class="empty">
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--app-out-var)" stroke-width="1.4"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/><rect x="3" y="4" width="18" height="3.5" rx="1"/><path d="M10 12h4" stroke-linecap="round"/></svg>
           <div class="et">Nenhuma cópia ainda</div>
-          <div class="es">A primeira acontece quando você lançar algo, ou antes da próxima exclusão.</div>
+          <div class="es">A primeira é feita na próxima vez que você abrir o app, ou antes da próxima exclusão.</div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="notes">
-    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O cabeçalho da pasta fica no topo, não no título.</b> "Documentos/Finsight · 10 cópias · 41 MB" responde de uma vez onde os arquivos estão e quanto ocupam — a pergunta que sempre vem junto de uma lista de backups.</div></div>
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>O cabeçalho do destino fica no topo, não no título — e é ele quem leva ao seletor agora.</b> "Numa pasta que você escolheu · 10 cópias guardadas · 41 MB no total" responde de uma vez onde os arquivos estão e quanto ocupam, e a seta à direita diz que o cartão inteiro é tocável — nunca um caminho de arquivo, que a spec proíbe mostrar (design D2).</div></div>
     <div class="note"><span class="mk pg">2</span><div class="nt"><b>O subtítulo é o quanto atrás, não só o tamanho.</b> "Há 9 dias" é o que decide entre duas cópias — quanto do que foi digitado desde então se perde; megabytes não dizem isso. A contagem de lançamentos não está aqui: abriria um arquivo por linha, e é o que sobra para o toque abrir a folha.</div></div>
     <div class="note"><span class="mk pg">3</span><div class="nt"><b>"Salvar uma cópia fora do app" resolve um buraco real.</b> No Android o cofre é local e não cobre perda do aparelho; poder mandar qualquer cópia do histórico para onde se quiser é a saída, e reusa o fluxo de exportação que já existe — sem capturar de novo.</div></div>
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Excluir uma cópia é do usuário, não só da retenção.</b> É a pasta dele; ele pode apagar pelo gerenciador de arquivos de qualquer forma, e o app tolera isso por construção — melhor oferecer o caminho de dentro.</div></div>
     <div class="note"><span class="mk pg">5</span><div class="nt"><b>Um selo só, e quem o leva é a atual.</b> Uma cópia pode ser várias coisas ao mesmo tempo — a que o app está rodando, a mais recente, a de antes de uma atualização — e empilhar as três diria menos do que uma sozinha. "Atual" vence porque é a única coisa que a lista não dizia antes: onde a pessoa está parada, mesmo depois de restaurar uma cópia antiga.</div></div>
+    <div class="note"><span class="mk pg">6</span><div class="nt"><b>"Criar uma cópia agora" e "Importar um arquivo" ficam abaixo do cabeçalho, em todo estado.</b> É aqui, não na tela de configuração, que mora o que preenche a pasta — e valem também vazia ou ilegível, que é justamente quando alguém as procura.</div></div>
   </div>
 
   <div class="why">
@@ -1046,21 +1092,6 @@
       </div>
     </div>
 
-    <div class="unit">
-      <span class="cap">Escolher onde guardar</span>
-      <div class="phone sheetmode">
-        <div class="sheet">
-          <span class="grab"></span>
-          <h5>Onde guardar as cópias</h5>
-          <div class="radio sel" style="align-items:flex-start"><span class="r" style="margin-top:3px"></span><span class="rl"><span style="display:block;font-weight:500">Dentro do app</span><span class="rn" style="display:block;line-height:1.4;margin-top:2px">Não pede nada. Some se você desinstalar o Finsight ou limpar os dados.</span></span></div>
-          <div class="radio" style="align-items:flex-start"><span class="r" style="margin-top:3px"></span><span class="rl"><span style="display:block;font-weight:500">Numa pasta que eu escolher</span><span class="rn" style="display:block;line-height:1.4;margin-top:2px">Continua lá mesmo se você desinstalar. Escolha uma pasta que seu serviço de nuvem sincronize para que sobrevivam à perda do aparelho.</span></span></div>
-          <div class="btns">
-            <span class="btn text">Cancelar</span>
-            <span class="btn tonal">Escolher pasta</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="notes">
@@ -1070,12 +1101,10 @@
     <div class="note"><span class="mk pg">4</span><div class="nt"><b>Escolha segmentada no lugar de oito rádios empilhados.</b> Quatro valores curtos e mutuamente exclusivos são exatamente o caso do <code>SingleChoiceSegmentedButtonRow</code>, e o sheet cabe na tela sem rolar.</div></div>
     <div class="note"><span class="mk pg">5</span><div class="nt"><b>A combinação mostra o que produz.</b> "3 dias" e "20 cópias" são dois números abstratos; "cerca de 60 dias de histórico, por volta de 84 MB" é uma decisão. O app sabe o tamanho médio das cópias que já fez — não precisa estimar no escuro.</div></div>
     <div class="note"><span class="mk pg">6</span><div class="nt"><b>"Todas" avisa em âmbar, e não é impedido.</b> Transforma a retenção em algo que o usuário desliga, em vez de algo que ele sofre — mas quem escolhe não apagar nada merece saber a que taxa a pasta cresce.</div></div>
-    <div class="note"><span class="mk pg">7</span><div class="nt"><b>Cada opção de destino declara o que não cobre</b>, na própria linha. Escolher onde guardar é escolher contra o que se está protegido, e essa informação não pode estar noutra tela.</div></div>
-    <div class="note"><span class="mk pg">8</span><div class="nt"><b>A frase sobre a nuvem difere por plataforma.</b> No iOS ela diz "escolha uma pasta no iCloud Drive", porque lá isso funciona. No Android nenhum provedor de nuvem aparece no seletor de pastas — verificado no código do AOSP —, então a frase é a genérica acima.</div></div>
   </div>
 
   <div class="why">
-    <p><b>Sem botão de confirmar, de propósito.</b> Os ajustes valem no toque, como toda preferência do app — nada aqui precisa ser "salvo". O sheet de escolher pasta tem botões porque ele leva a outro lugar: abre o seletor do sistema.</p>
+    <p><b>Sem botão de confirmar, de propósito.</b> Os ajustes valem no toque, como toda preferência do app — nada aqui precisa ser "salvo".</p>
   </div>
 </section>
 

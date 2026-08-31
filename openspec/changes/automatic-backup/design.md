@@ -441,14 +441,25 @@ nos dois sentidos. Ninguém construiu isso.
   (`ExchangeRateFormModal.kt:348-349`). É a única exclusão de dado do usuário sem confirmação no
   app, e está entre as seis do preventivo.
   → Idem: coberta aqui, corrigida noutra entrega.
-- **O bookmark do iOS pode não sobreviver a reboot, e a documentação não diz.** A Apple documenta
-  persistência entre *lançamentos* do app e não afirma nem nega nada sobre reinício do aparelho; a
-  única frase que fala em reboot é um teto sobre o escopo implícito, não uma previsão de duração
-  (Q1). É o maior risco em aberto do degrau 2. Um caso já se sabe negativo — pasta em volume externo
-  ou removível, que quebra na remontagem por bug reconhecido da Apple —, e ele cai dentro do desenho
-  aceito (D16), não contra ele.
-  → Q1, spike obrigatório e primeira tarefa do degrau 2. Se não sobreviver, o degrau 2 no iOS não
-  existe na forma desenhada.
+- **O bookmark do iOS sobreviveu a um reboot num aparelho real, e a documentação continua sem dizer
+  nada, em nenhuma direção.** A Apple documenta persistência entre *lançamentos* do app e não afirma
+  nem nega nada sobre reinício do aparelho; a única frase que fala em reboot é um teto sobre o
+  escopo implícito, não uma previsão de duração (Q1). A medição cobriu um aparelho, uma vez, pelo
+  caminho de resolução que a implementação usa — o outro lado do par não foi exercitado, e aparelho,
+  versão de iOS e provedor da pasta não foram registrados. Um caso já se sabe negativo — pasta em
+  volume externo ou removível, que quebra na remontagem por bug reconhecido da Apple —, e ele cai
+  dentro do desenho aceito (D16), não contra ele.
+  → Q1 fechada: o critério que pararia a entrega não disparou, e o degrau 2 no iOS segue como
+  desenhado. Um aparelho respondendo uma vez não vira garantia de plataforma.
+- **Uma pasta do iCloud Drive com cópias evictadas pode esconder o próprio histórico do app.** O iOS
+  pode representar localmente um arquivo cuja cópia foi liberada como um *placeholder* oculto,
+  `.nome-do-arquivo.icloud`; a listagem do degrau 2 no iOS pula arquivos ocultos
+  (`NSDirectoryEnumerationSkipsHiddenFiles`, `IosFolderBackupDestination.kt:140`) e o nome do
+  placeholder também não passaria pelo filtro (`isBackupFileName` exige o prefixo
+  `finsight-backup-`, `BackupFileName.kt:53-54`). Não medido.
+  → É o modo de falha mais provável do degrau 2 no iOS — mais provável que o reboot —, e é a leitura
+  que D9 proíbe: "sem cópias" sobre um acervo que está lá, só que evictado. Fica registrado como
+  risco em aberto contra o degrau da pasta.
 - **O gatilho preventivo entra no caminho crítico de uma exclusão.** `VACUUM INTO` precisa de
   espaço livre da ordem do tamanho do banco, e a captura acontece antes de o botão responder.
   → D8 reduz a frequência real a quase nada. Uma captura que falha por falta de espaço precisa
@@ -534,15 +545,42 @@ porque a que inicia o acesso sozinha pode passar onde a outra falha, e é de sab
 que depende o par `start`/`stop` do destino. Se falhar, o degrau 2 no iOS precisa de outro desenho —
 e o degrau 1 segue intacto.
 
-**Segue aberta.** Medir exige um iPhone real, reiniciado entre guardar o bookmark e resolvê-lo, e
-não há aparelho disponível. O simulador foi tentado e não serve de atalho — vale registrar por que,
-para que ninguém gaste o esforço de novo: ele roda sem sandbox (uma sonda gravou na pasta do
-usuário do host e enxergou os contêineres de dados de outros 133 apps), um controle negativo que
-devia falhar passou, e `kern.boottime` lido de dentro do app é o do host, não o do dispositivo
-simulado — reiniciar o simulador não é um reboot do ponto de vista do processo. O bookmark que ele
-produz é um bookmark de macOS sobre o APFS do host, não uma medição de iOS. Até que haja um aparelho
-real, o degrau 2 no iOS é desenho não verificado, e o critério acima continua sendo o que decide se
-ele existe na forma desenhada.
+**O simulador foi tentado antes, e não serve de atalho** — vale registrar por que, para que ninguém
+gaste o esforço de novo: ele roda sem sandbox (uma sonda gravou na pasta do usuário do host e
+enxergou os contêineres de dados de outros 133 apps), um controle negativo que devia falhar passou,
+e `kern.boottime` lido de dentro do app é o do host, não o do dispositivo simulado — reiniciar o
+simulador não é um reboot do ponto de vista do processo. O bookmark que ele produz é um bookmark de
+macOS sobre o APFS do host, não uma medição de iOS.
+
+**Medida num aparelho real, e sobreviveu — no caminho que a implementação usa.** O dono do produto
+apontou o cofre para uma pasta no próprio iPhone, reiniciou o aparelho, e a resolução seguinte
+funcionou: as cópias continuaram caindo na pasta escolhida depois do reboot. A medição correu pela
+opção que `IosBackupFolder.resolve()` de fato passa, `NSURLBookmarkResolutionWithoutImplicitStartAccessing`
+(`IosBackupFolder.kt:236`) — o lado do par que o código usa em produção, com `start`/`stop`
+balanceados em volta de cada operação.
+
+**O que essa medição não cobre.** O outro lado do par — resolver deixando o acesso implícito
+iniciar sozinho, sem passar a opção — não foi exercitado; o critério pedia os dois. Versão do iOS,
+modelo do aparelho e o provedor da pasta (iCloud Drive, armazenamento local do aparelho, ou um
+terceiro) não foram relatados, e ficam como não registrados aqui — não há por que supor qual foi. E
+a medição fala de escrita continuando depois do reboot; nada foi dito sobre listar, sobre a retenção
+rodar ou sobre restaurar uma cópia, e este parágrafo não estica o resultado até lá.
+
+**Isso pesa porque uma falha teria aparecido.** O veredito sobre o vínculo não é "o bookmark
+resolveu": é uma listagem da subpasta própria do app, feita de novo a cada operação
+(`IosBackupFolder.kt:143-147`), e quando o vínculo cai a tela troca a linha de destino para *Dentro
+do app*, com uma régua vermelha e duas saídas — reconectar a pasta ou manter dentro do app (design
+D12; `backup_destination_app`; `BackupScreen.kt:513-517,589-632`). Um caminho desenhado para
+anunciar a própria falha, que não anunciou nada, é um resultado que carrega peso mesmo sendo uma
+medição só.
+
+**O critério não disparou.** Ele existia para um cenário — se o bookmark não sobrevivesse, o degrau
+2 no iOS precisaria de outro desenho e a entrega pararia aqui —, e não foi isso que aconteceu. O
+degrau 2 no iOS segue como desenhado. Isso não fecha a pergunta por inteiro: a documentação da Apple
+continua sem dizer nada sobre sobrevivência a reboot, em nenhuma direção, e um aparelho respondendo
+uma vez não é garantia de plataforma — o arquivo não passa a ler como se fosse. O caso do volume
+externo ou removível, fechado acima como negativo, continua do mesmo jeito, dentro do desenho
+aceito (D16).
 
 ### Q2 — Uma subpasta de `Download` é selecionável no Android 11+?
 
@@ -592,4 +630,5 @@ cobertura contra perda do aparelho no Android incomodar, a resposta é `allowBac
 incluam **apenas** a pasta de backups do degrau 1 e continuem excluindo o banco vivo, oferecido
 como escolha explícita do usuário. Teto de 25 MB por app, só a cópia mais recente, e reescrita de
 `data_extraction_rules.xml`, de `PlatformBackupIsOffTest` e do requisito correspondente em
-`local-backup`.
+`local-backup`. Nada aqui decide que isso volta, nem quando: o registro poupa quem reabrir a
+pergunta de refazer a investigação, e a pergunta segue em aberto até alguém reabri-la.

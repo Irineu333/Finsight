@@ -2,7 +2,12 @@
 
 package com.neoutils.finsight.ui.modal.vaultSettings
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -104,9 +109,9 @@ import org.jetbrains.compose.resources.stringResource
  * the same gap between the rows of one group, and the wider gap only where a group opens.
  * Three groups stand here — the two triggers, the wait, and the limit with what it produces
  * — of which only the wait comes and goes, growing and collapsing rather than appearing
- * under the reader's thumb. What the limit produces sits inside the limit's own group,
- * against the picker that decides it, because it is that choice read back rather than a
- * fourth subject.
+ * under the reader's thumb, and taking the gap above it with it as it goes. What the limit
+ * produces sits inside the limit's own group, against the picker that decides it, because it
+ * is that choice read back rather than a fourth subject.
  *
  * Nothing here is saved, because nothing here is edited: every control writes the
  * preference as it is touched, which is what every other preference in this app does. There
@@ -127,13 +132,19 @@ class VaultSettingsModal(
         val vault by state.collectAsStateWithLifecycle()
         val stored by copies.collectAsStateWithLifecycle()
 
+        // The beat is carried by each row's own leading gap rather than by the column's
+        // arrangement. `Arrangement.spacedBy` puts its gap *between* children, and the wait is
+        // a child that leaves: it shrinks to nothing while the gap it stood in is still there,
+        // and that gap goes only once the row is dropped — so everything below hops by `RowGap`
+        // after the movement looked finished. Held as the row's own padding, the gap is inside
+        // the block that shrinks and leaves with it. The numbers are the ones `BackupRows`
+        // states, which is what keeps this sheet on the same beat as the screen behind it.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
                 .testTag("backup_vault_settings"),
-            verticalArrangement = Arrangement.spacedBy(RowGap),
         ) {
             Text(
                 text = stringResource(Res.string.backup_settings_title),
@@ -147,7 +158,7 @@ class VaultSettingsModal(
                 checked = vault.isPreventiveOn,
                 tag = "backup_preventive_switch",
                 onCheckedChange = { onAction(BackupAction.SetPreventiveOn(it)) },
-                modifier = Modifier.padding(top = GroupGap - RowGap),
+                modifier = Modifier.padding(top = GroupGap),
             )
 
             SwitchTile(
@@ -156,6 +167,7 @@ class VaultSettingsModal(
                 checked = vault.isPeriodicOn,
                 tag = "backup_periodic_switch",
                 onCheckedChange = { onAction(BackupAction.SetPeriodicOn(it)) },
+                modifier = Modifier.padding(top = RowGap),
             )
 
             AnimatedVisibility(visible = vault.isPeriodicOn) {
@@ -167,7 +179,7 @@ class VaultSettingsModal(
                     label = { intervalLabel(it) },
                     tag = { "backup_interval_${it.name}" },
                     onSelect = { onAction(BackupAction.SetInterval(it)) },
-                    modifier = Modifier.padding(top = GroupGap - RowGap),
+                    modifier = Modifier.padding(top = GroupGap),
                 )
             }
 
@@ -179,10 +191,14 @@ class VaultSettingsModal(
                 label = { retentionLabel(it) },
                 tag = { "backup_retention_${it.name}" },
                 onSelect = { onAction(BackupAction.SetRetention(it)) },
-                modifier = Modifier.padding(top = GroupGap - RowGap),
+                modifier = Modifier.padding(top = GroupGap),
             )
 
-            Outcome(vault = vault, copies = stored)
+            Outcome(
+                vault = vault,
+                copies = stored,
+                modifier = Modifier.padding(top = RowGap),
+            )
         }
     }
 }
@@ -202,17 +218,21 @@ class VaultSettingsModal(
  */
 @Composable
 private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier = Modifier) {
-    when (val outcome = vaultOutcome(vault, copies)) {
-        is VaultOutcome.KeepsEverything -> OutcomeBox(
-            value = stringResource(Res.string.backup_settings_retention_all),
-            hint = outcome.perMonthBytes?.let {
+    val outcome = vaultOutcome(vault, copies)
+
+    // What the box says and how it is painted are read off the same value and handed to one
+    // box, because keeping everything is this reading in its amber state rather than a second
+    // statement standing in the first one's place.
+    val keepsEverything = outcome is VaultOutcome.KeepsEverything
+
+    val (value, hint) = when (outcome) {
+        is VaultOutcome.KeepsEverything -> {
+            val rate = outcome.perMonthBytes?.let {
                 stringResource(Res.string.backup_settings_retention_all_hint, sizeLabel(it))
-            } ?: stringResource(Res.string.backup_settings_retention_all_by_hand),
-            tone = Warning,
-            container = Warning.copy(alpha = 0.14f),
-            tag = "backup_retention_all_warning",
-            modifier = modifier,
-        )
+            } ?: stringResource(Res.string.backup_settings_retention_all_by_hand)
+
+            stringResource(Res.string.backup_settings_retention_all) to rate
+        }
 
         is VaultOutcome.Keeps -> {
             val room = outcome.eachBytes?.let {
@@ -224,18 +244,26 @@ private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier =
                 )
             } ?: stringResource(Res.string.backup_settings_outcome_unknown)
 
-            OutcomeBox(
-                value = outcome.historyDays
-                    ?.let { stringResource(Res.string.backup_settings_outcome, it) }
-                    ?: room,
-                hint = outcome.historyDays?.let { room },
-                tone = colorScheme.onSurface,
-                container = colorScheme.background,
-                tag = "backup_settings_outcome",
-                modifier = modifier,
-            )
+            val history = outcome.historyDays?.let {
+                stringResource(Res.string.backup_settings_outcome, it)
+            }
+
+            (history ?: room) to history?.let { room }
         }
     }
+
+    OutcomeBox(
+        value = value,
+        hint = hint,
+        tone = if (keepsEverything) Warning else colorScheme.onSurface,
+        container = if (keepsEverything) {
+            Warning.copy(alpha = 0.14f)
+        } else {
+            colorScheme.background
+        },
+        tag = if (keepsEverything) "backup_retention_all_warning" else "backup_settings_outcome",
+        modifier = modifier,
+    )
 }
 
 /**
@@ -385,6 +413,13 @@ private fun <T> SegmentedChoice(
  * The ground is `background` and not `surfaceContainer` for the reason [SwitchTile]'s is.
  * The warning tone paints its own tint instead, and needs no such step: the amber *is* the
  * signal, which is why there is no icon beside it — a second mark for the same thing.
+ *
+ * **It is one box in every state, and that is what lets the change be carried rather than
+ * cut.** Two boxes chosen by a branch would be two nodes with nothing to animate between, and
+ * — since the states are told apart by [tag] — crossing between them would put both names in
+ * the tree at once, which is a thing a driver can catch. Here the reading, the tone and the
+ * tag are parameters of the same box, so exactly one name is ever present and the tint, the
+ * words and the height all move together.
  */
 @Composable
 private fun OutcomeBox(
@@ -395,28 +430,42 @@ private fun OutcomeBox(
     tag: String,
     modifier: Modifier = Modifier,
 ) {
+    val ground by animateColorAsState(container, label = "outcome_ground")
+    val valueTone by animateColorAsState(tone, label = "outcome_tone")
+
     Surface(
-        color = container,
+        color = ground,
         shape = TileShape,
         modifier = modifier
             .fillMaxWidth()
             .testTag(tag),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Text(
-                text = value,
-                style = typography.titleSmall,
-                color = tone,
-            )
-            if (hint != null) {
+        // The words fade in place and the tint ramps under them, so a tap on a picker reads
+        // as this box answering again rather than as a repaint of the area below it. The
+        // height a second line takes belongs to that same crossing — `AnimatedContent` carries
+        // its own size change — which is what keeps the box from resizing around text that has
+        // already swapped.
+        AnimatedContent(
+            targetState = value to hint,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "outcome",
+        ) { (currentValue, currentHint) ->
+            Column(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
                 Text(
-                    text = hint,
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
+                    text = currentValue,
+                    style = typography.titleSmall,
+                    color = valueTone,
                 )
+                if (currentHint != null) {
+                    Text(
+                        text = currentHint,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

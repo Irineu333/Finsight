@@ -31,7 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.VaultInterval
 import com.neoutils.finsight.domain.vault.VaultState
-import com.neoutils.finsight.domain.vault.copiesKept
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_settings_interval_hint
 import com.neoutils.finsight.resources.backup_settings_interval_title
@@ -43,6 +42,7 @@ import com.neoutils.finsight.resources.backup_settings_periodic_title
 import com.neoutils.finsight.resources.backup_settings_preventive_subtitle
 import com.neoutils.finsight.resources.backup_settings_preventive_title
 import com.neoutils.finsight.resources.backup_settings_retention_all
+import com.neoutils.finsight.resources.backup_settings_retention_all_by_hand
 import com.neoutils.finsight.resources.backup_settings_retention_all_hint
 import com.neoutils.finsight.resources.backup_settings_retention_title
 import com.neoutils.finsight.resources.backup_settings_title
@@ -78,31 +78,35 @@ import org.jetbrains.compose.resources.stringResource
  * the app cannot keep (design D5); the line under the choice says why in the same words a
  * person would.
  *
- * **The wait is shown only while the trigger that reads it is on.** One thing consults the
- * interval — the periodic trigger's question about time (`VaultPeriodicBackup`) — so with
- * that switch off it governs nothing, and a wait on screen would say that something happens
- * every so many days when nothing does. It arrives and leaves with the switch rather than
- * greying out: a disabled control still asserts that the setting matters, and this one
- * stops mattering entirely.
+ * **The wait is shown only while the trigger that reads it is on.** The periodic trigger's
+ * question about time is what consults the interval (`VaultPeriodicBackup`), so with that
+ * switch off nothing checks anything, and a row headed "check every" would name a rhythm the
+ * app has stopped keeping. It arrives and leaves with the switch rather than greying out: a
+ * disabled control still asserts that the setting matters, and this one stops mattering
+ * entirely.
  *
- * **How many copies are kept is a choice wherever they are kept.** One preference governs
- * both rungs and the sweep reads it, so the number on the picker is the number in force —
- * including the choice to remove nothing, which is stated in amber rather than prevented.
- * It is asked unconditionally because retention hangs off any capture that landed, whichever
- * trigger produced it (`BackupVault`).
+ * **How many copies are kept is asked in every state.** The sweep hangs off any capture that
+ * landed, whichever trigger produced it (`BackupVault`), so the limit is in force with the
+ * periodic trigger off, with the preventive trigger off, and with both — it is the one
+ * setting on this sheet that governs copies the vault has already written. That includes the
+ * choice to remove nothing, which is stated in amber rather than prevented, and the amber
+ * belongs to the choice rather than to any trigger.
  *
- * **The combination says what it produces.** "Three days" and "ten copies" are two abstract
- * numbers; "about a month of history, around 42 MB" is a decision — and the size is the
- * real one, averaged over the copies already taken, rather than a guess. It stands exactly
- * while both halves of the combination do: with no wait in force there is no combination,
- * and every sentence it could make — days of history, megabytes a month — is arithmetic on
- * a number that decides nothing.
+ * **What the settings produce is said as far as it can be sourced.** "Three days" and "ten
+ * copies" are two abstract numbers; "about a month of history, around 42 MB" is a decision —
+ * and the size is the real one, averaged over the copies already taken, rather than a guess.
+ * The readings have different sources and are worked out apart (`VaultOutcome`): the room a
+ * limit takes is that limit and that average, so it holds wherever the limit does, while a
+ * span of history and a rate per month need a wait as well and go quiet without one. A
+ * sentence half of which has lost its source is shortened, never dropped.
  *
  * **It is laid out on the beat both backup screens use** (`BackupRows`): the same corner,
  * the same gap between the rows of one group, and the wider gap only where a group opens.
- * Four groups stand here — the triggers, the wait, the limit, and what the two of them
- * produce together — of which the wait and the outcome come and go with the periodic
- * trigger, growing and collapsing rather than appearing under the reader's thumb.
+ * Three groups stand here — the two triggers, the wait, and the limit with what it produces
+ * — of which only the wait comes and goes, growing and collapsing rather than appearing
+ * under the reader's thumb. What the limit produces sits inside the limit's own group,
+ * against the picker that decides it, because it is that choice read back rather than a
+ * fourth subject.
  *
  * Nothing here is saved, because nothing here is edited: every control writes the
  * preference as it is touched, which is what every other preference in this app does. There
@@ -178,71 +182,60 @@ class VaultSettingsModal(
                 modifier = Modifier.padding(top = GroupGap - RowGap),
             )
 
-            AnimatedVisibility(visible = vault.isPeriodicOn) {
-                Outcome(
-                    vault = vault,
-                    copies = stored,
-                    modifier = Modifier.padding(top = GroupGap - RowGap),
-                )
-            }
+            Outcome(vault = vault, copies = stored)
         }
     }
 }
 
 /**
- * What the wait and the limit produce together: how far back the history reaches, and how
- * much room it takes.
+ * What the limit produces, and — while a wait is in force — how far back that reaches.
  *
- * The room is measured, not estimated — it is the average of the copies already written —
- * so a vault that has never captured says how far back it will reach and stays quiet about
- * the size rather than inventing one.
+ * The room is measured, not estimated: it is the average of the copies already written, so
+ * a vault that has never captured says so rather than inventing a size. The span and the
+ * rate per month are the readings that need a wait as well, and they are the ones that go
+ * quiet when the periodic trigger is off; what is left is stated on its own line rather than
+ * padded with a second sentence that has nothing behind it.
  *
  * Keeping everything is not prevented and is not silent: it turns retention into something
- * the user switched off rather than something they put up with, and somebody who chooses it
- * is owed the rate their copies pile up at.
- *
- * Both readings are measured in waits, so both belong to a vault whose periodic trigger is
- * on — which is why the caller shows this beside the wait and not without it. A rate stated
- * per month out of an interval nothing consults would be a number with no source.
+ * the user switched off rather than something they put up with, and it says so wherever the
+ * choice is made, because the limit is read behind every capture whatever set it off.
  */
 @Composable
 private fun Outcome(vault: VaultState, copies: VaultCopies, modifier: Modifier = Modifier) {
-    val kept = vault.copiesKept()
-    val days = VaultInterval.nearest(vault.interval).duration.inWholeDays.toInt()
-    val average = if (copies.count > 0) copies.totalBytes / copies.count else 0L
-
-    if (kept == null) {
-        OutcomeBox(
+    when (val outcome = vaultOutcome(vault, copies)) {
+        is VaultOutcome.KeepsEverything -> OutcomeBox(
             value = stringResource(Res.string.backup_settings_retention_all),
-            hint = stringResource(
-                Res.string.backup_settings_retention_all_hint,
-                sizeLabel(average * (DAYS_PER_MONTH / days.coerceAtLeast(1))),
-            ),
+            hint = outcome.perMonthBytes?.let {
+                stringResource(Res.string.backup_settings_retention_all_hint, sizeLabel(it))
+            } ?: stringResource(Res.string.backup_settings_retention_all_by_hand),
             tone = Warning,
             container = Warning.copy(alpha = 0.14f),
             tag = "backup_retention_all_warning",
             modifier = modifier,
         )
-        return
-    }
 
-    OutcomeBox(
-        value = stringResource(Res.string.backup_settings_outcome, days * kept),
-        hint = if (average > 0) {
-            stringResource(
-                Res.string.backup_settings_outcome_size,
-                kept,
-                sizeLabel(average),
-                sizeLabel(average * kept),
+        is VaultOutcome.Keeps -> {
+            val room = outcome.eachBytes?.let {
+                stringResource(
+                    Res.string.backup_settings_outcome_size,
+                    outcome.copies,
+                    sizeLabel(it),
+                    sizeLabel(it * outcome.copies),
+                )
+            } ?: stringResource(Res.string.backup_settings_outcome_unknown)
+
+            OutcomeBox(
+                value = outcome.historyDays
+                    ?.let { stringResource(Res.string.backup_settings_outcome, it) }
+                    ?: room,
+                hint = outcome.historyDays?.let { room },
+                tone = colorScheme.onSurface,
+                container = colorScheme.background,
+                tag = "backup_settings_outcome",
+                modifier = modifier,
             )
-        } else {
-            stringResource(Res.string.backup_settings_outcome_unknown)
-        },
-        tone = colorScheme.onSurface,
-        container = colorScheme.background,
-        tag = "backup_settings_outcome",
-        modifier = modifier,
-    )
+        }
+    }
 }
 
 /**
@@ -382,8 +375,12 @@ private fun <T> SegmentedChoice(
 }
 
 /**
- * A statement the sheet makes about itself: the reading of the combination on one line, and
- * why it comes out that way on the next.
+ * A statement the sheet makes about itself: the reading on one line and, where there is a
+ * second thing to say about it, why it comes out that way on the next.
+ *
+ * [hint] is null where the settings in force source one reading and not two. An empty line
+ * would be the box asserting that something is missing, when what is there is simply the
+ * whole of what can be said.
  *
  * The ground is `background` and not `surfaceContainer` for the reason [SwitchTile]'s is.
  * The warning tone paints its own tint instead, and needs no such step: the amber *is* the
@@ -392,7 +389,7 @@ private fun <T> SegmentedChoice(
 @Composable
 private fun OutcomeBox(
     value: String,
-    hint: String,
+    hint: String?,
     tone: Color,
     container: Color,
     tag: String,
@@ -414,14 +411,13 @@ private fun OutcomeBox(
                 style = typography.titleSmall,
                 color = tone,
             )
-            Text(
-                text = hint,
-                style = typography.bodySmall,
-                color = colorScheme.onSurfaceVariant,
-            )
+            if (hint != null) {
+                Text(
+                    text = hint,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
-
-/** Long enough to be a month for a sentence about how fast the copies pile up. */
-private const val DAYS_PER_MONTH = 30

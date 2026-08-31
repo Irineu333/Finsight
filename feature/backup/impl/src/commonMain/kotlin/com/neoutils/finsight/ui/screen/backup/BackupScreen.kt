@@ -408,6 +408,12 @@ private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
  * the copies that exist are still there and still valid. Red is what a vault that can no
  * longer write would deserve.
  *
+ * **Whether it has aged is the vault's own reading and not a second one taken here**
+ * ([VaultState.isLastCopyOverdue]). The wait belongs to the periodic trigger, so with that
+ * trigger off nothing was going to capture on a schedule and the sentence the amber carries
+ * — open the app more often and a new copy is taken — is one the app would not keep. The
+ * instant itself is shown in every case, which is the whole of what design D12 asks for.
+ *
  * The coverage sentence is here and not in a card of its own because it is the consequence
  * of the destination named two lines above it (`automatic-backup` spec), and it is only
  * ever true while there is a vault to have a destination.
@@ -421,7 +427,7 @@ private fun LastBackupCard(
 ) {
     val dateFormats = LocalDateFormats.current
     val last = vault.lastCapturedAt
-    val overdue = last != null && now - last >= vault.interval
+    val overdue = vault.isLastCopyOverdue(now)
     val tone = when {
         last == null -> colorScheme.onSurfaceVariant
         overdue -> Warning

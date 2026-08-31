@@ -1028,11 +1028,11 @@
     <string name="backup_copies_one">1 copy kept</string>
     <string name="backup_copies_many">%1$d copies kept</string>
     <string name="backup_settings_title">Vault settings</string>
-    <string name="backup_settings_subtitle">What triggers a copy, and how often</string>
+    <string name="backup_settings_subtitle">What triggers a copy, and how many are kept</string>
     <string name="backup_settings_preventive_title">Keep a copy before deleting</string>
     <string name="backup_settings_preventive_subtitle">Transactions, installments, invoices, currencies and rates.</string>
     <string name="backup_settings_periodic_title">Keep a copy when you open the app</string>
-    <string name="backup_settings_periodic_subtitle">One copy on the first opening after the interval below.</string>
+    <string name="backup_settings_periodic_subtitle">One copy on the first opening after an interval you choose.</string>
     <string name="backup_settings_interval_title">Check every</string>
     <string name="backup_settings_interval_hint">The copy happens when you open the app after that time — the system does not let the app work on its own in the background.</string>
     <string name="backup_settings_retention_title">How many copies to keep</string>
@@ -1041,6 +1041,7 @@
     <string name="backup_settings_outcome_unknown">How much room it takes will be known after the first copy.</string>
     <string name="backup_settings_retention_all">No copy will be deleted</string>
     <string name="backup_settings_retention_all_hint">At this rate about %1$s a month piles up, and you are the one who deletes what you no longer want.</string>
+    <string name="backup_settings_retention_all_by_hand">You are the one who deletes what you no longer want.</string>
     <string name="backup_retention_five">5</string>
     <string name="backup_retention_ten">10</string>
     <string name="backup_retention_twenty">20</string>

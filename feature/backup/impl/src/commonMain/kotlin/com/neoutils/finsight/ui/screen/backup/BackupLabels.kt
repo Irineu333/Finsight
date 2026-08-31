@@ -158,10 +158,11 @@ fun destinationLabel(destination: VaultDestination): String = when (destination)
 
 /**
  * What a month is worth when a span is being said out loud: a round thirty days, and not a
- * calendar. Nothing here is a date arithmetic — it is the width of the bucket "months ago",
- * and the exact stamp is on the row beside it.
+ * calendar. No date arithmetic passes through it — it is the width of the bucket "months
+ * ago" and the divisor of a rate stated per month, and the exact stamp is on the row beside
+ * it.
  */
-private const val DAYS_PER_MONTH = 30L
+internal const val DAYS_PER_MONTH = 30L
 
 private const val BYTES_PER_KB = 1_024L
 private const val BYTES_PER_MB = 1_024L * 1_024L

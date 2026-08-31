@@ -1029,11 +1029,11 @@
     <string name="backup_copies_one">1 cópia guardada</string>
     <string name="backup_copies_many">%1$d cópias guardadas</string>
     <string name="backup_settings_title">Ajustes do cofre</string>
-    <string name="backup_settings_subtitle">O que dispara uma cópia, e de quanto em quanto tempo</string>
+    <string name="backup_settings_subtitle">O que dispara uma cópia e quantas ficam guardadas</string>
     <string name="backup_settings_preventive_title">Guardar antes de excluir</string>
     <string name="backup_settings_preventive_subtitle">Lançamentos, parcelamentos, faturas, moedas e cotações.</string>
     <string name="backup_settings_periodic_title">Guardar quando você abrir o app</string>
-    <string name="backup_settings_periodic_subtitle">Uma cópia na primeira abertura depois do prazo abaixo.</string>
+    <string name="backup_settings_periodic_subtitle">Uma cópia na primeira abertura depois de um prazo que você escolhe.</string>
     <string name="backup_settings_interval_title">Verificar a cada</string>
     <string name="backup_settings_interval_hint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</string>
     <string name="backup_settings_retention_title">Quantas cópias manter</string>
@@ -1042,6 +1042,7 @@
     <string name="backup_settings_outcome_unknown">O quanto ocupa será sabido depois da primeira cópia.</string>
     <string name="backup_settings_retention_all">Nenhuma cópia será apagada</string>
     <string name="backup_settings_retention_all_hint">Nesse ritmo, cerca de %1$s por mês se acumulam — e é você quem apaga o que não quiser mais.</string>
+    <string name="backup_settings_retention_all_by_hand">É você quem apaga o que não quiser mais.</string>
     <string name="backup_retention_five">5</string>
     <string name="backup_retention_ten">10</string>
     <string name="backup_retention_twenty">20</string>

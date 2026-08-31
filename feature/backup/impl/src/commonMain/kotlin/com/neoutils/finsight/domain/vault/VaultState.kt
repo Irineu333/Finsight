@@ -166,6 +166,24 @@ data class VaultState(
         val last = lastCapturedAt ?: return true
         return now - last >= interval
     }
+
+    /**
+     * Whether the copy the screen names has been standing longer than the trigger that
+     * would replace it allows — the sign that the protection may have stopped (design D12).
+     *
+     * It is [isIntervalDue] with the two conditions a *sign* has and a *decision to
+     * capture* does not. A vault that has never captured is due but not late: the screen
+     * says so in words of its own, and "never" and "a long time ago" lead to different
+     * actions. And late is measured against the wait, which is the periodic trigger's own
+     * question — with that trigger off nothing was going to capture on a clock, so a copy
+     * standing while the vault captures only before deletions is exactly as recent as the
+     * archive let it be.
+     *
+     * The comparison itself is not restated here, and that is the point: a second reading
+     * of the same wait is a second reading that can disagree with the trigger's.
+     */
+    fun isLastCopyOverdue(now: Instant): Boolean =
+        isPeriodicOn && lastCapturedAt != null && isIntervalDue(now)
 }
 
 /**

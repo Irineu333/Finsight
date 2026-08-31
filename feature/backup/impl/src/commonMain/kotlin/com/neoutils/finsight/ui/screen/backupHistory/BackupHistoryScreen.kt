@@ -91,6 +91,7 @@ import com.neoutils.finsight.ui.screen.backup.destinationLabel
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
+import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.UiText
@@ -419,6 +420,10 @@ private fun Actions(
  * The glyph is the only thing the spinner replaces. A control whose label vanished while it
  * ran would be a second thing to read on the frame the person is waiting on, and the label
  * is what identifies which of the two is busy.
+ *
+ * How far the state layer moves from rest is [BackgroundTileRipple]'s to say, not this
+ * tile's: Material's own state-layer alphas painted white over `surfaceContainer`, in the
+ * dark scheme, read as the card replacing itself rather than responding to a touch.
  */
 @Composable
 private fun ActionTile(
@@ -432,37 +437,39 @@ private fun ActionTile(
 ) {
     val tone = if (enabled) colorScheme.primary else colorScheme.onSurfaceVariant
 
-    Surface(
-        color = colorScheme.surfaceContainer,
-        shape = TileShape,
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.testTag(tag),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    BackgroundTileRipple {
+        Surface(
+            color = colorScheme.surfaceContainer,
+            shape = TileShape,
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier.testTag(tag),
         ) {
-            if (isRunning) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    color = tone,
-                    strokeWidth = 2.dp,
-                )
-            } else {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = tone,
-                    modifier = Modifier.size(18.dp),
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isRunning) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = tone,
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = tone,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                Text(
+                    text = label,
+                    style = typography.labelLarge,
+                    color = if (enabled) colorScheme.onSurface else colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                text = label,
-                style = typography.labelLarge,
-                color = if (enabled) colorScheme.onSurface else colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -485,6 +492,10 @@ private fun ActionTile(
  * count over a folder nothing has read would be design D9's forbidden sentence at the top of
  * the screen that is most about it.
  *
+ * How far the state layer moves from rest is [BackgroundTileRipple]'s to say, not this
+ * card's: Material's own state-layer alphas painted white over `surfaceContainer`, in the
+ * dark scheme, read as the card replacing itself rather than responding to a touch.
+ *
  * @param onChange null on a platform that cannot raise a folder picker at all, where there
  * is one rung and therefore nothing to choose between. It is not a judgement about folders
  * or providers, which the app never makes (design D16).
@@ -496,67 +507,69 @@ private fun DestinationHeader(
     onChange: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        color = colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag("backup_history_destination"),
-    ) {
-        Row(
-            // The whole card is the target where there is one, so the eye sees one control
-            // where a screen reader announces one — and where there is nothing to choose
-            // between, it is a header and is announced as one rather than as a button
-            // nobody may press.
-            modifier = Modifier
-                .then(
-                    if (onChange != null) {
-                        Modifier.clickable(role = Role.Button, onClick = onChange)
-                    } else {
-                        Modifier
-                    }
-                )
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    BackgroundTileRipple {
+        Surface(
+            color = colorScheme.surfaceContainer,
+            shape = RoundedCornerShape(16.dp),
+            modifier = modifier
+                .fillMaxWidth()
+                .testTag("backup_history_destination"),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.FolderOpen,
-                contentDescription = null,
-                tint = colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+            Row(
+                // The whole card is the target where there is one, so the eye sees one control
+                // where a screen reader announces one — and where there is nothing to choose
+                // between, it is a header and is announced as one rather than as a button
+                // nobody may press.
+                modifier = Modifier
+                    .then(
+                        if (onChange != null) {
+                            Modifier.clickable(role = Role.Button, onClick = onChange)
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // The question the card answers, written out, so that somebody looking for
-                // where their copies are kept finds the words they were looking for.
-                Text(
-                    text = stringResource(Res.string.backup_destination_title),
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
+                Icon(
+                    imageVector = Icons.Outlined.FolderOpen,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
                 )
-                Text(
-                    text = where,
-                    style = typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface,
-                )
-                if (summary != null) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    // The question the card answers, written out, so that somebody looking for
+                    // where their copies are kept finds the words they were looking for.
                     Text(
-                        text = summary,
+                        text = stringResource(Res.string.backup_destination_title),
                         style = typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
                     )
+                    Text(
+                        text = where,
+                        style = typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                    )
+                    if (summary != null) {
+                        Text(
+                            text = summary,
+                            style = typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
-            }
-            if (onChange != null) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                )
+                if (onChange != null) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -618,6 +631,12 @@ private fun MonthTitle(month: YearMonth, thisYear: Int, modifier: Modifier = Mod
  * carries no mark of its own for that: a glyph on the right would promise a menu that
  * belongs to it, when what opens is the sheet the whole row opens. What stands there is the
  * spinner, while this copy is the one being worked on.
+ *
+ * How far the state layer moves from rest is [BackgroundTileRipple]'s to say, not this row's
+ * — on `surfaceContainer` and equally on the current copy's tinted ground, since Material
+ * derives the ripple from whichever colour is actually on screen: Material's own state-layer
+ * alphas painted white over either, in the dark scheme, read as the row replacing itself
+ * rather than responding to a touch.
  */
 @Composable
 private fun StoredBackupRow(
@@ -633,89 +652,91 @@ private fun StoredBackupRow(
     val dateFormats = LocalDateFormats.current
     val isFromMigration = backup.name == PRE_MIGRATION_BACKUP_NAME
 
-    Surface(
-        color = if (isCurrent) {
-            colorScheme.primary.copy(alpha = 0.10f)
-        } else {
-            colorScheme.surfaceContainer
-        },
-        shape = TileShape,
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag("backup_copy"),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    BackgroundTileRipple {
+        Surface(
+            color = if (isCurrent) {
+                colorScheme.primary.copy(alpha = 0.10f)
+            } else {
+                colorScheme.surfaceContainer
+            },
+            shape = TileShape,
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier
+                .fillMaxWidth()
+                .testTag("backup_copy"),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Inventory2,
-                contentDescription = null,
-                tint = when {
-                    isCurrent -> colorScheme.primary
-                    isFromMigration -> Warning
-                    else -> colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.size(20.dp),
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = dateFormats.formatDividerDate(
-                        instant = backup.savedAt,
-                        today = stringResource(Res.string.backup_today),
-                        yesterday = stringResource(Res.string.backup_yesterday),
-                    ) + ", " + dateFormats.formatInstantTime(backup.savedAt),
-                    style = typography.titleSmall,
-                    color = colorScheme.onSurface,
+                Icon(
+                    imageVector = Icons.Outlined.Inventory2,
+                    contentDescription = null,
+                    tint = when {
+                        isCurrent -> colorScheme.primary
+                        isFromMigration -> Warning
+                        else -> colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(20.dp),
                 )
-                // Set in tabular figures, so that a column of spans and sizes lines up on
-                // its digits: the line is read down the list rather than row by row.
-                Text(
-                    text = ageLabel(backup.savedAt, now) + " · " + sizeLabel(backup.sizeInBytes),
-                    style = typography.bodySmall.copy(
-                        fontFeatureSettings = TabularFigures,
-                    ),
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.testTag("backup_copy_age"),
-                )
-                // The second line is spent on whichever of the two this row has to say,
-                // and the current copy's takes it: a row saying where the app is standing
-                // is answering the question somebody opened this screen with.
-                if (isCurrent) {
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
-                        text = stringResource(Res.string.backup_history_current_subtitle),
-                        style = typography.bodySmall,
-                        color = colorScheme.primary,
-                        modifier = Modifier.testTag("backup_copy_current_subtitle"),
+                        text = dateFormats.formatDividerDate(
+                            instant = backup.savedAt,
+                            today = stringResource(Res.string.backup_today),
+                            yesterday = stringResource(Res.string.backup_yesterday),
+                        ) + ", " + dateFormats.formatInstantTime(backup.savedAt),
+                        style = typography.titleSmall,
+                        color = colorScheme.onSurface,
                     )
-                } else if (isFromMigration) {
+                    // Set in tabular figures, so that a column of spans and sizes lines up on
+                    // its digits: the line is read down the list rather than row by row.
                     Text(
-                        text = stringResource(Res.string.backup_history_migration_subtitle),
-                        style = typography.bodySmall,
+                        text = ageLabel(backup.savedAt, now) + " · " + sizeLabel(backup.sizeInBytes),
+                        style = typography.bodySmall.copy(
+                            fontFeatureSettings = TabularFigures,
+                        ),
                         color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("backup_copy_age"),
+                    )
+                    // The second line is spent on whichever of the two this row has to say,
+                    // and the current copy's takes it: a row saying where the app is standing
+                    // is answering the question somebody opened this screen with.
+                    if (isCurrent) {
+                        Text(
+                            text = stringResource(Res.string.backup_history_current_subtitle),
+                            style = typography.bodySmall,
+                            color = colorScheme.primary,
+                            modifier = Modifier.testTag("backup_copy_current_subtitle"),
+                        )
+                    } else if (isFromMigration) {
+                        Text(
+                            text = stringResource(Res.string.backup_history_migration_subtitle),
+                            style = typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                when {
+                    isCurrent -> CurrentTag()
+                    isFromMigration -> MigrationTag()
+                    isNewest -> NewestTag()
+                }
+
+                if (isWorking) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = colorScheme.onSurfaceVariant,
+                        strokeWidth = 2.dp,
                     )
                 }
-            }
-
-            when {
-                isCurrent -> CurrentTag()
-                isFromMigration -> MigrationTag()
-                isNewest -> NewestTag()
-            }
-
-            if (isWorking) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    color = colorScheme.onSurfaceVariant,
-                    strokeWidth = 2.dp,
-                )
             }
         }
     }

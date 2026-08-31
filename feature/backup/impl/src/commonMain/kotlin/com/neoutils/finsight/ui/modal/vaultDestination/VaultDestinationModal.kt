@@ -34,6 +34,7 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.backup.GroupGap
 import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TileShape
+import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -122,6 +123,11 @@ class VaultDestinationModal(
  * The whole card is `selectable` with [Role.RadioButton], so there is one target where the
  * eye sees one choice and one thing announced to a screen reader. The glyph carries the
  * selection and takes no callback of its own.
+ *
+ * How far the state layer moves from rest is [BackgroundTileRipple]'s to say, not this
+ * tile's: the card sits on `background`, the darkest ground the dark scheme has, and
+ * Material's own state-layer alphas over that ground read as the card replacing itself
+ * rather than responding to a touch.
  */
 @Composable
 private fun DestinationTile(
@@ -132,42 +138,44 @@ private fun DestinationTile(
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        color = colorScheme.background,
-        shape = TileShape,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier
-                .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
-                .testTag(tag)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top,
+    BackgroundTileRipple {
+        Surface(
+            color = colorScheme.background,
+            shape = TileShape,
+            modifier = modifier.fillMaxWidth(),
         ) {
-            Icon(
-                imageVector = if (isSelected) {
-                    Icons.Outlined.CheckCircle
-                } else {
-                    Icons.Outlined.RadioButtonUnchecked
-                },
-                contentDescription = null,
-                tint = if (isSelected) colorScheme.primary else colorScheme.onSurfaceVariant,
+            Row(
                 modifier = Modifier
-                    .padding(top = 2.dp)
-                    .size(20.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = title,
-                    style = typography.titleMedium,
-                    color = colorScheme.onSurface,
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
+                    .testTag(tag)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(
+                    imageVector = if (isSelected) {
+                        Icons.Outlined.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                    contentDescription = null,
+                    tint = if (isSelected) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .size(20.dp),
                 )
-                Text(
-                    text = coverage,
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = title,
+                        style = typography.titleMedium,
+                        color = colorScheme.onSurface,
+                    )
+                    Text(
+                        text = coverage,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

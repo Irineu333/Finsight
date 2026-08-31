@@ -39,6 +39,11 @@ Ela MUST NOT entrar na contagem da retenção, e SHALL ser substituída apenas p
 seguinte — o dano que ela existe para desfazer é uma corrupção que conclui sem erro e se descobre
 dias depois.
 
+Morar no armazenamento do app MUST NOT torná-la invisível para quem escolheu uma pasta: o histórico
+SHALL listá-la qualquer que seja o destino em vigor, lendo-a de onde ela está. Uma cópia que o app
+escreve e não mostra não protege ninguém — é justamente ela que se procura quando um número deixou
+de bater depois de uma atualização. Trocar de destino MUST NOT levá-la junto.
+
 Uma captura que falhe MUST NOT impedir a atualização de concluir nem o app de abrir.
 
 #### Scenario: Atualização com migração
@@ -56,6 +61,11 @@ Uma captura que falhe MUST NOT impedir a atualização de concluir nem o app de 
 #### Scenario: Atualização sem migração
 - **WHEN** o app é atualizado e a versão de schema não muda
 - **THEN** nenhuma cópia é capturada por esse gatilho
+
+#### Scenario: A cópia aparece mesmo com uma pasta escolhida
+- **WHEN** o histórico é aberto com as cópias indo para uma pasta apontada pelo usuário
+- **THEN** a cópia anterior à última migração é listada e pode ser restaurada, mesmo estando no
+  armazenamento do app, e trocar de pasta não a copia para lá
 
 ### Requirement: O periódico captura na abertura, e a tela promete isso
 

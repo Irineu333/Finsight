@@ -327,6 +327,13 @@ migração. Se entrasse, três capturas periódicas depois ela sumiria — justa
 ela é a única coisa que salva: a migração concluiu sem erro técnico e escreveu dado errado, e isso
 se descobre dias depois.
 
+Ela mora no armazenamento do app mesmo quando o destino escolhido é uma pasta, porque na subida do
+app a pasta pode não estar acessível — e por isso o histórico a lista **de lá** quando o degrau em
+vigor é o da pasta. Sem essa exceção ela seria escrita e nunca vista, que é a cópia invisível
+recusada em D1, e a única saída seria trocar o destino de volta para dentro do app. Trocar de pasta
+também não a leva junto: um segundo arquivo com o nome reservado dela seria um arquivo que a
+retenção nunca remove, no lugar onde ela não deveria estar.
+
 ### D11 — A captura anterior à migração vive em `:core:database`, e recebe o destino de fora
 
 O mecanismo é do banco, no vocabulário do módulo que já não conhece a palavra "backup" (D7 do

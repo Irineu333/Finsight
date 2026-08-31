@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
+import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -74,7 +75,7 @@ class VaultMigration(
         to: VaultLocation,
     ): List<StoredBackup> {
         if (from == to) return emptyList()
-        return withinRetention(destinations.rungFor(from).list().getOrNull().orEmpty())
+        return toCarry(destinations.rungFor(from).list().getOrNull().orEmpty())
     }
 
     /**
@@ -106,7 +107,7 @@ class VaultMigration(
             copies = 0,
             error = BackupError.EXPORT_FAILED,
         )
-        val copies = withinRetention(listed)
+        val copies = toCarry(listed)
         if (copies.isEmpty()) return MigrationOutcome.NothingToCarry
 
         var carried = 0
@@ -185,16 +186,26 @@ class VaultMigration(
     }
 
     /**
-     * The newest copies the destination's retention holds, or all of them where the person
-     * has asked that nothing be removed — newest first, as a listing answers.
+     * What a listing of the source offers a carry: the newest copies the destination's
+     * retention holds, or all of them where the person has asked that nothing be removed —
+     * newest first, as a listing answers — and never the copy taken before a migration.
      *
      * A listing already answers newest first ([com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST]),
      * so the limit is a `take` and never a second ordering — two ways of deciding which copy
      * is the newest is two ways of disagreeing about which one is dropped. Which end the
      * copying starts at is [carry]'s, and it is the other one.
+     *
+     * The copy taken before a migration stays where it is because that is where it belongs:
+     * it goes into the app's own storage whatever destination is chosen, since on the way up
+     * a folder may not be reachable. Carried into a folder it would be a second file under
+     * the one name reserved for it — a name retention refuses to sweep, so nothing would
+     * ever remove it — and it is not lost by staying: a destination that is not the app's
+     * own storage lists it from there ([VaultDestinations.list]).
      */
-    private fun withinRetention(copies: List<StoredBackup>): List<StoredBackup> =
-        state.observe().value.copiesKept()?.let(copies::take) ?: copies
+    private fun toCarry(copies: List<StoredBackup>): List<StoredBackup> {
+        val dated = copies.filterNot { it.name == PRE_MIGRATION_BACKUP_NAME }
+        return state.observe().value.copiesKept()?.let(dated::take) ?: dated
+    }
 }
 
 /**

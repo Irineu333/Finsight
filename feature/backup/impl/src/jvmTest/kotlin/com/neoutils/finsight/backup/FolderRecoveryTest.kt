@@ -52,6 +52,7 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.russhwolf.settings.MapSettings
 import java.io.File
@@ -1301,6 +1302,93 @@ class FolderRecoveryTest {
 
         val back = captureSomethingNew("milk")
         assertEquals(listOf(back), namesIn(chosen), "the copies did not go back to the folder")
+    }
+
+    // ------------------------- D10 · the copy taken before a migration, and where it is read
+
+    /**
+     * The file a migration leaves behind, made the way one is: a real archive of this app,
+     * under the one name reserved for it, in the app's own storage — which is where it goes
+     * whatever destination has been chosen, because on the way up a folder may not be there.
+     */
+    private suspend fun migrationCopyInApp(): String {
+        val captured = temporary("pre-migration").absolutePath
+        live.captureInto(destinationPath = captured, appVersion = "1.2.3", platform = "desktop")
+        appStorageFolder.mkdirs()
+        File(captured).copyTo(File(appStorageFolder, PRE_MIGRATION_BACKUP_NAME), overwrite = true)
+        return PRE_MIGRATION_BACKUP_NAME
+    }
+
+    /**
+     * Written where a folder cannot reach and then left out of the listing, this copy would be
+     * design D1's invisible copy — taken, never shown, never restorable, for exactly the person
+     * who chose a folder. It is listed from where it lives, alongside what the folder holds.
+     */
+    @Test
+    fun `the copy taken before a migration is listed while a folder is in force`() = runTest {
+        state.setOn(true)
+        pointAt(chosen)
+        val inFolder = captureSomethingNew("coffee")
+        val fromMigration = migrationCopyInApp()
+
+        assertEquals(
+            listOf(fromMigration, inFolder).sorted(),
+            destinations.list().getOrNull().orEmpty().map { it.name }.sorted(),
+            "the folder's listing left the pre-migration copy out",
+        )
+        assertEquals(listOf(inFolder), namesIn(chosen), "it was written into the folder itself")
+    }
+
+    /**
+     * Reading and removing it have to reach the file, and the file is not where the vault is
+     * pointed. A router that sent either to the rung in force would answer about a copy that is
+     * not the one on the screen — the removal saying *done* over a file still sitting in the
+     * app, or refusing, and leaving nobody able to clear it at all.
+     */
+    @Test
+    fun `the copy taken before a migration is read and removed where it lives`() = runTest {
+        state.setOn(true)
+        pointAt(chosen)
+        val inFolder = captureSomethingNew("coffee")
+        migrationCopyInApp()
+
+        val copy = destinations.list().getOrNull().orEmpty()
+            .first { it.name == PRE_MIGRATION_BACKUP_NAME }
+
+        val readOut = temporary("read-out").absolutePath
+        assertEquals(true, destinations.copyOut(copy, readOut).getOrNull(), "it could not be read")
+        assertTrue(File(readOut).length() > 0, "nothing came out of it")
+
+        assertEquals(true, destinations.remove(copy).getOrNull(), "it refused to be removed")
+        assertEquals(emptyList(), namesInApp(), "the file stayed inside the app")
+        assertEquals(listOf(inFolder), namesIn(chosen), "the folder lost a copy to it")
+    }
+
+    /**
+     * Carried into a folder it would be a second file under the one name retention refuses to
+     * sweep — immortal, in the place the spec says it must not be. It stays where it belongs,
+     * and the listing above is what keeps it reachable from there.
+     */
+    @Test
+    fun `a carry leaves the copy taken before a migration behind`() = runTest {
+        state.setOn(true)
+        val dated = List(THREE) { captureSomethingNew("entry $it") }.sorted()
+        val fromMigration = migrationCopyInApp()
+
+        pointAt(chosen)
+
+        assertEquals(
+            dated,
+            migration.carriable(appStorageLocation, folderLocation()).map { it.name }.sorted(),
+            "the pre-migration copy was offered to be carried",
+        )
+        assertEquals(
+            MigrationOutcome.Carried(THREE),
+            migration.carry(from = appStorageLocation, to = folderLocation()),
+        )
+
+        assertEquals(dated, namesIn(chosen), "the pre-migration copy went into the folder")
+        assertTrue(fromMigration in namesInApp(), "it was taken from where it belongs")
     }
 
     private companion object {

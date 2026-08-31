@@ -14,6 +14,7 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
@@ -106,10 +107,36 @@ class VaultDestinationsTest {
         destinations.copyOut(copy, "out")
         destinations.remove(copy)
 
+        // The extra `app.list` is the second half of listing a folder: the copy taken before
+        // a migration lives in the app's own storage whatever destination is chosen, and a
+        // listing of the folder has to go and get it, or it is written and never seen. Only
+        // the listing reaches across — the write goes to the folder, and so do a read and a
+        // removal of a copy that is not that one.
         assertEquals(
-            listOf("folder.put", "folder.list", "folder.copyOut", "folder.remove"),
+            listOf("folder.put", "folder.list", "app.list", "folder.copyOut", "folder.remove"),
             calls,
         )
+    }
+
+    /**
+     * A copy is read and removed on the rung it is actually on, and for one of them that is
+     * not the rung in force: the copy taken before a migration is in the app's own storage
+     * even while the vault is pointed at a folder. Routing it by the rung in force would
+     * answer about a file that is not the one on the screen — a removal reporting *done*
+     * over a file still sitting in the app, or refusing over one that is not there.
+     */
+    @Test
+    fun `the copy taken before a migration is read and removed inside the app`() = runTest {
+        val fromMigration =
+            StoredBackup(PRE_MIGRATION_BACKUP_NAME, Instant.fromEpochMilliseconds(0), 0)
+
+        state.setDestination(VaultDestination.USER_FOLDER)
+        calls.clear()
+
+        destinations.copyOut(fromMigration, "out")
+        destinations.remove(fromMigration)
+
+        assertEquals(listOf("app.copyOut", "app.remove"), calls)
     }
 
     /**
@@ -125,7 +152,8 @@ class VaultDestinationsTest {
         state.setDestination(VaultDestination.APP_STORAGE)
         destinations.list()
 
-        assertEquals(listOf("app.list", "folder.list", "app.list"), calls)
+        // The folder's listing is two calls, not one — see the note above.
+        assertEquals(listOf("app.list", "folder.list", "app.list", "app.list"), calls)
     }
 
     /**

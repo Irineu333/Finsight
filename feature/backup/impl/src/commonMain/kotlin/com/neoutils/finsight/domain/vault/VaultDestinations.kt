@@ -6,7 +6,9 @@ import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
 import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +53,12 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * Nothing is copied by the rung changing — see [VaultMigration], which is offered and never
  * performed on its own. The copies on the rung left behind are left exactly where they are.
+ *
+ * **One copy is read from outside the rung in force, and only one**: the one taken before a
+ * migration, which goes into the app's own storage whatever destination is chosen because on
+ * the way up a folder may not be reachable. A listing goes and gets it, and a read or a
+ * removal of it addresses the app's own storage — see [list] and [holderOf]. Nothing is ever
+ * *written* anywhere but the rung in force.
  */
 class VaultDestinations(
     private val state: BackupVaultRepository,
@@ -115,18 +123,63 @@ class VaultDestinations(
         else -> UnreachableDestination
     }
 
+    /**
+     * Always the rung in force. The copy taken before a migration is the one file this
+     * router reads from somewhere else, and it is never written from here — it carries a
+     * reserved name nothing else asks for, and the place it goes is the migration's own
+     * (see [MigrationCopyPlace]).
+     */
     override suspend fun put(
         capturedPath: String,
         name: String,
     ): Either<BackupError, StoredBackup> = inForce.put(capturedPath, name)
 
-    override suspend fun list(): Either<BackupError, List<StoredBackup>> = inForce.list()
+    /**
+     * The rung in force, plus the copy taken before a migration wherever that rung is not
+     * the app's own storage.
+     *
+     * That copy goes into the app's own storage whatever destination is chosen, because on
+     * the way up a folder may not be reachable and the capture must not depend on one — and
+     * the copy exists for a migration that finished without an error and wrote something
+     * wrong, which is found out days later. Listing only the rung in force would leave it
+     * written and unreachable for exactly the person who chose a folder: never shown, never
+     * restorable, which is the invisible copy design D1 refuses.
+     *
+     * It joins the listing rather than replacing anything, and joins it in order, so
+     * everything reading a destination — the kept-copies screen, the line on the backup
+     * screen counting what is there — answers the same. Retention does not count it and
+     * never sweeps it; that exclusion is [BackupVault]'s and is by the same reserved name.
+     */
+    override suspend fun list(): Either<BackupError, List<StoredBackup>> =
+        inForce.list().map { copies -> copies.withPreMigrationCopy() }
 
     override suspend fun copyOut(
         backup: StoredBackup,
         destinationPath: String,
-    ): Either<BackupError, Boolean> = inForce.copyOut(backup, destinationPath)
+    ): Either<BackupError, Boolean> = holderOf(backup).copyOut(backup, destinationPath)
 
     override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> =
-        inForce.remove(backup)
+        holderOf(backup).remove(backup)
+
+    /**
+     * The rung a copy [list] handed out actually sits on: the app's own storage for the one
+     * taken before a migration, and the rung in force for everything else.
+     *
+     * The reserved name is enough to tell them apart because nothing else may carry it —
+     * captures are dated, imports are dated and marked, and a carry leaves it behind on the
+     * rung it belongs to ([VaultMigration]). So a copy under that name is the migration's,
+     * and it is in the one place migrations write.
+     */
+    private fun holderOf(backup: StoredBackup): BackupDestination =
+        if (backup.name == PRE_MIGRATION_BACKUP_NAME) appStorage else inForce
+
+    private suspend fun List<StoredBackup>.withPreMigrationCopy(): List<StoredBackup> {
+        if (rung.inForce == VaultDestination.APP_STORAGE) return this
+
+        val kept = appStorage.list().getOrNull()
+            ?.firstOrNull { it.name == PRE_MIGRATION_BACKUP_NAME }
+            ?: return this
+
+        return (this + kept).sortedWith(NEWEST_FIRST)
+    }
 }

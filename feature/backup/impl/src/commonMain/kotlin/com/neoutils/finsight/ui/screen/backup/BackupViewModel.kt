@@ -274,6 +274,7 @@ class BackupViewModel(
             CarryCopiesModal(
                 copies = offer.copies,
                 onCarry = { carry(offer) },
+                onDeclined = destinationChange::declineCarry,
             )
         )
     }

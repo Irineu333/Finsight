@@ -4,8 +4,11 @@ import arrow.core.Either
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
+import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -37,6 +40,15 @@ import kotlinx.coroutines.flow.StateFlow
  * rung while writing the other; a router that could only see the rung in force would make it
  * impossible. [rungFor] is that half, and [VaultMigration] is its only caller.
  *
+ * **A folder change leaves two folders reachable, not one, and [rungFor] is what tells them
+ * apart (task 11.10).** The app remembers exactly two tokens for the folder rung — the one
+ * currently pointed at, and the one [BackupFolder.point] most recently shifted aside — so a
+ * [VaultLocation] naming the folder just left still resolves, through [previousFolder],
+ * for exactly as long as an offer built from it could still be answered. This is why the
+ * router is keyed by [VaultLocation] and not by [VaultDestination]: the enum has two values
+ * and the folder rung can name any number of folders over an install's life, and *whichever
+ * one is pointed at now* is not the question a carry offered right after a change is asking.
+ *
  * Nothing is copied by the rung changing — see [VaultMigration], which is offered and never
  * performed on its own. The copies on the rung left behind are left exactly where they are.
  */
@@ -50,25 +62,58 @@ class VaultDestinations(
     private val link: StateFlow<FolderLink>,
     private val appStorage: BackupDestination,
     private val folder: BackupDestination,
+    /**
+     * The same folder [folder] currently reads and writes, asked here only for its
+     * [BackupFolder.identity] — never for [BackupFolder.point] or anything else that could
+     * open it. [NoBackupFolder] answers no identity at all, which is what a platform with no
+     * folder rung correctly gives this.
+     */
+    private val folderToken: BackupFolder = NoBackupFolder,
+    /**
+     * The folder rung the person most recently left, exactly as [folder] but built on the
+     * token [BackupFolder.point] shifted aside rather than the one it just wrote (task
+     * 11.10). [UnreachableDestination] is correct here on a platform with no folder rung, and
+     * on the ordinary run of an install that has changed folders at most once.
+     */
+    private val previousFolder: BackupDestination = UnreachableDestination,
+    /** [folderToken]'s counterpart for [previousFolder]. */
+    private val previousFolderToken: BackupFolder = NoBackupFolder,
 ) : BackupDestination {
 
     private val rung: VaultRung
         get() = VaultRung(state.observe().value.destination, link.value)
 
-    private val inForce: BackupDestination get() = rungFor(rung.inForce)
-
     /**
-     * One named rung, whichever is in force.
-     *
-     * It exists for the one operation that has to address both at once: carrying copies from
-     * where they were to where they now go reads one and writes the other, and neither of
-     * the two is the rung in force for the whole of it (design D13).
+     * The rung an ordinary read or write actually goes to — [rung]'s own two-way choice,
+     * answered without asking which physical folder either name is. Every folder this app
+     * has ever pointed at reads [VaultDestination.USER_FOLDER] the same way, so there is
+     * nothing here for [VaultLocation] to add: the identity question only exists once there
+     * are two folders that could both answer to that one name, which is [rungFor]'s alone.
      */
-    internal fun rungFor(destination: VaultDestination): BackupDestination =
-        when (destination) {
+    private val inForce: BackupDestination
+        get() = when (rung.inForce) {
             VaultDestination.APP_STORAGE -> appStorage
             VaultDestination.USER_FOLDER -> folder
         }
+
+    /**
+     * The rung a [VaultLocation] actually names — [VaultMigration]'s only caller, since
+     * carrying is the one operation that has to address the folder just left and the one now
+     * in force at once (design D13; task 11.10).
+     *
+     * App storage always resolves to itself. A folder resolves by identity: to [folder] when
+     * it matches [folderToken] — whatever is pointed at right now — and to [previousFolder]
+     * when it matches [previousFolderToken] — the one folder change ago. Anything else names
+     * a folder this app no longer has a token for at all, which is [UnreachableDestination]
+     * rather than a silent misroute: this app keeps exactly two tokens for the folder rung,
+     * current and previous, and never a longer trail.
+     */
+    internal fun rungFor(location: VaultLocation): BackupDestination = when {
+        location.destination == VaultDestination.APP_STORAGE -> appStorage
+        location.folder != null && location.folder == folderToken.identity -> folder
+        location.folder != null && location.folder == previousFolderToken.identity -> previousFolder
+        else -> UnreachableDestination
+    }
 
     override suspend fun put(
         capturedPath: String,

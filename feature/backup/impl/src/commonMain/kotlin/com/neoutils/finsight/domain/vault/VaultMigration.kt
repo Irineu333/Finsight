@@ -63,13 +63,15 @@ class VaultMigration(
      * puts a number on.
      *
      * Empty is every reason there is nothing to offer, and they are one answer on purpose:
-     * the two rungs are the same one, the source holds nothing, or the source could not be
-     * read at all. None of the three is worth putting a question to somebody about, and the
-     * last one is the ordinary state of a folder somebody is leaving *because* it went away.
+     * the two locations are the same one, the source holds nothing, the source could not be
+     * read at all, or [from] names a folder this app no longer has a token for
+     * ([VaultDestinations.rungFor]'s *unreachable*). None of these is worth putting a
+     * question to somebody about, and a source that cannot be read is the ordinary state of
+     * a folder somebody is leaving *because* it went away.
      */
     suspend fun carriable(
-        from: VaultDestination,
-        to: VaultDestination,
+        from: VaultLocation,
+        to: VaultLocation,
     ): List<StoredBackup> {
         if (from == to) return emptyList()
         return withinRetention(destinations.rungFor(from).list().getOrNull().orEmpty())
@@ -84,14 +86,22 @@ class VaultMigration(
      * simply not carried, and no error is made of it.
      */
     suspend fun carry(
-        from: VaultDestination,
-        to: VaultDestination,
+        from: VaultLocation,
+        to: VaultLocation,
     ): MigrationOutcome {
         if (from == to) return MigrationOutcome.NothingToCarry
 
         val source = destinations.rungFor(from)
         val target = destinations.rungFor(to)
 
+        // A source that cannot even be listed answers Interrupted(0, ...) here, and not
+        // NothingToCarry — unlike carriable, which reads the same failure as nothing to
+        // offer (see its own doc). The two disagree on purpose: carriable is asked before
+        // anyone has said yes, so silence is the honest answer to a question nobody may ever
+        // repeat; this runs on that yes, so a listing that failed is a carry that failed,
+        // even though it failed before touching a single copy. This predates task 11.10 and
+        // is not a defect it introduced — an app-storage source that could not be listed
+        // read this way before a folder even existed to be unreadable, previous or current.
         val listed = source.list().getOrNull() ?: return MigrationOutcome.Interrupted(
             copies = 0,
             error = BackupError.EXPORT_FAILED,
@@ -159,15 +169,19 @@ class VaultMigration(
      * ordinary first capture into a freshly chosen folder goes on sweeping exactly as
      * before.
      *
-     * It is [to] the deferral is armed for ([BackupVaultRepository.deferNextSweep]), not
-     * "the next sweep, whichever destination it lands in" — the flag this used to be armed
-     * and spent no destination at all, which is what let it protect a folder nobody had
-     * just adopted, or fail to protect the one that was owed the wait (see
-     * [BackupVaultRepository.consumeSweepDeferral]).
+     * It is [to]'s [VaultLocation.destination] the deferral is armed for
+     * ([BackupVaultRepository.deferNextSweep]), not "the next sweep, whichever destination it
+     * lands in" — the flag this used to be armed and spent no destination at all, which is
+     * what let it protect a folder nobody had just adopted, or fail to protect the one that
+     * was owed the wait (see [BackupVaultRepository.consumeSweepDeferral]). The deferral
+     * itself still knows only [VaultDestination] and not which folder: two folder changes
+     * inside the window before the next capture lands is not a case task 11.10 has to make
+     * safe, and the cost of it staying coarse is at most one copy kept a little longer
+     * (design D10's own safe direction).
      */
-    suspend fun deferSweepIfAlreadyHolding(to: VaultDestination) {
+    suspend fun deferSweepIfAlreadyHolding(to: VaultLocation) {
         val already = destinations.rungFor(to).list().getOrNull()
-        if (!already.isNullOrEmpty()) state.deferNextSweep(to)
+        if (!already.isNullOrEmpty()) state.deferNextSweep(to.destination)
     }
 
     /**
@@ -191,7 +205,12 @@ class VaultMigration(
  */
 sealed interface MigrationOutcome {
 
-    /** There was nothing to carry — the same rung, an empty source, or one that would not be read. */
+    /**
+     * There was nothing to carry from [VaultMigration.carry]'s own point of view — the same
+     * location twice, or a source that was read and answered empty, or one retention leaves
+     * nothing of once it has. **Not** what an unreadable source answers here — see
+     * [Interrupted].
+     */
     data object NothingToCarry : MigrationOutcome
 
     /** Every copy the retention holds is now in both places. */
@@ -200,6 +219,14 @@ sealed interface MigrationOutcome {
     /**
      * The run stopped partway. [copies] are in both places, the rest are still only in the
      * source, and nothing anywhere was removed.
+     *
+     * [copies] of zero covers two different moments that read alike from here: a source that
+     * refused the very first listing, and one that listed fine but failed on its first copy.
+     * Neither is [NothingToCarry] — that answer is reserved for a source read successfully
+     * and found to have nothing worth carrying, which an unreadable source is not proof of
+     * either way (design D9's own rule, carried into this call). This is not something task
+     * 11.10 introduced: an app-storage source that could not be listed answered this way
+     * before a second, folder-shaped source ever existed to be unreadable too.
      */
     data class Interrupted(val copies: Int, val error: BackupError) : MigrationOutcome
 }

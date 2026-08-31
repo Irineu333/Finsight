@@ -34,6 +34,7 @@ import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.VaultLocation
 import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultSwitch
@@ -132,6 +133,9 @@ class FolderRecoveryTest {
 
     private val backupFolder = JvmBackupFolder(settings) { picked }
 
+    /** The folder [backupFolder] most recently shifted aside — task 11.10's own rung. */
+    private val previousBackupFolder = JvmBackupFolder.previous(settings)
+
     private val folder = VaultFolder(state = state, folder = backupFolder)
 
     private var pathsHandedOut = 0
@@ -160,11 +164,18 @@ class FolderRecoveryTest {
     private val userFolder =
         JvmFolderBackupDestination(folder = backupFolder, ownCopy = ownCopy, files = files)
 
+    /** The folder rung [userFolder] most recently gave up on — task 11.10's own rung. */
+    private val previousUserFolder =
+        JvmFolderBackupDestination(folder = previousBackupFolder, ownCopy = ownCopy, files = files)
+
     private val destinations = VaultDestinations(
         state = state,
         link = folder.link,
         appStorage = appStorage,
         folder = userFolder,
+        folderToken = backupFolder,
+        previousFolder = previousUserFolder,
+        previousFolderToken = previousBackupFolder,
     )
 
     private val vault = BackupVault(
@@ -318,6 +329,16 @@ class FolderRecoveryTest {
         picked = directory
         assertEquals(true, folder.pointAt(context).getOrNull(), "the folder was not taken")
     }
+
+    /** App storage, as a [VaultLocation] — what every carry's other end names. */
+    private val appStorageLocation = VaultLocation(VaultDestination.APP_STORAGE, null)
+
+    /**
+     * Whichever folder [backupFolder] is pointed at right now, as a [VaultLocation] — read
+     * fresh, since [pointAt] moves it (task 11.10).
+     */
+    private fun folderLocation(): VaultLocation =
+        VaultLocation(VaultDestination.USER_FOLDER, backupFolder.identity)
 
     private suspend fun captureSomethingNew(title: String): String {
         enter(title)
@@ -625,6 +646,11 @@ class FolderRecoveryTest {
      * rung never moved. Coverage stood over an archive folder B had never seen, and the
      * automatic trigger answered `AlreadyCovered` over a folder that had never been written
      * to at all — the "changing from one folder to another is invisible" defect.
+     *
+     * **Task 11.10 closes the other half of the same gap.** A now stays readable through the
+     * one token [BackupFolder.point] shifted aside on the move to B, so the offer this raises
+     * is a real one — not merely non-null, but a carry that actually lands A's copy in B,
+     * with A left exactly as it was.
      */
     @Test
     fun `pointing at a genuinely different folder ends coverage and the automatic trigger writes into it`() =
@@ -659,16 +685,90 @@ class FolderRecoveryTest {
             )
             assertEquals(1, namesIn(elsewhere).size, "nothing landed in the folder just pointed at")
 
-            // The offer stays null here, and is not asserted to have become anything else:
-            // once `pointAtFolder` has moved the vault onto `elsewhere`, every reader of
-            // "the folder in force" — VaultDestinations.rungFor included — reads `elsewhere`,
-            // so a listing of "the folder being left" is no longer reachable through this
-            // app's one remembered token for it. Ending coverage does not depend on being
-            // able to list the folder left behind, which is why it is fixed above; actually
-            // carrying its copies across would need this app to remember more than one
-            // folder's token at a time, which by design (task 11.1/11.3/11.5) it does not —
-            // see the return contract's stopped-and-reporting note for the reasoning.
-            assertNull(offer, "an offer promising a carry this app cannot execute is worse than none")
+            // The folder just left (A = chosen) is still readable, through the previous
+            // token the move to B (elsewhere) shifted aside — so the copy taken in A is
+            // offered for real, and not answered as nothing to carry (task 11.10).
+            val realOffer = assertNotNull(
+                offer,
+                "the folder just left is still readable, and its copy was offered to nobody",
+            )
+            assertEquals(1, realOffer.copies, "the offer did not count the copy A is holding")
+
+            val carried = destinationChange.carry(realOffer)
+
+            assertEquals(MigrationOutcome.Carried(1), carried)
+            assertEquals(
+                listOf(landedInA),
+                namesIn(chosen),
+                "the carry removed a copy from the folder it was only ever supposed to read",
+            )
+            assertTrue(
+                landedInA in namesIn(elsewhere),
+                "the copy A was holding never reached the folder now in force",
+            )
+        }
+
+    /**
+     * The lifecycle's other half (task 11.10), driven the way a person actually declines:
+     * dismissing the sheet — the "leave" button here, but every other way out of it funnels
+     * through the same [com.neoutils.finsight.ui.component.Modal.onDismissed] — never
+     * answering it.
+     *
+     * **This is written to fail against a no-op drop, and it was run against one to prove
+     * it.** A first attempt at this test pointed back at A afterward and asserted no offer
+     * came up — which passed whether or not the dismissal dropped anything, because A held
+     * nothing new by then and, more to the point, *any* further pointing shifts the previous
+     * slot on its own (see [VaultFolder.pointAt]'s class comment), overwriting whatever a
+     * declined carry did or did not clear before the question could ever be asked again. A
+     * test that passes either way is not proof.
+     *
+     * **So this one never points at anything again.** A is left holding the copy the offer
+     * was raised over, and the question the offer was built from — [VaultLocation]s captured
+     * before either folder moved, never rebuilt afterward — is put straight to
+     * [VaultMigration.carriable]. If the dismissal had not dropped A's token, that call would
+     * still resolve it through [VaultDestinations.rungFor]'s *previous* branch and answer
+     * with the copy sitting in it; with the token dropped, the same location names a folder
+     * this app no longer has a token for, and the answer is empty. Confirmed by reverting
+     * [VaultDestinationChange.declineCarry] to a no-op: this failed, reporting the one copy
+     * A still holds, exactly as the paragraph above predicts.
+     */
+    @Test
+    fun `dismissing the carry sheet drops the folder just left, proven by what it can no longer offer`() =
+        runTest {
+            state.setOn(true)
+            val screen = viewModel()
+            screen.await("the first listing never landed") { it.copies.isRead }
+
+            picked = chosen
+            screen.onAction(BackupAction.ChooseFolder(context))
+            screen.await("A never became the destination") {
+                it.rung.inForce == VaultDestination.USER_FOLDER
+            }
+            captureSomethingNew("in A")
+            val aLocation = folderLocation()
+
+            picked = elsewhere
+            screen.onAction(BackupAction.ChooseFolder(context))
+            val sheet = assertIs<CarryCopiesModal>(
+                awaitOffer("no offer was put up for A's copy"),
+                "the sheet that went up was not the offer",
+            )
+            val bLocation = folderLocation()
+
+            modalManager.dismiss(sheet)
+            assertNull(modalManager.top, "the sheet did not actually close")
+            assertEquals(1, namesIn(chosen).size, "A was touched by a carry nobody accepted")
+            assertEquals(emptyList(), namesIn(elsewhere), "B received a copy nobody accepted")
+
+            // The discriminating check: never a further pointing, which would shift the
+            // previous slot on its own regardless of whether the dismissal dropped anything
+            // — see the class comment above for why that would prove nothing. Asked directly
+            // instead, by the same two locations the declined offer was built from.
+            assertEquals(
+                emptyList(),
+                migration.carriable(aLocation, bLocation),
+                "the folder just left kept answering a carry after being declined",
+            )
         }
 
     /**
@@ -745,11 +845,11 @@ class FolderRecoveryTest {
 
         assertEquals(
             THREE,
-            migration.carriable(VaultDestination.APP_STORAGE, VaultDestination.USER_FOLDER).size,
+            migration.carriable(appStorageLocation, folderLocation()).size,
         )
         val outcome = migration.carry(
-            from = VaultDestination.APP_STORAGE,
-            to = VaultDestination.USER_FOLDER,
+            from = appStorageLocation,
+            to = folderLocation(),
         )
 
         assertEquals(MigrationOutcome.Carried(THREE), outcome)
@@ -771,8 +871,8 @@ class FolderRecoveryTest {
 
         pointAt(chosen)
         val outcome = migration.carry(
-            from = VaultDestination.APP_STORAGE,
-            to = VaultDestination.USER_FOLDER,
+            from = appStorageLocation,
+            to = folderLocation(),
         )
 
         assertEquals(MigrationOutcome.Carried(FIVE), outcome)
@@ -801,13 +901,14 @@ class FolderRecoveryTest {
                 link = folder.link,
                 appStorage = appStorage,
                 folder = recorder,
+                folderToken = backupFolder,
             ),
             files = files,
         )
 
         recording.carry(
-            from = VaultDestination.APP_STORAGE,
-            to = VaultDestination.USER_FOLDER,
+            from = appStorageLocation,
+            to = folderLocation(),
         )
 
         assertEquals(kept, recorder.handedOver, "the newest copy was written first")
@@ -830,8 +931,8 @@ class FolderRecoveryTest {
         assertEquals(
             MigrationOutcome.Carried(FIVE),
             migration.carry(
-                from = VaultDestination.APP_STORAGE,
-                to = VaultDestination.USER_FOLDER,
+                from = appStorageLocation,
+                to = folderLocation(),
             ),
         )
 
@@ -878,7 +979,7 @@ class FolderRecoveryTest {
 
             assertEquals(
                 emptyList(),
-                migration.carriable(VaultDestination.USER_FOLDER, VaultDestination.APP_STORAGE),
+                migration.carriable(folderLocation(), appStorageLocation),
                 "a folder nothing can read offered copies to carry",
             )
 
@@ -888,8 +989,8 @@ class FolderRecoveryTest {
             assertEquals(VaultDestination.USER_FOLDER, state.observe().value.destination)
 
             val outcome = migration.carry(
-                from = VaultDestination.APP_STORAGE,
-                to = VaultDestination.USER_FOLDER,
+                from = appStorageLocation,
+                to = folderLocation(),
             )
 
             assertEquals(MigrationOutcome.Carried(1), outcome)
@@ -914,13 +1015,14 @@ class FolderRecoveryTest {
                 link = folder.link,
                 appStorage = appStorage,
                 folder = RefusingAfter(userFolder, puts = 2),
+                folderToken = backupFolder,
             ),
             files = files,
         )
 
         val outcome = refusing.carry(
-            from = VaultDestination.APP_STORAGE,
-            to = VaultDestination.USER_FOLDER,
+            from = appStorageLocation,
+            to = folderLocation(),
         )
 
         assertEquals(MigrationOutcome.Interrupted(2, BackupError.EXPORT_FAILED), outcome)

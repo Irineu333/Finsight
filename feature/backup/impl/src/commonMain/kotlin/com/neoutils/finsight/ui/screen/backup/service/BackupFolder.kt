@@ -93,6 +93,17 @@ interface BackupFolder {
      * the last segment of a path it never hands out, so answering there costs nothing.
      */
     suspend fun displayName(): String?
+
+    /**
+     * Drops the folder [point] shifted aside on its last change, once nothing is owed to it
+     * any more — the carry into the folder now in force landed, or the person answered no to
+     * the offer (task 11.10; see
+     * [com.neoutils.finsight.domain.vault.VaultDestinationChange]).
+     *
+     * It never touches what is currently pointed at, which stays exactly where [point] left
+     * it — this is the one call that reaches backward instead.
+     */
+    fun forgetPrevious()
 }
 
 /**
@@ -123,6 +134,11 @@ enum class FolderLink {
  * drives the vault without a folder in it. It is not a stub standing in for behaviour —
  * [isOffered] is false, so the choice is never put to anybody, and [BackupDestination]'s
  * folder half cannot be reached because nothing can move the vault onto it.
+ *
+ * It also stands in for a token that was never shifted aside — the default a platform gives
+ * [com.neoutils.finsight.domain.vault.VaultDestinations] for the folder left behind before a
+ * folder has ever changed twice: [identity] answers null exactly like a genuinely empty
+ * previous slot would, so nothing spuriously matches it (task 11.10).
  */
 object NoBackupFolder : BackupFolder {
 
@@ -136,4 +152,6 @@ object NoBackupFolder : BackupFolder {
     override val identity: FolderIdentity? = null
 
     override suspend fun displayName(): String? = null
+
+    override fun forgetPrevious() = Unit
 }

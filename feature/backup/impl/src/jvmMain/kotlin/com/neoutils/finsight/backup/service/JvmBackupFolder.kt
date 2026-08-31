@@ -42,16 +42,33 @@ import kotlinx.coroutines.withContext
  * still empty does. Keeping a self-made subfolder as a marker used to be what told them
  * apart; writing straight into the chosen path gives that up, so a capture that lands on a
  * stale mountpoint is not caught here.
+ *
+ * **One more path, beside the one [point] writes.** [pointAt] shifts whatever [KEY_FOLDER]
+ * held into [KEY_FOLDER_PREVIOUS] the instant it is about to be overwritten by a genuinely
+ * different path — never on a first-ever pointing, and never on a re-point at the path
+ * already remembered (task 11.10). [previous] reads that second key with everything else
+ * this class already knows how to do, which is what lets a carry offered right after a
+ * folder change still read the folder being left, through
+ * [com.neoutils.finsight.domain.vault.VaultDestinations.rungFor] — even though the app's one
+ * *current* path has already moved on to naming the new folder by the time the offer is
+ * answered.
  */
-class JvmBackupFolder(
+class JvmBackupFolder private constructor(
     private val settings: Settings,
     /**
      * How a folder is put to the person — the platform's dialog by default, and the only
      * part of pointing at one that cannot be exercised anywhere. See
      * [chooseDirectoryWithSwing].
      */
-    private val choose: suspend (PlatformContext) -> File? = { chooseDirectoryWithSwing(it) },
+    private val choose: suspend (PlatformContext) -> File?,
+    /** Which settings key this instance reads and writes — [KEY_FOLDER] or [KEY_FOLDER_PREVIOUS]. */
+    private val key: String,
 ) : BackupFolder {
+
+    constructor(
+        settings: Settings,
+        choose: suspend (PlatformContext) -> File? = { chooseDirectoryWithSwing(it) },
+    ) : this(settings, choose, KEY_FOLDER)
 
     override val isOffered = true
 
@@ -75,11 +92,27 @@ class JvmBackupFolder(
                 if (!chosen.isDirectory) {
                     throw IOException("The chosen folder is not a directory")
                 }
+                shiftToPreviousIfChanged(chosen)
                 // Written last: a preference naming a folder this app could not read would
                 // be a vault pointed somewhere it cannot write.
-                settings.putString(KEY_FOLDER, chosen.absolutePath)
+                settings.putString(key, chosen.absolutePath)
                 true
             }.mapLeft { it.toBackupError(BackupError.EXPORT_FAILED) }
+        }
+    }
+
+    /**
+     * Keeps the path [pointAt] is about to overwrite reachable under [KEY_FOLDER_PREVIOUS]
+     * (task 11.10). It runs only on the instance that owns [KEY_FOLDER] — the previous-token
+     * reader's own [pointAt] is never actually called — and it shifts nothing when there was
+     * no path remembered yet, or when the path chosen is the one already remembered: a
+     * first-ever pointing and a re-point at the same folder both touch nothing.
+     */
+    private fun shiftToPreviousIfChanged(chosen: File) {
+        if (key != KEY_FOLDER) return
+        val before = settings.getStringOrNull(key)
+        if (before != null && before != chosen.absolutePath) {
+            settings.putString(KEY_FOLDER_PREVIOUS, before)
         }
     }
 
@@ -97,11 +130,11 @@ class JvmBackupFolder(
     /**
      * The chosen path's own text, fingerprinted — never the path itself, which stays
      * `internal` to this module (design D2). It is stable across everything that leaves
-     * [KEY_FOLDER] untouched: a path never rewrites itself, so a folder chosen twice reads
-     * the same text both times.
+     * [key] untouched: a path never rewrites itself, so a folder chosen twice reads the same
+     * text both times.
      */
     override val identity: FolderIdentity?
-        get() = settings.getStringOrNull(KEY_FOLDER)?.let(::folderIdentity)
+        get() = settings.getStringOrNull(key)?.let(::folderIdentity)
 
     /**
      * The chosen path's own last segment — never the path itself, which stays `internal` to
@@ -119,16 +152,36 @@ class JvmBackupFolder(
      * no further than this module: design D2 is about what a *caller* of the destination
      * can learn, and what it can learn stays [FolderLink].
      */
-    internal fun chosenFolder(): File? = settings.getStringOrNull(KEY_FOLDER)?.let(::File)
+    internal fun chosenFolder(): File? = settings.getStringOrNull(key)?.let(::File)
 
-    private companion object {
+    /** [BackupFolder.forgetPrevious] — see the class comment for the two occasions this runs. */
+    override fun forgetPrevious() = settings.remove(KEY_FOLDER_PREVIOUS)
+
+    companion object {
 
         /**
          * The desktop's own key. Each platform remembers its own kind of token — a path
          * here, a tree `Uri` on Android, a bookmark on iOS — and no install ever reads
          * another platform's.
          */
-        const val KEY_FOLDER = "backup_vault_folder"
+        private const val KEY_FOLDER = "backup_vault_folder"
+
+        /**
+         * The path [pointAt] shifted aside on its last change, beside [KEY_FOLDER] rather
+         * than instead of it — both are held at once so a carry offered right after a folder
+         * change can still read the one being left (task 11.10).
+         */
+        private const val KEY_FOLDER_PREVIOUS = "backup_vault_folder_previous"
+
+        /**
+         * A read-only reader of the path [pointAt] most recently shifted aside — everything
+         * [JvmBackupFolder] already knows how to do, over [KEY_FOLDER_PREVIOUS] instead of
+         * [KEY_FOLDER] (task 11.10). Its own [point]/[pointAt] are never meant to be called —
+         * [choose] answers null unconditionally, so a call resolves to *nothing chosen*
+         * rather than doing anything to either key.
+         */
+        fun previous(settings: Settings): JvmBackupFolder =
+            JvmBackupFolder(settings, choose = { null }, key = KEY_FOLDER_PREVIOUS)
     }
 }
 

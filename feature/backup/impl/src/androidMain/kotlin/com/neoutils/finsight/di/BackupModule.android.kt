@@ -32,7 +32,12 @@ actual val backupPlatformModule = module {
     // package being removed on its own — the app's own storage goes with it, and so does
     // the persisted grant — but the *files* in a folder the person chose do, and pointing
     // at that folder again is what finds them (design D4).
+    //
+    // A third rung, of sorts: the folder [pointAt] most recently shifted aside, over its own
+    // tree Uri (AndroidBackupFolder.previous) — never offered a picker, only ever asked to
+    // list and read what a token it did not choose still names (task 11.10).
     factory {
+        val previousFolder = AndroidBackupFolder.previous(appContext = get<Context>(), settings = get())
         VaultDestinations(
             state = get(),
             link = get<VaultFolder>().link,
@@ -43,6 +48,14 @@ actual val backupPlatformModule = module {
                 ownCopy = get(),
                 files = get(),
             ),
+            folderToken = get<AndroidBackupFolder>(),
+            previousFolder = AndroidFolderBackupDestination(
+                appContext = get<Context>(),
+                folder = previousFolder,
+                ownCopy = get(),
+                files = get(),
+            ),
+            previousFolderToken = previousFolder,
         )
     }
 

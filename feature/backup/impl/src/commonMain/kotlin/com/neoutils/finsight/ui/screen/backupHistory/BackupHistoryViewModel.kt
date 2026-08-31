@@ -391,7 +391,11 @@ class BackupHistoryViewModel(
      */
     private fun offerToCarry(offer: CarryOffer) {
         modalManager.show(
-            CarryCopiesModal(copies = offer.copies, onCarry = { carry(offer) })
+            CarryCopiesModal(
+                copies = offer.copies,
+                onCarry = { carry(offer) },
+                onDeclined = destinationChange::declineCarry,
+            )
         )
     }
 

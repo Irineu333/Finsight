@@ -44,13 +44,30 @@ import org.jetbrains.compose.resources.stringResource
  * carry keeps: only the newest copies the retention holds travel, and nothing is removed
  * from where it is (design D13).
  *
+ * **Leaving is [onDeclined], not merely the absence of [onCarry].** A folder change keeps
+ * the folder being left addressable for exactly one more change (task 11.10), and it is this
+ * sheet's own dismissal — the "leave" button, the scrim, the swipe, the back press, all of
+ * them alike — that says the person is done with the question and lets that folder be
+ * forgotten. [onDismissed] is the one override point every way of leaving already funnels
+ * through ([com.neoutils.finsight.ui.component.Modal.onDismissed]), so it is the one place
+ * this needs to be caught rather than wired into every button.
+ *
  * @param copies how many are in the destination being left, as the listing that offered this
  * counted them.
+ * @param onDeclined called once, when the sheet is dismissed without [onCarry] having run —
+ * never on the accepting path, where the carry itself is the answer.
  */
 class CarryCopiesModal(
     private val copies: Int,
     private val onCarry: () -> Unit,
+    private val onDeclined: () -> Unit,
 ) : ModalBottomSheet() {
+
+    /**
+     * Whether [onCarry] is the reason this sheet is being dismissed — the one case
+     * [onDismissed] must not read as a decline, since carrying is itself the answer.
+     */
+    private var accepted = false
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -97,6 +114,7 @@ class CarryCopiesModal(
 
                 Button(
                     onClick = {
+                        accepted = true
                         manager.dismiss(modal)
                         onCarry()
                     },
@@ -113,5 +131,10 @@ class CarryCopiesModal(
                 }
             }
         }
+    }
+
+    override fun onDismissed() {
+        super.onDismissed()
+        if (!accepted) onDeclined()
     }
 }

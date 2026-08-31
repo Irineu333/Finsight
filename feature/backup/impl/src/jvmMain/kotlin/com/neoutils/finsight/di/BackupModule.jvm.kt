@@ -28,7 +28,12 @@ actual val backupPlatformModule = module {
     // platform where the first rung already survives everything (design D3), so the second
     // adds reach rather than durability — a folder somebody syncs is what covers the
     // machine being lost.
+    //
+    // A third rung, of sorts: the folder [pointAt] most recently shifted aside, over its own
+    // path (JvmBackupFolder.previous) — never offered a picker, only ever asked to list and
+    // read what a path it did not choose still names (task 11.10).
     factory {
+        val previousFolder = JvmBackupFolder.previous(settings = get())
         VaultDestinations(
             state = get(),
             link = get<VaultFolder>().link,
@@ -38,6 +43,13 @@ actual val backupPlatformModule = module {
                 ownCopy = get(),
                 files = get(),
             ),
+            folderToken = get<JvmBackupFolder>(),
+            previousFolder = JvmFolderBackupDestination(
+                folder = previousFolder,
+                ownCopy = get(),
+                files = get(),
+            ),
+            previousFolderToken = previousFolder,
         )
     }
 

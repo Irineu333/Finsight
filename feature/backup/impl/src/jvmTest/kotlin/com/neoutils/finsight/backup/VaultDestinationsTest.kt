@@ -8,12 +8,19 @@ import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultDestinations
+import com.neoutils.finsight.domain.vault.VaultLocation
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
+import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
+import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +67,15 @@ class VaultDestinationsTest {
             calls += "$name.remove"
             return true.right()
         }
+    }
+
+    /** A [BackupFolder] whose identity is fixed, for a resolver test that never points at anything. */
+    private class FixedFolder(override val identity: FolderIdentity?) : BackupFolder {
+        override val isOffered = false
+        override suspend fun point(context: PlatformContext) = error("rungFor never points")
+        override suspend fun link() = FolderLink.NONE
+        override suspend fun displayName(): String? = null
+        override fun forgetPrevious() = Unit
     }
 
     private val calls = mutableListOf<String>()
@@ -110,5 +126,53 @@ class VaultDestinationsTest {
         destinations.list()
 
         assertEquals(listOf("app.list", "folder.list", "app.list"), calls)
+    }
+
+    /**
+     * [VaultDestinations.rungFor] — task 11.10's own resolver, and the reason it exists at
+     * all: a [VaultLocation] names app storage, or a folder by identity, and the folder half
+     * has to tell two physical folders apart even though both answer
+     * [VaultDestination.USER_FOLDER] the same way.
+     */
+    @Test
+    fun `rungFor resolves a location by identity, current, previous, or neither`() {
+        val currentId = folderIdentity("current-token")
+        val previousId = folderIdentity("previous-token")
+        val strangerId = folderIdentity("a-token-nobody-remembers")
+
+        val appRecorder = Recorder("app", calls)
+        val currentRecorder = Recorder("current", calls)
+        val previousRecorder = Recorder("previous", calls)
+
+        val router = VaultDestinations(
+            state = state,
+            link = MutableStateFlow(FolderLink.NONE),
+            appStorage = appRecorder,
+            folder = currentRecorder,
+            folderToken = FixedFolder(currentId),
+            previousFolder = previousRecorder,
+            previousFolderToken = FixedFolder(previousId),
+        )
+
+        assertSame(
+            appRecorder,
+            router.rungFor(VaultLocation(VaultDestination.APP_STORAGE, null)),
+            "app storage did not resolve to itself",
+        )
+        assertSame(
+            currentRecorder,
+            router.rungFor(VaultLocation(VaultDestination.USER_FOLDER, currentId)),
+            "the folder currently pointed at was not found by its own identity",
+        )
+        assertSame(
+            previousRecorder,
+            router.rungFor(VaultLocation(VaultDestination.USER_FOLDER, previousId)),
+            "the folder just left was not found by its own identity",
+        )
+        assertSame(
+            UnreachableDestination,
+            router.rungFor(VaultLocation(VaultDestination.USER_FOLDER, strangerId)),
+            "a folder naming neither remembered token was routed somewhere instead of refused",
+        )
     }
 }

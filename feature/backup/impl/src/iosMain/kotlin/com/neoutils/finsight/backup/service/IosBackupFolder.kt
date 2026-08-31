@@ -83,8 +83,26 @@ import platform.posix.memcpy
  * there: only listing the chosen folder itself settles it, so a scope that expired while
  * resolution went on working reads [FolderLink.BROKEN] like any other loss, and the screen
  * says so (design D12). Nothing here repairs anything or moves anybody's choice.
+ *
+ * **One more bookmark, beside the one [point] writes.** [pointAt] shifts whatever
+ * [KEY_BOOKMARK] held into [KEY_BOOKMARK_PREVIOUS] the instant it is about to be overwritten
+ * by a genuinely different bookmark — never on a first-ever pointing, and never on a
+ * re-point at the folder already remembered (task 11.10). [previous] reads that second key
+ * with everything else this class already knows how to do, which is what lets a carry
+ * offered right after a folder change still read the folder being left, through
+ * [com.neoutils.finsight.domain.vault.VaultDestinations.rungFor] — even though the app's one
+ * *current* bookmark has already moved on to naming the new folder by the time the offer is
+ * answered.
+ *
+ * **[resolve], [remember] and [withChosenFolder] all read and write [key], never
+ * [KEY_BOOKMARK] directly.** [withChosenFolder] rewrites a stale bookmark in place through
+ * [remember] — a folder addressed differently now, not a folder somebody chose — and the
+ * previous-token reader runs that same path over its own bookmark whenever
+ * [com.neoutils.finsight.domain.vault.VaultMigration] reads the folder being left. Hardwiring
+ * either call to [KEY_BOOKMARK] would let a stale rewrite on the previous instance silently
+ * clobber the current folder's bookmark instead of its own.
  */
-class IosBackupFolder(
+class IosBackupFolder private constructor(
     /**
      * Where the bookmark is kept — the same store every other preference of this install is
      * in, since `Settings()` on Apple platforms is `NSUserDefaults.standardUserDefaults`.
@@ -92,13 +110,20 @@ class IosBackupFolder(
      * strings and this is bytes, and turning these particular bytes into text and back is
      * the one thing design D2 is written to prevent anybody doing by habit.
      */
-    private val defaults: NSUserDefaults = NSUserDefaults.standardUserDefaults,
+    private val defaults: NSUserDefaults,
     /**
      * How a folder is put to the person — the system picker by default, and the only part
      * of pointing at one that cannot be exercised anywhere. See [chooseFolderWithPicker].
      */
-    private val choose: suspend (PlatformContext) -> NSURL? = { chooseFolderWithPicker(it) },
+    private val choose: suspend (PlatformContext) -> NSURL?,
+    /** Which defaults key this instance reads and writes — [KEY_BOOKMARK] or [KEY_BOOKMARK_PREVIOUS]. */
+    private val key: String,
 ) : BackupFolder {
+
+    constructor(
+        defaults: NSUserDefaults = NSUserDefaults.standardUserDefaults,
+        choose: suspend (PlatformContext) -> NSURL? = { chooseFolderWithPicker(it) },
+    ) : this(defaults, choose, KEY_BOOKMARK)
 
     override val isOffered = true
 
@@ -123,12 +148,32 @@ class IosBackupFolder(
             chosen.withAccess {
                 if (!chosen.lists()) {
                     BackupError.EXPORT_FAILED.left()
-                } else if (remember(chosen)) {
-                    true.right()
                 } else {
-                    BackupError.EXPORT_FAILED.left()
+                    val before = defaults.dataForKey(key)
+                    if (remember(chosen)) {
+                        shiftToPreviousIfChanged(before)
+                        true.right()
+                    } else {
+                        BackupError.EXPORT_FAILED.left()
+                    }
                 }
             }
+        }
+    }
+
+    /**
+     * Keeps the bookmark [pointAt] just overwrote reachable under [KEY_BOOKMARK_PREVIOUS]
+     * (task 11.10). It runs only on the instance that owns [KEY_BOOKMARK] — the
+     * previous-token reader's own [pointAt] is never actually called — and it shifts nothing
+     * when there was no bookmark remembered yet, or when [remember] just wrote the same
+     * bookmark back: a first-ever pointing and a re-point at the same folder both touch
+     * nothing.
+     */
+    private fun shiftToPreviousIfChanged(before: NSData?) {
+        if (key != KEY_BOOKMARK || before == null) return
+        val after = defaults.dataForKey(key) ?: return
+        if (!before.toByteArray().contentEquals(after.toByteArray())) {
+            defaults.setObject(before, forKey = KEY_BOOKMARK_PREVIOUS)
         }
     }
 
@@ -144,7 +189,7 @@ class IosBackupFolder(
      * what this does is read and report (design D12).
      */
     override suspend fun link(): FolderLink = withContext(Dispatchers.Default) {
-        if (defaults.dataForKey(KEY_BOOKMARK) == null) return@withContext FolderLink.NONE
+        if (defaults.dataForKey(key) == null) return@withContext FolderLink.NONE
         val reached = withChosenFolder(BackupError.EXPORT_FAILED) { true.right() }
         if (reached.isRight()) FolderLink.LINKED else FolderLink.BROKEN
     }
@@ -161,7 +206,7 @@ class IosBackupFolder(
      * own comment for which comparison that leaves safe to make.
      */
     override val identity: FolderIdentity?
-        get() = defaults.dataForKey(KEY_BOOKMARK)?.let { folderIdentity(it.toByteArray()) }
+        get() = defaults.dataForKey(key)?.let { folderIdentity(it.toByteArray()) }
 
     /**
      * The chosen folder's own `lastPathComponent`, or null when nothing is pointed at or the
@@ -219,7 +264,7 @@ class IosBackupFolder(
      * was pointed at and when the bookmark will not resolve.
      */
     private fun resolve(): Resolved? {
-        val bookmark = defaults.dataForKey(KEY_BOOKMARK) ?: return null
+        val bookmark = defaults.dataForKey(key) ?: return null
 
         return memScoped {
             val stale = alloc<BooleanVar>()
@@ -244,20 +289,30 @@ class IosBackupFolder(
             error = null,
         ) ?: return@memScoped false
 
-        defaults.setObject(bookmark, forKey = KEY_BOOKMARK)
+        defaults.setObject(bookmark, forKey = key)
         true
     }
 
+    /** [BackupFolder.forgetPrevious] — see the class comment for the two occasions this runs. */
+    override fun forgetPrevious() = defaults.removeObjectForKey(KEY_BOOKMARK_PREVIOUS)
+
     private class Resolved(val url: NSURL, val isStale: Boolean)
 
-    private companion object {
+    companion object {
 
         /**
          * iOS's own key. Each platform remembers its own kind of token — a bookmark here, a
          * tree `Uri` on Android, a path on the desktop — and no install ever reads another
          * platform's.
          */
-        const val KEY_BOOKMARK = "backup_vault_folder_bookmark"
+        private const val KEY_BOOKMARK = "backup_vault_folder_bookmark"
+
+        /**
+         * The bookmark [pointAt] shifted aside on its last change, beside [KEY_BOOKMARK]
+         * rather than instead of it — both are held at once so a carry offered right after a
+         * folder change can still read the one being left (task 11.10).
+         */
+        private const val KEY_BOOKMARK_PREVIOUS = "backup_vault_folder_bookmark_previous"
 
         /**
          * No options, which on iOS is the only creation that grants anything: a bookmark
@@ -265,7 +320,17 @@ class IosBackupFolder(
          * scope automatically, and that embedded scope is the whole of what lets a later
          * launch reach the folder again.
          */
-        const val IMPLICIT_SECURITY_SCOPE: ULong = 0uL
+        private const val IMPLICIT_SECURITY_SCOPE: ULong = 0uL
+
+        /**
+         * A read-only reader of the bookmark [pointAt] most recently shifted aside —
+         * everything [IosBackupFolder] already knows how to do, over [KEY_BOOKMARK_PREVIOUS]
+         * instead of [KEY_BOOKMARK] (task 11.10). Its own [point]/[pointAt] are never meant
+         * to be called — [choose] answers null unconditionally, so a call resolves to
+         * *nothing chosen* rather than doing anything to either key.
+         */
+        fun previous(defaults: NSUserDefaults = NSUserDefaults.standardUserDefaults): IosBackupFolder =
+            IosBackupFolder(defaults, choose = { null }, key = KEY_BOOKMARK_PREVIOUS)
     }
 }
 

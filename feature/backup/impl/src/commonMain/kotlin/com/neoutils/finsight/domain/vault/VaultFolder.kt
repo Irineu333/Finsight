@@ -187,6 +187,15 @@ class VaultFolder(
     }
 
     /**
+     * Drops the folder [pointAt] most recently shifted aside, once nothing is owed to it any
+     * more (task 11.10; see [com.neoutils.finsight.domain.vault.VaultDestinationChange]).
+     *
+     * It never touches what is currently pointed at — [folder] answers for that alone — and
+     * it costs nothing to call when nothing was shifted aside in the first place.
+     */
+    fun forgetPreviousFolder() = folder.forgetPrevious()
+
+    /**
      * Gives the coverage up when the copies have started landing somewhere else.
      *
      * It is the movement of [VaultRung.inForce] and not of the preference, because the two

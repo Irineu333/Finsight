@@ -47,6 +47,16 @@ data class BackupHistoryUiState(
     /** The copy an operation is running on, so its row alone says it is busy. */
     val working: StoredBackup? = null,
 
+    /**
+     * Whether a copy asked for from this screen is being taken right now.
+     *
+     * It is beside [working] rather than in it, because it is about no copy: the file it
+     * will produce does not exist yet and has no row to be busy in. What says so is the
+     * control that was pressed, and [isBusy] is what keeps the rest of the screen still
+     * while it runs.
+     */
+    val isCapturing: Boolean = false,
+
     val confirmation: RestoreConfirmation? = null,
 
     val captureRefusal: UiText? = null,
@@ -69,8 +79,13 @@ data class BackupHistoryUiState(
     /**
      * One flag for every row: a restore holds the database's writer connection, and a
      * second operation started beside it would only produce one that has to wait.
+     *
+     * A capture asked for here is one of them. It reads the whole archive and then sweeps
+     * the destination, so a restore or a removal started beside it would be working on a
+     * folder being rearranged underneath — and it is the same flag that stops the control
+     * being pressed a second time while the first press is still running.
      */
-    val isBusy: Boolean get() = working != null
+    val isBusy: Boolean get() = working != null || isCapturing
 
     /**
      * Whether [copy] is the one the app is running on right now — because it was the last

@@ -922,7 +922,6 @@
 
     <string name="settings_currencies_title">Moedas</string>
     <string name="settings_currencies_subtitle">Cadastre, edite, arquive ou apague as moedas que o app oferece</string>
-    <string name="settings_no_copy_message">Prosseguir destrói isso definitivamente: nenhuma cópia foi guardada que pudesse trazer de volta.</string>
 
     <string name="currencies_screen_title">Moedas</string>
     <string name="currencies_add">Cadastrar moeda</string>
@@ -1064,6 +1063,8 @@
     <string name="backup_history_removed">A cópia foi removida.</string>
     <string name="backup_history_remove_refused">Este arquivo não é uma cópia escrita por este app, então ele não foi removido.</string>
     <string name="backup_history_gone">Esta cópia não está mais no destino.</string>
+    <string name="backup_history_capture">Criar uma cópia agora</string>
+    <string name="backup_history_capture_done">A cópia foi criada.</string>
     <string name="backup_today">Hoje</string>
     <string name="backup_yesterday">Ontem</string>
     <string name="backup_size_bytes">%1$d B</string>

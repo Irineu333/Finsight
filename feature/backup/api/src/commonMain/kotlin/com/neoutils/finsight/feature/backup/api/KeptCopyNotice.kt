@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_reversible
+import com.neoutils.finsight.resources.backup_history_title
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -22,11 +23,19 @@ import org.jetbrains.compose.resources.stringResource
  * and five copies of it would be five chances for one of them to promise more than the
  * vault does. Whether to show it at all is [PreventiveCoverage]'s answer and never this
  * component's.
+ *
+ * *Where* is the copies screen, named by the same key its own title comes from — so the
+ * sentence cannot go on pointing at a screen that has been renamed. The restore
+ * confirmation, which writes the same sentence with a heading over it, resolves it the
+ * same way and from the same key.
  */
 @Composable
 fun KeptCopyNotice(modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(Res.string.backup_confirm_reversible),
+        text = stringResource(
+            Res.string.backup_confirm_reversible,
+            stringResource(Res.string.backup_history_title),
+        ),
         fontSize = 16.sp,
         color = colorScheme.onSurfaceVariant,
         modifier = modifier.testTag("backup_kept_copy"),

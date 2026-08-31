@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,6 +50,7 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.backup_history_capture
 import com.neoutils.finsight.resources.backup_history_current_label
 import com.neoutils.finsight.resources.backup_history_current_subtitle
 import com.neoutils.finsight.resources.backup_history_empty_message
@@ -149,6 +151,7 @@ fun BackupHistoryScreen(
                     containerColor = colorScheme.background,
                     titleContentColor = colorScheme.onBackground,
                     navigationIconContentColor = colorScheme.onBackground,
+                    actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -158,6 +161,7 @@ fun BackupHistoryScreen(
                         )
                     }
                 },
+                actions = { CaptureAction(uiState = uiState, onAction = viewModel::onAction) },
             )
         },
     ) { padding ->
@@ -269,6 +273,51 @@ fun BackupHistoryScreen(
                         }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The one thing this screen does that is not about a copy already in it: take another.
+ *
+ * **A press produces a copy, and never a sentence explaining why it did not.** The vault
+ * skips a capture while the copy it already has still holds everything the archive does,
+ * which is what stops a run of deletions leaving a folder of identical files — and it is
+ * the wrong answer to somebody who just pressed a button. `BackupVault.captureNow` is the
+ * intent without that comparison, and it is where the difference lives so that no screen
+ * has to know about it.
+ *
+ * It is in the bar rather than a floating button because the list underneath is the
+ * subject: a FAB would stand over the rows this screen exists to show, and the copies are
+ * the content while this is one action on them.
+ *
+ * **It is offered while there is a vault to write into.** With the vault off nothing is
+ * captured at all (design D1) — the vault refuses on its own, and the screen does not put
+ * up a control whose only answer would be that refusal. While a capture runs, the spinner
+ * takes the glyph's place and the same [BackupHistoryUiState.isBusy] that stills the rows
+ * stops a second press.
+ */
+@Composable
+private fun CaptureAction(
+    uiState: BackupHistoryUiState,
+    onAction: (BackupHistoryAction) -> Unit,
+) {
+    IconButton(
+        onClick = { onAction(BackupHistoryAction.Capture) },
+        enabled = uiState.isVaultOn && !uiState.isBusy,
+        modifier = Modifier.testTag("backup_history_capture"),
+    ) {
+        if (uiState.isCapturing) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = colorScheme.onBackground,
+                strokeWidth = 2.dp,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Outlined.AddCircleOutline,
+                contentDescription = stringResource(Res.string.backup_history_capture),
+            )
         }
     }
 }

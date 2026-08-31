@@ -26,16 +26,23 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * The one thing in the app that writes a copy nobody asked for, and therefore the one
- * place every rule about doing so lives.
+ * The one thing in the app that puts a copy in the vault's destination, and therefore the
+ * one place every rule about doing so lives.
  *
- * **Every trigger goes through here, and that is what makes design D1 true.** The switch
- * is read once, at the top of [captureIfNeeded], and a vault that is off returns before a
- * path is asked for, before the archive is read and before the destination is touched — so
- * "nothing is written while the vault is off" is a property of this function rather than a
- * check each trigger remembers to perform. A trigger added later inherits it by having
- * nowhere else to go: the manual export is the user's own doing and lives in
- * [com.neoutils.finsight.ui.screen.backup.BackupViewModel]; automatic capture is here.
+ * **Every occasion that writes a copy into the destination goes through here, and that is
+ * what makes design D1 true.** The switch is read first, before a path is asked for, before
+ * the archive is read and before the destination is touched — so "nothing is written while
+ * the vault is off" is a property of these two functions rather than a check each caller
+ * remembers to perform. A trigger added later inherits it by having nowhere else to go: the
+ * manual export leaves the vault entirely and lives in
+ * [com.neoutils.finsight.ui.screen.backup.BackupViewModel]; everything that lands in the
+ * destination is here.
+ *
+ * **Two intents, one pipeline.** [captureIfNeeded] is the occasion nobody chose and
+ * [captureNow] the copy somebody asked for; they differ in one comparison and in nothing
+ * else, which is why the comparison lives here rather than at either call site. No caller
+ * reasons about design D8 — a `captureNow` written in a view model would be a second place
+ * that rule is decided.
  *
  * **Retention hangs off a capture that landed, and cannot be reached any other way**
  * (design D10). The sweep is private, and the only call to it sits on the right-hand side
@@ -78,6 +85,41 @@ class BackupVault(
         return files.newCapturePath().fold(
             ifLeft = { CaptureOutcome.Failed(it) },
             ifRight = { path -> captureInto(path, state, mark) },
+        )
+    }
+
+    /**
+     * Takes a copy because somebody asked for one, if the vault is on.
+     *
+     * It is [captureIfNeeded] without the single comparison that makes an unasked-for
+     * capture bearable: whether the copy already in the destination still holds everything
+     * the archive does (design D8). That precondition exists so a run of twenty deletions
+     * does not leave twenty identical files, and it is right for an occasion nobody chose.
+     * On a control somebody has just pressed it is wrong twice over. A press that produces
+     * nothing reads as a broken button — and the sentence that would explain it is not even
+     * true: two tables of this schema issue no generated key, so adding a currency or
+     * changing which categories a budget covers moves the archive without moving the mark
+     * ([ArchiveMark]). "Nothing has changed" would be false in cases anybody can reach, and
+     * a redundant copy costs one file where a false sentence costs the control.
+     *
+     * Everything else is the same call, deliberately: the same switch, read first and here
+     * (design D1), the same destination, the same recording of what covers what, and the
+     * same sweep behind a copy that landed (design D10). A copy taken by hand is a copy like
+     * the others — retention counts it, and it becomes the one the archive corresponds to,
+     * because it is.
+     *
+     * **The switch is still read, and it is not a formality.** The screen that offers this
+     * only appears while the vault is on, but reachability is a fact about today's
+     * navigation and design D1 is a property of the vault. This never answers
+     * [CaptureOutcome.AlreadyCovered].
+     */
+    suspend fun captureNow(): CaptureOutcome {
+        val state = vault.observe().value
+        if (!state.isOn) return CaptureOutcome.VaultOff
+
+        return files.newCapturePath().fold(
+            ifLeft = { CaptureOutcome.Failed(it) },
+            ifRight = { path -> captureInto(path, state, markOrNull()) },
         )
     }
 

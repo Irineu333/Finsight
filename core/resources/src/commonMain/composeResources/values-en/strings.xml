@@ -921,7 +921,6 @@
 
     <string name="settings_currencies_title">Currencies</string>
     <string name="settings_currencies_subtitle">Add, edit, archive or delete the currencies the app offers</string>
-    <string name="settings_no_copy_message">Going ahead destroys this for good: no copy was kept that could bring it back.</string>
 
     <string name="currencies_screen_title">Currencies</string>
     <string name="currencies_add">Add currency</string>
@@ -1063,6 +1062,8 @@
     <string name="backup_history_removed">The copy was removed.</string>
     <string name="backup_history_remove_refused">This file is not a copy written by this app, so it was not removed.</string>
     <string name="backup_history_gone">This copy is no longer in the destination.</string>
+    <string name="backup_history_capture">Create a copy now</string>
+    <string name="backup_history_capture_done">The copy was created.</string>
     <string name="backup_today">Today</string>
     <string name="backup_yesterday">Yesterday</string>
     <string name="backup_size_bytes">%1$d B</string>

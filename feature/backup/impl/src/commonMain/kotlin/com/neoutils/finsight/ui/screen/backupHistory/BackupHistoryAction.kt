@@ -10,6 +10,15 @@ sealed interface BackupHistoryAction {
     data object Refresh : BackupHistoryAction
 
     /**
+     * Take a copy of the archive as it stands, because the person asked for one.
+     *
+     * It carries no condition of its own. Whether a copy is written at all is the vault's
+     * (`BackupVault.captureNow`), which is also where the difference from an unasked-for
+     * capture is stated once.
+     */
+    data object Capture : BackupHistoryAction
+
+    /**
      * Read this one copy, because its sheet has just been opened.
      *
      * It is the tap and not the listing that opens a file, and the sheet is put up without

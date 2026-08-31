@@ -13,12 +13,15 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.BackupVault
+import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
+import com.neoutils.finsight.resources.backup_history_capture_done
+import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_gone
 import com.neoutils.finsight.resources.backup_history_remove_refused
 import com.neoutils.finsight.resources.backup_history_removed
@@ -162,6 +165,7 @@ class BackupHistoryViewModel(
     fun onAction(action: BackupHistoryAction) {
         when (action) {
             BackupHistoryAction.Refresh -> refresh()
+            BackupHistoryAction.Capture -> capture()
             is BackupHistoryAction.Inspect -> inspect(action.backup)
             is BackupHistoryAction.Restore -> restore(action.backup)
             is BackupHistoryAction.Share -> share(action.backup, action.context)
@@ -206,6 +210,52 @@ class BackupHistoryViewModel(
                     }
                 },
             )
+        }
+    }
+
+    /**
+     * Takes a copy because the person asked for one, and reads the destination again so the
+     * new file is in the list and carries the mark.
+     *
+     * **Nothing about design D8 is decided here.** A copy asked for is written whether or
+     * not the one already there still covers the archive, and that difference is
+     * [BackupVault.captureNow]'s — a screen that skipped on its own would be a second owner
+     * of a rule the vault holds, and would have to explain the skip in a sentence that is
+     * not reliably true.
+     *
+     * **A refusal is said, and never dressed as a copy.** Only a capture that landed shows
+     * the success; everything else reaches [fail] or the sentence about the vault being off.
+     *
+     * The second press is what [BackupHistoryUiState.isBusy] is for: it goes up before the
+     * capture starts and comes down after the listing, so the button, the rows and this
+     * guard are the same fact.
+     */
+    private fun capture() {
+        if (_uiState.value.isBusy) return
+        inspection?.cancel()
+        _uiState.update { it.copy(isCapturing = true) }
+
+        viewModelScope.launch {
+            try {
+                // Off the caller's thread: a capture writes the whole archive out, and what
+                // asked for it is a composition.
+                when (val outcome = withContext(Dispatchers.Default) { vault.captureNow() }) {
+                    is CaptureOutcome.Captured -> succeed(Res.string.backup_history_capture_done)
+                    is CaptureOutcome.Failed -> fail(outcome.error)
+
+                    // The vault is off, so nothing was written (design D1). The control is
+                    // not offered then, but the refusal is the vault's rather than the
+                    // screen's, and a refusal that says nothing is a button that looks
+                    // broken. `captureNow` never answers `AlreadyCovered`; the branch is
+                    // here because the type has four.
+                    CaptureOutcome.VaultOff,
+                    CaptureOutcome.AlreadyCovered ->
+                        modalManager.showError(UiText.Res(Res.string.backup_history_empty_off))
+                }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+                refresh()
+            }
         }
     }
 

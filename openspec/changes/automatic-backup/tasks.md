@@ -73,7 +73,13 @@
 - [x] 6.5 Ações por item: restaurar, entregar a um destino escolhido na hora (pelo caminho da
       exportação manual, sem capturar de novo) e remover
 - [x] 6.6 Estado vazio próprio, que diz quando a primeira cópia acontece
-- [x] 6.7 Na tela de backup, o tile que leva até aqui, com a contagem e a mais recente no subtítulo
+- [x] 6.7 Na tela de backup, o tile que leva até aqui, com o destino em vigor no subtítulo
+- [x] 6.8 O seletor de destino como cabeçalho tocável desta tela, e não da tela de backup: aqui é
+      onde as cópias moram, lá é se elas acontecem
+- [x] 6.9 Capturar agora e importar como cartões rotulados no corpo, presentes em todos os estados —
+      inclusive vazio e ilegível, que é justamente quando alguém os procura
+- [x] 6.10 Importar passa pelo mesmo portão da restauração antes de pousar, recebe nome desta
+      convenção e nunca assume a marca de atual
 
 ## 7. Retenção
 

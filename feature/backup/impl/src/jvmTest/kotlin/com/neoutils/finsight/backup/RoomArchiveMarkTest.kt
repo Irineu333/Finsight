@@ -1,11 +1,13 @@
 package com.neoutils.finsight.backup
 
+import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.getDatabaseBuilder
 import com.neoutils.finsight.database.getRoomDatabase
 import com.neoutils.finsight.database.repository.RoomArchiveMark
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
+import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SeedCurrency
 import java.io.File
 import kotlin.test.AfterTest
@@ -49,6 +51,15 @@ class RoomArchiveMarkTest {
 
     private suspend fun enterTransaction(title: String): Long =
         live.transactionDao().insert(TransactionEntity(title = title, date = DATE))
+
+    private suspend fun enterCategory(name: String): Long = live.categoryDao().insert(
+        CategoryEntity(
+            name = name,
+            iconKey = "shopping",
+            type = CategoryEntity.Type.EXPENSE,
+            dimensionId = live.dimensionDao().emit(DimensionKind.CATEGORY),
+        )
+    )
 
     /**
      * SQLite creates `sqlite_sequence` the first time it issues a generated key, so on an
@@ -95,6 +106,35 @@ class RoomArchiveMarkTest {
             afterEntering,
             mark.current(),
             "twenty deletions in a row must not read as twenty reasons to capture",
+        )
+    }
+
+    /**
+     * The limit design D8 accepts, written down rather than left to be found out. A change
+     * in place issues no key, so the mark stands and the copy taken before it goes on
+     * covering — and that is the right answer rather than a tolerated one: nothing anybody
+     * typed leaves with a rename, the copy still holds every entry, and the label is
+     * retyped in one touch.
+     *
+     * Editing a transaction is not this and does move the mark: its entries are deleted and
+     * written again (`LedgerEntryWriter.rewriteEntries`), which issues keys. What this is
+     * about is the write that touches a row and creates none.
+     */
+    @Test
+    fun `renaming a facade in place leaves the mark where it was`() = runTest {
+        val id = enterCategory("Mercado")
+        val afterEntering = mark.current()
+        // A test whose point is that a number did not move has to start from a number, or
+        // it passes for the wrong reason.
+        assertTrue(afterEntering > 0L, "the category was entered and the mark did not notice")
+
+        val category = requireNotNull(live.categoryDao().getCategoryById(id))
+        live.categoryDao().update(category.copy(name = "Supermercado"))
+
+        assertEquals(
+            afterEntering,
+            mark.current(),
+            "a rename creates no row, so it must not read as a reason to capture",
         )
     }
 

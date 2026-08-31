@@ -174,15 +174,16 @@ private fun storedBackupAt(path: String, name: String): StoredBackup? {
 }
 
 /**
- * A count out of an attribute dictionary, whichever side of the bridge it arrives on:
+ * A count out of a Foundation dictionary, whichever side of the bridge it arrives on:
  * Foundation states a file's size as an `NSNumber`, and the interop is free to have turned
- * it into a Kotlin number already by the time it is read out of a `Map<Any?, *>`.
+ * it into a Kotlin number already by the time it is read out of a `Map<Any?, *>`. It is
+ * shared with the folder rung, which asks a url for the same number under another key.
  */
-private fun Any?.asLong(): Long? = when (this) {
+internal fun Any?.asLong(): Long? = when (this) {
     is NSNumber -> longLongValue
     is Number -> toLong()
     else -> null
 }
 
 private const val BACKUP_DIRECTORY = "backups"
-private const val MILLIS_PER_SECOND = 1_000
+internal const val MILLIS_PER_SECOND = 1_000

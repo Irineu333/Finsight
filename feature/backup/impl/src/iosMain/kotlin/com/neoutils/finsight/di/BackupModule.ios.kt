@@ -3,6 +3,8 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.backup.IosCaptureOrigin
 import com.neoutils.finsight.backup.service.IosBackupDestination
 import com.neoutils.finsight.backup.service.IosBackupFileService
+import com.neoutils.finsight.backup.service.IosBackupFolder
+import com.neoutils.finsight.backup.service.IosFolderBackupDestination
 import com.neoutils.finsight.backup.service.IosMigrationCopyPlace
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
@@ -11,28 +13,31 @@ import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
 import org.koin.dsl.module
 
 actual val backupPlatformModule = module {
     factory<BackupFileService> { IosBackupFileService() }
 
-    // The second rung is not built here yet (tasks 11.4–11.5), and it is the one blocked on
-    // an unanswered spike: Q1 asks whether a folder bookmark survives a reboot, and nobody
-    // has run it on a device. What it will supply is a `BackupFolder` over
-    // `UIDocumentPickerViewController` with `UTTypeFolder`, keeping the bookmark and never
-    // letting the security-scoped `NSURL` through a `String` (design D2), and a
-    // `BackupDestination` that balances `start`/`stopAccessingSecurityScopedResource` in a
-    // `finally` — under the shared subfolder name `BACKUP_FOLDER_NAME`.
-    factory<BackupFolder> { NoBackupFolder }
+    // The concrete type is bound as well as the contract, and only iOS's own folder
+    // destination resolves it: the folder is a security-scoped `NSURL` behind a bookmark,
+    // and the two classes that may reach it are in one module together (design D2).
+    single { IosBackupFolder() }
+    factory<BackupFolder> { get<IosBackupFolder>() }
 
+    // Both rungs, and the preference that says which is in force. Neither survives the app
+    // being deleted on its own — the sandbox goes whole, and the bookmark with it — but the
+    // *files* in a folder the person chose do, and pointing at that folder again is what
+    // finds them (design D4).
     factory {
         VaultDestinations(
             state = get(),
             link = get<VaultFolder>().link,
             appStorage = IosBackupDestination(ownCopy = get()),
-            folder = UnreachableDestination,
+            folder = IosFolderBackupDestination(
+                folder = get<IosBackupFolder>(),
+                ownCopy = get(),
+                files = get(),
+            ),
         )
     }
 

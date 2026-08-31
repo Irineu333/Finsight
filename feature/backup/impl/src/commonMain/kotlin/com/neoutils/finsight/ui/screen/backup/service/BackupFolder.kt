@@ -102,10 +102,10 @@ const val BACKUP_FOLDER_NAME = "Finsight backups"
  * The seam where a platform's folder picker is not written yet: it offers nothing, points
  * at nothing and is linked to nothing.
  *
- * iOS binds this, alone, until its own picker is written (tasks 11.4–11.5). It is not a
- * stub standing in for behaviour — [isOffered] is false, so the choice is never put to
- * anybody there, and [BackupDestination]'s folder half cannot be reached because nothing
- * can move the vault onto it.
+ * All three platforms have their own now, so what is left binding this is every test that
+ * drives the vault without a folder in it. It is not a stub standing in for behaviour —
+ * [isOffered] is false, so the choice is never put to anybody, and [BackupDestination]'s
+ * folder half cannot be reached because nothing can move the vault onto it.
  */
 object NoBackupFolder : BackupFolder {
 

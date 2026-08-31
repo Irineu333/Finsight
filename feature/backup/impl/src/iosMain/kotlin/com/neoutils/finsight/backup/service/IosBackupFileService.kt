@@ -6,9 +6,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.extension.resolvePresenter
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import kotlin.coroutines.resume
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -18,7 +16,6 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
@@ -26,16 +23,12 @@ import platform.Foundation.NSFileWriteOutOfSpaceError
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
-import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIDocumentPickerViewController
 import platform.UniformTypeIdentifiers.UTTypeData
-import platform.darwin.NSObject
-import platform.darwin.dispatch_async
-import platform.darwin.dispatch_get_main_queue
 
 /**
- * The document picker, which answers through a delegate rather than through a return
- * value, and holds that delegate weakly.
+ * The two file dialogs, over the document picker ([awaitPickedUrls], which owns the
+ * delegate UIKit holds weakly).
  *
  * Both directions go through a copy in the app's own temporary area. On the way in the
  * picker already makes one — `asCopy` puts the user's file in the sandbox rather than
@@ -135,45 +128,6 @@ class IosBackupFileService : BackupFileService {
     }
 
     /**
-     * Presents a picker and suspends until it answers, as the urls it was given or as an
-     * empty list when the user closed it without choosing.
-     *
-     * The delegate is put in [retainedDelegates] before the picker can reach it and taken
-     * out by whichever callback ends the picker's life. That is the whole of why the set
-     * exists: [UIDocumentPickerViewController.delegate] is a weak reference, so a delegate
-     * held by nothing else is collectable the moment this function returns — the picker
-     * would come up, the user would choose a file, and the callback would arrive at
-     * nothing. A cancelled continuation deliberately does not release it: the picker is
-     * still on screen, still holding the weak reference, and still going to call back.
-     * Answering a continuation that is no longer listening costs nothing; being called
-     * through a collected delegate does not fail so quietly.
-     */
-    private suspend fun PlatformContext.awaitPickedUrls(
-        onFailure: BackupError,
-        picker: () -> UIDocumentPickerViewController,
-    ): Either<BackupError, List<NSURL>> = suspendCancellableCoroutine { continuation ->
-        dispatch_async(dispatch_get_main_queue()) {
-            if (!continuation.isActive) {
-                return@dispatch_async
-            }
-
-            val delegate = BackupPickerDelegate { urls -> continuation.resume(urls.right()) }
-            retainedDelegates += delegate
-
-            Either.catch {
-                val controller = picker()
-                controller.delegate = delegate
-                viewController.resolvePresenter().presentViewController(controller, true, null)
-            }.onLeft {
-                // Nothing was presented, so nothing is ever going to call back and the
-                // delegate has no life left to be held through.
-                retainedDelegates -= delegate
-                continuation.resume(onFailure.left())
-            }
-        }
-    }
-
-    /**
      * A copy of what the user chose, at [destinationPath].
      *
      * The security scope is claimed even though `asCopy` already put the file inside the
@@ -191,37 +145,6 @@ class IosBackupFileService : BackupFileService {
                 stopAccessingSecurityScopedResource()
             }
         }
-    }
-}
-
-/**
- * The delegates of pickers that are still on screen, and the only strong references to
- * them. Every read and write happens on the main queue, which is where a picker is
- * presented and where UIKit calls its delegate back.
- */
-private val retainedDelegates = mutableSetOf<BackupPickerDelegate>()
-
-private class BackupPickerDelegate(
-    private val onPicked: (List<NSURL>) -> Unit,
-) : NSObject(), UIDocumentPickerDelegateProtocol {
-
-    override fun documentPicker(
-        controller: UIDocumentPickerViewController,
-        didPickDocumentsAtURLs: List<*>,
-    ) = deliver(didPickDocumentsAtURLs.filterIsInstance<NSURL>())
-
-    override fun documentPickerWasCancelled(
-        controller: UIDocumentPickerViewController,
-    ) = deliver(emptyList())
-
-    /**
-     * Answers once and stops being retained, in that order. The order is what makes a
-     * second callback harmless: the set no longer holds this delegate, so the removal
-     * fails and there is nothing left to answer twice.
-     */
-    private fun deliver(urls: List<NSURL>) {
-        if (!retainedDelegates.remove(this)) return
-        onPicked(urls)
     }
 }
 
@@ -281,7 +204,7 @@ internal fun copyItem(
  * A full disk is the one failure the user can act on, so it is the one told apart. Cocoa
  * spends a code of its own on it, which is more than a message to match against.
  */
-private fun NSError?.toBackupError(otherwise: BackupError): BackupError =
+internal fun NSError?.toBackupError(otherwise: BackupError): BackupError =
     if (this?.code == NSFileWriteOutOfSpaceError) BackupError.NO_SPACE else otherwise
 
 /**

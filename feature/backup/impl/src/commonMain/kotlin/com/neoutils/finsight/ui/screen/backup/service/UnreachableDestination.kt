@@ -18,7 +18,8 @@ import com.neoutils.finsight.domain.error.BackupError
  * copies means *could not read*, never *there is nothing here*, and a destination that has
  * never existed has certainly not been read.
  *
- * iOS is the platform still on it; tasks 11.4–11.5 are what replace it there.
+ * No platform is on it any more. What binds it is every test that drives the router with a
+ * folder rung nothing is supposed to reach.
  */
 object UnreachableDestination : BackupDestination {
 

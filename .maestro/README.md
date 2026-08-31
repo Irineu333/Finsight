@@ -251,6 +251,7 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai dos seletores e continua no gasto do mês, e volta inteira |
 | `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
 | `backup/reach` | a única porta do backup abre uma feature que não tem aba nem lugar no catálogo, com as quatro peças que a ligam — rota, subgrafo, módulo e entrada — respondendo juntas |
+| `backup/vault` | ligar o cofre é a cópia, não a promessa de uma: a tela muda de forma em volta do interruptor e uma segunda tela já lista o arquivo que caiu, marcado como aquele de que o banco veio |
 
 **Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
 `bottom_navigation_bar`. Itens de navegação derivam o seu da rota — `NavDestination.name` transforma

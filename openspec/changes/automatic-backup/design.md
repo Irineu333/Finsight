@@ -233,10 +233,9 @@ justamente para permitir acrescentá-lo depois sem falhar de modo obscuro.
 Contagem, não idade: o espaço fica previsível, nunca chega a zero por construção, e é o que a
 pessoa quer dizer quando pede que backups parem de acumular.
 
-- **Degrau 1: 3, fixo.** É infraestrutura invisível — o usuário não vê os arquivos, não os
-  gerencia. Configurar o invisível é configuração sem propósito.
-- **Degrau 2: configurável (5 · 10 · 20 · tudo), padrão 10.** É a pasta dele, o espaço é dele, e
-  "tudo" transforma a retenção em algo que ele desliga em vez de sofrer.
+**O limite é o mesmo nos dois degraus: 5 · 10 · 20 · tudo, padrão 10.** O espaço é do usuário nos
+dois casos, e um limite que a tela mostra é um limite que ela deixa escolher. "Tudo" transforma a
+retenção em algo que ele desliga em vez de sofrer.
 
 A limpeza roda **depois de uma captura bem-sucedida**, nunca na abertura por conta própria: assim
 ela está sempre ancorada num momento em que provadamente existe uma cópia nova, e o usuário nunca

@@ -245,9 +245,9 @@ conteúdo, com as mesmas verificações do fluxo de restauração manual.
 O app SHALL manter um número limitado de cópias por destino, e SHALL remover as mais antigas quando
 esse número for excedido.
 
-No armazenamento próprio do app o limite SHALL ser fixo e pequeno, e MUST NOT ser configurável —
-são arquivos que o usuário não vê nem administra. Numa pasta apontada pelo usuário o limite SHALL
-ser configurável, incluindo a opção de não remover nada.
+O limite SHALL ser configurável pelo usuário, incluindo a opção de não remover nada, e MUST NOT
+depender do destino em vigor — o espaço é dele nos dois destinos, e um limite que a tela mostra é
+um limite que ela deixa escolher.
 
 A remoção SHALL acontecer depois de uma captura bem-sucedida, e MUST NOT ser executada em nenhum
 outro momento: assim ela está sempre ancorada na existência de uma cópia nova, e o destino nunca

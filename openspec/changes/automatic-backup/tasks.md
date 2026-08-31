@@ -77,8 +77,7 @@
 
 ## 7. Retenção
 
-- [x] 7.1 Retenção por contagem: fixa e pequena no degrau 1, configurável no degrau 2, com a opção
-      de não remover nada
+- [x] 7.1 Retenção por contagem: configurável nos dois degraus, com a opção de não remover nada
 - [x] 7.2 Rodar a limpeza somente depois de uma captura bem-sucedida
 - [x] 7.3 Testes: limite excedido remove os mais antigos e preserva o recém-capturado; retenção
       desligada não remove nada; captura que falha não remove nada; a cópia anterior à migração

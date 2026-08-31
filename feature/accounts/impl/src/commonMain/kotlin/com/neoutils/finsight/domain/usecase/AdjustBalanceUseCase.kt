@@ -5,6 +5,8 @@ import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
+import com.neoutils.finsight.domain.ledger.WithheldAnnouncement
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.ContraLeg
@@ -20,6 +22,7 @@ class AdjustBalanceUseCase(
     private val transactionRepository: ITransactionRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
 ) {
+    @OptIn(WithheldAnnouncement::class)
     suspend operator fun invoke(
         targetBalance: Double,
         adjustmentDate: LocalDate,
@@ -76,7 +79,21 @@ class AdjustBalanceUseCase(
             val newAmount = currentAdjustment + difference
 
             if (newAmount == 0.0) {
-                transactionRepository.deleteTransactionById(existingTransaction.id)
+                // Clearing an adjustment removes a derived figure, not typed work: the row
+                // holds the difference between a balance the person stated and one the
+                // ledger computed, and stating the balance again reproduces it. That is
+                // `DestructiveClass.DERIVED_VALUE`, which the preventive trigger does not
+                // cover (design D7 of `automatic-backup`).
+                //
+                // Withheld rather than left to the trigger to refuse, because the prelude
+                // is reached through the two methods every removal shares and cannot tell
+                // this one apart: announcing here would take a copy the design excludes,
+                // and a copy that failed would abort the adjustment on a screen with no
+                // way to go on without one.
+                transactionRepository.deleteTransactionById(
+                    id = existingTransaction.id,
+                    announcement = RemovalAnnouncement.Withheld,
+                )
                 return@catch
             }
 

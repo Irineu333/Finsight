@@ -43,8 +43,10 @@ sealed interface RemovalAnnouncement {
     data object Announced : RemovalAnnouncement
 
     /**
-     * Not spoken — the caller has already dealt with that listener on its own terms, and
-     * that is the one thing the port cannot know for itself.
+     * Not spoken — the caller has settled with that listener on its own terms, either by
+     * having already put to somebody the question the listener would have raised, or by
+     * knowing this removal is not one the listener is there for. Both are the same thing
+     * the port cannot know for itself.
      */
     @WithheldAnnouncement
     data object Withheld : RemovalAnnouncement

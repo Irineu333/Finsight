@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
+import com.neoutils.finsight.domain.ledger.WithheldAnnouncement
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
@@ -120,6 +122,37 @@ class AdjustBalanceUseCaseTest {
     }
 
     /**
+     * Clearing an adjustment removes a figure the ledger derived, not work anybody typed —
+     * `DestructiveClass.DERIVED_VALUE`, which the preventive copy does not cover (design D7 of
+     * `automatic-backup`). The removal travels through the two methods every removal shares,
+     * and those cannot tell one removal from another; this use case is the only place that
+     * knows which one this is, so it has to say so out loud.
+     *
+     * What withholding buys is not the copy saved. It is the failure that never happens: a
+     * capture that cannot be written throws, and this screen has no way to offer going on
+     * without one — an adjustment would simply fail, over a copy the design never wanted.
+     */
+    @OptIn(WithheldAnnouncement::class)
+    @Test
+    fun `clearing an adjustment withholds the announcement that would take a copy`() = runTest {
+        val ledger = LedgerStore(account)
+        val repository = FakeTransactionRepository(ledger)
+        val useCase = AdjustBalanceUseCase(
+            transactionRepository = repository,
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
+        useCase(targetBalance = 0.0, adjustmentDate = date, account = account).getOrNull()
+
+        assertEquals<List<RemovalAnnouncement>>(
+            listOf(RemovalAnnouncement.Withheld),
+            repository.announcements,
+            "clearing an adjustment asked the vault for a copy",
+        )
+    }
+
+    /**
      * An adjustment is a **delta**, not a target the ledger keeps re-reaching. Moving the
      * past moves the present, and the adjustment already written stays as it was.
      */
@@ -234,6 +267,14 @@ class LedgerStore(private val account: Account) {
 }
 
 class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionRepository {
+
+    /**
+     * What each removal said to [com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude],
+     * in order. A removal that omits the argument is recorded as the announcement it makes by
+     * omission, so *withheld* and *never asked* cannot read alike here.
+     */
+    val announcements = mutableListOf<RemovalAnnouncement>()
+
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         val transactionId = ledger.create(intent.date, intent.legs)
         return Transaction(
@@ -255,6 +296,16 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) {
+        announcements += RemovalAnnouncement.Announced
+        remove(id)
+    }
+
+    override suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) {
+        announcements += announcement
+        remove(id)
+    }
+
+    private fun remove(id: Long) {
         ledger.entriesByTransaction.remove(id)
         ledger.dateByTransaction.remove(id)
     }

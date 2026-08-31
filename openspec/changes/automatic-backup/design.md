@@ -248,6 +248,14 @@ para justificar captura a cada edição) e **o ajuste que zera** (o valor anteri
 
 Uma exclusão nova nasce dentro de uma classe e é protegida sem que ninguém altere a tela.
 
+**A classe fica no domínio; o gancho, não.** Ele está nos dois métodos que toda remoção de transação
+atravessa (D6), e esses métodos não sabem de que ação a remoção é. Isso serve às três exclusões que
+passam por ali e atropela uma quarta: o ajuste que zera apaga a própria transação de ajuste, e cairia
+na captura de uma classe a que não pertence. Quem sabe qual ação é, ali, é o caso de uso —
+`AdjustBalanceUseCase` e `AdjustInvoiceUseCase` —, e é ele que cala o anúncio
+(`RemovalAnnouncement.Withheld`, com opt-in e o motivo escrito na linha). Não é a tela escolhendo
+regra: é o domínio dizendo de que classe aquela remoção é, no único lugar que sabe.
+
 ### D8 — Uma cópia serve enquanto nada foi acrescentado depois dela
 
 A pré-condição é a mesma para os três gatilhos, e não é tempo: **exclusões não criam necessidade de

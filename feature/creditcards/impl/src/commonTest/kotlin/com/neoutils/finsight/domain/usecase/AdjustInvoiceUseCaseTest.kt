@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
+import com.neoutils.finsight.domain.ledger.WithheldAnnouncement
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
@@ -67,6 +69,35 @@ class AdjustInvoiceUseCaseTest {
         useCase(invoice = invoice, target = 200.0, adjustmentDate = date).getOrNull()
 
         assertEquals(200.0, ledger.dimensionOwed(invoice.id))
+    }
+
+    /**
+     * The invoice half of what `AdjustBalanceUseCase` says for an account: clearing an
+     * adjustment removes a figure the ledger derived, not work anybody typed —
+     * `DestructiveClass.DERIVED_VALUE`, which the preventive copy does not cover (design D7 of
+     * `automatic-backup`). The removal travels through the two methods every removal shares,
+     * and those cannot tell one removal from another; this use case is the only place that
+     * knows which one this is, so it has to say so out loud.
+     */
+    @OptIn(WithheldAnnouncement::class)
+    @Test
+    fun `clearing an adjustment withholds the announcement that would take a copy`() = runTest {
+        val ledger = InvoiceLedgerStore(card)
+        val repository = FakeTransactionRepository(ledger)
+        val useCase = AdjustInvoiceUseCase(
+            transactionRepository = repository,
+            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+        )
+
+        useCase(invoice = invoice, target = 100.0, adjustmentDate = date).getOrNull()
+        useCase(invoice = invoice, target = 0.0, adjustmentDate = date).getOrNull()
+
+        assertEquals(0.0, ledger.dimensionOwed(invoice.id), "the adjustment was not cleared")
+        assertEquals<List<RemovalAnnouncement>>(
+            listOf(RemovalAnnouncement.Withheld),
+            repository.announcements,
+            "clearing an adjustment asked the vault for a copy",
+        )
     }
 
     /**
@@ -176,6 +207,14 @@ class InvoiceLedgerStore(card: CreditCard) {
 }
 
 class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITransactionRepository {
+
+    /**
+     * What each removal said to [com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude],
+     * in order. A removal that omits the argument is recorded as the announcement it makes by
+     * omission, so *withheld* and *never asked* cannot read alike here.
+     */
+    val announcements = mutableListOf<RemovalAnnouncement>()
+
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         val transactionId = ledger.create(intent.date, intent.legs)
         return Transaction(
@@ -197,6 +236,16 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) {
+        announcements += RemovalAnnouncement.Announced
+        remove(id)
+    }
+
+    override suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) {
+        announcements += announcement
+        remove(id)
+    }
+
+    private fun remove(id: Long) {
         ledger.entriesByTransaction.remove(id)
         ledger.dateByTransaction.remove(id)
     }

@@ -74,6 +74,10 @@ class VaultFolderTest {
 
         override suspend fun displayName(): String? =
             if (linked == FolderLink.NONE) null else "stub-folder"
+
+        // Nothing here reaches backward: this stub plays one folder, so there is no
+        // previous slot for the tests in this file to shift, hold or drop.
+        override fun forgetPrevious() = Unit
     }
 
     private val folder = VaultFolder(state = state, folder = stub)

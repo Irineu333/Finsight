@@ -54,6 +54,16 @@ import kotlinx.datetime.toLocalDateTime
  * from the file. What the file says about *itself* — which device wrote it, which build, and
  * when — is inside it, and the sheet that opens on the row is what reads it.
  *
+ * **The name also carries that it arrived this way** (`backupFileName(imported = true)`,
+ * read back by `isImportedFileName`). It is the one fact `snapshot_meta` cannot supply: the
+ * stamp names a platform and a version, the same four columns whoever wrote the file, and
+ * nothing in it says *this install*. A file brought in from a picker may be this install's
+ * own earlier export, a copy shared from someone else's phone, or another install's capture
+ * carried over from a folder more than one device writes to — indistinguishable once it is
+ * sitting in the destination unless the arrival itself is remembered. A restore reads the
+ * mark to keep from calling such a copy this app's own past
+ * ([com.neoutils.finsight.domain.restore.RestoreSource]).
+ *
  * **Nothing here records anything about the archive.** The mark that says which copy the
  * running app came from is written by a capture that landed and by a restore that landed,
  * and by nothing else ([ArchiveCopy]): an imported file is not the archive, and marking it
@@ -134,7 +144,10 @@ class ArchiveImport(
      * the provider may rename the document it creates (design D9).
      */
     private suspend fun land(path: String): ImportOutcome {
-        val name = backupFileName(clock.now().toLocalDateTime(TimeZone.currentSystemDefault()))
+        val name = backupFileName(
+            at = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+            imported = true,
+        )
 
         return destination.put(capturedPath = path, name = name).fold(
             ifLeft = { ImportOutcome.Failed(it) },

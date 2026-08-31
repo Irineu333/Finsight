@@ -2,6 +2,8 @@
 
 package com.neoutils.finsight.backup
 
+import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.window.WindowScope
 import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.backup.service.JvmBackupDestination
@@ -16,6 +18,7 @@ import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
+import com.neoutils.finsight.domain.model.ArchiveReplacedHook
 import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
@@ -23,8 +26,11 @@ import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
+import com.neoutils.finsight.domain.restore.RestoreSource
+import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
+import com.neoutils.finsight.domain.vault.ImportOutcome
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
@@ -124,6 +130,9 @@ class CurrentCopyTest {
 
     private var handedOut = 0
 
+    /** What the person picked, waiting to be handed over as a copy this app may lose. */
+    private var pickedFile: File? = null
+
     private val files = object : BackupFileService {
 
         override suspend fun newCapturePath(): Either<BackupError, String> =
@@ -135,7 +144,12 @@ class CurrentCopyTest {
 
         override suspend fun copyInChosenFile(
             context: PlatformContext,
-        ): Either<BackupError, String?> = error("nothing here opens a picker")
+        ): Either<BackupError, String?> {
+            val chosen = pickedFile ?: error("nothing here opens a picker")
+            val into = temporary("picked-${handedOut++}")
+            chosen.copyTo(into, overwrite = true)
+            return into.absolutePath.right()
+        }
 
         override suspend fun copyOutCapturedFile(
             sourcePath: String,
@@ -143,6 +157,16 @@ class CurrentCopyTest {
             context: PlatformContext,
         ): Either<BackupError, Boolean> = error("nothing here opens a save dialog")
     }
+
+    /**
+     * No window is ever raised: the picker is [files], and this only exists because the call
+     * that reaches it carries one.
+     */
+    private val context: PlatformContext = PlatformContext(
+        object : WindowScope {
+            override val window: ComposeWindow get() = error("no picker is raised here")
+        }
+    )
 
     private val vault = BackupVault(
         vault = state,
@@ -346,6 +370,88 @@ class CurrentCopyTest {
             "the archive really is the older copy's content",
         )
     }
+
+    /**
+     * The report's own defect: a copy brought in through the import control takes the
+     * kept-copy path through the restore just as a captured one does, and nothing in the
+     * file says whose archive it actually is — `snapshot_meta` carries a platform and an
+     * app version, the same four columns whoever wrote it. Restoring it must not tell the
+     * person this is *the app's own past*, which is a claim only a copy this install
+     * captured itself is entitled to.
+     */
+    @Test
+    fun `restoring an imported copy is not described as the app's own past`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+
+        val elsewhere = temporary("elsewhere")
+        live.captureInto(
+            destinationPath = elsewhere.absolutePath,
+            appVersion = "9.9.9",
+            platform = "ios",
+        )
+        pickedFile = elsewhere
+
+        val viewModel = viewModel()
+        viewModel.onAction(BackupHistoryAction.Import(context))
+        val afterImport = viewModel.await("the imported copy never showed up in the list") {
+            !it.isLoading && !it.isBusy && it.copies.isNotEmpty()
+        }
+        val imported = assertNotNull(afterImport.copies.singleOrNull())
+
+        viewModel.onAction(BackupHistoryAction.Restore(imported))
+        val withConfirmation = viewModel.await(
+            "the confirmation never came up for ${imported.name}"
+        ) { it.confirmation != null }
+
+        assertEquals(
+            RestoreSource.IMPORTED_COPY,
+            withConfirmation.confirmation?.source,
+            "an imported copy was described as this install's own past",
+        )
+
+        viewModel.onAction(BackupHistoryAction.ConfirmRestore)
+        viewModel.await("the restore of the imported copy never finished") {
+            !it.isBusy && !it.isRestoring && it.confirmation == null
+        }
+    }
+
+    /**
+     * The report's own defect: restoring the oldest copy retention keeps takes a preventive
+     * capture of its own, pushing the destination one past the limit — and a sweep that did
+     * not spare the copy just chosen would remove it, out from under a restore that goes on
+     * to succeed anyway because it reads a temporary taken earlier. The archive would then
+     * be marked with a copy no longer in the folder, and the history would show nothing as
+     * current for a restore that just landed.
+     */
+    @Test
+    fun `restoring the oldest kept copy survives the preventive capture's own sweep`() =
+        runTest {
+            state.setOn(true)
+            state.setRetention(BackupRetention.FIVE)
+
+            val copies = List(5) { index ->
+                enter("entry $index")
+                capture()
+            }
+            val oldest = copies.first()
+
+            val viewModel = viewModel()
+            viewModel.awaitCurrent(copies.last())
+
+            viewModel.restoreFromList(oldest)
+
+            assertTrue(
+                listed().any { it.name == oldest.name && it.savedAt == oldest.savedAt },
+                "the copy just restored from was swept away by the restore's own preventive " +
+                    "capture",
+            )
+            assertEquals(
+                oldest.asArchiveCopy(),
+                state.observe().value.archiveCopy,
+                "the mark names a copy that no longer exists in the destination",
+            )
+        }
 
     /**
      * Giving coverage up is what makes the restored archive get captured, and it is not
@@ -631,6 +737,76 @@ class CurrentCopyTest {
         assertFalse(
             BackupHistoryUiState(archiveCopy = copy.asArchiveCopy()).isCurrent(impostor),
             "the same name written again is a different copy, and is not marked",
+        )
+    }
+
+    // ---------------------------------------------------- the archive-replaced hook
+
+    /**
+     * The report's own third defect: a device preference indexing the old archive's rows
+     * by id must be told the archive is a different one now, and the one moment that is
+     * known is right here, once the swap has actually landed.
+     */
+    @Test
+    fun `a restore that lands tells whoever indexes the archive by row id`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val copy = capture()
+
+        var told = 0
+        val restore = ArchiveRestore(
+            database = live,
+            verifier = verifier,
+            preventive = VaultPreventiveBackup(state, vault),
+            vault = vault,
+            files = files,
+            archiveReplaced = ArchiveReplacedHook { told++ },
+        )
+
+        val outcome = restore.restoreFrom(
+            candidate = {
+                val path = temporary("candidate").absolutePath
+                destination.copyOut(copy, path).map { copied -> path.takeIf { copied } }
+            },
+            questions = saysYes,
+            from = copy,
+        )
+
+        assertIs<RestoreOutcome.Restored>(outcome)
+        assertEquals(1, told, "a restore that landed never told the hook the archive changed")
+    }
+
+    /**
+     * The restore has already succeeded by the time the hook is asked, so a bug in
+     * whichever feature claims it must not turn that success into a reported failure.
+     */
+    @Test
+    fun `a hook that fails does not turn a landed restore into a failed one`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+        val copy = capture()
+
+        val restore = ArchiveRestore(
+            database = live,
+            verifier = verifier,
+            preventive = VaultPreventiveBackup(state, vault),
+            vault = vault,
+            files = files,
+            archiveReplaced = ArchiveReplacedHook { error("some other feature's own bug") },
+        )
+
+        val outcome = restore.restoreFrom(
+            candidate = {
+                val path = temporary("candidate").absolutePath
+                destination.copyOut(copy, path).map { copied -> path.takeIf { copied } }
+            },
+            questions = saysYes,
+            from = copy,
+        )
+
+        assertIs<RestoreOutcome.Restored>(
+            outcome,
+            "a listener's own failure must not fail a restore that already landed",
         )
     }
 

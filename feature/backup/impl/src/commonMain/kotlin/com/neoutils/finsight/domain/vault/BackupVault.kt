@@ -6,7 +6,10 @@ import arrow.core.Either
 import arrow.core.left
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.exception.DatabaseCaptureException
+import com.neoutils.finsight.database.exception.DatabaseVerificationException
 import com.neoutils.finsight.database.repository.BackupVaultRepository
+import com.neoutils.finsight.database.snapshot.CandidateVerification
+import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.error.toBackupError
@@ -55,6 +58,18 @@ import kotlinx.datetime.toLocalDateTime
  * platforms the destination is not one; hand it over; remove the temporary whatever
  * happened, under [NonCancellable], because a suspending call in a `finally` does not run
  * once its coroutine is cancelled.
+ *
+ * **What lands is read back and put through the same gate a restore runs, before anything
+ * else believes it.** [destination.put][BackupDestination.put] returning a [StoredBackup]
+ * is proof the destination *has a file under that name*, and on every rung but one that is
+ * also proof of its content: the app's own storage and the folder rungs on the desktop and
+ * iOS all write through a name nothing lists and move the file into place only once every
+ * byte of it is there. Android's SAF folder rung is the one exception — a provider does not
+ * offer a rename `DocumentsContract` can lean on, so a document is created under its final
+ * name and written to directly, and a process killed mid-write leaves a truncated file
+ * under a name the app already recognises. Verifying once, here, after every capture,
+ * protects that one rung without asking the other four to pay for something a rename
+ * already gave them, and without this class knowing which rung it is talking to.
  */
 class BackupVault(
     private val vault: BackupVaultRepository,
@@ -64,6 +79,15 @@ class BackupVault(
     private val origin: CaptureOrigin,
     private val files: BackupFileService,
     private val clock: Clock,
+    /**
+     * The gate a restore already runs, asked once more about the copy this vault has just
+     * written — null only in a test whose subject is elsewhere. A capture proceeds exactly
+     * as it did before this existed when it is null, or when it answers
+     * [CandidateVerification.Accepted] or is simply unable to run at all: what changes
+     * behaviour is one thing only, a **proven** finding against the file (see
+     * [verifyLanded]).
+     */
+    private val verifier: CandidateVerifier? = null,
 ) {
 
     /**
@@ -112,14 +136,23 @@ class BackupVault(
      * only appears while the vault is on, but reachability is a fact about today's
      * navigation and design D1 is a property of the vault. This never answers
      * [CaptureOutcome.AlreadyCovered].
+     *
+     * @param sparing a copy the sweep behind this one capture must leave standing even if
+     * it is the oldest past the limit in force — [ArchiveRestore][com.neoutils.finsight.domain.restore.ArchiveRestore]'s
+     * use, and the only one with a reason to pass it: the copy a restore is reading from is
+     * still in the destination while this runs, and a sweep that took it would remove the
+     * one file the person just chose, out from under a restore that goes on to succeed
+     * from a temporary and never notices. Sparing it here can leave the destination one
+     * copy over the limit; the next capture of any kind, with nothing left to spare,
+     * brings it back down.
      */
-    suspend fun captureNow(): CaptureOutcome {
+    suspend fun captureNow(sparing: StoredBackup? = null): CaptureOutcome {
         val state = vault.observe().value
         if (!state.isOn) return CaptureOutcome.VaultOff
 
         return files.newCapturePath().fold(
             ifLeft = { CaptureOutcome.Failed(it) },
-            ifRight = { path -> captureInto(path, state, markOrNull()) },
+            ifRight = { path -> captureInto(path, state, markOrNull(), sparing) },
         )
     }
 
@@ -187,7 +220,7 @@ class BackupVault(
 
     /**
      * Writes the archive to [path], hands the file to the destination, and — only once the
-     * copy is in — records the capture and sweeps.
+     * copy is in and has been read back as good — records the capture and sweeps.
      *
      * The mark recorded is the one read *before* the capture, not after. A row entered
      * between the two would then be described by a mark lower than the file actually
@@ -199,6 +232,7 @@ class BackupVault(
         path: String,
         state: VaultState,
         mark: Long?,
+        sparing: StoredBackup? = null,
     ): CaptureOutcome {
         val at = clock.now()
 
@@ -221,15 +255,75 @@ class BackupVault(
 
         return landed.fold(
             ifLeft = { CaptureOutcome.Failed(it) },
-            ifRight = { copy ->
-                // The copy that landed, not the name it was asked for: a destination may
-                // have written a name of its own, and what is recorded has to be what the
-                // next listing answers with.
-                vault.recordCapture(at = at, mark = mark, copy = copy.asArchiveCopy())
-                sweep(state)
-                CaptureOutcome.Captured(copy)
-            },
+            ifRight = { copy -> land(copy, at, mark, sparing, state) },
         )
+    }
+
+    /**
+     * What `put` returning a [StoredBackup] is not, on its own, proof of — see the class
+     * comment. Read back and put through [verifier] before anything downstream believes
+     * it; a **proven** rejection turns this capture into [CaptureOutcome.Failed] and the
+     * copy is put back to the destination to take away, rather than left standing as a
+     * kept copy that reads is a kept copy.
+     */
+    private suspend fun land(
+        copy: StoredBackup,
+        at: Instant,
+        mark: Long?,
+        sparing: StoredBackup?,
+        state: VaultState,
+    ): CaptureOutcome {
+        val rejection = verifyLanded(copy)
+        if (rejection != null) {
+            // Best-effort, and never the reason this outcome changes again: the removal
+            // gate re-proves what was just proven, over the same bytes, and answers no
+            // for exactly the findings that matter most here — a truncated or corrupted
+            // file is provably this app's least of all, so it may be left standing rather
+            // than removed. The person is told the truth about the capture either way.
+            destination.remove(copy)
+            return CaptureOutcome.Failed(rejection.reason.toBackupError())
+        }
+
+        // The copy that landed, not the name it was asked for: a destination may have
+        // written a name of its own, and what is recorded has to be what the next listing
+        // answers with.
+        vault.recordCapture(at = at, mark = mark, copy = copy.asArchiveCopy())
+        sweep(state, sparing)
+        return CaptureOutcome.Captured(copy)
+    }
+
+    /**
+     * A **proven** rejection of [copy], reading it back out of the destination and asking
+     * [verifier] — or null when nothing about the file was disproven, which is not the
+     * same claim as *proven good*.
+     *
+     * Null covers three cases on purpose, and they are one answer because none of them is
+     * a finding against the file: there is no [verifier] to ask (a test whose subject is
+     * elsewhere), the copy could not be read back to be asked about, or the ask itself
+     * could not be carried out — a device that will not read, a disk with no room for the
+     * check's own temporary. [CandidateVerifier.verify] already draws this line for the
+     * same reason [com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck] does: a
+     * check that did not run has proven nothing, and answering as if it had would be the
+     * one thing worse than not checking at all — a false accusation against a copy that
+     * may be perfectly good, made of the one moment a person is being told their backup
+     * succeeded.
+     */
+    private suspend fun verifyLanded(copy: StoredBackup): CandidateVerification.Rejected? {
+        val verifier = verifier ?: return null
+        val path = files.newCapturePath().getOrNull() ?: return null
+
+        return try {
+            if (destination.copyOut(copy, path).getOrNull() != true) return null
+            verifier.verify(path) as? CandidateVerification.Rejected
+        } catch (cause: CancellationException) {
+            throw cause
+        } catch (cause: DatabaseVerificationException) {
+            null
+        } catch (cause: Exception) {
+            null
+        } finally {
+            withContext(NonCancellable) { files.discard(path) }
+        }
     }
 
     /**
@@ -252,14 +346,21 @@ class BackupVault(
      * captured, so it is the newest, and the smallest limit on offer is five — but that is
      * an argument about ordering rather than a rule, and a sweep that ever did reach it
      * would otherwise leave a mark on a file it had itself deleted.
+     *
+     * [sparing], when given, is left standing even where it is the oldest past the limit.
+     * It is excluded only from what this one pass removes — never added back into the
+     * count [keep] enforces, and never protected again on the sweep after this one — so
+     * the cost of sparing it is at most one copy over the limit until the next capture,
+     * of any kind, sweeps with nothing left to spare.
      */
-    private suspend fun sweep(state: VaultState) {
+    private suspend fun sweep(state: VaultState, sparing: StoredBackup? = null) {
         val keep = state.copiesKept() ?: return
         val copies = destination.list().getOrNull() ?: return
 
         copies.asSequence()
             .filterNot { it.name == PRE_MIGRATION_BACKUP_NAME }
             .drop(keep)
+            .filterNot { sparing != null && it.name == sparing.name && it.savedAt == sparing.savedAt }
             .forEach { copy ->
                 if (destination.remove(copy).getOrNull() == true) copyRemoved(copy)
             }

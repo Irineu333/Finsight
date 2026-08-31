@@ -6,6 +6,22 @@ private const val NAME_PREFIX = "finsight-backup-"
 private const val NAME_SUFFIX = ".db"
 
 /**
+ * What an imported file's name carries that a captured one's does not — the one fact this
+ * install actually knows about a copy it did not take itself.
+ *
+ * Nothing inside a file says which install wrote it (`snapshot_meta` carries a platform, an
+ * app version and a stamp — the same four columns whoever captured it,
+ * [com.neoutils.finsight.domain.vault.ArchiveImport] and
+ * [com.neoutils.finsight.domain.vault.BackupVault] alike), so a file this install merely
+ * brought in from a picker is, once it is sitting in the destination, a file that reads
+ * exactly like one this install captured itself — unless something records which of the two
+ * happened. This is that something: the one moment the distinction is known is the moment
+ * the file lands, and [com.neoutils.finsight.domain.vault.ArchiveImport] is the only caller
+ * that ever knows it landed this way.
+ */
+private const val IMPORTED_MARK = "imported-"
+
+/**
  * The name a captured file is written under, dated by the moment it was taken.
  *
  * The date is written as [kotlinx.datetime.LocalDate] writes itself, which is ISO-8601 and
@@ -25,9 +41,19 @@ private const val NAME_SUFFIX = ".db"
  * The extension is `.db` because the file is a SQLite database and nothing more. An
  * extension of this app's own would have to be declared to the system on iOS and would buy
  * nothing: what a candidate file is gets decided by reading it, never by its name.
+ *
+ * @param imported whether the file arrived through
+ * [com.neoutils.finsight.domain.vault.ArchiveImport] rather than through a capture of this
+ * install's own archive. It is written into the name — see [IMPORTED_MARK] — because
+ * nothing else records it once the file is sitting in the destination beside every other
+ * copy, and [isImportedFileName] is what a restore reads it back with. It changes nothing
+ * about [isBackupFileName], retention or removal, which all read the prefix and the
+ * extension and leave what is between them free — an imported copy is counted, dated and
+ * swept exactly like any other.
  */
-fun backupFileName(at: LocalDateTime): String = buildString {
+fun backupFileName(at: LocalDateTime, imported: Boolean = false): String = buildString {
     append(NAME_PREFIX)
+    if (imported) append(IMPORTED_MARK)
     append(at.date)
     append(TIME_MARK)
     append(at.hour.padded())
@@ -37,6 +63,21 @@ fun backupFileName(at: LocalDateTime): String = buildString {
     append(at.second.padded())
     append(NAME_SUFFIX)
 }
+
+/**
+ * Whether [name] names a copy [com.neoutils.finsight.domain.vault.ArchiveImport] put in the
+ * destination, as opposed to one this install captured itself.
+ *
+ * It is read, never asserted: a name is not authority over what a file is (design D9), and
+ * this answers a question about wording, not about safety — nothing here is trusted to
+ * decide what may be removed or restored. What it settles is a single sentence, in
+ * [com.neoutils.finsight.domain.restore.RestoreSource]: a copy this install cannot vouch for
+ * having taken itself must not be described as this app's own past, whether it was picked
+ * from a device or arrived in a folder another install also writes to and was imported from
+ * there.
+ */
+fun isImportedFileName(name: String): Boolean =
+    name.startsWith(NAME_PREFIX + IMPORTED_MARK)
 
 /**
  * Whether a file in a destination is worth looking at as a copy of this app's archive.

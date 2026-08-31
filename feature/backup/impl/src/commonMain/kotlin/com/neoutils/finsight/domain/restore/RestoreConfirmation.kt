@@ -28,22 +28,47 @@ data class RestoreConfirmation(
  * Where the file being restored came from — which is the whole of what the app knows about
  * whose archive it holds.
  *
- * It is not a detail of presentation. A copy the vault took is this install's own archive at
- * the instant stamped in it, so restoring one is a move backwards through this app's history
- * and can be said as such. A file the user picked is a file: the stamp says when it was
- * written and by which platform, and nothing in it says which device — a copy exported from
- * here and a copy exported from someone else's phone are the same four columns
- * ([FileOrigin]). The backup screen's own tile says the picked file is normally *from
- * another device*, so a sentence about how this app used to be is one the app cannot stand
- * behind there.
+ * It is not a detail of presentation. A copy this install captured itself is this install's
+ * own archive at the instant stamped in it, so restoring one is a move backwards through
+ * this app's history and can be said as such. A file the user picked is a file: the stamp
+ * says when it was written and by which platform, and nothing in it says which device — a
+ * copy exported from here and a copy exported from someone else's phone are the same four
+ * columns ([FileOrigin]). The backup screen's own tile says the picked file is normally
+ * *from another device*, so a sentence about how this app used to be is one the app cannot
+ * stand behind there.
+ *
+ * A copy sitting in the destination is not proof of the first case:
+ * [com.neoutils.finsight.domain.vault.ArchiveImport] puts any file that passes the gate
+ * there too, and `snapshot_meta` names no install — it is the same four columns whoever
+ * captured the file, so nothing inside it tells "this install's own capture" apart from
+ * "a file this install brought in from a picker," and inventing an identifier to do so is
+ * not this app's to add. What *is* known, because this install is the one doing it, is
+ * whether *this install's own* [com.neoutils.finsight.domain.vault.ArchiveImport] is what
+ * put the file there — read back by
+ * [com.neoutils.finsight.ui.screen.backup.service.isImportedFileName]. A copy another
+ * install captured and a folder synced between devices then carried in without ever going
+ * through this install's own import is not caught by that check and reads as [KEPT_COPY]
+ * regardless; there is nothing left in a captured file that could say otherwise.
  *
  * The distinction is made where it is known — by the restore, which is handed the kept copy
  * or nothing — and never inferred from a stamp.
  */
 enum class RestoreSource {
 
-    /** One of the copies the vault kept, taken out of this app's own destination. */
+    /**
+     * A copy that was either captured by this install, or reached the destination by some
+     * means this install has no way to tell apart from having captured it — a folder synced
+     * from another install's own vault included. See [IMPORTED_COPY] for the one case this
+     * install *can* tell apart.
+     */
     KEPT_COPY,
+
+    /**
+     * A copy this install brought in through its own
+     * [com.neoutils.finsight.domain.vault.ArchiveImport] rather than captured. Read the same
+     * as [PICKED_FILE]: the app has exactly as little standing to call this its own past.
+     */
+    IMPORTED_COPY,
 
     /** A file from the device's picker, of an archive that may never have been this one. */
     PICKED_FILE,

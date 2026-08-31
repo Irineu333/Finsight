@@ -12,12 +12,13 @@ import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.replaceContentFrom
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.error.toBackupError
+import com.neoutils.finsight.domain.model.ArchiveReplacedHook
 import com.neoutils.finsight.domain.vault.BackupVault
-import com.neoutils.finsight.feature.backup.api.DestructiveAction
-import com.neoutils.finsight.feature.backup.api.PreventiveBackup
+import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.ui.screen.backup.service.isImportedFileName
 import com.neoutils.finsight.util.UiText
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
@@ -59,9 +60,10 @@ import kotlinx.coroutines.withContext
 class ArchiveRestore(
     private val database: AppDatabase,
     private val verifier: CandidateVerifier,
-    private val preventive: PreventiveBackup,
+    private val preventive: VaultPreventiveBackup,
     private val vault: BackupVault,
     private val files: BackupFileService,
+    private val archiveReplaced: ArchiveReplacedHook = ArchiveReplacedHook.None,
 ) {
 
     /**
@@ -103,7 +105,7 @@ class ArchiveRestore(
                 is CandidateVerification.Accepted -> {
                     if (!questions.confirm(verification.toConfirmation(from))) {
                         RestoreOutcome.Abandoned
-                    } else if (!mayReplaceArchive(questions)) {
+                    } else if (!mayReplaceArchive(questions, from)) {
                         RestoreOutcome.Abandoned
                     } else {
                         val error = replaceArchiveWith(chosen, from)
@@ -136,9 +138,20 @@ class ArchiveRestore(
      * the only window in which it is worth anything. Earlier would take a file for a
      * restore the user then cancels; later would record the archive already gone, which
      * design D6 refuses to call protection.
+     *
+     * [from], when it names a kept copy, is passed on as the one file this capture's sweep
+     * must spare. It is still sitting in the destination while this runs — [candidate] only
+     * ever reads it into a temporary this call owns — and without sparing it, restoring the
+     * very copy retention is about to push past the limit removes it: the restore still
+     * succeeds, off the temporary, but the folder loses the copy the person just chose and
+     * [archiveRestoredFrom][BackupVault.archiveRestoredFrom] goes on to name a file that no
+     * longer exists.
      */
-    private suspend fun mayReplaceArchive(questions: RestoreQuestions): Boolean = try {
-        preventive.captureBefore(DestructiveAction.RESTORE_BACKUP)
+    private suspend fun mayReplaceArchive(
+        questions: RestoreQuestions,
+        from: StoredBackup?,
+    ): Boolean = try {
+        preventive.captureBeforeRestore(sparing = from)
         true
     } catch (cause: CancellationException) {
         throw cause
@@ -186,6 +199,13 @@ class ArchiveRestore(
      * it cannot be premature. A swap that failed or a process killed before this line
      * leaves the list unmarked, which says nothing, rather than marked wrongly, which says
      * something false; and the next capture puts the mark back on the copy it takes.
+     *
+     * **[archiveReplaced] runs last of all, and its failure is never this restore's.** A
+     * device preference indexing the old archive's rows by id ([ArchiveReplacedHook])
+     * is a fact about the install, not about whether the swap that just happened is worth
+     * reporting as one — the archive is already a different archive by the time this is
+     * told, and a listener's own exception must not turn a restore that already landed into
+     * one the person is told failed.
      */
     private suspend fun replaceArchiveWith(
         path: String,
@@ -195,6 +215,7 @@ class ArchiveRestore(
             vault.archiveReplaced()
             database.replaceContentFrom(path)
             vault.archiveRestoredFrom(from)
+            forgetStaleRowPreferences()
         }
         null
     } catch (cause: CancellationException) {
@@ -203,6 +224,18 @@ class ArchiveRestore(
         cause.error.toBackupError()
     } catch (cause: Exception) {
         BackupError.RESTORE_FAILED
+    }
+
+    private suspend fun forgetStaleRowPreferences() {
+        try {
+            archiveReplaced.onArchiveReplaced()
+        } catch (cause: CancellationException) {
+            throw cause
+        } catch (cause: Exception) {
+            // The restore already landed. A preference some other feature never manages
+            // to forget is that feature's own defect to fix, not a reason to tell the
+            // person the restore that already succeeded did not.
+        }
     }
 
     private suspend fun drop(path: String) {
@@ -265,10 +298,19 @@ sealed interface RestoreOutcome {
  * is a picker. Nothing in the file says which device wrote it, so a confirmation left to
  * work it out from the stamp would be guessing at the one fact that decides whether
  * restoring can be called a move back through this app's own history (see [RestoreSource]).
+ *
+ * A kept copy is not, on its own, proof of that fact: [from]'s own name is read for
+ * [isImportedFileName], because a copy this install brought in through
+ * [com.neoutils.finsight.domain.vault.ArchiveImport] sits in the same destination and is
+ * handed here the same way a captured one is, with nothing else to tell the two apart.
  */
 private fun CandidateVerification.Accepted.toConfirmation(from: StoredBackup?) =
     RestoreConfirmation(
         origin = origin?.toFileOrigin(),
         counts = counts,
-        source = if (from == null) RestoreSource.PICKED_FILE else RestoreSource.KEPT_COPY,
+        source = when {
+            from == null -> RestoreSource.PICKED_FILE
+            isImportedFileName(from.name) -> RestoreSource.IMPORTED_COPY
+            else -> RestoreSource.KEPT_COPY
+        },
     )

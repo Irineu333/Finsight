@@ -14,6 +14,11 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.navigation)
             implementation(projects.core.resources)
+            // `ArchiveReplacedHook`: a restore tells whichever facade claims it that a
+            // device preference indexing the old archive's rows by id no longer describes
+            // anything real. This module only calls the port; `:core:model` is where every
+            // facade model already lives, `DashboardComponentPreference` included.
+            implementation(projects.core.model)
 
             implementation(projects.feature.backup.api)
 

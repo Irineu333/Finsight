@@ -32,6 +32,7 @@ import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
+import com.neoutils.finsight.ui.screen.backup.service.isImportedFileName
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.nio.file.Files
@@ -291,6 +292,45 @@ class ArchiveImportTest {
             listOf(landed.name),
             listed().map { it.name },
             "and the history lists it like any other copy",
+        )
+    }
+
+    /**
+     * The report's own defect: nothing inside a file says which install captured it — the
+     * same four columns whoever wrote `snapshot_meta` — so a copy this install merely
+     * brought in from a picker would otherwise be indistinguishable, once it is sitting in
+     * the destination, from one this install captured itself. The name is the one place
+     * left to say so, and a restore reads it back to keep from calling such a copy this
+     * app's own past (`RestoreClaimsTest`).
+     */
+    @Test
+    fun `an imported file's name says it did not come from this install's own capture`() =
+        runTest {
+            state.setOn(true)
+            enter("coffee")
+            picked = backupFileElsewhere()
+
+            val landed = assertIs<ImportOutcome.Imported>(
+                archiveImport.importChosenFile(context)
+            ).copy
+
+            assertTrue(
+                isImportedFileName(landed.name),
+                "nothing about ${landed.name} says this copy did not come from a capture",
+            )
+        }
+
+    /** A copy this install actually captured must never read as one it merely imported. */
+    @Test
+    fun `a captured file's name is not mistaken for an imported one`() = runTest {
+        state.setOn(true)
+        enter("coffee")
+
+        val captured = capture()
+
+        assertFalse(
+            isImportedFileName(captured.name),
+            "a copy this install captured itself was marked as brought in from elsewhere",
         )
     }
 

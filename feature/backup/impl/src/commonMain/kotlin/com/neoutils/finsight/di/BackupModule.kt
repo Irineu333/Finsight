@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.database.repository.RoomArchiveMark
 import com.neoutils.finsight.database.snapshot.PreMigrationCopyTarget
 import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
+import com.neoutils.finsight.domain.model.ArchiveReplacedHook
 import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.ArchiveMark
@@ -31,6 +32,7 @@ import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryViewModel
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
@@ -69,6 +71,10 @@ val backupModule = module {
             origin = get(),
             files = get(),
             clock = get(),
+            // The gate a restore already runs, asked once more about the copy this vault
+            // has just written (see `BackupVault`'s own class comment): SAF is the one
+            // rung on Android that has no rename to lean on for the same guarantee.
+            verifier = get(),
         )
     }
 
@@ -80,7 +86,11 @@ val backupModule = module {
 
     // What every other feature reaches the vault through, and the only binding of it: a
     // second implementation would be a second answer to which actions are worth a copy.
-    factory<PreventiveBackup> { VaultPreventiveBackup(state = get(), vault = get()) }
+    // Bound under the concrete type too, because `ArchiveRestore` needs the one extra
+    // method the api's `PreventiveBackup` cannot carry — `StoredBackup` is this feature's
+    // own type — to spare the copy a restore is reading from out of the sweep its own
+    // preventive capture triggers.
+    factory { VaultPreventiveBackup(state = get(), vault = get()) } bind PreventiveBackup::class
 
     // What a destructive confirmation is told about its own action, so that it stops
     // calling a deletion permanent while the vault is about to copy the archive first.
@@ -172,6 +182,10 @@ val backupModule = module {
             preventive = get(),
             vault = get(),
             files = get(),
+            // Optional, like `TransactionRemovalPrelude` above: whichever feature owns a
+            // device preference that indexes an archive row by id claims this, and a
+            // restore proceeds correctly whether or not anybody does.
+            archiveReplaced = getOrNull() ?: ArchiveReplacedHook.None,
         )
     }
 

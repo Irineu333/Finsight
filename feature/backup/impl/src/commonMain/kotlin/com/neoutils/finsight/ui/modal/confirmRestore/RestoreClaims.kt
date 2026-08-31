@@ -30,12 +30,15 @@ import org.jetbrains.compose.resources.stringResource
  * The line about how far back the file reaches — or none, on a file that carries no stamp
  * and can therefore be dated at all only by guessing.
  *
- * **The two sources are two different sentences, and that is the point.** A kept copy is this
- * install's own archive at the instant stamped in it, so restoring one really does take the
- * app back to how it was. A picked file is a file: nothing in it names a device, the backup
- * screen's own tile says it normally comes from another one, and "how it was" would then be
- * a state this app was never in. What is left to say about such a file is the fact the stamp
- * actually carries — when it was written.
+ * **Two sentences, and only one source is entitled to the first of them.** A copy this
+ * install captured itself is this install's own archive at the instant stamped in it, so
+ * restoring one really does take the app back to how it was. Neither a picked file nor a
+ * copy this install imported can be said that way: nothing in a picked file names a device,
+ * the backup screen's own tile says it normally comes from another one, and an imported copy
+ * carries the same four columns whoever captured it (see
+ * [com.neoutils.finsight.domain.restore.RestoreSource]) — so for both, "how it was" would be
+ * a state this app cannot vouch for having been in, and what is left to say is the fact the
+ * stamp actually carries: when it was written.
  */
 internal fun ageSentence(confirmation: RestoreConfirmation): StringResource? = when {
     confirmation.origin == null -> null

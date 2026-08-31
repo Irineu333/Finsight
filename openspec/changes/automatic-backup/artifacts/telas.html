@@ -242,6 +242,7 @@
   .status.warn .pulse { background: var(--app-warning); }
   .status.bad .pulse { background: var(--app-error); }
   .status.none .pulse { background: var(--app-out-var); }
+  .status.bad .v { color: var(--app-error); }
   .status .k { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--app-on-var); }
   .status .v { font-size: 17px; font-weight: 600; margin-top: 3px; letter-spacing: -.01em; }
   .status .w { font-size: 12.5px; color: var(--app-on-var); margin-top: 5px; line-height: 1.4; }
@@ -667,7 +668,7 @@
             <div>
               <div class="k">Último backup</div>
               <div class="v">Hoje, 14:32</div>
-              <div class="w">Documentos/Finsight · 10 cópias guardadas</div>
+              <div class="w">Numa pasta que você escolheu · 10 cópias guardadas</div>
               <div class="w">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</div>
             </div>
           </div>
@@ -953,22 +954,6 @@
 
   <div class="stage">
     <div class="unit">
-      <span class="cap">Aviso na abertura do app</span>
-      <div class="phone sheetmode">
-        <div class="sheet">
-          <span class="grab"></span>
-          <h5>Não consigo mais gravar na pasta</h5>
-          <p>O acesso a <b>Documentos/Finsight</b> foi perdido. Seus backups continuam lá — o que se perdeu foi a permissão do app para escrever neles.</p>
-          <p>Estou guardando as cópias dentro do app até você decidir.</p>
-          <div class="btns">
-            <span class="btn outline block">Guardar dentro do app</span>
-            <span class="btn tonal block">Reconectar a pasta</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="unit">
       <span class="cap">Enquanto a decisão não vem</span>
       <div class="phone">
         <div class="body-pad" style="padding-top:16px">
@@ -977,17 +962,13 @@
             <div>
               <div class="k">Último backup</div>
               <div class="v">Hoje, 09:20</div>
-              <div class="w"><b class="err">Dentro do app, provisoriamente.</b> Sem acesso a Documentos/Finsight.</div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="tile">
-              <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--app-error)" stroke-width="1.7"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/><path d="M9 12l6 5M15 12l-6 5" stroke-linecap="round"/></svg>
-              <div class="mid">
-                <div class="t">Reconectar a pasta</div>
-                <div class="s">Seus backups anteriores voltam a aparecer aqui</div>
+              <div class="w">Dentro do app · 10 cópias guardadas</div>
+              <div class="w">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</div>
+              <div class="w" style="color:var(--app-error)">Não foi possível chegar até a pasta escolhida. As cópias novas estão sendo guardadas dentro do app, provisoriamente, até você decidir.</div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <span class="btn tonal">Apontar a pasta de novo</span>
+                <span class="btn text">Guardar dentro do app</span>
               </div>
-              <div class="end"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-on-var)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
             </div>
           </div>
         </div>
@@ -996,9 +977,8 @@
   </div>
 
   <div class="notes">
-    <div class="note"><span class="mk pg">1</span><div class="nt"><b>A frase separa o arquivo da permissão.</b> "Seus backups continuam lá" é a informação que evita pânico, e é literalmente verdade: o que morre é o vínculo, nunca os arquivos.</div></div>
-    <div class="note"><span class="mk pg">2</span><div class="nt"><b>Nenhum dos dois botões é destrutivo, então nenhum é vermelho.</b> O vermelho está na barra de status e no ícone da pasta quebrada — onde ele descreve a situação, não uma ação.</div></div>
-    <div class="note"><span class="mk pg">3</span><div class="nt"><b>Reconectar é a mesma tela de escolher pasta, usada num terceiro momento</b> — o primeiro é configurar, o segundo é trocar, e o terceiro é reencontrar o histórico depois de reinstalar o app.</div></div>
+    <div class="note"><span class="mk pg">1</span><div class="nt"><b>Nenhum dos dois botões é destrutivo, então nenhum é vermelho.</b> O vermelho está na barra de status e na frase que descreve a pasta perdida — onde ele descreve a situação, não uma ação.</div></div>
+    <div class="note"><span class="mk pg">2</span><div class="nt"><b>Reconectar é a mesma tela de escolher pasta, usada num terceiro momento</b> — o primeiro é configurar, o segundo é trocar, e o terceiro é reencontrar o histórico depois de reinstalar o app.</div></div>
   </div>
 </section>
 

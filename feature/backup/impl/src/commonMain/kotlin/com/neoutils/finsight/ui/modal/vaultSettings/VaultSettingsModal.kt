@@ -2,12 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.vaultSettings
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -54,6 +48,7 @@ import com.neoutils.finsight.resources.backup_settings_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.backup.BackupAction
 import com.neoutils.finsight.ui.screen.backup.GroupGap
+import com.neoutils.finsight.ui.screen.backup.OutcomeBox
 import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.VaultCopies
@@ -398,75 +393,6 @@ private fun <T> SegmentedChoice(
                 style = typography.bodySmall,
                 color = colorScheme.onSurfaceVariant,
             )
-        }
-    }
-}
-
-/**
- * A statement the sheet makes about itself: the reading on one line and, where there is a
- * second thing to say about it, why it comes out that way on the next.
- *
- * [hint] is null where the settings in force source one reading and not two. An empty line
- * would be the box asserting that something is missing, when what is there is simply the
- * whole of what can be said.
- *
- * The ground is `background` and not `surfaceContainer` for the reason [SwitchTile]'s is.
- * The warning tone paints its own tint instead, and needs no such step: the amber *is* the
- * signal, which is why there is no icon beside it — a second mark for the same thing.
- *
- * **It is one box in every state, and that is what lets the change be carried rather than
- * cut.** Two boxes chosen by a branch would be two nodes with nothing to animate between, and
- * — since the states are told apart by [tag] — crossing between them would put both names in
- * the tree at once, which is a thing a driver can catch. Here the reading, the tone and the
- * tag are parameters of the same box, so exactly one name is ever present and the tint, the
- * words and the height all move together.
- */
-@Composable
-private fun OutcomeBox(
-    value: String,
-    hint: String?,
-    tone: Color,
-    container: Color,
-    tag: String,
-    modifier: Modifier = Modifier,
-) {
-    val ground by animateColorAsState(container, label = "outcome_ground")
-    val valueTone by animateColorAsState(tone, label = "outcome_tone")
-
-    Surface(
-        color = ground,
-        shape = TileShape,
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(tag),
-    ) {
-        // The words fade in place and the tint ramps under them, so a tap on a picker reads
-        // as this box answering again rather than as a repaint of the area below it. The
-        // height a second line takes belongs to that same crossing — `AnimatedContent` carries
-        // its own size change — which is what keeps the box from resizing around text that has
-        // already swapped.
-        AnimatedContent(
-            targetState = value to hint,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "outcome",
-        ) { (currentValue, currentHint) ->
-            Column(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
-            ) {
-                Text(
-                    text = currentValue,
-                    style = typography.titleSmall,
-                    color = valueTone,
-                )
-                if (currentHint != null) {
-                    Text(
-                        text = currentHint,
-                        style = typography.bodySmall,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
         }
     }
 }

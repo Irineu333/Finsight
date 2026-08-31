@@ -20,6 +20,7 @@ import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_restore_success
@@ -124,10 +125,24 @@ class BackupViewModel(
     /**
      * Whether a copy of the current archive is genuinely taken before it is replaced — the
      * one fact the confirmation may not get wrong.
+     *
+     * **It is the vault's answer for this action and not a reading of the switches.**
+     * Whether a copy is owed is the two switches *and* the action's class, and
+     * [com.neoutils.finsight.feature.backup.api.DestructiveClass] is the one owner of the
+     * second half (design D7) — so a screen that asked only the switches would be a second
+     * owner of the rule, agreeing with the trigger only for as long as restoring stays in a
+     * covered class.
+     *
+     * A refusal takes it away for the rest of the flow. The copy was owed, it could not be
+     * taken, and from that moment the sheet has nothing to promise.
      */
     val keepsCopy: StateFlow<Boolean> = uiState
-        .map { it.vault.keepsCopy }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value.keepsCopy)
+        .map { it.vault.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP) && !it.copyRefused }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            vault.observe().value.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP),
+        )
 
     init {
         vault.observe()
@@ -292,6 +307,7 @@ class BackupViewModel(
                         isRestoring = false,
                         confirmation = null,
                         captureRefusal = null,
+                        copyRefused = false,
                     )
                 }
                 readDestination()
@@ -314,7 +330,7 @@ class BackupViewModel(
             await { it.copy(isVerifying = false, confirmation = confirmation) }
 
         override suspend fun permitWithoutCopy(reason: UiText): Boolean =
-            await { it.copy(captureRefusal = reason) }
+            await { it.copy(captureRefusal = reason, copyRefused = true) }
     }
 
     /** Publishes a question and waits, here, for the answer the sheet sends back. */

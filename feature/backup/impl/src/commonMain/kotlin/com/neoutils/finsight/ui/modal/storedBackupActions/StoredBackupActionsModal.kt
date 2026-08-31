@@ -2,19 +2,13 @@
 
 package com.neoutils.finsight.ui.modal.storedBackupActions
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.IosShare
@@ -33,11 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.restore.FileOrigin
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_categories
@@ -55,12 +46,14 @@ import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_today
 import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.screen.backup.FactBox
+import com.neoutils.finsight.ui.screen.backup.FactRow
 import com.neoutils.finsight.ui.screen.backup.GroupGap
+import com.neoutils.finsight.ui.screen.backup.MissingValue
 import com.neoutils.finsight.ui.screen.backup.RowGap
-import com.neoutils.finsight.ui.screen.backup.TabularFigures
 import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.ageLabel
-import com.neoutils.finsight.ui.screen.backup.originLabel
+import com.neoutils.finsight.ui.screen.backup.originWithVersion
 import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
 import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
@@ -252,125 +245,42 @@ private fun CopyFacts(
     // row shows that instead.
     val absent = if (facts is KeptCopyFacts.Unreadable) MissingValue else null
 
-    Surface(
-        color = colorScheme.background,
-        shape = TileShape,
-        modifier = modifier
-            .fillMaxWidth()
-            .animateContentSize()
-            .testTag("backup_copy_facts"),
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FactRow(
-                label = stringResource(Res.string.backup_copy_facts_origin),
-                value = held?.let { originValue(it.origin) } ?: absent,
-                tag = "backup_copy_facts_origin",
-            )
-            // Accounts and cards on one line, because they are read together: what a
-            // person recognises is the shape of their own archive, not two figures.
-            FactRow(
-                label = stringResource(Res.string.backup_copy_facts_accounts),
-                value = held?.let { "${it.counts.accounts} · ${it.counts.creditCards}" }
-                    ?: absent,
-                tag = "backup_copy_facts_accounts",
-            )
-            FactRow(
-                label = stringResource(Res.string.backup_confirm_transactions),
-                value = held?.counts?.transactions?.toString() ?: absent,
-                tag = "backup_copy_facts_transactions",
-            )
-            // Read out of every copy since the file has held one, and the fourth facade a
-            // person recognises their own archive by — the restore confirmation counts it
-            // for exactly that reason, and a sheet that dropped it was describing three
-            // quarters of the same file.
-            FactRow(
-                label = stringResource(Res.string.backup_confirm_categories),
-                value = held?.counts?.categories?.toString() ?: absent,
-                tag = "backup_copy_facts_categories",
-            )
-
-            FactRow(
-                label = stringResource(Res.string.backup_copy_facts_size),
-                value = sizeLabel(sizeInBytes),
-                tag = "backup_copy_facts_size",
-            )
-
-            if (facts is KeptCopyFacts.Unreadable) Unreadable()
-        }
-    }
-}
-
-/** Which device wrote the file, and which build of the app — the two halves of one answer. */
-@Composable
-private fun originValue(origin: FileOrigin?): String {
-    val where = originLabel(origin)
-
-    // A build that states no version of its own stamps none, and none is shown.
-    return if (origin != null && origin.appVersion.isNotBlank()) {
-        "$where · v${origin.appVersion}"
-    } else {
-        where
-    }
-}
-
-/**
- * One label and what stands opposite it: the figure, or the bar that says one is coming.
- *
- * The figures are set in tabular numerals so that four values stacked in one column line up
- * on their digits — a box of numbers that does not is what makes a set of facts read as a
- * dump of strings.
- */
-@Composable
-private fun FactRow(label: String, value: String?, tag: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(tag),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            text = label,
-            style = typography.bodySmall,
-            color = colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
+    FactBox(tag = "backup_copy_facts", modifier = modifier) {
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_origin),
+            value = held?.let { originWithVersion(it.origin) } ?: absent,
+            tag = "backup_copy_facts_origin",
         )
-        if (value == null) {
-            PendingValue()
-        } else {
-            Text(
-                text = value,
-                style = typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = TabularFigures,
-                ),
-                color = colorScheme.onSurface,
-                textAlign = TextAlign.End,
-            )
-        }
-    }
-}
+        // Accounts and cards on one line, because they are read together: what a person
+        // recognises is the shape of their own archive, not two figures.
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_accounts),
+            value = held?.let { "${it.counts.accounts} · ${it.counts.creditCards}" } ?: absent,
+            tag = "backup_copy_facts_accounts",
+        )
+        FactRow(
+            label = stringResource(Res.string.backup_confirm_transactions),
+            value = held?.counts?.transactions?.toString() ?: absent,
+            tag = "backup_copy_facts_transactions",
+        )
+        // Read out of every copy since the file has held one, and the fourth facade a
+        // person recognises their own archive by — the restore confirmation counts it for
+        // exactly that reason, and a sheet that dropped it was describing three quarters of
+        // the same file.
+        FactRow(
+            label = stringResource(Res.string.backup_confirm_categories),
+            value = held?.counts?.categories?.toString() ?: absent,
+            tag = "backup_copy_facts_categories",
+        )
 
-/**
- * Where a value will be. It takes the height of the line it stands in, so the row it holds
- * open is exactly the row the figure will occupy.
- */
-@Composable
-private fun PendingValue() {
-    Box(
-        modifier = Modifier
-            .padding(vertical = 3.dp)
-            .width(56.dp)
-            .height(10.dp)
-            .background(
-                color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(4.dp),
-            )
-            .testTag("backup_copy_facts_pending"),
-    )
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_size),
+            value = sizeLabel(sizeInBytes),
+            tag = "backup_copy_facts_size",
+        )
+
+        if (facts is KeptCopyFacts.Unreadable) Unreadable()
+    }
 }
 
 /**
@@ -460,7 +370,4 @@ private fun ActionRow(
         }
     }
 }
-
-/** What stands where a figure would, on a copy that could not be opened to produce one. */
-private const val MissingValue = "—"
 

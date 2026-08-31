@@ -998,11 +998,11 @@
     <string name="backup_platform_android">Android</string>
     <string name="backup_platform_desktop">Desktop</string>
     <string name="backup_platform_ios">iPhone or iPad</string>
-    <string name="backup_confirm_accounts">Accounts</string>
     <string name="backup_confirm_transactions">Transactions</string>
     <string name="backup_confirm_categories">Categories</string>
-    <string name="backup_confirm_credit_cards">Cards</string>
-    <string name="backup_confirm_irreversible">This replaces everything in the app right now — there is no undo, and the previous state cannot be brought back.</string>
+    <string name="backup_confirm_created">Created</string>
+    <string name="backup_confirm_irreversible_title">This cannot be undone</string>
+    <string name="backup_confirm_irreversible">It replaces everything in the app with the contents of this file, and no copy is kept first.</string>
     <string name="backup_confirm_cancel">Cancel</string>
     <string name="backup_confirm_action">Restore</string>
     <string name="backup_group_automatic">Automatic backup</string>
@@ -1068,7 +1068,8 @@
     <string name="backup_size_bytes">%1$d B</string>
     <string name="backup_size_kb">%1$d KB</string>
     <string name="backup_size_mb">%1$d MB</string>
-    <string name="backup_confirm_reversible">A copy of the app as it is now is kept first, and you can go back to it from the backup screen.</string>
+    <string name="backup_confirm_reversible_title">You can come back to how it is now</string>
+    <string name="backup_confirm_reversible">A copy of the app as it is now is kept first. You go back to it in %1$s.</string>
     <string name="backup_confirm_offer_title">Keep a copy first</string>
     <string name="backup_confirm_offer_subtitle">And every %1$s from now on. You can switch it off in the backup settings.</string>
     <string name="backup_confirm_offer_reminder">You left this unticked. Tick it and a copy is kept before this one and the next ones, every %1$s.</string>
@@ -1087,6 +1088,7 @@
     <string name="backup_history_current_subtitle">The app's data is this copy's</string>
     <string name="backup_history_newest_label">most recent</string>
     <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
+    <string name="backup_confirm_file_age">This file was created %1$s.</string>
     <string name="backup_copy_facts_origin">Origin</string>
     <string name="backup_copy_facts_accounts">Accounts · Cards</string>
     <string name="backup_copy_facts_size">Size</string>

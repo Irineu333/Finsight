@@ -147,6 +147,25 @@ fun originLabel(origin: FileOrigin?): String = when (origin?.platform) {
 }
 
 /**
+ * Which device wrote the file, and which build of the app — the two halves of one answer,
+ * said in the one row both sheets give the file's origin.
+ *
+ * The sheet about a kept copy and the confirmation before a restore describe the same stamp,
+ * so a second version of this would be a second way of naming the same file.
+ */
+@Composable
+fun originWithVersion(origin: FileOrigin?): String {
+    val where = originLabel(origin)
+
+    // A build that states no version of its own stamps none, and none is shown.
+    return if (origin != null && origin.appVersion.isNotBlank()) {
+        "$where · v${origin.appVersion}"
+    } else {
+        where
+    }
+}
+
+/**
  * Where the copies are, said as the place a person recognises rather than as a path — the
  * consequence of choosing it is what the coverage sentence beside it is for.
  */

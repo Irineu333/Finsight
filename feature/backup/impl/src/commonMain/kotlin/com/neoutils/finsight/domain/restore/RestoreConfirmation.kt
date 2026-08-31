@@ -21,7 +21,33 @@ import kotlin.time.Instant
 data class RestoreConfirmation(
     val origin: FileOrigin?,
     val counts: ArchiveCounts,
+    val source: RestoreSource,
 )
+
+/**
+ * Where the file being restored came from — which is the whole of what the app knows about
+ * whose archive it holds.
+ *
+ * It is not a detail of presentation. A copy the vault took is this install's own archive at
+ * the instant stamped in it, so restoring one is a move backwards through this app's history
+ * and can be said as such. A file the user picked is a file: the stamp says when it was
+ * written and by which platform, and nothing in it says which device — a copy exported from
+ * here and a copy exported from someone else's phone are the same four columns
+ * ([FileOrigin]). The backup screen's own tile says the picked file is normally *from
+ * another device*, so a sentence about how this app used to be is one the app cannot stand
+ * behind there.
+ *
+ * The distinction is made where it is known — by the restore, which is handed the kept copy
+ * or nothing — and never inferred from a stamp.
+ */
+enum class RestoreSource {
+
+    /** One of the copies the vault kept, taken out of this app's own destination. */
+    KEPT_COPY,
+
+    /** A file from the device's picker, of an archive that may never have been this one. */
+    PICKED_FILE,
+}
 
 /**
  * What the file says about where it came from, or nothing at all when it carries no

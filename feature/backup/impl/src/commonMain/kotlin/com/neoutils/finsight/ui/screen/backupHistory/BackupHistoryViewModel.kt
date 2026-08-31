@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_history_gone
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -113,10 +115,21 @@ class BackupHistoryViewModel(
      * person can be looking at kept copies with the preventive trigger switched off, and
      * the confirmation is not allowed to promise a way back that nothing will write
      * (`local-backup` spec).
+     *
+     * **The action is named, and the vault answers for it.** Whether a copy is owed is the
+     * switches *and* the action's class, and
+     * [com.neoutils.finsight.feature.backup.api.DestructiveClass] owns the second half
+     * (design D7); a screen that read only the switches would agree with the trigger by
+     * coincidence. A refusal then takes the promise away for the rest of the flow, because
+     * from that moment there is nothing to promise.
      */
-    val keepsCopy: StateFlow<Boolean> = vault.observe()
-        .map { it.keepsCopy }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, vault.observe().value.keepsCopy)
+    val keepsCopy: StateFlow<Boolean> = combine(vault.observe(), uiState) { state, screen ->
+        state.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP) && !screen.copyRefused
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        vault.observe().value.keepsCopyBefore(DestructiveAction.RESTORE_BACKUP),
+    )
 
     /**
      * What the sheet about one copy reads. It is the flow and not a value for the reason
@@ -248,6 +261,7 @@ class BackupHistoryViewModel(
                         isRestoring = false,
                         confirmation = null,
                         captureRefusal = null,
+                        copyRefused = false,
                     )
                 }
                 refresh()
@@ -355,7 +369,7 @@ class BackupHistoryViewModel(
             await { it.copy(confirmation = confirmation) }
 
         override suspend fun permitWithoutCopy(reason: UiText): Boolean =
-            await { it.copy(captureRefusal = reason) }
+            await { it.copy(captureRefusal = reason, copyRefused = true) }
     }
 
     private suspend fun await(ask: (BackupHistoryUiState) -> BackupHistoryUiState): Boolean {

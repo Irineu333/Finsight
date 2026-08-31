@@ -999,11 +999,11 @@
     <string name="backup_platform_android">Android</string>
     <string name="backup_platform_desktop">Computador</string>
     <string name="backup_platform_ios">iPhone ou iPad</string>
-    <string name="backup_confirm_accounts">Contas</string>
     <string name="backup_confirm_transactions">Transações</string>
     <string name="backup_confirm_categories">Categorias</string>
-    <string name="backup_confirm_credit_cards">Cartões</string>
-    <string name="backup_confirm_irreversible">Isso substitui tudo o que está no app agora — não é possível desfazer nem recuperar o estado anterior.</string>
+    <string name="backup_confirm_created">Criado em</string>
+    <string name="backup_confirm_irreversible_title">Não é possível desfazer</string>
+    <string name="backup_confirm_irreversible">Isso substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia é guardada antes.</string>
     <string name="backup_confirm_cancel">Cancelar</string>
     <string name="backup_confirm_action">Restaurar</string>
     <string name="backup_group_automatic">Backup automático</string>
@@ -1069,7 +1069,8 @@
     <string name="backup_size_bytes">%1$d B</string>
     <string name="backup_size_kb">%1$d KB</string>
     <string name="backup_size_mb">%1$d MB</string>
-    <string name="backup_confirm_reversible">Uma cópia de como o app está agora é guardada antes, e você pode voltar a ela pela tela de backup.</string>
+    <string name="backup_confirm_reversible_title">Dá para voltar a como está agora</string>
+    <string name="backup_confirm_reversible">Uma cópia do app como ele está agora é guardada antes. Você volta a ela em %1$s.</string>
     <string name="backup_confirm_offer_title">Guardar uma cópia antes</string>
     <string name="backup_confirm_offer_subtitle">E também a cada %1$s, daqui em diante. Você pode desligar nos ajustes de backup.</string>
     <string name="backup_confirm_offer_reminder">Você deixou isto desmarcado. Marque e uma cópia é guardada antes desta e das próximas, a cada %1$s.</string>
@@ -1088,6 +1089,7 @@
     <string name="backup_history_current_subtitle">Os dados do app são os desta cópia</string>
     <string name="backup_history_newest_label">mais recente</string>
     <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
+    <string name="backup_confirm_file_age">Este arquivo foi criado %1$s.</string>
     <string name="backup_copy_facts_origin">Origem</string>
     <string name="backup_copy_facts_accounts">Contas · Cartões</string>
     <string name="backup_copy_facts_size">Tamanho</string>

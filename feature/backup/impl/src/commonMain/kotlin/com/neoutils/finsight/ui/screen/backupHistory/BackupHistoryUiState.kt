@@ -51,6 +51,18 @@ data class BackupHistoryUiState(
 
     val captureRefusal: UiText? = null,
 
+    /**
+     * Whether the copy owed before *this* restore was refused — which stays true once the
+     * person has said to go on without it.
+     *
+     * It is not [captureRefusal] with the sentence dropped. The refusal is cleared as soon as
+     * the question is answered, while the confirmation is still standing behind it: read from
+     * that, the sheet would go back to promising a copy while the replacement it promised for
+     * ran with nothing kept. A capture that did not happen must not be presented as protection
+     * (`local-backup` spec).
+     */
+    val copyRefused: Boolean = false,
+
     val isRestoring: Boolean = false,
 ) {
 

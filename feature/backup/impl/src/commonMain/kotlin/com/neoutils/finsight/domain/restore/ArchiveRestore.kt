@@ -101,7 +101,7 @@ class ArchiveRestore(
         return try {
             when (val verification = verifier.verify(chosen)) {
                 is CandidateVerification.Accepted -> {
-                    if (!questions.confirm(verification.toConfirmation())) {
+                    if (!questions.confirm(verification.toConfirmation(from))) {
                         RestoreOutcome.Abandoned
                     } else if (!mayReplaceArchive(questions)) {
                         RestoreOutcome.Abandoned
@@ -259,8 +259,16 @@ sealed interface RestoreOutcome {
  * The counts arrive typed by facade and are passed on as they came: which tables they were
  * counted from is `:core:database`'s business, and an entity added to the schema later is
  * not something a screen has to remember.
+ *
+ * **Where the file came from is added here and read nowhere else**, because here is the one
+ * place that knows: [from] is the kept copy the candidate was taken out of, and its absence
+ * is a picker. Nothing in the file says which device wrote it, so a confirmation left to
+ * work it out from the stamp would be guessing at the one fact that decides whether
+ * restoring can be called a move back through this app's own history (see [RestoreSource]).
  */
-private fun CandidateVerification.Accepted.toConfirmation() = RestoreConfirmation(
-    origin = origin?.toFileOrigin(),
-    counts = counts,
-)
+private fun CandidateVerification.Accepted.toConfirmation(from: StoredBackup?) =
+    RestoreConfirmation(
+        origin = origin?.toFileOrigin(),
+        counts = counts,
+        source = if (from == null) RestoreSource.PICKED_FILE else RestoreSource.KEPT_COPY,
+    )

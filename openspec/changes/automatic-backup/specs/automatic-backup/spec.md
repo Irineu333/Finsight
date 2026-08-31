@@ -92,11 +92,18 @@ o app é aberto.
 ### Requirement: Uma cópia serve enquanto nada foi acrescentado depois dela
 
 Nenhum gatilho SHALL capturar quando a cópia mais recente ainda representa o acervo: uma captura só
-é necessária se dado foi **acrescentado** ou alterado desde ela.
+é necessária se **linha nova foi criada** desde ela. Editar um lançamento entra nessa conta, porque
+reescrever suas partidas é criar outras.
 
 Uma exclusão MUST NOT, por si só, tornar a cópia anterior insuficiente — ela é justamente a mais
 completa das duas. Uma sequência de exclusões sem inclusões entre elas SHALL produzir uma única
 cópia.
+
+Uma alteração no lugar, que não cria linha nenhuma — renomear uma categoria, mudar o valor de um
+orçamento —, MUST NOT obrigar a uma cópia nova. Nada que o usuário digitou desaparece com ela: a
+cópia anterior continua contendo todos os lançamentos, e o rótulo que mudou é redigitável em um
+toque. É o que permite medir o acervo por uma marca que só sobe, sem que uma tabela de controle
+viaje dentro do backup.
 
 #### Scenario: Exclusões em sequência
 - **WHEN** o usuário exclui três transações seguidas, sem lançar nada entre elas
@@ -108,6 +115,10 @@ cópia.
 
 #### Scenario: Aberturas sem lançamento
 - **WHEN** o usuário abre o app por vários dias além do intervalo, sem lançar nada
+- **THEN** nenhuma cópia nova é capturada, e a existente continua sendo a mais recente
+
+#### Scenario: Alteração que não cria linha
+- **WHEN** o usuário apenas renomeia uma categoria e abre o app depois do intervalo
 - **THEN** nenhuma cópia nova é capturada, e a existente continua sendo a mais recente
 
 ### Requirement: O preventivo captura antes da ação, ou a ação não é preventiva

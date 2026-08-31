@@ -262,6 +262,14 @@ A pré-condição é a mesma para os três gatilhos, e não é tempo: **exclusõ
 cópia nova** — a cópia anterior é justamente a mais completa das duas. Só inclusões e edições
 criam.
 
+A marca que responde isso é a maior chave que o SQLite já emitiu no acervo, somada por tabela
+(`sqlite_sequence`): sobe com uma inserção e não desce com uma exclusão, que é exatamente o formato
+da regra. Editar um lançamento reescreve as partidas dele e por isso a move. Uma alteração no lugar,
+que não cria linha nenhuma — renomear uma categoria, mudar o valor de um orçamento —, não a move, e
+esse é o limite aceito da medida: nada digitado se perde, porque a cópia anterior continua com todos
+os lançamentos, e o rótulo trocado é redigitável. Medi-la de outro jeito custaria uma tabela de
+controle, que viajaria dentro do backup — o que D9 recusa.
+
 ```
 apaga · apaga · apaga              → 1 cópia
 apaga · lança 3 · apaga            → 2 cópias (a 2ª protege as 3 novas)

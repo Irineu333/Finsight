@@ -563,6 +563,14 @@ private fun DestinationHeader(
                             text = summary,
                             style = typography.bodySmall,
                             color = colorScheme.onSurfaceVariant,
+                            // Tagged on the line that renders the count, not on the card
+                            // that holds it: the card is the control a flow taps, and it
+                            // reaches an E2E driver carrying no text of its own, so a
+                            // figure asserted on it could only ever be asserted as
+                            // present (`.maestro/README.md` §5.2, padrão 2). Absent until
+                            // the destination has answered, which is the same condition
+                            // the summary itself is under.
+                            modifier = Modifier.testTag("backup_history_summary"),
                         )
                     }
                 }

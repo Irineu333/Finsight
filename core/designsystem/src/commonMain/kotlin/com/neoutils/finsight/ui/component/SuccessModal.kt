@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.Res
@@ -81,7 +82,13 @@ class SuccessModal(
 
             Button(
                 onClick = { manager.dismiss(this@SuccessModal) },
-                modifier = Modifier.fillMaxWidth(),
+                // The sheet is its own composition root and covers everything under it, so a
+                // journey that passes through a success has to dismiss it before it can read
+                // anything again — and reaching a button by its label is what breaks the next
+                // time the copy changes (`.maestro/README.md` §5.2, padrão 1).
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("success_modal_dismiss"),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(

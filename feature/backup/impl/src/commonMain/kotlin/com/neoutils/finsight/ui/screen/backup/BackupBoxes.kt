@@ -89,13 +89,17 @@ internal fun FactBox(
  *
  * @param value null while the value is still being read. A value that will never arrive is
  * [MissingValue], which is a value: the row keeps its label and says so.
+ * @param tag names the node that renders the **figure**, not the row that holds it. A tag on
+ * the row reaches an E2E driver as an element with no text of its own — the label and the
+ * value are children of it — so a flow could assert the row exists and never the number in
+ * it, which is the assertion worth making (`.maestro/README.md` §5.2, padrão 2). Its absence
+ * while the value is still being read is not a gap either: [PendingValue] carries a tag of
+ * its own, so the two states stay told apart.
  */
 @Composable
 internal fun FactRow(label: String, value: String?, tag: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(tag),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -116,6 +120,7 @@ internal fun FactRow(label: String, value: String?, tag: String) {
                 ),
                 color = colorScheme.onSurface,
                 textAlign = TextAlign.End,
+                modifier = Modifier.testTag(tag),
             )
         }
     }

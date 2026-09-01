@@ -9,7 +9,9 @@ import com.neoutils.finsight.ui.screen.backup.VaultCopies
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * What the settings sheet concludes from the vault, in each of the four positions the two
@@ -163,5 +165,22 @@ class VaultOutcomeTest {
             assertIs<VaultOutcome.KeepsEverything>(outcome).perMonthBytes,
             "two fifteen-day waits fit in a month",
         )
+    }
+
+    @Test
+    fun `a wait the month does not divide by keeps the part of a copy it leaves over`() {
+        val outcome = vaultOutcome(
+            vault(interval = VaultInterval.SEVEN_DAYS, retention = BackupRetention.EVERYTHING),
+            captured(),
+        )
+
+        val rate = assertNotNull(assertIs<VaultOutcome.KeepsEverything>(outcome).perMonthBytes)
+
+        assertTrue(
+            rate > fourMegabytes * 4,
+            "a month holds four seven-day waits and most of a fifth, and dropping the " +
+                "remainder understates by a copy every four months",
+        )
+        assertTrue(rate < fourMegabytes * 5, "it does not hold a fifth whole one either")
     }
 }

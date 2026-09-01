@@ -56,7 +56,7 @@ internal fun vaultOutcome(vault: VaultState, copies: VaultCopies): VaultOutcome 
         ?.let { VaultInterval.nearest(vault.interval).duration.inWholeDays.coerceAtLeast(1) }
 
     val kept = vault.copiesKept() ?: return VaultOutcome.KeepsEverything(
-        perMonthBytes = if (each != null && wait != null) each * (DAYS_PER_MONTH / wait) else null,
+        perMonthBytes = if (each != null && wait != null) each * DAYS_PER_MONTH / wait else null,
     )
 
     return VaultOutcome.Keeps(

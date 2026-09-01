@@ -137,7 +137,7 @@ class DatabaseCaptureTest {
 
         onFile(capturedFile) { captured ->
             assertEquals(
-                14L,
+                AppSchema.VERSION.toLong(),
                 captured.scalarLong("PRAGMA user_version"),
                 "the schema version travelled",
             )
@@ -165,7 +165,7 @@ class DatabaseCaptureTest {
                 ),
                 "an archive with no rows in it is still recognisably a database of this app",
             )
-            assertEquals(14L, captured.scalarLong("PRAGMA user_version"))
+            assertEquals(AppSchema.VERSION.toLong(), captured.scalarLong("PRAGMA user_version"))
             assertEquals(0L, captured.scalarLong("SELECT COUNT(*) FROM `accounts`"))
             assertEquals(0L, captured.scalarLong("SELECT COUNT(*) FROM `transactions`"))
         }

@@ -10,15 +10,46 @@ import androidx.navigation.NavBackStackEntry
 import com.neoutils.finsight.ui.component.FloatingActionItem
 import org.jetbrains.compose.resources.StringResource
 
+/**
+ * Where a screen will take the app's action button.
+ *
+ * The button has two homes and the shell picks between them by window width: in a compact window it
+ * floats over the bottom-right corner of the content, and from `WIDE` upwards it is the navigation
+ * rail's header, beside the content and over nothing. A screen with no room for it usually means
+ * only the first — the corner it drew something of its own in — and that is what [BesideContent]
+ * says. Which home each width gets is the shell's rule; a screen reading the breakpoint to decide
+ * for itself would be a second copy of that rule, in as many screens as ever need it.
+ */
+enum class ActionButtonPresence {
+
+    /** Wherever the shell puts it. */
+    Anywhere,
+
+    /** Only where it stands beside the content: the rail's header, never the floating corner. */
+    BesideContent,
+
+    /** Neither place. */
+    Nowhere,
+}
+
 data class ChromeConfig(
     val isBottomBarVisible: Boolean = true,
-    val isFloatingActionButtonVisible: Boolean = true,
+    val actionButton: ActionButtonPresence = ActionButtonPresence.Anywhere,
 ) {
     companion object {
         val Default = ChromeConfig()
         val ContentOnly = ChromeConfig(
             isBottomBarVisible = false,
-            isFloatingActionButtonVisible = false,
+            actionButton = ActionButtonPresence.Nowhere,
+        )
+
+        /**
+         * The chrome of a screen that has no room for a button over its content — because it drew
+         * its own affordance in that corner, or because the universal action it would be served
+         * has nothing to do with what the screen is for.
+         */
+        val NoButtonOverContent = ChromeConfig(
+            actionButton = ActionButtonPresence.BesideContent,
         )
     }
 }

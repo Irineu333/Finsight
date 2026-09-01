@@ -59,6 +59,7 @@ import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ActionButtonPresence
 import com.neoutils.finsight.feature.shell.api.ChromeAction
 import com.neoutils.finsight.feature.shell.api.LocalChromeController
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -310,7 +311,7 @@ fun ChromeHost(
                                 onItemSelected = onItemSelected,
                                 header = {
                                     chromeTransition.AnimatedVisibility(
-                                        visible = { it.isFloatingActionButtonVisible },
+                                        visible = { it.actionButton != ActionButtonPresence.Nowhere },
                                         enter = fadeIn(),
                                         exit = fadeOut(),
                                     ) {
@@ -411,7 +412,7 @@ fun ChromeHost(
                             .padding(bottom = bottomAnchor),
                     ) {
                         chromeTransition.AnimatedVisibility(
-                            visible = { it.isFloatingActionButtonVisible },
+                            visible = { it.actionButton == ActionButtonPresence.Anywhere },
                             enter = fadeIn(),
                             exit = fadeOut(),
                             modifier = Modifier

@@ -1094,8 +1094,8 @@
     <string name="backup_confirm_reversible_title">You can come back to how it is now</string>
     <string name="backup_confirm_reversible">A copy of the app as it is now is kept first. You go back to it in %1$s.</string>
     <string name="backup_confirm_offer_title">Keep a copy first</string>
-    <string name="backup_confirm_offer_subtitle">And every %1$s from now on. You can switch it off in the backup settings.</string>
-    <string name="backup_confirm_offer_reminder">You left this unticked. Tick it and a copy is kept before this one and the next ones, every %1$s.</string>
+    <string name="backup_confirm_offer_subtitle">And when you open the app after %1$s, from now on. You can switch it off in the backup settings.</string>
+    <string name="backup_confirm_offer_reminder">You left this unticked. Tick it and a copy is kept before this one and the next ones, and when you open the app after %1$s.</string>
     <string name="backup_restore_subtitle_vault">From a backup that came from another device.</string>
     <string name="backup_no_copy_title">The backup copy could not be made</string>
     <string name="backup_no_copy_message">Restoring replaces everything in the app with this file's content, and no copy was kept that could bring it back.</string>

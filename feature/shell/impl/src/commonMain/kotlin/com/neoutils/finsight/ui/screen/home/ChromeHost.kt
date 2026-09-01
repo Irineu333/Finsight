@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -61,6 +62,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.feature.shell.api.ActionButtonPresence
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.LocalChromeController
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination as CatalogDestination
@@ -159,7 +161,16 @@ fun ChromeHost(
     // Two independent rules, and the reason they are stated apart. The bottom bar belongs to the
     // primary tabs; the action button does not, and is what every stacked screen keeps. A screen
     // suppresses the button by publishing it — `ContentOnly` — and never by where it sits.
-    val publishedConfig = chromeController.configOf(destinationId)
+    //
+    // Until the destination in focus publishes, the chrome that is on screen stays: a destination
+    // the shell has just reached has said nothing yet, which is not the same as having asked for
+    // the default. Holding is also what the eye expects — chrome the screen being left and the one
+    // being entered agree on should never move between them.
+    var lastPublishedConfig by remember { mutableStateOf(ChromeConfig.Default) }
+    val publishedConfig = chromeController.configOf(destinationId) ?: lastPublishedConfig
+
+    SideEffect { lastPublishedConfig = publishedConfig }
+
     val effectiveConfig = when {
         isWideWindow || isOnPrimaryTab -> publishedConfig
         else -> publishedConfig.copy(isBottomBarVisible = false)

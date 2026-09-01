@@ -10,6 +10,7 @@ import com.neoutils.finsight.resources.budgets_create
 import org.jetbrains.compose.resources.StringResource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * **What one destination publishes is not what another reads.**
@@ -61,7 +62,21 @@ class ChromeStateHolderTest {
         assertEquals(listOf("budgets_add"), holder.actionsOf(budgets).map { it.testTag })
         assertEquals(ChromeConfig.Default, holder.configOf(budgets))
         assertEquals(emptyList(), holder.actionsOf(accounts))
-        assertEquals(ChromeConfig.Default, holder.configOf(accounts))
+        assertNull(holder.configOf(accounts))
+    }
+
+    @Test
+    fun `a destination that has published nothing does not answer the default`() {
+        val holder = ChromeStateHolder()
+
+        holder.publish(accounts, ChromeConfig.NoButtonOverContent, listOf(action("accounts_add")))
+
+        // The frame between the navigation and the entering screen's `SideEffect`: the shell knows
+        // the destination and the destination has said nothing. Answering `Default` here is not
+        // silence but a request to show the button, and between two screens that both suppress it
+        // — settings and backup — that is the button appearing and leaving again.
+        assertNull(holder.configOf(budgets))
+        assertEquals(ChromeConfig.NoButtonOverContent, holder.configOf(accounts))
     }
 
     @Test

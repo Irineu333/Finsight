@@ -29,8 +29,18 @@ internal class ChromeStateHolder : ChromeController {
 
     private val registry = mutableStateMapOf<String, Published>()
 
-    fun configOf(destinationId: String?): ChromeConfig =
-        registry[destinationId]?.config ?: ChromeConfig.Default
+    /**
+     * What this destination published, or `null` while it has published nothing.
+     *
+     * The two are not the same answer, and collapsing them is a defect. A screen publishes from a
+     * `SideEffect`, which runs after the composition that first drew it, so the frame in which the
+     * shell learns it has navigated is a frame in which the destination it navigated to has said
+     * nothing yet. `ChromeConfig.Default` there is not silence — it is a request to show the
+     * button — and between two screens that both suppress it, that is the button appearing and
+     * leaving again.
+     */
+    fun configOf(destinationId: String?): ChromeConfig? =
+        registry[destinationId]?.config
 
     fun actionsOf(destinationId: String?): List<ChromeAction> =
         registry[destinationId]?.actions.orEmpty()

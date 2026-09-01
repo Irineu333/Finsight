@@ -30,9 +30,8 @@ class DeleteFutureInvoiceUseCase(
      * all its transactions are still there, and only the person may say to come back
      * [withoutCopy].
      */
-    // Withheld twice over: for every row after the first, because one removal is one
-    // announcement, and for all of them when the person was offered the copy, could not
-    // have it, and said to go on.
+    // Withheld only where the person was offered the copy, could not have it, and said to
+    // go on. Once for the batch is what the batch call already gives.
     @OptIn(WithheldAnnouncement::class)
     suspend operator fun invoke(
         invoiceId: Long,
@@ -48,21 +47,29 @@ class DeleteFutureInvoiceUseCase(
             InvoiceException(InvoiceError.CannotDeleteInvoice)
         }
 
-        transactionRepository.observeTransactionsBy(
+        val posted = transactionRepository.observeTransactionsBy(
             dimensionId = invoice.dimensionId,
-        ).first().forEachIndexed { index, transaction ->
-            // Announced once, before the first row goes. A copy taken between the second
-            // and the third would record the invoice already half taken apart, which is
-            // the state design D6 refuses to call protection.
-            transactionRepository.deleteTransactionById(
-                id = transaction.id,
-                announcement = if (index == 0 && !withoutCopy) {
-                    RemovalAnnouncement.Announced
-                } else {
-                    RemovalAnnouncement.Withheld
-                },
-            )
-        }
+        ).first()
+
+        // The batch is one removal and the copy owed before it is one copy, said once —
+        // which is the whole reason this is the batch call and not a row at a time. Said
+        // per row it rode on the *first* row, so an invoice carrying none said it never:
+        // the sheet promised a copy that this then did not take, and the invoice went
+        // anyway. Announcing here happens before the list is even looked at, so an invoice
+        // with nothing posted to it keeps the promise its confirmation made.
+        //
+        // Which deletions are worth a copy is the action's class and not the row count
+        // (design D7). An invoice with nothing on it is still a DELETE_INVOICE, and design
+        // D8 is what keeps that cheap: with nothing added since the last copy, the copy
+        // owed is the one already in the destination and no file is written.
+        transactionRepository.deleteTransactionsByIds(
+            ids = posted.map { it.id },
+            announcement = if (withoutCopy) {
+                RemovalAnnouncement.Withheld
+            } else {
+                RemovalAnnouncement.Announced
+            },
+        )
 
         invoiceRepository.deleteById(invoiceId)
     }

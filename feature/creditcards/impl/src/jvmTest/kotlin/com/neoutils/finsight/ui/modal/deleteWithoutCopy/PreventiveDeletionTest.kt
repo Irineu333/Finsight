@@ -689,6 +689,37 @@ class PreventiveDeletionTest {
     }
 
     /**
+     * An invoice carrying nothing is still an invoice the sheet promised a copy before.
+     *
+     * The promise is `DestructiveAction.DELETE_INVOICE`'s class and nothing else reads the
+     * row count (`DeleteFutureInvoiceViewModel.keepsCopy`), so a confirmation over an empty
+     * invoice shows the kept-copy notice exactly as one over twelve rows does. Said per
+     * row, the announcement rode on the *first* row and an invoice with none said it never:
+     * the notice stood, no copy was taken, and the invoice went anyway — protection claimed
+     * and not given, which is the one thing the screen may not do.
+     *
+     * The sibling deletion never had this: `deleteTransactionsByIds` announces before it
+     * looks at the list, so an empty batch still speaks, and that is now the call both
+     * take.
+     */
+    @Test
+    fun `an invoice carrying nothing still takes the copy its sheet promised`() = runTest {
+        seed()
+        val vault = Capturing()
+        val invoices = SingleInvoice(futureInvoice)
+
+        val outcome = DeleteFutureInvoiceUseCase(invoices, repository(vault))(futureInvoice.id)
+
+        assertTrue(outcome.isRight(), "an empty future invoice is deletable")
+        assertEquals(
+            1,
+            vault.files.size,
+            "the sheet promised a copy before an empty invoice and none was taken",
+        )
+        assertEquals(listOf(futureInvoice.id), invoices.deleted)
+    }
+
+    /**
      * A deletion the domain refuses destroys nothing, so there is nothing to keep a copy
      * of — and the refusal is reached before the removal is ever announced.
      */

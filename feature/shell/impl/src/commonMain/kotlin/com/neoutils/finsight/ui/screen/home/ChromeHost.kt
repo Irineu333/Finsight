@@ -162,19 +162,23 @@ fun ChromeHost(
     // primary tabs; the action button does not, and is what every stacked screen keeps. A screen
     // suppresses the button by publishing it — `ContentOnly` — and never by where it sits.
     //
-    // Until the destination in focus publishes, the chrome that is on screen stays: a destination
-    // the shell has just reached has said nothing yet, which is not the same as having asked for
-    // the default. Holding is also what the eye expects — chrome the screen being left and the one
-    // being entered agree on should never move between them.
-    var lastPublishedConfig by remember { mutableStateOf(ChromeConfig.Default) }
-    val publishedConfig = chromeController.configOf(destinationId) ?: lastPublishedConfig
-
-    SideEffect { lastPublishedConfig = publishedConfig }
+    // Until the destination in focus publishes, the chrome on screen stays — **all of it**, and
+    // that is the point of holding the answer rather than the half of it that comes from the
+    // register. The two rules answer about different destinations for one frame: "am I on a primary
+    // tab" is true of the destination the shell has already reached, while the configuration is
+    // still the one the destination being left published. Applying one against the other is a bar
+    // that starts leaving a frame before the button docked into it, and a button that spends that
+    // frame being sent to the corner it will never reach.
+    var lastEffectiveConfig by remember { mutableStateOf(ChromeConfig.Default) }
+    val publishedConfig = chromeController.configOf(destinationId)
 
     val effectiveConfig = when {
+        publishedConfig == null -> lastEffectiveConfig
         isWideWindow || isOnPrimaryTab -> publishedConfig
         else -> publishedConfig.copy(isBottomBarVisible = false)
     }
+
+    SideEffect { lastEffectiveConfig = effectiveConfig }
 
     // Created the moment the shell first knows where it stands. A transition created *in* a state
     // does not animate towards it — `updateTransition` keeps `remember { Transition(targetState) }`,
@@ -262,12 +266,38 @@ fun ChromeHost(
     // occupied is precisely the two-step entrance being removed here.
     val fabPlacement = remember(fabTarget != null) { Animatable(fabTarget ?: 0f) }
 
-    LaunchedEffect(fabPlacement, fabTarget) {
-        fabTarget?.let { fabPlacement.animateTo(it) }
+    // What the button is doing, read from the transition, which is the record of exactly that:
+    // `currentState` is the chrome on screen and the target is the chrome being moved to. The two
+    // disagree for as long as an entrance or an exit lasts, and that disagreement is the question.
+    val isButtonDrawn = chromeTransition.currentState.actionButton == ActionButtonPresence.Anywhere
+    val isButtonWanted = effectiveConfig.actionButton == ActionButtonPresence.Anywhere
+
+    // Three cases, and only the middle one is a journey.
+    //
+    // A button on screen for the whole of a bar arriving or leaving travels between the dock and
+    // the corner — the one animation this figure exists for. A button on its way *out* keeps the
+    // place it stands in: the bar leaves in the same breath it does, and following the bar would
+    // carry the button sideways while it goes, when the way out is straight down. And a button that
+    // is not drawn at all is placed rather than sent, so that it comes back where it belongs
+    // instead of travelling there in full view.
+    LaunchedEffect(fabPlacement, fabTarget, isButtonDrawn, isButtonWanted) {
+        val target = fabTarget ?: return@LaunchedEffect
+
+        when {
+            !isButtonDrawn -> fabPlacement.snapTo(target)
+            isButtonWanted -> fabPlacement.animateTo(target)
+            else -> Unit
+        }
     }
 
-    // Clamped: a spring is not contractually confined to [0, 1], and `lerp` extrapolates.
-    val fabProgress = fabPlacement.value.coerceIn(0f, 1f)
+    // Clamped: a spring is not contractually confined to [0, 1], and `lerp` extrapolates. A button
+    // that is not being drawn has no interpolation to read — its place is the one the shell would
+    // put it in, whole, in the very frame it appears in, and the spring is snapped to that same
+    // figure so that taking the reading back changes nothing.
+    val fabProgress = when {
+        isButtonDrawn -> fabPlacement.value
+        else -> fabTarget ?: fabPlacement.value
+    }.coerceIn(0f, 1f)
 
     // The endpoints are read directly and only the progress animates: a bar of a new height, or
     // insets arriving late, change where the button rests — they are not a journey it made.
@@ -422,10 +452,34 @@ fun ChromeHost(
                             .padding(horizontal = FabMargin)
                             .padding(bottom = bottomAnchor),
                     ) {
+                        // Where the button rests while hidden, and it is a different place in
+                        // each of the two situations the button lives in — which `fabProgress`
+                        // already tells apart.
+                        //
+                        // Docked, the distance is **the bar's**, not the button's: the bar leaves
+                        // by its own `slideOutVertically`, and two things on one clock only descend
+                        // as one thing if they descend the same distance. Its own height is a
+                        // shorter trip in the same time, which is the button visibly falling behind
+                        // the bar it is docked into.
+                        //
+                        // Alone in the corner there is no bar to keep up with and only the window's
+                        // edge to clear: its own height plus the clearance it was resting at. One
+                        // expression, because it is one place; and the entrance is the exit read
+                        // backwards, from that same place.
+                        val hiddenOffsetY: (Int) -> Int = { fullHeight ->
+                            with(density) {
+                                lerp(
+                                    start = bottomBarHeight ?: cornerAnchor,
+                                    stop = cornerAnchor + fullHeight.toDp(),
+                                    fraction = fabProgress,
+                                ).roundToPx()
+                            }
+                        }
+
                         chromeTransition.AnimatedVisibility(
                             visible = { it.actionButton == ActionButtonPresence.Anywhere },
-                            enter = fadeIn(),
-                            exit = fadeOut(),
+                            enter = fadeIn() + slideInVertically(initialOffsetY = hiddenOffsetY),
+                            exit = fadeOut() + slideOutVertically(targetOffsetY = hiddenOffsetY),
                             modifier = Modifier
                                 .align(BiasAlignment(horizontalBias, verticalBias = 1f))
                                 .aboveSharedElements(OverlayPriority.FloatingActionButton),

@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
@@ -72,6 +74,7 @@ import com.neoutils.finsight.resources.backup_history_import
 import com.neoutils.finsight.resources.backup_history_migration_label
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_history_newest_label
+import com.neoutils.finsight.resources.backup_history_retry
 import com.neoutils.finsight.resources.backup_history_summary
 import com.neoutils.finsight.resources.backup_history_title
 import com.neoutils.finsight.resources.backup_today
@@ -154,6 +157,17 @@ fun BackupHistoryScreen(
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup_history")
+    }
+
+    // **The history is the folder, so it is read again every time somebody comes back to
+    // it** (design D9). A listing taken when the screen was built is a claim about a folder
+    // as it was then, and the folder is one the person can also reach with a file manager —
+    // deleting a copy there and returning here left the row standing, and restoring it
+    // failed on a file that was no longer anywhere. The backup screen already reads again on
+    // the same occasion and for the same reason.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onAction(BackupHistoryAction.Refresh)
+        onPauseOrDispose {}
     }
 
     ConfirmRestoreHost(
@@ -257,6 +271,7 @@ fun BackupHistoryScreen(
 
                 uiState.copies.isEmpty() -> Empty(
                     isUnreadable = uiState.isUnreadable,
+                    onRetry = { viewModel.onAction(BackupHistoryAction.Refresh) },
                     message = when {
                         uiState.isUnreadable -> stringResource(Res.string.backup_history_failed)
                         uiState.isVaultOn -> stringResource(Res.string.backup_history_empty_message)
@@ -830,7 +845,12 @@ private fun RowTag(text: String, tone: Color, modifier: Modifier = Modifier) {
  * ([BackupHistoryUiState.isUnreadable]).
  */
 @Composable
-private fun Empty(isUnreadable: Boolean, message: String, modifier: Modifier = Modifier) {
+private fun Empty(
+    isUnreadable: Boolean,
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier
@@ -869,6 +889,22 @@ private fun Empty(isUnreadable: Boolean, message: String, modifier: Modifier = M
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+
+            // Only where the reading failed. An empty folder is an answer and has nothing to
+            // try again; a folder that would not read is a provider still waking up, a volume
+            // not mounted yet, a grant being checked — and the two controls above this are
+            // capture and import, which write. Leaving and coming back was the only way to
+            // ask the question again, which is a thing nobody guesses.
+            if (isUnreadable) {
+                TextButton(
+                    onClick = onRetry,
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .testTag("backup_history_retry"),
+                ) {
+                    Text(text = stringResource(Res.string.backup_history_retry))
+                }
+            }
         }
     }
 }

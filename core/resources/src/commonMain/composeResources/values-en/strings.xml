@@ -1072,6 +1072,7 @@
     <string name="backup_history_empty_message">The first one is taken the next time you open the app, or before the next deletion.</string>
     <string name="backup_history_empty_off">The vault is off. Turn it on from the backup screen for the app to start keeping copies.</string>
     <string name="backup_history_failed">The kept copies could not be read.</string>
+    <string name="backup_history_retry">Try again</string>
     <string name="backup_history_failed_title">The copies could not be read</string>
     <string name="backup_history_migration_label">update</string>
     <string name="backup_history_migration_subtitle">Kept before an app update</string>

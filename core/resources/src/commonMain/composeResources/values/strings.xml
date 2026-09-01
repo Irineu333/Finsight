@@ -1073,6 +1073,7 @@
     <string name="backup_history_empty_message">A primeira é feita na próxima vez que você abrir o app, ou antes da próxima exclusão.</string>
     <string name="backup_history_empty_off">O cofre está desligado. Ligue-o na tela de backup para o app começar a guardar cópias.</string>
     <string name="backup_history_failed">Não foi possível ler as cópias guardadas.</string>
+    <string name="backup_history_retry">Tentar de novo</string>
     <string name="backup_history_failed_title">Não foi possível ler as cópias</string>
     <string name="backup_history_migration_label">atualização</string>
     <string name="backup_history_migration_subtitle">Guardada antes de uma atualização do app</string>

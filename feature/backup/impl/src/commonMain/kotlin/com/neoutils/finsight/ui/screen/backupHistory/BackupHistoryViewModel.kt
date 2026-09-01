@@ -206,6 +206,7 @@ class BackupHistoryViewModel(
         modalManager = modalManager,
         scope = viewModelScope,
         refresh = ::refresh,
+        isBusy = { _uiState.value.isBusy },
     )
 
     fun onAction(action: BackupHistoryAction) {

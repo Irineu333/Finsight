@@ -177,6 +177,7 @@ class BackupViewModel(
         modalManager = modalManager,
         scope = viewModelScope,
         refresh = ::readDestination,
+        isBusy = { _uiState.value.isBusy },
     )
 
     fun onAction(action: BackupAction) {

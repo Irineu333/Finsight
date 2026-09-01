@@ -43,6 +43,14 @@ class VaultDestinationFlow(
     private val modalManager: ModalManager,
     private val scope: CoroutineScope,
     private val refresh: () -> Unit,
+    /**
+     * Whether the calling screen already has something running. A destination change is not
+     * a second operation somebody may start on top of a restore or a capture: it moves the
+     * rung those are addressing, and both screens guard every one of their other entries
+     * this way while leaving these two open. Asked here rather than at the two call sites,
+     * so a third caller cannot arrive without it.
+     */
+    private val isBusy: () -> Boolean,
 ) {
 
     /**
@@ -54,6 +62,8 @@ class VaultDestinationFlow(
      * something to do.
      */
     fun chooseFolder(context: PlatformContext) {
+        if (isBusy()) return
+
         scope.launch {
             change.pointAtFolder(context).fold(
                 ifLeft = ::fail,
@@ -73,6 +83,8 @@ class VaultDestinationFlow(
      * is also one of the two answers to a folder that has gone (design D12).
      */
     fun keepInsideApp() {
+        if (isBusy()) return
+
         scope.launch {
             val offer = change.keepInsideApp()
             refresh()

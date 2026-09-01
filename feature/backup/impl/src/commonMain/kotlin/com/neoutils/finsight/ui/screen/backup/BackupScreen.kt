@@ -213,6 +213,7 @@ fun BackupScreen(
                                 last = uiState.lastCopyAt,
                                 rung = uiState.rung,
                                 now = clock.now(),
+                                isBusy = uiState.isBusy,
                                 onAction = viewModel::onAction,
                                 platformContext = platformContext,
                                 modifier = modifier,
@@ -481,6 +482,13 @@ private fun LastBackupCard(
     last: Instant?,
     rung: VaultRung,
     now: Instant,
+    /**
+     * Whether the screen already has something running, which greys the two ways out of a
+     * fallen link — a destination change moves the rung a restore or an export is addressing,
+     * and the flow behind them refuses one while either is in flight. A control that refuses
+     * silently is a control that reads as broken.
+     */
+    isBusy: Boolean,
     onAction: (BackupAction) -> Unit,
     platformContext: PlatformContext,
     modifier: Modifier = Modifier,
@@ -581,6 +589,7 @@ private fun LastBackupCard(
                             onClick = {
                                 onAction(BackupAction.ChooseFolder(platformContext))
                             },
+                            enabled = !isBusy,
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             modifier = Modifier.testTag("backup_folder_reconnect"),
@@ -593,6 +602,7 @@ private fun LastBackupCard(
 
                         TextButton(
                             onClick = { onAction(BackupAction.KeepInsideApp) },
+                            enabled = !isBusy,
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             colors = ButtonDefaults.textButtonColors(

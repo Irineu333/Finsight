@@ -330,6 +330,28 @@ A limpeza roda **depois de uma captura bem-sucedida**, nunca na abertura por con
 ela está sempre ancorada num momento em que provadamente existe uma cópia nova, e o usuário nunca
 fica com zero.
 
+**Nenhuma varredura remove mais que cinco cópias**, por longe que o destino esteja do limite em
+vigor (`BackupVault.MAX_REMOVED_PER_SWEEP`). O caso que força isso não é a captura ordinária — ela
+excede o limite em uma cópia e remove uma —, e sim o limite baixado sobre um destino cheio, ou a
+pasta adotada que já guardava mais do que ele agora permite: ali uma única varredura seria larga o
+bastante para ser um segundo jeito, silencioso, de perder histórico, e quem moveu o limite veria o
+número que escolheu sem nunca ver o que o destino guardava um instante antes. Capado, aquilo vira
+algumas varreduras comuns em vez de uma desmedida, e o destino converge do mesmo jeito. O teto é
+cinco porque cinco é o menor limite que a tela oferece: nenhuma captura remove mais do que a pessoa
+poderia ter escolhido manter. O corte vem **depois** de todo o resto — sobre uma lista lida da mais
+nova para a mais velha, o que sobra da contagem já está ordenado da excedente mais nova para a mais
+antiga —, de modo que as cópias mais velhas e mais insubstituíveis ficam para uma varredura
+posterior em vez de serem as primeiras a ir.
+
+**E a primeira captura numa pasta recém-apontada que já guardava cópias não varre.** É o reencontro
+de D4 — o acervo de uma instalação anterior, achado de novo —, e a varredura que rodasse ali seria a
+retenção decidindo de quantas daquelas cópias não há mais espaço antes de a pessoa ter tido uma
+captura de tempo para ver o que está lá. O adiamento é armado só quando a pasta já continha cópias
+que esta instalação não escreveu (`VaultMigration.deferSweepIfAlreadyHolding`), vale para um único
+destino nomeado, e é gasto pela primeira captura que pousar **nele** — nunca por uma que pousou em
+outro lugar, e nunca de novo. Uma pasta apenas reconectada não o arma: as cópias ali são desta
+instalação, e ela já as varreu.
+
 A cópia anterior a uma migração **não entra na contagem** e é substituída apenas pela próxima
 migração. Se entrasse, três capturas periódicas depois ela sumiria — justamente no cenário em que
 ela é a única coisa que salva: a migração concluiu sem erro técnico e escreveu dado errado, e isso
@@ -482,6 +504,37 @@ que a dizem a consomem.
 *Direção, não decisão:* no momento da escolha o sistema sabe qual provedor a pessoa abriu, e sabe
 dizer o nome dele. Mostrar esse nome é honesto e barato, onde o app adivinhar "local ou nuvem" erra
 nos dois sentidos. Ninguém construiu isso.
+
+### D17 — O destino aceitar o arquivo não é prova de que a cópia presta
+
+Um `put` que responde sucesso prova que existe um arquivo com aquele nome. Em todas as
+implementações de destino menos uma isso também prova o conteúdo, porque elas escrevem sob um nome
+que ninguém lista e só movem o arquivo para o lugar quando o último byte chegou (`copyIntoPlace` no
+Android e no desktop, `moveItemAt…` no iOS). A da pasta no Android é a exceção, e não por descuido:
+um `DocumentsProvider` não oferece um rename em que `DocumentsContract` possa se apoiar, então o
+documento é criado já sob o nome final e escrito ali — e um processo morto no meio deixa um arquivo
+truncado sob um nome que o app reconhece como cópia sua
+(`AndroidFolderBackupDestination.put`, que diz isso de si mesmo).
+
+Então a cópia é **lida de volta e passada pelo mesmo portão da restauração**, uma vez, depois de
+toda captura (`BackupVault.verifyLanded`). Fica em `BackupVault` e não no degrau que precisa dela
+porque ali é onde toda captura passa: o degrau que não tem rename fica protegido sem que os outros
+sejam reescritos para pagar por ele, e nenhuma classe acima precisa saber com qual deles está
+falando.
+
+**Só uma reprovação provada muda o resultado.** Não haver verificador, não conseguir ler o arquivo
+de volta, ou a checagem não poder correr — um disco sem espaço para o temporário da própria checagem
+— são as três coisas que respondem igual, e a resposta é *nada foi desprovado*, que não é a mesma
+afirmação que *está bom*. Reprovar por uma checagem que não aconteceu seria uma acusação falsa
+contra uma cópia possivelmente boa, feita exatamente no instante em que a pessoa está sendo
+informada de que o backup deu certo — pior que não checar. É a mesma linha que `OwnCopyCheck` já
+traça antes de remover qualquer coisa.
+
+Retirar o arquivo reprovado é *best-effort* e nunca muda de novo o resultado: a remoção passa pelo
+mesmo portão, que sobre bytes truncados ou corrompidos não consegue provar que aquilo é deste app e
+por isso recusa apagar — a mesma recusa que protege o arquivo de um estranho numa pasta escolhida.
+O que não pode acontecer já não acontece: a captura não foi contada como sucesso, o instante da
+última cópia boa não se moveu, e nenhuma varredura rodou atrás dela.
 
 ## Risks / Trade-offs
 

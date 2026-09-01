@@ -65,9 +65,11 @@ estabelece, e registrado em `design.md` como pergunta aberta com o argumento pre
 ### New Capabilities
 
 - `automatic-backup`: o app mantendo cópias por conta própria — os três gatilhos e a regra que
-  decide se há o que capturar, os dois degraus de destino e o que cada um cobre, o vínculo com a
-  pasta e o que fazer quando ele cai, o histórico lido da pasta, a retenção, a troca de pasta, e a
-  obrigação de a tela dizer sempre quando foi o último backup que deu certo.
+  decide se há o que capturar, as duas portas pelas quais a pessoa mesma põe uma cópia no destino
+  (capturar agora e importar um arquivo), a releitura que decide se uma captura foi mesmo boa, os
+  dois degraus de destino e o que cada um cobre, o vínculo com a pasta e o que fazer quando ele cai,
+  o histórico lido da pasta, a retenção, a troca de pasta, e a obrigação de a tela dizer sempre
+  quando foi o último backup que deu certo.
 
 ### Modified Capabilities
 

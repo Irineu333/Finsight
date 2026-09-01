@@ -194,6 +194,34 @@ restauração — é o que autoriza mexer nele antes de qualquer remoção.
   nenhum deles passa pelo filtro de nome e pela confirmação de conteúdo que a retenção exige antes
   de apagar qualquer coisa
 
+### Requirement: Uma captura só é dada como boa depois de a cópia ser lida de volta
+
+O app SHALL ler de volta o arquivo que acabou de pousar no destino e submetê-lo às mesmas
+verificações do fluxo de restauração antes de tratar a captura como bem-sucedida. Um destino que
+aceita o arquivo prova que existe um arquivo com aquele nome, e não que o conteúdo dele é um banco
+deste app: onde o destino escreve direto sob o nome final, sem trocar um arquivo pronto de lugar, um
+processo interrompido no meio da escrita deixa um arquivo truncado sob um nome que o app reconhece.
+
+Uma cópia **provadamente** ruim MUST NOT ser dada como sucesso: o instante da última captura
+bem-sucedida MUST NOT se mover por causa dela, nenhuma cópia existente SHALL ser removida por uma
+captura assim, e o app SHALL pedir ao destino que retire o arquivo — pedido que o destino pode
+recusar, pelo mesmo portão que impede o app de apagar o que não prova ser seu. Um arquivo ruim
+deixado no destino é o preço aceito; a cópia contada como boa não é.
+
+Uma verificação que **não pôde ser feita** MUST NOT ser tratada como reprovação — o arquivo não pôde
+ser lido de volta, ou a checagem não pôde correr —, e a captura SHALL valer como valia antes desta
+leitura existir. Uma acusação falsa contra uma cópia possivelmente boa, feita no momento em que a
+pessoa está sendo informada de que seu backup deu certo, é pior que a checagem que não aconteceu.
+
+#### Scenario: O que pousou não é o acervo
+- **WHEN** uma cópia pousa truncada, num destino que escreve direto sob o nome final
+- **THEN** a captura é relatada como falha, o instante da última cópia bem-sucedida não se move, e
+  nenhuma cópia antiga é removida
+
+#### Scenario: A verificação não pôde correr
+- **WHEN** a cópia pousa e o app não consegue lê-la de volta para verificar
+- **THEN** a captura continua valendo como bem-sucedida, e nada é removido por causa disso
+
 ### Requirement: O usuário aponta a pasta uma vez, e o app a reencontra
 
 Escolhida a pasta, o app SHALL escrever, listar e remover cópias nela sem pedir nada ao usuário a
@@ -278,6 +306,37 @@ conteúdo, com as mesmas verificações do fluxo de restauração manual.
 - **WHEN** a retenção remove cópias antigas de uma pasta que contém outros arquivos
 - **THEN** apenas arquivos confirmados como cópias escritas por este app são removidos
 
+### Requirement: Fora dos três gatilhos, a pessoa põe uma cópia no destino de dois jeitos
+
+A tela do histórico SHALL oferecer capturar uma cópia agora e trazer para o destino um arquivo que a
+pessoa tenha em outro lugar. As duas SHALL estar presentes em todos os estados da tela — inclusive
+sem nenhuma cópia e com o destino ilegível, que é justamente quando alguém as procura — e nenhuma
+das duas SHALL escrever coisa alguma com o cofre desligado, como nenhum gatilho escreve.
+
+Capturar agora MUST NOT ser recusada porque a cópia mais recente ainda representa o acervo. Essa
+pré-condição existe para a ocasião que ninguém escolheu; num controle que a pessoa acabou de tocar
+ela produz um botão que não faz nada, e a frase que o explicaria não seria nem verdadeira — há
+tabelas cuja escrita não move a marca do acervo. Fora essa diferença a cópia é como qualquer outra:
+a retenção a conta, e ela passa a ser a cópia a que o acervo corresponde.
+
+Um arquivo importado SHALL passar pelas mesmas verificações do fluxo de restauração antes de pousar
+no destino, SHALL receber um nome desta convenção — distinguível do nome de uma cópia que este app
+capturou —, e MUST NOT ser tomado como a cópia de que o acervo em uso saiu. Pousado, ele é uma cópia
+guardada como as outras: listada, contada pela retenção, restaurável e removível pelas mesmas ações.
+
+#### Scenario: Capturar com o acervo inalterado
+- **WHEN** o usuário toca em capturar agora sem ter lançado nada desde a última cópia
+- **THEN** uma cópia nova é escrita assim mesmo, e passa a ser a mais recente
+
+#### Scenario: Um arquivo que não é cópia deste app
+- **WHEN** o usuário escolhe importar um arquivo que não passa nas verificações da restauração
+- **THEN** nada é escrito no destino, e o histórico continua como estava
+
+#### Scenario: As duas portas com o cofre desligado
+- **WHEN** a tela do histórico é aberta com o cofre desligado
+- **THEN** capturar e importar continuam à vista e não escrevem nada, e a tela diz que o cofre está
+  desligado
+
 ### Requirement: A retenção nunca deixa o usuário sem nada
 
 O app SHALL manter um número limitado de cópias por destino, e SHALL remover as mais antigas quando
@@ -291,9 +350,34 @@ A remoção SHALL acontecer depois de uma captura bem-sucedida, e MUST NOT ser e
 outro momento: assim ela está sempre ancorada na existência de uma cópia nova, e o destino nunca
 fica vazio por efeito da retenção.
 
+Uma única varredura MUST NOT remover mais que um punhado de cópias, qualquer que seja a distância
+entre o que o destino guarda e o que o limite agora permite; o destino SHALL convergir para o limite
+ao longo das capturas seguintes. Uma varredura larga o bastante para absorver a diferença de uma vez
+seria um segundo jeito, silencioso, de perder histórico: quem baixa o limite vê o número que
+escolheu, nunca o que o destino guardava um instante antes. O punhado MUST NOT ser maior que o menor
+limite que a tela oferece, de modo que nenhuma captura remova mais cópias do que a pessoa poderia
+ter escolhido manter.
+
+Apontar para uma pasta que já contém cópias que esta instalação não escreveu SHALL adiar uma
+varredura, e exatamente uma: a da primeira captura que pousar naquela pasta. É o reencontro de um
+acervo anterior (ver *O usuário aponta a pasta uma vez*), e decidir de quantas daquelas cópias a
+retenção não tem mais espaço, antes de a pessoa ter tido a chance de ver o que está lá, seria a
+retenção respondendo por ela. O adiamento SHALL valer só para o destino em que foi armado, e a
+varredura seguinte SHALL rodar normalmente.
+
 #### Scenario: Limite excedido
 - **WHEN** uma captura conclui e o destino passa a ter mais cópias que o limite
 - **THEN** as mais antigas são removidas até o limite, e a recém-capturada permanece
+
+#### Scenario: Limite baixado sobre um destino cheio
+- **WHEN** o usuário baixa o limite para cinco num destino que guarda vinte cópias
+- **THEN** nenhuma captura remove as quinze de uma vez, e o destino chega a cinco ao longo das
+  capturas seguintes
+
+#### Scenario: Pasta reencontrada com um acervo anterior
+- **WHEN** o usuário aponta para uma pasta que já contém cópias de uma instalação anterior
+- **THEN** a primeira cópia capturada nela não remove nenhuma das que já estavam, e a captura
+  seguinte volta a aplicar o limite
 
 #### Scenario: Retenção desligada
 - **WHEN** o usuário escolhe não remover nada

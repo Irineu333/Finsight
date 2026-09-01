@@ -167,8 +167,14 @@
 
 Tudo o que veio depois de `fefce652d` — *"every task in the change is done"* —, que é o commit em
 que esta lista se declarou completa. Levantado com `git log fefce652d..HEAD` e lido commit a
-commit, não de memória. São 20, e nenhum deles é tarefa nova: são defeitos encontrados por
-verificação, por auditoria ou por uso, e os ajustes que vieram com eles.
+commit, não de memória. Nenhum deles é tarefa nova: são defeitos encontrados por verificação, por
+auditoria ou por uso, e os ajustes que vieram com eles.
+
+O levantamento foi feito duas vezes, e a segunda existe porque a primeira envelheceu. 13.1 a 13.20
+são os vinte commits até `08f7c9fcd`, que é o commit em que esta seção foi escrita; 13.21 a 13.24
+são os quatro que vieram depois dele, e que a frase *"são 20"* passou a esconder no instante
+seguinte. Uma lista que se declara completa é verdade só até o próximo commit, então o que a mantém
+honesta é conferi-la de novo com o mesmo `git log` antes de arquivar.
 
 **Defeitos de comportamento**
 
@@ -233,3 +239,28 @@ verificação, por auditoria ou por uso, e os ajustes que vieram com eles.
 - [x] 13.20 O cenário de cobertura da spec e D16 do design passaram a distinguir ler o próprio
       armazenamento de adivinhar o provedor, que é o que aquela decisão recusa — no mesmo commit
       de 13.10, porque o cenário afirmava sem ressalva o que o código dizia errado (`5af06ad0a`)
+
+**Depois do próprio registro**
+
+- [x] 13.21 O vocabulário do cofre — o destino, a pasta, o serviço de arquivo, `StoredBackup`,
+      `FolderLink`, `OwnCopyCheck` e as regras de nome — morava em `ui.screen.backup.service`, e
+      onze arquivos de `domain/` o importavam em 35 linhas. A regra de camada do `CLAUDE.md` é
+      Domain <- UI, e isso corria nos dois sentidos: são portas e os valores que as atravessam, não
+      código de tela. Passaram para `domain.vault.service`, e nada além do pacote mudou
+      (`74a964b6c`)
+- [x] 13.22 As duas telas carregavam cada uma a sua cópia de trocar de destino e de esperar por uma
+      resposta no meio de uma restauração — 87 linhas idênticas, e o que estava duplicado eram
+      decisões, não encanamento: qual desfecho de uma migração merece uma frase, e qual frase.
+      `VaultDestinationFlow` e `PendingAnswer` passam a ser os donos das duas (`e1c4d3dda`)
+- [x] 13.23 Ler uma cópia do destino entregava o caminho primeiro e só removia o arquivo quando a
+      leitura respondia *não está lá*: uma leitura que falhava de vez deixava para trás um arquivo do
+      tamanho do acervo, e disco cheio é o jeito mais provável de chegar nessa saída. E uma captura
+      cujo escopo era cancelado depois de a cópia pousar saía antes de qualquer coisa registrá-la —
+      o arquivo ficava no destino, a linha da última cópia continuava velha, e o gatilho seguinte
+      escrevia um segundo que o primeiro tornara desnecessário (`6cec2a4a4`)
+- [x] 13.24 A tela das cópias lia o destino ao ser construída e nunca mais, na única tela cujo
+      próprio comentário diz que o histórico **é** a pasta (D9): apagar uma cópia pelo gerenciador de
+      arquivos e voltar deixava a linha lá, e restaurar falhava sobre um arquivo que não está em
+      lugar nenhum. Uma pasta que não lia não tinha como pedir de novo — os dois controles acima da
+      mensagem escrevem —, e trocar de destino no meio de uma operação em curso não era recusado
+      (`f465cf3c4`)

@@ -2,6 +2,7 @@
 area: report
 severity: low
 type: ux
+verdict: fixed
 ---
 
 # A configuração de relatório esconde o botão de ação também em janela larga
@@ -44,3 +45,21 @@ mas é uma afordância perdida por um motivo que ali não se aplica.
 
 A mesma forma aplicada em `SupportIssueScreen`: publicar `ChromeConfig.Default` de `WIDE` para
 cima e a supressão só abaixo dela. Não vinculante.
+
+## Desfecho
+
+**Causa real** — como registrado: `ChromeEffect` publicava a supressão sem condição, e o motivo
+que a justifica (o botão "Gerar" ocupando a `bottomBar`) só descreve a janela compacta.
+
+**Mudança** — `ReportConfigScreen` passa a publicar `ChromeConfig.Default` de `WIDE` para cima e
+a supressão só abaixo dela, lendo `isWideWindow()` — o mesmo fato pelo qual `ChromeHost` decide
+onde desenhar o botão. O comentário ao lado passa a dizer isso.
+
+**Prova** — nenhuma automatizada. Não há teste que morda uma decisão de chrome por largura de
+janela, e um teste estrutural que proibisse a supressão incondicional seria falso: o modo de
+edição do dashboard publica `ChromeConfig.ContentOnly` e está certo em qualquer largura. O que
+foi verificado: `:feature:report:impl:compileKotlinJvm` limpo, e a leitura de `ChromeHost`, que
+desenha o botão do canto dentro de `if (!isWideWindow)` e o do rail como `header` do
+`NavigationRailBar`.
+
+**Commit** — `Fix(Report): suppress the action button only where it can collide`

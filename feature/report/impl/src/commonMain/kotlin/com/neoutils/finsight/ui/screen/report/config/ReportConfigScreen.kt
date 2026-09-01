@@ -97,10 +97,18 @@ private fun ReportConfigContent(
         inactiveBorderColor = colorScheme.outline,
     )
 
-    // The generate button spans the bottom bar of this screen, and on a stacked screen the shell
-    // puts the action button over its right-hand end. This screen has a primary action of its own
-    // and needs no second one floating on top of it.
-    ChromeEffect(config = ChromeConfig(isFloatingActionButtonVisible = false))
+    // The generate button spans the bottom bar of this screen, and in a compact window the shell
+    // floats the action button over its right-hand end. This screen has a primary action of its
+    // own and needs no second one on top of it. The overlap is the whole reason, and it exists
+    // only there: from `WIDE` upwards the button sits in the navigation rail's header, clear of
+    // the bottom bar, and suppressing it would cost the universal action for nothing.
+    ChromeEffect(
+        config = if (isWideWindow()) {
+            ChromeConfig.Default
+        } else {
+            ChromeConfig(isFloatingActionButtonVisible = false)
+        }
+    )
 
     Scaffold(
         topBar = {

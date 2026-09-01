@@ -59,7 +59,11 @@ class DeleteTransactionViewModel(
      * Asked for as the sheet is built, and answered as the deletion starts: whether the
      * offer stands at all, and whether it arrives ticked, are the vault's own.
      */
-    val offer = VaultOfferState(vaultOffer)
+    val offer = VaultOfferState(
+        offer = vaultOffer,
+        coverage = coverage,
+        action = DestructiveAction.DELETE_TRANSACTION,
+    )
 
     /**
      * Whether a copy is genuinely kept before the transaction goes, which is what the sheet
@@ -68,7 +72,7 @@ class DeleteTransactionViewModel(
      * Asked about *this* action and answered in the domain: a screen carrying its own idea
      * of which deletions are worth a copy would be a second owner of that rule (design D7).
      */
-    val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.DELETE_TRANSACTION)
+    val keepsCopy: StateFlow<Boolean> get() = offer.keepsCopy
 
     fun deleteTransaction() = viewModelScope.launch {
         // The analytics event still reports the category by name; the ledger only

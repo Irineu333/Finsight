@@ -23,6 +23,8 @@ import com.neoutils.finsight.domain.vault.VaultInterval
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.domain.vault.label
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
 import com.neoutils.finsight.feature.backup.api.VaultOfferState
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -123,7 +125,14 @@ class VaultOfferTest {
     private val offer = StandingVaultOffer(vault = vault, switch = switch)
 
     /** A confirmation going up: it asks for the offer and gets the box that goes with it. */
-    private fun confirmation() = VaultOfferState(StandingVaultOffer(vault, switch))
+    private fun confirmation() = VaultOfferState(
+        offer = StandingVaultOffer(vault, switch),
+        // The subject here is the offer itself, so the other half of the sentence it
+        // decides is held still: no copy is kept without the box, and the action is one
+        // ticking the box would cover.
+        coverage = PreventiveCoverage.None,
+        action = DestructiveAction.DELETE_TRANSACTION,
+    )
 
     @AfterTest
     fun tearDown() {
@@ -160,6 +169,80 @@ class VaultOfferTest {
         assertNotNull(first.terms, "a vault that is off is offered")
         assertTrue(first.isAccepted.value, "the offer is made, not merely displayed")
         assertFalse(vault.observe().value.wasDeclined, "showing it is not an answer")
+    }
+
+    /**
+     * The sentence a confirmation says about its own action follows the box beside it.
+     *
+     * **The two used to be unable to agree, by construction.** An offer is put only while
+     * the vault is off, and that is exactly when the coverage a sheet asked answers no — so
+     * every confirmation carrying an offer said *"this cannot be undone"*, including the
+     * ones where the box arrives ticked and the copy really is written before the action
+     * runs. The sentence contradicted the control directly under it, and nothing anybody
+     * did to the box ever moved it.
+     *
+     * Both directions are asserted, because the promise is only worth what its "no" is
+     * worth: unticking it takes the promise back on the spot.
+     */
+    @Test
+    fun `the sentence follows the box, and moves when it does`() {
+        val sheet = confirmation()
+
+        assertNotNull(sheet.terms, "a vault that is off is offered")
+        assertTrue(sheet.isAccepted.value, "the offer arrives ticked")
+        assertTrue(
+            sheet.keepsCopy.value,
+            "the box is ticked and a copy will be kept, and the sheet said otherwise",
+        )
+
+        sheet.setAccepted(false)
+
+        assertFalse(
+            sheet.keepsCopy.value,
+            "nothing is kept without the box, and the sheet went on promising it",
+        )
+
+        sheet.setAccepted(true)
+
+        assertTrue(sheet.keepsCopy.value, "the promise did not come back with the box")
+    }
+
+    /**
+     * Ticking the box turns the whole vault on; it does not put an action into a class the
+     * vault does not cover (design D7). A facade the domain refuses to delete with anything
+     * in it is promised nothing here, whatever the box says.
+     */
+    @Test
+    fun `a box ticked over an uncovered action promises nothing`() {
+        val sheet = VaultOfferState(
+            offer = StandingVaultOffer(vault, switch),
+            coverage = PreventiveCoverage.None,
+            action = DestructiveAction.DELETE_CATEGORY,
+        )
+
+        assertNotNull(sheet.terms, "the offer stands on any destructive confirmation")
+        assertTrue(sheet.isAccepted.value)
+        assertFalse(
+            sheet.keepsCopy.value,
+            "a class the preventive trigger does not cover was promised a copy",
+        )
+    }
+
+    /**
+     * With the vault already on, there is no box — and the answer is the vault's, unchanged.
+     */
+    @Test
+    fun `a vault already on answers for itself, with no box to read`() = runTest {
+        switch.setOn(true)
+
+        val sheet = VaultOfferState(
+            offer = StandingVaultOffer(vault, switch),
+            coverage = { action -> vault.observe().value.keepsCopyBefore(action) },
+            action = DestructiveAction.DELETE_TRANSACTION,
+        )
+
+        assertNull(sheet.terms, "a vault that is on has nothing to offer")
+        assertTrue(sheet.keepsCopy.value, "the vault keeps a copy and the sheet denied it")
     }
 
     /**

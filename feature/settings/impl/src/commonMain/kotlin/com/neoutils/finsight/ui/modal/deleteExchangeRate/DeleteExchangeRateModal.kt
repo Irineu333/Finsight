@@ -53,6 +53,7 @@ class DeleteExchangeRateModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<DeleteExchangeRateViewModel> { parametersOf(rate) }
         val captureRefusal by viewModel.captureRefusal.collectAsStateWithLifecycle()
+        val keepsCopy by viewModel.keepsCopy.collectAsStateWithLifecycle()
 
         // Over this sheet rather than in place of it: the observation being removed is
         // still stated above, and the question only adds that nothing is being kept back.
@@ -86,7 +87,7 @@ class DeleteExchangeRateModal(
             // beside one that contradicts it.
             Text(
                 text = stringResource(
-                    if (viewModel.keepsCopy) {
+                    if (keepsCopy) {
                         Res.string.delete_exchange_rate_message_reversible
                     } else {
                         Res.string.delete_exchange_rate_message
@@ -96,7 +97,7 @@ class DeleteExchangeRateModal(
                 color = colorScheme.onSurfaceVariant,
             )
 
-            if (viewModel.keepsCopy) {
+            if (keepsCopy) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeptCopyNotice()

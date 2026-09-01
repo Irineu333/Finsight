@@ -51,6 +51,7 @@ class DeleteCurrencyModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<DeleteCurrencyViewModel> { parametersOf(code) }
         val captureRefusal by viewModel.captureRefusal.collectAsStateWithLifecycle()
+        val keepsCopy by viewModel.keepsCopy.collectAsStateWithLifecycle()
 
         // Over this sheet rather than in place of it: what is being deleted is still stated
         // above, and the question only adds that nothing is being kept back.
@@ -81,7 +82,7 @@ class DeleteCurrencyModal(
             Text(
                 text = if (ratesToRemove > 0) {
                     stringResource(
-                        if (viewModel.keepsCopy) {
+                        if (keepsCopy) {
                             Res.string.currencies_delete_confirm_message_rates_reversible
                         } else {
                             Res.string.currencies_delete_confirm_message_rates
@@ -90,7 +91,7 @@ class DeleteCurrencyModal(
                     )
                 } else {
                     stringResource(
-                        if (viewModel.keepsCopy) {
+                        if (keepsCopy) {
                             Res.string.currencies_delete_confirm_message_reversible
                         } else {
                             Res.string.currencies_delete_confirm_message
@@ -101,7 +102,7 @@ class DeleteCurrencyModal(
                 color = colorScheme.onSurfaceVariant,
             )
 
-            if (viewModel.keepsCopy) {
+            if (keepsCopy) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeptCopyNotice()

@@ -46,6 +46,7 @@ class DeleteInstallmentModal(
             parametersOf(installment, transactions)
         }
         val captureRefusal by viewModel.captureRefusal.collectAsStateWithLifecycle()
+        val keepsCopy by viewModel.keepsCopy.collectAsStateWithLifecycle()
 
         // Over this sheet rather than in place of it: how many instalments are going is
         // still stated above, and the question only adds that nothing is being kept back.
@@ -75,7 +76,7 @@ class DeleteInstallmentModal(
             // beside one that contradicts it.
             Text(
                 text = stringResource(
-                    if (viewModel.keepsCopy) {
+                    if (keepsCopy) {
                         Res.string.delete_installment_message_reversible
                     } else {
                         Res.string.delete_installment_message
@@ -86,7 +87,7 @@ class DeleteInstallmentModal(
                 color = colorScheme.onSurfaceVariant,
             )
 
-            if (viewModel.keepsCopy) {
+            if (keepsCopy) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeptCopyNotice()

@@ -48,7 +48,11 @@ class DeleteExchangeRateViewModel(
      * Asked for as the sheet is built, and answered as the removal starts: whether the
      * offer stands at all, and whether it arrives ticked, are the vault's own.
      */
-    val offer = VaultOfferState(vaultOffer)
+    val offer = VaultOfferState(
+        offer = vaultOffer,
+        coverage = coverage,
+        action = DestructiveAction.REMOVE_EXCHANGE_RATE,
+    )
 
     /**
      * Whether a copy is genuinely kept before the observation goes, which is what the sheet
@@ -57,7 +61,7 @@ class DeleteExchangeRateViewModel(
      * Asked about *this* action and answered in the domain: a screen carrying its own idea
      * of which removals are worth a copy would be a second owner of that rule (design D7).
      */
-    val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.REMOVE_EXCHANGE_RATE)
+    val keepsCopy: StateFlow<Boolean> get() = offer.keepsCopy
 
     /**
      * The dismissal belongs **inside** the write, as it does in every other sheet of this

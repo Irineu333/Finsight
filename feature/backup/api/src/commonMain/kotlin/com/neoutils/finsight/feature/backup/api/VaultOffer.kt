@@ -99,10 +99,17 @@ class VaultOfferTerms(
  * afterwards has nothing left to copy. Five view models deciding either would be five
  * chances for one to decide it differently.
  */
-class VaultOfferState(offer: VaultOffer) {
+class VaultOfferState(
+    offer: VaultOffer,
+    coverage: PreventiveCoverage,
+    private val action: DestructiveAction,
+) {
 
     /** What this confirmation has to offer, or null on a vault that is already on. */
     val terms: VaultOfferTerms? = offer.offer()
+
+    /** Whether a copy is kept before [action] without anybody ticking anything. */
+    private val alreadyKeeps: Boolean = coverage.keepsCopyBefore(action)
 
     private val _isAccepted = MutableStateFlow(terms != null && !terms.wasDeclined)
 
@@ -112,9 +119,40 @@ class VaultOfferState(offer: VaultOffer) {
      */
     val isAccepted: StateFlow<Boolean> = _isAccepted.asStateFlow()
 
+    private val _keepsCopy = MutableStateFlow(keepsCopyWhen(_isAccepted.value))
+
+    /**
+     * Whether a copy of the archive is genuinely kept before [action] — which is what the
+     * sheet says instead of calling the loss permanent.
+     *
+     * **It is here, beside the box, because the box is half the answer.** The offer is put
+     * only while the vault is off ([VaultOfferTerms]), and that is exactly when
+     * [PreventiveCoverage] answers no — so a sheet reading coverage alone said *"this cannot
+     * be undone"* on every confirmation that carried an offer, including the ones where the
+     * box arrives ticked and a copy is written before the action runs. The sentence
+     * contradicted the control directly under it, and no sheet ever showed the other one.
+     *
+     * It is a flow rather than a value for the same reason: the box moves while the sheet is
+     * up, and a sentence about somebody's archive may not go on saying what it said before
+     * they touched it.
+     *
+     * The class still decides which actions are worth a copy (design D7). Ticking the box
+     * turns the whole vault on, and the vault then covers what its classes cover — so an
+     * action outside them is not promised a copy here just because somebody accepted.
+     */
+    val keepsCopy: StateFlow<Boolean> = _keepsCopy.asStateFlow()
+
     fun setAccepted(accepted: Boolean) {
         _isAccepted.value = accepted
+        _keepsCopy.value = keepsCopyWhen(accepted)
     }
+
+    /**
+     * Stated once, for both the value this starts at and every value it takes afterwards: a
+     * second reading of the same rule is a second reading that can disagree with the first.
+     */
+    private fun keepsCopyWhen(accepted: Boolean): Boolean = alreadyKeeps ||
+        (terms != null && accepted && action.classification.isCoveredByPreventiveCapture)
 
     /**
      * Answers the offer: turns the whole vault on when the box was left ticked, and records

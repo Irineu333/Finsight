@@ -36,6 +36,7 @@ class DeleteTransactionModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<DeleteTransactionViewModel> { parametersOf(transaction) }
+        val keepsCopy by viewModel.keepsCopy.collectAsStateWithLifecycle()
         val captureRefusal by viewModel.captureRefusal.collectAsStateWithLifecycle()
 
         // Over this sheet rather than in place of it: what is being deleted is still stated
@@ -66,7 +67,7 @@ class DeleteTransactionModal(
             // beside one that contradicts it.
             Text(
                 text = stringResource(
-                    if (viewModel.keepsCopy) {
+                    if (keepsCopy) {
                         Res.string.delete_transaction_message_reversible
                     } else {
                         Res.string.delete_transaction_message
@@ -76,7 +77,7 @@ class DeleteTransactionModal(
                 color = colorScheme.onSurfaceVariant
             )
 
-            if (viewModel.keepsCopy) {
+            if (keepsCopy) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeptCopyNotice()

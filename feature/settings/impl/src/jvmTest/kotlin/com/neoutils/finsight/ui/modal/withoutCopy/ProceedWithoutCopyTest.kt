@@ -497,7 +497,7 @@ class ProceedWithoutCopyTest {
                 coverage = currencyCovered,
             )
 
-            assertTrue(currency.keepsCopy, "a copy is kept and the sheet was told otherwise")
+            assertTrue(currency.keepsCopy.value, "a copy is kept and the sheet was told otherwise")
             assertEquals(DestructiveAction.DELETE_CURRENCY, currencyCovered.asked)
 
             val rateCovered = RecordingCoverage(DestructiveAction.REMOVE_EXCHANGE_RATE)
@@ -507,7 +507,7 @@ class ProceedWithoutCopyTest {
                 coverage = rateCovered,
             )
 
-            assertTrue(rateRemoval.keepsCopy, "a copy is kept and the sheet was told otherwise")
+            assertTrue(rateRemoval.keepsCopy.value, "a copy is kept and the sheet was told otherwise")
             assertEquals(DestructiveAction.REMOVE_EXCHANGE_RATE, rateCovered.asked)
 
             val elsewhere = deleteViewModel(
@@ -516,7 +516,7 @@ class ProceedWithoutCopyTest {
                 coverage = RecordingCoverage(DestructiveAction.DELETE_TRANSACTION),
             )
 
-            assertFalse(elsewhere.keepsCopy, "no copy is kept and the sheet still promised one")
+            assertFalse(elsewhere.keepsCopy.value, "no copy is kept and the sheet still promised one")
         }
 
     @Test

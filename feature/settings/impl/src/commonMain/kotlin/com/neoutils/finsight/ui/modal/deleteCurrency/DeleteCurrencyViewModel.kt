@@ -45,7 +45,11 @@ class DeleteCurrencyViewModel(
      * Asked for as the sheet is built, and answered as the deletion starts: whether the
      * offer stands at all, and whether it arrives ticked, are the vault's own.
      */
-    val offer = VaultOfferState(vaultOffer)
+    val offer = VaultOfferState(
+        offer = vaultOffer,
+        coverage = coverage,
+        action = DestructiveAction.DELETE_CURRENCY,
+    )
 
     /**
      * Whether a copy is genuinely kept before the currency goes, which is what the sheet
@@ -54,7 +58,7 @@ class DeleteCurrencyViewModel(
      * Asked about *this* action and answered in the domain: a screen carrying its own idea
      * of which deletions are worth a copy would be a second owner of that rule (design D7).
      */
-    val keepsCopy = coverage.keepsCopyBefore(DestructiveAction.DELETE_CURRENCY)
+    val keepsCopy: StateFlow<Boolean> get() = offer.keepsCopy
 
     fun delete() = viewModelScope.launch {
         // The offer is answered before the removal and never after: a box left ticked has

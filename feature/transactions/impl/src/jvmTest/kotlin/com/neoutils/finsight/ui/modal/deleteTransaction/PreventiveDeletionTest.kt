@@ -463,7 +463,7 @@ class PreventiveDeletionTest {
         val covered = RecordingCoverage(DestructiveAction.DELETE_TRANSACTION)
         val keeping = viewModel(entered, TransactionRemovalPrelude.None, coverage = covered)
 
-        assertTrue(keeping.keepsCopy, "a copy is kept and the sheet was told otherwise")
+        assertTrue(keeping.keepsCopy.value, "a copy is kept and the sheet was told otherwise")
         assertEquals(
             DestructiveAction.DELETE_TRANSACTION,
             covered.asked,
@@ -473,7 +473,7 @@ class PreventiveDeletionTest {
         val elsewhere = RecordingCoverage(DestructiveAction.DELETE_CURRENCY)
         val plain = viewModel(entered, TransactionRemovalPrelude.None, coverage = elsewhere)
 
-        assertFalse(plain.keepsCopy, "no copy is kept and the sheet still promised one")
+        assertFalse(plain.keepsCopy.value, "no copy is kept and the sheet still promised one")
     }
 
     private companion object {

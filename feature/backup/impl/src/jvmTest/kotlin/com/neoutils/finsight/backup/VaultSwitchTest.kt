@@ -26,6 +26,7 @@ import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultSwitch
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
 import com.neoutils.finsight.feature.backup.api.VaultOfferState
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
@@ -231,7 +232,11 @@ class VaultSwitchTest {
     @Test
     fun `accepting the offer and deleting produce one copy, not two`() = runTest {
         val entered = enter("rent")
-        val offer = VaultOfferState(StandingVaultOffer(vault = state, switch = switch))
+        val offer = VaultOfferState(
+            offer = StandingVaultOffer(vault = state, switch = switch),
+            coverage = PreventiveCoverage.None,
+            action = DestructiveAction.DELETE_TRANSACTION,
+        )
         assertNotNull(offer.terms, "a vault that is off is offered beside a deletion")
 
         offer.settle()

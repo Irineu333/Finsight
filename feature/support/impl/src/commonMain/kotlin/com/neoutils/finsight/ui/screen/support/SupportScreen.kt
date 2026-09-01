@@ -64,19 +64,25 @@ fun SupportScreen(
         }
     }
 
-    // Nothing to create against while the list is still being read — the same states the button
-    // used to be drawn in, now the states it is published in.
-    //
-    // With no issue at all the empty state renders that very command as its own button, and the one
-    // the shell would serve over it, having been handed no action, is the universal one.
+    // Three states, three answers, and the middle one is the reason the configuration can be null.
+    // Whether this screen wants a button is a fact about the list, and the list is what is being
+    // read: answering while the read is in flight is answering twice, and the second answer is one
+    // the chrome has to walk back. Silent, the bar and the button hold, and the reading moves them
+    // once — out to the corner beside a list of issues, or straight down over an empty state that
+    // renders the create command as its own button.
     ChromeEffect(
-        config = if (uiState is SupportUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
+        config = when (uiState) {
+            is SupportUiState.Loading -> null
+
+            is SupportUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is SupportUiState.Content -> ChromeConfig.Default
         },
-        actions = if (uiState is SupportUiState.Content) {
-            remember(modalManager, viewModel) {
+        actions = when (uiState) {
+            is SupportUiState.Loading,
+            is SupportUiState.Empty -> emptyList()
+
+            is SupportUiState.Content -> remember(modalManager, viewModel) {
                 listOf(
                     ChromeAction(
                         icon = Icons.Default.Add,
@@ -92,8 +98,6 @@ fun SupportScreen(
                     )
                 )
             }
-        } else {
-            emptyList()
         }
     )
 

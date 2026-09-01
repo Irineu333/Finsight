@@ -112,15 +112,22 @@ private fun CreditCardsContent(
         ?.let { it.domainCards.getOrNull(it.selectedCardIndex)?.id }
 
     ChromeEffect(
-        // With no card at all the empty state is the create command, full width; the button the
-        // shell would serve over it is the universal one, and there is no card to charge yet.
-        config = if (uiState is CreditCardsUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
+        // The same states as the actions below. While the cards are being read the screen says
+        // nothing and the chrome holds — an answer given now is one the reading takes back. With no
+        // card at all the empty state is the create command, full width, and the button the shell
+        // would serve over it is the universal one, with no card to charge.
+        config = when (uiState) {
+            is CreditCardsUiState.Loading -> null
+
+            is CreditCardsUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is CreditCardsUiState.Content -> ChromeConfig.Default
         },
-        actions = if (uiState is CreditCardsUiState.Content) {
-            remember(modalManager, transactionsEntry, focusedCardId) {
+        actions = when (uiState) {
+            is CreditCardsUiState.Loading,
+            is CreditCardsUiState.Empty -> emptyList()
+
+            is CreditCardsUiState.Content -> remember(modalManager, transactionsEntry, focusedCardId) {
                 listOfNotNull(
                     ChromeAction(
                         icon = Icons.Default.Add,
@@ -144,8 +151,6 @@ private fun CreditCardsContent(
                     },
                 )
             }
-        } else {
-            emptyList()
         }
     )
 

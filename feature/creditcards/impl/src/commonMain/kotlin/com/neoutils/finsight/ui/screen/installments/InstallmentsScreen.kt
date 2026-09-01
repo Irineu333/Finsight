@@ -150,15 +150,22 @@ private fun InstallmentsContent(
     val transactionsEntry = koinInject<TransactionsEntry>()
 
     ChromeEffect(
-        // The empty state renders the create command as its own full-width button, and the one the
-        // shell would serve beside it, having been handed no action, is not this screen's at all.
-        config = if (uiState is InstallmentsUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
+        // The same states as the actions below. Still reading, the screen says nothing and the
+        // chrome holds — an answer given now is one the reading takes back. The empty state then
+        // renders the create command as its own full-width button, and what the shell would serve
+        // over it is the universal one, which is not this screen's at all.
+        config = when (uiState) {
+            is InstallmentsUiState.Loading -> null
+
+            is InstallmentsUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is InstallmentsUiState.Content -> ChromeConfig.Default
         },
-        actions = if (uiState is InstallmentsUiState.Content) {
-            remember(modalManager) {
+        actions = when (uiState) {
+            is InstallmentsUiState.Loading,
+            is InstallmentsUiState.Empty -> emptyList()
+
+            is InstallmentsUiState.Content -> remember(modalManager) {
                 listOf(
                     ChromeAction(
                         icon = Icons.Default.Add,
@@ -170,8 +177,6 @@ private fun InstallmentsContent(
                     )
                 )
             }
-        } else {
-            emptyList()
         }
     )
 

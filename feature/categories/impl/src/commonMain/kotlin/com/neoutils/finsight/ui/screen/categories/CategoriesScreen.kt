@@ -102,41 +102,49 @@ private fun CategoriesContent(
     // shell: which type the form opens on is the filter's answer, and it changes while the screen
     // lives. The primary is the type in view; the menu offers the other one.
     ChromeEffect(
-        // The empty state earns the big CTA and renders the create commands itself; the button the
-        // shell would serve there is the universal one, which has nothing to do with categories.
-        config = if (uiState is CategoriesUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
-        },
-        actions = if (uiState is CategoriesUiState.Content) {
-            val filter = uiState.filter
-            remember(modalManager, filter) {
-                val primaryType = filter.fabInitialType
-                val otherType = primaryType.other
+        // The same states as the actions below. Still reading, the screen says nothing and the
+        // chrome holds — an answer given now is one the reading takes back. Empty, the big CTA
+        // renders the create commands itself, and the button the shell would serve over it is the
+        // universal one, which has nothing to do with categories.
+        config = when (uiState) {
+            is CategoriesUiState.Loading -> null
 
-                listOf(
-                    ChromeAction(
-                        icon = Icons.Default.Add,
-                        labelRes = primaryType.addLabel,
-                        // Same command as the empty state's button below, hence the same id.
-                        testTag = "categories_add",
-                        onClick = {
-                            modalManager.show(CategoryFormModal(initialType = primaryType))
-                        },
-                    ),
-                    ChromeAction(
-                        icon = Icons.Default.Add,
-                        labelRes = otherType.addLabel,
-                        testTag = "categories_add_other_type",
-                        onClick = {
-                            modalManager.show(CategoryFormModal(initialType = otherType))
-                        },
-                    ),
-                )
+            is CategoriesUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is CategoriesUiState.Content -> ChromeConfig.Default
+        },
+        actions = when (uiState) {
+            is CategoriesUiState.Loading,
+            is CategoriesUiState.Empty -> emptyList()
+
+            is CategoriesUiState.Content -> {
+                val filter = uiState.filter
+
+                remember(modalManager, filter) {
+                    val primaryType = filter.fabInitialType
+                    val otherType = primaryType.other
+
+                    listOf(
+                        ChromeAction(
+                            icon = Icons.Default.Add,
+                            labelRes = primaryType.addLabel,
+                            // Same command as the empty state's button below, hence the same id.
+                            testTag = "categories_add",
+                            onClick = {
+                                modalManager.show(CategoryFormModal(initialType = primaryType))
+                            },
+                        ),
+                        ChromeAction(
+                            icon = Icons.Default.Add,
+                            labelRes = otherType.addLabel,
+                            testTag = "categories_add_other_type",
+                            onClick = {
+                                modalManager.show(CategoryFormModal(initialType = otherType))
+                            },
+                        ),
+                    )
+                }
             }
-        } else {
-            emptyList()
         }
     )
 

@@ -68,20 +68,24 @@ fun BudgetsScreen(
         analytics.logScreenView("budgets")
     }
 
-    // Only in `Content`, as the button used to be: publishing unconditionally would put it on
-    // screen while the month is still being read.
-    //
-    // The empty state renders this same command as its own full-width button, so a second one over
-    // the content would be the same offer twice — and the one the shell would serve there, having
-    // been handed no action, is not even this screen's.
+    // Three states, three answers. Whether this screen wants a button is a fact about the month,
+    // and the month is what is being read — so while it is, the screen says nothing and the chrome
+    // holds, rather than being moved on a guess and moved back on the answer. The empty state then
+    // renders this very command as its own full-width button, so a button over it would be the same
+    // offer twice.
     ChromeEffect(
-        config = if (uiState is BudgetsUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
+        config = when (uiState) {
+            is BudgetsUiState.Loading -> null
+
+            is BudgetsUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is BudgetsUiState.Content -> ChromeConfig.Default
         },
-        actions = if (uiState is BudgetsUiState.Content) {
-            remember(modalManager) {
+        actions = when (uiState) {
+            is BudgetsUiState.Loading,
+            is BudgetsUiState.Empty -> emptyList()
+
+            is BudgetsUiState.Content -> remember(modalManager) {
                 listOf(
                     ChromeAction(
                         icon = Icons.Default.Add,
@@ -94,8 +98,6 @@ fun BudgetsScreen(
                     )
                 )
             }
-        } else {
-            emptyList()
         }
     )
 

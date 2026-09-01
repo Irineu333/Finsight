@@ -122,18 +122,23 @@ fun RecurringScreen(
         analytics.logScreenView("recurring")
     }
 
-    // Not tied to Content: a month with no cycle at all must still offer the create button.
-    //
-    // Except where the empty state already renders it full width — there the two would be the same
-    // offer, one over the other.
+    // The actions are not tied to Content: a month with no cycle at all must still offer the
+    // create command. Where it is *rendered* is another matter — the empty state already draws it
+    // full width, so a button over that would be the same offer twice; and a month still being read
+    // answers nothing at all, because the answer is a fact about the month.
     ChromeEffect(
-        config = if (uiState is RecurringUiState.Empty) {
-            ChromeConfig.NoButtonOverContent
-        } else {
-            ChromeConfig.Default
+        config = when (uiState) {
+            is RecurringUiState.Loading -> null
+
+            is RecurringUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is RecurringUiState.Content -> ChromeConfig.Default
         },
-        actions = if (uiState !is RecurringUiState.Loading) {
-            remember(modalManager) {
+        actions = when (uiState) {
+            is RecurringUiState.Loading -> emptyList()
+
+            is RecurringUiState.Empty,
+            is RecurringUiState.Content -> remember(modalManager) {
                 listOf(
                     ChromeAction(
                         icon = Icons.Default.Add,
@@ -145,8 +150,6 @@ fun RecurringScreen(
                     )
                 )
             }
-        } else {
-            emptyList()
         }
     )
 

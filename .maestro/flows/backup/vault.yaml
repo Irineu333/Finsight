@@ -49,18 +49,24 @@ tags:
       id: "screen_backup"
     timeout: 15000
 
-# --- With no vault, the screen offers neither its settings nor its history -----------------------
-# This is the `false` half of the offer; the `true` half is asserted below on the same two ids,
-# with nothing changed but the switch. `backup_export` is the premise: it is laid out after both of
-# them, so the rows that would carry these ids were composed and are genuinely not there.
+# --- With no vault, the screen offers its settings tile to nobody --------------------------------
+# This is the `false` half of the offer; the `true` half is asserted below on the same id, with
+# nothing changed but the switch. `backup_export` is the premise: it is laid out after it, so the
+# row that would carry that id was composed and is genuinely not there.
+#
+# The copies tile is asserted *present* here, and that is the point of asserting it at all. The
+# destination is chosen on the screen it opens, and a fresh install has the vault off — so a tile
+# withheld until the switch moves withholds the folder chooser from the one person who most needs
+# it, somebody who has just reinstalled onto a phone with their copies already sitting in a folder
+# (design D4, design D15).
 - assertVisible:
     id: "backup_vault"
 - assertVisible:
     id: "backup_export"
+- assertVisible:
+    id: "backup_history_tile"
 - assertNotVisible:
     id: "backup_vault_settings_tile"
-- assertNotVisible:
-    id: "backup_history_tile"
 
 # --- I turn the vault on -------------------------------------------------------------------------
 # The tile *is* the switch — the whole row is `toggleable` and the `Switch` takes no callback of
@@ -68,11 +74,11 @@ tags:
 - tapOn:
     id: "backup_vault"
 
-# The two tiles arrive under the ids that were absent a moment ago, which is what makes that
+# The settings tile arrives under the id that was absent a moment ago, which is what makes that
 # absence mean "off" rather than "not composed yet".
 - extendedWaitUntil:
     visible:
-      id: "backup_history_tile"
+      id: "backup_vault_settings_tile"
     timeout: 15000
 - assertVisible:
     id: "backup_vault_settings_tile"

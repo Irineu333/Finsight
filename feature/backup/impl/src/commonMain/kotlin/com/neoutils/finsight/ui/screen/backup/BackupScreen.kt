@@ -123,10 +123,16 @@ import org.koin.compose.viewmodel.koinViewModel
  * user's hand. The two headings this replaced sat over one tile each and repeated the
  * tile's own name, which grouped nothing.
  *
- * **It is a list, and it is built as one.** Turning the vault on adds three rows at once —
- * the status card and the two tiles that only mean something with copies to point at — and
- * a `Column` had them appear from nothing while everything below jumped. Every row is a
+ * **It is a list, and it is built as one.** Turning the vault on adds two rows at once — the
+ * status card and the settings tile, which say nothing at all about a vault that is off —
+ * and a `Column` had them appear from nothing while everything below jumped. Every row is a
  * keyed item, so the list fades in what arrives and slides what was already there.
+ *
+ * **The tile that opens the copies is not one of them.** It stands whatever the switch says,
+ * because the destination is chosen on the screen it opens (design D15) and a fresh install
+ * has the vault off by requirement — so gating it would put the folder chooser behind a
+ * switch for the one person design D4 says this feature exists for, who has just reinstalled
+ * and needs to point at the folder their copies are already in.
  *
  * **Nothing on it explains the feature at rest.** What the destination does not cover rides
  * with the status card that names the destination, and the consequence of leaving the vault
@@ -265,26 +271,41 @@ fun BackupScreen(
                                 },
                             )
                         }
+                    }
 
-                        row(key = "history") { modifier ->
-                            SettingsMenuLink(
-                                modifier = modifier.testTag("backup_history_tile"),
-                                shape = TileShape,
-                                icon = {
-                                    Icon(imageVector = Icons.Outlined.History, contentDescription = null)
-                                },
-                                title = { Text(text = stringResource(Res.string.backup_history_title)) },
-                                // Where they are, which is also what is behind this door
-                                // now that choosing the destination happens on the screen it
-                                // opens. It needs no listing — the rung in force is known
-                                // before the folder answers — so the tile never opens with a
-                                // blank line under its name, and it says nothing about how
-                                // many copies there are, which the card above already counts.
-                                subtitle = { Text(text = destinationLabel(uiState.rung.inForce)) },
-                                action = { TileAction(isRunning = false) },
-                                onClick = onNavigateToHistory,
-                            )
-                        }
+                    // **Not behind the switch, and that is the whole of somebody finding
+                    // their archive again on a new phone.** Choosing where the copies go
+                    // lives on the screen this opens (design D15), so a tile withheld until
+                    // the vault is on withholds the folder chooser with it — and the vault
+                    // is off on every fresh install, by requirement. That is exactly the
+                    // person design D4 calls the most important one this feature has: they
+                    // reinstalled, their copies are sitting in a folder, and the app has to
+                    // let them point at it. Withheld, the only way through is to turn the
+                    // vault on first, which nothing on this screen says and which writes a
+                    // copy of the empty archive on the way past.
+                    //
+                    // The screen behind it is already written for a vault that is off: it
+                    // says so where the list would be, it refuses to capture and to import,
+                    // and it leaves restoring alone — which is the one thing that person
+                    // came to do.
+                    row(key = "history") { modifier ->
+                        SettingsMenuLink(
+                            modifier = modifier.testTag("backup_history_tile"),
+                            shape = TileShape,
+                            icon = {
+                                Icon(imageVector = Icons.Outlined.History, contentDescription = null)
+                            },
+                            title = { Text(text = stringResource(Res.string.backup_history_title)) },
+                            // Where they are, which is also what is behind this door
+                            // now that choosing the destination happens on the screen it
+                            // opens. It needs no listing — the rung in force is known
+                            // before the folder answers — so the tile never opens with a
+                            // blank line under its name, and it says nothing about how
+                            // many copies there are, which the card above already counts.
+                            subtitle = { Text(text = destinationLabel(uiState.rung.inForce)) },
+                            action = { TileAction(isRunning = false) },
+                            onClick = onNavigateToHistory,
+                        )
                     }
 
                     row(key = "group_manual", opensGroup = true) { modifier ->

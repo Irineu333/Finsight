@@ -54,9 +54,11 @@ env:
     timeout: 15000
 - tapOn:
     id: "backup_vault"
+# The settings tile, not the copies one: the copies tile stands whatever the switch says, so
+# waiting on it would prove the screen is drawn rather than that the vault came on.
 - extendedWaitUntil:
     visible:
-      id: "backup_history_tile"
+      id: "backup_vault_settings_tile"
     timeout: 15000
 
 - tapOn:

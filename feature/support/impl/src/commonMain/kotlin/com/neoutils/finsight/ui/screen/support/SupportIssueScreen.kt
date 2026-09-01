@@ -62,12 +62,19 @@ fun SupportIssueScreen(
         }
     }
 
-    // This screen suppresses the action button, and it is the one kind of screen that has to. The
-    // reply field ends in a send button, in the bottom-right corner — which is where the shell puts
-    // the button on a stacked screen. A screen that offers no action of its own is served the
-    // universal one, so without this the two land on top of each other and the press meant for
-    // send opens a transaction form instead.
-    ChromeEffect(config = ChromeConfig(isFloatingActionButtonVisible = false))
+    // The reply field ends in a send button, in the bottom-right corner — which is where the shell
+    // floats the action button in a compact window. A screen that offers no action of its own is
+    // served the universal one, so without this the two land on top of each other and the press
+    // meant for send opens a transaction form instead. The collision is the whole reason, and it
+    // exists only there: from `WIDE` upwards the button sits in the navigation rail's header, clear
+    // of the composer, and suppressing it would cost the universal action for nothing.
+    ChromeEffect(
+        config = if (isWideWindow()) {
+            ChromeConfig.Default
+        } else {
+            ChromeConfig(isFloatingActionButtonVisible = false)
+        }
+    )
 
     Scaffold(
         modifier = Modifier.testTag("screen_support_issue"),

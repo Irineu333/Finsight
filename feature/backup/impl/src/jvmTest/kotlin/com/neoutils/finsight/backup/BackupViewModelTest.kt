@@ -34,24 +34,24 @@ import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.restore.ArchiveRestore
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
-import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
-import com.neoutils.finsight.domain.vault.VaultMigration
 import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultSwitch
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
-import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.NoBackupFolder
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.UnreachableDestination
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.component.ErrorModal
-import com.neoutils.finsight.ui.component.SuccessModal
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.component.SuccessModal
 import com.neoutils.finsight.ui.screen.backup.BackupAction
 import com.neoutils.finsight.ui.screen.backup.BackupUiState
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.io.IOException
@@ -74,13 +74,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * The restore flow, over the gate that actually decides.

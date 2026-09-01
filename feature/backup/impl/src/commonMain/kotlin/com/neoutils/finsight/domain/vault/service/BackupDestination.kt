@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.ui.screen.backup.service
+package com.neoutils.finsight.domain.vault.service
 
 import arrow.core.Either
 import com.neoutils.finsight.domain.error.BackupError

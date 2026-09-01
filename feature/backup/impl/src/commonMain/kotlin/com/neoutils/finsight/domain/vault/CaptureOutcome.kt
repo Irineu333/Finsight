@@ -1,7 +1,7 @@
 package com.neoutils.finsight.domain.vault
 
 import com.neoutils.finsight.domain.error.BackupError
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 
 /**
  * What came of asking the vault for a copy.

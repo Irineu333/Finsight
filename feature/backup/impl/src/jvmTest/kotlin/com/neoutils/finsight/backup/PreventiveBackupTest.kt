@@ -22,12 +22,12 @@ import com.neoutils.finsight.domain.model.SeedCurrency
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveCoverage
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.DestructiveClass
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.nio.file.Files

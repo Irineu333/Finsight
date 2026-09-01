@@ -8,11 +8,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.FolderIdentity
+import com.neoutils.finsight.domain.vault.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.folderIdentity
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
-import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.Settings
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers

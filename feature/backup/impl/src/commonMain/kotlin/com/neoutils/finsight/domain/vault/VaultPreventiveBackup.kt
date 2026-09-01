@@ -2,10 +2,10 @@ package com.neoutils.finsight.domain.vault
 
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 
 /**
  * The preventive trigger: its own switch, the classification, and the one road from there

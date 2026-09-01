@@ -10,8 +10,8 @@ import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.model.CURRENCY_SEED
 import com.neoutils.finsight.domain.model.CurrencySeeding
 import com.neoutils.finsight.domain.model.SeedCurrency
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.AfterTest

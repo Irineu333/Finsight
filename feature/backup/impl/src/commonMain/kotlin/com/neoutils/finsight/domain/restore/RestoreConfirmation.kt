@@ -45,7 +45,7 @@ data class RestoreConfirmation(
  * not this app's to add. What *is* known, because this install is the one doing it, is
  * whether *this install's own* [com.neoutils.finsight.domain.vault.ArchiveImport] is what
  * put the file there — read back by
- * [com.neoutils.finsight.ui.screen.backup.service.isImportedFileName]. A copy another
+ * [com.neoutils.finsight.domain.vault.service.isImportedFileName]. A copy another
  * install captured and a folder synced between devices then carried in without ever going
  * through this install's own import is not caught by that check and reads as [KEPT_COPY]
  * regardless; there is nothing left in a captured file that could say otherwise.

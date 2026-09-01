@@ -1,7 +1,7 @@
 package com.neoutils.finsight.domain.vault
 
-import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.FolderIdentity
+import com.neoutils.finsight.domain.vault.service.FolderLink
 
 /**
  * Where the copies are going right now: the rung the person chose, unless the folder it

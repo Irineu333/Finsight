@@ -11,12 +11,12 @@ import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.NEWEST_FIRST
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.isBackupFileName
 import java.io.File
 import java.io.IOException
 import kotlin.time.ExperimentalTime
@@ -189,7 +189,7 @@ class AndroidFolderBackupDestination(
      *
      * Both refusals behind it are the same to a caller and different in kind: nothing was
      * ever pointed at, or what was pointed at cannot be reached now. What separates them
-     * for a person is [com.neoutils.finsight.ui.screen.backup.service.FolderLink], which
+     * for a person is [com.neoutils.finsight.domain.vault.service.FolderLink], which
      * the screen reads, and this stays the destination's own flat "I cannot".
      */
     private suspend fun reachable(): Either<BackupError, ChosenFolder> =
@@ -230,7 +230,7 @@ class AndroidFolderBackupDestination(
  *
  * A provider that keeps no modification time answers zero, and every copy then ties — so
  * what orders them is the stamp their names carry, which for a destination this app writes
- * is the same order ([com.neoutils.finsight.ui.screen.backup.service.backupNameStamp]).
+ * is the same order ([com.neoutils.finsight.domain.vault.service.backupNameStamp]).
  * What it costs is a date on the screen that is not the date the copy was taken, and never
  * an order that puts the newest copy where retention can reach it.
  *

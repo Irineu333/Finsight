@@ -19,10 +19,10 @@ import com.neoutils.finsight.resources.backup_age_minutes
 import com.neoutils.finsight.resources.backup_age_month
 import com.neoutils.finsight.resources.backup_age_months
 import com.neoutils.finsight.resources.backup_age_now
+import com.neoutils.finsight.resources.backup_confirm_origin_unknown
 import com.neoutils.finsight.resources.backup_copies_many
 import com.neoutils.finsight.resources.backup_copies_none
 import com.neoutils.finsight.resources.backup_copies_one
-import com.neoutils.finsight.resources.backup_confirm_origin_unknown
 import com.neoutils.finsight.resources.backup_coverage_app
 import com.neoutils.finsight.resources.backup_coverage_app_desktop
 import com.neoutils.finsight.resources.backup_coverage_folder
@@ -179,7 +179,7 @@ fun originWithVersion(origin: FileOrigin?): String {
  * **[folderPath] is the folder's own name, and it replaces the generic sentence once a
  * caller has one to give.** It is never a path and never anything that could reopen the
  * folder (design D2) — see
- * [com.neoutils.finsight.ui.screen.backup.service.BackupFolder.displayPath]. Left null, the
+ * [com.neoutils.finsight.domain.vault.service.BackupFolder.displayPath]. Left null, the
  * generic sentence stands: not every caller has read the destination, and a settings row that
  * names the rung without waiting on a folder to answer is a decision of its own (see the
  * backup screen's own tile).

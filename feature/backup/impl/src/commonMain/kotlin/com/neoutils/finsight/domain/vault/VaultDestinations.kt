@@ -3,14 +3,14 @@ package com.neoutils.finsight.domain.vault
 import arrow.core.Either
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
-import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
-import com.neoutils.finsight.ui.screen.backup.service.NoBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.UnreachableDestination
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.NEWEST_FIRST
+import com.neoutils.finsight.domain.vault.service.NoBackupFolder
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.UnreachableDestination
 import kotlinx.coroutines.flow.StateFlow
 
 /**

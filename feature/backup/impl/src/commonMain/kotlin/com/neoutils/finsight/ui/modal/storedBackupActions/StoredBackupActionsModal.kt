@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_transactions
@@ -56,8 +58,6 @@ import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TileShape
 import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.originWithVersion
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
 import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import com.neoutils.finsight.ui.theme.Warning

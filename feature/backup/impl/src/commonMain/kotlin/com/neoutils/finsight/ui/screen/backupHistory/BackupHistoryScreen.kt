@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.extension.currentYearMonth
@@ -59,7 +61,6 @@ import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_destination_title
 import com.neoutils.finsight.resources.backup_history_capture
-import com.neoutils.finsight.resources.backup_history_import
 import com.neoutils.finsight.resources.backup_history_current_label
 import com.neoutils.finsight.resources.backup_history_current_subtitle
 import com.neoutils.finsight.resources.backup_history_empty_message
@@ -67,6 +68,7 @@ import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_empty_title
 import com.neoutils.finsight.resources.backup_history_failed
 import com.neoutils.finsight.resources.backup_history_failed_title
+import com.neoutils.finsight.resources.backup_history_import
 import com.neoutils.finsight.resources.backup_history_migration_label
 import com.neoutils.finsight.resources.backup_history_migration_subtitle
 import com.neoutils.finsight.resources.backup_history_newest_label
@@ -88,8 +90,6 @@ import com.neoutils.finsight.ui.screen.backup.ageLabel
 import com.neoutils.finsight.ui.screen.backup.backupRows
 import com.neoutils.finsight.ui.screen.backup.copiesLabel
 import com.neoutils.finsight.ui.screen.backup.destinationLabel
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.screen.backup.sizeLabel
 import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import com.neoutils.finsight.ui.theme.Warning

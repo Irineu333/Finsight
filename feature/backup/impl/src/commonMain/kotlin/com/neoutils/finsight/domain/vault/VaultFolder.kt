@@ -3,10 +3,10 @@ package com.neoutils.finsight.domain.vault
 import arrow.core.Either
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.FolderIdentity
+import com.neoutils.finsight.domain.vault.service.FolderLink
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

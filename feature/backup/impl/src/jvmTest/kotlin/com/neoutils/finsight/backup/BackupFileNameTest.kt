@@ -1,8 +1,8 @@
 package com.neoutils.finsight.backup
 
-import com.neoutils.finsight.ui.screen.backup.service.backupFileName
-import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
-import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
+import com.neoutils.finsight.domain.vault.service.backupFileName
+import com.neoutils.finsight.domain.vault.service.freeBackupFileName
+import com.neoutils.finsight.domain.vault.service.isBackupFileName
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

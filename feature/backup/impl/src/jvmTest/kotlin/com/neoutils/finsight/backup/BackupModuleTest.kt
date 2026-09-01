@@ -20,9 +20,9 @@ import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultMigration
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.russhwolf.settings.MapSettings
 import com.russhwolf.settings.Settings
 import java.io.File

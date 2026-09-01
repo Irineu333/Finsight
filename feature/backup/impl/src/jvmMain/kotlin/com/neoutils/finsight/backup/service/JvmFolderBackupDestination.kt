@@ -6,13 +6,13 @@ import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.freeBackupFileName
-import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.NEWEST_FIRST
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.freeBackupFileName
+import com.neoutils.finsight.domain.vault.service.isBackupFileName
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -163,7 +163,7 @@ class JvmFolderBackupDestination(
      *
      * Both refusals are the same to a caller and different in kind: nothing was ever
      * pointed at, or what was pointed at is not there now. What separates them for a person
-     * is [com.neoutils.finsight.ui.screen.backup.service.FolderLink], which the screen
+     * is [com.neoutils.finsight.domain.vault.service.FolderLink], which the screen
      * reads, and this stays the destination's own flat "I cannot".
      */
     private fun reachable(): Either<BackupError, File> {

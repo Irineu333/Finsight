@@ -11,9 +11,9 @@ import com.neoutils.finsight.domain.model.CaptureOrigin
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
 import com.neoutils.finsight.domain.vault.VaultDestinations
 import com.neoutils.finsight.domain.vault.VaultFolder
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.BackupFolder
 import org.koin.dsl.module
 
 actual val backupPlatformModule = module {

@@ -2,8 +2,8 @@ package com.neoutils.finsight.backup.service
 
 import com.neoutils.finsight.database.defaultDatabasePath
 import com.neoutils.finsight.domain.vault.MigrationCopyPlace
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.STAGED_PRE_MIGRATION_NAME
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.STAGED_PRE_MIGRATION_NAME
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files

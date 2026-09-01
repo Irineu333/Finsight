@@ -2,9 +2,9 @@
 
 package com.neoutils.finsight.backup
 
-import arrow.core.Either
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.window.WindowScope
+import arrow.core.Either
 import arrow.core.right
 import com.neoutils.finsight.backup.service.JvmBackupDestination
 import com.neoutils.finsight.database.AppDatabase
@@ -27,12 +27,12 @@ import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.ImportOutcome
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.isBackupFileName
+import com.neoutils.finsight.domain.vault.service.isImportedFileName
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.isBackupFileName
-import com.neoutils.finsight.ui.screen.backup.service.isImportedFileName
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.nio.file.Files

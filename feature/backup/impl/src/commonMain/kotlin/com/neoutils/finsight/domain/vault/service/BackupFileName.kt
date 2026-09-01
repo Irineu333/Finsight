@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.backup.service
+package com.neoutils.finsight.domain.vault.service
 
 import kotlinx.datetime.LocalDateTime
 

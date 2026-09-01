@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.domain.vault
 
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 

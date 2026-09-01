@@ -2,10 +2,10 @@
 
 package com.neoutils.finsight.backup
 
-import com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.backupFileName
+import com.neoutils.finsight.domain.vault.service.NEWEST_FIRST
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.backupFileName
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime

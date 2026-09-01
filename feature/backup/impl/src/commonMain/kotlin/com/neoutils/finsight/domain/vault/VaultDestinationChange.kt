@@ -52,7 +52,7 @@ import kotlinx.coroutines.withContext
  * copies wait in A until somebody says to carry them into B, and A is never touched. What
  * makes it possible at all is that [VaultFolder.pointAt] keeps A's token reachable for one
  * folder change after it stops being the one in force
- * ([com.neoutils.finsight.ui.screen.backup.service.BackupFolder.forgetPrevious]), and
+ * ([com.neoutils.finsight.domain.vault.service.BackupFolder.forgetPrevious]), and
  * [pointAtFolder] reads the folder before and after the move as locations rather than as the
  * destination enum, precisely so [VaultDestinations.rungFor] can tell A and B apart even
  * though both answer [VaultDestination.USER_FOLDER].

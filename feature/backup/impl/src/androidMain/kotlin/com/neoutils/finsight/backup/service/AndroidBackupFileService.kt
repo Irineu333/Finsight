@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.activity.result.contract.ActivityResultContracts
 import arrow.core.Either
 import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.service.BackupFileService
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +131,7 @@ private const val EVERY_MIME_TYPE = "*/*"
  * It is also the type the folder rung creates its documents under, measured the same way
  * and mattering more there: nothing asks the person to confirm a name, and a provider that
  * decided `.db` did not suit the type would rename every copy out from under
- * [com.neoutils.finsight.ui.screen.backup.service.isBackupFileName] with nobody watching.
+ * [com.neoutils.finsight.domain.vault.service.isBackupFileName] with nobody watching.
  */
 internal const val EXPORT_MIME_TYPE = "application/octet-stream"
 

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.backup.service
+package com.neoutils.finsight.domain.vault.service
 
 import com.neoutils.finsight.database.snapshot.CandidateRejection
 import com.neoutils.finsight.database.snapshot.CandidateVerification

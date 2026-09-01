@@ -1,7 +1,7 @@
 package com.neoutils.finsight.backup
 
 import com.neoutils.finsight.backup.service.JvmBackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.FolderLink
 import com.russhwolf.settings.MapSettings
 import java.io.File
 import java.nio.file.Files

@@ -4,7 +4,7 @@ package com.neoutils.finsight.domain.vault
  * The two files the copy taken before a migration is about, spelled out for the one moment
  * they have to be paths: the archive that is about to be rewritten, and where its copy goes.
  *
- * **This is not a [com.neoutils.finsight.ui.screen.backup.service.BackupDestination] and it
+ * **This is not a [com.neoutils.finsight.domain.vault.service.BackupDestination] and it
  * does not weaken design D2.** A destination hands nobody a path because on two platforms it
  * cannot — a folder the user pointed at is a security-scoped `NSURL` or a tree `Uri`, and
  * turning either into text destroys it. This is the app's own storage on all three
@@ -15,7 +15,7 @@ package com.neoutils.finsight.domain.vault
  * cannot suspend and so cannot ask a destination for anything.
  *
  * The copy is written under one reserved name
- * ([com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME]), reached
+ * ([com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME]), reached
  * through one staging name beside it, and those two are the only files this app ever writes
  * there — so nothing of the user's is within reach of anything below.
  */
@@ -33,7 +33,7 @@ interface MigrationCopyPlace {
      *
      * **It is never the copy in force.** The file lands under a name nothing lists, nothing
      * counts and nothing sweeps
-     * ([com.neoutils.finsight.ui.screen.backup.service.STAGED_PRE_MIGRATION_NAME]), so a
+     * ([com.neoutils.finsight.domain.vault.service.STAGED_PRE_MIGRATION_NAME]), so a
      * `VACUUM` refused by a full disk, a process killed halfway, or the well-formed empty
      * database a full volume leaves behind all cost nothing at all: the copy from the last
      * migration is still there, still listed, still the one a restore reaches.

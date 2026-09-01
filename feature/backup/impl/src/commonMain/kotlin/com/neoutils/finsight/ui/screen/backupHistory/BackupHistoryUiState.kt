@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.backupHistory
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.ArchiveCopy
 import com.neoutils.finsight.domain.vault.VaultDestination
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 
@@ -29,7 +29,7 @@ data class BackupHistoryUiState(
     /**
      * [destination]'s own name, when it is a folder the platform can currently name — never
      * a path, and never anything that could reopen it (design D2; see
-     * [com.neoutils.finsight.ui.screen.backup.service.BackupFolder.displayPath]).
+     * [com.neoutils.finsight.domain.vault.service.BackupFolder.displayPath]).
      *
      * Null while [destination] is the app's own storage, which has no name to give; null
      * while nothing has been pointed at; and null while the platform cannot currently say.

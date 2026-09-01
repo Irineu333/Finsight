@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.backupHistory
 
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 
 /** What the copies screen asks for. */
 sealed interface BackupHistoryAction {

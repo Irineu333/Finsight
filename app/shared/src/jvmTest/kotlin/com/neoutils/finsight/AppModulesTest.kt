@@ -4,34 +4,34 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.repository.ExchangeRateRepository
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.database.snapshot.PreMigrationCopyTarget
-import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
-import com.neoutils.finsight.feature.backup.api.PeriodicBackup
-import com.neoutils.finsight.feature.backup.api.PreventiveBackup
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import com.neoutils.finsight.di.appModules
-import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.IRemoteRateSource
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.SyncExchangeRatesUseCase
-import com.neoutils.finsight.database.repository.ExchangeRateRepository
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.feature.backup.api.PeriodicBackup
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import org.koin.dsl.koinApplication
-import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 
 /**
  * `TransactionsEntry` e `NavCatalog` são resolvidos via Koin fora de escopo Composable por várias

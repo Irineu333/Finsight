@@ -20,6 +20,7 @@ import com.neoutils.finsight.domain.vault.VaultPreMigrationCopy
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveCoverage
 import com.neoutils.finsight.domain.vault.VaultSwitch
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
 import com.neoutils.finsight.feature.backup.api.BackupEntry
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.feature.backup.api.PeriodicBackup
@@ -29,7 +30,6 @@ import com.neoutils.finsight.feature.backup.api.VaultOffer
 import com.neoutils.finsight.feature.backup.impl.BackupEntryImpl
 import com.neoutils.finsight.ui.screen.backup.BackupViewModel
 import com.neoutils.finsight.ui.screen.backupHistory.BackupHistoryViewModel
-import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind

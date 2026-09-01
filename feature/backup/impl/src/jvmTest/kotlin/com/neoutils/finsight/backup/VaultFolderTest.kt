@@ -2,23 +2,23 @@
 
 package com.neoutils.finsight.backup
 
+import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.window.WindowScope
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.window.WindowScope
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.vault.ArchiveCopy
 import com.neoutils.finsight.domain.vault.VaultAppOpening
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.FolderIdentity
+import com.neoutils.finsight.domain.vault.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.folderIdentity
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.PeriodicBackup
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
-import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals

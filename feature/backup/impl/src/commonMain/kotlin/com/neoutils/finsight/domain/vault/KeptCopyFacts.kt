@@ -5,9 +5,9 @@ import com.neoutils.finsight.database.snapshot.CandidateVerification
 import com.neoutils.finsight.database.snapshot.CandidateVerifier
 import com.neoutils.finsight.domain.restore.FileOrigin
 import com.neoutils.finsight.domain.restore.toFileOrigin
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext

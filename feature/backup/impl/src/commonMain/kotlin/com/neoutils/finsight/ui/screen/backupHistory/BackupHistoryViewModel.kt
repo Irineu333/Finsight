@@ -17,11 +17,14 @@ import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
 import com.neoutils.finsight.domain.vault.CarryOffer
 import com.neoutils.finsight.domain.vault.ImportOutcome
-import com.neoutils.finsight.domain.vault.MigrationOutcome
-import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
+import com.neoutils.finsight.domain.vault.MigrationOutcome
+import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
@@ -29,21 +32,19 @@ import com.neoutils.finsight.resources.backup_carry_done
 import com.neoutils.finsight.resources.backup_carry_partial
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_history_capture_done
-import com.neoutils.finsight.resources.backup_history_import_done
 import com.neoutils.finsight.resources.backup_history_empty_off
 import com.neoutils.finsight.resources.backup_history_gone
+import com.neoutils.finsight.resources.backup_history_import_done
 import com.neoutils.finsight.resources.backup_history_remove_refused
 import com.neoutils.finsight.resources.backup_history_removed
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,7 +57,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.StringResource
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The copies the vault keeps: where they are kept, what a person does with one of them, and

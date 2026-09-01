@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.backup.service
+package com.neoutils.finsight.domain.vault.service
 
 /**
  * Which physical folder [BackupFolder] is pointed at, right now — the thing the vault was

@@ -6,11 +6,11 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.service.BackupFolder
+import com.neoutils.finsight.domain.vault.service.FolderIdentity
+import com.neoutils.finsight.domain.vault.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.folderIdentity
 import com.neoutils.finsight.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.backup.service.BackupFolder
-import com.neoutils.finsight.ui.screen.backup.service.FolderIdentity
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
-import com.neoutils.finsight.ui.screen.backup.service.folderIdentity
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ExperimentalForeignApi

@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
+import com.neoutils.finsight.domain.vault.service.FolderLink
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

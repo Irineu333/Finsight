@@ -2,10 +2,10 @@ package com.neoutils.finsight.domain.vault
 
 import com.neoutils.finsight.database.repository.BackupVaultRepository
 import com.neoutils.finsight.domain.error.BackupError
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
@@ -190,7 +190,7 @@ class VaultMigration(
      * retention holds, or all of them where the person has asked that nothing be removed —
      * newest first, as a listing answers — and never the copy taken before a migration.
      *
-     * A listing already answers newest first ([com.neoutils.finsight.ui.screen.backup.service.NEWEST_FIRST]),
+     * A listing already answers newest first ([com.neoutils.finsight.domain.vault.service.NEWEST_FIRST]),
      * so the limit is a `take` and never a second ordering — two ways of deciding which copy
      * is the newest is two ways of disagreeing about which one is dropped. Which end the
      * copying starts at is [carry]'s, and it is the other one.

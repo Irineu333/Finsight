@@ -5,9 +5,9 @@ package com.neoutils.finsight.backup
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
+import com.neoutils.finsight.domain.vault.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.BackupUiState
 import com.neoutils.finsight.ui.screen.backup.VaultCopies
-import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

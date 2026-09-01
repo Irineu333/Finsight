@@ -17,12 +17,15 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.CaptureOutcome
-import com.neoutils.finsight.domain.vault.MigrationOutcome
 import com.neoutils.finsight.domain.vault.CarryOffer
+import com.neoutils.finsight.domain.vault.MigrationOutcome
 import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.domain.vault.VaultSwitch
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.backupFileName
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
@@ -32,10 +35,10 @@ import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.backupFileName
 import com.neoutils.finsight.util.UiText
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -43,9 +46,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -54,9 +57,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
  * The backup screen: the vault as a set of preferences, and the two file operations the

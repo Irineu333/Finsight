@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_confirm_cancel
 import com.neoutils.finsight.resources.backup_remove_confirm_action
@@ -37,8 +39,6 @@ import com.neoutils.finsight.resources.backup_today
 import com.neoutils.finsight.resources.backup_yesterday
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlin.time.ExperimentalTime

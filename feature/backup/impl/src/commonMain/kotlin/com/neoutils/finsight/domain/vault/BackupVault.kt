@@ -14,11 +14,11 @@ import com.neoutils.finsight.database.snapshot.captureInto
 import com.neoutils.finsight.domain.error.BackupError
 import com.neoutils.finsight.domain.error.toBackupError
 import com.neoutils.finsight.domain.model.CaptureOrigin
-import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
-import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
-import com.neoutils.finsight.ui.screen.backup.service.PRE_MIGRATION_BACKUP_NAME
-import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
-import com.neoutils.finsight.ui.screen.backup.service.backupFileName
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.BackupFileService
+import com.neoutils.finsight.domain.vault.service.PRE_MIGRATION_BACKUP_NAME
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.backupFileName
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -351,7 +351,7 @@ class BackupVault(
      * elsewhere), the copy could not be read back to be asked about, or the ask itself
      * could not be carried out — a device that will not read, a disk with no room for the
      * check's own temporary. [CandidateVerifier.verify] already draws this line for the
-     * same reason [com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck] does: a
+     * same reason [com.neoutils.finsight.domain.vault.service.OwnCopyCheck] does: a
      * check that did not run has proven nothing, and answering as if it had would be the
      * one thing worse than not checking at all — a false accusation against a copy that
      * may be perfectly good, made of the one moment a person is being told their backup

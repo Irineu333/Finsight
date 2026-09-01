@@ -1,0 +1,184 @@
+appId: com.neoutils.finsight
+name: backup_periodic
+tags:
+  - backup
+env:
+  ENTRY_TITLE: "E2E Rent"
+  ENTRY_DIGITS: "72300"
+---
+# Opening the app is the occasion — and only when there is something new to copy. The app is
+# relaunched twice past the wait: once with nothing entered since the last copy, which produces
+# none, and once with a transaction entered, which produces one.
+#
+# **The occasion itself is E2E territory by the README's own rule** (§5.1, question 3: the process
+# lifecycle is reached by no other layer). `VaultPeriodicBackup` has unit tests for the wait and
+# `BackupVault` for the precondition, but both are asked directly. What announces the opening is a
+# `LaunchedEffect` in `App.kt` collecting `lifecycle.currentStateFlow` and waiting a frame — a
+# collector nothing below the assembled app mounts, whose deletion would compile, resolve, pass
+# every unit test, and quietly leave the periodic trigger never firing on anybody's device.
+# `backup/vault` does not reach it either: the copy it sees is the *switch's* own, taken the moment
+# the vault is turned on.
+#
+# The clock is the debug-only `clockOffsetDays` (§5.2, padrão 9) against the 3-day default wait, and
+# `clearState: false` is the point — the copy and the vault's preferences were written before the
+# jump, and it is those that have to age.
+#
+# The two relaunches are one claim, not two: "1 copy kept" after the first is what makes "2 copies
+# kept" after the second mean *this opening captured*, rather than *any opening captures*. Read on
+# the line of the destination header that renders the count, which is the folder listed at the
+# moment the screen opened rather than anything the app remembers about it (design D9).
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- I turn the vault on, and it takes the copy it does not have ----------------------------------
+# That turning it on captures is `backup/vault`'s claim, asserted there on the list itself. Here it
+# is the arrangement: the flow needs one copy on disk and a last-capture instant to age from.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- tapOn:
+    id: "backup_vault"
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_tile"
+    timeout: 15000
+
+- tapOn:
+    id: "backup_history_tile"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup_history"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_list"
+    timeout: 15000
+- assertVisible:
+    id: "backup_history_summary"
+    text: ".*1 copy kept.*"
+
+# --- Four days on, with nothing entered, the opening produces nothing ------------------------------
+# The wait has run out and the trigger fired: what stopped it is the precondition, not the clock —
+# the copy already there still holds everything the archive does (design D8). This is the half that
+# makes the next one mean something.
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: 4
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- tapOn:
+    id: "backup_history_tile"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup_history"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_list"
+    timeout: 15000
+- assertVisible:
+    id: "backup_history_summary"
+    text: ".*1 copy kept.*"
+
+# --- I enter something, and the next opening copies it ---------------------------------------------
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: expense
+      TITLE: ${ENTRY_TITLE}
+      AMOUNT: ${ENTRY_DIGITS}
+
+- launchApp:
+    clearState: false
+    arguments:
+      clockOffsetDays: 8
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 30000
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- tapOn:
+    id: "backup_history_tile"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup_history"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_list"
+    timeout: 15000
+
+# Two. The opening is what wrote the second one: nothing on either screen captures, the only tap
+# between the two readings recorded a transaction, and the vault was already on before it.
+- assertVisible:
+    id: "backup_history_summary"
+    text: ".*2 copies kept.*"

@@ -81,6 +81,7 @@ import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.TransactionCard
@@ -149,6 +150,13 @@ private fun InstallmentsContent(
     val transactionsEntry = koinInject<TransactionsEntry>()
 
     ChromeEffect(
+        // The empty state renders the create command as its own full-width button, and the one the
+        // shell would serve beside it, having been handed no action, is not this screen's at all.
+        config = if (uiState is InstallmentsUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState is InstallmentsUiState.Content) {
             remember(modalManager) {
                 listOf(

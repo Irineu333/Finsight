@@ -60,6 +60,8 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_destination_title
 import com.neoutils.finsight.resources.backup_history_capture
@@ -158,6 +160,10 @@ fun BackupHistoryScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup_history")
     }
+
+    // A list of copies, each carrying its own commands: the universal action a screen with none of
+    // its own is served records a transaction, and would only float over them.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     // **The history is the folder, so it is read again every time somebody comes back to
     // it** (design D9). A listing taken when the screen was built is a claim about a folder

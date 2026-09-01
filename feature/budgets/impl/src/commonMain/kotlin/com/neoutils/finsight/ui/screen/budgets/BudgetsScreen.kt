@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.ConsolidationListNotice
@@ -69,7 +70,16 @@ fun BudgetsScreen(
 
     // Only in `Content`, as the button used to be: publishing unconditionally would put it on
     // screen while the month is still being read.
+    //
+    // The empty state renders this same command as its own full-width button, so a second one over
+    // the content would be the same offer twice — and the one the shell would serve there, having
+    // been handed no action, is not even this screen's.
     ChromeEffect(
+        config = if (uiState is BudgetsUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState is BudgetsUiState.Content) {
             remember(modalManager) {
                 listOf(

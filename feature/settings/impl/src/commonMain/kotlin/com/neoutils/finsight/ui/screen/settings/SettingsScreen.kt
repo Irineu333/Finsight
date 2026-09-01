@@ -34,6 +34,8 @@ import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.feature.backup.api.BackupRoute
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.settings_backup_subtitle
@@ -94,6 +96,10 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("settings")
     }
+
+    // Configuring the app has no action to float over it, and the universal one a screen with none
+    // of its own is served — record a transaction — is not what anyone came here to do.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     Scaffold(
         modifier = Modifier.testTag("screen_settings"),

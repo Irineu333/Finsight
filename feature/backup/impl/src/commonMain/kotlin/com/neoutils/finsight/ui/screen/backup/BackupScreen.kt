@@ -61,6 +61,8 @@ import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_folder_keep_in_app
 import com.neoutils.finsight.resources.backup_folder_reconnect
@@ -154,6 +156,10 @@ fun BackupScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("backup")
     }
+
+    // The commands of this screen are its own rows, and what leaves or replaces the whole archive
+    // is not something a floating button should stand beside.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     // What the destination holds is read from a folder, not observed from a table, so
     // nothing tells this screen that the copies screen on top of it deleted one. Coming

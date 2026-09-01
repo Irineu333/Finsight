@@ -33,6 +33,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_archived_empty
 import com.neoutils.finsight.resources.recurring_archived_title
@@ -68,6 +70,9 @@ fun ArchivedRecurringScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("archived_recurring")
     }
+
+    // What is archived is looked at and brought back, never added to.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     Scaffold(
         topBar = {

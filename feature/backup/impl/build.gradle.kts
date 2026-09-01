@@ -20,6 +20,7 @@ kotlin {
             // facade model already lives, `DashboardComponentPreference` included.
             implementation(projects.core.model)
 
+            implementation(projects.feature.shell.api)
             implementation(projects.feature.backup.api)
 
             implementation(libs.arrow.core)

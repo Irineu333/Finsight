@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
@@ -101,6 +102,13 @@ private fun CategoriesContent(
     // shell: which type the form opens on is the filter's answer, and it changes while the screen
     // lives. The primary is the type in view; the menu offers the other one.
     ChromeEffect(
+        // The empty state earns the big CTA and renders the create commands itself; the button the
+        // shell would serve there is the universal one, which has nothing to do with categories.
+        config = if (uiState is CategoriesUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState is CategoriesUiState.Content) {
             val filter = uiState.filter
             remember(modalManager, filter) {

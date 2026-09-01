@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.accounts_archived_empty
 import com.neoutils.finsight.resources.accounts_archived_title
@@ -54,6 +56,9 @@ fun ArchivedAccountsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("archived_accounts")
     }
+
+    // What is archived is looked at and brought back, never added to.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     ArchivedAccountsContent(
         uiState = uiState,

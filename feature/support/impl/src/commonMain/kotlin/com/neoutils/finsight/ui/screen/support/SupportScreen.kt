@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
@@ -65,7 +66,15 @@ fun SupportScreen(
 
     // Nothing to create against while the list is still being read — the same states the button
     // used to be drawn in, now the states it is published in.
+    //
+    // With no issue at all the empty state renders that very command as its own button, and the one
+    // the shell would serve over it, having been handed no action, is the universal one.
     ChromeEffect(
+        config = if (uiState is SupportUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState is SupportUiState.Content) {
             remember(modalManager, viewModel) {
                 listOf(
@@ -216,7 +225,8 @@ private fun EmptySupportState(
         )
         androidx.compose.material3.Button(
             onClick = onCreateIssue,
-            // The same command as the FAB this state replaces: the two never stand together.
+            // The same command as the action button this state replaces, hence the same id: the
+            // two never stand together, because this state publishes no button over the content.
             modifier = Modifier
                 .padding(top = 16.dp)
                 .testTag("support_add"),

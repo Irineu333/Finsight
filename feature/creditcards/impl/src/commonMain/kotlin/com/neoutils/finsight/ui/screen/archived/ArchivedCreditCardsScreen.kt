@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_cards_archived_empty
 import com.neoutils.finsight.resources.credit_cards_archived_title
@@ -53,6 +55,9 @@ fun ArchivedCreditCardsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("archived_credit_cards")
     }
+
+    // What is archived is looked at and brought back, never added to.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     ArchivedCreditCardsContent(
         uiState = uiState,

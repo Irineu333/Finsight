@@ -31,6 +31,8 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
@@ -71,6 +73,10 @@ fun ReportViewerScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("reports_viewer")
     }
+
+    // A rendered report is read, printed or shared, all from its own top bar. Recording a
+    // transaction over it would change the very figures being read.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->

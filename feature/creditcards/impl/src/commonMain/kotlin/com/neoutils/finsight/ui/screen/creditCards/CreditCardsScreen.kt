@@ -8,6 +8,7 @@ import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -111,6 +112,13 @@ private fun CreditCardsContent(
         ?.let { it.domainCards.getOrNull(it.selectedCardIndex)?.id }
 
     ChromeEffect(
+        // With no card at all the empty state is the create command, full width; the button the
+        // shell would serve over it is the universal one, and there is no card to charge yet.
+        config = if (uiState is CreditCardsUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState is CreditCardsUiState.Content) {
             remember(modalManager, transactionsEntry, focusedCardId) {
                 listOfNotNull(

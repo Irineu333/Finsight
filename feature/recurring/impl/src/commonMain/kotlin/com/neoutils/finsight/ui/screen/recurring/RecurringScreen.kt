@@ -47,6 +47,7 @@ import com.neoutils.finsight.domain.model.RecurringCycleStatus
 import com.neoutils.finsight.extension.ConsolidatedAmount
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
 import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
@@ -122,7 +123,15 @@ fun RecurringScreen(
     }
 
     // Not tied to Content: a month with no cycle at all must still offer the create button.
+    //
+    // Except where the empty state already renders it full width — there the two would be the same
+    // offer, one over the other.
     ChromeEffect(
+        config = if (uiState is RecurringUiState.Empty) {
+            ChromeConfig.NoButtonOverContent
+        } else {
+            ChromeConfig.Default
+        },
         actions = if (uiState !is RecurringUiState.Loading) {
             remember(modalManager) {
                 listOf(

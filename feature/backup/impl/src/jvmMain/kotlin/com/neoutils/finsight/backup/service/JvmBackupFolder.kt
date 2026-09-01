@@ -137,13 +137,29 @@ class JvmBackupFolder private constructor(
         get() = settings.getStringOrNull(key)?.let(::folderIdentity)
 
     /**
-     * The chosen path's own last segment — never the path itself, which stays `internal` to
-     * this module (design D2). Unlike [identity] this asks nothing of the file system: a
-     * path's name is a property of its text, so a folder that has since been renamed or
-     * removed still answers the name it was chosen under.
+     * The chosen path, as the person reads paths on this platform — with their home
+     * directory written the way a shell writes it, because `/Users/someone/Documents` is
+     * their own name repeated back at them and `~/Documents` is the same place said
+     * shorter.
+     *
+     * The desktop is the one platform whose folder token *is* a path, so this is the whole
+     * of the location rather than as much of it as can be recovered. That is not a leak of
+     * anything design D2 protects: what it forbids is the destination being reopened from
+     * text, and this platform has no scope to lose — [chosenFolder] rebuilds a [File] from
+     * the same preference either way. What stays `internal` is the [File], so that no
+     * caller is handed something it could write into.
+     *
+     * Unlike [identity] this asks nothing of the file system: a path's text is a property of
+     * itself, so a folder that has since been renamed or removed still answers where it was
+     * chosen.
      */
-    override suspend fun displayName(): String? =
-        chosenFolder()?.name?.takeIf { it.isNotBlank() }
+    override suspend fun displayPath(): String? = chosenFolder()
+        ?.absolutePath
+        ?.takeIf { it.isNotBlank() }
+        ?.let { path ->
+            val home = System.getProperty("user.home").orEmpty()
+            if (home.isNotBlank() && path.startsWith(home)) "~" + path.removePrefix(home) else path
+        }
 
     /**
      * The folder the copies go in, or null when nothing has been pointed at.

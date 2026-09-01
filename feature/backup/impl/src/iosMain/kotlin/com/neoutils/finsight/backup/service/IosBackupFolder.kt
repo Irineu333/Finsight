@@ -211,13 +211,28 @@ class IosBackupFolder private constructor(
     /**
      * The chosen folder's own `lastPathComponent`, or null when nothing is pointed at or the
      * bookmark will not resolve to something that still lists — the same reading [link]
-     * takes, so a name is never offered for a folder that is not actually there.
+     * takes, so nothing is offered for a folder that is not actually there.
+     *
+     * **This is the one platform that still answers a segment rather than a location, and
+     * that is a gap rather than a rule.** The other two say where the folder is, because a
+     * name alone cannot tell two folders called `Backups` apart — see
+     * [BackupFolder.displayPath]. What stops this one is not design D2, which forbids
+     * addressing the destination *through* text and is untouched by text on a screen: it is
+     * that a url here is a container path, and the honest half of it — `iCloud Drive ›
+     * Documents › Backups` as the Files app writes it — is not a slice of `pathComponents`.
+     * `/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/…` is where it
+     * really is and is not what anybody would recognise, so putting it up would answer the
+     * question with noise.
+     *
+     * Deciding what a container reads as belongs with somebody who can watch it on a device,
+     * which is where this rung's every other question was settled (Q1). Until then the
+     * segment stands, and it is the same segment it always was.
      *
      * `lastPathComponent` is the one property this reads off the url. Everything else here
-     * goes on refusing `path` and `absoluteString` (design D2): a last path segment names the
-     * folder without addressing it, and nothing here can turn it back into a location.
+     * goes on refusing `path` and `absoluteString` (design D2), and the scan that enforces
+     * that is `ScopedUrlNeverTextTest`.
      */
-    override suspend fun displayName(): String? = withContext(Dispatchers.Default) {
+    override suspend fun displayPath(): String? = withContext(Dispatchers.Default) {
         withChosenFolder(BackupError.EXPORT_FAILED) { url ->
             url.lastPathComponent?.right() ?: BackupError.EXPORT_FAILED.left()
         }.getOrNull()

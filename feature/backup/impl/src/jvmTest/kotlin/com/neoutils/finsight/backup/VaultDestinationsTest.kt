@@ -75,7 +75,7 @@ class VaultDestinationsTest {
         override val isOffered = false
         override suspend fun point(context: PlatformContext) = error("rungFor never points")
         override suspend fun link() = FolderLink.NONE
-        override suspend fun displayName(): String? = null
+        override suspend fun displayPath(): String? = null
         override fun forgetPrevious() = Unit
     }
 

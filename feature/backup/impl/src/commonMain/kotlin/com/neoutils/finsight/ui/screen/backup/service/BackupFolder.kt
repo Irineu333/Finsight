@@ -16,9 +16,9 @@ import com.neoutils.finsight.extension.PlatformContext
  * picker and one act of remembering, not three flows — and the third is the most valuable
  * thing this feature does, because it is reached by somebody who has just lost everything.
  *
- * **Nothing here hands out a path, or anything else that could open the folder** (design
- * D2). What a caller can learn is [FolderLink] — three words about the link — [displayName]
- * — the folder's own name, which is not a handle and opens nothing — and what it can do is
+ * **Nothing here hands out anything that could open the folder** (design D2). What a caller
+ * can learn is [FolderLink] — three words about the link — and [displayPath], which is text
+ * for a person to read rather than an address anything reopens from, and what it can do is
  * [point] at a folder or ask. Where the copies actually go is [BackupDestination]'s, and each
  * platform's implementation of that is what holds the tree `Uri`, the security-scoped
  * `NSURL` or the path, privately.
@@ -78,21 +78,33 @@ interface BackupFolder {
     val identity: FolderIdentity?
 
     /**
-     * What the folder is called, as far as this platform can say without handing out
-     * anything that could open it (design D2) — never a path, an absolute address, or
-     * anything that would double as one.
+     * Where the folder is, as far as this platform can say it — enough to tell one folder
+     * from another folder of the same name.
      *
-     * Null when nothing is pointed at, and null when this platform cannot currently read a
-     * name for it — a reason to fall back to a generic sentence, never one to report as a
-     * refusal: a caller that only wants something readable does not need the failure a
-     * listing would have to explain.
+     * **A last segment on its own does not do that.** Somebody who keeps a `Backups` under
+     * `Documents` and another on a drive reads the same word for both, and the moment it
+     * matters most is the one where being sure matters most: pointing at a folder again
+     * after reinstalling, with the archive on the line (design D4).
+     *
+     * **It is read, never used to reach anything, and that is what keeps design D2 whole.**
+     * What D2 forbids is the destination being *modelled* as text and reopened from it — on
+     * iOS the grant lives inside the url object and does not survive the round trip. Text
+     * put on a screen makes no such trip: every platform here goes on addressing its folder
+     * through the token it already holds, and nothing reads this back.
+     *
+     * How much of the location each platform can honestly say differs, and the answer is
+     * whatever that platform knows rather than a shape imposed on all three. What none of
+     * them may do is answer something that is not where the copies are.
+     *
+     * Null when nothing is pointed at, and null when this platform cannot currently read it
+     * — a reason to fall back to a generic sentence, never one to report as a refusal: a
+     * caller that only wants something readable does not need the failure a listing would
+     * have to explain.
      *
      * It is `suspend` because two of the three platforms cannot answer without asking the
-     * file system: Android queries the provider for the display name, and iOS resolves the
-     * bookmark far enough to read `lastPathComponent` off the url. The desktop already holds
-     * the last segment of a path it never hands out, so answering there costs nothing.
+     * file system.
      */
-    suspend fun displayName(): String?
+    suspend fun displayPath(): String?
 
     /**
      * Drops the folder [point] shifted aside on its last change, once nothing is owed to it
@@ -151,7 +163,7 @@ object NoBackupFolder : BackupFolder {
 
     override val identity: FolderIdentity? = null
 
-    override suspend fun displayName(): String? = null
+    override suspend fun displayPath(): String? = null
 
     override fun forgetPrevious() = Unit
 }

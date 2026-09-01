@@ -9,6 +9,8 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
@@ -121,23 +123,55 @@ class JvmBackupFolderTest {
 
     @Test
     fun `there is no name until something is pointed at`() = runTest {
-        assertEquals(null, folder.displayName())
+        assertEquals(null, folder.displayPath())
     }
 
+    /**
+     * The last segment on its own cannot answer the question the header is asked, and this
+     * is that question in the shape somebody actually meets it: two folders called the same
+     * thing, in different places, one of which holds their archive.
+     */
     @Test
-    fun `the name is the chosen folder's own last segment, never its path`() = runTest {
-        folder.pointAt(chosen)
+    fun `two folders of the same name read apart`() = runTest {
+        val here = File(chosen, "one/Backups").apply { mkdirs() }
+        val there = File(chosen, "two/Backups").apply { mkdirs() }
 
-        assertEquals(chosen.name, folder.displayName())
-        assertFalse(
-            folder.displayName().orEmpty().contains(File.separator),
-            "the name carried the path it is not allowed to be",
-        )
+        folder.pointAt(here)
+        val first = folder.displayPath()
+
+        folder.pointAt(there)
+        val second = folder.displayPath()
+
+        assertEquals("Backups", here.name)
+        assertEquals(here.name, there.name, "the two are meant to share a name")
+        assertNotNull(first)
+        assertNotNull(second)
+        assertNotEquals(first, second, "the header could not tell the two folders apart")
+        assertTrue(first.endsWith(File.separator + "one" + File.separator + "Backups"), first)
+        assertTrue(second.endsWith(File.separator + "two" + File.separator + "Backups"), second)
+    }
+
+    /**
+     * A home directory is the person's own name said back to them, and every path they read
+     * on this platform is written the shorter way.
+     */
+    @Test
+    fun `a folder under the home directory is written the way a shell writes it`() = runTest {
+        val home = File(System.getProperty("user.home"))
+        val under = File(home, "finsight-display-path-probe").apply { mkdirs() }
+
+        try {
+            folder.pointAt(under)
+
+            assertEquals("~" + File.separator + under.name, folder.displayPath())
+        } finally {
+            under.deleteRecursively()
+        }
     }
 
     /**
      * A path's name is a property of its text, not a claim about the file system — the same
-     * reason [displayName] costs nothing, unlike [FolderIdentity]. A folder somebody deleted
+     * reason [displayPath] costs nothing, unlike [FolderIdentity]. A folder somebody deleted
      * still answers the name it was chosen under; [link] is what says it is gone.
      */
     @Test
@@ -145,6 +179,6 @@ class JvmBackupFolderTest {
         folder.pointAt(chosen)
         chosen.deleteRecursively()
 
-        assertEquals(chosen.name, folder.displayName())
+        assertEquals(chosen.absolutePath, folder.displayPath())
     }
 }

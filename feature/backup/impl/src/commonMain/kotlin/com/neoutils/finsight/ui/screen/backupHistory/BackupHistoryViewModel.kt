@@ -229,10 +229,10 @@ class BackupHistoryViewModel(
             val vaultState = state.observe().value
             val rung = folder.rung.inForce
             // Asked beside the listing and not instead of it: a name is not proof the
-            // folder can be read, and [folder.displayName] answers null on its own where
+            // folder can be read, and [folder.displayPath] answers null on its own where
             // that proof is missing (design D9's forbidden sentence is about the listing
             // below, not about what the destination is called).
-            val name = folder.displayName()
+            val name = folder.displayPath()
             destination.list().fold(
                 ifLeft = {
                     _uiState.update {
@@ -240,7 +240,7 @@ class BackupHistoryViewModel(
                             isLoading = false,
                             isUnreadable = true,
                             destination = rung,
-                            folderName = name,
+                            folderPath = name,
                             isVaultOn = vaultState.isOn,
                             archiveCopy = vaultState.archiveCopy,
                         )
@@ -252,7 +252,7 @@ class BackupHistoryViewModel(
                             isLoading = false,
                             isUnreadable = false,
                             destination = rung,
-                            folderName = name,
+                            folderPath = name,
                             isVaultOn = vaultState.isOn,
                             archiveCopy = vaultState.archiveCopy,
                             copies = copies,

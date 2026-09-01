@@ -63,6 +63,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -1113,18 +1114,30 @@ class FolderRecoveryTest {
 
     /**
      * The complaint this rung exists to answer: somebody who pointed at a folder can read
-     * which one from the screen, not only that a folder was chosen (design D2 — a display
-     * name is not a handle).
+     * **which** one from the screen, not only that a folder was chosen.
+     *
+     * The whole location and not its last segment, because a name alone does not answer that
+     * — two folders called `Backups` read identically, and the moment it matters is the one
+     * where being sure matters most (design D4). Nothing is reopened from it: design D2 is
+     * about the destination being addressed through text, and this is text on a screen.
      */
     @Test
-    fun `the header names the folder somebody actually pointed at`() = runTest {
+    fun `the header says where the folder somebody pointed at actually is`() = runTest {
         pointAt(chosen)
         state.setOn(true)
 
         val screen = historyViewModel()
-        val after = screen.awaitHistory("the folder was never named") { it.folderName != null }
+        val shown = screen
+            .awaitHistory("the folder was never named") { it.folderPath != null }
+            .folderPath
 
-        assertEquals(chosen.name, after.folderName)
+        assertNotNull(shown)
+        assertTrue(shown.endsWith(chosen.name), "the folder's own name is missing from $shown")
+        assertNotEquals(
+            chosen.name,
+            shown,
+            "only the last segment was shown, which two folders can share",
+        )
     }
 
     /** The app's own storage has no name to give, and the header must not invent one. */
@@ -1136,7 +1149,7 @@ class FolderRecoveryTest {
         val after = screen.awaitHistory("the first listing never landed") { !it.isLoading }
 
         assertEquals(VaultDestination.APP_STORAGE, after.destination)
-        assertNull(after.folderName)
+        assertNull(after.folderPath)
     }
 
     /**
@@ -1156,7 +1169,7 @@ class FolderRecoveryTest {
             it.destination == VaultDestination.APP_STORAGE
         }
 
-        assertNull(after.folderName, "the folder that fell was named over the app's own storage")
+        assertNull(after.folderPath, "the folder that fell was named over the app's own storage")
     }
 
     // --------------------------------------------------- nothing moves without being asked

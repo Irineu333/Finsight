@@ -72,7 +72,7 @@ class VaultFolderTest {
         override val identity: FolderIdentity?
             get() = if (linked == FolderLink.NONE) null else folderIdentity("stub-folder")
 
-        override suspend fun displayName(): String? =
+        override suspend fun displayPath(): String? =
             if (linked == FolderLink.NONE) null else "stub-folder"
 
         // Nothing here reaches backward: this stub plays one folder, so there is no
@@ -138,18 +138,18 @@ class VaultFolderTest {
 
     /**
      * The question does not apply while the copies are going inside the app — see
-     * [VaultLocation.folder], which [displayName] follows the same reasoning as.
+     * [VaultLocation.folder], which [displayPath] follows the same reasoning as.
      */
     @Test
     fun `there is no name while the copies are going inside the app`() = runTest {
-        assertEquals(null, folder.displayName())
+        assertEquals(null, folder.displayPath())
     }
 
     @Test
     fun `the name is the stub folder's once one is pointed at`() = runTest {
         folder.pointAt(context)
 
-        assertEquals("stub-folder", folder.displayName())
+        assertEquals("stub-folder", folder.displayPath())
     }
 
     @Test
@@ -160,7 +160,7 @@ class VaultFolderTest {
 
         assertEquals(
             null,
-            folder.displayName(),
+            folder.displayPath(),
             "the app's own storage was named after a folder it does not use",
         )
     }

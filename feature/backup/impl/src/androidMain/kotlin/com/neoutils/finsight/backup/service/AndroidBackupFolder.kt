@@ -144,11 +144,12 @@ class AndroidBackupFolder private constructor(
      * check: a caller asking for a name is asking something readable, not proof the folder
      * can currently be written into.
      */
-    override suspend fun displayName(): String? = withContext(Dispatchers.IO) {
+    override suspend fun displayPath(): String? = withContext(Dispatchers.IO) {
         val tree = storedTree() ?: return@withContext null
-        Either.catch {
-            appContext.contentResolver.documentAt(ChosenFolder(tree).uri)?.name
-        }.getOrNull()
+        Either.catch { ChosenFolder(tree).documentId.asReadablePath() }.getOrNull()
+            ?: Either.catch {
+                appContext.contentResolver.documentAt(ChosenFolder(tree).uri)?.name
+            }.getOrNull()
     }
 
     /**
@@ -261,3 +262,35 @@ private val DOCUMENTS_FOLDER: Uri = DocumentsContract.buildDocumentUri(
     "com.android.externalstorage.documents",
     "primary:Documents",
 )
+
+/**
+ * The location a tree's document id describes, or null where it describes none.
+ *
+ * A provider backed by a file system writes its ids as `volume:a/b/c`, so the tail is the
+ * path under that volume and is exactly what somebody needs to tell one `Backups` from
+ * another. `primary` is the device's own storage and is dropped, because naming it adds a
+ * word nobody reads as anything; any other volume is kept, since on a phone with a card
+ * that word is the whole difference.
+ *
+ * **Every other provider answers null here, and that is the point of asking this way.** An
+ * id from a cloud provider is opaque — `acc=1;doc=…` and worse — and putting it on a screen
+ * would be worse than the folder's own name, which is what the caller falls back to. So the
+ * test is not "does it contain a separator" but "does this read as a path at all": a tail
+ * that is empty, or that carries none of the punctuation a path is made of, is not one.
+ *
+ * Nothing is reopened from what this returns (design D2). The tree `Uri` and the grant
+ * persisted against it stay exactly where they were; this is the same id, read for a person.
+ */
+private fun String.asReadablePath(): String? {
+    val tail = substringAfter(':', missingDelimiterValue = this).trim('/')
+    if (tail.isBlank() || tail == this && !contains('/')) return null
+
+    val volume = substringBefore(':', missingDelimiterValue = "")
+    return when {
+        volume.isBlank() || volume == PRIMARY_VOLUME -> tail
+        else -> "$volume/$tail"
+    }
+}
+
+/** What every Android calls the device's own storage in a document id. */
+private const val PRIMARY_VOLUME = "primary"

@@ -203,7 +203,7 @@ fun BackupHistoryScreen(
             verticalArrangement = Arrangement.spacedBy(RowGap),
         ) {
             DestinationHeader(
-                where = destinationLabel(uiState.destination, uiState.folderName),
+                where = destinationLabel(uiState.destination, uiState.folderPath),
                 // Only once the destination has answered. A summary built before that would
                 // be counting a folder nobody has read, and "no copies" is an answer there
                 // is none to give yet (design D9).

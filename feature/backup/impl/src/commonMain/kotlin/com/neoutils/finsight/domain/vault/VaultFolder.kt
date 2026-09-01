@@ -100,7 +100,7 @@ class VaultFolder(
 
     /**
      * The folder's own name, for a screen to show — never a path, and never anything that
-     * could reopen it (design D2; see [BackupFolder.displayName] for what each platform may
+     * could reopen it (design D2; see [BackupFolder.displayPath] for what each platform may
      * answer with).
      *
      * Null on the same terms [location] leaves [VaultLocation.folder] null: while
@@ -110,8 +110,8 @@ class VaultFolder(
      * every other read here is: a name held past the call that moves the rung is a name that
      * can go on describing a folder no longer in force.
      */
-    suspend fun displayName(): String? =
-        if (rung.inForce == VaultDestination.USER_FOLDER) folder.displayName() else null
+    suspend fun displayPath(): String? =
+        if (rung.inForce == VaultDestination.USER_FOLDER) folder.displayPath() else null
 
     /**
      * Asks whether the folder is still reachable, and publishes the answer.

@@ -62,6 +62,7 @@ Nenhum ciclo aberto depois dela.
 | **Listas em linha**             | Recorrentes e Orçamentos trocam a ficha pela linha: de ~180 e ~232dp para 64 e ~62dp  | Funcionalidade | 1.10.0        |
 | **Ajuste no detalhe único**     | Um ajuste abre o mesmo detalhe de qualquer operação, nomeado pelo alvo que corrige    | Funcionalidade | 1.10.0        |
 | **Telemetria de arquivar**      | Arquivar deixou de ser reportado como apagar, e reabrir deixou de não ser reportado   | Arquitetura    | 1.10.0        |
+| **Backup local**                | Exportar e restaurar o acervo num arquivo, com o backup automático da plataforma desligado | Funcionalidade | —             |
 
 ## Planejado
 
@@ -69,7 +70,6 @@ Nada começado: sem change em `openspec/` e sem código no repositório.
 
 | Nome                            | Descrição                                                                             | Tipo           |
 |---------------------------------|---------------------------------------------------------------------------------------|----------------|
-| **Backup em arquivo**           | Exportar o banco para um arquivo e restaurá-lo em outro dispositivo, sem servidor     | Funcionalidade |
 | **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade |
 | **Sincronização**               | O mesmo razão em mais de um dispositivo, sem exportar e importar à mão                | Funcionalidade |
 | **Open Finance**                | Lançamentos e saldos vindos do banco pelo Open Finance, em vez de digitados           | Funcionalidade |

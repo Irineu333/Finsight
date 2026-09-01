@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.repository.RatePair
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesUiState
 import com.neoutils.finsight.ui.screen.exchangeRates.ExchangeRatesViewModel
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +85,7 @@ class ExchangeRatesViewModelTest {
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),
         baseCurrencyRepository = FixedBase("BRL"),
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private suspend fun seed(

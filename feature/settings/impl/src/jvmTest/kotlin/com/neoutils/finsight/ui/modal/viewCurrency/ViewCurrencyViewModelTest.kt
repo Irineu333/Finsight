@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.ui.model.RetireAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,6 +82,7 @@ class ViewCurrencyViewModelTest {
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),
         baseCurrencyRepository = base,
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private val delete = DeleteCurrencyUseCase(
@@ -93,6 +95,7 @@ class ViewCurrencyViewModelTest {
         exchangeRateRepository = rates,
         accountDao = db.accountDao(),
         budgetDao = db.budgetDao(),
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private fun viewModel(

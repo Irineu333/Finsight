@@ -191,7 +191,6 @@ internal object NoExchangeRates : IExchangeRateRepository {
     override suspend fun save(rate: ExchangeRate) = throw NotImplementedError()
     override suspend fun remove(rate: ExchangeRate) = throw NotImplementedError()
     override suspend fun countNaming(currency: String) = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }
 
 /**

@@ -14,6 +14,7 @@ val appModules: List<Module> = listOf(
     shellModule,
     reportModule,
     settingsModule,
+    backupModule,
     supportModule,
     dashboardModule,
     categoriesModule,

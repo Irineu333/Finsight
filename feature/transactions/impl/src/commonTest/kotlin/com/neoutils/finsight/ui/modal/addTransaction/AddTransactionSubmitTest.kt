@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.addTransaction
 
 import app.cash.turbine.test
+import arrow.core.Either
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -24,6 +25,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
+import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
@@ -47,6 +49,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -148,13 +151,52 @@ class AddTransactionSubmitTest {
         }
     }
 
+    /**
+     * A purchase in parts is refused by the same write boundary as a purchase in one, so it
+     * owes the same answer. The single-transaction path says it; this pins that the
+     * installment path above it does too, instead of recording the refusal and leaving a
+     * sheet that only refuses to close.
+     */
+    @Test
+    fun `a refused installment save is explained and leaves the sheet open`() = runTest(dispatcher) {
+        val modalManager = ModalManager()
+        val crashlytics = FakeCrashlytics()
+        val viewModel = viewModel(
+            today = LocalDate(2026, 3, 10),
+            addInstallmentUseCase = Refused,
+            modalManager = modalManager,
+            crashlytics = crashlytics,
+        )
+
+        viewModel.uiState.test {
+            viewModel.onAction(AddTransactionAction.ChangeTarget(TransactionTarget.CREDIT_CARD))
+            viewModel.onAction(AddTransactionAction.ChangeInstallments(3))
+            viewModel.fill(date = "10/03/2026")
+            advanceUntilIdle()
+
+            assertEquals(3, expectMostRecentItem().form.installments, "the installment path is the one taken")
+
+            viewModel.onAction(AddTransactionAction.Submit)
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertIs<ErrorModal>(modalManager.top, "the refusal is said, not swallowed")
+        assertEquals(1, crashlytics.recorded.size)
+    }
+
     private fun AddTransactionViewModel.fill(date: String) {
         onAction(AddTransactionAction.ChangeTitle("Lunch"))
         onAction(AddTransactionAction.ChangeAmount("4500"))
         onAction(AddTransactionAction.ChangeDate(date))
     }
 
-    private fun viewModel(today: LocalDate) = AddTransactionViewModel(
+    private fun viewModel(
+        today: LocalDate,
+        addInstallmentUseCase: AddInstallmentUseCase = NotWritten,
+        modalManager: ModalManager = ModalManager(),
+        crashlytics: FakeCrashlytics = FakeCrashlytics(),
+    ) = AddTransactionViewModel(
         // Opened from nowhere in particular: nothing is preselected.
         origin = null,
         categoryRepository = FakeCategoryRepository,
@@ -163,10 +205,10 @@ class AddTransactionSubmitTest {
         transactionRepository = FakeTransactionRepository(),
         accountRepository = FakeAccountRepository(account),
         buildTransactionUseCase = NotWritten,
-        addInstallmentUseCase = NotWritten,
-        modalManager = ModalManager(),
+        addInstallmentUseCase = addInstallmentUseCase,
+        modalManager = modalManager,
         analytics = FakeAnalytics,
-        crashlytics = FakeCrashlytics(),
+        crashlytics = crashlytics,
         startRecurringFromTransaction = StartRecurringFromTransactionUseCase(
             repository = RecordingRecurringRepository(),
             clock = FixedClock(today),
@@ -190,6 +232,12 @@ private object FakeAnalytics : Analytics {
 private object NotWritten : BuildTransactionUseCase, AddInstallmentUseCase {
     override suspend operator fun invoke(form: TransactionForm) = throw NotImplementedError()
     override suspend operator fun invoke(form: TransactionForm, installments: Int) = throw NotImplementedError()
+}
+
+/** A write boundary that refuses, the way a closed invoice makes it refuse. */
+private object Refused : AddInstallmentUseCase {
+    override suspend operator fun invoke(form: TransactionForm, installments: Int) =
+        Either.Left(IllegalStateException("closed invoice"))
 }
 
 private object FakeCategoryRepository : ICategoryRepository {

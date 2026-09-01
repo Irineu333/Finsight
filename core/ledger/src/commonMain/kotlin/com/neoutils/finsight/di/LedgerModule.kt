@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.repository.EntryRepository
 import com.neoutils.finsight.database.repository.LedgerEntryWriter
 import com.neoutils.finsight.database.repository.TransactionRepository
+import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -14,7 +15,8 @@ import org.koin.dsl.module
  * only aggregates them, as it does for every other core.
  *
  * The DAOs and the `RoomDatabase` come from `:core:database`, which assembles the
- * real database; the two ports come from whichever facade claims them.
+ * real database; the ports come from whichever facade claims them, and the removal
+ * prelude is the only one that may go unclaimed.
  */
 val ledgerModule = module {
     single<ITransactionRepository> {
@@ -25,6 +27,10 @@ val ledgerModule = module {
             accountDao = get(),
             writeGuard = get(),
             removalHook = get(),
+            // Optional, unlike the two ports above: whoever wants to be told before a
+            // removal registers a binding and is found here; nobody registering is a
+            // valid graph, because the ledger removes correctly either way.
+            removalPrelude = getOrNull() ?: TransactionRemovalPrelude.None,
             transactionMapper = get(),
             ledgerEntryWriter = get(),
         )

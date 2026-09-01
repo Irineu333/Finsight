@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.repository
 
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
@@ -72,4 +73,24 @@ interface ITransactionRepository {
 
     /** Removes several transactions as one unit — see [createTransactions]. */
     suspend fun deleteTransactionsByIds(ids: List<Long>)
+
+    /**
+     * Removes [id], saying the [announcement] to
+     * [com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude] on the way.
+     *
+     * Spelling it out is what this overload is for; the removals above are the same
+     * removal with [RemovalAnnouncement.Announced], which is why forgetting the argument
+     * cannot cost anybody the announcement.
+     *
+     * The default carries the answer no further, because an implementation with no prelude
+     * has nothing to withhold: [beforeRemoval][com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude.beforeRemoval]
+     * is the only thing it governs, and where it is not spoken both answers are the same
+     * removal.
+     */
+    suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) =
+        deleteTransactionById(id)
+
+    /** [deleteTransactionsByIds], with the [announcement] spelled out — see above. */
+    suspend fun deleteTransactionsByIds(ids: List<Long>, announcement: RemovalAnnouncement) =
+        deleteTransactionsByIds(ids)
 }

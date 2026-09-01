@@ -149,6 +149,15 @@ class InvoiceTransactionsViewModel(
         // filter below offers the open ones.
         val lookup = TransactionFacadeLookup.of(categories, installments)
 
+        // How many transactions each invoice of this card holds, counted once over the
+        // card's own list rather than re-read per invoice. An invoice's dimension only ever
+        // lands on the LIABILITY leg of this card, so every transaction that carries it is
+        // already in the list this screen observes.
+        val countByDimension = transactions
+            .flatMap { transaction -> transaction.entries.mapNotNull { it.dimensionId }.distinct() }
+            .groupingBy { it }
+            .eachCount()
+
         val invoiceTransactions = transactions
             .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
         // Everything the other controls leave standing — the universe the axis cuts, and
@@ -243,6 +252,8 @@ class InvoiceTransactionsViewModel(
                     closingDate = invoice.closingDate,
                     isClosable = invoice.isClosableOn(currentDate),
                     canReopen = invoice.isReopenable(invoices),
+                    transactionCount = invoice.dimensionId
+                        ?.let { countByDimension[it] } ?: 0,
                     canPay = invoice.acceptsPayment,
                     payLabel = invoice.paymentLabel,
                     paySettles = invoice.acceptsFullSettlement,

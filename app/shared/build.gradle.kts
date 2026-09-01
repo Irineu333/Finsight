@@ -20,6 +20,8 @@ kotlin {
 
             api(projects.feature.accounts.api)
             implementation(projects.feature.accounts.impl)
+            api(projects.feature.backup.api)
+            implementation(projects.feature.backup.impl)
             api(projects.feature.shell.api)
             implementation(projects.feature.shell.impl)
             api(projects.feature.dashboard.api)

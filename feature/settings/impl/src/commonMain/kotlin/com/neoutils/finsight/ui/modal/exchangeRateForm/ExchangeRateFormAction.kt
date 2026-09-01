@@ -11,5 +11,4 @@ sealed interface ExchangeRateFormAction {
     data class SelectDate(val date: LocalDate) : ExchangeRateFormAction
     data class ChangeRate(val rate: Double?) : ExchangeRateFormAction
     data object Submit : ExchangeRateFormAction
-    data object Remove : ExchangeRateFormAction
 }

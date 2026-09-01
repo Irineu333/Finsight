@@ -121,6 +121,8 @@ val creditCardsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            vaultOffer = get(),
+            coverage = get(),
         )
     }
     viewModel {
@@ -142,6 +144,8 @@ val creditCardsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            vaultOffer = get(),
+            coverage = get(),
         )
     }
     viewModel {

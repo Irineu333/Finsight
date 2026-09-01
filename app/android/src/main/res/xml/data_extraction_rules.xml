@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The API 31+ format. The app owns its backup: the only copy of the ledger is the file
+    the user exports, and no automatic mechanism copies the database anywhere.
+
+    Both sections are written out on purpose. Since Android 12 `allowBackup` governs the
+    cloud alone, and a missing section is not a disabled mode: whatever section is absent
+    is fully enabled for every domain. So `<device-transfer>` is what refuses the
+    device-to-device transfer, and it has to be here to refuse it.
+
+    An `<exclude>` without `path` covers the whole domain, and nothing is included: an
+    inclusion rule would narrow the exclusion down to everything else, which is the
+    opposite of what is meant here.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

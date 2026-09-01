@@ -134,5 +134,4 @@ internal class RecordingRates(
     override suspend fun countNaming(currency: String): Int =
         existing.count { it.currency == currency || it.counterCurrency == currency }
 
-    override suspend fun removeAllNaming(currency: String) = throw NotImplementedError()
 }

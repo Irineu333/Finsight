@@ -65,6 +65,7 @@ import com.neoutils.finsight.resources.exchange_rate_form_title_new
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
+import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateModal
 import com.neoutils.finsight.ui.util.exposeTestTags
 import com.neoutils.finsight.ui.util.optionalTestTag
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -342,11 +343,18 @@ class ExchangeRateFormModal(
             // `ViewBudgetModal`, `ViewTransactionModal`, `ViewCategoryModal` and
             // `ViewRecurringModal` all wear. It used to be a bare `TextButton` with
             // coloured text, the one place in the app where deleting looked like a link.
-            if (uiState.isEditing) {
+            //
+            // **It asks first.** The button starts the removal; it does not perform it.
+            // What it takes away is typed work with no other path back to it, so it is
+            // confirmed in the sheet every other deletion of this app is confirmed in —
+            // which is also where the copy kept first is promised and the vault offered,
+            // beside the risk rather than beside a form that may only be registering a
+            // rate.
+            existing?.let { rate ->
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedButton(
-                    onClick = { viewModel.onAction(ExchangeRateFormAction.Remove) },
+                    onClick = { modalManager.show(DeleteExchangeRateModal(rate)) },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,

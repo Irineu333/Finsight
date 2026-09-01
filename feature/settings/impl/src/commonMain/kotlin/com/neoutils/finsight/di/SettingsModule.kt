@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.ui.modal.archiveCurrency.ArchiveCurrencyViewModel
 import com.neoutils.finsight.ui.modal.currencyForm.CurrencyFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
+import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel
 import com.neoutils.finsight.ui.modal.viewCurrency.ViewCurrencyViewModel
 import com.neoutils.finsight.ui.modal.exchangeRateForm.ExchangeRateFormViewModel
 import com.neoutils.finsight.ui.screen.currencies.CurrenciesViewModel
@@ -75,6 +76,7 @@ val settingsModule = module {
             rateSyncStateRepository = get(),
             accountDao = get(),
             budgetDao = get(),
+            preventiveBackup = get(),
         )
     }
     factory {
@@ -91,7 +93,14 @@ val settingsModule = module {
     // through this binding: it is a read only they make, and putting it on
     // `IExchangeRateRepository` would oblige the thirteen fakes that implement the
     // interface to answer a question their modules never ask.
-    single { ExchangeRateRepository(dao = get(), mapper = get(), baseCurrencyRepository = get()) }
+    single {
+        ExchangeRateRepository(
+            dao = get(),
+            mapper = get(),
+            baseCurrencyRepository = get(),
+            preventiveBackup = get(),
+        )
+    }
     single<IExchangeRateRepository> { get<ExchangeRateRepository>() }
 
     single<IRateSyncStateRepository> { RateSyncStateRepository(settings = get()) }
@@ -137,10 +146,24 @@ val settingsModule = module {
         ExchangeRateFormViewModel(
             existing = it.getOrNull<ExchangeRate>(),
             baseCurrencyRepository = get(),
-            exchangeRateRepository = get(),
+            exchangeRateRepository = get<ExchangeRateRepository>(),
             currencyRepository = get(),
             modalManager = get(),
             analytics = get(),
+        )
+    }
+
+    viewModel {
+        DeleteExchangeRateViewModel(
+            rate = it.get(),
+            // The concrete binding, for the same reason the rates screen takes it: the
+            // removal that carries the person's answer about the copy is this feature's,
+            // not something `IExchangeRateRepository` obliges every module to answer.
+            exchangeRateRepository = get<ExchangeRateRepository>(),
+            modalManager = get(),
+            analytics = get(),
+            vaultOffer = get(),
+            coverage = get(),
         )
     }
 
@@ -169,6 +192,8 @@ val settingsModule = module {
             deleteCurrency = get(),
             modalManager = get(),
             analytics = get(),
+            vaultOffer = get(),
+            coverage = get(),
         )
     }
 

@@ -1,0 +1,264 @@
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
+
+package com.neoutils.finsight.backup.service
+
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.left
+import arrow.core.right
+import com.neoutils.finsight.domain.error.BackupError
+import com.neoutils.finsight.domain.vault.service.BackupDestination
+import com.neoutils.finsight.domain.vault.service.NEWEST_FIRST
+import com.neoutils.finsight.domain.vault.service.OwnCopyCheck
+import com.neoutils.finsight.domain.vault.service.STAGED_SUFFIX
+import com.neoutils.finsight.domain.vault.service.StoredBackup
+import com.neoutils.finsight.domain.vault.service.freeBackupFileName
+import com.neoutils.finsight.domain.vault.service.isBackupFileName
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import platform.Foundation.NSApplicationSupportDirectory
+import platform.Foundation.NSDate
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileModificationDate
+import platform.Foundation.NSFileSize
+import platform.Foundation.NSNumber
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLIsExcludedFromBackupKey
+import platform.Foundation.NSUserDomainMask
+// A category on `NSDate`, which the interop states as an extension of this package rather
+// than as a member — so it is imported by name, like any other extension.
+import platform.Foundation.timeIntervalSince1970
+
+/**
+ * The app's own sandbox, which on iOS is the whole of what the platform lets an app keep
+ * without being pointed at something.
+ *
+ * It protects against everything except losing the sandbox, and losing the sandbox is what
+ * uninstalling does: the system removes the container whole, with the keychain as the only
+ * exception (design D3). The screen is what says that out loud; this only has to be
+ * somewhere the app can always write.
+ *
+ * Application Support rather than Documents, because these are files the app maintains and
+ * not documents the user authors, and excluded from iCloud's backup for the same reason the
+ * live database is (`Database.ios.kt`): the copies hold everything the archive holds, and
+ * design D14 keeps this app from putting the user's finances anywhere they did not choose.
+ */
+class IosBackupDestination(private val ownCopy: OwnCopyCheck) : BackupDestination {
+
+    override suspend fun put(
+        capturedPath: String,
+        name: String,
+    ): Either<BackupError, StoredBackup> = withContext(Dispatchers.Default) {
+        val directory = backupDirectory() ?: return@withContext BackupError.EXPORT_FAILED.left()
+        val free = freeBackupFileName(name) {
+            NSFileManager.defaultManager.fileExistsAtPath("$directory/$it")
+        }
+
+        // Through a name nothing lists, and into place only once every byte is there. A
+        // write cut short under the final name leaves a truncated file the history shows,
+        // retention counts inside the window it keeps, and removal refuses for good — a
+        // truncated database reads as corrupt, and corruption is not proof a file is this
+        // app's. One such file costs one real copy at every capture from then on.
+        val staged = "$directory/$free$STAGED_SUFFIX"
+        NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+
+        val landed = copyItem(capturedPath, staged, BackupError.EXPORT_FAILED).flatMap {
+            val target = "$directory/$free"
+            if (NSFileManager.defaultManager.moveItemAtPath(staged, target, error = null)) {
+                storedBackupAt(target, free)?.right() ?: BackupError.EXPORT_FAILED.left()
+            } else {
+                BackupError.EXPORT_FAILED.left()
+            }
+        }
+
+        NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+        landed
+    }
+
+    /**
+     * What the folder holds — and a refusal wherever the reading did not happen.
+     *
+     * `contentsOfDirectoryAtPath` answers null for a directory it could not read, and
+     * turning that into an empty list would have the screen say "no copies yet" over a
+     * folder it never managed to read, the card overwritten with zero, and a migration
+     * report nothing to carry (design D9). There is no "not there yet" for it to mean
+     * either — [backupDirectory] makes the folder on the way in, and answers null itself
+     * when it cannot.
+     */
+    override suspend fun list(): Either<BackupError, List<StoredBackup>> =
+        withContext(Dispatchers.Default) {
+            val directory = backupDirectory()
+                ?: return@withContext BackupError.EXPORT_FAILED.left()
+
+            val entries = NSFileManager.defaultManager
+                .contentsOfDirectoryAtPath(directory, error = null)
+                ?: return@withContext BackupError.EXPORT_FAILED.left()
+
+            entries.filterIsInstance<String>()
+                .filter(::isBackupFileName)
+                .mapNotNull { storedBackupAt("$directory/$it", it) }
+                .sortedWith(NEWEST_FIRST)
+                .right()
+        }
+
+    override suspend fun copyOut(
+        backup: StoredBackup,
+        destinationPath: String,
+    ): Either<BackupError, Boolean> = withContext(Dispatchers.Default) {
+        val directory = backupDirectory()
+            ?: return@withContext BackupError.EXPORT_FAILED.left()
+
+        val path = "$directory/${backup.name}"
+        if (!NSFileManager.defaultManager.fileExistsAtPath(path)) {
+            return@withContext false.right()
+        }
+
+        // `copyItemAtPath` refuses a destination that already holds a file, and the caller
+        // asked for a free path of its own — so anything left there is this app's own
+        // leftover and is in the way of the copy that was asked for.
+        NSFileManager.defaultManager.removeItemAtPath(destinationPath, error = null)
+
+        copyItem(path, destinationPath, BackupError.EXPORT_FAILED).map { true }
+    }
+
+    /**
+     * Removes one copy, once the file has been confirmed by its content to be one this app
+     * wrote.
+     *
+     * **Proving it costs a copy, even here.** The gate opens a database with Room and lets
+     * the migration chain run over it ([OwnCopyCheck]), so what it is handed has to be a
+     * file that may come back changed — and a copy the check *refuses* is one that stays in
+     * the sandbox afterwards. Run where it lies, the check rewrites a file the app has just
+     * decided it may not remove, and strands a `-wal` and a `-shm` beside it that nothing
+     * lists and nothing else will ever take away. It is the same rule the folder rung states
+     * ([IosFolderBackupDestination.remove]) for a different reason: there the file is
+     * somebody else's, here it is one this app is about to be told to keep.
+     *
+     * The staging goes beside the copy rather than into the app's temporary area, under the
+     * name [STAGED_SUFFIX] reserves: this folder is the app's own, the name is listed by
+     * nothing and counted by nothing, and the copy stays where it already is. It is removed
+     * on every way out — the journal files with it — which leaves the same window a capture
+     * already accepts in [put]: a process killed mid-copy strands one staged file that no
+     * listing shows.
+     *
+     * The journal files go with the copy on the way out too, because a folder swept by an
+     * earlier build may still be holding a pair.
+     *
+     * **False means one thing only: the content check refused.** A deletion that did not
+     * happen is a failure and leaves as one — the screen turns false into a sentence about
+     * what the file *is*, and saying that over a file the app never managed to unlink would
+     * be a claim it has no evidence for.
+     */
+    override suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean> {
+        val directory = withContext(Dispatchers.Default) { backupDirectory() }
+            ?: return BackupError.EXPORT_FAILED.left()
+
+        val path = "$directory/${backup.name}"
+        val exists = withContext(Dispatchers.Default) {
+            NSFileManager.defaultManager.fileExistsAtPath(path)
+        }
+        if (!exists) return true.right()
+
+        val staged = path + STAGED_SUFFIX
+        try {
+            val copied = withContext(Dispatchers.Default) {
+                // `copyItemAtPath` refuses a destination that already holds a file, and
+                // anything under this name is a leftover of this app's own.
+                NSFileManager.defaultManager.removeItemAtPath(staged, error = null)
+                copyItem(path, staged, BackupError.EXPORT_FAILED)
+            }
+            copied.getOrElse { return it.left() }
+
+            if (!ownCopy.confirms(staged)) return false.right()
+        } finally {
+            withContext(NonCancellable + Dispatchers.Default) {
+                DATABASE_FILES.forEach {
+                    NSFileManager.defaultManager.removeItemAtPath(staged + it, error = null)
+                }
+            }
+        }
+
+        return withContext(Dispatchers.Default) {
+            DATABASE_FILES.forEach { suffix ->
+                NSFileManager.defaultManager.removeItemAtPath(path + suffix, error = null)
+            }
+            if (NSFileManager.defaultManager.fileExistsAtPath(path)) {
+                BackupError.EXPORT_FAILED.left()
+            } else {
+                true.right()
+            }
+        }
+    }
+}
+
+/**
+ * The folder the copies live in, made if it is not there yet, or null when the sandbox
+ * refuses — which is the one condition under which this destination has nowhere to write.
+ *
+ * `internal` because the copy taken before a migration goes here too and is written before
+ * this class exists — one folder, decided once, rather than a second walk to Application
+ * Support that could drift from this one.
+ */
+internal fun backupDirectory(): String? {
+    val support = NSFileManager.defaultManager.URLForDirectory(
+        directory = NSApplicationSupportDirectory,
+        inDomain = NSUserDomainMask,
+        appropriateForURL = null,
+        create = true,
+        error = null,
+    )?.path ?: return null
+
+    val path = "$support/$BACKUP_DIRECTORY"
+    val created = NSFileManager.defaultManager.createDirectoryAtPath(
+        path = path,
+        withIntermediateDirectories = true,
+        attributes = null,
+        error = null,
+    )
+    if (!created) return null
+
+    NSURL.fileURLWithPath(path).setResourceValue(
+        value = true,
+        forKey = NSURLIsExcludedFromBackupKey,
+        error = null,
+    )
+    return path
+}
+
+/**
+ * What the file system says about one copy, or null when it says nothing — a file removed
+ * between being listed and being described is not an error, it is a file that is gone.
+ */
+private fun storedBackupAt(path: String, name: String): StoredBackup? {
+    val attributes = NSFileManager.defaultManager.attributesOfItemAtPath(path, error = null)
+        ?: return null
+    val size = attributes[NSFileSize].asLong() ?: return null
+    val modified = (attributes[NSFileModificationDate] as? NSDate)?.timeIntervalSince1970
+        ?: return null
+
+    return StoredBackup(
+        name = name,
+        savedAt = Instant.fromEpochMilliseconds((modified * MILLIS_PER_SECOND).toLong()),
+        sizeInBytes = size,
+    )
+}
+
+/**
+ * A count out of a Foundation dictionary, whichever side of the bridge it arrives on:
+ * Foundation states a file's size as an `NSNumber`, and the interop is free to have turned
+ * it into a Kotlin number already by the time it is read out of a `Map<Any?, *>`. It is
+ * shared with the folder rung, which asks a url for the same number under another key.
+ */
+internal fun Any?.asLong(): Long? = when (this) {
+    is NSNumber -> longLongValue
+    is Number -> toLong()
+    else -> null
+}
+
+private const val BACKUP_DIRECTORY = "backups"
+internal const val MILLIS_PER_SECOND = 1_000

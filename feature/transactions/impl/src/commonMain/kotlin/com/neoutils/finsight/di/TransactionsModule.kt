@@ -111,6 +111,8 @@ val transactionsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+            vaultOffer = get(),
+            coverage = get(),
         )
     }
 }

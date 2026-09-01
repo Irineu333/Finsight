@@ -103,6 +103,15 @@ data class InvoiceTransactionsUiState(
         val isClosable: Boolean,
         val canReopen: Boolean = false,
         /**
+         * How many transactions are posted to this invoice, before any filter.
+         *
+         * It exists for one sentence: the deletion confirmation states what the invoice
+         * takes with it, and the transactions it takes are the invoice's own, not the ones
+         * the chips happen to be leaving standing. Reading it from
+         * [ListState.Content.transactions] would count the cut instead.
+         */
+        val transactionCount: Int = 0,
+        /**
          * Whether this invoice has a payment to offer, and the verb that names it —
          * resolved from the domain's predicate, beside [isClosable] and [canReopen], so
          * the screen reads a fact rather than re-deciding a rule from the status.

@@ -1,0 +1,263 @@
+appId: com.neoutils.finsight
+name: backup_preventive
+tags:
+  - backup
+env:
+  INCOME_TITLE: "E2E Wages"
+  INCOME_DIGITS: "90000"
+  EXPENSE_TITLE: "E2E Books"
+  EXPENSE_DIGITS: "3645"
+---
+# A deletion stops being irreversible, and the whole of that promise is one journey: the offer rides
+# on the first destructive confirmation, accepting it turns the vault on, the copy is taken *before*
+# the row goes, and restoring that copy brings the deleted money back.
+#
+# **This is the travessia the change exists to deliver, and no layer below mounts it.** Each half has
+# unit tests of its own — `PreventiveDeletionTest` proves the copy holds what the deletion removes,
+# `VaultOfferTest` proves one yes turns everything on, `CurrentCopyTest` and `RestoreClaimsTest`
+# prove what a restore does and says — and every one of them stands on a fake vault or a fake
+# destination. What none of them assembles is the chain: a composable declared in
+# `feature/backup/api`, rendered inside `feature/transactions/impl`'s sheet, reaching a vault in
+# `feature/backup/impl`, which writes a real file through `:core:database`, which a *second screen*
+# then reads back and replaces the live archive from. Four modules, one file on disk, and the
+# figures on the dashboard as the proof it landed.
+#
+# The figures are 900.00 earned and 36.45 spent, leaving 863.55, and they share no digits: no
+# assertion here can pass by reading a neighbour. The balance is read three times — after both
+# writes, after the deletion, after the restore — and it is the same node each time, so the story
+# is told by one number moving and coming back.
+#
+# Nothing here leaves the app. The vault's destination on Android is the app's own external files
+# directory (`AndroidBackupDestination`): no picker, no permission, no provider this suite does not
+# own — which is why this fits where exporting a file does not (`backup/reach` argues that
+# exclusion).
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- I earn 900.00 and spend 36.45 ---------------------------------------------------------------
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: income
+      TITLE: ${INCOME_TITLE}
+      AMOUNT: ${INCOME_DIGITS}
+- runFlow:
+    file: ../../subflows/record_transaction.yaml
+    env:
+      TYPE: expense
+      TITLE: ${EXPENSE_TITLE}
+      AMOUNT: ${EXPENSE_DIGITS}
+
+# 900.00 − 36.45 = 863.55. The starting figure, and the one the restore has to bring back.
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]863[.,]55"
+
+# --- The first thing I destroy comes with an offer -----------------------------------------------
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- tapOn:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "view_transaction_delete"
+    timeout: 15000
+- tapOn:
+    id: "view_transaction_delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete_transaction_confirm"
+    timeout: 15000
+
+# The offer is here, on a sheet that belongs to another feature. `VaultOfferRow` is declared in
+# `feature/backup/api` and composed by `feature/transactions/impl`, and the two are wired through
+# Koin — a binding that resolves in no test below this one, and whose absence would show up as a
+# sheet that simply has one fewer card on it. Reading it back is reading back that wiring.
+#
+# It is not tapped. The offer nobody has turned down arrives already ticked (`VaultState.wasDeclined`),
+# so confirming the deletion is what accepts it — which is exactly the path most people take, and
+# the one where a box that silently defaulted to unticked would cost somebody their copy.
+- assertVisible:
+    id: "backup_vault_offer"
+
+- tapOn:
+    id: "delete_transaction_confirm"
+- extendedWaitUntil:
+    notVisible:
+      id: "delete_transaction_confirm"
+    timeout: 30000
+
+# The row is gone and the money is back where it was before the spend.
+#
+# Absence by `id` and figure, never by loose text (§5.3): a bare "E2E Books" is answered by any node
+# anywhere on the screen that happens to render those words, so it can pass for a reason that has
+# nothing to do with the row. And the row shares `transaction_card_title` with every other one, which
+# is exactly the case that rule sends to the figure.
+#
+# The income row standing is the premise the same rule asks for. Without it, an empty list and a
+# list that dropped the right row read alike — and so would a screen that never composed at all.
+- extendedWaitUntil:
+    visible:
+      id: "transaction_card_title"
+      text: ${INCOME_TITLE}
+    timeout: 15000
+- assertNotVisible:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- tapOn:
+    id: "nav_item_dashboard"
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]900[.,]00"
+
+# --- One yes turned the whole vault on ------------------------------------------------------------
+# Nothing on the backup screen was ever touched: the only tap that could have turned the vault on
+# was the confirmation of a deletion, two screens away, in another feature. These two tiles are
+# absent while the vault is off — `backup/vault` asserts that absence on these same ids — so their
+# presence here is the offer having landed.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- assertVisible:
+    id: "backup_history_tile"
+- assertVisible:
+    id: "backup_last_capture"
+
+# --- and the copy it took is older than the deletion ----------------------------------------------
+- tapOn:
+    id: "backup_history_tile"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup_history"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_list"
+    timeout: 15000
+
+- tapOn:
+    id: "backup_copy"
+- extendedWaitUntil:
+    visible:
+      id: "backup_copy_actions"
+    timeout: 15000
+- tapOn:
+    id: "backup_copy_restore"
+- extendedWaitUntil:
+    visible:
+      id: "backup_restore_confirm_sheet"
+    timeout: 15000
+
+# **Two, and this is the assertion the flow exists for.** The count is not read from the app's state
+# — it is read out of the file, by opening the copy and counting the rows in it
+# (`CandidateVerifier`, the same gate a picked file goes through). Two means the copy was written
+# while both transactions were still there, which is the whole of "the copy comes *before* the
+# action": a copy taken a moment later would say one, and would be a copy of the damage.
+#
+# Waited for rather than asserted outright: the sheet goes up first and the file is opened behind
+# it, so the row holds a placeholder (`backup_copy_facts_pending`) until the read answers.
+- extendedWaitUntil:
+    visible:
+      id: "backup_restore_confirm_transactions"
+      text: "2"
+    timeout: 30000
+
+- tapOn:
+    id: "backup_restore_confirm_action"
+
+# A restore closes its own confirmation without a trace, so the app says it landed — and the saying
+# is a sheet of its own, covering everything beneath it until it is dismissed. Waiting for it is
+# waiting for the replacement to have finished: the transaction that does the swap is what this
+# button appears behind.
+- extendedWaitUntil:
+    visible:
+      id: "success_modal_dismiss"
+    timeout: 60000
+- tapOn:
+    id: "success_modal_dismiss"
+- extendedWaitUntil:
+    notVisible:
+      id: "success_modal_dismiss"
+    timeout: 15000
+
+# Restoring is itself a destructive action, and the vault treats it as one: a copy of the archive
+# *as it stands* is written before the replacement, so the way back has a way back. Two copies where
+# there was one is that second file.
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_summary"
+      text: ".*2 copies kept.*"
+    timeout: 30000
+
+# --- The deletion is undone -----------------------------------------------------------------------
+# The archive was replaced by the file's content, and both readers say so: the balance is the figure
+# from before the deletion, and the row somebody deleted is in the list again. Read after navigating
+# away and back, so what is asserted is what the archive holds rather than a screen that never let
+# go of its old state.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "bottom_navigation_bar"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "dashboard_total_balance_amount"
+    direction: UP
+    timeout: 25000
+- assertVisible:
+    id: "dashboard_total_balance_amount"
+    text: "[$]863[.,]55"
+
+- tapOn:
+    id: "nav_item_transactions"
+- extendedWaitUntil:
+    visible:
+      id: "screen_transactions"
+    timeout: 15000
+- assertVisible:
+    id: "transaction_card_title"
+    text: ${EXPENSE_TITLE}
+- assertVisible:
+    id: "transaction_card_amount"
+    text: "[$]36[.,]45"

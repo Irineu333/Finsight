@@ -279,7 +279,6 @@ internal class RecordingExchangeRates : IExchangeRateRepository {
     override fun observeAll(): Flow<List<ExchangeRate>> = flowOf(emptyList())
     override suspend fun remove(rate: ExchangeRate) = Unit
     override suspend fun countNaming(currency: String): Int = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }
 
 private fun notUnderTest(): Nothing = error("not part of the payment correction under test")

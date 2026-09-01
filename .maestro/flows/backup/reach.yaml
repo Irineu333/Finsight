@@ -1,0 +1,64 @@
+appId: com.neoutils.finsight
+name: backup_reach
+tags:
+  - backup
+---
+# Settings hands the assembled app over to a feature that has no tab, no place in the navigation
+# catalog and no other door — and the backup screen comes up with both of its commands on it.
+#
+# What this is for is the hand-off, and only the hand-off. Backup is wired through four places that
+# fail apart from one another and none of which fails a compile: the route declared in the feature's
+# `api`, the subgraph aggregated into the single `AppNavHost`, the Koin module aggregated into
+# `appModules`, and the entry in settings that names the route. Miss the graph and the tap goes
+# nowhere; miss the module and the screen crashes building its view model the moment it composes.
+# Both are silent everywhere except in the assembled app, which is the whole of §5.1's test.
+#
+# What this is deliberately *not* for: exporting a file, and refusing an invalid one. Both leave the
+# app — the picker is the system's, and what it hands back depends on a provider this suite does not
+# own — and both are already answered with the system taken apart, which §5.1 says is where they
+# belong. The gate has eighteen tests over real files in `:core:database`, including the four that
+# are healthy SQLite and simply are not ours; the view model has nine more, including the one that
+# proves a refused file never reaches the confirmation. An E2E run of the same claim would cost a
+# device and prove less.
+#
+# The assertion is not "the screen exists". `backup_export` and `backup_restore` are rendered by a
+# screen that cannot compose at all unless the module resolved, so reading them back is reading
+# back the wiring.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+
+# --- Settings is the only door -------------------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+
+# --- and it opens the feature, wired ------------------------------------------------------------
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- assertVisible:
+    id: "backup_export"
+- assertVisible:
+    id: "backup_restore"
+
+# Back returns to settings rather than to the dashboard: the screen is a destination of its own
+# subgraph, not a panel settings drew over itself.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000

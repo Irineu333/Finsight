@@ -262,6 +262,10 @@ essa conta, e uma falha da jornada retroativa passaria a se ler como falha da hi
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
 | `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai do seletor de lançamento, continua no gasto do mês e **continua cortando a lista**, e volta inteira |
 | `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
+| `backup/reach` | a única porta do backup abre uma feature que não tem aba nem lugar no catálogo, com as quatro peças que a ligam — rota, subgrafo, módulo e entrada — respondendo juntas |
+| `backup/vault` | ligar o cofre é a cópia, não a promessa de uma: a tela muda de forma em volta do interruptor e uma segunda tela já lista o arquivo que caiu, marcado como aquele de que o banco veio |
+| `backup/preventive` | uma exclusão deixa de ser irreversível: a oferta chega na confirmação de outra feature, um sim liga o cofre inteiro, a cópia é tomada **antes** da linha ir — e restaurá-la traz o dinheiro apagado de volta |
+| `backup/periodic` | abrir o app é a ocasião, e só quando há o que copiar: passado o prazo sem nada lançado não nasce cópia, e passado o prazo com algo lançado nasce uma |
 
 **Identificadores.** `snake_case`, descrevendo o elemento e não sua posição: `add_transaction_save`,
 `bottom_navigation_bar`. Itens de navegação derivam o seu da rota — `NavDestination.name` transforma
